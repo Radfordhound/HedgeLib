@@ -19,7 +19,7 @@ namespace HedgeLib.Archives
                 var shortName = fileInfo.Name.Substring(0,
                     fileInfo.Name.Length - fileInfo.Extension.Length);
 
-                for (int i = 0; i < 99; ++i)
+                for (int i = 0; i <= 99; ++i)
                 {
                     var fileName = Path.Combine(fileInfo.DirectoryName,
                     $"{shortName}{ext}.{i.ToString("00")}");
@@ -27,7 +27,6 @@ namespace HedgeLib.Archives
                     if (!File.Exists(fileName))
                         break;
 
-                    System.Console.WriteLine(fileName);
                     using (var fileStream = File.OpenRead(fileName))
                     {
                         Load(fileStream);

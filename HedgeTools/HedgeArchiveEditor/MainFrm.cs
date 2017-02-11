@@ -63,7 +63,9 @@ namespace HedgeArchiveEditor
                 AllowColumnReorder = true,
             };
 
+            lv.ContextMenuStrip = contextMenu;
             lv.ColumnClick += Lv_ColumnClick;
+
             lv.Columns.Add("Name");
             lv.Columns.Add("Extension");
 
@@ -220,6 +222,11 @@ namespace HedgeArchiveEditor
             }
         }
 
+        private void extractAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //TODO
+        }
+
         private void closeToolStripMenuItem_Click(object sender, EventArgs e)
         {
             CloseArchive(tabControl.SelectedIndex);
@@ -233,6 +240,14 @@ namespace HedgeArchiveEditor
         private void tabControl_SelectedIndexChanged(object sender, EventArgs e)
         {
             RefreshGUI();
+        }
+
+        private void contextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            var lv = tabControl.SelectedTab.Controls[0] as ListView;
+
+            extractSelectedFilesToolStripMenuItem.Enabled =
+                removeSelectedFilesToolStripMenuItem.Enabled = lv.SelectedItems.Count > 0;
         }
     }
 }
