@@ -158,6 +158,7 @@
             | System.Windows.Forms.Keys.A)));
             this.addFilesToolStripMenuItem.Size = new System.Drawing.Size(294, 30);
             this.addFilesToolStripMenuItem.Text = "&Add Files...";
+            this.addFilesToolStripMenuItem.Click += new System.EventHandler(this.addFilesToolStripMenuItem_Click);
             // 
             // extractAllToolStripMenuItem
             // 

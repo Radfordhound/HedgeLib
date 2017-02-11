@@ -15,18 +15,16 @@ namespace HedgeArchiveEditor
         {
             get
             {
-                return (CurrentArchvieIndex >= 0 && CurrentArchvieIndex < Archives.Count) ?
-                    Archives[CurrentArchvieIndex] : null;
+                return (tabControl.SelectedIndex >= 0 && tabControl.SelectedIndex < Archives.Count)
+                    ? Archives[tabControl.SelectedIndex] : null;
             }
 
             set
             {
-                if (CurrentArchvieIndex >= 0 && CurrentArchvieIndex < Archives.Count)
-                    Archives[CurrentArchvieIndex] = value;
+                if (tabControl.SelectedIndex >= 0 && tabControl.SelectedIndex < Archives.Count)
+                    Archives[tabControl.SelectedIndex] = value;
             }
         }
-
-        public int CurrentArchvieIndex = -1;
 
         //Constructors
         public MainFrm()
@@ -204,6 +202,24 @@ namespace HedgeArchiveEditor
             }
         }
 
+        private void addFilesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var ofd = new OpenFileDialog()
+            {
+                Title = "Add File(s)...",
+                Filter = "All Files (*.*)|*.*",
+                Multiselect = true
+            };
+
+            if (ofd.ShowDialog() == DialogResult.OK)
+            {
+                foreach (var file in ofd.FileNames)
+                    CurrentArchive.Files.Add(new ArchiveFile(file));
+
+                RefreshTabPage(tabControl.SelectedIndex);
+            }
+        }
+
         private void closeToolStripMenuItem_Click(object sender, EventArgs e)
         {
             CloseArchive(tabControl.SelectedIndex);
@@ -216,7 +232,6 @@ namespace HedgeArchiveEditor
 
         private void tabControl_SelectedIndexChanged(object sender, EventArgs e)
         {
-            CurrentArchvieIndex = tabControl.SelectedIndex;
             RefreshGUI();
         }
     }
