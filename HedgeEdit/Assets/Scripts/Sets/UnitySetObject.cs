@@ -25,9 +25,9 @@ public class UnitySetObject : MonoBehaviour
 
     public static void ConvertTransform(SetObjectTransform setObjTransform, Transform unityTransform)
     {
-        var pos = Helpers.ConvertToUnity(setObjTransform.Position);
-        unityTransform.position = new Vector3(pos.x, pos.y, -pos.z);
-        unityTransform.rotation = Helpers.ConvertToUnity(setObjTransform.Rotation);
-        unityTransform.localScale = Helpers.ConvertToUnity(setObjTransform.Scale);
+        var pos = Convert.ToUnity(setObjTransform.Position);
+        unityTransform.position = new Vector3(pos.x, pos.y, -pos.z); //TODO: Is this correct?
+        unityTransform.rotation = Convert.ToUnity(setObjTransform.Rotation);
+        unityTransform.localScale = Convert.ToUnity(setObjTransform.Scale);
     }
 }

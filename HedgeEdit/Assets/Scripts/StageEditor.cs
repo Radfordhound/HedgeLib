@@ -1,5 +1,4 @@
-﻿using HedgeLib.Archives;
-using HedgeLib.Sets;
+﻿using HedgeLib.Sets;
 using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,19 +22,6 @@ public class StageEditor : MonoBehaviour
             LightParentObject = new GameObject("Lights");
 
         GameList.Load();
-
-        //TODO: REMOVE THIS
-        //if (File.Exists(DebugFilePath))
-        //{
-        //    var arc = new GensArchive();
-        //    arc.Load(DebugFilePath);
-        //    Debug.Log("done loading archive");
-        //    Debug.Log("Padding = " + arc.Padding);
-        //    Debug.Log("arc.Files[2].Name = " + arc.Files[2].Name);
-        //    Debug.Log("arc.Files[2].Name.Length = " + arc.Files[2].Name.Length);
-        //    arc.Extract(DebugOutputDir);
-        //    Debug.Log("Done extracting");
-        //}
 	}
 
     private void Update()
@@ -63,7 +49,7 @@ public class StageEditor : MonoBehaviour
             var light = new HedgeLib.Lights.Light();
             light.Load(lightFile);
 
-            var lightObject = Helpers.ConvertToUnity(light);
+            var lightObject = Convert.ToUnity(light);
             lightObject.gameObject.transform.parent = LightParentObject.transform;
         }
 

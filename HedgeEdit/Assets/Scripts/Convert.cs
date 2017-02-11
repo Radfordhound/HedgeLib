@@ -1,28 +1,28 @@
 ﻿using UnityEngine;
 
-public static class Helpers
+public static class Convert
 {
     //Methods
-    public static Vector3 ConvertToUnity(HedgeLib.Vector3 vect)
+    public static Vector3 ToUnity(HedgeLib.Vector3 vect)
     {
         return new Vector3(vect.X, vect.Y, vect.Z);
     }
 
-    public static Vector4 ConvertToUnity(HedgeLib.Vector4 vect)
+    public static Vector4 ToUnity(HedgeLib.Vector4 vect)
     {
         return new Vector4(vect.X, vect.Y, vect.Z, vect.W);
     }
 
-    public static Quaternion ConvertToUnity(HedgeLib.Quaternion quat)
+    public static Quaternion ToUnity(HedgeLib.Quaternion quat)
     {
         return new Quaternion(quat.X, quat.Y, quat.Z, quat.W);
     }
 
-    public static Light ConvertToUnity(HedgeLib.Lights.Light light)
+    public static Light ToUnity(HedgeLib.Lights.Light light)
     {
         GameObject obj = new GameObject();
         var unityLight = obj.AddComponent<Light>();
-        var unityPos = ConvertToUnity(light.Position);
+        var unityPos = ToUnity(light.Position);
 
         unityLight.color = new Color(light.Color.X, light.Color.Y, light.Color.Z);
         unityLight.shadows = LightShadows.Soft;
