@@ -162,6 +162,68 @@ namespace HedgeLib
             return floatUnion.Float;
         }
 
+        //8-Byte Types
+        public override long ReadInt64()
+        {
+            var buffer = ReadBytes(8);
+            if (IsBigEndian)
+            {
+                return buffer[0] << 56 | buffer[1] << 48 |
+                    buffer[2] << 40 | buffer[3] << 32 |
+                    buffer[4] << 24 | buffer[5] << 16 |
+                    buffer[6] << 8 | buffer[7];
+            }
+            else
+            {
+                return buffer[7] << 56 | buffer[6] << 48 |
+                    buffer[5] << 40 | buffer[4] << 32 |
+                    buffer[3] << 24 | buffer[2] << 16 |
+                    buffer[1] << 8 | buffer[0];
+            }
+        }
+
+        public override ulong ReadUInt64()
+        {
+            var buffer = ReadBytes(8);
+            if (IsBigEndian)
+            {
+                return (ulong)(buffer[0] << 56 | buffer[1] << 48 |
+                    buffer[2] << 40 | buffer[3] << 32 |
+                    buffer[4] << 24 | buffer[5] << 16 |
+                    buffer[6] << 8 | buffer[7]);
+            }
+            else
+            {
+                return (ulong)(buffer[7] << 56 | buffer[6] << 48 |
+                    buffer[5] << 40 | buffer[4] << 32 |
+                    buffer[3] << 24 | buffer[2] << 16 |
+                    buffer[1] << 8 | buffer[0]);
+            }
+        }
+
+        public override double ReadDouble()
+        {
+            var buffer = ReadBytes(8);
+            var doubleUnion = new ExtendedBinary.DoubleUnion();
+
+            if (IsBigEndian)
+            {
+                doubleUnion.ULong = (ulong)(buffer[0] << 56 | buffer[1] << 48 |
+                    buffer[2] << 40 | buffer[3] << 32 |
+                    buffer[4] << 24 | buffer[5] << 16 |
+                    buffer[6] << 8 | buffer[7]);
+            }
+            else
+            {
+                doubleUnion.ULong = (ulong)(buffer[7] << 56 | buffer[6] << 48 |
+                    buffer[5] << 40 | buffer[4] << 32 |
+                    buffer[3] << 24 | buffer[2] << 16 |
+                    buffer[1] << 8 | buffer[0]);
+            }
+
+            return doubleUnion.Double;
+        }
+
         //12-Byte Types
         public Vector3 ReadVector3()
         {
@@ -278,6 +340,13 @@ namespace HedgeLib
             Write(nulls);
         }
 
+        public void WriteNullTerminatedString(string value)
+        {
+            var chArr = value.ToCharArray();
+            Write(chArr, 0, chArr.Length);
+            WriteNull();
+        }
+
         //2-Byte Types
         public override void Write(short value)
         {
@@ -350,6 +419,123 @@ namespace HedgeLib
             }
 
             Write(dataBuffer, 0, 4);
+        }
+
+        public override void Write(float value)
+        {
+            var floatUnion = new ExtendedBinary.FloatUnion();
+            floatUnion.Float = value;
+
+            if (IsBigEndian)
+            {
+                dataBuffer[0] = (byte)(floatUnion.UInt >> 24);
+                dataBuffer[1] = (byte)(floatUnion.UInt >> 16);
+                dataBuffer[2] = (byte)(floatUnion.UInt >> 8);
+                dataBuffer[3] = (byte)(floatUnion.UInt);
+            }
+            else
+            {
+                dataBuffer[0] = (byte)(floatUnion.UInt);
+                dataBuffer[1] = (byte)(floatUnion.UInt >> 8);
+                dataBuffer[2] = (byte)(floatUnion.UInt >> 16);
+                dataBuffer[3] = (byte)(floatUnion.UInt >> 24);
+            }
+
+            Write(dataBuffer, 0, 4);
+        }
+
+        //8-Byte Types
+        public override void Write(long value)
+        {
+            if (IsBigEndian)
+            {
+                dataBuffer[0] = (byte)(value >> 56);
+                dataBuffer[1] = (byte)(value >> 48);
+                dataBuffer[2] = (byte)(value >> 40);
+                dataBuffer[3] = (byte)(value >> 32);
+
+                dataBuffer[4] = (byte)(value >> 24);
+                dataBuffer[5] = (byte)(value >> 16);
+                dataBuffer[6] = (byte)(value >> 8);
+                dataBuffer[7] = (byte)(value);
+            }
+            else
+            {
+                dataBuffer[0] = (byte)(value);
+                dataBuffer[1] = (byte)(value >> 8);
+                dataBuffer[2] = (byte)(value >> 16);
+                dataBuffer[3] = (byte)(value >> 24);
+
+                dataBuffer[4] = (byte)(value >> 32);
+                dataBuffer[5] = (byte)(value >> 40);
+                dataBuffer[6] = (byte)(value >> 48);
+                dataBuffer[7] = (byte)(value >> 56);
+            }
+
+            Write(dataBuffer, 0, 8);
+        }
+
+        public override void Write(ulong value)
+        {
+            if (IsBigEndian)
+            {
+                dataBuffer[0] = (byte)(value >> 56);
+                dataBuffer[1] = (byte)(value >> 48);
+                dataBuffer[2] = (byte)(value >> 40);
+                dataBuffer[3] = (byte)(value >> 32);
+
+                dataBuffer[4] = (byte)(value >> 24);
+                dataBuffer[5] = (byte)(value >> 16);
+                dataBuffer[6] = (byte)(value >> 8);
+                dataBuffer[7] = (byte)(value);
+            }
+            else
+            {
+                dataBuffer[0] = (byte)(value);
+                dataBuffer[1] = (byte)(value >> 8);
+                dataBuffer[2] = (byte)(value >> 16);
+                dataBuffer[3] = (byte)(value >> 24);
+
+                dataBuffer[4] = (byte)(value >> 32);
+                dataBuffer[5] = (byte)(value >> 40);
+                dataBuffer[6] = (byte)(value >> 48);
+                dataBuffer[7] = (byte)(value >> 56);
+            }
+
+            Write(dataBuffer, 0, 8);
+        }
+
+        public override void Write(double value)
+        {
+            var doubleUnion = new ExtendedBinary.DoubleUnion();
+            doubleUnion.Double = value;
+
+            if (IsBigEndian)
+            {
+                dataBuffer[0] = (byte)(doubleUnion.ULong >> 56);
+                dataBuffer[1] = (byte)(doubleUnion.ULong >> 48);
+                dataBuffer[2] = (byte)(doubleUnion.ULong >> 40);
+                dataBuffer[3] = (byte)(doubleUnion.ULong >> 32);
+
+                dataBuffer[4] = (byte)(doubleUnion.ULong >> 24);
+                dataBuffer[5] = (byte)(doubleUnion.ULong >> 16);
+                dataBuffer[6] = (byte)(doubleUnion.ULong >> 8);
+                dataBuffer[7] = (byte)(doubleUnion.ULong);
+            }
+            else
+            {
+                dataBuffer[0] = (byte)(doubleUnion.ULong);
+                dataBuffer[1] = (byte)(doubleUnion.ULong >> 8);
+                dataBuffer[2] = (byte)(doubleUnion.ULong >> 16);
+                dataBuffer[3] = (byte)(doubleUnion.ULong >> 24);
+
+                dataBuffer[4] = (byte)(doubleUnion.ULong >> 32);
+                dataBuffer[5] = (byte)(doubleUnion.ULong >> 40);
+                dataBuffer[6] = (byte)(doubleUnion.ULong >> 48);
+                dataBuffer[7] = (byte)(doubleUnion.ULong >> 56);
+            }
+
+            Write(dataBuffer, 0, 8);
         }
 
         //12-Byte Types
