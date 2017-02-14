@@ -25,6 +25,8 @@ namespace HedgeLib.Bases
             Header = ReadHeader(reader);
 
             Read(reader);
+
+            reader.JumpTo(Header.FileSize - Header.FinalTableLength);
             Offsets = ReadFooter(reader);
         }
 
@@ -70,8 +72,10 @@ namespace HedgeLib.Bases
         {
             var offsets = new List<uint>();
             uint lastOffsetPos = LWHeader.Length;
+            uint footerEnd = (uint)reader.BaseStream.Position + Header.FinalTableLength;
 
-            while (reader.BaseStream.Position < reader.BaseStream.Length)
+            while (reader.BaseStream.Position < reader.BaseStream.Length &&
+                   reader.BaseStream.Position < footerEnd)
             {
                 byte b = reader.ReadByte();
                 byte type = (byte)(b & 0xC0); //0xC0 = 1100 0000. We're getting the first two bits.
