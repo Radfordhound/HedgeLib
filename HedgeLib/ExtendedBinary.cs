@@ -364,6 +364,11 @@ namespace HedgeLib
             WriteNull();
         }
 
+        public void WriteSignature(string signature)
+        {
+            Write(signature.ToCharArray());
+        }
+
         //2-Byte Types
         public override void Write(short value)
         {
