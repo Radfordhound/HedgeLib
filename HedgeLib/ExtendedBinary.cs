@@ -69,6 +69,12 @@ namespace HedgeLib
             JumpAhead(jumpAmount);
         }
 
+        public string ReadSignature(uint length = 4)
+        {
+            var chars = ReadChars(4);
+            return new string(chars);
+        }
+
         public string ReadNullTerminatedString()
         {
             char curChar;
@@ -315,6 +321,17 @@ namespace HedgeLib
             BaseStream.Position = position;
 
             WriteNulls(4);
+            BaseStream.Position = curPos;
+        }
+
+        public void FillInOffset(string name)
+        {
+            var curPos = BaseStream.Position;
+            BaseStream.Position = Offsets[name];
+
+            Write((uint)curPos);
+            Offsets.Remove(name);
+
             BaseStream.Position = curPos;
         }
 
