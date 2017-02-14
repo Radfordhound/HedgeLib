@@ -262,15 +262,7 @@ namespace HedgeArchiveEditor
             {
                 try
                 {
-                    Archive ar = CurrentArchive;
-                    Directory.CreateDirectory(tabControl.SelectedTab.Text);
-                    ListView lv = (ListView)tabControl.SelectedTab.Controls[0];
-
-                    for (int i = 0; i < ar.Files.Count; i++)
-                    {
-                        ArchiveFile arFile = ar.Files[i];
-                        File.WriteAllBytes(Path.Combine(new FileInfo(sfd.FileName).Directory.FullName, arFile.Name), arFile.Data);
-                    }
+                    CurrentArchive.Extract(new FileInfo(sfd.FileName).Directory.FullName);
                 }
                 catch (Exception ex)
                 {
@@ -319,16 +311,15 @@ namespace HedgeArchiveEditor
                 {
                     Archive ar = CurrentArchive;
                     ListView lv = (ListView)tabControl.SelectedTab.Controls[0];
-                    Directory.CreateDirectory(tabControl.SelectedTab.Text);
 
                     for (int i = 0; i < lv.SelectedItems.Count; i++)
                     {
-                        for (int ii = 0; ii < CurrentArchive.Files.Count; ii++)
+                        for (int ii = 0; ii < ar.Files.Count; ii++)
                         {
-                            if (CurrentArchive.Files[ii].Name == lv.SelectedItems[i].SubItems[0].Text)
+                            if (ar.Files[ii].Name == lv.SelectedItems[i].SubItems[0].Text)
                             {
-                                ArchiveFile arFile = ar.Files[ii];
-                                File.WriteAllBytes(Path.Combine(new FileInfo(sfd.FileName).Directory.FullName, arFile.Name), arFile.Data);
+                                ar.Files[ii].Extract(Path.Combine(new FileInfo(sfd.FileName).Directory.FullName, ar.Files[ii].Name));
+                                break;
                             }
                         }
                     }
