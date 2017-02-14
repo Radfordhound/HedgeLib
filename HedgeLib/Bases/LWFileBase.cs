@@ -1,5 +1,6 @@
 ﻿using HedgeLib.Headers;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace HedgeLib.Bases
@@ -9,6 +10,13 @@ namespace HedgeLib.Bases
         //Variables/Constants
         public LWHeader Header;
 
+        private enum OffsetTypes
+        {
+            SixBit = 0x40,
+            FourteenBit = 0x80,
+            ThirtyBit = 0xC0
+        }
+
         //Methods
         public override sealed void Load(Stream fileStream)
         {
@@ -17,6 +25,48 @@ namespace HedgeLib.Bases
 
             Read(reader);
             //We don't really need to read the footer for our purposes.
+        }
+
+        /// <summary>
+        /// Provided for debugging purposes. Reads all the offsets in a LW offset table.
+        /// </summary>
+        public static List<uint> ReadOffsetTable(ExtendedBinaryReader reader)
+        {
+            var offsets = new List<uint>();
+            uint lastOffsetPos = LWHeader.Length;
+
+            while (reader.BaseStream.Position < reader.BaseStream.Length)
+            {
+                byte b = reader.ReadByte();
+                byte type = (byte)(b & 0xC0); //0xC0 = 1100 0000. We're getting the first two bits.
+                byte d = (byte)(b & 0x3F);
+
+                if (type == (byte)OffsetTypes.SixBit)
+                {
+                    d <<= 2;
+                    offsets.Add(d + lastOffsetPos);
+                }
+                else if (type == (byte)OffsetTypes.FourteenBit)
+                {
+                    byte b2 = reader.ReadByte();
+                    ushort d2 = (ushort)(((d << 8) & b2) << 2);
+
+                    offsets.Add(d2 + lastOffsetPos);
+                }
+                else if (type == (byte)OffsetTypes.ThirtyBit)
+                {
+                    var bytes = reader.ReadBytes(3);
+                    uint d2 = (uint)(((d << 24) | (bytes[0] << 16) |
+                        (bytes[1] << 8) | bytes[2]) << 2);
+
+                    offsets.Add(d2 + lastOffsetPos);
+                }
+                else break;
+
+                lastOffsetPos = offsets[offsets.Count - 1];
+            }
+
+            return offsets;
         }
 
         protected virtual void Read(ExtendedBinaryReader reader)
