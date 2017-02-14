@@ -252,7 +252,15 @@ namespace HedgeArchiveEditor
 
         private void extractAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //TODO
+            Archive ar = CurrentArchive;
+            Directory.CreateDirectory(tabControl.SelectedTab.Text);
+            ListView lv = (ListView)tabControl.SelectedTab.Controls[0];
+
+            for (int i = 0; i < ar.Files.Count; i++)
+            {
+                ArchiveFile arFile = ar.Files[i];
+                File.WriteAllBytes(Path.Combine(tabControl.SelectedTab.Text, arFile.Name), arFile.Data);
+            }
         }
 
         private void closeToolStripMenuItem_Click(object sender, EventArgs e)
@@ -276,6 +284,24 @@ namespace HedgeArchiveEditor
 
             extractSelectedFilesToolStripMenuItem.Enabled =
                 removeSelectedFilesToolStripMenuItem.Enabled = lv.SelectedItems.Count > 0;
+        }
+
+        private void extractSelectedFilesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Archive ar = CurrentArchive;
+            ListView lv = (ListView)tabControl.SelectedTab.Controls[0];
+
+            for (int i = 0; i < lv.SelectedItems.Count; i++)
+            {
+                for(int ii = 0; ii < CurrentArchive.Files.Count; ii++)
+                {
+                    if(CurrentArchive.Files[ii].Name == lv.SelectedItems[i].SubItems[0].Text)
+                    {
+                        ArchiveFile arFile = ar.Files[ii];
+                        File.WriteAllBytes(arFile.Name, arFile.Data);
+                    }
+                }
+            }
         }
     }
 }
