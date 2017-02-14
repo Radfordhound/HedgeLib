@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace HedgeLib
+namespace HedgeLib.Bases
 {
     /// <summary>
     /// The base for all file-based classes in HedgeLib.

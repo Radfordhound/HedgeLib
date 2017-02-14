@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using HedgeLib.Bases;
+using System.Collections.Generic;
 
 namespace HedgeLib.Archives
 {

@@ -56,10 +56,14 @@
     <Compile Include="Archives\GensArchive.cs" />
     <Compile Include="Archives\LWArchive.cs" />
     <Compile Include="ExtendedBinary.cs" />
-    <Compile Include="FileBase.cs" />
-    <Compile Include="GensHeader.cs" />
+    <Compile Include="Bases\FileBase.cs" />
+    <Compile Include="Bases\GensFileBase.cs" />
+    <Compile Include="Headers\GensHeader.cs" />
+    <Compile Include="Headers\LWHeader.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="Lights\Light.cs" />
+    <Compile Include="Bases\LWFileBase.cs" />
+    <Compile Include="Misc\LWGism.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Quaternion.cs" />
     <Compile Include="Sets\GensSetData.cs" />

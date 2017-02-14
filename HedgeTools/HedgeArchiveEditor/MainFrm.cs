@@ -34,6 +34,11 @@ namespace HedgeArchiveEditor
         }
 
         //Methods
+        public void UpdateTitle()
+        {
+            Text = Program.ProgramName; //TODO
+        }
+
         public void OpenArchive(string filePath)
         {
             var arc = Program.LoadArchive(filePath);
@@ -41,9 +46,40 @@ namespace HedgeArchiveEditor
             AddTabPage(new FileInfo(filePath).Name);
         }
 
-        public void UpdateTitle()
+        public void SaveArchive(int index)
         {
-            Text = Program.ProgramName; //TODO
+            var sfd = new SaveFileDialog()
+            {
+                Title = "Save Archive As...",
+                Filter = "Generations/Unleashed Archives (*.ar, *.arl, *.pfd)|*.ar;*.arl;*.pfd" +
+                "|Lost World Archives (*.pac)|*.pac",
+            };
+
+            if (sfd.ShowDialog() == DialogResult.OK)
+            {
+                var saveOptions = new SaveOptions();
+                if (saveOptions.ShowDialog() == DialogResult.OK)
+                {
+                    //This is a horrible way of checking this, I know.
+                    string val = (string)saveOptions.comboBox1.SelectedValue;
+                    if (val == "Generations/Unleashed")
+                    {
+                        var genArc = new GensArchive(CurrentArchive);
+                        genArc.Padding = (uint)saveOptions.numericUpDown1.Value;
+                        genArc.Save(sfd.FileName);
+                    }
+
+                    //TODO: Add other archive types.
+                }
+            }
+        }
+
+        public void CloseArchive(int index)
+        {
+            //TODO: Prompt the user to save the archive first if not yet saved.
+
+            Archives.RemoveAt(index);
+            tabControl.TabPages.RemoveAt(index);
         }
 
         public void AddTabPage(string fileName)
@@ -72,14 +108,6 @@ namespace HedgeArchiveEditor
             tabPage.Controls.Add(lv);
             RefreshTabPage(tabPageIndex);
             tabControl.SelectedIndex = tabPageIndex;
-        }
-
-        public void CloseArchive(int index)
-        {
-            //TODO: Prompt the user to save the archive first if not yet saved.
-
-            Archives.RemoveAt(index);
-            tabControl.TabPages.RemoveAt(index);
         }
 
         public void RefreshTabPage(int index, bool refreshFileList = true)

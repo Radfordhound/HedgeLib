@@ -1,8 +1,9 @@
-﻿using System.IO;
+﻿using HedgeLib.Bases;
+using System.IO;
 
 namespace HedgeLib.Lights
 {
-    public class Light : FileBase
+    public class Light : GensFileBase
     {
         //Variables/Constants
         public Vector3 Position, Color;
@@ -18,12 +19,8 @@ namespace HedgeLib.Lights
         }
 
         //Methods
-        public override void Load(Stream fileStream)
+        protected override void Read(ExtendedBinaryReader reader)
         {
-            //Header
-            ExtendedBinaryReader reader = new ExtendedBinaryReader(fileStream, true);
-            GensHeader.Read(reader);
-
             //Root Node
             uint lightType = reader.ReadUInt32();
             if (lightType < 0 || lightType > 1)
@@ -46,12 +43,8 @@ namespace HedgeLib.Lights
             }
         }
 
-        public override void Save(Stream fileStream)
+        protected override void Write(ExtendedBinaryWriter writer)
         {
-            //Header
-            ExtendedBinaryWriter writer = new ExtendedBinaryWriter(fileStream, true);
-            writer.WriteNulls(GensHeader.Length);
-
             //Root Node
             writer.Write((uint)LightType);
 

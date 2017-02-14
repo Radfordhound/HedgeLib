@@ -6,8 +6,17 @@ namespace HedgeLib.Archives
     {
         //Variables/Constants
         public uint Padding = 0x40;
+
+        public const uint Sig1 = 0, Sig2 = 0x10, Sig3 = 0x14;
         public const string ListExtension = ".arl", Extension = ".ar",
             PFDExtension = ".pfd", SplitExtension = ".00";
+
+        //Constructors
+        public GensArchive() { }
+        public GensArchive(Archive arc)
+        {
+            Files = arc.Files;
+        }
 
         //Methods
         public override void Load(string filePath)
@@ -77,6 +86,39 @@ namespace HedgeLib.Archives
                 };
                 Files.Add(file);
             }
+        }
+
+        public override void Save(Stream fileStream)
+        {
+            //TODO: Remove this once the Save method is working properly.
+            throw new System.NotImplementedException();
+
+            //Header
+            ExtendedBinaryWriter writer = new ExtendedBinaryWriter(fileStream);
+
+            writer.Write(Sig1);
+            writer.Write(Sig2);
+            writer.Write(Sig3);
+            writer.Write(Padding);
+
+            //Data
+            foreach (var file in Files)
+            {
+                writer.AddOffset("dataEndOffset");
+                writer.Write(file.Data.Length);
+                writer.Write("dataStartOffset");
+                writer.WriteNulls(4); //TODO: Figure out what Unknown1 is.
+                writer.WriteNulls(4); //TODO: Figure out what Unknown2 is.
+                writer.WriteNullTerminatedString(file.Name);
+
+                //TODO: Write enough nulls to properly pad the file.
+
+                writer.FillInOffset("dataStartOffset");
+                writer.Write(file.Data);
+                writer.FillInOffset("dataEndOffset");
+            }
+
+            base.Save(fileStream);
         }
     }
 }
