@@ -252,14 +252,33 @@ namespace HedgeArchiveEditor
 
         private void extractAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Archive ar = CurrentArchive;
-            Directory.CreateDirectory(tabControl.SelectedTab.Text);
-            ListView lv = (ListView)tabControl.SelectedTab.Controls[0];
-
-            for (int i = 0; i < ar.Files.Count; i++)
+            SaveFileDialog sfd = new SaveFileDialog()
             {
-                ArchiveFile arFile = ar.Files[i];
-                File.WriteAllBytes(Path.Combine(tabControl.SelectedTab.Text, arFile.Name), arFile.Data);
+                Title = "Extract all files",
+                FileName = "Enter into a directory and press Save"
+            };
+
+            if (sfd.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    Archive ar = CurrentArchive;
+                    Directory.CreateDirectory(tabControl.SelectedTab.Text);
+                    ListView lv = (ListView)tabControl.SelectedTab.Controls[0];
+
+                    for (int i = 0; i < ar.Files.Count; i++)
+                    {
+                        ArchiveFile arFile = ar.Files[i];
+                        File.WriteAllBytes(Path.Combine(new FileInfo(sfd.FileName).Directory.FullName, arFile.Name), arFile.Data);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, Program.ProgramName,
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+
+                RefreshGUI();
             }
         }
 
@@ -288,18 +307,36 @@ namespace HedgeArchiveEditor
 
         private void extractSelectedFilesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Archive ar = CurrentArchive;
-            ListView lv = (ListView)tabControl.SelectedTab.Controls[0];
-
-            for (int i = 0; i < lv.SelectedItems.Count; i++)
+            SaveFileDialog sfd = new SaveFileDialog()
             {
-                for(int ii = 0; ii < CurrentArchive.Files.Count; ii++)
+                Title = "Extract selected files",
+                FileName = "Enter into a directory and press Save"
+            };
+
+            if (sfd.ShowDialog() == DialogResult.OK)
+            {
+                try
                 {
-                    if(CurrentArchive.Files[ii].Name == lv.SelectedItems[i].SubItems[0].Text)
+                    Archive ar = CurrentArchive;
+                    ListView lv = (ListView)tabControl.SelectedTab.Controls[0];
+                    Directory.CreateDirectory(tabControl.SelectedTab.Text);
+
+                    for (int i = 0; i < lv.SelectedItems.Count; i++)
                     {
-                        ArchiveFile arFile = ar.Files[ii];
-                        File.WriteAllBytes(arFile.Name, arFile.Data);
+                        for (int ii = 0; ii < CurrentArchive.Files.Count; ii++)
+                        {
+                            if (CurrentArchive.Files[ii].Name == lv.SelectedItems[i].SubItems[0].Text)
+                            {
+                                ArchiveFile arFile = ar.Files[ii];
+                                File.WriteAllBytes(Path.Combine(new FileInfo(sfd.FileName).Directory.FullName, arFile.Name), arFile.Data);
+                            }
+                        }
                     }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, Program.ProgramName,
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
