@@ -69,9 +69,9 @@ namespace HedgeLib
             JumpAhead(jumpAmount);
         }
 
-        public string ReadSignature(uint length = 4)
+        public string ReadSignature(int length = 4)
         {
-            var chars = ReadChars(4);
+            var chars = ReadChars(length);
             return new string(chars);
         }
 
