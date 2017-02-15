@@ -277,6 +277,7 @@ namespace HedgeLib
         //Variables/Constants
         public Dictionary<string, long> Offsets = new Dictionary<string, long>();
         public Encoding Encoding = Encoding.ASCII;
+        public long Offset = 0;
         public bool IsBigEndian = false;
 
         private byte[] dataBuffer = new byte[32];
@@ -324,23 +325,23 @@ namespace HedgeLib
             BaseStream.Position = curPos;
         }
 
-        public void FillInOffset(string name)
+        public void FillInOffset(string name, bool absolute = true)
         {
             var curPos = BaseStream.Position;
             BaseStream.Position = Offsets[name];
 
-            Write((uint)curPos);
+            Write((uint)(curPos - ((absolute) ? 0 : Offset)));
             Offsets.Remove(name);
 
             BaseStream.Position = curPos;
         }
 
-        public void FillInOffset(string name, uint value)
+        public void FillInOffset(string name, uint value, bool absolute = true)
         {
             var curPos = BaseStream.Position;
             BaseStream.Position = Offsets[name];
 
-            Write(value);
+            Write((uint)(value - ((absolute) ? 0 : Offset)));
             Offsets.Remove(name);
 
             BaseStream.Position = curPos;
@@ -362,6 +363,13 @@ namespace HedgeLib
             var chArr = value.ToCharArray();
             Write(chArr, 0, chArr.Length);
             WriteNull();
+        }
+
+        public void FixPadding(int amount = 4)
+        {
+            uint padAmount = 0;
+            while (BaseStream.Position % amount != 0) ++padAmount;
+            WriteNulls(padAmount);
         }
 
         public void WriteSignature(string signature)
