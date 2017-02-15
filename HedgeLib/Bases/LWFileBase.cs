@@ -115,6 +115,7 @@ namespace HedgeLib.Bases
 
             writer.WriteNulls(LWHeader.Length);
             Write(writer);
+            writer.FixPadding();
             WriteFooter(writer);
 
             //We write the header last since there's no way we'll know the fileSize until here.
@@ -137,6 +138,12 @@ namespace HedgeLib.Bases
         {
             //TODO
             throw new NotImplementedException();
+        }
+
+        protected void AddOffset(ExtendedBinaryWriter writer, string name)
+        {
+            Offsets.Add((uint)writer.BaseStream.Position);
+            writer.AddOffset(name);
         }
     }
 }
