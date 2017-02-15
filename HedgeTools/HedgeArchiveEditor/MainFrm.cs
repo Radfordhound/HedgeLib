@@ -262,7 +262,21 @@ namespace HedgeArchiveEditor
             {
                 try
                 {
-                    CurrentArchive.Extract(new FileInfo(sfd.FileName).Directory.FullName);
+                    Archive ar = CurrentArchive;
+                    new System.Threading.Thread(() =>
+                    {
+                        Invoke(new Action(() => Enabled = false));
+                        ToolStripProgressBar pb = new ToolStripProgressBar();
+                        statusStrip.Invoke(new Action(() => statusStrip.Items.AddRange(new ToolStripItem[] { pb })));
+                        Invoke(new Action(() => pb.Maximum = ar.Files.Count));
+                        foreach (ArchiveFile file in ar.Files)
+                        {
+                            file.Extract(HedgeLib.Helpers.CombinePaths(new FileInfo(sfd.FileName).Directory.FullName, file.Name));
+                            Invoke(new Action(() => pb.Value++));
+                        }
+                        statusStrip.Invoke(new Action(() => statusStrip.Items.Remove(pb)));
+                        Invoke(new Action(() => Enabled = true));
+                    }).Start();
                 }
                 catch (Exception ex)
                 {
@@ -310,25 +324,82 @@ namespace HedgeArchiveEditor
                 try
                 {
                     Archive ar = CurrentArchive;
-                    ListView lv = (ListView)tabControl.SelectedTab.Controls[0];
-
-                    for (int i = 0; i < lv.SelectedItems.Count; i++)
+                    new System.Threading.Thread(() =>
                     {
-                        for (int ii = 0; ii < ar.Files.Count; ii++)
+                        Invoke(new Action(() => Enabled = false));
+                        ToolStripProgressBar pb = new ToolStripProgressBar();
+                        statusStrip.Invoke(new Action(() => statusStrip.Items.AddRange(new ToolStripItem[] { pb })));
+                        ListView lv = null;
+                        Invoke(new Action(() => lv = (ListView)tabControl.SelectedTab.Controls[0]));
+                        Invoke(new Action(() => pb.Maximum = lv.SelectedItems.Count));
+                        Invoke(new Action(() =>
                         {
-                            if (ar.Files[ii].Name == lv.SelectedItems[i].SubItems[0].Text)
+                            for (int i = 0; i < lv.SelectedItems.Count; i++)
                             {
-                                ar.Files[ii].Extract(Path.Combine(new FileInfo(sfd.FileName).Directory.FullName, ar.Files[ii].Name));
-                                break;
+                                for (int ii = 0; ii < ar.Files.Count; ii++)
+                                {
+                                    if (ar.Files[ii].Name == lv.SelectedItems[i].SubItems[0].Text)
+                                    {
+                                        ar.Files[ii].Extract(Path.Combine(new FileInfo(sfd.FileName).Directory.FullName, ar.Files[ii].Name));
+                                        Invoke(new Action(() => pb.Value++));
+                                        break;
+                                    }
+                                }
                             }
-                        }
-                    }
+                        }));
+                        statusStrip.Invoke(new Action(() => statusStrip.Items.Remove(pb)));
+                        Invoke(new Action(() => Enabled = true));
+                    }).Start();
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show(ex.Message, Program.ProgramName,
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
+            }
+        }
+
+        private void removeSelectedFilesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                new System.Threading.Thread(() =>
+                {
+                    Invoke(new Action(() => Enabled = false));
+                    ToolStripProgressBar pb = new ToolStripProgressBar();
+                    statusStrip.Invoke(new Action(() => statusStrip.Items.AddRange(new ToolStripItem[] { pb })));
+                    Archive ar = null;
+                    Invoke(new Action(() => ar = CurrentArchive));
+                    ListView lv = null;
+                    Invoke(new Action(() => lv = (ListView)tabControl.SelectedTab.Controls[0]));
+                    Invoke(new Action(() => pb.Maximum = lv.Items.Count));
+                    Invoke(new Action(() =>
+                    {
+                        for (int ii = 0; ii < ar.Files.Count; ii++)
+                        {
+                            for (int i = 0; i < lv.SelectedItems.Count; i++)
+                            {
+                                if (ar.Files[ii].Name == lv.SelectedItems[i].SubItems[0].Text)
+                                {
+                                    Invoke(new Action(() => pb.Value++));
+                                    ar.Files.Remove(ar.Files[ii]);
+                                    continue;
+                                }
+                            }
+                        }
+                    }));
+                    Invoke(new Action(() => RefreshGUI()));
+                    Invoke(new Action(() => RefreshTabPage(tabControl.SelectedIndex)));
+                    Invoke(new Action(() => Enabled = true));
+                    statusStrip.Invoke(new Action(() => statusStrip.Items.Remove(pb)));
+                }).Start();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, Program.ProgramName,
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                RefreshGUI();
+                RefreshTabPage(tabControl.SelectedIndex);
             }
         }
     }

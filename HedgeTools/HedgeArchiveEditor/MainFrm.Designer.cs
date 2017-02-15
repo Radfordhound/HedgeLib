@@ -59,7 +59,7 @@
             // 
             this.tabControl.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl.Location = new System.Drawing.Point(0, 24);
-            this.tabControl.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.tabControl.Margin = new System.Windows.Forms.Padding(2);
             this.tabControl.Name = "tabControl";
             this.tabControl.SelectedIndex = 0;
             this.tabControl.Size = new System.Drawing.Size(359, 252);
@@ -254,6 +254,7 @@
             this.removeSelectedFilesToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Delete;
             this.removeSelectedFilesToolStripMenuItem.Size = new System.Drawing.Size(239, 22);
             this.removeSelectedFilesToolStripMenuItem.Text = "&Remove Selected File(s)...";
+            this.removeSelectedFilesToolStripMenuItem.Click += new System.EventHandler(this.removeSelectedFilesToolStripMenuItem_Click);
             // 
             // MainFrm
             // 
@@ -265,7 +266,7 @@
             this.Controls.Add(this.statusStrip);
             this.Controls.Add(this.fileStrip);
             this.MainMenuStrip = this.fileStrip;
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "MainFrm";
             this.Text = "Hedge Archive Editor";
             this.fileStrip.ResumeLayout(false);
