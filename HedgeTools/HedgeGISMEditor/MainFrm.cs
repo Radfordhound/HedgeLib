@@ -69,6 +69,16 @@ namespace HedgeGISMEditor
                 FileName = sfd.FileName;
             }
 
+            var dr = MessageBox.Show("Would you like to save the file as Big Endian " +
+                "(Wii U)? Choosing \"No\" will save the file as Little Endian (PC).",
+                Text, MessageBoxButtons.YesNoCancel, MessageBoxIcon.Information,
+
+                (Gism.Header.IsBigEndian) ?
+                    MessageBoxDefaultButton.Button1 : MessageBoxDefaultButton.Button2);
+
+            if (dr == DialogResult.Cancel) return;
+            Gism.Header.IsBigEndian = (dr == DialogResult.Yes);
+
             Gism.Gismos = Gismos.ToArray();
             Gism.UnknownBoolean1 = (checkBox1.Checked) ? 1u : 0u;
             Gism.Save(FileName);
