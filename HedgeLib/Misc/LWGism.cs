@@ -105,8 +105,7 @@ namespace HedgeLib.Misc
 
                 AddString(writer, "fileNameOffset_" + i, gismo.FileName);
                 AddString(writer, "fileNameOffset2_" + i, gismo.FileName);
-                AddOffset(writer, "unknownOffset1");
-                writer.FillInOffset("unknownOffset1", 0); //TODO
+                AddString(writer, "unknownOffset1_" + i, gismo.FileName); //TODO
                 writer.Write(gismo.Unknown1);
 
                 writer.Write(gismo.Unknown2);
@@ -154,8 +153,8 @@ namespace HedgeLib.Misc
             Unknown6, Unknown7, Unknown8,
             RotationAmount, Unknown9;
 
-        public uint Unknown1;
+        public uint Unknown1 = 2;
         public bool DoesAnimate, UnknownBoolean1 = true,
-            UnknownBoolean2, UnknownBoolean3;
+            UnknownBoolean2 = true, UnknownBoolean3;
     }
 }

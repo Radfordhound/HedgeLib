@@ -8,7 +8,7 @@ namespace HedgeLib.Bases
     public class LWFileBase : FileBase
     {
         //Variables/Constants
-        public LWHeader Header;
+        public LWHeader Header = new LWHeader();
         public List<uint> Offsets = new List<uint>();
 
         private List<StringTableEntry> strings = new List<StringTableEntry>();

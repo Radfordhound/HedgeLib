@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HedgeLib", "HedgeLib\HedgeL
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HedgeArchiveEditor", "HedgeTools\HedgeArchiveEditor\HedgeArchiveEditor.csproj", "{5C49913A-A2FF-4A95-9CA9-8A1B1E5B9513}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HedgeGISMEditor", "HedgeTools\HedgeGISMEditor\HedgeGISMEditor.csproj", "{2EB84FE4-C074-4640-B758-E584EA3F0F29}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{5C49913A-A2FF-4A95-9CA9-8A1B1E5B9513}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5C49913A-A2FF-4A95-9CA9-8A1B1E5B9513}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5C49913A-A2FF-4A95-9CA9-8A1B1E5B9513}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2EB84FE4-C074-4640-B758-E584EA3F0F29}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2EB84FE4-C074-4640-B758-E584EA3F0F29}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2EB84FE4-C074-4640-B758-E584EA3F0F29}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2EB84FE4-C074-4640-B758-E584EA3F0F29}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
