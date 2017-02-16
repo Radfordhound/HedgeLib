@@ -1,4 +1,5 @@
 ﻿using HedgeLib.Bases;
+using HedgeLib.Headers;
 using System.Collections.Generic;
 
 namespace HedgeLib.Misc
@@ -50,8 +51,7 @@ namespace HedgeLib.Misc
                         fileNameOffset + " vs. " + fileNameOffset2 + ")");
 
                 var curPos = reader.BaseStream.Position;
-                reader.JumpTo(fileNameOffset, false);
-                gismo.FileName = reader.ReadNullTerminatedString();
+                gismo.FileName = GetString(fileNameOffset);
 
                 //Havok Array
                 reader.JumpTo(havokOffset, false);
@@ -63,8 +63,7 @@ namespace HedgeLib.Misc
                         unknown10 + ".)");
 
                 var havokNameOffset = reader.ReadUInt32();
-                reader.JumpTo(havokNameOffset, false);
-                gismo.HavokName = reader.ReadNullTerminatedString();
+                gismo.HavokName = GetString(havokNameOffset);
 
                 //Container 2
                 reader.JumpTo(containerTwoOffset, false);
@@ -88,10 +87,10 @@ namespace HedgeLib.Misc
         protected override void Write(ExtendedBinaryWriter writer)
         {
             //Header
-            writer.Offset = Headers.LWHeader.Length;
+            writer.Offset = LWHeader.Length;
             Offsets.Clear();
 
-            AddOffset(writer, "gismOffset");
+            AddString(writer, "gismOffset", Signature);
             writer.Write(UnknownBoolean1);
             writer.Write((uint)Gismos.Length);
 
@@ -104,8 +103,8 @@ namespace HedgeLib.Misc
             {
                 var gismo = Gismos[i];
 
-                AddOffset(writer, "fileNameOffset_"  + i);
-                AddOffset(writer, "fileNameOffset2_" + i);
+                AddString(writer, "fileNameOffset_" + i, gismo.FileName);
+                AddString(writer, "fileNameOffset2_" + i, gismo.FileName);
                 AddOffset(writer, "unknownOffset1");
                 writer.FillInOffset("unknownOffset1", 0); //TODO
                 writer.Write(gismo.Unknown1);
@@ -124,7 +123,7 @@ namespace HedgeLib.Misc
             {
                 writer.FillInOffset("havokOffset_" + i, false);
                 writer.WriteNulls(4); //TODO: Figure out what this is
-                AddOffset(writer, "havokNameOffset_" + i);
+                AddString(writer, "havokNameOffset_" + i, Gismos[i].HavokName);
             }
 
             //Container 2
@@ -143,45 +142,6 @@ namespace HedgeLib.Misc
                 writer.Write(gismo.Unknown8);
                 writer.Write(gismo.RotationAmount);
                 writer.Write(gismo.Unknown9);
-            }
-
-            //GISM
-            writer.FillInOffset("gismOffset", false);
-            writer.WriteNullTerminatedString(Signature);
-            var fileNames = new List<string>();
-            var offsets = new List<uint>();
-
-            for (int i = 0; i < Gismos.Length; ++i)
-            {
-                var gismo = Gismos[i];
-
-                AddToNameList(writer, fileNames, offsets, gismo.FileName,
-                    "fileNameOffset_" + i, "fileNameOffset2_" + i);
-
-                AddToNameList(writer, fileNames, offsets, gismo.HavokName,
-                    "havokNameOffset_" + i);
-            }
-        }
-
-        private void AddToNameList(ExtendedBinaryWriter writer, List<string> fileNames,
-            List<uint> offsets, string fileName, params string[] offsetNames)
-        {
-            if (!fileNames.Contains(fileName))
-            {
-                offsets.Add((uint)writer.BaseStream.Position);
-                foreach (var offsetName in offsetNames)
-                    writer.FillInOffset(offsetName, false);
-
-                fileNames.Add(fileName);
-                writer.WriteNullTerminatedString(fileName);
-            }
-            else
-            {
-                int index = fileNames.IndexOf(fileName);
-                uint offset = offsets[index];
-
-                foreach (var offsetName in offsetNames)
-                    writer.FillInOffset(offsetName, false);
             }
         }
     }
