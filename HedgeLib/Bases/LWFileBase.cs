@@ -67,8 +67,8 @@ namespace HedgeLib.Bases
             Header.StringTableLength = reader.ReadUInt32();
             Header.FinalTableLength = reader.ReadUInt32();
 
-            Header.Padding = reader.ReadUInt32(); //TODO: Make sure this is correct.
-            reader.JumpAhead(Header.Padding);
+            Header.Padding = reader.ReadUInt16(); //TODO: Make sure this is correct.
+            reader.JumpAhead(Header.Padding + 2);
         }
 
         private void ReadStrings(ExtendedBinaryReader reader)
@@ -130,7 +130,7 @@ namespace HedgeLib.Bases
 
         public override sealed void Save(Stream fileStream)
         {
-            var writer = new ExtendedBinaryWriter(fileStream);
+            var writer = new ExtendedBinaryWriter(fileStream, Header.IsBigEndian);
             strings.Clear();
 
             writer.WriteNulls(LWHeader.Length);
