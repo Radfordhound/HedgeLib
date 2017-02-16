@@ -104,6 +104,7 @@ namespace HedgeArchiveEditor
 
             lv.Columns.Add("Name");
             lv.Columns.Add("Extension");
+            lv.Columns.Add("Size");
 
             tabPage.Controls.Add(lv);
             RefreshTabPage(tabPageIndex);
@@ -124,21 +125,25 @@ namespace HedgeArchiveEditor
             if (!refreshFileList || lv == null) return;
             lv.Items.Clear();
 
-            int longestNameLength = 0, longestExtensionLength = 0;
+            int longestNameLength = 0, longestExtensionLength = 0, longestSizeLength = 0;
             foreach (var file in arc.Files)
             {
                 FileInfo fileInfo = new FileInfo(file.Name);
                 ListViewItem lvi = new ListViewItem(new string[]
                 {
                     fileInfo.Name,
-                    fileInfo.Extension
+                    fileInfo.Extension,
+                    file.Data != null ? file.Data.Length >= 1024 ? file.Data.Length >= 1048576 ? (file.Data.Length / 1048576.0).ToString("0.00") + " MB": (file.Data.Length / 1024.0).ToString("0.00") + " KB" : file.Data.Length+" Bytes" : null
                 });
-
+                
                 if (lvi.Text.Length > longestNameLength)
                     longestNameLength = lvi.Text.Length;
 
                 if (lvi.SubItems[1].Text.Length > longestExtensionLength)
                     longestExtensionLength = lvi.SubItems[1].Text.Length;
+
+                if (lvi.SubItems[2].Text.Length > longestSizeLength)
+                    longestSizeLength = lvi.SubItems[2].Text.Length;
 
                 lv.Items.Add(lvi);
             }
@@ -149,6 +154,10 @@ namespace HedgeArchiveEditor
                 ColumnHeaderAutoResizeStyle.HeaderSize);
 
             lv.AutoResizeColumn(1, (longestExtensionLength > lv.Columns[1].Text.Length) ?
+                ColumnHeaderAutoResizeStyle.ColumnContent :
+                ColumnHeaderAutoResizeStyle.HeaderSize);
+
+            lv.AutoResizeColumn(2, (longestExtensionLength > lv.Columns[2].Text.Length) ?
                 ColumnHeaderAutoResizeStyle.ColumnContent :
                 ColumnHeaderAutoResizeStyle.HeaderSize);
         }
@@ -400,6 +409,37 @@ namespace HedgeArchiveEditor
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 RefreshGUI();
                 RefreshTabPage(tabControl.SelectedIndex);
+            }
+        }
+
+        private void createFromDirectoryToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog sfd = new SaveFileDialog()
+            {
+                Title = "Create Archive from Directory",
+                FileName = "Enter into a directory and press Save"
+            };
+
+            if (sfd.ShowDialog() == DialogResult.OK)
+            {
+                bool includeSubfolders = (MessageBox.Show("Include Subfolders?", Text,
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes);
+                string[] files = Directory.GetFiles(new FileInfo(sfd.FileName).Directory.FullName, "*", includeSubfolders ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                if(files.Length > 3000)
+                {
+                    if (MessageBox.Show("Theres over 3000 files.\n\tContinue?", Text,
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No) return;
+                }
+
+                Archive ar = new Archive();
+                foreach (string fileLocation in files)
+                {
+                    if (new FileInfo(fileLocation).Length < int.MaxValue)
+                        ar.Files.Add(new ArchiveFile(fileLocation));
+                }
+                Archives.Add(ar);
+                AddTabPage(new FileInfo(sfd.FileName).Directory.Name);
+                RefreshGUI();
             }
         }
     }

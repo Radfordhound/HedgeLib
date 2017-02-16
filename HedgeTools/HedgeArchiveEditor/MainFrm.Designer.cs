@@ -130,6 +130,7 @@
             | System.Windows.Forms.Keys.N)));
             this.createFromDirectoryToolStripMenuItem.Size = new System.Drawing.Size(274, 22);
             this.createFromDirectoryToolStripMenuItem.Text = "Create From &Directory...";
+            this.createFromDirectoryToolStripMenuItem.Click += new System.EventHandler(this.createFromDirectoryToolStripMenuItem_Click);
             // 
             // openToolStripMenuItem
             // 
@@ -214,7 +215,7 @@
             this.extractSelectedFilesToolStripMenuItem,
             this.removeSelectedFilesToolStripMenuItem});
             this.contextMenu.Name = "contextMenu";
-            this.contextMenu.Size = new System.Drawing.Size(240, 120);
+            this.contextMenu.Size = new System.Drawing.Size(240, 98);
             this.contextMenu.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenu_Opening);
             // 
             // addFilesToolStripMenuItem1
