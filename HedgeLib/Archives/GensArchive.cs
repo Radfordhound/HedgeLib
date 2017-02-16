@@ -88,37 +88,65 @@ namespace HedgeLib.Archives
             }
         }
 
-        public override void Save(Stream fileStream)
+        public override void Save(string filePath)
         {
             //TODO: Remove this once the Save method is working properly.
-            throw new System.NotImplementedException();
+            //throw new System.NotImplementedException();
+
+            ExtendedBinaryWriter arlWriter = new ExtendedBinaryWriter(File.OpenWrite(filePath));
+            ExtendedBinaryWriter arWriter = new ExtendedBinaryWriter(File.OpenWrite(Path.ChangeExtension(filePath, ".ar.00")));
+            int i = 0, off = 0;
 
             //Header
-            ExtendedBinaryWriter writer = new ExtendedBinaryWriter(fileStream);
-
-            writer.Write(Sig1);
-            writer.Write(Sig2);
-            writer.Write(Sig3);
-            writer.Write(Padding);
-
+            arWriter.Write(Sig1);
+            arWriter.Write(Sig2);
+            arWriter.Write(Sig3);
+            arWriter.Write(Padding);
             //Data
             foreach (var file in Files)
             {
-                writer.AddOffset("dataEndOffset");
-                writer.Write(file.Data.Length);
-                writer.AddOffset("dataStartOffset");
-                writer.WriteNulls(4); //TODO: Figure out what Unknown1 is.
-                writer.WriteNulls(4); //TODO: Figure out what Unknown2 is.
-                writer.WriteNullTerminatedString(file.Name);
 
-                //TODO: Write enough nulls to properly pad the file.
-
-                writer.FillInOffset("dataStartOffset");
-                writer.Write(file.Data);
-                writer.FillInOffset("dataEndOffset");
+                int hlen = 0x14 + file.Name.Length + 1;
+                off = (hlen + (int)arWriter.BaseStream.Position) % (int)Padding;
+                if (off != 0)
+                    hlen += (int)Padding - off;
+                // TODO: Find out how to get splitting to work.
+                if (arWriter.BaseStream.Position + hlen + file.Data.Length > 0xA00000 & false)
+                {
+                    i++;
+                    arWriter.Flush();
+                    arWriter.Close();
+                    arWriter = new ExtendedBinaryWriter(File.OpenWrite(Path.ChangeExtension(filePath, ".ar."+ i.ToString("00"))));
+                    arWriter.Write(Sig1);
+                    arWriter.Write(Sig2);
+                    arWriter.Write(Sig3);
+                    arWriter.Write(Padding);
+                    off = (hlen+(int)arWriter.BaseStream.Position) % (int)Padding;
+                    if (off != 0)
+                        hlen += (int)Padding - off;
+                }
+                arWriter.Write(hlen + file.Data.Length);//writer.AddOffset("dataEndOffset");
+                arWriter.Write(file.Data.Length);
+                arWriter.Write(hlen);//writer.AddOffset("dataStartOffset");
+                arWriter.WriteNulls(4); //TODO: Figure out what Unknown1 is.
+                arWriter.WriteNulls(4); //TODO: Figure out what Unknown2 is.
+                arWriter.WriteNullTerminatedString(file.Name);
+                off = (int)arWriter.BaseStream.Position % (int)Padding;
+                if (off != 0)
+                    arWriter.Write(new byte[Padding - off]);
+                //writer.FillInOffset("dataStartOffset");
+                arWriter.Write(file.Data);
+                //writer.FillInOffset("dataEndOffset");
             }
+            //base.Save(fileStream);
+            arlWriter.Flush();
+            arlWriter.Close();
 
-            base.Save(fileStream);
+            // TODO: Figure out how to create a listing file.
+
+            arWriter.Flush();
+            arWriter.Close();
+
         }
     }
 }

@@ -57,12 +57,13 @@ namespace HedgeArchiveEditor
 
             if (sfd.ShowDialog() == DialogResult.OK)
             {
+                if (sfd.FileName.EndsWith(".ar")) sfd.FileName = Path.ChangeExtension(sfd.FileName, ".arl");
                 var saveOptions = new SaveOptions();
                 if (saveOptions.ShowDialog() == DialogResult.OK)
                 {
                     //This is a horrible way of checking this, I know.
-                    string val = (string)saveOptions.comboBox1.SelectedValue;
-                    if (val == "Generations/Unleashed")
+                    int val = saveOptions.comboBox1.SelectedIndex;
+                    if (val == 0)
                     {
                         var genArc = new GensArchive(CurrentArchive);
                         genArc.Padding = (uint)saveOptions.numericUpDown1.Value;
@@ -441,6 +442,11 @@ namespace HedgeArchiveEditor
                 AddTabPage(new FileInfo(sfd.FileName).Directory.Name);
                 RefreshGUI();
             }
+        }
+
+        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveArchive(tabControl.SelectedIndex);
         }
     }
 }

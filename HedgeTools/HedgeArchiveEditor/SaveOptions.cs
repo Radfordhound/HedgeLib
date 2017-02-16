@@ -9,11 +9,13 @@ namespace HedgeArchiveEditor
         public SaveOptions()
         {
             InitializeComponent();
+            comboBox1.Text = "Generations/Unleashed";
         }
 
         //GUI Events
         private void button_Click(object sender, EventArgs e)
         {
+            DialogResult = DialogResult.OK;
             Close();
         }
     }
