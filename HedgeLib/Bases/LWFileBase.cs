@@ -27,7 +27,7 @@ namespace HedgeLib.Bases
             Read(reader);
 
             reader.JumpTo(Header.FileSize - Header.FinalTableLength);
-            Offsets = ReadFooter(reader);
+            ReadFooter(reader);
         }
 
         protected virtual void Read(ExtendedBinaryReader reader)
@@ -68,9 +68,8 @@ namespace HedgeLib.Bases
             return header;
         }
 
-        private List<uint> ReadFooter(ExtendedBinaryReader reader)
+        private void ReadFooter(ExtendedBinaryReader reader)
         {
-            var offsets = new List<uint>();
             uint lastOffsetPos = LWHeader.Length;
             uint footerEnd = (uint)reader.BaseStream.Position + Header.FinalTableLength;
 
@@ -84,14 +83,14 @@ namespace HedgeLib.Bases
                 if (type == (byte)OffsetTypes.SixBit)
                 {
                     d <<= 2;
-                    offsets.Add(d + lastOffsetPos);
+                    Offsets.Add(d + lastOffsetPos);
                 }
                 else if (type == (byte)OffsetTypes.FourteenBit)
                 {
                     byte b2 = reader.ReadByte();
                     ushort d2 = (ushort)(((d << 8) & b2) << 2);
 
-                    offsets.Add(d2 + lastOffsetPos);
+                    Offsets.Add(d2 + lastOffsetPos);
                 }
                 else if (type == (byte)OffsetTypes.ThirtyBit)
                 {
@@ -99,14 +98,12 @@ namespace HedgeLib.Bases
                     uint d2 = (uint)(((d << 24) | (bytes[0] << 16) |
                         (bytes[1] << 8) | bytes[2]) << 2);
 
-                    offsets.Add(d2 + lastOffsetPos);
+                    Offsets.Add(d2 + lastOffsetPos);
                 }
                 else break;
 
-                lastOffsetPos = offsets[offsets.Count - 1];
+                lastOffsetPos = Offsets[Offsets.Count - 1];
             }
-
-            return offsets;
         }
 
         public override sealed void Save(Stream fileStream)
@@ -136,8 +133,37 @@ namespace HedgeLib.Bases
 
         private void WriteFooter(ExtendedBinaryWriter writer)
         {
-            //TODO
-            throw new NotImplementedException();
+            uint lastOffsetPos = LWHeader.Length;
+            uint footerLength = 0;
+
+            foreach (var offset in Offsets)
+            {
+                uint d = (offset - lastOffsetPos) >> 2;
+
+                if (d <= 0x3F)
+                {
+                    byte d2 = (byte)(((byte)OffsetTypes.SixBit) | d);
+                    writer.Write(d2);
+                    ++footerLength;
+                }
+                else if (d <= 0x3FFF)
+                {
+                    ushort d2 = (ushort)((((byte)OffsetTypes.FourteenBit) << 8) | d);
+                    writer.Write(d2);
+                    footerLength += 2;
+                }
+                else
+                {
+                    uint d2 = (uint)((((byte)OffsetTypes.ThirtyBit) << 24) | d);
+                    writer.Write(d2);
+                    footerLength += 4;
+                }
+
+                lastOffsetPos = offset;
+            }
+
+            Header.FinalTableLength = footerLength;
+            writer.FixPadding();
         }
 
         protected void AddOffset(ExtendedBinaryWriter writer, string name)
