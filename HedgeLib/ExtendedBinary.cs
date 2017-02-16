@@ -368,7 +368,7 @@ namespace HedgeLib
         public void FixPadding(int amount = 4)
         {
             uint padAmount = 0;
-            while (BaseStream.Position % amount != 0) ++padAmount;
+            while ((BaseStream.Position + padAmount) % amount != 0) ++padAmount;
             WriteNulls(padAmount);
         }
 

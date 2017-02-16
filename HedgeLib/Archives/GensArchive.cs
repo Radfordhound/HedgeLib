@@ -106,7 +106,7 @@ namespace HedgeLib.Archives
             {
                 writer.AddOffset("dataEndOffset");
                 writer.Write(file.Data.Length);
-                writer.Write("dataStartOffset");
+                writer.AddOffset("dataStartOffset");
                 writer.WriteNulls(4); //TODO: Figure out what Unknown1 is.
                 writer.WriteNulls(4); //TODO: Figure out what Unknown2 is.
                 writer.WriteNullTerminatedString(file.Name);

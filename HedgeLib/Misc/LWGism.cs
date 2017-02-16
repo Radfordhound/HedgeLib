@@ -33,12 +33,12 @@ namespace HedgeLib.Misc
                 //Container 1
                 var fileNameOffset = reader.ReadUInt32();
                 var fileNameOffset2 = reader.ReadUInt32(); //TODO: Find out what this is for.
-                var unknownOffset1 = reader.ReadUInt32();
+                var unknownNameOffset = reader.ReadUInt32();
                 gismo.Unknown1 = reader.ReadUInt32();
 
                 gismo.Unknown2 = reader.ReadSingle();
                 gismo.Unknown3 = reader.ReadSingle();
-                gismo.Unknown4 = reader.ReadSingle();
+                gismo.DoesAnimate = (reader.ReadUInt32() == 1);
                 var havokOffset = reader.ReadUInt32();
 
                 gismo.UnknownBoolean1 = (reader.ReadUInt32() == 1);
@@ -112,7 +112,7 @@ namespace HedgeLib.Misc
 
                 writer.Write(gismo.Unknown2);
                 writer.Write(gismo.Unknown3);
-                writer.Write(gismo.Unknown4);
+                writer.Write((gismo.DoesAnimate) ? 1u : 0u);
                 AddOffset(writer, "havokOffset_" + i);
 
                 writer.Write((gismo.UnknownBoolean1) ? 1u : 0u);
@@ -146,6 +146,7 @@ namespace HedgeLib.Misc
             }
 
             //GISM
+            writer.FillInOffset("gismOffset", false);
             writer.WriteNullTerminatedString(Signature);
             var fileNames = new List<string>();
             var offsets = new List<uint>();
@@ -189,12 +190,12 @@ namespace HedgeLib.Misc
     {
         //Variables/Constants
         public string FileName, HavokName;
-        public float Unknown2, Unknown3, Unknown4,
-            Unknown5, Unknown6, Unknown7, Unknown8,
+        public float Unknown2, Unknown3, Unknown5,
+            Unknown6, Unknown7, Unknown8,
             RotationAmount, Unknown9;
 
         public uint Unknown1;
-        public bool UnknownBoolean1, UnknownBoolean2,
-            UnknownBoolean3;
+        public bool DoesAnimate, UnknownBoolean1 = true,
+            UnknownBoolean2, UnknownBoolean3;
     }
 }
