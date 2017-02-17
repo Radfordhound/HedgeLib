@@ -341,7 +341,8 @@ namespace HedgeArchiveEditor
             var lv = tabControl.SelectedTab.Controls[0] as ListView;
 
             extractSelectedFilesToolStripMenuItem.Enabled =
-                removeSelectedFilesToolStripMenuItem.Enabled = lv.SelectedItems.Count > 0;
+                removeSelectedFilesToolStripMenuItem.Enabled =
+                renameSelectedFileToolStripMenuItem.Enabled = lv.SelectedItems.Count > 0;
         }
 
         private void extractSelectedFilesToolStripMenuItem_Click(object sender, EventArgs e)
@@ -495,15 +496,94 @@ namespace HedgeArchiveEditor
         private void tabControl_DragDrop(object sender, DragEventArgs e)
         {
             string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-            foreach (var file in files)
-                CurrentArchive.Files.Add(new ArchiveFile(file));
-            RefreshGUI();
-            RefreshTabPage(tabControl.SelectedIndex);
+            if (files.Length == 1 & (files[0].EndsWith(".ar.00") || files[0].EndsWith(".arl")))
+            {
+                OpenArchive(files[0]);
+            }
+            else
+            {
+                foreach (var file in files)
+                {
+                    foreach (ArchiveFile file2 in CurrentArchive.Files)
+                    {
+                        if(new FileInfo(file).Name.ToLower() == file2.Name.ToLower())
+                        {
+                            if (MessageBox.Show($"Theres already a file called {file2.Name}.\n\tAre you sure you want to continue?", Text,
+                                MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No) return;
+                        }
+                    }
+                    CurrentArchive.Files.Add(new ArchiveFile(file));
+                }
+                RefreshGUI();
+                RefreshTabPage(tabControl.SelectedIndex);
+            }
         }
 
         private void tabControl_DragEnter(object sender, DragEventArgs e)
         {
+            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
             if (e.Data.GetDataPresent(DataFormats.FileDrop) & Archives.Count > 0) e.Effect = DragDropEffects.Copy;
+            if (e.Data.GetDataPresent(DataFormats.FileDrop) & files.Length == 1)
+            {
+                if(files[0].EndsWith(".ar.00") || files[0].EndsWith(".arl"))
+                    e.Effect = DragDropEffects.Copy;
+            }
         }
+
+        private void renameSelectedFileToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ListView lv = (ListView)tabControl.SelectedTab.Controls[0];
+            if(!(lv.SelectedItems.Count > 0)) return;
+            Form renameForm = new Form()
+            {
+                Size = new System.Drawing.Size(400, 120),
+                FormBorderStyle = FormBorderStyle.Fixed3D,
+                MaximizeBox = false,
+                Text = $"Rename item \"{lv.SelectedItems[0].Text}\""
+            };
+            renameForm.Controls.Add(new Label()
+            {
+                Location = new System.Drawing.Point(12, 12),
+                Text = "Rename to: "
+            });
+            TextBox textBox = new TextBox()
+            {
+                Location = new System.Drawing.Point(30, 38),
+                Size = new System.Drawing.Size(330, 20),
+                Text = lv.SelectedItems[0].Text
+            };
+            textBox.KeyDown += new KeyEventHandler(renameTextBox_KeyDown);
+            renameForm.Controls.Add(textBox);
+            renameForm.ShowDialog();
+        }
+
+        private void renameTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if(e.KeyCode == Keys.Return & ((TextBox)sender).Text.Length > 1)
+            {
+                Form form = ((Form)((TextBox)sender).Parent);
+                var lv = tabControl.SelectedTab.Controls[0] as ListView;
+                foreach (ArchiveFile file in CurrentArchive.Files)
+                {
+                    if (file.Name == ((ListViewItem)((ListView)tabControl.SelectedTab.Controls[0]).SelectedItems[0]).Text)
+                    {
+                        file.Name = ((TextBox)sender).Text;
+                        form.Close();
+                        RefreshGUI();
+                        RefreshTabPage(tabControl.SelectedIndex);
+                        form.DialogResult = DialogResult.OK;
+                        form.Close();
+                        return;
+                    }
+                }
+                form.Close();
+            }
+            if (e.KeyCode == Keys.Escape)
+            {
+                ((Form)((TextBox)sender).Parent).DialogResult = DialogResult.Cancel;
+                ((Form)((TextBox)sender).Parent).Close();
+            }
+        }
+
     }
 }
