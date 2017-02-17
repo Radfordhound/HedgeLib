@@ -96,7 +96,7 @@ namespace HedgeLib.Archives
             ExtendedBinaryWriter arlWriter = new ExtendedBinaryWriter(File.OpenWrite(filePath));
             ExtendedBinaryWriter arWriter = new ExtendedBinaryWriter(File.OpenWrite(Path.ChangeExtension(filePath, ".ar.00")));
             int i = 0, off = 0;
-
+            // AR.00 Creation
             //Header
             arWriter.Write(Sig1);
             arWriter.Write(Sig2);
@@ -138,14 +138,39 @@ namespace HedgeLib.Archives
                 arWriter.Write(file.Data);
                 //writer.FillInOffset("dataEndOffset");
             }
-            //base.Save(fileStream);
-            arlWriter.Flush();
-            arlWriter.Close();
-
-            // TODO: Figure out how to create a listing file.
-
+            
             arWriter.Flush();
             arWriter.Close();
+            
+            // ARL Creation
+            int split = 0;
+            string fileName = Path.ChangeExtension(filePath, ".ar");
+            System.Collections.Generic.List<byte> header = new System.Collections.Generic.List<byte>(new byte[] { 0x41, 0x52, 0x4C, 0x32 });
+            System.Collections.Generic.List<byte> data = new System.Collections.Generic.List<byte>();
+            while (File.Exists(fileName+split.ToString(".00")))
+            {
+                ExtendedBinaryReader fileStream = new ExtendedBinaryReader(File.OpenRead(fileName + split.ToString(".00")));
+                if (fileStream.ReadUInt32() == Sig1 & fileStream.ReadUInt32() == Sig2 & fileStream.ReadUInt32() == Sig3)
+                {
+                    header.AddRange(System.BitConverter.GetBytes((int)fileStream.BaseStream.Length));
+                    int address = 0x10;
+                    while (address < fileStream.BaseStream.Length)
+                    {
+                        fileStream.JumpTo(address + 0x14);
+                        string name = fileStream.ReadNullTerminatedString();
+                        data.Add((byte)name.Length);
+                        data.AddRange(System.Text.Encoding.ASCII.GetBytes(name));
+                        fileStream.JumpTo(address);
+                        address += fileStream.ReadInt32();
+                    }
+                    split++;
+                }
+            }
+            header.InsertRange(4, System.BitConverter.GetBytes(System.Math.Max(split, 1)));
+            data.InsertRange(0, header);
+            arlWriter.Write(data.ToArray());
+            arlWriter.Flush();
+            arlWriter.Close();
 
         }
     }

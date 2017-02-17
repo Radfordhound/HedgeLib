@@ -13,9 +13,15 @@ namespace HedgeArchiveEditor
         }
 
         //GUI Events
-        private void button_Click(object sender, EventArgs e)
+        private void okBtn_Click(object sender, EventArgs e)
         {
             DialogResult = DialogResult.OK;
+            Close();
+        }
+
+        private void cancelBtn_Click(object sender, EventArgs e)
+        {
+            DialogResult = DialogResult.Cancel;
             Close();
         }
     }

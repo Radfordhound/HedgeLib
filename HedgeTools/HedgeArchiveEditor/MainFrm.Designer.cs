@@ -57,6 +57,7 @@
             // 
             // tabControl
             // 
+            this.tabControl.AllowDrop = true;
             this.tabControl.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl.Location = new System.Drawing.Point(0, 24);
             this.tabControl.Margin = new System.Windows.Forms.Padding(2);
@@ -65,6 +66,8 @@
             this.tabControl.Size = new System.Drawing.Size(359, 252);
             this.tabControl.TabIndex = 0;
             this.tabControl.SelectedIndexChanged += new System.EventHandler(this.tabControl_SelectedIndexChanged);
+            this.tabControl.DragDrop += new System.Windows.Forms.DragEventHandler(this.tabControl_DragDrop);
+            this.tabControl.DragEnter += new System.Windows.Forms.DragEventHandler(this.tabControl_DragEnter);
             // 
             // statusStrip
             // 
@@ -157,6 +160,7 @@
             | System.Windows.Forms.Keys.S)));
             this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(207, 22);
             this.saveAsToolStripMenuItem.Text = "Save &As...";
+            this.saveAsToolStripMenuItem.Click += new System.EventHandler(this.saveAsToolStripMenuItem_Click);
             // 
             // toolStripSeparator1
             // 

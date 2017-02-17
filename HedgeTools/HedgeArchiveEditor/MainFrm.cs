@@ -11,6 +11,7 @@ namespace HedgeArchiveEditor
     {
         //Variables/Constants
         public List<Archive> Archives = new List<Archive>();
+        public Dictionary<Archive, string> ArchiveFileLocations = new Dictionary<Archive, string>();
         public Archive CurrentArchive
         {
             get
@@ -43,21 +44,42 @@ namespace HedgeArchiveEditor
         {
             var arc = Program.LoadArchive(filePath);
             Archives.Add(arc);
+            ArchiveFileLocations.Add(arc, filePath);
             AddTabPage(new FileInfo(filePath).Name);
         }
 
-        public void SaveArchive(int index)
+        public void SaveArchive(int index, bool saveAs)
         {
-            var sfd = new SaveFileDialog()
+            string fileLocation = null;
+            bool ok = true;
+            if (!ArchiveFileLocations.ContainsKey(Archives[index]) || saveAs)
             {
-                Title = "Save Archive As...",
-                Filter = "Generations/Unleashed Archives (*.ar, *.arl, *.pfd)|*.ar;*.arl;*.pfd" +
+                SaveFileDialog sfd = new SaveFileDialog()
+                {
+                    Title = "Save Archive As...",
+                    Filter = "Generations/Unleashed Archives (*.ar, *.arl, *.pfd)|*.ar;*.arl;*.pfd" +
                 "|Lost World Archives (*.pac)|*.pac",
-            };
-
-            if (sfd.ShowDialog() == DialogResult.OK)
+                };
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    fileLocation = sfd.FileName;
+                    if(!ArchiveFileLocations.ContainsKey(Archives[index])) ArchiveFileLocations.Add(Archives[index], fileLocation);
+                } else
+                {
+                    ok = false;
+                }
+            }
+            else
             {
-                if (sfd.FileName.EndsWith(".ar")) sfd.FileName = Path.ChangeExtension(sfd.FileName, ".arl");
+                fileLocation = ArchiveFileLocations[Archives[index]];
+            }
+
+            if (ok)
+            {
+                
+                if (fileLocation.EndsWith(".ar")) fileLocation = Path.ChangeExtension(fileLocation, ".arl");
+                if (fileLocation.EndsWith(".ar.00")) fileLocation = Path.ChangeExtension(fileLocation, ".arl");
+                if (!Path.HasExtension(fileLocation)) fileLocation = fileLocation+".arl";
                 var saveOptions = new SaveOptions();
                 if (saveOptions.ShowDialog() == DialogResult.OK)
                 {
@@ -67,7 +89,7 @@ namespace HedgeArchiveEditor
                     {
                         var genArc = new GensArchive(CurrentArchive);
                         genArc.Padding = (uint)saveOptions.numericUpDown1.Value;
-                        genArc.Save(sfd.FileName);
+                        genArc.Save(fileLocation);
                     }
 
                     //TODO: Add other archive types.
@@ -79,6 +101,7 @@ namespace HedgeArchiveEditor
         {
             //TODO: Prompt the user to save the archive first if not yet saved.
 
+            ArchiveFileLocations.Remove(Archives[index]);
             Archives.RemoveAt(index);
             tabControl.TabPages.RemoveAt(index);
         }
@@ -446,7 +469,41 @@ namespace HedgeArchiveEditor
 
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            SaveArchive(tabControl.SelectedIndex);
+            try
+            {
+                SaveArchive(tabControl.SelectedIndex, false);
+            }catch(Exception ex)
+            {
+                MessageBox.Show($"Failed to save archive!\n{ex.Message}", Program.ProgramName,
+                     MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                SaveArchive(tabControl.SelectedIndex, true);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to save archive!\n{ex.Message}", Program.ProgramName,
+                     MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        
+        private void tabControl_DragDrop(object sender, DragEventArgs e)
+        {
+            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+            foreach (var file in files)
+                CurrentArchive.Files.Add(new ArchiveFile(file));
+            RefreshGUI();
+            RefreshTabPage(tabControl.SelectedIndex);
+        }
+
+        private void tabControl_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop) & Archives.Count > 0) e.Effect = DragDropEffects.Copy;
         }
     }
 }
