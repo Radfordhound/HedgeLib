@@ -40,11 +40,13 @@ namespace HedgeLib.Terrain
                 for (uint i2 = 0; i2 < fileNameCount; ++i2)
                 {
                     uint fileNameOffset = reader.ReadUInt32();
+                    var curPos2 = reader.BaseStream.Position;
                     reader.JumpTo(fileNameOffset, false);
 
                     string fileName = reader.ReadNullTerminatedString();
                     instanceInfo.FileNames[i2] = fileName;
                     reader.FixPadding(4);
+                    reader.BaseStream.Position = curPos2;
                 }
 
                 //Bounding Sphere
