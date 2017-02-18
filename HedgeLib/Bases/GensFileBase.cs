@@ -39,6 +39,7 @@ namespace HedgeLib.Bases
             };
 
             reader.Offset = Header.RootNodeOffset;
+            reader.JumpTo(Header.RootNodeOffset);
         }
 
         private void ReadFooter(ExtendedBinaryReader reader)
