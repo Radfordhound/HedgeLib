@@ -87,9 +87,6 @@ namespace HedgeLib.Misc
         protected override void Write(ExtendedBinaryWriter writer)
         {
             //Header
-            writer.Offset = LWHeader.Length;
-            Offsets.Clear();
-
             AddString(writer, "gismOffset", Signature);
             writer.Write(UnknownBoolean1);
             writer.Write((uint)Gismos.Length);

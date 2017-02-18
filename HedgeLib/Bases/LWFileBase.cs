@@ -8,8 +8,8 @@ namespace HedgeLib.Bases
     public class LWFileBase : FileBase
     {
         //Variables/Constants
-        public LWHeader Header = new LWHeader();
         public List<uint> Offsets = new List<uint>();
+        public LWHeader Header = new LWHeader();
 
         private List<StringTableEntry> strings = new List<StringTableEntry>();
 
@@ -131,6 +131,8 @@ namespace HedgeLib.Bases
         public override sealed void Save(Stream fileStream)
         {
             var writer = new ExtendedBinaryWriter(fileStream, Header.IsBigEndian);
+            writer.Offset = LWHeader.Length;
+            Offsets.Clear();
             strings.Clear();
 
             writer.WriteNulls(LWHeader.Length);
