@@ -67,9 +67,11 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Quaternion.cs" />
     <Compile Include="Sets\GensSetData.cs" />
+    <Compile Include="Sets\LWSetData.cs" />
     <Compile Include="Sets\SetData.cs" />
     <Compile Include="Sets\SetObject.cs" />
     <Compile Include="Sets\SetObjectType.cs" />
+    <Compile Include="Terrain\GensTerrainGroup.cs" />
     <Compile Include="Types.cs" />
     <Compile Include="Vector.cs" />
   </ItemGroup>
