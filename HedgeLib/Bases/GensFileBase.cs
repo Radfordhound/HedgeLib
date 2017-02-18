@@ -1,5 +1,6 @@
 ﻿using HedgeLib.Headers;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace HedgeLib.Bases
@@ -7,16 +8,17 @@ namespace HedgeLib.Bases
     public class GensFileBase : FileBase
     {
         //Variables/Constants
-        public GensHeader Header;
+        public List<uint> Offsets = new List<uint>();
+        public GensHeader Header = new GensHeader();
 
         //Methods
         public override sealed void Load(Stream fileStream)
         {
             var reader = new ExtendedBinaryReader(fileStream, true);
-            Header = ReadHeader(reader);
+            ReadHeader(reader);
 
             Read(reader);
-            //We don't really need to read the footer for our purposes.
+            ReadFooter(reader);
         }
 
         protected virtual void Read(ExtendedBinaryReader reader)
@@ -24,26 +26,41 @@ namespace HedgeLib.Bases
             throw new NotImplementedException();
         }
 
-        private GensHeader ReadHeader(ExtendedBinaryReader reader)
+        private void ReadHeader(ExtendedBinaryReader reader)
         {
-            var gensHeader = new GensHeader()
+            Header = new GensHeader()
             {
                 FileSize = reader.ReadUInt32(),
                 RootNodeType = reader.ReadUInt32(),
                 OffsetFinalTable = reader.ReadUInt32(),
                 RootNodeOffset = reader.ReadUInt32(),
                 OffsetFinalTableAbs = reader.ReadUInt32(),
-                Padding = reader.ReadUInt32()
+                FileEndOffset = reader.ReadUInt32()
             };
 
-            return gensHeader;
+            reader.Offset = Header.RootNodeOffset;
+        }
+
+        private void ReadFooter(ExtendedBinaryReader reader)
+        {
+            reader.JumpTo(Header.OffsetFinalTableAbs);
+            Offsets.Clear();
+
+            uint offsetCount = reader.ReadUInt32();
+            for (uint i = 0; i < offsetCount; ++i)
+                Offsets.Add(reader.ReadUInt32() + Header.RootNodeOffset);
         }
 
         public override sealed void Save(Stream fileStream)
         {
-            var writer = new ExtendedBinaryWriter(fileStream);
+            var writer = new ExtendedBinaryWriter(fileStream, true);
+            writer.Offset = Header.RootNodeOffset;
+            Offsets.Clear();
 
-            writer.WriteNulls(GensHeader.Length);
+            if (Header.RootNodeOffset < GensHeader.Length)
+                Header.RootNodeOffset = GensHeader.Length;
+
+            writer.WriteNulls(Header.RootNodeOffset);
             Write(writer);
             WriteFooter(writer);
 
@@ -59,20 +76,38 @@ namespace HedgeLib.Bases
 
         private void WriteHeader(ExtendedBinaryWriter writer)
         {
-            writer.IsBigEndian = true;
-
             writer.Write(Header.FileSize);
             writer.Write(Header.RootNodeType);
             writer.Write(Header.OffsetFinalTable);
             writer.Write(Header.RootNodeOffset);
             writer.Write(Header.OffsetFinalTableAbs);
-            writer.Write(Header.Padding);
+            writer.Write(Header.FileEndOffset);
         }
 
         private void WriteFooter(ExtendedBinaryWriter writer)
         {
-            //TODO
-            throw new NotImplementedException();
+            Header.OffsetFinalTableAbs = (uint)writer.BaseStream.Position;
+            Header.OffsetFinalTable = (uint)writer.BaseStream.Position - GensHeader.Length;
+
+            writer.Write((uint)Offsets.Count);
+            foreach (var offset in Offsets)
+                writer.Write(offset - Header.RootNodeOffset);
+
+            writer.WriteNulls(4);
+            Header.FileSize = (uint)writer.BaseStream.Position;
+        }
+
+        protected void AddOffset(ExtendedBinaryWriter writer, string offsetName)
+        {
+            Offsets.Add((uint)writer.BaseStream.Position);
+            writer.AddOffset(offsetName);
+        }
+
+        protected void AddOffsetTable(ExtendedBinaryWriter writer,
+            string namePrefix, uint offsetCount)
+        {
+            for (uint i = 0; i < offsetCount; ++i)
+                AddOffset(writer, namePrefix + "_" + i);
         }
     }
 }
