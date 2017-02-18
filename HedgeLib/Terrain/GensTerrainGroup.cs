@@ -25,8 +25,8 @@ namespace HedgeLib.Terrain
             for (uint i = 0; i < instanceInfoCount; ++i)
             {
                 var instanceInfo = new InstanceInfo();
-                var curPos = reader.BaseStream.Position;
                 uint instanceInfoOffset = reader.ReadUInt32();
+                var curPos = reader.BaseStream.Position;
                 reader.JumpTo(instanceInfoOffset, false);
 
                 uint fileNameCount = reader.ReadUInt32();
@@ -62,8 +62,8 @@ namespace HedgeLib.Terrain
 
             for (uint i = 0; i < terrainModelCount; ++i)
             {
-                var curPos = reader.BaseStream.Position;
                 uint terrainModelOffset = reader.ReadUInt32();
+                var curPos = reader.BaseStream.Position;
                 reader.JumpTo(terrainModelOffset, false);
 
                 string terrainModelFileName = reader.ReadNullTerminatedString();
