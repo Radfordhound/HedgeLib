@@ -65,7 +65,7 @@ namespace HedgeLib
         public void FixPadding(int amount = 4)
         {
             long jumpAmount = 0;
-            while (BaseStream.Position % amount != 0) ++jumpAmount;
+            while ((BaseStream.Position + jumpAmount) % amount != 0) ++jumpAmount;
             JumpAhead(jumpAmount);
         }
 
