@@ -224,7 +224,7 @@
             this.toolStripSeparator4,
             this.renameSelectedFileToolStripMenuItem});
             this.contextMenu.Name = "contextMenu";
-            this.contextMenu.Size = new System.Drawing.Size(240, 148);
+            this.contextMenu.Size = new System.Drawing.Size(240, 126);
             this.contextMenu.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenu_Opening);
             // 
             // addFilesToolStripMenuItem1
@@ -232,7 +232,7 @@
             this.addFilesToolStripMenuItem1.Name = "addFilesToolStripMenuItem1";
             this.addFilesToolStripMenuItem1.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift) 
             | System.Windows.Forms.Keys.A)));
-            this.addFilesToolStripMenuItem1.Size = new System.Drawing.Size(248, 22);
+            this.addFilesToolStripMenuItem1.Size = new System.Drawing.Size(239, 22);
             this.addFilesToolStripMenuItem1.Text = "&Add Files...";
             this.addFilesToolStripMenuItem1.Click += new System.EventHandler(this.addFilesToolStripMenuItem_Click);
             // 
@@ -241,20 +241,20 @@
             this.extractAllToolStripMenuItem1.Name = "extractAllToolStripMenuItem1";
             this.extractAllToolStripMenuItem1.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift) 
             | System.Windows.Forms.Keys.E)));
-            this.extractAllToolStripMenuItem1.Size = new System.Drawing.Size(248, 22);
+            this.extractAllToolStripMenuItem1.Size = new System.Drawing.Size(239, 22);
             this.extractAllToolStripMenuItem1.Text = "&Extract All...";
             this.extractAllToolStripMenuItem1.Click += new System.EventHandler(this.extractAllToolStripMenuItem_Click);
             // 
             // toolStripSeparator3
             // 
             this.toolStripSeparator3.Name = "toolStripSeparator3";
-            this.toolStripSeparator3.Size = new System.Drawing.Size(245, 6);
+            this.toolStripSeparator3.Size = new System.Drawing.Size(236, 6);
             // 
             // extractSelectedFilesToolStripMenuItem
             // 
             this.extractSelectedFilesToolStripMenuItem.Name = "extractSelectedFilesToolStripMenuItem";
             this.extractSelectedFilesToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.E)));
-            this.extractSelectedFilesToolStripMenuItem.Size = new System.Drawing.Size(248, 22);
+            this.extractSelectedFilesToolStripMenuItem.Size = new System.Drawing.Size(239, 22);
             this.extractSelectedFilesToolStripMenuItem.Text = "Extract &Selected File(s)...";
             this.extractSelectedFilesToolStripMenuItem.Click += new System.EventHandler(this.extractSelectedFilesToolStripMenuItem_Click);
             // 
@@ -262,14 +262,14 @@
             // 
             this.removeSelectedFilesToolStripMenuItem.Name = "removeSelectedFilesToolStripMenuItem";
             this.removeSelectedFilesToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Delete;
-            this.removeSelectedFilesToolStripMenuItem.Size = new System.Drawing.Size(248, 22);
+            this.removeSelectedFilesToolStripMenuItem.Size = new System.Drawing.Size(239, 22);
             this.removeSelectedFilesToolStripMenuItem.Text = "&Remove Selected File(s)...";
             this.removeSelectedFilesToolStripMenuItem.Click += new System.EventHandler(this.removeSelectedFilesToolStripMenuItem_Click);
             // 
             // toolStripSeparator4
             // 
             this.toolStripSeparator4.Name = "toolStripSeparator4";
-            this.toolStripSeparator4.Size = new System.Drawing.Size(245, 6);
+            this.toolStripSeparator4.Size = new System.Drawing.Size(236, 6);
             // 
             // renameSelectedFileToolStripMenuItem
             // 
@@ -292,6 +292,7 @@
             this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "MainFrm";
             this.Text = "Hedge Archive Editor";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainFrm_FormClosing);
             this.fileStrip.ResumeLayout(false);
             this.fileStrip.PerformLayout();
             this.contextMenu.ResumeLayout(false);

@@ -11,7 +11,7 @@ namespace HedgeArchiveEditor
     {
         //Variables/Constants
         public List<Archive> Archives = new List<Archive>();
-        public Dictionary<Archive, string> ArchiveFileLocations = new Dictionary<Archive, string>();
+        public Dictionary<Archive, object[]> ArchiveFileExtraData = new Dictionary<Archive, object[]>();
         public Archive CurrentArchive
         {
             get
@@ -44,7 +44,7 @@ namespace HedgeArchiveEditor
         {
             var arc = Program.LoadArchive(filePath);
             Archives.Add(arc);
-            ArchiveFileLocations.Add(arc, filePath);
+            ArchiveFileExtraData.Add(arc, new object[] { filePath, false});
             AddTabPage(new FileInfo(filePath).Name);
         }
 
@@ -52,7 +52,7 @@ namespace HedgeArchiveEditor
         {
             string fileLocation = null;
             bool ok = true;
-            if (!ArchiveFileLocations.ContainsKey(Archives[index]) || saveAs)
+            if (!ArchiveFileExtraData.ContainsKey(Archives[index]) || saveAs)
             {
                 SaveFileDialog sfd = new SaveFileDialog()
                 {
@@ -63,7 +63,7 @@ namespace HedgeArchiveEditor
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
                     fileLocation = sfd.FileName;
-                    if(!ArchiveFileLocations.ContainsKey(Archives[index])) ArchiveFileLocations.Add(Archives[index], fileLocation);
+                    if(!ArchiveFileExtraData.ContainsKey(Archives[index])) ArchiveFileExtraData.Add(Archives[index], new object[] { fileLocation, true});
                 } else
                 {
                     ok = false;
@@ -71,14 +71,14 @@ namespace HedgeArchiveEditor
             }
             else
             {
-                fileLocation = ArchiveFileLocations[Archives[index]];
+                fileLocation = (string)ArchiveFileExtraData[Archives[index]][0];
             }
 
             if (ok)
             {
                 
                 if (fileLocation.EndsWith(".ar")) fileLocation = Path.ChangeExtension(fileLocation, ".arl");
-                if (fileLocation.EndsWith(".ar.00")) fileLocation = Path.ChangeExtension(fileLocation, ".arl");
+                if (fileLocation.EndsWith(".ar.00")) fileLocation = fileLocation.Remove(fileLocation.Length-6);
                 if (!Path.HasExtension(fileLocation)) fileLocation = fileLocation+".arl";
                 var saveOptions = new SaveOptions();
                 if (saveOptions.ShowDialog() == DialogResult.OK)
@@ -89,7 +89,10 @@ namespace HedgeArchiveEditor
                     {
                         var genArc = new GensArchive(CurrentArchive);
                         genArc.Padding = (uint)saveOptions.numericUpDown1.Value;
+                        genArc.GenARL = saveOptions.checkBox1.Checked;
+                        genArc.Split = saveOptions.checkBox2.Checked;
                         genArc.Save(fileLocation);
+                        ArchiveFileExtraData[Archives[index]][1] = false;
                     }
 
                     //TODO: Add other archive types.
@@ -99,9 +102,17 @@ namespace HedgeArchiveEditor
 
         public void CloseArchive(int index)
         {
-            //TODO: Prompt the user to save the archive first if not yet saved.
+            if (!ArchiveFileExtraData.ContainsKey(Archives[index]) || (ArchiveFileExtraData.ContainsKey(Archives[index]) & (bool)ArchiveFileExtraData[Archives[index]][1]))
+            {
+                if (MessageBox.Show("Save Archive before closing?", Text,
+                      MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    try { SaveArchive(index, false); }
+                    catch { return; }
+                }
+            }
 
-            ArchiveFileLocations.Remove(Archives[index]);
+            ArchiveFileExtraData.Remove(Archives[index]);
             Archives.RemoveAt(index);
             tabControl.TabPages.RemoveAt(index);
         }
@@ -276,7 +287,10 @@ namespace HedgeArchiveEditor
 
             if (ofd.ShowDialog() == DialogResult.OK)
             {
-                foreach (var file in ofd.FileNames)
+                if (ArchiveFileExtraData.ContainsKey(CurrentArchive))
+                    ArchiveFileExtraData[CurrentArchive][1] = true;
+
+                    foreach (var file in ofd.FileNames)
                     CurrentArchive.Files.Add(new ArchiveFile(file));
 
                 RefreshTabPage(tabControl.SelectedIndex);
@@ -299,6 +313,7 @@ namespace HedgeArchiveEditor
                     new System.Threading.Thread(() =>
                     {
                         Invoke(new Action(() => Enabled = false));
+                        System.Diagnostics.Process.Start("explorer.exe", new FileInfo(sfd.FileName).Directory.FullName);
                         ToolStripProgressBar pb = new ToolStripProgressBar();
                         statusStrip.Invoke(new Action(() => statusStrip.Items.AddRange(new ToolStripItem[] { pb })));
                         Invoke(new Action(() => pb.Maximum = ar.Files.Count));
@@ -361,6 +376,7 @@ namespace HedgeArchiveEditor
                     new System.Threading.Thread(() =>
                     {
                         Invoke(new Action(() => Enabled = false));
+                        System.Diagnostics.Process.Start("explorer.exe", new FileInfo(sfd.FileName).Directory.FullName);
                         ToolStripProgressBar pb = new ToolStripProgressBar();
                         statusStrip.Invoke(new Action(() => statusStrip.Items.AddRange(new ToolStripItem[] { pb })));
                         ListView lv = null;
@@ -397,6 +413,8 @@ namespace HedgeArchiveEditor
         {
             try
             {
+                if (ArchiveFileExtraData.ContainsKey(CurrentArchive))
+                    ArchiveFileExtraData[CurrentArchive][1] = true;
                 new System.Threading.Thread(() =>
                 {
                     Invoke(new Action(() => Enabled = false));
@@ -499,9 +517,12 @@ namespace HedgeArchiveEditor
             if (files.Length == 1 & (files[0].EndsWith(".ar.00") || files[0].EndsWith(".arl")))
             {
                 OpenArchive(files[0]);
+                RefreshGUI();
             }
             else
             {
+                if (ArchiveFileExtraData.ContainsKey(CurrentArchive))
+                    ArchiveFileExtraData[CurrentArchive][1] = true;
                 foreach (var file in files)
                 {
                     foreach (ArchiveFile file2 in CurrentArchive.Files)
@@ -521,12 +542,16 @@ namespace HedgeArchiveEditor
 
         private void tabControl_DragEnter(object sender, DragEventArgs e)
         {
+            if(e.Data.GetData(DataFormats.FileDrop).GetType().ToString() != "System.String[]") return; 
             string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-            if (e.Data.GetDataPresent(DataFormats.FileDrop) & Archives.Count > 0) e.Effect = DragDropEffects.Copy;
-            if (e.Data.GetDataPresent(DataFormats.FileDrop) & files.Length == 1)
+            if(files != null)
             {
-                if(files[0].EndsWith(".ar.00") || files[0].EndsWith(".arl"))
-                    e.Effect = DragDropEffects.Copy;
+                if (e.Data.GetDataPresent(DataFormats.FileDrop) & Archives.Count > 0) e.Effect = DragDropEffects.Copy;
+                if (e.Data.GetDataPresent(DataFormats.FileDrop) & files.Length == 1)
+                {
+                    if (files[0].EndsWith(".ar.00") || files[0].EndsWith(".arl"))
+                        e.Effect = DragDropEffects.Copy;
+                }
             }
         }
 
@@ -585,5 +610,20 @@ namespace HedgeArchiveEditor
             }
         }
 
+        private void MainFrm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            foreach (Archive archive in Archives)
+            {
+                if (!ArchiveFileExtraData.ContainsKey(archive) || (ArchiveFileExtraData.ContainsKey(archive) & (bool)ArchiveFileExtraData[archive][1]))
+                {
+                    if (MessageBox.Show("Save Archive before closing?", Text,
+                          MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                    {
+                        try { SaveArchive(Archives.IndexOf(archive), false); }
+                        catch { e.Cancel = true; }
+                    }
+                }
+            }
+        }
     }
 }
