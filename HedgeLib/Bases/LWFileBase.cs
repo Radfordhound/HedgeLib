@@ -25,14 +25,14 @@ namespace HedgeLib.Bases
         {
             var reader = new ExtendedBinaryReader(fileStream);
             reader.Offset = LWHeader.Length;
-            ReadHeader(reader);
+            Header = ReadHeader(reader);
 
             var dataPos = reader.BaseStream.Position;
-            ReadStrings(reader);
+            strings = ReadStrings(reader, Header);
 
             reader.BaseStream.Position = dataPos;
             Read(reader);
-            ReadFooter(reader);
+            Offsets = ReadFooter(reader, Header);
         }
 
         protected virtual void Read(ExtendedBinaryReader reader)
@@ -40,9 +40,10 @@ namespace HedgeLib.Bases
             throw new NotImplementedException();
         }
 
-        private void ReadHeader(ExtendedBinaryReader reader)
+        public static LWHeader ReadHeader(ExtendedBinaryReader reader)
         {
-            Header = new LWHeader();
+            var header = new LWHeader();
+            reader.JumpTo(0, true);
 
             //BINA Header
             var sig = reader.ReadSignature();
@@ -50,9 +51,9 @@ namespace HedgeLib.Bases
                 throw new InvalidDataException("The given file's signature was incorrect!" +
                     " (Expected " + LWHeader.Signature + " got " + sig + ".)");
 
-            Header.VersionString = reader.ReadSignature(3);
-            Header.IsBigEndian = reader.IsBigEndian = (reader.ReadChar() == 'B');
-            Header.FileSize = reader.ReadUInt32();
+            header.VersionString = reader.ReadSignature(3);
+            header.IsBigEndian = reader.IsBigEndian = (reader.ReadChar() == 'B');
+            header.FileSize = reader.ReadUInt32();
 
             reader.JumpAhead(4); //TODO: Figure out what this value is.
 
@@ -62,19 +63,22 @@ namespace HedgeLib.Bases
                 throw new InvalidDataException("The given file's signature was incorrect!" +
                     " (Expected " + LWHeader.DataSignature + " got " + dataSig + ".)");
 
-            Header.DataLength = reader.ReadUInt32();
-            Header.StringTableOffset = reader.ReadUInt32();
-            Header.StringTableLength = reader.ReadUInt32();
-            Header.FinalTableLength = reader.ReadUInt32();
+            header.DataLength = reader.ReadUInt32();
+            header.StringTableOffset = reader.ReadUInt32();
+            header.StringTableLength = reader.ReadUInt32();
+            header.FinalTableLength = reader.ReadUInt32();
 
-            Header.Padding = reader.ReadUInt16(); //TODO: Make sure this is correct.
-            reader.JumpAhead(Header.Padding + 2);
+            header.Padding = reader.ReadUInt16(); //TODO: Make sure this is correct.
+            reader.JumpAhead(header.Padding + 2);
+
+            return header;
         }
 
-        private void ReadStrings(ExtendedBinaryReader reader)
+        public static List<StringTableEntry> ReadStrings(ExtendedBinaryReader reader, LWHeader header)
         {
-            reader.JumpTo(Header.StringTableOffset, false);
-            uint stringsEnd = (uint)reader.BaseStream.Position + Header.StringTableLength;
+            reader.JumpTo(header.StringTableOffset, false);
+            uint stringsEnd = (uint)reader.BaseStream.Position + header.StringTableLength;
+            var strings = new List<StringTableEntry>();
 
             while (reader.BaseStream.Position < reader.BaseStream.Length &&
                 reader.BaseStream.Position < stringsEnd)
@@ -87,13 +91,16 @@ namespace HedgeLib.Bases
 
                 strings.Add(tableEntry);
             }
+
+            return strings;
         }
 
-        private void ReadFooter(ExtendedBinaryReader reader)
+        public static List<uint> ReadFooter(ExtendedBinaryReader reader, LWHeader header)
         {
-            reader.JumpTo(Header.FileSize - Header.FinalTableLength);
+            reader.JumpTo(header.FileSize - header.FinalTableLength);
             uint lastOffsetPos = LWHeader.Length;
-            uint footerEnd = (uint)reader.BaseStream.Position + Header.FinalTableLength;
+            uint footerEnd = (uint)reader.BaseStream.Position + header.FinalTableLength;
+            var offsets = new List<uint>();
 
             while (reader.BaseStream.Position < reader.BaseStream.Length &&
                    reader.BaseStream.Position < footerEnd)
@@ -105,14 +112,14 @@ namespace HedgeLib.Bases
                 if (type == (byte)OffsetTypes.SixBit)
                 {
                     d <<= 2;
-                    Offsets.Add(d + lastOffsetPos);
+                    offsets.Add(d + lastOffsetPos);
                 }
                 else if (type == (byte)OffsetTypes.FourteenBit)
                 {
                     byte b2 = reader.ReadByte();
                     ushort d2 = (ushort)(((d << 8) & b2) << 2);
 
-                    Offsets.Add(d2 + lastOffsetPos);
+                    offsets.Add(d2 + lastOffsetPos);
                 }
                 else if (type == (byte)OffsetTypes.ThirtyBit)
                 {
@@ -120,12 +127,14 @@ namespace HedgeLib.Bases
                     uint d2 = (uint)(((d << 24) | (bytes[0] << 16) |
                         (bytes[1] << 8) | bytes[2]) << 2);
 
-                    Offsets.Add(d2 + lastOffsetPos);
+                    offsets.Add(d2 + lastOffsetPos);
                 }
                 else break;
 
-                lastOffsetPos = Offsets[Offsets.Count - 1];
+                lastOffsetPos = offsets[offsets.Count - 1];
             }
+
+            return offsets;
         }
 
         public override sealed void Save(Stream fileStream)
@@ -138,12 +147,12 @@ namespace HedgeLib.Bases
             writer.WriteNulls(LWHeader.Length);
             Write(writer);
             
-            WriteStrings(writer);
-            WriteFooter(writer);
+            WriteStrings(writer, Header, strings);
+            WriteFooter(writer, Header, Offsets);
 
             //We write the header last since there's no way we'll know the fileSize until here.
             writer.BaseStream.Position = 0;
-            WriteHeader(writer);
+            WriteHeader(writer, Header);
         }
 
         protected virtual void Write(ExtendedBinaryWriter writer)
@@ -151,30 +160,31 @@ namespace HedgeLib.Bases
             throw new NotImplementedException();
         }
 
-        private void WriteHeader(ExtendedBinaryWriter writer)
+        public static void WriteHeader(ExtendedBinaryWriter writer, LWHeader header)
         {
             //BINA Header
             writer.WriteSignature(LWHeader.Signature);
-            writer.WriteSignature(Header.VersionString);
-            writer.Write((Header.IsBigEndian) ? 'B' : 'L');
-            writer.Write(Header.FileSize);
+            writer.WriteSignature(header.VersionString);
+            writer.Write((header.IsBigEndian) ? 'B' : 'L');
+            writer.Write(header.FileSize);
 
             writer.Write(1u); //TODO: Figure out what this value is.
 
             //DATA Header
             writer.WriteSignature(LWHeader.DataSignature);
-            writer.Write(Header.DataLength);
-            writer.Write(Header.StringTableOffset);
-            writer.Write(Header.StringTableLength);
+            writer.Write(header.DataLength);
+            writer.Write(header.StringTableOffset);
+            writer.Write(header.StringTableLength);
 
-            writer.Write(Header.FinalTableLength);
-            writer.Write(Header.Padding);
+            writer.Write(header.FinalTableLength);
+            writer.Write(header.Padding);
         }
 
-        private void WriteStrings(ExtendedBinaryWriter writer)
+        public static void WriteStrings(ExtendedBinaryWriter writer,
+            LWHeader header, List<StringTableEntry> strings)
         {
             uint stringTableStartPos = (uint)writer.BaseStream.Position;
-            Header.StringTableOffset = stringTableStartPos - LWHeader.Length;
+            header.StringTableOffset = stringTableStartPos - LWHeader.Length;
 
             foreach (var tableEntry in strings)
             {
@@ -188,16 +198,17 @@ namespace HedgeLib.Bases
             }
 
             writer.FixPadding();
-            Header.StringTableLength =
+            header.StringTableLength =
                 (uint)writer.BaseStream.Position - stringTableStartPos;
         }
 
-        private void WriteFooter(ExtendedBinaryWriter writer)
+        public static void WriteFooter(ExtendedBinaryWriter writer,
+            LWHeader header, List<uint> offsets)
         {
             uint lastOffsetPos = LWHeader.Length;
             uint footerStartPos = (uint)writer.BaseStream.Position;
 
-            foreach (var offset in Offsets)
+            foreach (var offset in offsets)
             {
                 uint d = (offset - lastOffsetPos) >> 2;
 
@@ -222,9 +233,9 @@ namespace HedgeLib.Bases
 
             //Update header values
             writer.FixPadding();
-            Header.FinalTableLength = (uint)writer.BaseStream.Position - footerStartPos;
-            Header.FileSize = (uint)writer.BaseStream.Position;
-            Header.DataLength = (uint)writer.BaseStream.Position - 0x10;
+            header.FinalTableLength = (uint)writer.BaseStream.Position - footerStartPos;
+            header.FileSize = (uint)writer.BaseStream.Position;
+            header.DataLength = (uint)writer.BaseStream.Position - 0x10;
         }
 
         protected void AddOffset(ExtendedBinaryWriter writer, string name)
@@ -269,7 +280,7 @@ namespace HedgeLib.Bases
         }
 
         //Other
-        private class StringTableEntry
+        public class StringTableEntry
         {
             //Variables/Constants
             public List<string> OffsetNames = new List<string>();
