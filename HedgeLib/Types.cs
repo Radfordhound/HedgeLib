@@ -10,7 +10,7 @@ namespace HedgeLib
         {
             //1-Byte Values
             new DataType(typeof(bool), false, "boolean", "bool"),
-            new DataType(typeof(byte), (byte)0, "unsigned byte", "uint8", "byte"),
+            new DataType(typeof(byte), (byte)0, "unsigned byte", "uint8", "byte", "enum"),
             new DataType(typeof(sbyte), (sbyte)0, "signed byte", "sint8", "sbyte"),
             new DataType(typeof(char), '\0', "char"),
 
