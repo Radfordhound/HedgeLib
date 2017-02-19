@@ -1,41 +1,47 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using HedgeLib.Bases;
+using System;
+using HedgeLib.Headers;
 
 namespace HedgeLib.Sets
 {
-    //Kind of had to do a weird hack on this one.
-    //If you can implement this better, please do!
     public class LWSetData : SetData
     {
         //Variables/Constants
+        public LWHeader Header = new LWHeader();
+        private List<LWFileBase.StringTableEntry> strings =
+            new List<LWFileBase.StringTableEntry>();
+
         public const string Signature = "SOBJ", Extension = ".orc";
-        private LWSetDataFileBase lwFileBase = new LWSetDataFileBase();
 
         //Methods
         public override void Load(Stream fileStream,
             Dictionary<string, SetObjectType> objectTemplates)
         {
-            lwFileBase.Load(fileStream);
-            Objects = lwFileBase.Objects;
+            if (objectTemplates == null)
+                throw new ArgumentNullException("objectTemplates",
+                    "Cannot load LW set data without object templates.");
+
+            var reader = new ExtendedBinaryReader(fileStream);
+            reader.Offset = LWHeader.Length;
+            Header = LWFileBase.ReadHeader(reader);
+
+            var dataPos = reader.BaseStream.Position;
+            strings = LWFileBase.ReadStrings(reader, Header);
+
+            reader.BaseStream.Position = dataPos;
+            Read(reader, objectTemplates);
+            LWFileBase.ReadFooter(reader, Header);
+        }
+
+        private void Read(ExtendedBinaryReader reader,
+            Dictionary<string, SetObjectType> objectTemplates)
+        {
+            //TODO
+            throw new NotImplementedException();
         }
 
         //TODO: Add a Write method.
-
-        //Other
-        private class LWSetDataFileBase : LWFileBase
-        {
-            //Variables/Constants
-            public List<SetObject> Objects = new List<SetObject>();
-
-            //Methods
-            protected override void Read(ExtendedBinaryReader reader)
-            {
-                //TODO
-                throw new System.NotImplementedException();
-            }
-
-            //TODO: Add a Write method.
-        }
     }
 }
