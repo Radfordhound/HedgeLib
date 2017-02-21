@@ -168,7 +168,9 @@ namespace HedgeLib.Bases
             writer.Write((header.IsBigEndian) ? 'B' : 'L');
             writer.Write(header.FileSize);
 
-            writer.Write(1u); //TODO: Figure out what this value is.
+            //TODO: Figure out what these values are.
+            writer.Write((ushort)1);
+            writer.Write((ushort)0);
 
             //DATA Header
             writer.WriteSignature(LWHeader.DataSignature);
