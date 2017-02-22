@@ -7,7 +7,7 @@ namespace HedgeLib.Havok
     {
         //Variables/Constants
         public Dictionary<string, HavokSection> Sections = new Dictionary<string, HavokSection>();
-        public string ContentsVersion;
+        public string ContentsVersion, TopLevelObject;
         public int ClassVersion;
     }
 
@@ -28,6 +28,7 @@ namespace HedgeLib.Havok
     {
         //Variables/Constants
         public List<HavokObject> SubObjects = new List<HavokObject>();
-        public List<object> Elements = new List<object>();
+        public string Data;
+        public int NumElements;
     }
 }

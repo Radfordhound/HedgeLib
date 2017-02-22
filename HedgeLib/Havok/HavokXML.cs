@@ -9,6 +9,15 @@ namespace HedgeLib.Havok
         //Variables/Constants
         public const string Extension = ".xml";
 
+        //Constructors
+        public HavokXML() { }
+        public HavokXML(HavokPackFile packFile)
+        {
+            ClassVersion = packFile.ClassVersion;
+            ContentsVersion = packFile.ContentsVersion;
+            Sections = packFile.Sections;
+        }
+
         //Methods
         public override void Load(Stream fileStream)
         {
@@ -25,8 +34,12 @@ namespace HedgeLib.Havok
             if (contentsVersion == null)
                 throw new InvalidDataException("No contentsversion element could be found!");
 
+            if (topLevelObject == null)
+                throw new InvalidDataException("No toplevelobject element could be found!");
+
             ClassVersion = Convert.ToInt32(classVersion.Value);
             ContentsVersion = contentsVersion.Value;
+            TopLevelObject = topLevelObject.Value;
 
             //HKSections
             foreach (var elem in xml.Root.Elements())
@@ -125,8 +138,8 @@ namespace HedgeLib.Havok
             var numElementsAttr = elem.Attribute("numelements");
 
             paramName = (nameAttr == null) ? null : nameAttr.Value;
-            int numElements = (numElementsAttr == null) ?
-                1 : Convert.ToInt32(numElementsAttr.Value);
+            param.NumElements = (numElementsAttr == null) ?
+                -1 : Convert.ToInt32(numElementsAttr.Value);
 
             //Sub-Objects
             foreach (var subElem in elem.Elements("hkobject"))
@@ -138,69 +151,84 @@ namespace HedgeLib.Havok
 
             //Data
             if (param.SubObjects.Count < 1)
-            {
-                string curValue = "";
-                bool inArray = false;
-
-                int iValue;
-                float fValue;
-
-                for (int i2 = 0; i2 < elem.Value.Length; ++i2)
-                {
-                    char c = elem.Value[i2];
-                    switch (c)
-                    {
-                        case '(':
-                            inArray = true;
-                            continue;
-
-                        case ')':
-                            {
-                                var split = curValue.Split(' ');
-                                var data = new float[split.Length];
-
-                                for (int i3 = 0; i3 < split.Length; ++i3)
-                                    data[i3] = Convert.ToSingle(split[i3]);
-
-                                param.Elements.Add(data);
-                                inArray = false;
-                                curValue = "";
-
-                                continue;
-                            }
-
-                        case ' ':
-                            {
-                                if (string.IsNullOrEmpty(curValue))
-                                    continue;
-
-                                if (inArray)
-                                {
-                                    curValue += " ";
-                                }
-                                else
-                                {
-                                    if (int.TryParse(curValue, out iValue))
-                                        param.Elements.Add(iValue);
-                                    else if (float.TryParse(curValue, out fValue))
-                                        param.Elements.Add(fValue);
-                                    else
-                                        param.Elements.Add(curValue);
-
-                                    curValue = "";
-                                }
-
-                                continue;
-                            }
-
-                        default:
-                            curValue += c;
-                            continue;
-                    }
-                }
-            }
+                param.Data = elem.Value;
 
             return param;
+        }
+
+        public override void Save(Stream fileStream)
+        {
+            //HKPackFile
+            XElement root = new XElement("hkpackfile");
+            root.Add(new XAttribute("classversion", ClassVersion));
+            root.Add(new XAttribute("contentsversion", ContentsVersion));
+            root.Add(new XAttribute("toplevelobject", TopLevelObject));
+
+            //HKSections
+            foreach (var section in Sections)
+            {
+                WriteSection(root, section.Value, section.Key);
+            }
+
+            XDocument xml = new XDocument(root);
+            Helpers.SaveXDocStream(fileStream, xml);
+        }
+
+        private void WriteSection(XElement root, HavokSection section, string name)
+        {
+            XElement elem = new XElement("hksection");
+            elem.Add(new XAttribute("name", name));
+
+            //HKObjects
+            foreach (var obj in section.Objects)
+            {
+                WriteObject(elem, obj.Value, obj.Key);
+            }
+
+            root.Add(elem);
+        }
+
+        private void WriteObject(XElement root, HavokObject obj, string name)
+        {
+            XElement elem = new XElement("hkobject");
+            if (!string.IsNullOrEmpty(name))
+                elem.Add(new XAttribute("name", name));
+
+            if (!string.IsNullOrEmpty(obj.Class))
+                elem.Add(new XAttribute("class", obj.Class));
+
+            if (!string.IsNullOrEmpty(obj.Signature))
+                elem.Add(new XAttribute("signature", obj.Signature));
+
+            //HKParams
+            foreach (var param in obj.Parameters)
+            {
+                WriteParameter(elem, param.Value, param.Key);
+            }
+
+            root.Add(elem);
+        }
+
+        private void WriteParameter(XElement root, HavokParam param, string name)
+        {
+            XElement elem = new XElement("hkparam");
+            if (!string.IsNullOrEmpty(name))
+                elem.Add(new XAttribute("name", name));
+
+            if (param.NumElements > 0)
+                elem.Add(new XAttribute("numelements", param.NumElements));
+
+            //Sub-Objects
+            foreach (var subObject in param.SubObjects)
+            {
+                WriteObject(elem, subObject, null);
+            }
+
+            //Elements
+            if (!string.IsNullOrEmpty(param.Data))
+                elem.Value = param.Data;
+
+            root.Add(elem);
         }
     }
 }
