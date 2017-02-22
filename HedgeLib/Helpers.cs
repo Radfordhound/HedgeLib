@@ -41,8 +41,14 @@ namespace HedgeLib
              *  ~ Radfordhound
             */
 
-            XmlWriter writer = XmlWriter.Create(fileStream);
+            var writerSettings = new XmlWriterSettings();
+            writerSettings.Indent = true;
+            writerSettings.IndentChars = "\t";
+
+            XmlWriter writer = XmlWriter.Create(fileStream, writerSettings);
             xml.Save(writer);
+            writer.Flush();
+            writer.Close();
         }
 
         public static string CombinePaths(params string[] paths)
