@@ -6,6 +6,10 @@ namespace HedgeLib.Havok
 {
     public class HavokXML : HavokPackFile
     {
+        //Variables/Constants
+        public const string Extension = ".xml";
+
+        //Methods
         public override void Load(Stream fileStream)
         {
             XDocument xml = Helpers.GetXDocStream(fileStream);
