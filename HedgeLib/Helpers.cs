@@ -28,6 +28,23 @@ namespace HedgeLib
             return XDocument.Load(reader);
         }
 
+        public static void SaveXDocStream(Stream fileStream, XDocument xml)
+        {
+            /*
+             * So here's the deal: Unity as of now only supports up to .NET 3.5.
+             * As such we have to target that, otherwise this library won't work in Unity.
+             * 
+             * .NET 3.5 doesn't allow you to simply call XDocument.Save with a Stream as
+             * an argument. Because of this, we had to create the following ugly work-around.
+             * 
+             * Dear Unity Technologies: Please add support for .NET 4.6. Thanks!
+             *  ~ Radfordhound
+            */
+
+            XmlWriter writer = XmlWriter.Create(fileStream);
+            xml.Save(writer);
+        }
+
         public static string CombinePaths(params string[] paths)
         {
             string combinedPath = "";
