@@ -6,10 +6,15 @@ namespace HedgeLib.Sets
     public class SetObject
     {
         //Variables/Constants
+        public Dictionary<string, SetObjectParam> CustomData =
+            new Dictionary<string, SetObjectParam>();
         public List<SetObjectParam> Parameters = new List<SetObjectParam>();
+
         public SetObjectTransform[] Children;
         public SetObjectTransform Transform;
+
         public string ObjectType;
+        public uint ObjectID;
     }
 
     public class SetObjectParam
@@ -17,6 +22,14 @@ namespace HedgeLib.Sets
         //Variables/Constants
         public object Data;
         public Type DataType;
+
+        //Constructors
+        public SetObjectParam() { }
+        public SetObjectParam(Type dataType, object data)
+        {
+            DataType = dataType;
+            Data = data;
+        }
     }
 
     public class SetObjectTransform

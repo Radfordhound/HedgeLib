@@ -29,6 +29,7 @@ namespace HedgeLib.Sets
                     var parameters = new List<SetObjectParam>();
                     var transform = new SetObjectTransform();
                     SetObjectTransform[] children = null;
+                    uint? objID = null;
 
                     foreach (var paramElement in element.Elements())
                     {
@@ -42,6 +43,10 @@ namespace HedgeLib.Sets
 
                             case "rotation":
                                 transform.Rotation = ReadQuaternion(paramElement);
+                                continue;
+
+                            case "setobjectid":
+                                objID = Convert.ToUInt32(paramElement.Value);
                                 continue;
 
                             case "multisetparam":
@@ -116,13 +121,22 @@ namespace HedgeLib.Sets
                         parameters.Add(param);
                     }
 
+                    //Ensure Object has ID
+                    if (!objID.HasValue)
+                    {
+                        Console.WriteLine("WARNING: Object of type \"" + elemName +
+                            "\" is missing it's object ID! Skipping this object...");
+                        continue;
+                    }
+
                     //Add Object to List
                     var obj = new SetObject()
                     {
                         ObjectType = elemName,
                         Parameters = parameters,
                         Transform = transform,
-                        Children = children
+                        Children = children,
+                        ObjectID = objID.Value
                     };
                     Objects.Add(obj);
                 }

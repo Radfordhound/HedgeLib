@@ -58,6 +58,14 @@ namespace HedgeLib.Sets
 
             return null;
         }
+
+        public SetObjectTypeParam AddParameter(string name, Type dataType)
+        {
+            var param = new SetObjectTypeParam(name, dataType);
+            Parameters.Add(param);
+
+            return Parameters[Parameters.Count-1];
+        }
     }
 
     public class SetObjectTypeParam
@@ -66,5 +74,13 @@ namespace HedgeLib.Sets
         public object DefaultValue;
         public Type DataType;
         public string Name, Description;
+
+        //Constructors
+        public SetObjectTypeParam() { }
+        public SetObjectTypeParam(string name, Type dataType)
+        {
+            Name = name;
+            DataType = dataType;
+        }
     }
 }
