@@ -8,6 +8,7 @@ namespace HedgeLib.Havok
         //Variables/Constants
         public Dictionary<string, HavokSection> Sections = new Dictionary<string, HavokSection>();
         public string ContentsVersion, TopLevelObject;
+        public uint UserTag = 0;
         public int ClassVersion;
     }
 
