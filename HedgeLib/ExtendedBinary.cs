@@ -97,10 +97,22 @@ namespace HedgeLib
             return (T)ReadByType(typeof(T));
         }
 
-        private object ReadByType(Type type)
+        public object ReadByType(Type type)
         {
             switch (type.ToString().ToLower())
             {
+                case "system.boolean":
+                    return ReadBoolean();
+
+                case "system.byte":
+                    return ReadByte();
+
+                case "system.sbyte":
+                    return ReadSByte();
+
+                case "system.char":
+                    return ReadChar();
+
                 case "system.int16":
                     return ReadInt16();
 
