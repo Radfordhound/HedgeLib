@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -89,6 +90,49 @@ namespace HedgeLib
             while (BaseStream.Position < BaseStream.Length && curChar != '\0');
 
             return str;
+        }
+
+        public T ReadByType<T>()
+        {
+            return (T)ReadByType(typeof(T));
+        }
+
+        private object ReadByType(Type type)
+        {
+            switch (type.ToString().ToLower())
+            {
+                case "system.int16":
+                    return ReadInt16();
+
+                case "system.uint16":
+                    return ReadUInt16();
+
+                case "system.int32":
+                    return ReadInt32();
+
+                case "system.uint32":
+                    return ReadUInt32();
+
+                case "system.single":
+                    return ReadSingle();
+
+                case "system.int64":
+                    return ReadInt64();
+
+                case "system.uint64":
+                    return ReadUInt64();
+
+                case "system.double":
+                    return ReadDouble();
+
+                case "hedgelib.vector3":
+                    return ReadVector3();
+                
+                //TODO: Add more types.
+            }
+
+            throw new NotImplementedException("Cannot read \"" +
+                type + "\" by type yet!");
         }
 
         //2-Byte Types
