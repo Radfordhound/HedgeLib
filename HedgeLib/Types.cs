@@ -21,8 +21,10 @@ namespace HedgeLib
             //4-Byte Values
             new DataType(typeof(int), 0, "signed int", "integer", "sint32", "int"),
             new DataType(typeof(uint), (uint)0,
-                "unsigned int", "unsigned integer", "uint32", "uint"),
+                "unsigned int", "unsigned integer", "uint32", "uint", "target"),
             new DataType(typeof(float), 0.0f, "single", "float"),
+
+            new DataType(typeof(uint[]), new uint[0], "uint32array"),
 
             //8-Byte Values
             new DataType(typeof(long), 0L, "signed long", "sint64", "long"),
@@ -30,7 +32,7 @@ namespace HedgeLib
             new DataType(typeof(double), 0.0D, "double"),
 
             //12-Byte Values
-            new DataType(typeof(Vector3), new Vector3(), "vect", "vector", "vector3"),
+            new DataType(typeof(Vector3), new Vector3(), "vect", "vector", "vector3", "position"),
 
             //16-Byte Values
             new DataType(typeof(decimal), 0.0M, "decimal"),
