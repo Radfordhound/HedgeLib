@@ -270,7 +270,7 @@ namespace HedgeLib.Bases
                 strings.Add(tableEntry);
         }
 
-        protected string GetString(uint offset)
+        public static string GetString(uint offset, List<StringTableEntry> strings)
         {
             foreach (var str in strings)
             {
@@ -279,6 +279,11 @@ namespace HedgeLib.Bases
             }
 
             return null;
+        }
+
+        protected string GetString(uint offset)
+        {
+            return GetString(offset, strings);
         }
 
         //Other
