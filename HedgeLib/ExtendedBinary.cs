@@ -195,13 +195,13 @@ namespace HedgeLib
             var buffer = ReadBytes(4);
             if (IsBigEndian)
             {
-                return (uint)(buffer[0] << 24 | buffer[1] << 16 |
-                    buffer[2] << 8 | buffer[3]);
+                return ((uint)buffer[0] << 24 | (uint)buffer[1] << 16 |
+                    (uint)buffer[2] << 8 | buffer[3]);
             }
             else
             {
-                return (uint)(buffer[3] << 24 | buffer[2] << 16 |
-                    buffer[1] << 8 | buffer[0]);
+                return ((uint)buffer[3] << 24 | (uint)buffer[2] << 16 |
+                    (uint)buffer[1] << 8 | buffer[0]);
             }
         }
 
@@ -212,13 +212,15 @@ namespace HedgeLib
 
             if (IsBigEndian)
             {
-                floatUnion.UInt = (uint)(buffer[0] << 24 | buffer[1] << 16 |
-                    buffer[2] << 8 | buffer[3]);
+                floatUnion.UInt = (
+                    (uint)buffer[0] << 24 | (uint)buffer[1] << 16 |
+                    (uint)buffer[2] << 8 | buffer[3]);
             }
             else
             {
-                floatUnion.UInt = (uint)(buffer[3] << 24 | buffer[2] << 16 |
-                    buffer[1] << 8 | buffer[0]);
+                floatUnion.UInt = (
+                    (uint)buffer[3] << 24 | (uint)buffer[2] << 16 |
+                    (uint)buffer[1] << 8 | buffer[0]);
             }
 
             return floatUnion.Float;
@@ -249,17 +251,17 @@ namespace HedgeLib
             var buffer = ReadBytes(8);
             if (IsBigEndian)
             {
-                return (ulong)(buffer[0] << 56 | buffer[1] << 48 |
-                    buffer[2] << 40 | buffer[3] << 32 |
-                    buffer[4] << 24 | buffer[5] << 16 |
-                    buffer[6] << 8 | buffer[7]);
+                return ((ulong)buffer[0] << 56 | (ulong)buffer[1] << 48 |
+                    (ulong)buffer[2] << 40 | (ulong)buffer[3] << 32 |
+                    (ulong)buffer[4] << 24 | (ulong)buffer[5] << 16 |
+                    (ulong)buffer[6] << 8 | buffer[7]);
             }
             else
             {
-                return (ulong)(buffer[7] << 56 | buffer[6] << 48 |
-                    buffer[5] << 40 | buffer[4] << 32 |
-                    buffer[3] << 24 | buffer[2] << 16 |
-                    buffer[1] << 8 | buffer[0]);
+                return ((ulong)buffer[7] << 56 | (ulong)buffer[6] << 48 |
+                    (ulong)buffer[5] << 40 | (ulong)buffer[4] << 32 |
+                    (ulong)buffer[3] << 24 | (ulong)buffer[2] << 16 |
+                    (ulong)buffer[1] << 8 | buffer[0]);
             }
         }
 
@@ -270,17 +272,19 @@ namespace HedgeLib
 
             if (IsBigEndian)
             {
-                doubleUnion.ULong = (ulong)(buffer[0] << 56 | buffer[1] << 48 |
-                    buffer[2] << 40 | buffer[3] << 32 |
-                    buffer[4] << 24 | buffer[5] << 16 |
-                    buffer[6] << 8 | buffer[7]);
+                doubleUnion.ULong = (
+                    (ulong)buffer[0] << 56 | (ulong)buffer[1] << 48 |
+                    (ulong)buffer[2] << 40 | (ulong)buffer[3] << 32 |
+                    (ulong)buffer[4] << 24 | (ulong)buffer[5] << 16 |
+                    (ulong)buffer[6] << 8 | buffer[7]);
             }
             else
             {
-                doubleUnion.ULong = (ulong)(buffer[7] << 56 | buffer[6] << 48 |
-                    buffer[5] << 40 | buffer[4] << 32 |
-                    buffer[3] << 24 | buffer[2] << 16 |
-                    buffer[1] << 8 | buffer[0]);
+                doubleUnion.ULong = (
+                    (ulong)buffer[7] << 56 | (ulong)buffer[6] << 48 |
+                    (ulong)buffer[5] << 40 | (ulong)buffer[4] << 32 |
+                    (ulong)buffer[3] << 24 | (ulong)buffer[2] << 16 |
+                    (ulong)buffer[1] << 8 | buffer[0]);
             }
 
             return doubleUnion.Double;
@@ -295,30 +299,36 @@ namespace HedgeLib
 
             if (IsBigEndian)
             {
-                floatUnion.UInt = (uint)(buffer[0] << 24 | buffer[1] << 16 |
-                    buffer[2] << 8 | buffer[3]);
+                floatUnion.UInt = (
+                    (uint)buffer[0] << 24 | (uint)buffer[1] << 16 |
+                    (uint)buffer[2] << 8 | buffer[3]);
                 x = floatUnion.Float;
 
-                floatUnion.UInt = (uint)(buffer[4] << 24 | buffer[5] << 16 |
-                    buffer[6] << 8 | buffer[7]);
+                floatUnion.UInt = (
+                    (uint)buffer[4] << 24 | (uint)buffer[5] << 16 |
+                    (uint)buffer[6] << 8 | buffer[7]);
                 y = floatUnion.Float;
 
-                floatUnion.UInt = (uint)(buffer[8] << 24 | buffer[9] << 16 |
-                    buffer[10] << 8 | buffer[11]);
+                floatUnion.UInt = (
+                    (uint)buffer[8] << 24 | (uint)buffer[9] << 16 |
+                    (uint)buffer[10] << 8 | buffer[11]);
                 z = floatUnion.Float;
             }
             else
             {
-                floatUnion.UInt = (uint)(buffer[11] << 24 | buffer[10] << 16 |
-                    buffer[9] << 8 | buffer[8]);
+                floatUnion.UInt = (
+                    (uint)buffer[11] << 24 | (uint)buffer[10] << 16 |
+                    (uint)buffer[9] << 8 | buffer[8]);
                 x = floatUnion.Float;
 
-                floatUnion.UInt = (uint)(buffer[7] << 24 | buffer[6] << 16 |
-                    buffer[5] << 8 | buffer[4]);
+                floatUnion.UInt = (
+                    (uint)buffer[7] << 24 | (uint)buffer[6] << 16 |
+                    (uint)buffer[5] << 8 | buffer[4]);
                 y = floatUnion.Float;
 
-                floatUnion.UInt = (uint)(buffer[3] << 24 | buffer[2] << 16 |
-                    buffer[1] << 8 | buffer[0]);
+                floatUnion.UInt = (
+                    (uint)buffer[3] << 24 | (uint)buffer[2] << 16 |
+                    (uint)buffer[1] << 8 | buffer[0]);
                 z = floatUnion.Float;
             }
 
