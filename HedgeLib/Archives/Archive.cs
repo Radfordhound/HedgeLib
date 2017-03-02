@@ -7,6 +7,7 @@ namespace HedgeLib.Archives
     {
         //Variables/Constants
         public List<ArchiveFile> Files = new List<ArchiveFile>();
+        public bool Saved = false;
 
         //Methods
         public void Extract(string directory)

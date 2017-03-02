@@ -44,7 +44,8 @@ namespace HedgeArchiveEditor
         {
             var arc = Program.LoadArchive(filePath);
             Archives.Add(arc);
-            ArchiveFileExtraData.Add(arc, new object[] { filePath, false});
+            ArchiveFileExtraData.Add(arc, new object[] { filePath });
+            arc.Saved = true;
             AddTabPage(new FileInfo(filePath).Name);
         }
 
@@ -52,18 +53,20 @@ namespace HedgeArchiveEditor
         {
             string fileLocation = null;
             bool ok = true;
+            int ArchiveType = -1;
             if (!ArchiveFileExtraData.ContainsKey(Archives[index]) || saveAs)
             {
                 SaveFileDialog sfd = new SaveFileDialog()
                 {
-                    Title = "Save Archive As...",
+                    Title =  "Save Archive As...",
                     Filter = "Generations/Unleashed Archives (*.ar, *.arl, *.pfd)|*.ar;*.arl;*.pfd" +
-                "|Lost World Archives (*.pac)|*.pac",
+                             "|Lost World Archives (*.pac)|*.pac",
                 };
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
+                    ArchiveType = sfd.FilterIndex-1;
                     fileLocation = sfd.FileName;
-                    if(!ArchiveFileExtraData.ContainsKey(Archives[index])) ArchiveFileExtraData.Add(Archives[index], new object[] { fileLocation, true});
+                    if(!ArchiveFileExtraData.ContainsKey(Archives[index])) ArchiveFileExtraData.Add(Archives[index], new object[] { fileLocation });
                 } else
                 {
                     ok = false;
@@ -72,37 +75,63 @@ namespace HedgeArchiveEditor
             else
             {
                 fileLocation = (string)ArchiveFileExtraData[Archives[index]][0];
+                
+                // These checks may not work.
+                if (Archives[index].GetType() == typeof(GensArchive)) ArchiveType = 0;
+                if (Archives[index].GetType() == typeof(LWArchive)) ArchiveType = 1;
+
+                if (ArchiveType == -1)
+                {
+                    if (fileLocation.EndsWith(".arl")) ArchiveType = 0;
+                    if (fileLocation.EndsWith(".ar")) ArchiveType = 0;
+                    if (fileLocation.EndsWith(".00")) ArchiveType = 0;
+                    if (fileLocation.EndsWith(".pac")) ArchiveType = 1;
+                }
             }
 
             if (ok)
             {
-                
-                if (fileLocation.EndsWith(".ar")) fileLocation = Path.ChangeExtension(fileLocation, ".arl");
-                if (fileLocation.EndsWith(".ar.00")) fileLocation = fileLocation.Remove(fileLocation.Length-6);
-                if (!Path.HasExtension(fileLocation)) fileLocation = fileLocation+".arl";
-                var saveOptions = new SaveOptions();
-                if (saveOptions.ShowDialog() == DialogResult.OK)
+                //TODO: Add other archive types.
+                if (ArchiveType == 0)
+                {
+                    //Generations/Unleashed Archive
+                    if (Path.HasExtension(fileLocation)) fileLocation = fileLocation.Remove(fileLocation.Length - 3);
+                    if (fileLocation.EndsWith(".ar")) fileLocation += 'l';
+                }else if(ArchiveType == 1)
+                {
+                    //Lost World Archive
+                    if (!Path.HasExtension(fileLocation)) fileLocation += ".pac";
+                }
+                var saveOptions = new SaveOptions(ArchiveType);
+                if (saveOptions.ShowDialog() == DialogResult.OK && saveOptions.ArchiveType != -1)
                 {
                     //This is a horrible way of checking this, I know.
                     int val = saveOptions.comboBox1.SelectedIndex;
-                    if (val == 0)
+                    switch(val)
                     {
-                        var genArc = new GensArchive(CurrentArchive);
-                        genArc.Padding = (uint)saveOptions.numericUpDown1.Value;
-                        genArc.GenARL = saveOptions.checkBox1.Checked;
-                        genArc.Split = saveOptions.checkBox2.Checked;
-                        genArc.Save(fileLocation);
-                        ArchiveFileExtraData[Archives[index]][1] = false;
+                        case 0:
+                            var genArc = new GensArchive(CurrentArchive);
+                            genArc.Padding = (uint)saveOptions.numericUpDown1.Value;
+                            genArc.GenARL = saveOptions.checkBox1.Checked;
+                            genArc.Split = saveOptions.checkBox2.Checked;
+                            genArc.Save(fileLocation);
+                            CurrentArchive.Saved = true;
+                            break;
+                        case 1:
+                            var lwArc = new LWArchive(/*CurrentArchive*/);
+                            lwArc.Save(fileLocation);
+                            CurrentArchive.Saved = true;
+                            break;
+                        default:
+                            throw new NotImplementedException("Unknown Archive Type");
                     }
-
-                    //TODO: Add other archive types.
                 }
             }
         }
 
         public void CloseArchive(int index)
         {
-            if (!ArchiveFileExtraData.ContainsKey(Archives[index]) || (ArchiveFileExtraData.ContainsKey(Archives[index]) & (bool)ArchiveFileExtraData[Archives[index]][1]))
+            if (!Archives[index].Saved)
             {
                 if (MessageBox.Show("Save Archive before closing?", Text,
                       MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
@@ -153,8 +182,7 @@ namespace HedgeArchiveEditor
             Archive arc = Archives[index];
 
             //Update TabPage Text
-            //TODO
-            //tp.Text = (tp.Tag as string) + ((arc.Saved) ? "" : "*");
+            tp.Text = (tp.Tag as string) + ((arc.Saved) ? "" : "*");
 
             //Update File List
             if (!refreshFileList || lv == null) return;
@@ -243,7 +271,8 @@ namespace HedgeArchiveEditor
         //GUI Events
         private void createNewArchiveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Archives.Add(new Archive());
+            Archive ar = new Archive();
+            Archives.Add(ar);
             AddTabPage("Untitled");
             RefreshGUI();
         }
@@ -287,10 +316,8 @@ namespace HedgeArchiveEditor
 
             if (ofd.ShowDialog() == DialogResult.OK)
             {
-                if (ArchiveFileExtraData.ContainsKey(CurrentArchive))
-                    ArchiveFileExtraData[CurrentArchive][1] = true;
-
-                    foreach (var file in ofd.FileNames)
+                CurrentArchive.Saved = false;
+                foreach (var file in ofd.FileNames)
                     CurrentArchive.Files.Add(new ArchiveFile(file));
 
                 RefreshTabPage(tabControl.SelectedIndex);
@@ -413,8 +440,7 @@ namespace HedgeArchiveEditor
         {
             try
             {
-                if (ArchiveFileExtraData.ContainsKey(CurrentArchive))
-                    ArchiveFileExtraData[CurrentArchive][1] = true;
+                CurrentArchive.Saved = false;
                 new System.Threading.Thread(() =>
                 {
                     Invoke(new Action(() => Enabled = false));
@@ -493,7 +519,7 @@ namespace HedgeArchiveEditor
                 SaveArchive(tabControl.SelectedIndex, false);
             }catch(Exception ex)
             {
-                MessageBox.Show($"Failed to save archive!\n{ex.Message}", Program.ProgramName,
+                MessageBox.Show($"Failed to save archive!\n{ex}", Program.ProgramName,
                      MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -506,7 +532,7 @@ namespace HedgeArchiveEditor
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to save archive!\n{ex.Message}", Program.ProgramName,
+                MessageBox.Show($"Failed to save archive!\n{ex}", Program.ProgramName,
                      MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -521,8 +547,7 @@ namespace HedgeArchiveEditor
             }
             else
             {
-                if (ArchiveFileExtraData.ContainsKey(CurrentArchive))
-                    ArchiveFileExtraData[CurrentArchive][1] = true;
+                CurrentArchive.Saved = false;
                 foreach (var file in files)
                 {
                     foreach (ArchiveFile file2 in CurrentArchive.Files)
@@ -612,15 +637,30 @@ namespace HedgeArchiveEditor
 
         private void MainFrm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            foreach (Archive archive in Archives)
+            for(int i = 0; i < Archives.Count; i++)
             {
-                if (!ArchiveFileExtraData.ContainsKey(archive) || (ArchiveFileExtraData.ContainsKey(archive) & (bool)ArchiveFileExtraData[archive][1]))
+                Archive archive = Archives[i];
+                if (!archive.Saved)
                 {
-                    if (MessageBox.Show("Save Archive before closing?", Text,
+                    String ArchiveName = Path.GetFileName(ArchiveFileExtraData.ContainsKey(archive) ? (string)ArchiveFileExtraData[archive][0] : "Archive");
+                    if (MessageBox.Show($"Save {ArchiveName} before closing?", Text,
                           MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                     {
-                        try { SaveArchive(Archives.IndexOf(archive), false); }
-                        catch { e.Cancel = true; }
+                        try
+                        {
+                            int index = Archives.IndexOf(archive);
+                            SaveArchive(index, false);
+                            ArchiveFileExtraData.Remove(Archives[index]);
+                            Archives.RemoveAt(index);
+                            tabControl.TabPages.RemoveAt(index);
+                            i--;
+                        }
+                        catch(Exception ex)
+                        {
+                            e.Cancel = true;
+                            MessageBox.Show($"Failed to save archive!\n{ex}", Program.ProgramName,
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
                 }
             }

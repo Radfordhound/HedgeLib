@@ -147,7 +147,7 @@ namespace HedgeLib.Archives
                 // ARL Creation
                 // TODO: Fix ARL Creation with split files.
                 if(Split) throw new System.NotImplementedException();
-                ExtendedBinaryWriter arlWriter = new ExtendedBinaryWriter(File.OpenWrite(filePath));
+                ExtendedBinaryWriter arlWriter = new ExtendedBinaryWriter(File.OpenWrite(Path.HasExtension(filePath) ? filePath : filePath + ".arl"));
                 int split = 0;
                 string fileName = Path.ChangeExtension(filePath, ".ar");
                 System.Collections.Generic.List<byte> header = new System.Collections.Generic.List<byte>(new byte[] { 0x41, 0x52, 0x4C, 0x32 });

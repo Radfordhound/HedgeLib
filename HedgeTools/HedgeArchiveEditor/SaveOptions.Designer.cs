@@ -68,7 +68,8 @@
             this.comboBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.comboBox1.FormattingEnabled = true;
             this.comboBox1.Items.AddRange(new object[] {
-            "Generations/Unleashed"});
+            "Generations/Unleashed",
+            "Lost World"});
             this.comboBox1.Location = new System.Drawing.Point(97, 6);
             this.comboBox1.Margin = new System.Windows.Forms.Padding(2);
             this.comboBox1.Name = "comboBox1";
