@@ -26,12 +26,14 @@ namespace HedgeArchiveEditor
                     Archives[tabControl.SelectedIndex] = value;
             }
         }
+        public string tempPath = Path.Combine(Path.GetTempPath(), "HedgeArchiveEditor\\");
 
         //Constructors
         public MainFrm()
         {
             InitializeComponent();
             UpdateTitle();
+            Directory.CreateDirectory(tempPath);
         }
 
         //Methods
@@ -187,7 +189,9 @@ namespace HedgeArchiveEditor
             //Update File List
             if (!refreshFileList || lv == null) return;
             lv.Items.Clear();
-
+            // TODO:
+            lv.MouseMove += Lv_MouseMove;
+            lv.MouseUp += Lv_MouseUp;
             int longestNameLength = 0, longestExtensionLength = 0, longestSizeLength = 0;
             foreach (var file in arc.Files)
             {
@@ -199,6 +203,8 @@ namespace HedgeArchiveEditor
                     file.Data != null ? file.Data.Length >= 1024 ? file.Data.Length >= 1048576 ? (file.Data.Length / 1048576.0).ToString("0.00") + " MB": (file.Data.Length / 1024.0).ToString("0.00") + " KB" : file.Data.Length+" Bytes" : null
                 });
                 
+
+
                 if (lvi.Text.Length > longestNameLength)
                     longestNameLength = lvi.Text.Length;
 
@@ -234,6 +240,73 @@ namespace HedgeArchiveEditor
             //TODO: Update status bar label.
             Text = ((tabControl.TabPages.Count > 0) ?
                 $"{tabControl.SelectedTab.Tag.ToString()} - " : "") + Program.ProgramName;
+        }
+
+        // NOTE: Lv_MouseMove needs a lot of work
+        private bool extracting, extracted = false;
+        private void Lv_MouseUp(object sender, MouseEventArgs e)
+        {
+            extracted = false;
+        }
+
+        private void Lv_MouseMove(object sender, MouseEventArgs e)
+        {
+            ListView lv = sender as ListView;
+            if (e.Button == MouseButtons.Left && lv.SelectedItems.Count > 0)
+            {
+                List<string> fileList = new List<string>();
+                try
+                {
+                    if (!extracting && !extracted)
+                    {
+                        if (!extracted) extracting = true;
+                        Invoke(new Action(() =>
+                        {
+                            Enabled = false;
+                            Archive ar = CurrentArchive;
+                            ToolStripProgressBar pb = new ToolStripProgressBar();
+                            statusStrip.Items.AddRange(new ToolStripItem[] { pb });
+                            pb.Maximum = lv.SelectedItems.Count;
+                            for (int i = 0; i < lv.SelectedItems.Count; i++)
+                            {
+                                for (int ii = 0; ii < ar.Files.Count; ii++)
+                                {
+                                    if (ar.Files[ii].Name == lv.SelectedItems[i].SubItems[0].Text)
+                                    {
+                                        string path = Path.Combine(tempPath, ar.Files[ii].Name);
+                                        ar.Files[ii].Extract(path);
+                                        fileList.Add(path);
+                                        pb.Value++;
+                                        break;
+                                    }
+                                }
+                            }
+                            statusStrip.Items.Remove(pb);
+                            Enabled = true;
+                            extracting = false;
+                            extracted = true;
+                        }));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, Program.ProgramName,
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                
+                if (fileList.Count > 0 && extracted)
+                {
+                    DataObject d = new DataObject(DataFormats.FileDrop, fileList.ToArray());
+                    DoDragDrop(d, DragDropEffects.Copy);
+                    // TODO: Delete files in the temp folder when done or on close
+                }
+
+                if (fileList.Count == 0 && extracted)
+                {
+                    extracted = false;
+                }
+
+            }
         }
 
         private void Lv_ColumnClick(object sender, ColumnClickEventArgs e)
@@ -567,7 +640,7 @@ namespace HedgeArchiveEditor
 
         private void tabControl_DragEnter(object sender, DragEventArgs e)
         {
-            if(e.Data.GetData(DataFormats.FileDrop).GetType().ToString() != "System.String[]") return; 
+            if(e.Data.GetData(DataFormats.FileDrop).GetType() != typeof(String[])) return; 
             string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
             if(files != null)
             {
