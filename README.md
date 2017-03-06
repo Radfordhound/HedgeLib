@@ -8,9 +8,13 @@ Right now it supports the following:
 ##Hedgehog Engine
 - Reading lights.
 
+##Havok
+- Reading/Writing XML Havok data.
+
 ##Generations/Unleashed
 - Reading uncompressed archives.
 - Reading set data.
+- Reading/Writing terrain groups.
 
 ##Lost World
 - Reading/Writing BINA headers/footers.
