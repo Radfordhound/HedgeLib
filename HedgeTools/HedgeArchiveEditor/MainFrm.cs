@@ -354,6 +354,27 @@ namespace HedgeArchiveEditor
                 int returnVal = -1;
                 returnVal = string.Compare(((ListViewItem)x).SubItems[col].Text,
                                         ((ListViewItem)y).SubItems[col].Text);
+                // Sorting by file size
+                if (col == 2)
+                {
+                    try
+                    {
+                        string xx = ((ListViewItem)x).SubItems[col].Text;
+                        string yy = ((ListViewItem)y).SubItems[col].Text;
+
+                        if (xx.EndsWith("MB")) xx = Convert.ToDouble(xx.Substring(0, xx.Length - 3)) * 1024 + " KB";
+                        if (xx.EndsWith("KB")) xx = Convert.ToDouble(xx.Substring(0, xx.Length - 3)) * 1024 + " Bytes";
+                        if (xx.EndsWith("Bytes")) xx = xx.Substring(0, xx.Length - 6);
+
+                        if (yy.EndsWith("MB")) yy = Convert.ToDouble(yy.Substring(0, yy.Length - 3)) * 1024 + " KB";
+                        if (yy.EndsWith("KB")) yy = Convert.ToDouble(yy.Substring(0, yy.Length - 3)) * 1024 + " Bytes";
+                        if (yy.EndsWith("Bytes")) yy = yy.Substring(0, yy.Length - 6);
+                        returnVal = Convert.ToDouble(xx) > Convert.ToDouble(yy) ? 1 : -1;
+                    }
+                    catch
+                    {
+                    }
+                }
 
                 if (order == SortOrder.Descending) returnVal *= -1;
                 return returnVal;
