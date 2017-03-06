@@ -10,6 +10,7 @@ namespace HedgeArchiveEditor
     public partial class MainFrm : Form
     {
         //Variables/Constants
+        public static string tempPath = Path.Combine(Path.GetTempPath(), "HedgeArchiveEditor\\");
         public List<Archive> Archives = new List<Archive>();
         public Dictionary<Archive, object[]> ArchiveFileExtraData = new Dictionary<Archive, object[]>();
         public Archive CurrentArchive
@@ -26,7 +27,6 @@ namespace HedgeArchiveEditor
                     Archives[tabControl.SelectedIndex] = value;
             }
         }
-        public string tempPath = Path.Combine(Path.GetTempPath(), "HedgeArchiveEditor\\");
 
         //Constructors
         public MainFrm()
@@ -183,15 +183,19 @@ namespace HedgeArchiveEditor
             ListView lv = tp.Controls[0] as ListView;
             Archive arc = Archives[index];
 
+            lv.SmallImageList = new ImageList();
+            Directory.CreateDirectory(Path.Combine(tempPath, "File_Extensions"));
+
             //Update TabPage Text
             tp.Text = (tp.Tag as string) + ((arc.Saved) ? "" : "*");
 
             //Update File List
             if (!refreshFileList || lv == null) return;
             lv.Items.Clear();
-            // TODO:
+
             lv.MouseMove += Lv_MouseMove;
             lv.MouseUp += Lv_MouseUp;
+
             int longestNameLength = 0, longestExtensionLength = 0, longestSizeLength = 0;
             foreach (var file in arc.Files)
             {
@@ -202,8 +206,22 @@ namespace HedgeArchiveEditor
                     fileInfo.Extension,
                     file.Data != null ? file.Data.Length >= 1024 ? file.Data.Length >= 1048576 ? (file.Data.Length / 1048576.0).ToString("0.00") + " MB": (file.Data.Length / 1024.0).ToString("0.00") + " KB" : file.Data.Length+" Bytes" : null
                 });
-                
 
+                try
+                {
+                    // TODO: Find a better way to get icons or just remove this try catch statement
+                    // Getting Icon
+                    if (!lv.SmallImageList.Images.ContainsKey(fileInfo.Extension) && fileInfo.Extension.Length > 0)
+                    {
+                        File.OpenWrite(Path.Combine(tempPath, "File_Extensions\\"+fileInfo.Extension)).Close();
+                        lv.SmallImageList.Images.Add(fileInfo.Extension, System.Drawing.Icon.ExtractAssociatedIcon(Path.Combine(tempPath, "File_Extensions\\" + fileInfo.Extension)));
+                        File.Delete(Path.Combine(tempPath, "File_Extensions\\" + fileInfo.Extension));
+                    }
+                    lvi.ImageKey = fileInfo.Extension;
+                }
+                catch//(Exception ex)
+                {
+                }
 
                 if (lvi.Text.Length > longestNameLength)
                     longestNameLength = lvi.Text.Length;
@@ -262,6 +280,8 @@ namespace HedgeArchiveEditor
                         if (!extracted) extracting = true;
                         Invoke(new Action(() =>
                         {
+                            string path = Path.Combine(tempPath, "Extracted_Files\\");
+                            Directory.CreateDirectory(path);
                             Enabled = false;
                             Archive ar = CurrentArchive;
                             ToolStripProgressBar pb = new ToolStripProgressBar();
@@ -273,9 +293,9 @@ namespace HedgeArchiveEditor
                                 {
                                     if (ar.Files[ii].Name == lv.SelectedItems[i].SubItems[0].Text)
                                     {
-                                        string path = Path.Combine(tempPath, ar.Files[ii].Name);
-                                        ar.Files[ii].Extract(path);
-                                        fileList.Add(path);
+                                        string filePath = Path.Combine(path, ar.Files[ii].Name);
+                                        ar.Files[ii].Extract(filePath);
+                                        fileList.Add(filePath);
                                         pb.Value++;
                                         break;
                                     }
@@ -298,7 +318,6 @@ namespace HedgeArchiveEditor
                 {
                     DataObject d = new DataObject(DataFormats.FileDrop, fileList.ToArray());
                     DoDragDrop(d, DragDropEffects.Copy);
-                    // TODO: Delete files in the temp folder when done or on close
                 }
 
                 if (fileList.Count == 0 && extracted)
@@ -623,12 +642,14 @@ namespace HedgeArchiveEditor
                 CurrentArchive.Saved = false;
                 foreach (var file in files)
                 {
-                    foreach (ArchiveFile file2 in CurrentArchive.Files)
+                    for (int i = 0; i < CurrentArchive.Files.Count; i++)
                     {
-                        if(new FileInfo(file).Name.ToLower() == file2.Name.ToLower())
+                        ArchiveFile file2 = CurrentArchive.Files[i];
+                        if (new FileInfo(file).Name.ToLower() == file2.Name.ToLower())
                         {
-                            if (MessageBox.Show($"Theres already a file called {file2.Name}.\n\tAre you sure you want to continue?", Text,
+                            if (MessageBox.Show($"Theres already a file called {file2.Name}.\nDo you want to replace {new FileInfo(file).Name}?", Text,
                                 MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No) return;
+                            CurrentArchive.Files.Remove(file2);
                         }
                     }
                     CurrentArchive.Files.Add(new ArchiveFile(file));
@@ -708,6 +729,14 @@ namespace HedgeArchiveEditor
             }
         }
 
+        private void selectAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            foreach (ListViewItem item in (tabControl.SelectedTab.Controls[0] as ListView).Items)
+            {
+                item.Selected = true;
+            }
+        }
+
         private void MainFrm_FormClosing(object sender, FormClosingEventArgs e)
         {
             for(int i = 0; i < Archives.Count; i++)
@@ -736,6 +765,17 @@ namespace HedgeArchiveEditor
                         }
                     }
                 }
+            }
+
+            // Only delete the Temp Folder if the user is not holding 'Alt' when the form is closing
+            if(!ModifierKeys.HasFlag(Keys.Alt))
+            {
+                try
+                {
+                    #if !DEBUG
+                    Directory.Delete(tempPath, true);
+                    #endif
+                }catch { }
             }
         }
     }

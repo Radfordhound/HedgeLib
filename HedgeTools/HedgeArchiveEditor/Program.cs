@@ -57,6 +57,10 @@ namespace HedgeArchiveEditor
                             break;
                         }
 
+                    case "/temp":
+                        System.Diagnostics.Process.Start("explorer", $"\"{MainFrm.tempPath}\"");
+                        break;
+
                     case "/?":
                         ShowHelp();
                         break;
@@ -105,6 +109,10 @@ namespace HedgeArchiveEditor
             MessageBox.Show("Command-line Arguments:" + Environment.NewLine + Environment.NewLine +
                     "/E archive [directory]" + Environment.NewLine +
                     "\t (Extracts the given archive to the given directory.)" +
+                    Environment.NewLine +
+
+                     "/TEMP " + Environment.NewLine +
+                    "\t (Opens HedgeArchiveEditor's Temp folder in Explorer.)" +
                     Environment.NewLine +
 
                     "/?" + Environment.NewLine +
