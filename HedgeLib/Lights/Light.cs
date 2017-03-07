@@ -58,8 +58,8 @@ namespace HedgeLib.Lights
         {
             //Header
             var writer = new ExtendedBinaryWriter(fileStream, true);
-            Offsets.Clear();
             Gens.AddHeader(writer, Header);
+            Offsets.Clear();
 
             //Root Node
             writer.Write((uint)LightType);

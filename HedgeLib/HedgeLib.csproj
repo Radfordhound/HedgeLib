@@ -81,6 +81,9 @@
   <ItemGroup>
     <Folder Include="Models\" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include=".editorconfig" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>IF EXIST "$(SolutionDir)HedgeEdit\Assets\Libraries" copy /Y "$(TargetPath)" "$(SolutionDir)HedgeEdit\Assets\Libraries\$(TargetFileName)"</PostBuildEvent>

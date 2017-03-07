@@ -24,8 +24,10 @@ namespace HedgeLib.Sets
                 throw new ArgumentNullException("objectTemplates",
                     "Cannot load LW set data without object templates.");
 
-            var reader = new ExtendedBinaryReader(fileStream);
-            reader.Offset = LWHeader.Length;
+            var reader = new ExtendedBinaryReader(fileStream)
+            {
+                Offset = LWHeader.Length
+            };
             Header = LWFileBase.ReadHeader(reader);
 
             var dataPos = reader.BaseStream.Position;
