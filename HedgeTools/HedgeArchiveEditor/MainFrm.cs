@@ -758,6 +758,75 @@ namespace HedgeArchiveEditor
             }
         }
 
+        private void copyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ListView lv = (ListView)tabControl.SelectedTab.Controls[0];
+            Archive ar = CurrentArchive;
+
+            string path = Path.Combine(tempPath, "Extracted_Files\\");
+            Directory.CreateDirectory(path);
+            List<string> fileList = new List<string>();
+
+            new System.Threading.Thread(() =>
+            {
+                Invoke(new Action(() => Enabled = false));
+                ToolStripProgressBar pb = new ToolStripProgressBar();
+                statusStrip.Invoke(new Action(() => statusStrip.Items.AddRange(new ToolStripItem[] { pb })));
+                Invoke(new Action(() => pb.Maximum = lv.SelectedItems.Count));
+                Invoke(new Action(() =>
+                {
+                    for (int i = 0; i < lv.SelectedItems.Count; i++)
+                    {
+                        for (int ii = 0; ii < ar.Files.Count; ii++)
+                        {
+                            if (ar.Files[ii].Name == lv.SelectedItems[i].SubItems[0].Text)
+                            {
+                                string filePath = Path.Combine(path, ar.Files[ii].Name);
+                                ar.Files[ii].Extract(filePath);
+                                fileList.Add(filePath);
+                                Invoke(new Action(() => pb.Value++));
+                                break;
+                            }
+                        }
+                    }
+                }));
+                Invoke(new Action(() => Clipboard.SetData(DataFormats.FileDrop, fileList.ToArray())));
+                statusStrip.Invoke(new Action(() => statusStrip.Items.Remove(pb)));
+                Invoke(new Action(() => Enabled = true));
+            })
+            { Name = "CopyExtractSelectedItems" }.Start();
+        }
+
+        private void pasteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string[] files = (string[])Clipboard.GetData(DataFormats.FileDrop);
+            CurrentArchive.Saved = false;
+            foreach (var file in files)
+            {
+                for (int i = 0; i < CurrentArchive.Files.Count; i++)
+                {
+                    ArchiveFile file2 = CurrentArchive.Files[i];
+                    if (new FileInfo(file).Name.ToLower() == file2.Name.ToLower())
+                    {
+                        if (MessageBox.Show($"Theres already a file called {file2.Name}.\nDo you want to replace {new FileInfo(file).Name}?", Text,
+                            MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No) return;
+                        CurrentArchive.Files.Remove(file2);
+                    }
+                }
+                CurrentArchive.Files.Add(new ArchiveFile(file));
+            }
+            RefreshGUI();
+            RefreshTabPage(tabControl.SelectedIndex);
+        }
+
+        private void editToolStripMenuItem_Opening(object sender, EventArgs e)
+        {
+            ListView lv = null;
+            if(Archives.Count > 0) lv = tabControl.SelectedTab.Controls[0] as ListView;
+            pasteToolStripMenuItem.Enabled = lv != null;
+            copyToolStripMenuItem.Enabled = deleteToolStripMenuItem.Enabled = selectAllToolStripMenuItem.Enabled = lv != null ? lv.SelectedItems.Count > 0 : false;
+        }
+
         private void MainFrm_FormClosing(object sender, FormClosingEventArgs e)
         {
             for(int i = 0; i < Archives.Count; i++)
