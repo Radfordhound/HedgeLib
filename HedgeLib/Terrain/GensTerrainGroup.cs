@@ -1,16 +1,26 @@
 ﻿using HedgeLib.Bases;
+using HedgeLib.Headers;
+using System.Collections.Generic;
+using System.IO;
 
 namespace HedgeLib.Terrain
 {
-    public class GensTerrainGroup : GensFileBase
+    public class GensTerrainGroup : FileBase
     {
         //Variables/Constants
         public InstanceInfo[] InstanceInfos;
         public string[] TerrainModels;
 
+        public List<uint> Offsets = new List<uint>();
+        public GensHeader Header = new GensHeader();
+
         //Methods
-        protected override void Read(ExtendedBinaryReader reader)
+        public override void Load(Stream fileStream)
         {
+            //Header
+            var reader = new ExtendedBinaryReader(fileStream, true);
+            Header = Gens.ReadHeader(reader);
+
             //Root Node
             uint instanceInfoCount = reader.ReadUInt32();
             uint instanceInfoOffsetsOffset = reader.ReadUInt32();
@@ -73,20 +83,29 @@ namespace HedgeLib.Terrain
 
                 reader.BaseStream.Position = curPos;
             }
+
+            //Footer
+            Offsets = Gens.ReadFooter(reader, Header);
         }
 
-        protected override void Write(ExtendedBinaryWriter writer)
+        public override void Save(Stream fileStream)
         {
+            //Header
+            var writer = new ExtendedBinaryWriter(fileStream, true);
+            Offsets.Clear();
+            Gens.AddHeader(writer, Header);
+
             //Root Node
             writer.Write(InstanceInfos.Length);
-            AddOffset(writer, "instanceInfoOffsetsOffset");
+            Gens.AddOffset(writer, Offsets, "instanceInfoOffsetsOffset");
 
             writer.Write(TerrainModels.Length);
-            AddOffset(writer, "terrainModelOffsetsOffset");
+            Gens.AddOffset(writer, Offsets, "terrainModelOffsetsOffset");
 
             //Instance Infos
             writer.FillInOffset("instanceInfoOffsetsOffset", false);
-            AddOffsetTable(writer, "instanceInfoOffset", (uint)InstanceInfos.Length);
+            Gens.AddOffsetTable(writer, Offsets,
+                "instanceInfoOffset", (uint)InstanceInfos.Length);
 
             for (int i = 0; i < InstanceInfos.Length; ++i)
             {
@@ -94,12 +113,13 @@ namespace HedgeLib.Terrain
                 writer.FillInOffset("instanceInfoOffset_" + i, false);
 
                 writer.Write(instanceInfo.FileNames.Length);
-                AddOffset(writer, "fileNameOffsetOffset");
-                AddOffset(writer, "boundingSphereOffset");
+                Gens.AddOffset(writer, Offsets, "fileNameOffsetOffset");
+                Gens.AddOffset(writer, Offsets, "boundingSphereOffset");
 
                 //File Names
                 writer.FillInOffset("fileNameOffsetOffset", false);
-                AddOffsetTable(writer, "fileNameOffset", (uint)instanceInfo.FileNames.Length);
+                Gens.AddOffsetTable(writer, Offsets,
+                    "fileNameOffset", (uint)instanceInfo.FileNames.Length);
 
                 for (int i2 = 0; i2 < instanceInfo.FileNames.Length; ++i2)
                 {
@@ -116,7 +136,8 @@ namespace HedgeLib.Terrain
 
             //Terrain Models
             writer.FillInOffset("terrainModelOffsetsOffset", false);
-            AddOffsetTable(writer, "terrainModelOffset", (uint)TerrainModels.Length);
+            Gens.AddOffsetTable(writer, Offsets,
+                "terrainModelOffset", (uint)TerrainModels.Length);
 
             for (int i = 0; i < TerrainModels.Length; ++i)
             {

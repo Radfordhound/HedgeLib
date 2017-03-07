@@ -57,7 +57,7 @@
     <Compile Include="Archives\LWArchive.cs" />
     <Compile Include="ExtendedBinary.cs" />
     <Compile Include="Bases\FileBase.cs" />
-    <Compile Include="Bases\GensFileBase.cs" />
+    <Compile Include="Bases\Gens.cs" />
     <Compile Include="Havok\HavokBinary.cs" />
     <Compile Include="Havok\HavokData.cs" />
     <Compile Include="Havok\HavokXML.cs" />

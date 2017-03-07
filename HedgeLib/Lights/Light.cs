@@ -1,11 +1,15 @@
 ﻿using HedgeLib.Bases;
+using HedgeLib.Headers;
+using System.Collections.Generic;
 using System.IO;
 
 namespace HedgeLib.Lights
 {
-    public class Light : GensFileBase
+    public class Light : FileBase
     {
         //Variables/Constants
+        public List<uint> Offsets = new List<uint>();
+        public GensHeader Header = new GensHeader();
         public Vector3 Position, Color;
         public float UnknownTotal1, UnknownTotal2, UnknownTotal3,
             UnknownFloat1, UnknownFloat2;
@@ -19,8 +23,12 @@ namespace HedgeLib.Lights
         }
 
         //Methods
-        protected override void Read(ExtendedBinaryReader reader)
+        public override void Load(Stream fileStream)
         {
+            //Header
+            var reader = new ExtendedBinaryReader(fileStream, true);
+            var header = Gens.ReadHeader(reader);
+
             //Root Node
             uint lightType = reader.ReadUInt32();
             if (lightType < 0 || lightType > 1)
@@ -41,10 +49,18 @@ namespace HedgeLib.Lights
                 UnknownFloat1 = reader.ReadSingle();
                 UnknownFloat2 = reader.ReadSingle();
             }
+
+            //Footer
+            Offsets = Gens.ReadFooter(reader, header);
         }
 
-        protected override void Write(ExtendedBinaryWriter writer)
+        public override void Save(Stream fileStream)
         {
+            //Header
+            var writer = new ExtendedBinaryWriter(fileStream, true);
+            Offsets.Clear();
+            Gens.AddHeader(writer, Header);
+
             //Root Node
             writer.Write((uint)LightType);
 
@@ -61,6 +77,10 @@ namespace HedgeLib.Lights
                 writer.Write(UnknownFloat1);
                 writer.Write(UnknownFloat2);
             }
+
+            //Footer
+            Gens.WriteFooter(writer, Header, Offsets);
+            Gens.FillInHeader(writer, Header);
         }
     }
 }
