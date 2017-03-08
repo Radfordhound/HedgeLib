@@ -1,298 +1,289 @@
 ﻿using HedgeLib.Headers;
-using System;
 using System.Collections.Generic;
 using System.IO;
 
 namespace HedgeLib.Bases
 {
-    public class LWFileBase : FileBase
-    {
-        //Variables/Constants
-        public List<uint> Offsets = new List<uint>();
-        public LWHeader Header = new LWHeader();
+	public class LWFileBase : IGameFormatBase
+	{
+		//Variables/Constants
+		public List<uint> Offsets = new List<uint>();
+		public LWHeader Header = new LWHeader();
 
-        private List<StringTableEntry> strings = new List<StringTableEntry>();
+		private List<StringTableEntry> strings = new List<StringTableEntry>();
 
-        private enum OffsetTypes
-        {
-            SixBit = 0x40,
-            FourteenBit = 0x80,
-            ThirtyBit = 0xC0
-        }
+		//Methods
+		public static LWHeader ReadHeader(ExtendedBinaryReader reader)
+		{
+			var header = new LWHeader();
+			reader.BaseStream.Position = 0;
+			reader.Offset = LWHeader.Length;
 
-        //Methods
-        public override sealed void Load(Stream fileStream)
-        {
-            var reader = new ExtendedBinaryReader(fileStream);
-            reader.Offset = LWHeader.Length;
-            Header = ReadHeader(reader);
+			//BINA Header
+			var sig = reader.ReadSignature();
+			if (sig != LWHeader.Signature)
+				throw new InvalidDataException("The given file's signature was incorrect!" +
+					" (Expected " + LWHeader.Signature + " got " + sig + ".)");
 
-            var dataPos = reader.BaseStream.Position;
-            strings = ReadStrings(reader, Header);
+			header.VersionString = reader.ReadSignature(3);
+			header.IsBigEndian = reader.IsBigEndian = (reader.ReadChar() == 'B');
+			header.FileSize = reader.ReadUInt32();
 
-            reader.BaseStream.Position = dataPos;
-            Read(reader);
-            Offsets = ReadFooter(reader, Header);
-        }
+			reader.JumpAhead(4); //TODO: Figure out what this value is.
 
-        protected virtual void Read(ExtendedBinaryReader reader)
-        {
-            throw new NotImplementedException();
-        }
+			//DATA Header
+			var dataSig = reader.ReadSignature();
+			if (dataSig != LWHeader.DataSignature)
+				throw new InvalidDataException("The given file's signature was incorrect!" +
+					" (Expected " + LWHeader.DataSignature + " got " + dataSig + ".)");
 
-        public static LWHeader ReadHeader(ExtendedBinaryReader reader)
-        {
-            var header = new LWHeader();
-            reader.JumpTo(0, true);
+			header.DataLength = reader.ReadUInt32();
+			header.StringTableOffset = reader.ReadUInt32();
+			header.StringTableLength = reader.ReadUInt32();
+			header.FinalTableLength = reader.ReadUInt32();
 
-            //BINA Header
-            var sig = reader.ReadSignature();
-            if (sig != LWHeader.Signature)
-                throw new InvalidDataException("The given file's signature was incorrect!" +
-                    " (Expected " + LWHeader.Signature + " got " + sig + ".)");
+			header.Padding = reader.ReadUInt16(); //TODO: Make sure this is correct.
+			reader.JumpAhead(header.Padding + 2);
 
-            header.VersionString = reader.ReadSignature(3);
-            header.IsBigEndian = reader.IsBigEndian = (reader.ReadChar() == 'B');
-            header.FileSize = reader.ReadUInt32();
+			return header;
+		}
 
-            reader.JumpAhead(4); //TODO: Figure out what this value is.
+		public static List<StringTableEntry> ReadStrings(ExtendedBinaryReader reader, LWHeader header)
+		{
+			reader.JumpTo(header.StringTableOffset, false);
+			uint stringsEnd = (uint)reader.BaseStream.Position + header.StringTableLength;
+			var strings = new List<StringTableEntry>();
 
-            //DATA Header
-            var dataSig = reader.ReadSignature();
-            if (dataSig != LWHeader.DataSignature)
-                throw new InvalidDataException("The given file's signature was incorrect!" +
-                    " (Expected " + LWHeader.DataSignature + " got " + dataSig + ".)");
+			while (reader.BaseStream.Position < reader.BaseStream.Length &&
+				reader.BaseStream.Position < stringsEnd)
+			{
+				var tableEntry = new StringTableEntry()
+				{
+					Offset = (uint)reader.BaseStream.Position - LWHeader.Length,
+					Data = reader.ReadNullTerminatedString()
+				};
 
-            header.DataLength = reader.ReadUInt32();
-            header.StringTableOffset = reader.ReadUInt32();
-            header.StringTableLength = reader.ReadUInt32();
-            header.FinalTableLength = reader.ReadUInt32();
+				strings.Add(tableEntry);
+			}
 
-            header.Padding = reader.ReadUInt16(); //TODO: Make sure this is correct.
-            reader.JumpAhead(header.Padding + 2);
+			return strings;
+		}
 
-            return header;
-        }
+		public static List<uint> ReadFooter(ExtendedBinaryReader reader, LWHeader header)
+		{
+			reader.JumpTo(header.FileSize - header.FinalTableLength);
+			uint lastOffsetPos = LWHeader.Length;
+			uint footerEnd = (uint)reader.BaseStream.Position + header.FinalTableLength;
+			var offsets = new List<uint>();
 
-        public static List<StringTableEntry> ReadStrings(ExtendedBinaryReader reader, LWHeader header)
-        {
-            reader.JumpTo(header.StringTableOffset, false);
-            uint stringsEnd = (uint)reader.BaseStream.Position + header.StringTableLength;
-            var strings = new List<StringTableEntry>();
+			while (reader.BaseStream.Position < reader.BaseStream.Length &&
+				   reader.BaseStream.Position < footerEnd)
+			{
+				byte b = reader.ReadByte();
+				byte type = (byte)(b & 0xC0); //0xC0 = 1100 0000. We're getting the first two bits.
+				byte d = (byte)(b & 0x3F);
 
-            while (reader.BaseStream.Position < reader.BaseStream.Length &&
-                reader.BaseStream.Position < stringsEnd)
-            {
-                var tableEntry = new StringTableEntry()
-                {
-                    Offset = (uint)reader.BaseStream.Position - LWHeader.Length,
-                    Data = reader.ReadNullTerminatedString()
-                };
+				if (type == (byte)OffsetTypes.SixBit)
+				{
+					d <<= 2;
+					offsets.Add(d + lastOffsetPos);
+				}
+				else if (type == (byte)OffsetTypes.FourteenBit)
+				{
+					byte b2 = reader.ReadByte();
+					ushort d2 = (ushort)(((d << 8) & b2) << 2);
 
-                strings.Add(tableEntry);
-            }
+					offsets.Add(d2 + lastOffsetPos);
+				}
+				else if (type == (byte)OffsetTypes.ThirtyBit)
+				{
+					var bytes = reader.ReadBytes(3);
+					uint d2 = (uint)(((d << 24) | (bytes[0] << 16) |
+						(bytes[1] << 8) | bytes[2]) << 2);
 
-            return strings;
-        }
+					offsets.Add(d2 + lastOffsetPos);
+				}
+				else break;
 
-        public static List<uint> ReadFooter(ExtendedBinaryReader reader, LWHeader header)
-        {
-            reader.JumpTo(header.FileSize - header.FinalTableLength);
-            uint lastOffsetPos = LWHeader.Length;
-            uint footerEnd = (uint)reader.BaseStream.Position + header.FinalTableLength;
-            var offsets = new List<uint>();
+				lastOffsetPos = offsets[offsets.Count - 1];
+			}
 
-            while (reader.BaseStream.Position < reader.BaseStream.Length &&
-                   reader.BaseStream.Position < footerEnd)
-            {
-                byte b = reader.ReadByte();
-                byte type = (byte)(b & 0xC0); //0xC0 = 1100 0000. We're getting the first two bits.
-                byte d = (byte)(b & 0x3F);
+			return offsets;
+		}
 
-                if (type == (byte)OffsetTypes.SixBit)
-                {
-                    d <<= 2;
-                    offsets.Add(d + lastOffsetPos);
-                }
-                else if (type == (byte)OffsetTypes.FourteenBit)
-                {
-                    byte b2 = reader.ReadByte();
-                    ushort d2 = (ushort)(((d << 8) & b2) << 2);
+		public static void AddHeader(ExtendedBinaryWriter writer, LWHeader header)
+		{
+			writer.Offset = LWHeader.Length;
+			writer.IsBigEndian = header.IsBigEndian;
+			writer.WriteNulls(LWHeader.Length);
+		}
 
-                    offsets.Add(d2 + lastOffsetPos);
-                }
-                else if (type == (byte)OffsetTypes.ThirtyBit)
-                {
-                    var bytes = reader.ReadBytes(3);
-                    uint d2 = (uint)(((d << 24) | (bytes[0] << 16) |
-                        (bytes[1] << 8) | bytes[2]) << 2);
+		public static void FillInHeader(ExtendedBinaryWriter writer, LWHeader header)
+		{
+			writer.BaseStream.Position = 0;
 
-                    offsets.Add(d2 + lastOffsetPos);
-                }
-                else break;
+			//BINA Header
+			writer.WriteSignature(LWHeader.Signature);
+			writer.WriteSignature(header.VersionString);
+			writer.Write((header.IsBigEndian) ? 'B' : 'L');
+			writer.Write(header.FileSize);
 
-                lastOffsetPos = offsets[offsets.Count - 1];
-            }
+			//TODO: Figure out what these values are.
+			writer.Write((ushort)1);
+			writer.Write((ushort)0);
 
-            return offsets;
-        }
+			//DATA Header
+			writer.WriteSignature(LWHeader.DataSignature);
+			writer.Write(header.DataLength);
+			writer.Write(header.StringTableOffset);
+			writer.Write(header.StringTableLength);
 
-        public override sealed void Save(Stream fileStream)
-        {
-            var writer = new ExtendedBinaryWriter(fileStream, Header.IsBigEndian);
-            writer.Offset = LWHeader.Length;
-            Offsets.Clear();
-            strings.Clear();
+			writer.Write(header.FinalTableLength);
+			writer.Write(header.Padding);
+		}
 
-            writer.WriteNulls(LWHeader.Length);
-            Write(writer);
-            
-            WriteStrings(writer, Header, strings);
-            WriteFooter(writer, Header, Offsets);
+		public static void WriteStrings(ExtendedBinaryWriter writer,
+			LWHeader header, List<StringTableEntry> strings)
+		{
+			uint stringTableStartPos = (uint)writer.BaseStream.Position;
+			header.StringTableOffset = stringTableStartPos - LWHeader.Length;
 
-            //We write the header last since there's no way we'll know the fileSize until here.
-            writer.BaseStream.Position = 0;
-            WriteHeader(writer, Header);
-        }
+			foreach (var tableEntry in strings)
+			{
+				foreach (var offsetName in tableEntry.OffsetNames)
+				{
+					writer.FillInOffset(offsetName,
+						(uint)writer.BaseStream.Position, false);
+				}
 
-        protected virtual void Write(ExtendedBinaryWriter writer)
-        {
-            throw new NotImplementedException();
-        }
+				writer.WriteNullTerminatedString(tableEntry.Data);
+			}
 
-        public static void WriteHeader(ExtendedBinaryWriter writer, LWHeader header)
-        {
-            //BINA Header
-            writer.WriteSignature(LWHeader.Signature);
-            writer.WriteSignature(header.VersionString);
-            writer.Write((header.IsBigEndian) ? 'B' : 'L');
-            writer.Write(header.FileSize);
+			writer.FixPadding();
+			header.StringTableLength =
+				(uint)writer.BaseStream.Position - stringTableStartPos;
+		}
 
-            //TODO: Figure out what these values are.
-            writer.Write((ushort)1);
-            writer.Write((ushort)0);
+		public static void WriteFooter(ExtendedBinaryWriter writer,
+			LWHeader header, List<uint> offsets)
+		{
+			uint lastOffsetPos = LWHeader.Length;
+			uint footerStartPos = (uint)writer.BaseStream.Position;
 
-            //DATA Header
-            writer.WriteSignature(LWHeader.DataSignature);
-            writer.Write(header.DataLength);
-            writer.Write(header.StringTableOffset);
-            writer.Write(header.StringTableLength);
+			foreach (var offset in offsets)
+			{
+				uint d = (offset - lastOffsetPos) >> 2;
 
-            writer.Write(header.FinalTableLength);
-            writer.Write(header.Padding);
-        }
+				if (d <= 0x3F)
+				{
+					byte d2 = (byte)(((byte)OffsetTypes.SixBit) | d);
+					writer.Write(d2);
+				}
+				else if (d <= 0x3FFF)
+				{
+					ushort d2 = (ushort)((((byte)OffsetTypes.FourteenBit) << 8) | d);
+					writer.Write(d2);
+				}
+				else
+				{
+					uint d2 = (uint)((((byte)OffsetTypes.ThirtyBit) << 24) | d);
+					writer.Write(d2);
+				}
 
-        public static void WriteStrings(ExtendedBinaryWriter writer,
-            LWHeader header, List<StringTableEntry> strings)
-        {
-            uint stringTableStartPos = (uint)writer.BaseStream.Position;
-            header.StringTableOffset = stringTableStartPos - LWHeader.Length;
+				lastOffsetPos = offset;
+			}
 
-            foreach (var tableEntry in strings)
-            {
-                foreach (var offsetName in tableEntry.OffsetNames)
-                {
-                    writer.FillInOffset(offsetName,
-                        (uint)writer.BaseStream.Position, false);
-                }
+			//Update header values
+			writer.FixPadding();
+			header.FinalTableLength = (uint)writer.BaseStream.Position - footerStartPos;
+			header.FileSize = (uint)writer.BaseStream.Position;
+			header.DataLength = (uint)writer.BaseStream.Position - 0x10;
+		}
 
-                writer.WriteNullTerminatedString(tableEntry.Data);
-            }
+		public void InitRead(ExtendedBinaryReader reader)
+		{
+			Header = ReadHeader(reader);
 
-            writer.FixPadding();
-            header.StringTableLength =
-                (uint)writer.BaseStream.Position - stringTableStartPos;
-        }
+			var dataPos = reader.BaseStream.Position;
+			strings = ReadStrings(reader, Header);
+			reader.BaseStream.Position = dataPos;
+		}
 
-        public static void WriteFooter(ExtendedBinaryWriter writer,
-            LWHeader header, List<uint> offsets)
-        {
-            uint lastOffsetPos = LWHeader.Length;
-            uint footerStartPos = (uint)writer.BaseStream.Position;
+		public void InitWrite(ExtendedBinaryWriter writer)
+		{
+			Offsets.Clear();
+			strings.Clear();
 
-            foreach (var offset in offsets)
-            {
-                uint d = (offset - lastOffsetPos) >> 2;
+			AddHeader(writer, Header);
+		}
 
-                if (d <= 0x3F)
-                {
-                    byte d2 = (byte)(((byte)OffsetTypes.SixBit) | d);
-                    writer.Write(d2);
-                }
-                else if (d <= 0x3FFF)
-                {
-                    ushort d2 = (ushort)((((byte)OffsetTypes.FourteenBit) << 8) | d);
-                    writer.Write(d2);
-                }
-                else
-                {
-                    uint d2 = (uint)((((byte)OffsetTypes.ThirtyBit) << 24) | d);
-                    writer.Write(d2);
-                }
+		public void FinishRead(ExtendedBinaryReader reader)
+		{
+			Offsets = ReadFooter(reader, Header);
+		}
 
-                lastOffsetPos = offset;
-            }
+		public void FinishWrite(ExtendedBinaryWriter writer)
+		{
+			WriteStrings(writer, Header, strings);
+			WriteFooter(writer, Header, Offsets);
+			FillInHeader(writer, Header);
+		}
 
-            //Update header values
-            writer.FixPadding();
-            header.FinalTableLength = (uint)writer.BaseStream.Position - footerStartPos;
-            header.FileSize = (uint)writer.BaseStream.Position;
-            header.DataLength = (uint)writer.BaseStream.Position - 0x10;
-        }
+		public void AddOffset(ExtendedBinaryWriter writer, string name)
+		{
+			Offsets.Add((uint)writer.BaseStream.Position);
+			writer.AddOffset(name);
+		}
 
-        protected void AddOffset(ExtendedBinaryWriter writer, string name)
-        {
-            Offsets.Add((uint)writer.BaseStream.Position);
-            writer.AddOffset(name);
-        }
+		public void AddString(ExtendedBinaryWriter writer, string offsetName, string str)
+		{
+			if (string.IsNullOrEmpty(offsetName)) return;
 
-        protected void AddString(ExtendedBinaryWriter writer, string offsetName, string str)
-        {
-            if (string.IsNullOrEmpty(offsetName)) return;
+			var tableEntry = new StringTableEntry() { Data = str };
+			bool newEntry = true;
 
-            StringTableEntry tableEntry = new StringTableEntry() { Data = str };
-            bool newEntry = true;
+			foreach (var strEntry in strings)
+			{
+				if (strEntry.Data == str)
+				{
+					tableEntry = strEntry;
+					newEntry = false;
+					break;
+				}
+			}
 
-            foreach (var strEntry in strings)
-            {
-                if (strEntry.Data == str)
-                {
-                    tableEntry = strEntry;
-                    newEntry = false;
-                    break;
-                }
-            }
+			AddOffset(writer, offsetName);
+			tableEntry.OffsetNames.Add(offsetName);
 
-            AddOffset(writer, offsetName);
-            tableEntry.OffsetNames.Add(offsetName);
+			if (newEntry)
+				strings.Add(tableEntry);
+		}
 
-            if (newEntry)
-                strings.Add(tableEntry);
-        }
+		public string GetString(uint offset)
+		{
+			foreach (var str in strings)
+			{
+				if (str.Offset == offset)
+					return str.Data;
+			}
 
-        public static string GetString(uint offset, List<StringTableEntry> strings)
-        {
-            foreach (var str in strings)
-            {
-                if (str.Offset == offset)
-                    return str.Data;
-            }
+			return null;
+		}
 
-            return null;
-        }
+		//Other
+		public class StringTableEntry
+		{
+			//Variables/Constants
+			public List<string> OffsetNames = new List<string>();
+			public string Data;
+			public uint Offset;
+		}
 
-        protected string GetString(uint offset)
-        {
-            return GetString(offset, strings);
-        }
-
-        //Other
-        public class StringTableEntry
-        {
-            //Variables/Constants
-            public List<string> OffsetNames = new List<string>();
-            public string Data;
-            public uint Offset;
-        }
-    }
+		private enum OffsetTypes
+		{
+			SixBit = 0x40,
+			FourteenBit = 0x80,
+			ThirtyBit = 0xC0
+		}
+	}
 }

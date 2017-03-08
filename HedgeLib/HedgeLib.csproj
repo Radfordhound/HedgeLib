@@ -55,9 +55,11 @@
     <Compile Include="Archives\ArchiveFile.cs" />
     <Compile Include="Archives\GensArchive.cs" />
     <Compile Include="Archives\LWArchive.cs" />
+    <Compile Include="Bases\IGameFormatBase.cs" />
+    <Compile Include="Bases\LWFileBase.cs" />
     <Compile Include="ExtendedBinary.cs" />
     <Compile Include="Bases\FileBase.cs" />
-    <Compile Include="Bases\Gens.cs" />
+    <Compile Include="Bases\GensFileBase.cs" />
     <Compile Include="Havok\HavokBinary.cs" />
     <Compile Include="Havok\HavokData.cs" />
     <Compile Include="Havok\HavokXML.cs" />
@@ -65,7 +67,6 @@
     <Compile Include="Headers\LWHeader.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="Lights\Light.cs" />
-    <Compile Include="Bases\LWFileBase.cs" />
     <Compile Include="Misc\LWGism.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Quaternion.cs" />

@@ -1,22 +1,24 @@
 ﻿using HedgeLib.Bases;
-using HedgeLib.Headers;
-using System.Collections.Generic;
+using System.IO;
+using System.Text;
 
 namespace HedgeLib.Misc
 {
-    public class LWGism : LWFileBase
+	public class LWGism : FileBase
     {
-        //Variables/Constants
+		//Variables/Constants
+		public LWFileBase LWFileData = new LWFileBase();
         public LWGismo[] Gismos;
         public uint UnknownBoolean1 = 1;
 
         public const string Signature = "GISM", Extension = ".gism";
 
         //Methods
-        protected override void Read(ExtendedBinaryReader reader)
+        public override void Load(Stream fileStream)
         {
-            //Header
-            reader.Offset = reader.BaseStream.Position;
+			//Header
+			var reader = new ExtendedBinaryReader(fileStream, Encoding.ASCII, false);
+			LWFileData.InitRead(reader);
 
             var gismOffset = reader.ReadUInt32();
             UnknownBoolean1 = reader.ReadUInt32(); //TODO: Find out what this is.
@@ -51,7 +53,7 @@ namespace HedgeLib.Misc
                         fileNameOffset + " vs. " + fileNameOffset2 + ")");
 
                 var curPos = reader.BaseStream.Position;
-                gismo.FileName = GetString(fileNameOffset);
+                gismo.FileName = LWFileData.GetString(fileNameOffset);
 
                 //Havok Array
                 reader.JumpTo(havokOffset, false);
@@ -63,7 +65,7 @@ namespace HedgeLib.Misc
                         unknown10 + ".)");
 
                 var havokNameOffset = reader.ReadUInt32();
-                gismo.HavokName = GetString(havokNameOffset);
+                gismo.HavokName = LWFileData.GetString(havokNameOffset);
 
                 //Container 2
                 reader.JumpTo(containerTwoOffset, false);
@@ -82,17 +84,22 @@ namespace HedgeLib.Misc
                 reader.BaseStream.Position = curPos;
                 Gismos[i] = gismo;
             }
+
+			LWFileData.FinishRead(reader);
         }
 
-        protected override void Write(ExtendedBinaryWriter writer)
+        public override void Save(Stream fileStream)
         {
-            //Header
-            AddString(writer, "gismOffset", Signature);
+			//Header
+			var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, false);
+			LWFileData.InitWrite(writer);
+
+			LWFileData.AddString(writer, "gismOffset", Signature);
             writer.Write(UnknownBoolean1);
             writer.Write((uint)Gismos.Length);
 
-            //Containers
-            AddOffset(writer, "containerOffset");
+			//Containers
+			LWFileData.AddOffset(writer, "containerOffset");
             writer.FillInOffset("containerOffset", false);
 
             //Container 1
@@ -100,18 +107,18 @@ namespace HedgeLib.Misc
             {
                 var gismo = Gismos[i];
 
-                AddString(writer, "fileNameOffset_" + i, gismo.FileName);
-                AddString(writer, "fileNameOffset2_" + i, gismo.FileName);
-                AddString(writer, "unknownOffset1_" + i, gismo.FileName); //TODO
+				LWFileData.AddString(writer, "fileNameOffset_" + i, gismo.FileName);
+				LWFileData.AddString(writer, "fileNameOffset2_" + i, gismo.FileName);
+				LWFileData.AddString(writer, "unknownOffset1_" + i, gismo.FileName); //TODO
                 writer.Write(gismo.Unknown1);
 
                 writer.Write(gismo.Unknown2);
                 writer.Write(gismo.Unknown3);
                 writer.Write((gismo.DoesAnimate) ? 1u : 0u);
-                AddOffset(writer, "havokOffset_" + i);
+				LWFileData.AddOffset(writer, "havokOffset_" + i);
 
                 writer.Write((gismo.UnknownBoolean1) ? 1u : 0u);
-                AddOffset(writer, "containerTwoOffset_" + i);
+				LWFileData.AddOffset(writer, "containerTwoOffset_" + i);
             }
 
             //Havok Array
@@ -119,7 +126,7 @@ namespace HedgeLib.Misc
             {
                 writer.FillInOffset("havokOffset_" + i, false);
                 writer.WriteNulls(4); //TODO: Figure out what this is
-                AddString(writer, "havokNameOffset_" + i, Gismos[i].HavokName);
+				LWFileData.AddString(writer, "havokNameOffset_" + i, Gismos[i].HavokName);
             }
 
             //Container 2
@@ -139,6 +146,8 @@ namespace HedgeLib.Misc
                 writer.Write(gismo.RotationAmount);
                 writer.Write(gismo.Unknown9);
             }
+
+			LWFileData.FinishWrite(writer);
         }
     }
 

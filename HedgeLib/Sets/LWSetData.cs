@@ -8,13 +8,9 @@ namespace HedgeLib.Sets
 {
     public class LWSetData : SetData
     {
-        //Variables/Constants
-        public LWHeader Header = new LWHeader();
-        public List<uint> Offsets = new List<uint>();
+		//Variables/Constants
+		public LWFileBase LWFileData = new LWFileBase();
         public const string Signature = "SOBJ", Extension = ".orc";
-
-        private List<LWFileBase.StringTableEntry> strings =
-            new List<LWFileBase.StringTableEntry>();
 
         //Methods
         public override void Load(Stream fileStream,
@@ -24,102 +20,93 @@ namespace HedgeLib.Sets
                 throw new ArgumentNullException("objectTemplates",
                     "Cannot load LW set data without object templates.");
 
-            var reader = new ExtendedBinaryReader(fileStream)
-            {
-                Offset = LWHeader.Length
-            };
-            Header = LWFileBase.ReadHeader(reader);
+			//Header
+			var reader = new ExtendedBinaryReader(fileStream);
+			LWFileData.InitRead(reader);
 
-            var dataPos = reader.BaseStream.Position;
-            strings = LWFileBase.ReadStrings(reader, Header);
+			//SOBJ Header
+			var sig = reader.ReadChars(4);
+			if (!reader.IsBigEndian)
+				Array.Reverse(sig);
 
-            reader.BaseStream.Position = dataPos;
-            Read(reader, objectTemplates);
-            Offsets = LWFileBase.ReadFooter(reader, Header);
-        }
+			if (new string(sig) != Signature)
+				throw new InvalidDataException("Cannot load set data - incorrect signature!");
 
-        private void Read(ExtendedBinaryReader reader,
-            Dictionary<string, SetObjectType> objectTemplates)
-        {
-            //SOBJ Header
-            var sig = reader.ReadChars(4);
-            if (!reader.IsBigEndian)
-                Array.Reverse(sig);
+			uint unknown1 = reader.ReadUInt32(); //Maybe root node type??
+			uint objTypeCount = reader.ReadUInt32();
+			uint objTypeOffsetsOffset = reader.ReadUInt32();
 
-            if (new string(sig) != Signature)
-                throw new InvalidDataException("Cannot load set data - incorrect signature!");
+			uint unknown2 = reader.ReadUInt32(); //Probably just padding
+			uint objOffsetsOffset = reader.ReadUInt32();
+			uint objCount = reader.ReadUInt32();
+			uint unknown3 = reader.ReadUInt32(); //Probably just padding
 
-            uint unknown1 = reader.ReadUInt32(); //Maybe root node type??
-            uint objTypeCount = reader.ReadUInt32();
-            uint objTypeOffsetsOffset = reader.ReadUInt32();
+			uint transformsCount = reader.ReadUInt32();
 
-            uint unknown2 = reader.ReadUInt32(); //Probably just padding
-            uint objOffsetsOffset = reader.ReadUInt32();
-            uint objCount = reader.ReadUInt32();
-            uint unknown3 = reader.ReadUInt32(); //Probably just padding
+			if (unknown2 != 0)
+				Console.WriteLine("WARNING: Unknown2 != 0! (" + unknown2 + ")");
 
-            uint transformsCount = reader.ReadUInt32();
+			if (unknown3 != 0)
+				Console.WriteLine("WARNING: Unknown3 != 0! (" + unknown3 + ")");
 
-            if (unknown2 != 0)
-                Console.WriteLine("WARNING: Unknown2 != 0! (" + unknown2 + ")");
+			//Object Offsets
+			var objOffsets = new uint[objCount];
+			reader.JumpTo(objOffsetsOffset, false);
 
-            if (unknown3 != 0)
-                Console.WriteLine("WARNING: Unknown3 != 0! (" + unknown3 + ")");
+			for (uint i = 0; i < objCount; ++i)
+				objOffsets[i] = reader.ReadUInt32();
 
-            //Object Offsets
-            var objOffsets = new uint[objCount];
-            reader.JumpTo(objOffsetsOffset, false);
+			//Object Types
+			reader.JumpTo(objTypeOffsetsOffset, false);
 
-            for (uint i = 0; i < objCount; ++i)
-                objOffsets[i] = reader.ReadUInt32();
+			for (uint i = 0; i < objTypeCount; ++i)
+			{
+				//Object Type
+				string objName = LWFileData.GetString(reader.ReadUInt32());
+				if (!objectTemplates.ContainsKey(objName))
+				{
+					Console.WriteLine("WARNING: No object template exists for object type \"" +
+						objName + "\"! Skipping this object...");
+					reader.JumpAhead(8);
 
-            //Object Types
-            reader.JumpTo(objTypeOffsetsOffset, false);
+					continue;
+				}
 
-            for (uint i = 0; i < objTypeCount; ++i)
-            {
-                //Object Type
-                string objName = LWFileBase.GetString(reader.ReadUInt32(), strings);
-                if (!objectTemplates.ContainsKey(objName))
-                {
-                    Console.WriteLine("WARNING: No object template exists for object type \"" +
-                        objName + "\"! Skipping this object...");
-                    reader.JumpAhead(8);
+				uint objOfTypeCount = reader.ReadUInt32();
+				uint objIndiciesOffset = reader.ReadUInt32();
+				var curTypePos = reader.BaseStream.Position;
 
-                    continue;
-                }
+				//Objects
+				reader.JumpTo(objIndiciesOffset, false);
 
-                uint objOfTypeCount = reader.ReadUInt32();
-                uint objIndiciesOffset = reader.ReadUInt32();
-                var curTypePos = reader.BaseStream.Position;
+				for (uint i2 = 0; i2 < objOfTypeCount; ++i2)
+				{
+					ushort objIndex = reader.ReadUInt16();
+					var curPos = reader.BaseStream.Position;
 
-                //Objects
-                reader.JumpTo(objIndiciesOffset, false);
+					//Object Data
+					reader.JumpTo(objOffsets[objIndex], false);
+					Objects.Add(ReadObject(reader, objectTemplates[objName], objName));
 
-                for (uint i2 = 0; i2 < objOfTypeCount; ++i2)
-                {
-                    ushort objIndex = reader.ReadUInt16();
-                    var curPos = reader.BaseStream.Position;
+					reader.BaseStream.Position = curPos;
+				}
 
-                    //Object Data
-                    reader.JumpTo(objOffsets[objIndex], false);
-                    Objects.Add(ReadObject(reader, objectTemplates[objName], objName));
+				reader.BaseStream.Position = curTypePos;
+			}
 
-                    reader.BaseStream.Position = curPos;
-                }
-
-                reader.BaseStream.Position = curTypePos;
-            }
+			LWFileData.FinishRead(reader);
         }
 
         private SetObject ReadObject(ExtendedBinaryReader reader,
             SetObjectType objTemplate, string objType)
         {
-            var obj = new SetObject();
-            obj.ObjectType = objType;
+			var obj = new SetObject()
+			{
+				ObjectType = objType,
+				ObjectID = reader.ReadUInt16()
+			};
 
-            obj.ObjectID = reader.ReadUInt16();
-            ushort unknown1 = reader.ReadUInt16();
+			ushort unknown1 = reader.ReadUInt16();
             uint unknown2 = reader.ReadUInt32();
             uint unknown3 = reader.ReadUInt32();
             float unknown4 = reader.ReadUInt32();

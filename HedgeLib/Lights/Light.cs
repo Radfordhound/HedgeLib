@@ -1,15 +1,12 @@
 ﻿using HedgeLib.Bases;
-using HedgeLib.Headers;
-using System.Collections.Generic;
 using System.IO;
 
 namespace HedgeLib.Lights
 {
-    public class Light : FileBase
+	public class Light : FileBase
     {
-        //Variables/Constants
-        public List<uint> Offsets = new List<uint>();
-        public GensHeader Header = new GensHeader();
+		//Variables/Constants
+		public GensFileBase GensFileData = new GensFileBase();
         public Vector3 Position, Color;
         public float UnknownTotal1, UnknownTotal2, UnknownTotal3,
             UnknownFloat1, UnknownFloat2;
@@ -17,17 +14,12 @@ namespace HedgeLib.Lights
         public LightTypes LightType;
         public const string Extension = ".light";
 
-        public enum LightTypes
-        {
-            Directional, Omni
-        }
-
         //Methods
         public override void Load(Stream fileStream)
         {
             //Header
             var reader = new ExtendedBinaryReader(fileStream, true);
-            var header = Gens.ReadHeader(reader);
+			GensFileData.InitRead(reader);
 
             //Root Node
             uint lightType = reader.ReadUInt32();
@@ -50,16 +42,14 @@ namespace HedgeLib.Lights
                 UnknownFloat2 = reader.ReadSingle();
             }
 
-            //Footer
-            Offsets = Gens.ReadFooter(reader, header);
+			GensFileData.FinishRead(reader);
         }
 
         public override void Save(Stream fileStream)
         {
             //Header
             var writer = new ExtendedBinaryWriter(fileStream, true);
-            Gens.AddHeader(writer, Header);
-            Offsets.Clear();
+			GensFileData.InitWrite(writer);
 
             //Root Node
             writer.Write((uint)LightType);
@@ -78,9 +68,13 @@ namespace HedgeLib.Lights
                 writer.Write(UnknownFloat2);
             }
 
-            //Footer
-            Gens.WriteFooter(writer, Header, Offsets);
-            Gens.FillInHeader(writer, Header);
+			GensFileData.FinishWrite(writer);
         }
-    }
+
+		//Other
+		public enum LightTypes
+		{
+			Directional, Omni
+		}
+	}
 }

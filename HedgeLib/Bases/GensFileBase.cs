@@ -3,10 +3,14 @@ using System.Collections.Generic;
 
 namespace HedgeLib.Bases
 {
-    public static class Gens
+    public class GensFileBase : IGameFormatBase
     {
-        //Methods
-        public static GensHeader ReadHeader(ExtendedBinaryReader reader)
+		//Variables/Constants
+		public List<uint> Offsets = new List<uint>();
+		public GensHeader Header = new GensHeader();
+
+		//Methods
+		public static GensHeader ReadHeader(ExtendedBinaryReader reader)
         {
             var header = new GensHeader()
             {
@@ -75,18 +79,39 @@ namespace HedgeLib.Bases
             header.FileSize = (uint)writer.BaseStream.Position;
         }
 
-        public static void AddOffset(ExtendedBinaryWriter writer,
-            List<uint> offsets, string offsetName)
-        {
-            offsets.Add((uint)writer.BaseStream.Position);
-            writer.AddOffset(offsetName);
-        }
+		public void InitRead(ExtendedBinaryReader reader)
+		{
+			Header = ReadHeader(reader);
+		}
 
-        public static void AddOffsetTable(ExtendedBinaryWriter writer,
-            List<uint> offsets, string namePrefix, uint offsetCount)
-        {
-            for (uint i = 0; i < offsetCount; ++i)
-                AddOffset(writer, offsets, namePrefix + "_" + i);
-        }
-    }
+		public void InitWrite(ExtendedBinaryWriter writer)
+		{
+			Offsets.Clear();
+			AddHeader(writer, Header);
+		}
+
+		public void FinishRead(ExtendedBinaryReader reader)
+		{
+			Offsets = ReadFooter(reader, Header);
+		}
+
+		public void FinishWrite(ExtendedBinaryWriter writer)
+		{
+			WriteFooter(writer, Header, Offsets);
+			FillInHeader(writer, Header);
+		}
+
+		public void AddOffset(ExtendedBinaryWriter writer, string offsetName)
+		{
+			Offsets.Add((uint)writer.BaseStream.Position);
+			writer.AddOffset(offsetName);
+		}
+
+		public void AddOffsetTable(ExtendedBinaryWriter writer,
+			string namePrefix, uint offsetCount)
+		{
+			for (uint i = 0; i < offsetCount; ++i)
+				AddOffset(writer, namePrefix + "_" + i);
+		}
+	}
 }
