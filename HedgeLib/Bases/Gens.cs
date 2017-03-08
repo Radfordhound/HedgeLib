@@ -42,10 +42,10 @@ namespace HedgeLib.Bases
 
         public static void AddHeader(ExtendedBinaryWriter writer, GensHeader header)
         {
-            writer.Offset = header.RootNodeOffset;
-            if (header.RootNodeOffset < GensHeader.Length)
-                header.RootNodeOffset = GensHeader.Length;
+			if (header.RootNodeOffset < GensHeader.Length)
+				header.RootNodeOffset = GensHeader.Length;
 
+			writer.Offset = header.RootNodeOffset;
             writer.WriteNulls(header.RootNodeOffset);
         }
 
