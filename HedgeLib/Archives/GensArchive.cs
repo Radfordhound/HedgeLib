@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Text;
 
 namespace HedgeLib.Archives
 {
@@ -7,13 +9,13 @@ namespace HedgeLib.Archives
         //Variables/Constants
         public uint Padding = 0x40;
 
-        public bool Split, GenARL = false;
-        public const uint Sig1 = 0, Sig2 = 0x10, Sig3 = 0x14;
+		public const string ARLSignature = "ARL2";
         public const string ListExtension = ".arl", Extension = ".ar",
             PFDExtension = ".pfd", SplitExtension = ".00";
+		public const uint Sig1 = 0, Sig2 = 0x10, Sig3 = 0x14;
 
-        //Constructors
-        public GensArchive() { }
+		//Constructors
+		public GensArchive() { }
         public GensArchive(Archive arc)
         {
             Files = arc.Files;
@@ -25,39 +27,29 @@ namespace HedgeLib.Archives
             var fileInfo = new FileInfo(filePath);
             if (fileInfo.Extension == SplitExtension || fileInfo.Extension == ListExtension)
             {
-                var ext = (fileInfo.Extension == ListExtension) ? ".ar" : "";
-                var shortName = fileInfo.Name.Substring(0,
+				string ext = (fileInfo.Extension == ListExtension) ? ".ar" : "";
+				string shortName = fileInfo.Name.Substring(0,
                     fileInfo.Name.Length - fileInfo.Extension.Length);
 
                 for (int i = 0; i <= 99; ++i)
                 {
-                    var fileName = Path.Combine(fileInfo.DirectoryName,
+					string fileName = Path.Combine(fileInfo.DirectoryName,
                     $"{shortName}{ext}.{i.ToString("00")}");
 
                     if (!File.Exists(fileName))
                         break;
 
-                    using (var fileStream = File.OpenRead(fileName))
-                    {
-                        Load(fileStream);
-                        fileStream.Close();
-                    }
+					LoadFile(fileName);
                 }
             }
             else
-            {
-                using (var fileStream = File.OpenRead(filePath))
-                {
-                    Load(fileStream);
-                    fileStream.Close();
-                }
-            }
+				LoadFile(filePath);
         }
 
         public override void Load(Stream fileStream)
         {
             //Header
-            ExtendedBinaryReader reader = new ExtendedBinaryReader(fileStream);
+            var reader = new ExtendedBinaryReader(fileStream);
 
             //Apparently SEGA doesn't even do signature checking (try loading an AR in-game
             //with the first 0xC bytes set to 0, it works just fine), so why should we?
@@ -77,7 +69,7 @@ namespace HedgeLib.Archives
                 string name = reader.ReadNullTerminatedString();
 
                 reader.JumpTo(dataStartOffset, false);
-                byte[] data = reader.ReadBytes((int)dataLength);
+                var data = reader.ReadBytes((int)dataLength);
                 reader.JumpTo(dataEndOffset, false);
 
                 var file = new ArchiveFile()
@@ -89,104 +81,122 @@ namespace HedgeLib.Archives
             }
         }
 
-        public override void Save(string filePath)
-        {
-            //TODO: Remove this once the Save method is working properly.
-            //throw new System.NotImplementedException();
+		public override void Save(string filePath)
+		{
+			Save(filePath, false, null);
+		}
 
-            ExtendedBinaryWriter arWriter = new ExtendedBinaryWriter(File.OpenWrite(Path.ChangeExtension(filePath, ".ar.00")));
-            int i = 0, off = 0, files = 0;
-            // AR.00 Creation
-            //Header
-            arWriter.Write(Sig1);
-            arWriter.Write(Sig2);
-            arWriter.Write(Sig3);
-            arWriter.Write(Padding);
-            //Data
-            foreach (var file in Files)
-            {
+		public void Save(string filePath, bool generateARL = true, uint? splitCount = 0xA00000)
+		{
+			var fileInfo = new FileInfo(filePath);
+			var archiveSizes = new List<uint>();
+			string shortName = fileInfo.Name.Substring(0,
+					fileInfo.Name.IndexOf('.'));
 
-                int hlen = 0x14 + file.Name.Length + 1;
-                off = (hlen + (int)arWriter.BaseStream.Position) % (int)Padding;
-                if (off != 0)
-                    hlen += (int)Padding - off;
-                if (arWriter.BaseStream.Position + hlen + file.Data.Length > 0xA00000 & files != 0 & Split)
-                {
-                    files = 0;
-                    i++;
-                    arWriter.Flush();
-                    arWriter.Close();
-                    arWriter = new ExtendedBinaryWriter(File.OpenWrite(Path.ChangeExtension(filePath, ".ar."+ i.ToString("00"))));
-                    arWriter.Write(Sig1);
-                    arWriter.Write(Sig2);
-                    arWriter.Write(Sig3);
-                    arWriter.Write(Padding);
-                    off = (hlen+(int)arWriter.BaseStream.Position) % (int)Padding;
-                    if (off != 0)
-                        hlen += (int)Padding - off;
-                }
-                arWriter.Write(hlen + file.Data.Length);//writer.AddOffset("dataEndOffset");
-                arWriter.Write(file.Data.Length);
-                arWriter.Write(hlen);//writer.AddOffset("dataStartOffset");
-                arWriter.WriteNulls(4); //TODO: Figure out what Unknown1 is.
-                arWriter.WriteNulls(4); //TODO: Figure out what Unknown2 is.
-                arWriter.WriteNullTerminatedString(file.Name);
-                off = (int)arWriter.BaseStream.Position % (int)Padding;
-                if (off != 0)
-                    arWriter.Write(new byte[Padding - off]);
-                //writer.FillInOffset("dataStartOffset");
-                arWriter.Write(file.Data);
-                //writer.FillInOffset("dataEndOffset");
-                files++;
-            }
-            
-            arWriter.Flush();
-            arWriter.Close();
-            if (GenARL)
-            {
-                // ARL Creation
-                // TODO: Fix ARL Creation with split files.
-                if(Split) throw new System.NotImplementedException();
-                ExtendedBinaryWriter arlWriter = new ExtendedBinaryWriter(File.OpenWrite(Path.HasExtension(filePath) ? filePath : filePath + ".arl"));
-                int split = 0;
-                string fileName = Path.ChangeExtension(filePath, ".ar");
-                System.Collections.Generic.List<byte> header = new System.Collections.Generic.List<byte>(new byte[] { 0x41, 0x52, 0x4C, 0x32 });
-                System.Collections.Generic.List<byte> data = new System.Collections.Generic.List<byte>();
-                while (File.Exists(fileName + "." + split.ToString("00")))
-                {
-                    ExtendedBinaryReader fileStream = new ExtendedBinaryReader(File.OpenRead(fileName + "." + split.ToString("00")));
-                    if (fileStream.ReadUInt32() == Sig1 & fileStream.ReadUInt32() == Sig2 & fileStream.ReadUInt32() == Sig3)
-                    {
-                        header.AddRange(System.BitConverter.GetBytes((int)fileStream.BaseStream.Length));
-                        int address = 0x10;
-                        while (address < (int)fileStream.BaseStream.Length)
-                        {
-                            fileStream.JumpTo(address + 0x14);
-                            string name = fileStream.ReadNullTerminatedString();
-                            data.Add((byte)name.Length);
-                            data.AddRange(System.Text.Encoding.ASCII.GetBytes(name));
-                            fileStream.JumpTo(address);
-                            if(fileStream.ReadInt32() == 0)
-                            {
-                                arlWriter.Close();
-                                throw new System.Exception("Got zero");
-                            }
-                            fileStream.JumpTo(address);
-                            address += fileStream.ReadInt32();
-                        }
-                        split++;
-                    }else
-                    {
-                        throw new System.Exception("Invalid Archive");
-                    }
-                    fileStream.Close();
-                }
-                header.InsertRange(4, System.BitConverter.GetBytes(System.Math.Max(split, 1)));
-                data.InsertRange(0, header);
-                arlWriter.Write(data.ToArray());
-                arlWriter.Flush();
-                arlWriter.Close();
-            }
-        }
+			if (splitCount.HasValue)
+			{
+				//Generate split Archives
+				int startIndex = 0, arcIndex = 0;
+
+				while (startIndex != -1)
+				{
+					string fileName = Path.Combine(fileInfo.DirectoryName,
+						$"{shortName}{Extension}.{arcIndex.ToString("00")}");
+
+					using (var fileStream = File.OpenWrite(fileName))
+					{
+						startIndex = Save(fileStream, splitCount, startIndex);
+
+						archiveSizes.Add((uint)fileStream.Length);
+						++arcIndex;
+
+						fileStream.Close();
+					}
+				}
+			}
+			else
+			{
+				//Generate archive
+				using (var fileStream = File.OpenWrite(filePath))
+				{
+					Save(fileStream, splitCount, 0);
+					archiveSizes.Add((uint)fileStream.Length);
+					fileStream.Close();
+				}
+			}
+
+			//Generate ARL
+			if (!generateARL) return;
+			string arlPath = Path.Combine(fileInfo.DirectoryName,
+				$"{shortName}{ListExtension}");
+
+			using (var fileStream = File.OpenWrite(arlPath))
+			{
+				GenerateARL(fileStream, archiveSizes);
+				fileStream.Close();
+			}
+		}
+
+		public override void Save(Stream fileStream)
+		{
+			Save(fileStream, null, 0);
+		}
+
+		public int Save(Stream fileStream, uint? sizeLimit, int startIndex = 0)
+		{
+			//Header
+			var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, false);
+			writer.Write(Sig1);
+			writer.Write(Sig2);
+			writer.Write(Sig3);
+
+			writer.Write(Padding);
+
+			//Data
+			for (int i = startIndex; i < Files.Count; ++i)
+			{
+				var file = Files[i];
+				writer.Offset = writer.BaseStream.Position;
+				if (writer.BaseStream.Position + file.Data.Length > sizeLimit)
+					return i;
+
+				writer.AddOffset("dataEndOffset");
+				writer.Write((uint)file.Data.LongLength);
+				writer.AddOffset("dataStartOffset");
+				writer.WriteNulls(8); //TODO: Figure out what unknown1 and unknown2 are.
+				writer.WriteNullTerminatedString(file.Name);
+				writer.FixPadding(Padding);
+
+				writer.FillInOffset("dataStartOffset", false);
+				writer.Write(file.Data);
+				writer.FillInOffset("dataEndOffset", false);
+			}
+
+			return -1;
+		}
+
+		public void GenerateARL(Stream fileStream, List<uint> archiveSizes)
+		{
+			//Header
+			var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, false);
+			writer.WriteSignature(ARLSignature);
+
+			writer.Write((uint)archiveSizes.Count);
+			foreach (uint arcSize in archiveSizes)
+				writer.Write(arcSize);
+
+			//Data
+			foreach (var file in Files)
+				writer.Write(file.Name);
+		}
+
+		private void LoadFile(string filePath)
+		{
+			using (var fileStream = File.OpenRead(filePath))
+			{
+				Load(fileStream);
+				fileStream.Close();
+			}
+		}
     }
 }

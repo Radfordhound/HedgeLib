@@ -14,7 +14,7 @@ Right now it supports the following:
 - Reading/Writing XML Havok data.
 
 ##Generations/Unleashed
-- Reading uncompressed archives.
+- Reading/Writing uncompressed archives.
 - Reading set data.
 - Reading/Writing terrain groups.
 

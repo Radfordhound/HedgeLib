@@ -5,7 +5,6 @@ namespace HedgeArchiveEditor
 {
     public partial class SaveOptions : Form
     {
-
         //Variables/Constants
         public int ArchiveType = -1;
 
@@ -14,18 +13,18 @@ namespace HedgeArchiveEditor
         {
             InitializeComponent();
             ArchiveType = 0;
-            comboBox1.Text = comboBox1.Items[ArchiveType] as string;
+            ComboBox1.Text = ComboBox1.Items[ArchiveType] as string;
         }
 
-        public SaveOptions(int ArchiveType)
+        public SaveOptions(int archiveType)
         {
             InitializeComponent();
-            this.ArchiveType = ArchiveType;
-            comboBox1.Text = comboBox1.Items[ArchiveType] as string;
+            ArchiveType = archiveType;
+            ComboBox1.Text = ComboBox1.Items[archiveType] as string;
         }
 
         //GUI Events
-        private void okBtn_Click(object sender, EventArgs e)
+        private void OkBtn_Click(object sender, EventArgs e)
         {
             DialogResult = DialogResult.OK;
             // This may not be the best way of checking
@@ -41,11 +40,16 @@ namespace HedgeArchiveEditor
             Close();
         }
 
-        private void cancelBtn_Click(object sender, EventArgs e)
+        private void CancelBtn_Click(object sender, EventArgs e)
         {
             DialogResult = DialogResult.Cancel;
             ArchiveType = -1;
             Close();
+        }
+
+        private void CheckBox2_CheckedChanged(object sender, EventArgs e)
+        {
+            label5.Enabled = NumericUpDown2.Enabled = CheckBox2.Checked;
         }
     }
 }

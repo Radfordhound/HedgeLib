@@ -98,37 +98,22 @@ namespace HedgeArchiveEditor
                 }
             }
 
-            //TODO: Add other archive types.
-            if (ArchiveType == 0)
-            {
-                //Generations/Unleashed Archive
-                if (Path.HasExtension(fileLocation))
-                    fileLocation = fileLocation.Remove(fileLocation.Length - 3);
-
-                if (fileLocation.EndsWith(".ar")) fileLocation += 'l';
-            }
-            else if (ArchiveType == 1)
-            {
-                //Lost World Archive
-                if (!Path.HasExtension(fileLocation)) fileLocation += ".pac";
-            }
-
             var saveOptions = new SaveOptions(ArchiveType);
             if (saveOptions.ShowDialog() == DialogResult.OK && saveOptions.ArchiveType != -1)
             {
                 //This is a horrible way of checking this, I know.
-                int val = saveOptions.comboBox1.SelectedIndex;
+                int val = saveOptions.ComboBox1.SelectedIndex;
                 switch (val)
                 {
                     case 0:
+                        uint? splitAmount = (saveOptions.CheckBox2.Checked) ?
+                            (uint?)saveOptions.NumericUpDown2.Value : null;
                         var genArc = new GensArchive(CurrentArchive)
                         {
-                            Padding = (uint)saveOptions.numericUpDown1.Value,
-                            GenARL = saveOptions.checkBox1.Checked,
-                            Split = saveOptions.checkBox2.Checked
+                            Padding = (uint)saveOptions.NumericUpDown1.Value,
                         };
-
-                        genArc.Save(fileLocation);
+                        
+                        genArc.Save(fileLocation, saveOptions.CheckBox1.Checked, splitAmount);
                         CurrentArchive.Saved = true;
                         break;
                     case 1:
