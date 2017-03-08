@@ -559,10 +559,12 @@ namespace HedgeArchiveEditor
                     for (int i = 0; i < CurrentArchive.Files.Count; i++)
                     {
                         ArchiveFile file2 = CurrentArchive.Files[i];
-                        if (new FileInfo(file).Name.ToLower() == file2.Name.ToLower())
+                        var fileInfo = new FileInfo(file);
+
+                        if (fileInfo.Name.ToLower() == file2.Name.ToLower())
                         {
                             if (MessageBox.Show($"There's already a file called {file2.Name}.\n" +
-                                "Do you want to replace {new FileInfo(file).Name}?", Text,
+                                $"Do you want to replace {fileInfo.Name}?", Text,
                                 MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
                                 return;
 
@@ -715,10 +717,12 @@ namespace HedgeArchiveEditor
                 for (int i = 0; i < CurrentArchive.Files.Count; ++i)
                 {
                     ArchiveFile file2 = CurrentArchive.Files[i];
-                    if (new FileInfo(file).Name.ToLower() == file2.Name.ToLower())
+                    var fileInfo = new FileInfo(file);
+
+                    if (fileInfo.Name.ToLower() == file2.Name.ToLower())
                     {
                         if (MessageBox.Show($"There's already a file called {file2.Name}.\n" +
-                            "Do you want to replace {new FileInfo(file).Name}?", Text,
+                            $"Do you want to replace {fileInfo.Name}?", Text,
                             MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
                             return;
 
