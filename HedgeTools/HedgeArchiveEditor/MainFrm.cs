@@ -581,9 +581,11 @@ namespace HedgeArchiveEditor
 
         private void TabControl_DragEnter(object sender, DragEventArgs e)
         {
-            if (e.Data.GetData(DataFormats.FileDrop) is string[] files &&
-                e.Data.GetDataPresent(DataFormats.FileDrop))
+            if (e.Data.GetDataPresent(DataFormats.FileDrop) &&
+                e.Data.GetData(DataFormats.FileDrop) is string[])
             {
+                var files = e.Data.GetData(DataFormats.FileDrop) as string[];
+
                 if (Archives.Count > 0)
                     e.Effect = DragDropEffects.Copy;
 
