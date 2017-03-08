@@ -98,6 +98,8 @@ namespace HedgeArchiveEditor
                 }
             }
 
+            if (fileLocation.ToLower().EndsWith("00.ar")) fileLocation = fileLocation.Substring(0, fileLocation.Length - 3);
+
             var saveOptions = new SaveOptions(ArchiveType);
             if (saveOptions.ShowDialog() == DialogResult.OK && saveOptions.ArchiveType != -1)
             {
@@ -112,7 +114,8 @@ namespace HedgeArchiveEditor
                         {
                             Padding = (uint)saveOptions.NumericUpDown1.Value,
                         };
-                        
+
+                        if (fileLocation.ToLower().EndsWith(".ar") && splitAmount == null) fileLocation += ".00";
                         genArc.Save(fileLocation, saveOptions.CheckBox1.Checked, splitAmount);
                         CurrentArchive.Saved = true;
                         break;
