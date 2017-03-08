@@ -1,3 +1,5 @@
+**IMPORTANT:** All code committed to this repository, preferrably, should follow [these style guidelines](https://github.com/Radfordhound/HedgeLib/wiki/Code-Style).
+
 This repository contains the following tools/libraries:
 
 # HedgeLib
