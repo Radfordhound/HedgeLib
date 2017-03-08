@@ -90,7 +90,7 @@
             this.createNewGISMToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N)));
             this.createNewGISMToolStripMenuItem.Size = new System.Drawing.Size(395, 30);
             this.createNewGISMToolStripMenuItem.Text = "Create &New GISM";
-            this.createNewGISMToolStripMenuItem.Click += new System.EventHandler(this.createNewGISMToolStripMenuItem_Click);
+            this.createNewGISMToolStripMenuItem.Click += new System.EventHandler(this.CreateNewGISMToolStripMenuItem_Click);
             // 
             // createFromDirectoryToolStripMenuItem
             // 
@@ -106,7 +106,7 @@
             this.openToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
             this.openToolStripMenuItem.Size = new System.Drawing.Size(280, 30);
             this.openToolStripMenuItem.Text = "&Open...";
-            this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
+            this.openToolStripMenuItem.Click += new System.EventHandler(this.OpenToolStripMenuItem_Click);
             // 
             // saveToolStripMenuItem
             // 
@@ -114,7 +114,7 @@
             this.saveToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
             this.saveToolStripMenuItem.Size = new System.Drawing.Size(280, 30);
             this.saveToolStripMenuItem.Text = "&Save";
-            this.saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
+            this.saveToolStripMenuItem.Click += new System.EventHandler(this.SaveToolStripMenuItem_Click);
             // 
             // saveAsToolStripMenuItem
             // 
@@ -123,7 +123,7 @@
             | System.Windows.Forms.Keys.S)));
             this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(280, 30);
             this.saveAsToolStripMenuItem.Text = "Save &As...";
-            this.saveAsToolStripMenuItem.Click += new System.EventHandler(this.saveAsToolStripMenuItem_Click);
+            this.saveAsToolStripMenuItem.Click += new System.EventHandler(this.SaveAsToolStripMenuItem_Click);
             // 
             // toolStripSeparator1
             // 
@@ -136,7 +136,7 @@
             this.exitToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.F4)));
             this.exitToolStripMenuItem.Size = new System.Drawing.Size(280, 30);
             this.exitToolStripMenuItem.Text = "E&xit";
-            this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
+            this.exitToolStripMenuItem.Click += new System.EventHandler(this.ExitToolStripMenuItem_Click);
             // 
             // mainPnl
             // 
@@ -159,8 +159,8 @@
             this.listBox1.Name = "listBox1";
             this.listBox1.Size = new System.Drawing.Size(578, 316);
             this.listBox1.TabIndex = 1;
-            this.listBox1.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
-            this.listBox1.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.listBox1_MouseDoubleClick);
+            this.listBox1.SelectedIndexChanged += new System.EventHandler(this.ListBox1_SelectedIndexChanged);
+            this.listBox1.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.ListBox1_MouseDoubleClick);
             // 
             // checkBox1
             // 
@@ -199,7 +199,7 @@
             this.editGismoBtn.TabIndex = 2;
             this.editGismoBtn.Text = "&Edit Gismo";
             this.editGismoBtn.UseVisualStyleBackColor = true;
-            this.editGismoBtn.Click += new System.EventHandler(this.editGismoBtn_Click);
+            this.editGismoBtn.Click += new System.EventHandler(this.EditGismoBtn_Click);
             // 
             // rmGismoBtn
             // 
@@ -212,7 +212,7 @@
             this.rmGismoBtn.TabIndex = 1;
             this.rmGismoBtn.Text = "&Remove Gismo";
             this.rmGismoBtn.UseVisualStyleBackColor = true;
-            this.rmGismoBtn.Click += new System.EventHandler(this.rmGismoBtn_Click);
+            this.rmGismoBtn.Click += new System.EventHandler(this.RmGismoBtn_Click);
             // 
             // addGismoBtn
             // 
@@ -224,7 +224,7 @@
             this.addGismoBtn.TabIndex = 0;
             this.addGismoBtn.Text = "&Add Gismo";
             this.addGismoBtn.UseVisualStyleBackColor = true;
-            this.addGismoBtn.Click += new System.EventHandler(this.addGismoBtn_Click);
+            this.addGismoBtn.Click += new System.EventHandler(this.AddGismoBtn_Click);
             // 
             // MainFrm
             // 
