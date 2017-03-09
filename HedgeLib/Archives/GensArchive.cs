@@ -27,26 +27,38 @@ namespace HedgeLib.Archives
             var fileInfo = new FileInfo(filePath);
             if (fileInfo.Extension == SplitExtension || fileInfo.Extension == ListExtension)
             {
-				string ext = (fileInfo.Extension == ListExtension) ? ".ar" : "";
-				string shortName = fileInfo.Name.Substring(0,
-                    fileInfo.Name.Length - fileInfo.Extension.Length);
-
-                for (int i = 0; i <= 99; ++i)
-                {
-					string fileName = Path.Combine(fileInfo.DirectoryName,
-                    $"{shortName}{ext}.{i.ToString("00")}");
-
-                    if (!File.Exists(fileName))
-                        break;
-
-					LoadFile(fileName);
-                }
+				var splitArchives = GetSplitArchivesList(filePath);
+				foreach (string arc in splitArchives)
+					LoadFile(arc);
             }
             else
 				LoadFile(filePath);
         }
 
-        public override void Load(Stream fileStream)
+		public override List<string> GetSplitArchivesList(string filePath)
+		{
+			var fileInfo = new FileInfo(filePath);
+			var splitArchivesList = new List<string>();
+
+			string ext = (fileInfo.Extension == ListExtension) ? ".ar" : "";
+			string shortName = fileInfo.Name.Substring(0,
+				fileInfo.Name.Length - fileInfo.Extension.Length);
+
+			for (int i = 0; i <= 99; ++i)
+			{
+				string fileName = Path.Combine(fileInfo.DirectoryName,
+				$"{shortName}{ext}.{i.ToString("00")}");
+
+				if (!File.Exists(fileName))
+					break;
+
+				splitArchivesList.Add(fileName);
+			}
+
+			return splitArchivesList;
+		}
+
+		public override void Load(Stream fileStream)
         {
             //Header
             var reader = new ExtendedBinaryReader(fileStream);

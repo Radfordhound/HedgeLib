@@ -1,4 +1,5 @@
 ﻿using HedgeLib.Bases;
+using System;
 using System.Collections.Generic;
 
 namespace HedgeLib.Archives
@@ -10,6 +11,11 @@ namespace HedgeLib.Archives
         public bool Saved = false;
 
         //Methods
+		public virtual List<string> GetSplitArchivesList(string filePath)
+		{
+			throw new NotImplementedException();
+		}
+
         public void Extract(string directory)
         {
             foreach (var file in Files)
