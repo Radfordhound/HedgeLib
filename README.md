@@ -23,8 +23,9 @@ Right now it supports the following:
 - Reading/Writing GISM files.
 
 # HedgeEdit
-**IMPORTANT** Please compile HedgeLib using Visual Studio and the sln file provided before opening HedgeEdit in Unity!
+**IMPORTANT:** Please compile HedgeLib using Visual Studio and the sln file provided before opening HedgeEdit in Unity!
 If done correctly, Visual Studio should automatically copy the generated DLL file to the HedgeEdit Assets\Libraries folder.
+
 
 A Unity-based level editor designed to carry much of the same functionality as "SonicGlvl," but with support for a large number of games in the series, rather than just Generations.
 
