@@ -8,6 +8,7 @@ public static class GameList
     //Variables/Constants
     public static Dictionary<string, GameEntry> Games = new Dictionary<string, GameEntry>();
     public const string FilePath = "GameList.xml";
+    public const float HighestSupportedVersion = 1.0f;
 
     //Methods
     public static void Load()
@@ -16,22 +17,62 @@ public static class GameList
         using (var fileStream = File.OpenRead(filePath))
         {
             var xml = XDocument.Load(fileStream);
+            var versionAttr = xml.Root.Attribute("version");
+            if (versionAttr != null)
+            {
+                float v;
+                if (float.TryParse(versionAttr.Value, out v) && v > HighestSupportedVersion)
+                {
+                    throw new FileLoadException("Could not load GameList. The file's version (" +
+                        versionAttr.Value + ") is higher than the highest supported version (" +
+                        HighestSupportedVersion + ")!", filePath);
+                }
+            }
+
             foreach (var element in xml.Root.Elements("Game"))
             {
+                //Game Name
                 var shortNameAttr = element.Attribute("shortName");
                 var nameAttr = element.Attribute("name");
+                var dataTypeAttr = element.Attribute("dataType");
 
-                if (shortNameAttr == null) continue;
-                string shortName = shortNameAttr.Value;
+                if (shortNameAttr == null || dataTypeAttr == null) continue;
+                string shortName = shortNameAttr.Value,
+                       dataType = dataTypeAttr.Value;
 
+                //Game Entry
                 var game = new GameEntry()
                 {
                     Name = (nameAttr == null) ?  shortName : nameAttr.Value,
+                    DataType = dataType,
                     ObjectTemplates = LoadObjectTemplates(shortName)
                 };
 
-                if (string.IsNullOrEmpty(Globals.CurrentGame))
-                    Globals.CurrentGame = shortName;
+                //Unpack Info
+                var unpackInfoElem = element.Element("UnpackInfo");
+                if (unpackInfoElem == null) continue;
+
+                foreach (var subElem in unpackInfoElem.Elements())
+                {
+                    var pathAttr = subElem.Attribute("path");
+                    var cachePathAttr = subElem.Attribute("cachePath");
+                    var searchPatternAttr = subElem.Attribute("searchPattern");
+                    if (pathAttr == null || cachePathAttr == null) continue;
+
+                    var entry = new UnpackInfoEntry()
+                    {
+                        Type = subElem.Name.LocalName,
+                        Path = pathAttr.Value,
+                        CachePath = cachePathAttr.Value,
+                        SearchPattern = (searchPatternAttr != null) ?
+                            searchPatternAttr.Value : null
+                    };
+
+                    game.UnpackInfo.Add(entry);
+                }
+
+                //TODO: LoadInfo Element.
+
                 Games.Add(shortName, game);
 
                 UnityEngine.Debug.Log("Loaded " + game.ObjectTemplates.Count +
@@ -73,5 +114,13 @@ public class GameEntry
     //Variables/Constants
     public Dictionary<string, SetObjectType> ObjectTemplates =
         new Dictionary<string, SetObjectType>();
-    public string Name;
+    public List<UnpackInfoEntry> UnpackInfo = new List<UnpackInfoEntry>();
+    public string Name, DataType;
+}
+
+public class UnpackInfoEntry
+{
+    //Variables/Constants
+    public string Type;
+    public string Path, CachePath, SearchPattern;
 }

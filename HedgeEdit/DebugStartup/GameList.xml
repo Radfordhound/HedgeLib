@@ -1,6 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
-<GameList>
-	<Game shortName="Generations" name="Sonic Generations" />
-	<Game shortName="Unleashed" name="Sonic Unleashed" />
-	<Game shortName="Lost World" name="Sonic Lost World" />
+<GameList version="1.0">
+	<Game shortName="Generations" name="Sonic Generations" dataType="Gens">
+		<UnpackInfo>
+			<!-- #Arc (E.G. #ghz200) -->
+			<Archive path="#{0}.ar.00" cachePath="#{0}" /> 
+			<!-- Arc (E.G. ghz200) -->
+			<Archive path="{0}.ar.00" cachePath="{0}" /> 
+			<!-- Packed Arc (E.G. Packed/ghz200) -->
+			<Archive path="Packed/{0}/{0}.ar.00" cachePath="Packed/{0}" />
+			<!-- TODO: Add Stage.pfd -->
+			<!-- TODO: Add Stage-Add.pfd -->
+		</UnpackInfo>
+		
+		<LoadInfo>
+			<Directory type="setData">#{0}</Directory>
+			<!-- TODO -->
+		</LoadInfo>
+	</Game>
+	
+	<Game shortName="Unleashed" name="Sonic Unleashed" dataType="Gens">
+		<UnpackInfo>
+			<!-- #Arc (E.G. #ActD_MykonosAct2) -->
+			<Archive path="#{0}.ar.00" cachePath="#{0}" /> 
+			<!-- Arc (E.G. ActD_MykonosAct2) -->
+			<Archive path="{0}.ar.00" cachePath="{0}" /> 
+			<!-- TODO: Add Stage.pfd -->
+			<!-- TODO: Add Stage-Add.pfd -->
+		</UnpackInfo>
+		
+		<LoadInfo>
+			<Directory type="setData">#{0}</Directory>
+			<!-- TODO -->
+		</LoadInfo>
+	</Game>
+	
+	<Game shortName="Lost World" name="Sonic Lost World" dataType="LW">
+		<UnpackInfo>
+			<!-- Misc PAC (E.G. w1a01_misc) -->
+			<Archive path="{0}/{0}_misc.pac" cachePath="{0}/misc" />
+			<!-- Far PAC (E.G. w1a01_far) -->
+			<Archive path="{0}/{0}_far.pac" cachePath="{0}/far" />
+			<!-- Obj PAC (E.G. w1a01_obj) -->
+			<Archive path="{0}/{0}_obj.pac" cachePath="{0}/obj" />
+			<!-- Sky PAC (E.G. w1a01_sky) -->
+			<Archive path="{0}/{0}_sky.pac" cachePath="{0}/sky" />
+			<!-- Trr_Cmn PAC (E.G w1a01_trr_cmn) -->
+			<Archive path="{0}/{0}_trr_cmn.pac" cachePath="{0}/trr_cmn"/>
+			
+			<!-- Set Data -->
+			<Files searchPattern="{0}_obj_**.orc" path="set" cachePath="set/{1}" />
+			<!-- Config.lua -->
+			<File path="{0}/{0}_config.lua" cachePath="{0}/{0}_config.lua" />
+		</UnpackInfo>
+		
+		<LoadInfo>
+			<Directory type="setData">set</Directory>
+			<Directory type="terrain">{0}/trr_cmn|{0}/far</Directory>
+			<Directory type="sky">{0}/sky</Directory>
+			<Directory type="objects">{0}/obj</Directory>
+			
+			<File type="collision">{0}/misc/{0}_col.phy.hkx</File>
+			<File type="sceneEffect">{0}/misc/{0}.hhd</File>
+			<File type="splines">{0}/misc/{0}_path.path2.bin</File>
+		</LoadInfo>
+	</Game>
 </GameList>
