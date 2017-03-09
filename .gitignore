@@ -249,3 +249,5 @@ ehthumbs.db
 # Other #
 # ===== #
 HedgeEdit/Binaries/
+HedgeEdit/DebugStartup/Cache/
+HedgeEdit/Assets/Libraries/*.dll
