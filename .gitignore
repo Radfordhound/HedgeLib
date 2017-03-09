@@ -250,4 +250,4 @@ ehthumbs.db
 # ===== #
 HedgeEdit/Binaries/
 HedgeEdit/DebugStartup/Cache/
-HedgeEdit/Assets/Libraries/*.dll
+HedgeEdit/Assets/Libraries/*.dll*
