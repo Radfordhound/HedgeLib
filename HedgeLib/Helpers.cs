@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Security.Cryptography;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -45,11 +46,25 @@ namespace HedgeLib
             writerSettings.Indent = true;
             writerSettings.IndentChars = "\t";
 
-            XmlWriter writer = XmlWriter.Create(fileStream, writerSettings);
+            var writer = XmlWriter.Create(fileStream, writerSettings);
             xml.Save(writer);
             writer.Flush();
             writer.Close();
         }
+
+		public static string GetFileHash(string filePath)
+		{
+			string fileHash;
+			using (var fileStream = File.OpenRead(filePath))
+			{
+				var md5 = MD5.Create();
+				var hash = md5.ComputeHash(fileStream);
+				fileHash = BitConverter.ToString(hash);
+				fileStream.Close();
+			}
+
+			return fileHash;
+		}
 
         public static string CombinePaths(params string[] paths)
         {
