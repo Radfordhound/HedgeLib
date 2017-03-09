@@ -883,14 +883,14 @@ namespace HedgeArchiveEditor
 
                         if (xx.EndsWith("MB"))
                             xx = Convert.ToDouble(xx.Substring(0, xx.Length - 3)) * 1024 + " KB";
-                        else if (xx.EndsWith("KB"))
+                        if (xx.EndsWith("KB"))
                             xx = Convert.ToDouble(xx.Substring(0, xx.Length - 3)) * 1024 + " Bytes";
-                        else if (xx.EndsWith("Bytes"))
+                        if (xx.EndsWith("Bytes"))
                             xx = xx.Substring(0, xx.Length - 6);
 
                         if (yy.EndsWith("MB"))
                             yy = Convert.ToDouble(yy.Substring(0, yy.Length - 3)) * 1024 + " KB";
-                        else if (yy.EndsWith("KB"))
+                        if (yy.EndsWith("KB"))
                             yy = Convert.ToDouble(yy.Substring(0, yy.Length - 3)) * 1024 + " Bytes";
                         if (yy.EndsWith("Bytes"))
                             yy = yy.Substring(0, yy.Length - 6);
