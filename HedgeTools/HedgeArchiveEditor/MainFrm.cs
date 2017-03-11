@@ -125,6 +125,7 @@ namespace HedgeArchiveEditor
                         throw new NotImplementedException("Unknown Archive Type");
                 }
             }
+            RefreshTabPage(index, false);
         }
 
         public void CloseArchive(int index)
@@ -179,18 +180,20 @@ namespace HedgeArchiveEditor
             ListView lv = tp.Controls[0] as ListView;
             Archive arc = Archives[index];
 
-            lv.SmallImageList = new ImageList();
-            Directory.CreateDirectory(Path.Combine(tempPath, "File_Extensions"));
-
             //Update TabPage Text
             tp.Text = (tp.Tag as string) + ((arc.Saved) ? "" : "*");
 
             //Update File List
             if (!refreshFileList || lv == null) return;
+
+            lv.SmallImageList = new ImageList();
+            Directory.CreateDirectory(Path.Combine(tempPath, "File_Extensions"));
+
             lv.Items.Clear();
 
             lv.MouseMove += Lv_MouseMove;
             lv.MouseUp += Lv_MouseUp;
+            lv.MouseDoubleClick += Lv_MouseDoubleClick;
 
             int longestNameLength = 0, longestExtensionLength = 0, longestSizeLength = 0;
             foreach (var file in arc.Files)
@@ -778,6 +781,27 @@ namespace HedgeArchiveEditor
             }
         }
 
+        private void Lv_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            var lv = sender as ListView;
+            var ar = CurrentArchive;
+            if (lv.SelectedItems.Count == 1)
+            {
+                for (int i = 0; i < ar.Files.Count; ++i)
+                {
+                    if (ar.Files[i].Name == lv.SelectedItems[0].SubItems[0].Text)
+                    {
+                        var path = Path.Combine(tempPath, "Extracted_Files\\");
+                        var filePath = Path.Combine(path, ar.Files[i].Name);
+                        Directory.CreateDirectory(path);
+                        ar.Files[i].Extract(filePath);
+                        System.Diagnostics.Process.Start(filePath);
+                        break;
+                    }
+                }                
+            }
+        }
+
         // NOTE: Lv_MouseMove needs a lot of work
         private void Lv_MouseUp(object sender, MouseEventArgs e)
         {
@@ -787,7 +811,7 @@ namespace HedgeArchiveEditor
         private void Lv_MouseMove(object sender, MouseEventArgs e)
         {
             ListView lv = sender as ListView;
-            if (e.Button == MouseButtons.Left && lv.SelectedItems.Count > 0)
+            if (e.Button == MouseButtons.Left && lv.SelectedItems.Count > 0 && !lv.FocusedItem.Bounds.Contains(lv.PointToClient(MousePosition)))
             {
                 List<string> fileList = new List<string>();
                 try
