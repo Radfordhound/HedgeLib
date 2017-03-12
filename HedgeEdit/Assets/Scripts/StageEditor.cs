@@ -1,5 +1,6 @@
 ﻿using HedgeLib;
 using HedgeLib.Archives;
+using HedgeLib.Misc;
 using HedgeLib.Sets;
 using System.Collections.Generic;
 using System.IO;
@@ -39,85 +40,36 @@ public class StageEditor : MonoBehaviour
 	}
 
     //Methods
-    public void Load(string cacheDir, string gameType)
+    public void Load(string cacheDir, string stgID, GameEntry game)
     {
-        //TODO
-    }
-
-    //TODO: Remove this old method.
-    //public void Load(string directory)
-    //{
-    //    var resourcesDir = HedgeLib.Helpers.CombinePaths(directory, ResourcesPath);
-
-    //    //TODO: Load Everything Else.
-    //    //TODO: Make this all load from the cache correctly.
-
-    //    //Load Lights
-    //    foreach (var lightFile in Directory.GetFiles(resourcesDir, "*" +
-    //        HedgeLib.Lights.Light.Extension))
-    //    {
-    //        var light = new HedgeLib.Lights.Light();
-    //        light.Load(lightFile);
-
-    //        var lightObject = Convert.ToUnity(light);
-    //        lightObject.gameObject.transform.parent = LightParentObject.transform;
-    //    }
-
-    //    //Load Sets
-    //    //TODO: Add support for other types of set data.
-    //    foreach (var file in Directory.GetFiles(directory, "*.xml"))
-    //    {
-    //        //Skip past this file if it isn't set data
-    //        var fileInfo = new FileInfo(file);
-    //        int extIndex = fileInfo.Name.Length - GensSetData.Extension.Length;
-    //        if (extIndex < 0 || fileInfo.Name.Substring(extIndex) != GensSetData.Extension)
-    //            continue;
-
-    //        //Load Generations/Unleashed Set Data
-    //        var setData = new GensSetData();
-    //        var objectTemplates = (GameList.Games.ContainsKey(Globals.CurrentGame)) ?
-    //            GameList.Games[Globals.CurrentGame].ObjectTemplates : null;
-
-    //        setData.Load(file, objectTemplates);
-    //        Globals.Sets.Add(setData);
-
-    //        //Spawn Objects in World
-    //        GameObject setDataObject = new GameObject(fileInfo.Name.Substring(0, extIndex));
-    //        for (int i = 0; i < setData.Objects.Count; ++i)
-    //        {
-    //            var obj = setData.Objects[i];
-    //            var gameObject = GameObject.CreatePrimitive(PrimitiveType.Cube); //TODO: Load actual models.
-    //            var setObj = gameObject.AddComponent<UnitySetObject>();
-
-    //            setObj.InitFromSetObject(obj, i);
-    //            gameObject.transform.parent = setDataObject.transform;
-    //        }
-    //        setDataObject.transform.parent = SetParentObject.transform;
-
-    //        Debug.Log("Loaded " + fileInfo.Name); //TODO: REMOVE THIS LINE
-    //    }
-    //}
-
-    public void Unpack(string dataDir, string stgID, string gameType, GameEntry game)
-    {
-        //Make cache directory
-        string cacheDir = Helpers.CombinePaths(Globals.StartupPath, CachePath, stgID);
-        string editorCachePath = Helpers.CombinePaths(cacheDir, EditorCache.FileName);
-        Directory.CreateDirectory(cacheDir);
-
-        //Load EditorCache.xml
-        EditorCache editorCache = null;
-
-        if (File.Exists(editorCachePath))
+        //Load Directories
+        foreach (var entry in game.LoadInfo.Directories)
         {
-            editorCache = new EditorCache();
-            editorCache.Load(editorCachePath);
+            var dirEntry = entry.Value;
+            var dirs = string.Format(dirEntry.Directory, stgID).Split('|');
 
-            if (editorCache.GameType.ToLower() != gameType.ToLower())
-                editorCache = null;
+            foreach (string dir in dirs)
+            {
+                string fullDir = Helpers.CombinePaths(cacheDir, dir);
+                foreach (string file in Directory.GetFiles(fullDir, dirEntry.Filter))
+                {
+                    LoadFile(entry.Key, file, game);
+                }
+            }
         }
 
-        //Unpack data
+        //Load Files
+        foreach (var entry in game.LoadInfo.Files)
+        {
+            string fileName = string.Format(entry.Value, stgID);
+            string file = Helpers.CombinePaths(cacheDir, fileName);
+            LoadFile(entry.Key, file, game);
+        }
+    }
+
+    public List<List<string>> Unpack(string cacheDir, EditorCache editorCache,
+        string dataDir, string stgID, GameEntry game)
+    {
         var arcHashes = new List<List<string>>();
         int arcIndex = 0;
 
@@ -143,7 +95,7 @@ public class StageEditor : MonoBehaviour
                 case "archive":
                     {
                         //Get file hashes
-                        var arc = GetArchiveType(game.DataType);
+                        var arc = game.GameDataType.GetArchiveType();
                         if (arc == null)
                         {
                             ++arcIndex;
@@ -163,7 +115,7 @@ public class StageEditor : MonoBehaviour
                             arcHashesSub.Add(arcHash);
 
                             if (editorCache == null || editorCacheHashes == null ||
-                                editorCacheHashes[i] != arcHash)
+                                i >= editorCacheHashes.Count || editorCacheHashes[i] != arcHash)
                             {
                                 hashesMatch = false;
                             }
@@ -203,37 +155,13 @@ public class StageEditor : MonoBehaviour
             }
         }
 
-        //Generate Editor Cache
-        if (editorCache != null) File.Delete(editorCachePath);
-        editorCache = new EditorCache()
-        {
-            GameType = gameType,
-            ArcHashes = arcHashes
-        };
-
-        editorCache.Save(editorCachePath);
+        return arcHashes;
     }
 
     private void CopyData(string path, string destPath)
     {
         Directory.CreateDirectory(new FileInfo(destPath).DirectoryName);
         File.Copy(path, destPath, true);
-    }
-
-    private Archive GetArchiveType(string dataType)
-    {
-        Archive arc = null;
-
-        switch (dataType.ToLower())
-        {
-            case "gens":
-                arc = new GensArchive();
-                break;
-
-                //TODO: Add support for more data types (such as "LW").
-        }
-
-        return arc;
     }
 
     private void UnpackArchive(Archive arc, string arcPath, string dir)
@@ -244,18 +172,86 @@ public class StageEditor : MonoBehaviour
                 "not be found!", arcPath);
 
         Directory.CreateDirectory(dir);
-        
+
         arc.Load(arcPath);
         arc.Extract(dir);
 
         arc = null; //This is just to ensure the archive's data gets unloaded right away.
     }
 
+    private void LoadFile(string type, string filePath, GameEntry game)
+    {
+        if (!File.Exists(filePath)) return;
+        var fileInfo = new FileInfo(filePath);
+
+        switch (type.ToLower())
+        {
+            case "lightlist":
+                {
+                    //Load Light-List
+                    var lightList = new HedgeLib.Lights.GensLightList();
+                    lightList.Load(filePath);
+
+                    //Load all lights in list
+                    foreach (var lightName in lightList.LightNames)
+                    {
+                        string lightPath = Helpers.CombinePaths(fileInfo.DirectoryName,
+                            lightName + HedgeLib.Lights.Light.Extension);
+                        var light = new HedgeLib.Lights.Light();
+
+                        light.Load(lightPath);
+
+                        var lightObject = Convert.ToUnity(light);
+                        lightObject.gameObject.transform.parent = LightParentObject.transform;
+                        lightObject.gameObject.name = lightName;
+                    }
+
+                    return;
+                }
+
+            case "gensstagexml":
+                {
+                    var stageXML = new GensStageXML();
+                    stageXML.Load(filePath);
+
+                    //TODO: Load sonic spawn data.
+                    //TODO: Load path data.
+
+                    return;
+                }
+
+            case "setdata":
+                {
+                    var setData = new GensSetData();
+                    setData.Load(filePath, game.ObjectTemplates);
+                    Globals.Sets.Add(setData);
+
+                    //Spawn Objects in World
+                    GameObject setDataObject = new GameObject(fileInfo.Name);
+                    for (int i = 0; i < setData.Objects.Count; ++i)
+                    {
+                        //TODO: Load actual models.
+                        var obj = setData.Objects[i];
+                        var gameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                        var setObj = gameObject.AddComponent<UnitySetObject>();
+
+                        setObj.InitFromSetObject(obj, i);
+                        gameObject.transform.parent = setDataObject.transform;
+                    }
+
+                    setDataObject.transform.parent = SetParentObject.transform;
+                    return;
+                }
+
+                //TODO: Add more types.
+        }
+    }
+
     //GUI Events
     public void LoadGUI()
     {
         string gameType = StageTypeDropdown.options[StageTypeDropdown.value].text;
-        var game = GameList.Games[gameType];
+        GameEntry game = null;
 
         if (!GameList.Games.ContainsKey(gameType))
         {
@@ -263,13 +259,47 @@ public class StageEditor : MonoBehaviour
                 GameList.FilePath + " for " + gameType + ". Cannot load stage.");
         }
 
+        game = GameList.Games[gameType];
+
+        //Make cache directory
+        string cacheDir = Helpers.CombinePaths(Globals.StartupPath, CachePath, StageIDTxtbx.text);
+        string editorCachePath = Helpers.CombinePaths(cacheDir, EditorCache.FileName);
+        Directory.CreateDirectory(cacheDir);
+
+        //Load EditorCache.xml
+        EditorCache editorCache = null;
+
+        if (File.Exists(editorCachePath))
+        {
+            editorCache = new EditorCache();
+            editorCache.Load(editorCachePath);
+
+            if (editorCache.GameType.ToLower() != gameType.ToLower())
+                editorCache = null;
+        }
+
+        //Unpack Data
         //TODO: Remove all these stopwatches.
         var unpackStopWatch = System.Diagnostics.Stopwatch.StartNew();
-        Unpack(StageDirTxtbx.text, StageIDTxtbx.text, gameType, game);
+        var arcHashes = Unpack(cacheDir, editorCache,
+            StageDirTxtbx.text, StageIDTxtbx.text, game);
         unpackStopWatch.Stop();
         Debug.Log("Done unpacking! Time (ms): " + unpackStopWatch.ElapsedMilliseconds);
 
-        //TODO: Load stage as well.
-        Debug.Log("Done loading!");
+        //Generate New Editor Cache
+        if (editorCache != null) File.Delete(editorCachePath);
+        editorCache = new EditorCache()
+        {
+            GameType = gameType,
+            ArcHashes = arcHashes
+        };
+
+        editorCache.Save(editorCachePath);
+
+        //Load Data
+        var loadStopWatch = System.Diagnostics.Stopwatch.StartNew();
+        Load(cacheDir, StageIDTxtbx.text, game);
+        loadStopWatch.Stop();
+        Debug.Log("Done loading! Time (ms): " + loadStopWatch.ElapsedMilliseconds);
     }
 }

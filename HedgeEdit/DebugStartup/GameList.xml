@@ -13,7 +13,9 @@
 		</UnpackInfo>
 		
 		<LoadInfo>
-			<Directory type="setData">#{0}</Directory>
+			<File type="gensStageXML">#{0}/Stage.stg.xml</File>
+			<File type="lightList">Packed/{0}/light-list.light-list</File>
+			<Directory type="setData" filter="*.set.xml">#{0}</Directory>
 			<!-- TODO -->
 		</LoadInfo>
 	</Game>
@@ -29,7 +31,9 @@
 		</UnpackInfo>
 		
 		<LoadInfo>
-			<Directory type="setData">#{0}</Directory>
+			<!-- TODO: SU Stage XML -->
+			<Directory type="setData" filter="*.set.xml">#{0}</Directory>
+			<File type="lightList">Packed/{0}/light-list.light-list</File>
 			<!-- TODO -->
 		</LoadInfo>
 	</Game>
@@ -54,7 +58,9 @@
 		</UnpackInfo>
 		
 		<LoadInfo>
-			<Directory type="setData">set</Directory>
+			<Directory type="setData" filter="*.orc">set</Directory>
+			
+			<!-- TODO: Add filters to these directory elements -->
 			<Directory type="terrain">{0}/trr_cmn|{0}/far</Directory>
 			<Directory type="sky">{0}/sky</Directory>
 			<Directory type="objects">{0}/obj</Directory>

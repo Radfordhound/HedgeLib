@@ -942,8 +942,6 @@ MonoBehaviour:
   StageTypeDropdown: {fileID: 2047321614}
   StageDirTxtbx: {fileID: 588959400}
   StageIDTxtbx: {fileID: 2024791652}
-  DebugFilePath: E:\Program Files (x86)\Steam\SteamApps\common\Sonic Lost World\mods\Spectrum\disk\sonic2013_patch_0\stg110\stg110_trr_cmn\Direct01.light
-  DebugOutputDir: E:\Users\Graha_000\Documents\Visual Studio 2015\Projects\HedgeLib\HedgeEdit\DebugStartup\Cache\Test\out
 --- !u!4 &743495183
 Transform:
   m_ObjectHideFlags: 0

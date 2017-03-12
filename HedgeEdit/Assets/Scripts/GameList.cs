@@ -43,8 +43,9 @@ public static class GameList
                 //Game Entry
                 var game = new GameEntry()
                 {
-                    Name = (nameAttr == null) ?  shortName : nameAttr.Value,
+                    Name = (nameAttr == null) ? shortName : nameAttr.Value,
                     DataType = dataType,
+                    GameDataType = DataTypes.GetDataType(dataType),
                     ObjectTemplates = LoadObjectTemplates(shortName)
                 };
 
@@ -83,10 +84,23 @@ public static class GameList
                     switch (subElem.Name.LocalName.ToLower())
                     {
                         case "directory":
-                            game.LoadInfo.Directories.Add(typeAttr.Value, subElem.Value);
-                            break;
+                            {
+                                var filterAttr = subElem.Attribute("filter");
+                                if (filterAttr == null ||
+                                    game.LoadInfo.Directories.ContainsKey(typeAttr.Value))
+                                    continue;
+
+                                var dirEntry = new LoadInfoDirectory()
+                                {
+                                    Directory = subElem.Value,
+                                    Filter = filterAttr.Value
+                                };
+                                game.LoadInfo.Directories.Add(typeAttr.Value, dirEntry);
+                                break;
+                            }
 
                         case "file":
+                            if (game.LoadInfo.Files.ContainsKey(typeAttr.Value)) continue;
                             game.LoadInfo.Files.Add(typeAttr.Value, subElem.Value);
                             break;
                     }
@@ -136,6 +150,7 @@ public class GameEntry
         new Dictionary<string, SetObjectType>();
     public List<UnpackInfoEntry> UnpackInfo = new List<UnpackInfoEntry>();
     public LoadInfo LoadInfo = new LoadInfo();
+    public IGameDataType GameDataType;
     public string Name, DataType;
 }
 
@@ -149,6 +164,13 @@ public class UnpackInfoEntry
 public class LoadInfo
 {
     //Variables/Constants
-    public Dictionary<string, string> Directories = new Dictionary<string, string>();
+    public Dictionary<string, LoadInfoDirectory> Directories =
+        new Dictionary<string, LoadInfoDirectory>();
     public Dictionary<string, string> Files = new Dictionary<string, string>();
+}
+
+public class LoadInfoDirectory
+{
+    //Variables/Constants
+    public string Directory, Filter;
 }
