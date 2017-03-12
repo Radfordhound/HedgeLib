@@ -222,7 +222,7 @@ public class StageEditor : MonoBehaviour
 
             case "setdata":
                 {
-                    var setData = new GensSetData();
+                    var setData = game.GameDataType.GetSetDataType();
                     setData.Load(filePath, game.ObjectTemplates);
                     Globals.Sets.Add(setData);
 
