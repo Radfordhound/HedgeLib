@@ -17,6 +17,7 @@ Right now it supports the following:
 - Reading/Writing uncompressed archives.
 - Reading set data.
 - Reading/Writing terrain groups.
+- Reading/Writing light lists.
 
 ##Lost World
 - Reading/Writing BINA headers/footers.

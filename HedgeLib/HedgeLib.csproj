@@ -68,6 +68,7 @@
     <Compile Include="Headers\GensHeader.cs" />
     <Compile Include="Headers\LWHeader.cs" />
     <Compile Include="Helpers.cs" />
+    <Compile Include="Lights\GensLightList.cs" />
     <Compile Include="Lights\Light.cs" />
     <Compile Include="Misc\LWGism.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
