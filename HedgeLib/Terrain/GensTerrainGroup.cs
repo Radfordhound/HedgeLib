@@ -3,6 +3,7 @@ using System.IO;
 
 namespace HedgeLib.Terrain
 {
+	//Based off of the wonderful SCHG page on Sonic Generations over at Sonic Retro
 	public class GensTerrainGroup : FileBase
     {
         //Variables/Constants

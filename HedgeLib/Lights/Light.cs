@@ -3,6 +3,7 @@ using System.IO;
 
 namespace HedgeLib.Lights
 {
+	//Based off of the wonderful SCHG page on Sonic Generations over at Sonic Retro
 	public class Light : FileBase
     {
 		//Variables/Constants
