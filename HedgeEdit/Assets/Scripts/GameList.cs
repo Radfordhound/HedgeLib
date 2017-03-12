@@ -71,13 +71,33 @@ public static class GameList
                     game.UnpackInfo.Add(entry);
                 }
 
-                //TODO: LoadInfo Element.
+                //Load Info
+                var loadInfoElem = element.Element("LoadInfo");
+                if (loadInfoElem == null) continue;
+
+                foreach (var subElem in loadInfoElem.Elements())
+                {
+                    var typeAttr = subElem.Attribute("type");
+                    if (typeAttr == null) continue;
+
+                    switch (subElem.Name.LocalName.ToLower())
+                    {
+                        case "directory":
+                            game.LoadInfo.Directories.Add(typeAttr.Value, subElem.Value);
+                            break;
+
+                        case "file":
+                            game.LoadInfo.Files.Add(typeAttr.Value, subElem.Value);
+                            break;
+                    }
+                }
 
                 Games.Add(shortName, game);
 
                 UnityEngine.Debug.Log("Loaded " + game.ObjectTemplates.Count +
                     " templates for " + game.Name + "."); //TODO: REMOVE THIS
             }
+
             fileStream.Close();
         }
     }
@@ -115,6 +135,7 @@ public class GameEntry
     public Dictionary<string, SetObjectType> ObjectTemplates =
         new Dictionary<string, SetObjectType>();
     public List<UnpackInfoEntry> UnpackInfo = new List<UnpackInfoEntry>();
+    public LoadInfo LoadInfo = new LoadInfo();
     public string Name, DataType;
 }
 
@@ -123,4 +144,11 @@ public class UnpackInfoEntry
     //Variables/Constants
     public string Type;
     public string Path, CachePath, SearchPattern;
+}
+
+public class LoadInfo
+{
+    //Variables/Constants
+    public Dictionary<string, string> Directories = new Dictionary<string, string>();
+    public Dictionary<string, string> Files = new Dictionary<string, string>();
 }
