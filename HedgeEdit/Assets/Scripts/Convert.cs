@@ -5,17 +5,17 @@ public static class Convert
     //Methods
     public static Vector3 ToUnity(HedgeLib.Vector3 vect)
     {
-        return new Vector3(vect.X, vect.Y, vect.Z);
+        return new Vector3(vect.Z, vect.Y, vect.X);
     }
 
     public static Vector4 ToUnity(HedgeLib.Vector4 vect)
     {
-        return new Vector4(vect.X, vect.Y, vect.Z, vect.W);
+        return new Vector4(vect.Z, vect.Y, vect.X, vect.W);
     }
 
     public static Quaternion ToUnity(HedgeLib.Quaternion quat)
     {
-        return new Quaternion(quat.X, quat.Y, quat.Z, quat.W);
+        return new Quaternion(-quat.Z, -quat.Y, -quat.X, quat.W);
     }
 
     public static Light ToUnity(HedgeLib.Lights.Light light)
