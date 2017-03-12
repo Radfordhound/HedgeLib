@@ -114,5 +114,31 @@ namespace HedgeLib
 
             return Convert.ChangeType(value, conversionType);
         }
-    }
+
+		public static Vector3 XMLReadVector3(XElement element)
+		{
+			var x = element.Element("x");
+			var y = element.Element("y");
+			var z = element.Element("z");
+
+			return new Vector3(
+				(x == null) ? 0 : Convert.ToSingle(x.Value),
+				(y == null) ? 0 : Convert.ToSingle(y.Value),
+				(z == null) ? 0 : Convert.ToSingle(z.Value));
+		}
+
+		public static Quaternion XMLReadQuat(XElement element)
+		{
+			var x = element.Element("x");
+			var y = element.Element("y");
+			var z = element.Element("z");
+			var w = element.Element("w");
+
+			return new Quaternion(
+				(x == null) ? 0 : Convert.ToSingle(x.Value),
+				(y == null) ? 0 : Convert.ToSingle(y.Value),
+				(z == null) ? 0 : Convert.ToSingle(z.Value),
+				(w == null) ? 0 : Convert.ToSingle(w.Value));
+		}
+	}
 }

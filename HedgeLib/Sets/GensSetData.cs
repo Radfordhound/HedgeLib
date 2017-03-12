@@ -14,11 +14,10 @@ namespace HedgeLib.Sets
         public override void Load(Stream fileStream,
             Dictionary<string, SetObjectType> objectTemplates)
         {
-            XDocument xml = Helpers.GetXDocStream(fileStream);
+            var xml = Helpers.GetXDocStream(fileStream);
             foreach (var element in xml.Root.Elements())
             {
                 string elemName = element.Name.LocalName;
-
                 if (elemName.ToLower() == "layerdefine")
                 {
                     //TODO: Parse LayerDefine XML elements.
@@ -38,11 +37,11 @@ namespace HedgeLib.Sets
                         switch (paramName.ToLower())
                         {
                             case "position":
-                                transform.Position = ReadVector3(paramElement);
+                                transform.Position = Helpers.XMLReadVector3(paramElement);
                                 continue;
 
                             case "rotation":
-                                transform.Rotation = ReadQuaternion(paramElement);
+                                transform.Rotation = Helpers.XMLReadQuat(paramElement);
                                 continue;
 
                             case "setobjectid":
@@ -72,9 +71,11 @@ namespace HedgeLib.Sets
                                                         continue;
 
                                                     var pos = (posElem == null) ?
-                                                        new Vector3() : ReadVector3(posElem);
+                                                        new Vector3() :
+														Helpers.XMLReadVector3(posElem);
                                                     var rot = (rotElem == null) ?
-                                                        new Quaternion() : ReadQuaternion(rotElem);
+                                                        new Quaternion() :
+														Helpers.XMLReadQuat(rotElem);
 
                                                     var childTransform = new SetObjectTransform()
                                                     {
@@ -106,8 +107,8 @@ namespace HedgeLib.Sets
 
                         //Read the parameter's data
                         object data =
-                            (paramType == typeof(Vector3)) ? ReadVector3(paramElement) :
-                            (paramType == typeof(Quaternion)) ? ReadQuaternion(paramElement) :
+                            (paramType == typeof(Vector3)) ? Helpers.XMLReadVector3(paramElement) :
+                            (paramType == typeof(Quaternion)) ? Helpers.XMLReadQuat(paramElement) :
                             Helpers.ChangeType(paramElement.Value, paramType);
 
                         //Add the Parameter to the list
@@ -142,32 +143,6 @@ namespace HedgeLib.Sets
         }
 
         //TODO: Save Method.
-
-        private static Vector3 ReadVector3(XElement element)
-        {
-            var x = element.Element("x");
-            var y = element.Element("y");
-            var z = element.Element("z");
-
-            return new Vector3(
-                (x == null) ? 0 : Convert.ToSingle(x.Value),
-                (y == null) ? 0 : Convert.ToSingle(y.Value),
-                (z == null) ? 0 : Convert.ToSingle(z.Value));
-        }
-
-        private static Quaternion ReadQuaternion(XElement element)
-        {
-            var x = element.Element("x");
-            var y = element.Element("y");
-            var z = element.Element("z");
-            var w = element.Element("w");
-
-            return new Quaternion(
-                (x == null) ? 0 : Convert.ToSingle(x.Value),
-                (y == null) ? 0 : Convert.ToSingle(y.Value),
-                (z == null) ? 0 : Convert.ToSingle(z.Value),
-                (w == null) ? 0 : Convert.ToSingle(w.Value));
-        }
 
         private static Type AutoDetectParamType(XElement element)
         {
