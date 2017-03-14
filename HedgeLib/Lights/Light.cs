@@ -24,8 +24,10 @@ namespace HedgeLib.Lights
 
             //Root Node
             uint lightType = reader.ReadUInt32();
-            if (lightType < 0 || lightType > 1)
-                throw new InvalidDataException("Cannot read light - unknown light type!");
+			if (lightType < 0 || lightType > 1)
+			{
+				throw new FileLoadException("Cannot read light - unknown light type!");
+			}
 
             //Data
             LightType = (LightTypes)lightType;
