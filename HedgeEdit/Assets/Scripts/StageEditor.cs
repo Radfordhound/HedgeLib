@@ -1,7 +1,6 @@
 ﻿using HedgeLib;
 using HedgeLib.Archives;
 using HedgeLib.Misc;
-using HedgeLib.Sets;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -13,6 +12,8 @@ public class StageEditor : MonoBehaviour
     public GameObject SetParentObject, LightParentObject;
     public Dropdown StageTypeDropdown;
     public InputField StageDirTxtbx, StageIDTxtbx;
+
+    public static bool Saved = false;
 
     public const string ResourcesPath = "Resources", CachePath = "Cache";
 
