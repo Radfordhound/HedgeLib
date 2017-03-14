@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Xml.Linq;
+using UnityEngine;
 
 public static class GameList
 {
@@ -35,6 +36,7 @@ public static class GameList
                 var shortNameAttr = element.Attribute("shortName");
                 var nameAttr = element.Attribute("name");
                 var dataTypeAttr = element.Attribute("dataType");
+                var unitMultiplierAttr = element.Attribute("unitMultiplier");
 
                 if (shortNameAttr == null || dataTypeAttr == null) continue;
                 string shortName = shortNameAttr.Value,
@@ -46,7 +48,9 @@ public static class GameList
                     Name = (nameAttr == null) ? shortName : nameAttr.Value,
                     DataType = dataType,
                     GameDataType = DataTypes.GetDataType(dataType),
-                    ObjectTemplates = LoadObjectTemplates(shortName)
+                    ObjectTemplates = LoadObjectTemplates(shortName),
+                    UnitMultiplier = (unitMultiplierAttr == null) ? 1 :
+                        System.Convert.ToSingle(unitMultiplierAttr.Value)
                 };
 
                 //Unpack Info
@@ -135,6 +139,13 @@ public static class GameList
                     fileInfo.Name.Length - SetObjectType.Extension.Length);
 
                 template.Load(file);
+                if (objectTemplates.ContainsKey(objTypeName))
+                {
+                    Debug.LogWarning("WARNING: Skipping over duplicate template \"" +
+                        objTypeName + "\".");
+                    continue;
+                }
+
                 objectTemplates.Add(objTypeName, template);
             }
         }
@@ -148,10 +159,13 @@ public class GameEntry
     //Variables/Constants
     public Dictionary<string, SetObjectType> ObjectTemplates =
         new Dictionary<string, SetObjectType>();
+
     public List<UnpackInfoEntry> UnpackInfo = new List<UnpackInfoEntry>();
     public LoadInfo LoadInfo = new LoadInfo();
+
     public IGameDataType GameDataType;
     public string Name, DataType;
+    public float UnitMultiplier = 1;
 }
 
 public class UnpackInfoEntry

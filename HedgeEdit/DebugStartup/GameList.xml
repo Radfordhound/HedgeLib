@@ -38,18 +38,18 @@
 		</LoadInfo>
 	</Game>
 	
-	<Game shortName="Lost World" name="Sonic Lost World" dataType="LW">
+	<Game shortName="Lost World" name="Sonic Lost World" dataType="LW" unitMultiplier="0.1">
 		<UnpackInfo>
 			<!-- Misc PAC (E.G. w1a01_misc) -->
-			<Archive path="{0}/{0}_misc.pac" cachePath="{0}/misc" />
+			<!-- <Archive path="{0}/{0}_misc.pac" cachePath="{0}/misc" /> -->
 			<!-- Far PAC (E.G. w1a01_far) -->
-			<Archive path="{0}/{0}_far.pac" cachePath="{0}/far" />
+			<!-- <Archive path="{0}/{0}_far.pac" cachePath="{0}/far" /> -->
 			<!-- Obj PAC (E.G. w1a01_obj) -->
-			<Archive path="{0}/{0}_obj.pac" cachePath="{0}/obj" />
+			<!-- <Archive path="{0}/{0}_obj.pac" cachePath="{0}/obj" /> -->
 			<!-- Sky PAC (E.G. w1a01_sky) -->
-			<Archive path="{0}/{0}_sky.pac" cachePath="{0}/sky" />
+			<!-- <Archive path="{0}/{0}_sky.pac" cachePath="{0}/sky" /> -->
 			<!-- Trr_Cmn PAC (E.G w1a01_trr_cmn) -->
-			<Archive path="{0}/{0}_trr_cmn.pac" cachePath="{0}/trr_cmn"/>
+			<!-- <Archive path="{0}/{0}_trr_cmn.pac" cachePath="{0}/trr_cmn"/> -->
 			
 			<!-- Set Data -->
 			<Files searchPattern="{0}_obj_**.orc" path="set" cachePath="set/{1}" />

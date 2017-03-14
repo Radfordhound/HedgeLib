@@ -235,7 +235,7 @@ public class StageEditor : MonoBehaviour
                         var gameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
                         var setObj = gameObject.AddComponent<UnitySetObject>();
 
-                        setObj.InitFromSetObject(obj, i);
+                        setObj.InitFromSetObject(obj, i, game.UnitMultiplier);
                         gameObject.transform.parent = setDataObject.transform;
                     }
 

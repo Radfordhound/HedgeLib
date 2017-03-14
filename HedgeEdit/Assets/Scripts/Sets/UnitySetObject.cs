@@ -7,11 +7,11 @@ public class UnitySetObject : MonoBehaviour
     public int ObjectIndex = -1;
 
     //Methods
-    public void InitFromSetObject(SetObject obj, int index)
+    public void InitFromSetObject(SetObject obj, int index, float unitMultiplier = 1)
     {
         ObjectIndex = index;
         gameObject.name = obj.ObjectType;
-        ConvertTransform(obj.Transform, gameObject.transform);
+        ConvertTransform(obj.Transform, gameObject.transform, unitMultiplier);
 
         if (obj.Children == null) return;
         foreach (var child in obj.Children)
@@ -21,14 +21,15 @@ public class UnitySetObject : MonoBehaviour
             //TODO: Load actual models.
             GameObject childObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
 
-            ConvertTransform(child, childObject.transform);
+            ConvertTransform(child, childObject.transform, unitMultiplier);
             childObject.transform.parent = gameObject.transform;
         }
     }
 
-    public static void ConvertTransform(SetObjectTransform setObjTransform, Transform unityTransform)
+    public static void ConvertTransform(SetObjectTransform setObjTransform,
+        Transform unityTransform, float unitMultiplier = 1)
     {
-        unityTransform.position = Convert.ToUnity(setObjTransform.Position);
+        unityTransform.position = Convert.ToUnity(setObjTransform.Position) * unitMultiplier;
         unityTransform.rotation = Convert.ToUnity(setObjTransform.Rotation);
         unityTransform.localScale = Convert.ToUnity(setObjTransform.Scale);
     }
