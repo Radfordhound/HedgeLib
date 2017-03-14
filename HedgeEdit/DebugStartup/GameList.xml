@@ -59,6 +59,7 @@
 		
 		<LoadInfo>
 			<Directory type="setData" filter="*.orc">set</Directory>
+			<Directory type="light" filter="*.light">{0}/trr_cmn</Directory>
 			
 			<!-- TODO: Add filters to these directory elements -->
 			<Directory type="terrain">{0}/trr_cmn|{0}/far</Directory>

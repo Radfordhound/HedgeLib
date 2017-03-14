@@ -52,6 +52,13 @@ public class StageEditor : MonoBehaviour
             foreach (string dir in dirs)
             {
                 string fullDir = Helpers.CombinePaths(cacheDir, dir);
+                if (!Directory.Exists(fullDir))
+                {
+                    Debug.LogWarning("WARNING: Could not load directory \"" +
+                        fullDir + "\" as it does not exist!");
+                    continue;
+                }
+
                 foreach (string file in Directory.GetFiles(fullDir, dirEntry.Filter))
                 {
                     LoadFile(entry.Key, file, game);
@@ -183,9 +190,14 @@ public class StageEditor : MonoBehaviour
 
     private void LoadFile(string type, string filePath, GameEntry game)
     {
-        if (!File.Exists(filePath)) return;
-        var fileInfo = new FileInfo(filePath);
+        if (!File.Exists(filePath))
+        {
+            Debug.LogWarning("WARNING: Could not load file \"" + filePath +
+                "\" as it does not exist!");
+            return;
+        }
 
+        var fileInfo = new FileInfo(filePath);
         switch (type.ToLower())
         {
             case "lightlist":
@@ -199,15 +211,23 @@ public class StageEditor : MonoBehaviour
                     {
                         string lightPath = Helpers.CombinePaths(fileInfo.DirectoryName,
                             lightName + HedgeLib.Lights.Light.Extension);
-                        var light = new HedgeLib.Lights.Light();
-
-                        light.Load(lightPath);
-
-                        var lightObject = Convert.ToUnity(light);
-                        lightObject.gameObject.transform.parent = LightParentObject.transform;
-                        lightObject.gameObject.name = lightName;
+                        LoadFile("light", lightPath, game);
                     }
 
+                    return;
+                }
+
+            case "light":
+                {
+                    string lightName = fileInfo.Name.Substring(0,
+                        fileInfo.Name.Length - fileInfo.Extension.Length);
+
+                    var light = new HedgeLib.Lights.Light();
+                    light.Load(filePath);
+
+                    var lightObject = Convert.ToUnity(light);
+                    lightObject.gameObject.transform.parent = LightParentObject.transform;
+                    lightObject.gameObject.name = lightName;
                     return;
                 }
 
