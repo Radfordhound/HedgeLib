@@ -5,6 +5,7 @@ public static class Convert
     //Methods
     public static Vector3 ToUnity(HedgeLib.Vector3 vect)
     {
+        if (vect == null) return Vector3.zero;
         return new Vector3(vect.Z, vect.Y, vect.X);
     }
 
@@ -15,6 +16,7 @@ public static class Convert
 
     public static Quaternion ToUnity(HedgeLib.Quaternion quat)
     {
+        if (quat == null) return Quaternion.Euler(0, 0, 0);
         return new Quaternion(-quat.Z, -quat.Y, -quat.X, quat.W);
     }
 
