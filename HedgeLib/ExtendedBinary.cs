@@ -99,49 +99,34 @@ namespace HedgeLib
 
         public object ReadByType(Type type)
         {
-            switch (type.ToString().ToLower())
-            {
-                case "system.boolean":
-                    return ReadBoolean();
+			if (type == typeof(bool))
+				return ReadBoolean();
+			else if (type == typeof(byte))
+				return ReadByte();
+			else if (type == typeof(sbyte))
+				return ReadSByte();
+			else if (type == typeof(char))
+				return ReadChar();
+			else if (type == typeof(short))
+				return ReadInt16();
+			else if (type == typeof(ushort))
+				return ReadUInt16();
+			else if (type == typeof(int))
+				return ReadInt32();
+			else if (type == typeof(uint))
+				return ReadUInt32();
+			else if (type == typeof(float))
+				return ReadSingle();
+			else if (type == typeof(long))
+				return ReadInt64();
+			else if (type == typeof(ulong))
+				return ReadUInt64();
+			else if (type == typeof(double))
+				return ReadDouble();
+			else if (type == typeof(Vector3))
+				return ReadVector3();
 
-                case "system.byte":
-                    return ReadByte();
-
-                case "system.sbyte":
-                    return ReadSByte();
-
-                case "system.char":
-                    return ReadChar();
-
-                case "system.int16":
-                    return ReadInt16();
-
-                case "system.uint16":
-                    return ReadUInt16();
-
-                case "system.int32":
-                    return ReadInt32();
-
-                case "system.uint32":
-                    return ReadUInt32();
-
-                case "system.single":
-                    return ReadSingle();
-
-                case "system.int64":
-                    return ReadInt64();
-
-                case "system.uint64":
-                    return ReadUInt64();
-
-                case "system.double":
-                    return ReadDouble();
-
-                case "hedgelib.vector3":
-                    return ReadVector3();
-                
-                //TODO: Add more types.
-            }
+			//TODO: Add more types.
 
             throw new NotImplementedException("Cannot read \"" +
                 type + "\" by type yet!");
