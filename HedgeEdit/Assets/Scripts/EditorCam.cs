@@ -22,8 +22,6 @@ public class EditorCam : MonoBehaviour
 
         if (isRBDown)
         {
-            //TODO: Tweak movement speed.
-
             //Rotation
             yaw += 2 * Input.GetAxis("Mouse X");
             pitch -= 2 * Input.GetAxis("Mouse Y");
