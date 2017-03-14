@@ -106,8 +106,9 @@ public class StageEditor : MonoBehaviour
                         bool hashesMatch = true;
                         var arcFileList = arc.GetSplitArchivesList(fullPath);
                         var arcHashesSub = new List<string>();
-                        var editorCacheHashes = (arcIndex >= editorCache.ArcHashes.Count) ?
-                            null : editorCache.ArcHashes[arcIndex];
+                        var editorCacheHashes = (editorCache == null ||
+                            arcIndex >= editorCache.ArcHashes.Count) ?
+                                null : editorCache.ArcHashes[arcIndex];
 
                         for (int i = 0; i < arcFileList.Count; ++i)
                         {

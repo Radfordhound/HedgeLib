@@ -73,7 +73,12 @@ namespace HedgeLib
             {
                 //The only OS that doesn't use this type of slash is Windows, which doesn't care.
                 if (i > 0) combinedPath += '/';
-                combinedPath += paths[i];
+
+				string pth = paths[i];
+				if (pth.EndsWith("/") || pth.EndsWith("\\"))
+					pth = pth.Substring(0, pth.Length - 1);
+
+                combinedPath += pth;
             }
 
             return combinedPath;
