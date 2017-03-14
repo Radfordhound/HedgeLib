@@ -151,53 +151,58 @@ namespace RuntimeGizmos
 			Vector3 projectedAxis = Vector3.ProjectOnPlane(axis, planeNormal).normalized;
 			Vector3 previousMousePosition = Vector3.zero;
 
-			while(!Input.GetMouseButtonUp(0))
-			{
-				Ray mouseRay = myCamera.ScreenPointToRay(Input.mousePosition);
-				Vector3 mousePosition = Geometry.LinePlaneIntersect(mouseRay.origin, mouseRay.direction, originalTargetPosition, planeNormal);
+            if (!UIController.IsPointerOverUI)
+            {
+                while (!Input.GetMouseButtonUp(0))
+                {
+                    Ray mouseRay = myCamera.ScreenPointToRay(Input.mousePosition);
+                    Vector3 mousePosition = Geometry.LinePlaneIntersect(mouseRay.origin, mouseRay.direction, originalTargetPosition, planeNormal);
 
-				if(previousMousePosition != Vector3.zero && mousePosition != Vector3.zero)
-				{
-					if(type == TransformType.Move)
-					{
-						float moveAmount = ExtVector3.MagnitudeInDirection(mousePosition - previousMousePosition, projectedAxis) * moveSpeedMultiplier;
-						target.Translate(axis * moveAmount, Space.World);
-					}
+                    if (previousMousePosition != Vector3.zero && mousePosition != Vector3.zero)
+                    {
+                        if (type == TransformType.Move)
+                        {
+                            float moveAmount = ExtVector3.MagnitudeInDirection(mousePosition - previousMousePosition, projectedAxis) * moveSpeedMultiplier;
+                            target.Translate(axis * moveAmount, Space.World);
+                        }
 
-					if(type == TransformType.Scale)
-					{
-						Vector3 projected = (selectedAxis == Axis.Any) ? transform.right : projectedAxis;
-						float scaleAmount = ExtVector3.MagnitudeInDirection(mousePosition - previousMousePosition, projected) * scaleSpeedMultiplier;
-						
-						//WARNING - There is a bug in unity 5.4 and 5.5 that causes InverseTransformDirection to be affected by scale which will break negative scaling. Not tested, but updating to 5.4.2 should fix it - https://issuetracker.unity3d.com/issues/transformdirection-and-inversetransformdirection-operations-are-affected-by-scale
-						Vector3 localAxis = (space == TransformSpace.Local && selectedAxis != Axis.Any) ? target.InverseTransformDirection(axis) : axis;
-						
-						if(selectedAxis == Axis.Any) target.localScale += (ExtVector3.Abs(target.localScale.normalized) * scaleAmount);
-						else target.localScale += (localAxis * scaleAmount);
-					
-						totalScaleAmount += scaleAmount;
-					}
+                        if (type == TransformType.Scale)
+                        {
+                            Vector3 projected = (selectedAxis == Axis.Any) ? transform.right : projectedAxis;
+                            float scaleAmount = ExtVector3.MagnitudeInDirection(mousePosition - previousMousePosition, projected) * scaleSpeedMultiplier;
 
-					if(type == TransformType.Rotate)
-					{
-						if(selectedAxis == Axis.Any)
-						{
-							Vector3 rotation = transform.TransformDirection(new Vector3(Input.GetAxis("Mouse Y"), -Input.GetAxis("Mouse X"), 0));
-							target.Rotate(rotation * allRotateSpeedMultiplier, Space.World);
-							totalRotationAmount *= Quaternion.Euler(rotation * allRotateSpeedMultiplier);
-						}else{
-							Vector3 projected = (selectedAxis == Axis.Any || ExtVector3.IsParallel(axis, planeNormal)) ? planeNormal : Vector3.Cross(axis, planeNormal);
-							float rotateAmount = (ExtVector3.MagnitudeInDirection(mousePosition - previousMousePosition, projected) * rotateSpeedMultiplier) / GetDistanceMultiplier();
-							target.Rotate(axis, rotateAmount, Space.World);
-							totalRotationAmount *= Quaternion.Euler(axis * rotateAmount);
-						}
-					}
-				}
+                            //WARNING - There is a bug in unity 5.4 and 5.5 that causes InverseTransformDirection to be affected by scale which will break negative scaling. Not tested, but updating to 5.4.2 should fix it - https://issuetracker.unity3d.com/issues/transformdirection-and-inversetransformdirection-operations-are-affected-by-scale
+                            Vector3 localAxis = (space == TransformSpace.Local && selectedAxis != Axis.Any) ? target.InverseTransformDirection(axis) : axis;
 
-				previousMousePosition = mousePosition;
+                            if (selectedAxis == Axis.Any) target.localScale += (ExtVector3.Abs(target.localScale.normalized) * scaleAmount);
+                            else target.localScale += (localAxis * scaleAmount);
 
-				yield return null;
-			}
+                            totalScaleAmount += scaleAmount;
+                        }
+
+                        if (type == TransformType.Rotate)
+                        {
+                            if (selectedAxis == Axis.Any)
+                            {
+                                Vector3 rotation = transform.TransformDirection(new Vector3(Input.GetAxis("Mouse Y"), -Input.GetAxis("Mouse X"), 0));
+                                target.Rotate(rotation * allRotateSpeedMultiplier, Space.World);
+                                totalRotationAmount *= Quaternion.Euler(rotation * allRotateSpeedMultiplier);
+                            }
+                            else
+                            {
+                                Vector3 projected = (selectedAxis == Axis.Any || ExtVector3.IsParallel(axis, planeNormal)) ? planeNormal : Vector3.Cross(axis, planeNormal);
+                                float rotateAmount = (ExtVector3.MagnitudeInDirection(mousePosition - previousMousePosition, projected) * rotateSpeedMultiplier) / GetDistanceMultiplier();
+                                target.Rotate(axis, rotateAmount, Space.World);
+                                totalRotationAmount *= Quaternion.Euler(axis * rotateAmount);
+                            }
+                        }
+                    }
+
+                    previousMousePosition = mousePosition;
+
+                    yield return null;
+                }
+            }
 
 			totalRotationAmount = Quaternion.identity;
 			totalScaleAmount = 0;
@@ -218,7 +223,8 @@ namespace RuntimeGizmos
 	
 		void GetTarget()
 		{
-			if(selectedAxis == Axis.None && Input.GetMouseButtonDown(0))
+			if(selectedAxis == Axis.None && Input.GetMouseButtonDown(0) &&
+                !UIController.IsPointerOverUI)
 			{
 				RaycastHit hitInfo; 
 				if(Physics.Raycast(myCamera.ScreenPointToRay(Input.mousePosition), out hitInfo))
@@ -233,7 +239,7 @@ namespace RuntimeGizmos
 		AxisVectors selectedLinesBuffer = new AxisVectors();
 		void SelectAxis()
 		{
-			if(!Input.GetMouseButtonDown(0)) return;
+			if(!Input.GetMouseButtonDown(0) || UIController.IsPointerOverUI) return;
 			selectedAxis = Axis.None;
 
 			float xClosestDistance = float.MaxValue;

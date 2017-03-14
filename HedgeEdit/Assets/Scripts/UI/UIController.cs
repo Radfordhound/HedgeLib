@@ -1,7 +1,17 @@
 ﻿using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class UIController : MonoBehaviour
 {
+    //Variables/Constants
+    public static bool IsPointerOverUI = false;
+
+    //Unity Events
+    private void Update()
+    {
+        IsPointerOverUI = EventSystem.current.IsPointerOverGameObject();
+    }
+
     //Methods
     public void ToggleEnabled(GameObject obj)
     {

@@ -12,7 +12,7 @@ public class EditorCam : MonoBehaviour
     //Unity Events
     private void Update()
     {
-        bool isRBDown = Input.GetMouseButton(1);
+        bool isRBDown = Input.GetMouseButton(1) && !UIController.IsPointerOverUI;
         bool fastMove = Input.GetKey(KeyCode.LeftShift);
         hasMoved = false;
 
