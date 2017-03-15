@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class UIController : MonoBehaviour
 {
@@ -16,6 +17,13 @@ public class UIController : MonoBehaviour
     public void ToggleEnabled(GameObject obj)
     {
         obj.SetActive(!obj.activeSelf);
+    }
+
+    public void FadeInBG(Image img)
+    {
+        img.gameObject.SetActive(true);
+        img.canvasRenderer.SetAlpha(0.0f);
+        img.CrossFadeAlpha(0.2f, 0.4f, false);
     }
 
     public void Enable(GameObject obj)
