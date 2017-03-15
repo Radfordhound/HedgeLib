@@ -246,7 +246,6 @@ public class StageEditor : MonoBehaviour
                 {
                     var setData = game.GameDataType.GetSetDataType();
                     setData.Load(filePath, game.ObjectTemplates);
-                    Globals.Sets.Add(setData);
 
                     //Spawn Objects in World
                     GameObject setDataObject = new GameObject(fileInfo.Name);
