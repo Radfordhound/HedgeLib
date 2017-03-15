@@ -13,6 +13,7 @@ public class StageEditor : MonoBehaviour
     public Dropdown StageTypeDropdown;
     public InputField StageDirTxtbx, StageIDTxtbx;
 
+    public static string StageDir, StageID, GameType;
     public static bool Saved = false;
 
     public const string ResourcesPath = "Resources", CachePath = "Cache";
@@ -271,19 +272,39 @@ public class StageEditor : MonoBehaviour
     //GUI Events
     public void LoadGUI()
     {
-        string gameType = StageTypeDropdown.options[StageTypeDropdown.value].text;
+        StageDir = StageDirTxtbx.text;
+        StageID = StageIDTxtbx.text;
+        GameType = StageTypeDropdown.options[StageTypeDropdown.value].text;
         GameEntry game = null;
 
-        if (!GameList.Games.ContainsKey(gameType))
+        if (string.IsNullOrEmpty(StageDir) || !Directory.Exists(StageDir))
         {
-            throw new System.Exception("ERROR: No paths defined in " +
-                GameList.FilePath + " for " + gameType + ". Cannot load stage.");
+            Debug.LogWarning("Cannot load stage from \"" + StageDir + "\". Invalid Path!");
+            return;
         }
 
-        game = GameList.Games[gameType];
+        if (string.IsNullOrEmpty(StageID))
+        {
+            Debug.LogWarning("Cannot load stage. Invalid Stage ID!");
+            return;
+        }
+
+        if (string.IsNullOrEmpty(GameType))
+        {
+            Debug.LogWarning("Cannot load stage. Invalid Game Type!");
+            return;
+        }
+
+        if (!GameList.Games.ContainsKey(GameType))
+        {
+            throw new System.Exception("ERROR: No paths defined in " +
+                GameList.FilePath + " for " + GameType + ". Cannot load stage.");
+        }
+
+        game = GameList.Games[GameType];
 
         //Make cache directory
-        string cacheDir = Helpers.CombinePaths(Globals.StartupPath, CachePath, StageIDTxtbx.text);
+        string cacheDir = Helpers.CombinePaths(Globals.StartupPath, CachePath, StageID);
         string editorCachePath = Helpers.CombinePaths(cacheDir, EditorCache.FileName);
         Directory.CreateDirectory(cacheDir);
 
@@ -295,7 +316,7 @@ public class StageEditor : MonoBehaviour
             editorCache = new EditorCache();
             editorCache.Load(editorCachePath);
 
-            if (editorCache.GameType.ToLower() != gameType.ToLower())
+            if (editorCache.GameType.ToLower() != GameType.ToLower())
                 editorCache = null;
         }
 
@@ -303,7 +324,7 @@ public class StageEditor : MonoBehaviour
         //TODO: Remove all these stopwatches.
         var unpackStopWatch = System.Diagnostics.Stopwatch.StartNew();
         var arcHashes = Unpack(cacheDir, editorCache,
-            StageDirTxtbx.text, StageIDTxtbx.text, game);
+            StageDir, StageID, game);
         unpackStopWatch.Stop();
         Debug.Log("Done unpacking! Time (ms): " + unpackStopWatch.ElapsedMilliseconds);
 
@@ -311,7 +332,7 @@ public class StageEditor : MonoBehaviour
         if (editorCache != null) File.Delete(editorCachePath);
         editorCache = new EditorCache()
         {
-            GameType = gameType,
+            GameType = GameType,
             ArcHashes = arcHashes
         };
 
@@ -319,7 +340,7 @@ public class StageEditor : MonoBehaviour
 
         //Load Data
         var loadStopWatch = System.Diagnostics.Stopwatch.StartNew();
-        Load(cacheDir, StageIDTxtbx.text, game);
+        Load(cacheDir, StageID, game);
         loadStopWatch.Stop();
         Debug.Log("Done loading! Time (ms): " + loadStopWatch.ElapsedMilliseconds);
     }
