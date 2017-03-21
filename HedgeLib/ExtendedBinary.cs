@@ -428,8 +428,50 @@ namespace HedgeLib
             Write(signature.ToCharArray());
         }
 
-        //2-Byte Types
-        public override void Write(short value)
+		public void WriteByType<T>(object data)
+		{
+			WriteByType(typeof(T), data);
+		}
+
+		public void WriteByType(Type type, object data)
+		{
+			if (type == typeof(bool))
+				Write((bool)data);
+			else if (type == typeof(byte))
+				Write((byte)data);
+			else if (type == typeof(sbyte))
+				Write((sbyte)data);
+			else if (type == typeof(char))
+				Write((char)data);
+			else if (type == typeof(short))
+				Write((short)data);
+			else if (type == typeof(ushort))
+				Write((ushort)data);
+			else if (type == typeof(int))
+				Write((int)data);
+			else if (type == typeof(uint))
+				Write((uint)data);
+			else if (type == typeof(float))
+				Write((float)data);
+			else if (type == typeof(long))
+				Write((long)data);
+			else if (type == typeof(ulong))
+				Write((ulong)data);
+			else if (type == typeof(double))
+				Write((double)data);
+			else if (type == typeof(Vector3))
+				Write((Vector3)data);
+			else
+			{
+				throw new NotImplementedException("Cannot write \"" +
+					type + "\" by type yet!");
+			}
+
+			//TODO: Add more types.
+		}
+
+		//2-Byte Types
+		public override void Write(short value)
         {
             if (IsBigEndian)
             {

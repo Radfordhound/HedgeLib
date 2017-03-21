@@ -2,11 +2,10 @@
 using System.IO;
 using HedgeLib.Bases;
 using System;
-using HedgeLib.Headers;
 
 namespace HedgeLib.Sets
 {
-    public class LWSetData : SetData
+	public class LWSetData : SetData
     {
 		//Variables/Constants
 		public LWFileBase LWFileData = new LWFileBase();
@@ -74,7 +73,7 @@ namespace HedgeLib.Sets
 
 				uint objOfTypeCount = reader.ReadUInt32();
 				uint objIndiciesOffset = reader.ReadUInt32();
-				var curTypePos = reader.BaseStream.Position;
+				long curTypePos = reader.BaseStream.Position;
 
 				//Objects
 				reader.JumpTo(objIndiciesOffset, false);
@@ -82,7 +81,7 @@ namespace HedgeLib.Sets
 				for (uint i2 = 0; i2 < objOfTypeCount; ++i2)
 				{
 					ushort objIndex = reader.ReadUInt16();
-					var curPos = reader.BaseStream.Position;
+					long curPos = reader.BaseStream.Position;
 
 					//Object Data
 					reader.JumpTo(objOffsets[objIndex], false);

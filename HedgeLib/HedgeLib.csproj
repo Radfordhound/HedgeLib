@@ -70,6 +70,7 @@
     <Compile Include="Helpers.cs" />
     <Compile Include="Lights\GensLightList.cs" />
     <Compile Include="Lights\Light.cs" />
+    <Compile Include="Misc\BINA.cs" />
     <Compile Include="Misc\GensStageXML.cs" />
     <Compile Include="Misc\LWGism.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

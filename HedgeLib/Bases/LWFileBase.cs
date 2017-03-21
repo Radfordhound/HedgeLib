@@ -1,4 +1,5 @@
 ﻿using HedgeLib.Headers;
+using HedgeLib.Misc;
 using System.Collections.Generic;
 using System.IO;
 
@@ -10,7 +11,7 @@ namespace HedgeLib.Bases
 		public List<uint> Offsets = new List<uint>();
 		public LWHeader Header = new LWHeader();
 
-		private List<StringTableEntry> strings = new List<StringTableEntry>();
+		private List<BINA.StringTableEntry> strings = new List<BINA.StringTableEntry>();
 
 		//Methods
 		public static LWHeader ReadHeader(ExtendedBinaryReader reader)
@@ -20,7 +21,7 @@ namespace HedgeLib.Bases
 			reader.Offset = LWHeader.Length;
 
 			//BINA Header
-			var sig = reader.ReadSignature();
+			string sig = reader.ReadSignature();
 			if (sig != LWHeader.Signature)
 				throw new InvalidDataException("The given file's signature was incorrect!" +
 					" (Expected " + LWHeader.Signature + " got " + sig + ".)");
@@ -32,7 +33,7 @@ namespace HedgeLib.Bases
 			reader.JumpAhead(4); //TODO: Figure out what this value is.
 
 			//DATA Header
-			var dataSig = reader.ReadSignature();
+			string dataSig = reader.ReadSignature();
 			if (dataSig != LWHeader.DataSignature)
 				throw new InvalidDataException("The given file's signature was incorrect!" +
 					" (Expected " + LWHeader.DataSignature + " got " + dataSig + ".)");
@@ -48,67 +49,17 @@ namespace HedgeLib.Bases
 			return header;
 		}
 
-		public static List<StringTableEntry> ReadStrings(ExtendedBinaryReader reader, LWHeader header)
+		public static List<BINA.StringTableEntry> ReadStrings(
+			ExtendedBinaryReader reader, LWHeader header)
 		{
 			reader.JumpTo(header.StringTableOffset, false);
-			uint stringsEnd = (uint)reader.BaseStream.Position + header.StringTableLength;
-			var strings = new List<StringTableEntry>();
-
-			while (reader.BaseStream.Position < reader.BaseStream.Length &&
-				reader.BaseStream.Position < stringsEnd)
-			{
-				var tableEntry = new StringTableEntry()
-				{
-					Offset = (uint)reader.BaseStream.Position - LWHeader.Length,
-					Data = reader.ReadNullTerminatedString()
-				};
-
-				strings.Add(tableEntry);
-			}
-
-			return strings;
+			return BINA.ReadStrings(reader, LWHeader.Length, header.StringTableLength);
 		}
 
 		public static List<uint> ReadFooter(ExtendedBinaryReader reader, LWHeader header)
 		{
 			reader.JumpTo(header.FileSize - header.FinalTableLength);
-			uint lastOffsetPos = LWHeader.Length;
-			uint footerEnd = (uint)reader.BaseStream.Position + header.FinalTableLength;
-			var offsets = new List<uint>();
-
-			while (reader.BaseStream.Position < reader.BaseStream.Length &&
-				   reader.BaseStream.Position < footerEnd)
-			{
-				byte b = reader.ReadByte();
-				byte type = (byte)(b & 0xC0); //0xC0 = 1100 0000. We're getting the first two bits.
-				byte d = (byte)(b & 0x3F);
-
-				if (type == (byte)OffsetTypes.SixBit)
-				{
-					d <<= 2;
-					offsets.Add(d + lastOffsetPos);
-				}
-				else if (type == (byte)OffsetTypes.FourteenBit)
-				{
-					byte b2 = reader.ReadByte();
-					ushort d2 = (ushort)(((d << 8) & b2) << 2);
-
-					offsets.Add(d2 + lastOffsetPos);
-				}
-				else if (type == (byte)OffsetTypes.ThirtyBit)
-				{
-					var bytes = reader.ReadBytes(3);
-					uint d2 = (uint)(((d << 24) | (bytes[0] << 16) |
-						(bytes[1] << 8) | bytes[2]) << 2);
-
-					offsets.Add(d2 + lastOffsetPos);
-				}
-				else break;
-
-				lastOffsetPos = offsets[offsets.Count - 1];
-			}
-
-			return offsets;
+			return BINA.ReadFooter(reader, LWHeader.Length, header.FinalTableLength);
 		}
 
 		public static void AddHeader(ExtendedBinaryWriter writer, LWHeader header)
@@ -143,23 +94,12 @@ namespace HedgeLib.Bases
 		}
 
 		public static void WriteStrings(ExtendedBinaryWriter writer,
-			LWHeader header, List<StringTableEntry> strings)
+			LWHeader header, List<BINA.StringTableEntry> strings)
 		{
 			uint stringTableStartPos = (uint)writer.BaseStream.Position;
 			header.StringTableOffset = stringTableStartPos - LWHeader.Length;
 
-			foreach (var tableEntry in strings)
-			{
-				foreach (var offsetName in tableEntry.OffsetNames)
-				{
-					writer.FillInOffset(offsetName,
-						(uint)writer.BaseStream.Position, false);
-				}
-
-				writer.WriteNullTerminatedString(tableEntry.Data);
-			}
-
-			writer.FixPadding();
+			BINA.WriteStrings(writer, strings);
 			header.StringTableLength =
 				(uint)writer.BaseStream.Position - stringTableStartPos;
 		}
@@ -167,34 +107,10 @@ namespace HedgeLib.Bases
 		public static void WriteFooter(ExtendedBinaryWriter writer,
 			LWHeader header, List<uint> offsets)
 		{
-			uint lastOffsetPos = LWHeader.Length;
 			uint footerStartPos = (uint)writer.BaseStream.Position;
-
-			foreach (var offset in offsets)
-			{
-				uint d = (offset - lastOffsetPos) >> 2;
-
-				if (d <= 0x3F)
-				{
-					byte d2 = (byte)(((byte)OffsetTypes.SixBit) | d);
-					writer.Write(d2);
-				}
-				else if (d <= 0x3FFF)
-				{
-					ushort d2 = (ushort)((((byte)OffsetTypes.FourteenBit) << 8) | d);
-					writer.Write(d2);
-				}
-				else
-				{
-					uint d2 = (uint)((((byte)OffsetTypes.ThirtyBit) << 24) | d);
-					writer.Write(d2);
-				}
-
-				lastOffsetPos = offset;
-			}
+			BINA.WriteFooter(writer, offsets, LWHeader.Length);
 
 			//Update header values
-			writer.FixPadding();
 			header.FinalTableLength = (uint)writer.BaseStream.Position - footerStartPos;
 			header.FileSize = (uint)writer.BaseStream.Position;
 			header.DataLength = (uint)writer.BaseStream.Position - 0x10;
@@ -204,7 +120,7 @@ namespace HedgeLib.Bases
 		{
 			Header = ReadHeader(reader);
 
-			var dataPos = reader.BaseStream.Position;
+			long dataPos = reader.BaseStream.Position;
 			strings = ReadStrings(reader, Header);
 			reader.BaseStream.Position = dataPos;
 		}
@@ -231,59 +147,17 @@ namespace HedgeLib.Bases
 
 		public void AddOffset(ExtendedBinaryWriter writer, string name)
 		{
-			Offsets.Add((uint)writer.BaseStream.Position);
-			writer.AddOffset(name);
+			BINA.AddOffset(writer, Offsets, name);
 		}
 
 		public void AddString(ExtendedBinaryWriter writer, string offsetName, string str)
 		{
-			if (string.IsNullOrEmpty(offsetName)) return;
-
-			var tableEntry = new StringTableEntry() { Data = str };
-			bool newEntry = true;
-
-			foreach (var strEntry in strings)
-			{
-				if (strEntry.Data == str)
-				{
-					tableEntry = strEntry;
-					newEntry = false;
-					break;
-				}
-			}
-
-			AddOffset(writer, offsetName);
-			tableEntry.OffsetNames.Add(offsetName);
-
-			if (newEntry)
-				strings.Add(tableEntry);
+			BINA.AddString(writer, strings, Offsets, offsetName, str);
 		}
 
 		public string GetString(uint offset)
 		{
-			foreach (var str in strings)
-			{
-				if (str.Offset == offset)
-					return str.Data;
-			}
-
-			return null;
-		}
-
-		//Other
-		public class StringTableEntry
-		{
-			//Variables/Constants
-			public List<string> OffsetNames = new List<string>();
-			public string Data;
-			public uint Offset;
-		}
-
-		private enum OffsetTypes
-		{
-			SixBit = 0x40,
-			FourteenBit = 0x80,
-			ThirtyBit = 0xC0
+			return BINA.GetString(offset, strings);
 		}
 	}
 }
