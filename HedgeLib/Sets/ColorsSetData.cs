@@ -295,7 +295,6 @@ namespace HedgeLib.Sets
 
 			//World-Space
 			transform.Position = reader.ReadVector3();
-			transform.Position.X = -transform.Position.X;
 			//TODO: Convert euler angles rotation to quaternion.
 			var rotation = reader.ReadVector3();
 
@@ -379,7 +378,6 @@ namespace HedgeLib.Sets
 		private void WriteTransform(ExtendedBinaryWriter writer, SetObjectTransform transform)
 		{
 			var pos = transform.Position;
-			pos.X = -pos.X;
 			writer.Write(pos);
 
 			writer.Write(new Vector3(0, 0, 0)); //TODO: Convert rotation to euler angles and write.

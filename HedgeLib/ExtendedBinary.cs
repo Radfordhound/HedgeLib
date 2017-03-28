@@ -301,9 +301,9 @@ namespace HedgeLib
             }
             else
             {
-                floatUnion.UInt = (
-                    (uint)buffer[11] << 24 | (uint)buffer[10] << 16 |
-                    (uint)buffer[9] << 8 | buffer[8]);
+				floatUnion.UInt = (
+                    (uint)buffer[3] << 24 | (uint)buffer[2] << 16 |
+                    (uint)buffer[1] << 8 | buffer[0]);
                 x = floatUnion.Float;
 
                 floatUnion.UInt = (
@@ -312,8 +312,8 @@ namespace HedgeLib
                 y = floatUnion.Float;
 
                 floatUnion.UInt = (
-                    (uint)buffer[3] << 24 | (uint)buffer[2] << 16 |
-                    (uint)buffer[1] << 8 | buffer[0]);
+                    (uint)buffer[11] << 24 | (uint)buffer[10] << 16 |
+                    (uint)buffer[9] << 8 | buffer[8]);
                 z = floatUnion.Float;
             }
 

@@ -216,7 +216,6 @@ namespace HedgeLib.Sets
 
             //World-Space
             transform.Position = reader.ReadVector3();
-			transform.Position.X = -transform.Position.X;
             //TODO: Convert euler angles rotation to quaternion.
             var rotation = reader.ReadVector3();
 
