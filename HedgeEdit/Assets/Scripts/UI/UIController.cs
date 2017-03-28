@@ -18,7 +18,7 @@ public class UIController : MonoBehaviour
     {
         img.gameObject.SetActive(true);
         img.canvasRenderer.SetAlpha(0.0f);
-        img.CrossFadeAlpha(0.2f, 0.4f, false);
+        img.CrossFadeAlpha(0.4f, 0.28f, false);
     }
 
     public void ToggleEnabled(GameObject obj)
