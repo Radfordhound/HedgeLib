@@ -43,12 +43,15 @@ public static class GameList
                        dataType = dataTypeAttr.Value;
 
                 //Game Entry
+                var templates = LoadObjectTemplates(shortName);
+                if (templates == null) continue;
+
                 var game = new GameEntry()
                 {
                     Name = (nameAttr == null) ? shortName : nameAttr.Value,
                     DataType = dataType,
                     GameDataType = DataTypes.GetDataType(dataType),
-                    ObjectTemplates = LoadObjectTemplates(shortName),
+                    ObjectTemplates = templates,
                     UnitMultiplier = (unitMultiplierAttr == null) ? 1 :
                         System.Convert.ToSingle(unitMultiplierAttr.Value)
                 };
@@ -112,7 +115,7 @@ public static class GameList
 
                 Games.Add(shortName, game);
 
-                UnityEngine.Debug.Log("Loaded " + game.ObjectTemplates.Count +
+                Debug.Log("Loaded " + game.ObjectTemplates.Count +
                     " templates for " + game.Name + "."); //TODO: REMOVE THIS
             }
 
