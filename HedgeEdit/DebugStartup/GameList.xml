@@ -71,4 +71,17 @@
 			<File type="splines">{0}/misc/{0}_path.path2.bin</File>
 		</LoadInfo>
 	</Game>
+	
+	<Game shortName="Colors" name="Sonic Colors" dataType="Colors" unitMultiplier="0.1">
+		<UnpackInfo>
+			<!-- Set Data -->
+			<Files searchPattern="{0}_obj_**.orc" path="set" cachePath="set/{1}" />
+			<!-- Config.lua -->
+			<File path="{0}/{0}_config.lua" cachePath="{0}/{0}_config.lua" />
+		</UnpackInfo>
+		
+		<LoadInfo>
+			<Directory type="setData" filter="*.orc">set</Directory>
+		</LoadInfo>
+	</Game>
 </GameList>

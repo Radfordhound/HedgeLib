@@ -10,6 +10,9 @@
 
             case "lw":
                 return new LW();
+
+            case "colors":
+                return new Colors();
         }
 
         return null;
