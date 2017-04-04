@@ -1,6 +1,7 @@
 ﻿using HedgeLib;
 using HedgeLib.Archives;
 using HedgeLib.Misc;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -9,24 +10,26 @@ using UnityEngine.UI;
 public class StageEditor : MonoBehaviour
 {
     //Variables/Constants
+    public static string StageDir, StageID, GameType;
+    public static bool Saved = false;
+
     public GameObject SetParentObject, LightParentObject;
     public Dropdown StageTypeDropdown;
     public InputField StageDirTxtbx, StageIDTxtbx;
-
-    public static string StageDir, StageID, GameType;
-    public static bool Saved = false;
 
     public const string ResourcesPath = "Resources", CachePath = "Cache";
 
     //Unity Events
 	private void Start()
     {
+        //Initialize Stage Editor
         if (SetParentObject == null)
             SetParentObject = new GameObject("Set Objects");
 
         if (LightParentObject == null)
             LightParentObject = new GameObject("Lights");
 
+        Console.SetOut(new UnityTextWriter());
         GameList.Load();
 
         //Setup GUI
@@ -249,7 +252,7 @@ public class StageEditor : MonoBehaviour
                     setData.Load(filePath, game.ObjectTemplates);
 
                     //Spawn Objects in World
-                    GameObject setDataObject = new GameObject(fileInfo.Name);
+                    var setDataObject = new GameObject(fileInfo.Name);
                     for (int i = 0; i < setData.Objects.Count; ++i)
                     {
                         //TODO: Load actual models.
