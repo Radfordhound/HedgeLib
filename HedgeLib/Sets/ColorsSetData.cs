@@ -55,13 +55,7 @@ namespace HedgeLib.Sets
 			for (uint i = 0; i < objTypeCount; ++i)
 			{
 				//Object Type
-				uint stringOffset = reader.ReadUInt32();
-				long stringPos = reader.BaseStream.Position;
-
-				reader.JumpTo(stringOffset, false);
-				string objName = reader.ReadNullTerminatedString();
-				reader.BaseStream.Position = stringPos;
-
+				string objName = reader.GetString();
 				if (!objectTemplates.ContainsKey(objName))
 				{
 					Console.WriteLine("WARNING: No object template exists for object type \"" +

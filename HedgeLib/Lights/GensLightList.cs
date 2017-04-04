@@ -27,14 +27,7 @@ namespace HedgeLib.Lights
 			reader.JumpTo(lightTableOffset, false);
 			for (uint i = 0; i < lightTotal; ++i)
 			{
-				uint lightOffset = reader.ReadUInt32();
-				long curPos = reader.BaseStream.Position;
-				reader.JumpTo(lightOffset, false);
-
-				string lightName = reader.ReadNullTerminatedString();
-				LightNames.Add(lightName);
-
-				reader.BaseStream.Position = curPos;
+				LightNames.Add(reader.GetString(true));
 			}
 
 			GensFileData.FinishRead(reader);
