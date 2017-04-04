@@ -27,7 +27,7 @@ namespace HedgeLib.Lights
 			reader.JumpTo(lightTableOffset, false);
 			for (uint i = 0; i < lightTotal; ++i)
 			{
-				LightNames.Add(reader.GetString(true));
+				LightNames.Add(reader.GetString());
 			}
 
 			GensFileData.FinishRead(reader);

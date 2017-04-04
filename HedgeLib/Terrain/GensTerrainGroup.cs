@@ -45,7 +45,7 @@ namespace HedgeLib.Terrain
                 instanceInfo.FileNames = new string[fileNameCount];
                 for (uint i2 = 0; i2 < fileNameCount; ++i2)
                 {
-                    instanceInfo.FileNames[i2] = reader.GetString(true);
+                    instanceInfo.FileNames[i2] = reader.GetString();
                 }
 
                 //Bounding Sphere

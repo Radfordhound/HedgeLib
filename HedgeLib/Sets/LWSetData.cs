@@ -61,7 +61,7 @@ namespace HedgeLib.Sets
 			for (uint i = 0; i < objTypeCount; ++i)
 			{
 				//Object Type
-				string objName = reader.GetString(true);
+				string objName = reader.GetString();
 				if (!objectTemplates.ContainsKey(objName))
 				{
 					Console.WriteLine("WARNING: No object template exists for object type \"" +

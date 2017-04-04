@@ -64,7 +64,7 @@ namespace HedgeLib.Misc
                     System.Console.WriteLine("WARNING: Unknown10 != 0 (" +
                         unknown10 + ".)");
 
-                gismo.HavokName = reader.GetString(true);
+                gismo.HavokName = reader.GetString();
 
                 //Container 2
                 reader.JumpTo(containerTwoOffset, false);

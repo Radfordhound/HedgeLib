@@ -31,7 +31,7 @@ namespace HedgeLib
     {
         //Variables/Constants
         public Encoding Encoding = Encoding.ASCII;
-        public long Offset = 0;
+        public uint Offset = 0;
         public bool IsBigEndian = false;
 
         //Constructors
@@ -70,9 +70,10 @@ namespace HedgeLib
             JumpAhead(jumpAmount);
         }
 
-		public string GetString(bool isNullTerminated = true)
+		public string GetString(bool isAbsolute = false, bool isNullTerminated = true)
 		{
-			return GetString(ReadUInt32(), isNullTerminated);
+			uint offset = (isAbsolute) ? ReadUInt32() : ReadUInt32() + Offset;
+			return GetString(offset, isNullTerminated);
 		}
 
 		public string GetString(uint offset, bool isNullTerminated = true)
