@@ -274,8 +274,10 @@ namespace HedgeLib.Sets
 				{
 					reader.FixPadding(4);
 				}
-				else if (param.DataType == typeof(Vector3))
+				else if (isLW && param.DataType == typeof(Vector3))
+				{
 					reader.FixPadding(16);
+				}
 
 				//Read Data
 				var objParam = new SetObjectParam(param.DataType,
@@ -391,8 +393,10 @@ namespace HedgeLib.Sets
 				{
 					writer.FixPadding(4);
 				}
-				else if (param.DataType == typeof(Vector3))
+				else if (isLW && param.DataType == typeof(Vector3))
+				{
 					writer.FixPadding(16);
+				}
 
 				//Write Data
 				writer.WriteByType(param.DataType, param.Data);
