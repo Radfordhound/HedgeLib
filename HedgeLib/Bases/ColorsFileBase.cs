@@ -134,16 +134,16 @@ namespace HedgeLib.Bases
 			BINA.AddOffset(writer, Offsets, name);
 		}
 
+		public void AddString(ExtendedBinaryWriter writer, string offsetName, string str)
+		{
+			BINA.AddString(writer, strings, Offsets, offsetName, str);
+		}
+
 		public void AddOffsetTable(ExtendedBinaryWriter writer,
 			string namePrefix, uint offsetCount)
 		{
 			for (uint i = 0; i < offsetCount; ++i)
 				AddOffset(writer, namePrefix + "_" + i);
-		}
-
-		public void AddString(ExtendedBinaryWriter writer, string offsetName, string str)
-		{
-			BINA.AddString(writer, strings, Offsets, offsetName, str);
 		}
 	}
 }

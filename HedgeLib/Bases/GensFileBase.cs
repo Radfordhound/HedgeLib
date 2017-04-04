@@ -1,5 +1,6 @@
 ﻿using HedgeLib.Headers;
 using System.Collections.Generic;
+using System;
 
 namespace HedgeLib.Bases
 {
@@ -105,6 +106,11 @@ namespace HedgeLib.Bases
 		{
 			Offsets.Add((uint)writer.BaseStream.Position);
 			writer.AddOffset(offsetName);
+		}
+
+		public void AddString(ExtendedBinaryWriter writer, string offsetName, string str)
+		{
+			throw new NotImplementedException();
 		}
 
 		public void AddOffsetTable(ExtendedBinaryWriter writer,

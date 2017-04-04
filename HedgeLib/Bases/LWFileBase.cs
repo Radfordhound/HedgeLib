@@ -143,5 +143,12 @@ namespace HedgeLib.Bases
 		{
 			BINA.AddString(writer, strings, Offsets, offsetName, str);
 		}
+
+		public void AddOffsetTable(ExtendedBinaryWriter writer,
+			string namePrefix, uint offsetCount)
+		{
+			for (uint i = 0; i < offsetCount; ++i)
+				AddOffset(writer, namePrefix + "_" + i);
+		}
 	}
 }
