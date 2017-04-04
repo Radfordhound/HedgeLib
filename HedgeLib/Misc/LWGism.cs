@@ -20,44 +20,44 @@ namespace HedgeLib.Misc
 			var reader = new ExtendedBinaryReader(fileStream, Encoding.ASCII, false);
 			LWFileData.InitRead(reader);
 
-            var gismOffset = reader.ReadUInt32();
+			uint gismOffset = reader.ReadUInt32();
             UnknownBoolean1 = reader.ReadUInt32(); //TODO: Find out what this is.
-            var gismoCount = reader.ReadUInt32();
+			uint gismoCount = reader.ReadUInt32();
             Gismos = new LWGismo[gismoCount];
 
-            //Containers
-            var containerOffset = reader.ReadUInt32();
+			//Containers
+			uint containerOffset = reader.ReadUInt32();
             reader.JumpTo(containerOffset, false);
 
             for (uint i = 0; i < gismoCount; ++i)
             {
                 var gismo = new LWGismo();
 
-                //Container 1
-                var fileNameOffset = reader.ReadUInt32();
-                var fileNameOffset2 = reader.ReadUInt32(); //TODO: Find out what this is for.
-                var unknownNameOffset = reader.ReadUInt32();
+				//Container 1
+				uint fileNameOffset = reader.ReadUInt32();
+				uint fileNameOffset2 = reader.ReadUInt32(); //TODO: Find out what this is for.
+				uint unknownNameOffset = reader.ReadUInt32();
                 gismo.Unknown1 = reader.ReadUInt32();
 
                 gismo.Unknown2 = reader.ReadSingle();
                 gismo.Unknown3 = reader.ReadSingle();
                 gismo.DoesAnimate = (reader.ReadUInt32() == 1);
-                var havokOffset = reader.ReadUInt32();
+				uint havokOffset = reader.ReadUInt32();
 
                 gismo.UnknownBoolean1 = (reader.ReadUInt32() == 1);
-                var containerTwoOffset = reader.ReadUInt32();
+				uint containerTwoOffset = reader.ReadUInt32();
 
                 //TODO: Remove this debug code
                 if (fileNameOffset != fileNameOffset2)
                     System.Console.WriteLine("WARNING: fileNameOffset != fileNameOffset2 (" +
                         fileNameOffset + " vs. " + fileNameOffset2 + ")");
 
-                var curPos = reader.BaseStream.Position;
+				long curPos = reader.BaseStream.Position;
                 gismo.FileName = reader.GetString(fileNameOffset, true);
 
                 //Havok Array
                 reader.JumpTo(havokOffset, false);
-                var unknown10 = reader.ReadUInt32();
+				uint unknown10 = reader.ReadUInt32();
 
                 //TODO: Remove this debug code
                 if (unknown10 != 0)

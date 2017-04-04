@@ -73,7 +73,7 @@ namespace HedgeLib.Bases
             header.OffsetFinalTable = (uint)writer.BaseStream.Position - header.RootNodeOffset;
 
             writer.Write((uint)offsets.Count);
-            foreach (var offset in offsets)
+            foreach (uint offset in offsets)
                 writer.Write(offset - header.RootNodeOffset);
 
             writer.WriteNulls(4);

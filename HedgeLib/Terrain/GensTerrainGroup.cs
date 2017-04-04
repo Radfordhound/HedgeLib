@@ -33,7 +33,7 @@ namespace HedgeLib.Terrain
             {
                 var instanceInfo = new InstanceInfo();
                 uint instanceInfoOffset = reader.ReadUInt32();
-                var curPos = reader.BaseStream.Position;
+				long curPos = reader.BaseStream.Position;
                 reader.JumpTo(instanceInfoOffset, false);
 
                 uint fileNameCount = reader.ReadUInt32();
@@ -63,14 +63,7 @@ namespace HedgeLib.Terrain
 
             for (uint i = 0; i < terrainModelCount; ++i)
             {
-                uint terrainModelOffset = reader.ReadUInt32();
-                var curPos = reader.BaseStream.Position;
-                reader.JumpTo(terrainModelOffset, false);
-
-                string terrainModelFileName = reader.ReadNullTerminatedString();
-                TerrainModels[i] = terrainModelFileName;
-
-                reader.BaseStream.Position = curPos;
+                TerrainModels[i] = reader.GetString();
             }
 
 			GensFileData.FinishRead(reader);

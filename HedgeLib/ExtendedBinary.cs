@@ -8,23 +8,40 @@ namespace HedgeLib
 {
     public class ExtendedBinary
     {
+		//Other
         [StructLayout(LayoutKind.Explicit)]
         public struct FloatUnion
         {
+			//Variables/Constants
             [FieldOffset(0)]
             public float Float;
             [FieldOffset(0)]
             public uint UInt;
+
+			//Constructors
+			public FloatUnion(float f)
+			{
+				UInt = 0;
+				Float = f;
+			}
         }
 
         [StructLayout(LayoutKind.Explicit)]
         public struct DoubleUnion
         {
+			//Variables/Constants
             [FieldOffset(0)]
             public double Double;
             [FieldOffset(0)]
             public ulong ULong;
-        }
+
+			//Constructors
+			public DoubleUnion(double d)
+			{
+				ULong = 0;
+				Double = d;
+			}
+		}
     }
 
     public class ExtendedBinaryReader : BinaryReader
@@ -442,7 +459,7 @@ namespace HedgeLib
             else
                 Offsets.Add(name, position);
 
-            var curPos = BaseStream.Position;
+			long curPos = BaseStream.Position;
             BaseStream.Position = position;
 
             WriteNulls(4);
@@ -451,7 +468,7 @@ namespace HedgeLib
 
         public void FillInOffset(string name, bool absolute = true)
         {
-            var curPos = BaseStream.Position;
+			long curPos = BaseStream.Position;
             BaseStream.Position = Offsets[name];
 
             Write((uint)(curPos - ((absolute) ? 0 : Offset)));
@@ -462,7 +479,7 @@ namespace HedgeLib
 
         public void FillInOffset(string name, uint value, bool absolute = true)
         {
-            var curPos = BaseStream.Position;
+			long curPos = BaseStream.Position;
             BaseStream.Position = Offsets[name];
 
             Write((uint)(value - ((absolute) ? 0 : Offset)));
@@ -478,7 +495,7 @@ namespace HedgeLib
 
         public void WriteNulls(uint count)
         {
-            byte[] nulls = new byte[count];
+            var nulls = new byte[count];
             Write(nulls);
         }
 
@@ -619,9 +636,7 @@ namespace HedgeLib
 
         public override void Write(float value)
         {
-            var floatUnion = new ExtendedBinary.FloatUnion();
-            floatUnion.Float = value;
-
+            var floatUnion = new ExtendedBinary.FloatUnion(value);
             if (IsBigEndian)
             {
                 dataBuffer[0] = (byte)(floatUnion.UInt >> 24);
@@ -703,9 +718,7 @@ namespace HedgeLib
 
         public override void Write(double value)
         {
-            var doubleUnion = new ExtendedBinary.DoubleUnion();
-            doubleUnion.Double = value;
-
+            var doubleUnion = new ExtendedBinary.DoubleUnion(value);
             if (IsBigEndian)
             {
                 dataBuffer[0] = (byte)(doubleUnion.ULong >> 56);
