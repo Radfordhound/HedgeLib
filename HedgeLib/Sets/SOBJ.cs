@@ -53,16 +53,6 @@ namespace HedgeLib.Sets
 			{
 				//Object Type
 				string objName = reader.GetString();
-				if (!objectTemplates.ContainsKey(objName))
-				{
-					Console.WriteLine("WARNING: No object template exists for object type \"" +
-						objName + "\" (Offset: 0x" + reader.BaseStream.Position.ToString("X") +
-						")! Skipping this object...");
-					reader.JumpAhead(8);
-
-					continue;
-				}
-
 				uint objOfTypeCount = reader.ReadUInt32();
 				uint objIndicesOffset = reader.ReadUInt32();
 				long curTypePos = reader.BaseStream.Position;
@@ -74,6 +64,16 @@ namespace HedgeLib.Sets
 				{
 					ushort objIndex = reader.ReadUInt16();
 					long curPos = reader.BaseStream.Position;
+					
+					//We do this check here so we can print an offset that's actually helpful
+					if (!objectTemplates.ContainsKey(objName))
+					{
+						Console.WriteLine("WARNING: No object template exists for object type \"" +
+							objName + "\" (Offset: 0x" + objOffsets[objIndex].ToString("X") +
+							")! Skipping this object...");
+						
+						break;
+					}
 
 					//Object Data
 					reader.JumpTo(objOffsets[objIndex], false);
