@@ -7,7 +7,7 @@ using UnityEngine;
 public static class GameList
 {
     //Variables/Constants
-    public static Dictionary<string, GameEntry> Games = new Dictionary<string, GameEntry>();
+    public static List<GameEntry> Games = new List<GameEntry>();
     public const string FilePath = "GameList.xml";
     public const float HighestSupportedVersion = 1.0f;
 
@@ -49,6 +49,7 @@ public static class GameList
                 var game = new GameEntry()
                 {
                     Name = (nameAttr == null) ? shortName : nameAttr.Value,
+                    ShortName = shortName,
                     DataType = dataType,
                     GameDataType = DataTypes.GetDataType(dataType),
                     ObjectTemplates = templates,
@@ -113,7 +114,7 @@ public static class GameList
                     }
                 }
 
-                Games.Add(shortName, game);
+                Games.Add(game);
 
                 Debug.Log("Loaded " + game.ObjectTemplates.Count +
                     " templates for " + game.Name + "."); //TODO: REMOVE THIS
@@ -167,7 +168,7 @@ public class GameEntry
     public LoadInfo LoadInfo = new LoadInfo();
 
     public IGameDataType GameDataType;
-    public string Name, DataType;
+    public string Name, ShortName, DataType;
     public float UnitMultiplier = 1;
 }
 

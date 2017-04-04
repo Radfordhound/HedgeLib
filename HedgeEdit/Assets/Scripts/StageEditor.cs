@@ -30,8 +30,8 @@ public class StageEditor : MonoBehaviour
         GameList.Load();
 
         //Setup GUI
-        foreach (var key in GameList.Games.Keys)
-            StageTypeDropdown.options.Add(new Dropdown.OptionData(key));
+        foreach (var game in GameList.Games)
+            StageTypeDropdown.options.Add(new Dropdown.OptionData(game.Name));
 
         StageTypeDropdown.RefreshShownValue();
 	}
@@ -272,10 +272,11 @@ public class StageEditor : MonoBehaviour
     //GUI Events
     public void LoadGUI()
     {
+        int gameIndex = StageTypeDropdown.value;
+        GameEntry game = null;
+
         StageDir = StageDirTxtbx.text;
         StageID = StageIDTxtbx.text;
-        GameType = StageTypeDropdown.options[StageTypeDropdown.value].text;
-        GameEntry game = null;
 
         if (string.IsNullOrEmpty(StageDir) || !Directory.Exists(StageDir))
         {
@@ -289,19 +290,22 @@ public class StageEditor : MonoBehaviour
             return;
         }
 
+        if (gameIndex < 0 || gameIndex >= GameList.Games.Count)
+        {
+            Debug.LogError("ERROR: No paths defined in " + GameList.FilePath +
+                " for " + StageTypeDropdown.options[gameIndex].text
+                + ". Cannot load stage.");
+            return;
+        }
+
+        game = GameList.Games[gameIndex];
+        GameType = game.Name;
+
         if (string.IsNullOrEmpty(GameType))
         {
             Debug.LogWarning("Cannot load stage. Invalid Game Type!");
             return;
         }
-
-        if (!GameList.Games.ContainsKey(GameType))
-        {
-            throw new System.Exception("ERROR: No paths defined in " +
-                GameList.FilePath + " for " + GameType + ". Cannot load stage.");
-        }
-
-        game = GameList.Games[GameType];
 
         //Make cache directory
         string cacheDir = Helpers.CombinePaths(Globals.StartupPath, CachePath, StageID);
