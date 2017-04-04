@@ -15,6 +15,13 @@ namespace HedgeLib.Sets
 
         public string ObjectType;
         public uint ObjectID;
+
+		//Methods
+		public T GetCustomDataValue<T>(string name)
+		{
+			return (CustomData.ContainsKey(name)) ?
+				(T)CustomData[name].Data : default(T);
+		}
     }
 
     public class SetObjectParam
