@@ -71,7 +71,7 @@ namespace HedgeLib.Archives
             //Data
             while (reader.BaseStream.Position < reader.BaseStream.Length)
             {
-                reader.Offset = reader.BaseStream.Position;
+                reader.Offset = (uint)reader.BaseStream.Position;
 
                 uint dataEndOffset = reader.ReadUInt32();
                 uint dataLength = reader.ReadUInt32();
