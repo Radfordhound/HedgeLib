@@ -63,11 +63,11 @@ namespace HedgeLib.Sets
 				}
 
 				uint objOfTypeCount = reader.ReadUInt32();
-				uint objIndiciesOffset = reader.ReadUInt32();
+				uint objIndicesOffset = reader.ReadUInt32();
 				long curTypePos = reader.BaseStream.Position;
 
 				//Objects
-				reader.JumpTo(objIndiciesOffset, false);
+				reader.JumpTo(objIndicesOffset, false);
 
 				for (uint i2 = 0; i2 < objOfTypeCount; ++i2)
 				{
@@ -143,10 +143,10 @@ namespace HedgeLib.Sets
 				//Object Type
 				gameFileData.AddString(writer, "objName_" + i, obj.Key);
 				writer.Write((uint)obj.Value.Count);
-				gameFileData.AddOffset(writer, "objIndiciesOffset");
+				gameFileData.AddOffset(writer, "objIndicesOffset");
 
-				//Object Indicies
-				writer.FillInOffset("objIndiciesOffset", false);
+				//Object Indices
+				writer.FillInOffset("objIndicesOffset", false);
 				for (int i3 = 0; i3 < obj.Value.Count; ++i3)
 				{
 					writer.Write(i2);
