@@ -70,6 +70,18 @@ namespace HedgeLib
             JumpAhead(jumpAmount);
         }
 
+		public string GetString(uint offset, bool isNullTerminated = true)
+		{
+			long curPos = BaseStream.Position;
+			BaseStream.Position = offset;
+
+			string str = (isNullTerminated) ?
+				ReadNullTerminatedString() : ReadString();
+
+			BaseStream.Position = curPos;
+			return str;
+		}
+
         public string ReadSignature(int length = 4)
         {
             var chars = ReadChars(length);
