@@ -70,6 +70,11 @@ namespace HedgeLib
             JumpAhead(jumpAmount);
         }
 
+		public string GetString(bool isNullTerminated = true)
+		{
+			return GetString(ReadUInt32(), isNullTerminated);
+		}
+
 		public string GetString(uint offset, bool isNullTerminated = true)
 		{
 			long curPos = BaseStream.Position;
