@@ -3,34 +3,38 @@
 This repository contains the following tools/libraries:
 
 # HedgeLib
-A C# library [under the MIT license](https://github.com/Radfordhound/HedgeLib/blob/master/License.txt) that aims to make modding games in the Sonic the Hedgehog franchise easier, similar to Dario's excellent "[LibGens](https://github.com/DarioSamo/libgens-sonicglvl)."
+A C# library [under the MIT license](https://github.com/Radfordhound/HedgeLib/blob/master/License.txt) that aims to make modding games in the Sonic the Hedgehog franchise easier, similar to [Dario's excellent "LibGens."](https://github.com/DarioSamo/libgens-sonicglvl)
 
 Right now it supports the following:
 
-##Hedgehog Engine
-- Reading lights.
-
-##Havok
+## Havok
 - Reading/Writing XML Havok data.
 
-##Generations/Unleashed
+## Hedgehog Engine
+- Reading/Writing lights.
+
+## Sonic Unleashed/Sonic Generations
 - Reading/Writing uncompressed archives.
 - Reading set data.
 - Reading/Writing terrain groups.
 - Reading/Writing light lists.
 
-##Lost World
+## Sonic Colors
+- Reading/Writing set data.
+
+## Sonic Lost World
 - Reading/Writing BINA headers/footers.
 - Reading/Writing GISM files.
+- Reading/Writing set data.
 
 # HedgeEdit
-**IMPORTANT:** Please compile HedgeLib using Visual Studio and the sln file provided before opening HedgeEdit in Unity!
+**IMPORTANT:** Please compile HedgeLib using Visual Studio 2017 and the sln file provided before opening HedgeEdit in Unity!
 If done correctly, Visual Studio should automatically copy the generated DLL file to the HedgeEdit Assets\Libraries folder.
 
 
 A Unity-based level editor designed to carry much of the same functionality as "SonicGlvl," but with support for a large number of games in the series, rather than just Generations.
 
-Right now it's a major WIP.
+Right now it's a major WIP, though feel free to try it out!
 
 # HedgeTools
 A collection of miscellaneous tools that utilize HedgeLib to allow editing a wide array of formats.
