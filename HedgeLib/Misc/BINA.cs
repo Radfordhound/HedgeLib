@@ -2,7 +2,7 @@
 
 namespace HedgeLib.Misc
 {
-	public class BINA
+	public static class BINA
 	{
 		//Methods
 		public static List<uint> ReadFooter(ExtendedBinaryReader reader,
@@ -78,27 +78,6 @@ namespace HedgeLib.Misc
 			writer.FixPadding();
 		}
 
-		public static List<StringTableEntry> ReadStrings(ExtendedBinaryReader reader,
-			uint headerLength, uint stringTableLength)
-		{
-			uint stringsEnd = (uint)reader.BaseStream.Position + stringTableLength;
-			var strings = new List<StringTableEntry>();
-
-			while (reader.BaseStream.Position < reader.BaseStream.Length &&
-				reader.BaseStream.Position < stringsEnd)
-			{
-				var tableEntry = new StringTableEntry()
-				{
-					Offset = (uint)reader.BaseStream.Position - headerLength,
-					Data = reader.ReadNullTerminatedString()
-				};
-
-				strings.Add(tableEntry);
-			}
-
-			return strings;
-		}
-
 		public static void WriteStrings(ExtendedBinaryWriter writer,
 			 List<StringTableEntry> strings)
 		{
@@ -148,24 +127,12 @@ namespace HedgeLib.Misc
 			writer.AddOffset(name);
 		}
 
-		public static string GetString(uint offset, List<StringTableEntry> strings)
-		{
-			foreach (var str in strings)
-			{
-				if (str.Offset == offset)
-					return str.Data;
-			}
-
-			return null;
-		}
-
 		//Other
 		public class StringTableEntry
 		{
 			//Variables/Constants
 			public List<string> OffsetNames = new List<string>();
 			public string Data;
-			public uint Offset;
 		}
 
 		private enum OffsetTypes

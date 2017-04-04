@@ -53,7 +53,7 @@ namespace HedgeLib.Misc
                         fileNameOffset + " vs. " + fileNameOffset2 + ")");
 
                 var curPos = reader.BaseStream.Position;
-                gismo.FileName = LWFileData.GetString(fileNameOffset);
+                gismo.FileName = reader.GetString(fileNameOffset, true);
 
                 //Havok Array
                 reader.JumpTo(havokOffset, false);
@@ -64,8 +64,7 @@ namespace HedgeLib.Misc
                     System.Console.WriteLine("WARNING: Unknown10 != 0 (" +
                         unknown10 + ".)");
 
-                var havokNameOffset = reader.ReadUInt32();
-                gismo.HavokName = LWFileData.GetString(havokNameOffset);
+                gismo.HavokName = reader.GetString(true);
 
                 //Container 2
                 reader.JumpTo(containerTwoOffset, false);

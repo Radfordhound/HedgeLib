@@ -145,10 +145,5 @@ namespace HedgeLib.Bases
 		{
 			BINA.AddString(writer, strings, Offsets, offsetName, str);
 		}
-
-		public string GetString(uint offset)
-		{
-			return BINA.GetString(offset, strings);
-		}
 	}
 }

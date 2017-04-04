@@ -61,7 +61,7 @@ namespace HedgeLib.Sets
 			for (uint i = 0; i < objTypeCount; ++i)
 			{
 				//Object Type
-				string objName = LWFileData.GetString(reader.ReadUInt32());
+				string objName = reader.GetString(true);
 				if (!objectTemplates.ContainsKey(objName))
 				{
 					Console.WriteLine("WARNING: No object template exists for object type \"" +

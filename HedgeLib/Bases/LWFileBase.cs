@@ -49,13 +49,6 @@ namespace HedgeLib.Bases
 			return header;
 		}
 
-		public static List<BINA.StringTableEntry> ReadStrings(
-			ExtendedBinaryReader reader, LWHeader header)
-		{
-			reader.JumpTo(header.StringTableOffset, false);
-			return BINA.ReadStrings(reader, LWHeader.Length, header.StringTableLength);
-		}
-
 		public static List<uint> ReadFooter(ExtendedBinaryReader reader, LWHeader header)
 		{
 			reader.JumpTo(header.FileSize - header.FinalTableLength);
@@ -119,10 +112,6 @@ namespace HedgeLib.Bases
 		public void InitRead(ExtendedBinaryReader reader)
 		{
 			Header = ReadHeader(reader);
-
-			long dataPos = reader.BaseStream.Position;
-			strings = ReadStrings(reader, Header);
-			reader.BaseStream.Position = dataPos;
 		}
 
 		public void InitWrite(ExtendedBinaryWriter writer)
@@ -153,11 +142,6 @@ namespace HedgeLib.Bases
 		public void AddString(ExtendedBinaryWriter writer, string offsetName, string str)
 		{
 			BINA.AddString(writer, strings, Offsets, offsetName, str);
-		}
-
-		public string GetString(uint offset)
-		{
-			return BINA.GetString(offset, strings);
 		}
 	}
 }
