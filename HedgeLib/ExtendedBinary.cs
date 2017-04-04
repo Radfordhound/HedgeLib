@@ -319,9 +319,64 @@ namespace HedgeLib
 
             return new Vector3(x, y, z);
         }
+		
+		//16-Byte Types
+		public Quaternion ReadQuaternion()
+		{
+			float x, y, z, w;
+			var buffer = ReadBytes(16);
+			var floatUnion = new ExtendedBinary.FloatUnion();
 
-        //TODO: Write override methods for all types.
-    }
+			if (IsBigEndian)
+			{
+				floatUnion.UInt = (
+					(uint)buffer[0] << 24 | (uint)buffer[1] << 16 |
+					(uint)buffer[2] << 8 | buffer[3]);
+				x = floatUnion.Float;
+
+				floatUnion.UInt = (
+					(uint)buffer[4] << 24 | (uint)buffer[5] << 16 |
+					(uint)buffer[6] << 8 | buffer[7]);
+				y = floatUnion.Float;
+
+				floatUnion.UInt = (
+					(uint)buffer[8] << 24 | (uint)buffer[9] << 16 |
+					(uint)buffer[10] << 8 | buffer[11]);
+				z = floatUnion.Float;
+
+				floatUnion.UInt = (
+					(uint)buffer[12] << 24 | (uint)buffer[13] << 16 |
+					(uint)buffer[14] << 8 | buffer[15]);
+				w = floatUnion.Float;
+			}
+			else
+			{
+				floatUnion.UInt = (
+					(uint)buffer[3] << 24 | (uint)buffer[2] << 16 |
+					(uint)buffer[1] << 8 | buffer[0]);
+				x = floatUnion.Float;
+
+				floatUnion.UInt = (
+					(uint)buffer[7] << 24 | (uint)buffer[6] << 16 |
+					(uint)buffer[5] << 8 | buffer[4]);
+				y = floatUnion.Float;
+
+				floatUnion.UInt = (
+					(uint)buffer[11] << 24 | (uint)buffer[10] << 16 |
+					(uint)buffer[9] << 8 | buffer[8]);
+				z = floatUnion.Float;
+
+				floatUnion.UInt = (
+					(uint)buffer[15] << 24 | (uint)buffer[14] << 16 |
+					(uint)buffer[13] << 8 | buffer[12]);
+				w = floatUnion.Float;
+			}
+
+			return new Quaternion(x, y, z, w);
+		}
+
+		//TODO: Write override methods for all types.
+	}
 
     public class ExtendedBinaryWriter : BinaryWriter
     {
