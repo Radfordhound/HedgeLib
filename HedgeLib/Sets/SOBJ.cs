@@ -69,8 +69,8 @@ namespace HedgeLib.Sets
 					if (!objectTemplates.ContainsKey(objName))
 					{
 						Console.WriteLine("WARNING: No object template exists for object type \"" +
-							objName + "\" (Offset: 0x" + objOffsets[objIndex].ToString("X") +
-							")! Skipping this object...");
+							objName + "\" (Offset: 0x" + (objOffsets[objIndex] +
+							reader.Offset).ToString("X") + ")! Skipping this object...");
 						
 						break;
 					}
