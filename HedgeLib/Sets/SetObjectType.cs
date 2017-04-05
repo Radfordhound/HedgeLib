@@ -2,11 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Xml.Linq;
 
 namespace HedgeLib.Sets
 {
-    public class SetObjectType : FileBase
+	public class SetObjectType : FileBase
     {
         //Variables/Constants
         public List<SetObjectTypeParam> Parameters = new List<SetObjectTypeParam>();
@@ -15,7 +14,7 @@ namespace HedgeLib.Sets
         //Methods
         public override void Load(Stream fileStream)
         {
-            XDocument xml = Helpers.GetXDocStream(fileStream);
+            var xml = Helpers.GetXDocStream(fileStream);
             
             foreach (var element in xml.Root.Elements())
             {
@@ -31,7 +30,7 @@ namespace HedgeLib.Sets
                 {
                     var defaultAttr = element.Attribute("default");
                     var descAttr = element.Attribute("description");
-                    Type dataType = Types.GetTypeFromString(typeAttr.Value);
+                    var dataType = Types.GetTypeFromString(typeAttr.Value);
 
                     var param = new SetObjectTypeParam()
                     {

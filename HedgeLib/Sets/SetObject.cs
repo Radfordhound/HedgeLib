@@ -10,11 +10,25 @@ namespace HedgeLib.Sets
             new Dictionary<string, SetObjectParam>();
         public List<SetObjectParam> Parameters = new List<SetObjectParam>();
 
-        public SetObjectTransform[] Children;
-        public SetObjectTransform Transform;
+        public SetObjectTransform[] Children = new SetObjectTransform[0];
+        public SetObjectTransform Transform = new SetObjectTransform();
 
         public string ObjectType;
         public uint ObjectID;
+
+		//Constructors
+		public SetObject() { }
+		public SetObject(SetObjectType type, string typeName, uint objID)
+		{
+			ObjectType = typeName;
+			ObjectID = objID;
+
+			foreach (var param in type.Parameters)
+			{
+				Parameters.Add(new SetObjectParam(param.DataType,
+					param.DefaultValue));
+			}
+		}
 
 		//Methods
 		public T GetCustomDataValue<T>(string name)
@@ -42,7 +56,8 @@ namespace HedgeLib.Sets
     public class SetObjectTransform
     {
         //Variables/Constants
-        public Quaternion Rotation;
-        public Vector3 Position, Scale = new Vector3(1, 1, 1);
+        public Quaternion Rotation = new Quaternion(0, 0, 0, 1);
+        public Vector3 Position = new Vector3(0, 0, 0),
+			Scale = new Vector3(1, 1, 1);
     }
 }
