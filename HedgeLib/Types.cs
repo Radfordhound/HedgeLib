@@ -20,22 +20,22 @@ namespace HedgeLib
 
             //4-Byte Values
             new DataType(typeof(int), 0, "signed int", "integer", "sint32", "int"),
-            new DataType(typeof(uint), (uint)0,
-                "unsigned int", "unsigned integer", "uint32", "uint", "target"),
-            new DataType(typeof(float), 0.0f, "single", "float"),
+            new DataType(typeof(uint), 0u, "unsigned int",
+				"unsigned integer", "uint32", "uint", "target"),
+            new DataType(typeof(float), 0f, "single", "float"),
 
             new DataType(typeof(uint[]), new uint[0], "uint32array"),
 
             //8-Byte Values
             new DataType(typeof(long), 0L, "signed long", "sint64", "long"),
-            new DataType(typeof(ulong), (ulong)0, "unsigned long", "uint64", "ulong"),
-            new DataType(typeof(double), 0.0D, "double"),
+            new DataType(typeof(ulong), 0UL, "unsigned long", "uint64", "ulong"),
+            new DataType(typeof(double), 0D, "double"),
 
             //12-Byte Values
             new DataType(typeof(Vector3), new Vector3(), "vect", "vector", "vector3", "position"),
 
             //16-Byte Values
-            new DataType(typeof(decimal), 0.0M, "decimal"),
+            new DataType(typeof(decimal), 0M, "decimal"),
             new DataType(typeof(Vector4), new Vector4(), "vector4"),
             new DataType(typeof(Quaternion), new Quaternion(), "quat", "quaternion"),
 
@@ -81,7 +81,7 @@ namespace HedgeLib
         }
     }
 
-    public class DataType
+    public struct DataType
     {
         //Variables/Constants
         public string[] Identifiers;
