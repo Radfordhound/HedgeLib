@@ -322,7 +322,7 @@ namespace HedgeLib.Sets
 			IGameFormatBase gameFileData, SetObject obj, bool isLW)
 		{
 			//Get a bunch of values from the object's custom data, if present.
-			uint unknown1 = obj.GetCustomDataValue<uint>("Unknown1");
+			uint unknown1 = obj.GetCustomDataValue<ushort>("Unknown1");
 			uint unknown2 = obj.GetCustomDataValue<uint>("Unknown2");
 			uint unknown3 = obj.GetCustomDataValue<uint>("Unknown3");
 			float unknown4 = obj.GetCustomDataValue<float>("Unknown4");
