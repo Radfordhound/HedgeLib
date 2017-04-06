@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
 
@@ -190,8 +191,8 @@ namespace HedgeArchiveEditor
             if (!refreshFileList || lv == null) return;
 
             lv.SmallImageList = new ImageList();
-            Directory.CreateDirectory(Path.Combine(tempPath, "File_Extensions"));
-
+            lv.SmallImageList.Images.Add("-", GetIconFromExtension("-"));
+            
             lv.Items.Clear();
 
             lv.MouseMove += Lv_MouseMove;
@@ -211,15 +212,13 @@ namespace HedgeArchiveEditor
 
                 try
                 {
-                    // TODO: Find a better way to get icons or just remove this try catch statement
-                    // Getting Icon
-                    if (!lv.SmallImageList.Images.ContainsKey(fileInfo.Extension) && fileInfo.Extension.Length > 0)
-                    {
-                        File.OpenWrite(Path.Combine(tempPath, "File_Extensions\\"+fileInfo.Extension)).Close();
-                        lv.SmallImageList.Images.Add(fileInfo.Extension, System.Drawing.Icon.ExtractAssociatedIcon(Path.Combine(tempPath, "File_Extensions\\" + fileInfo.Extension)));
-                        File.Delete(Path.Combine(tempPath, "File_Extensions\\" + fileInfo.Extension));
-                    }
+                    if (!lv.SmallImageList.Images.ContainsKey(fileInfo.Extension))
+                        lv.SmallImageList.Images.Add(fileInfo.Extension, GetIconFromExtension(fileInfo.Extension));
+
                     lvi.ImageKey = fileInfo.Extension;
+
+                    if (fileInfo.Extension.Length == 0)
+                        lvi.ImageKey = "-";
                 }
                 catch//(Exception ex)
                 {
@@ -549,22 +548,52 @@ namespace HedgeArchiveEditor
                     CurrentArchive.Saved = false;
                     foreach (var file in files)
                     {
-                        for (int i = 0; i < CurrentArchive.Files.Count; ++i)
+                        if (File.GetAttributes(file) == FileAttributes.Normal)
                         {
-                            ArchiveFile file2 = CurrentArchive.Files[i];
-                            var fileInfo = new FileInfo(file);
-
-                            if (fileInfo.Name.ToLower() == file2.Name.ToLower())
+                            for (int i = 0; i < CurrentArchive.Files.Count; ++i)
                             {
-                                if (MessageBox.Show($"There's already a file called {file2.Name}.\n" +
-                                    $"Do you want to replace {fileInfo.Name}?", Text,
-                                    MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
-                                    return;
+                                ArchiveFile file2 = CurrentArchive.Files[i];
+                                var fileInfo = new FileInfo(file);
 
-                                CurrentArchive.Files.Remove(file2);
+                                if (fileInfo.Name.ToLower() == file2.Name.ToLower())
+                                {
+                                    if (MessageBox.Show($"There's already a file called {file2.Name}.\n" +
+                                        $"Do you want to replace {fileInfo.Name}?", Text,
+                                        MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                                        return;
+
+                                    CurrentArchive.Files.Remove(file2);
+                                }
+                            }
+                            CurrentArchive.Files.Add(new ArchiveFile(file));
+                        }
+                        else if (File.GetAttributes(file) == FileAttributes.Directory)
+                        {
+                            bool includeSubfolders = (MessageBox.Show("Include Subfolders?", Text,
+                                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes);
+                            string[] filesInDir = Directory.GetFiles(file, "*", includeSubfolders ?
+                                SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+
+                            foreach (var fileDir in filesInDir)
+                            {
+                                for (int i = 0; i < CurrentArchive.Files.Count; ++i)
+                                {
+                                    var fileDir2 = CurrentArchive.Files[i];
+                                    var fileInfo = new FileInfo(fileDir);
+
+                                    if (fileInfo.Name.ToLower() == fileDir2.Name.ToLower())
+                                    {
+                                        if (MessageBox.Show($"There's already a file called {fileDir2.Name}.\n" +
+                                            $"Do you want to replace {fileInfo.Name}?", Text,
+                                            MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                                            continue;
+
+                                        CurrentArchive.Files.Remove(fileDir2);
+                                    }
+                                }
+                                CurrentArchive.Files.Add(new ArchiveFile(fileDir));
                             }
                         }
-                        CurrentArchive.Files.Add(new ArchiveFile(file));
                     }
 
                     RefreshGUI();
@@ -596,7 +625,7 @@ namespace HedgeArchiveEditor
 
             var renameForm = new Form()
             {
-                Size = new System.Drawing.Size(400, 120),
+                Size = new Size(400, 120),
                 FormBorderStyle = FormBorderStyle.Fixed3D,
                 MaximizeBox = false,
                 Text = $"Rename item \"{lv.SelectedItems[0].Text}\""
@@ -604,14 +633,14 @@ namespace HedgeArchiveEditor
 
             renameForm.Controls.Add(new Label()
             {
-                Location = new System.Drawing.Point(12, 12),
+                Location = new Point(12, 12),
                 Text = "Rename to: "
             });
 
             var textBox = new TextBox()
             {
-                Location = new System.Drawing.Point(30, 38),
-                Size = new System.Drawing.Size(330, 20),
+                Location = new Point(30, 38),
+                Size = new Size(330, 20),
                 Text = lv.SelectedItems[0].Text
             };
 
@@ -737,7 +766,7 @@ namespace HedgeArchiveEditor
             if (Archives.Count > 0) lv = tabControl.SelectedTab.Controls[0] as ListView;
 
             pasteToolStripMenuItem.Enabled = (lv != null && Clipboard.ContainsFileDropList());
-            copyToolStripMenuItem.Enabled = deleteToolStripMenuItem.Enabled =
+            renameToolStripMenuItem.Enabled = copyToolStripMenuItem.Enabled = deleteToolStripMenuItem.Enabled =
                 selectAllToolStripMenuItem.Enabled =
                 ((lv != null) ? lv.SelectedItems.Count > 0 : false);
         }
@@ -826,7 +855,8 @@ namespace HedgeArchiveEditor
         private void Lv_MouseMove(object sender, MouseEventArgs e)
         {
             ListView lv = sender as ListView;
-            if (e.Button == MouseButtons.Left && lv.SelectedItems.Count > 0 && !lv.FocusedItem.Bounds.Contains(lv.PointToClient(MousePosition)))
+            if (e.Button == MouseButtons.Left && lv.SelectedItems.Count > 0 &&
+                !lv.FocusedItem.Bounds.Contains(lv.PointToClient(MousePosition)))
             {
                 List<string> fileList = new List<string>();
                 try
@@ -942,6 +972,39 @@ namespace HedgeArchiveEditor
                 if (order == SortOrder.Descending) returnVal *= -1;
                 return returnVal;
             }
+        }
+
+        private struct SHFILEINFO
+        {
+            public IntPtr iconHandle;
+            public int iconIndex;
+            public uint dwAttributes;
+            public string szDisplayName;
+            public string szTypeName;
+        };
+
+        [System.Runtime.InteropServices.DllImport("Shell32.dll")]
+        private static extern uint SHGetFileInfo(string fileName, uint fileAttributes, ref SHFILEINFO psfi,
+            uint fileInfoSize, uint flags);
+
+        [System.Runtime.InteropServices.DllImport("User32.dll")]
+        private static extern bool DestroyIcon(IntPtr iconHandle);
+
+        private static Icon GetIconFromExtension(string name)
+        {
+            try
+            {
+                var shfi = new SHFILEINFO();
+                uint fileAttributes = 0x80; // FILE_ATTRIBUTE_NORMAL
+                uint flags = 0x110; // SHGFI_ICON | SHGFI_USEFILEATTRIBUTES
+
+                SHGetFileInfo(name, fileAttributes, ref shfi, (uint)System.Runtime.InteropServices.Marshal.SizeOf(shfi), flags);
+
+                var icon = (Icon)Icon.FromHandle(shfi.iconHandle).Clone();
+                DestroyIcon(shfi.iconHandle);
+                return icon;
+            }
+            catch { return SystemIcons.Error; }
         }
     }
 }
