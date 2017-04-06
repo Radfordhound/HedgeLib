@@ -1,10 +1,7 @@
 ﻿namespace HedgeLib
 {
-    public class Quaternion
+    public class Quaternion : Vector4
     {
-        //Variables/Constants
-        public float X = 0, Y = 0, Z = 0, W = 0;
-
         //Constructors
         public Quaternion() { }
         public Quaternion(float x, float y, float z, float w)
@@ -15,10 +12,12 @@
             W = w;
         }
 
-        //Methods
-        public override string ToString()
-        {
-            return $"({X}, {Y}, {Z}, {W})";
-        }
+		public Quaternion(Vector4 vect)
+		{
+			X = vect.X;
+			Y = vect.Y;
+			Z = vect.Z;
+			W = vect.W;
+		}
     }
 }
