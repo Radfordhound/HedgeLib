@@ -133,6 +133,13 @@ namespace HedgeLib
 			var y = element.Element("y");
 			var z = element.Element("z");
 
+			if (x == null)
+				x = element.Element("X");
+			if (y == null)
+				y = element.Element("Y");
+			if (z == null)
+				z = element.Element("Z");
+
 			return new Vector3(
 				(x == null) ? 0 : Convert.ToSingle(x.Value),
 				(y == null) ? 0 : Convert.ToSingle(y.Value),
@@ -145,6 +152,15 @@ namespace HedgeLib
 			var y = element.Element("y");
 			var z = element.Element("z");
 			var w = element.Element("w");
+
+			if (x == null)
+				x = element.Element("X");
+			if (y == null)
+				y = element.Element("Y");
+			if (z == null)
+				z = element.Element("Z");
+			if (w == null)
+				w = element.Element("W");
 
 			return new Vector4(
 				(x == null) ? 0 : Convert.ToSingle(x.Value),
