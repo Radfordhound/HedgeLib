@@ -25,13 +25,13 @@ namespace HedgeLib
              *  ~ Radfordhound
             */
 
-            XmlReader reader = XmlReader.Create(fileStream);
+            var reader = XmlReader.Create(fileStream);
             return XDocument.Load(reader);
         }
 
         public static void SaveXDocStream(Stream fileStream, XDocument xml)
         {
-            /*
+			/*
              * So here's the deal: Unity as of now only supports up to .NET 3.5.
              * As such we have to target that, otherwise this library won't work in Unity.
              * 
@@ -42,14 +42,17 @@ namespace HedgeLib
              *  ~ Radfordhound
             */
 
-            var writerSettings = new XmlWriterSettings();
-            writerSettings.Indent = true;
-            writerSettings.IndentChars = "\t";
+			var writerSettings = new XmlWriterSettings()
+			{
+				Indent = true,
+				IndentChars = "\t"
+			};
 
-            var writer = XmlWriter.Create(fileStream, writerSettings);
-            xml.Save(writer);
-            writer.Flush();
-            writer.Close();
+			using (var writer = XmlWriter.Create(fileStream, writerSettings))
+			{
+				xml.Save(writer);
+				writer.Flush();
+			}
         }
 
 		public static string GetFileHash(string filePath)
@@ -100,9 +103,7 @@ namespace HedgeLib
             {
                 if (value.GetType() == typeof(string))
                 {
-                    var singles = ((string)value).Split();
-                    return new Vector4(Convert.ToSingle(singles[0]), Convert.ToSingle(singles[1]),
-                        Convert.ToSingle(singles[2]), Convert.ToSingle(singles[3]));
+					return StringToVector4();
                 }
                 else throw new NotImplementedException();
             }
@@ -110,14 +111,20 @@ namespace HedgeLib
             {
                 if (value.GetType() == typeof(string))
                 {
-                    var singles = ((string)value).Split();
-                    return new Quaternion(Convert.ToSingle(singles[0]), Convert.ToSingle(singles[1]),
-                        Convert.ToSingle(singles[2]), Convert.ToSingle(singles[3]));
+                    return new Quaternion(StringToVector4());
                 }
                 else throw new NotImplementedException();
             }
 
             return Convert.ChangeType(value, conversionType);
+
+			//Sub-Methods
+			Vector4 StringToVector4()
+			{
+				var singles = ((string)value).Split();
+				return new Vector4(Convert.ToSingle(singles[0]), Convert.ToSingle(singles[1]),
+					Convert.ToSingle(singles[2]), Convert.ToSingle(singles[3]));
+			}
         }
 
 		public static Vector3 XMLReadVector3(XElement element)
@@ -132,18 +139,42 @@ namespace HedgeLib
 				(z == null) ? 0 : Convert.ToSingle(z.Value));
 		}
 
-		public static Quaternion XMLReadQuat(XElement element)
+		public static Vector4 XMLReadVector4(XElement element)
 		{
 			var x = element.Element("x");
 			var y = element.Element("y");
 			var z = element.Element("z");
 			var w = element.Element("w");
 
-			return new Quaternion(
+			return new Vector4(
 				(x == null) ? 0 : Convert.ToSingle(x.Value),
 				(y == null) ? 0 : Convert.ToSingle(y.Value),
 				(z == null) ? 0 : Convert.ToSingle(z.Value),
 				(w == null) ? 0 : Convert.ToSingle(w.Value));
+		}
+
+		public static Quaternion XMLReadQuat(XElement element)
+		{
+			return new Quaternion(XMLReadVector4(element));
+		}
+
+		public static void XMLWriteVector3(XElement element, Vector3 vect)
+		{
+			var x = new XElement("x", vect.X);
+			var y = new XElement("y", vect.Y);
+			var z = new XElement("z", vect.Z);
+
+			element.Add(x, y, z);
+		}
+
+		public static void XMLWriteVector4(XElement element, Vector4 vect)
+		{
+			var x = new XElement("x", vect.X);
+			var y = new XElement("y", vect.Y);
+			var z = new XElement("z", vect.Z);
+			var w = new XElement("w", vect.W);
+
+			element.Add(x, y, z, w);
 		}
 	}
 }
