@@ -160,6 +160,10 @@ namespace HedgeLib
 				return ReadDouble();
 			else if (type == typeof(Vector3))
 				return ReadVector3();
+			else if (type == typeof(Quaternion))
+				return new Quaternion(ReadVector4());
+			else if (type == typeof(Vector4))
+				return ReadVector4();
 
 			//TODO: Add more types.
 
@@ -356,7 +360,7 @@ namespace HedgeLib
         }
 		
 		//16-Byte Types
-		public Quaternion ReadQuaternion()
+		public Vector4 ReadVector4()
 		{
 			float x, y, z, w;
 			var buffer = ReadBytes(16);
@@ -407,7 +411,7 @@ namespace HedgeLib
 				w = floatUnion.Float;
 			}
 
-			return new Quaternion(x, y, z, w);
+			return new Vector4(x, y, z, w);
 		}
 
 		//TODO: Write override methods for all types.
@@ -551,6 +555,8 @@ namespace HedgeLib
 				Write((double)data);
 			else if (type == typeof(Vector3))
 				Write((Vector3)data);
+			else if (type == typeof(Vector4) || type == typeof(Quaternion))
+				Write((Vector4)data);
 			else
 			{
 				throw new NotImplementedException("Cannot write \"" +
@@ -795,6 +801,66 @@ namespace HedgeLib
             Write(dataBuffer, 0, 12);
         }
 
-        //TODO: Write override methods for all types.
-    }
+		//16-Byte Types
+		public void Write(Vector4 vect)
+		{
+			var floatUnion = new ExtendedBinary.FloatUnion();
+			if (IsBigEndian)
+			{
+				floatUnion.Float = vect.X;
+				dataBuffer[0] = (byte)(floatUnion.UInt >> 24);
+				dataBuffer[1] = (byte)(floatUnion.UInt >> 16);
+				dataBuffer[2] = (byte)(floatUnion.UInt >> 8);
+				dataBuffer[3] = (byte)(floatUnion.UInt);
+
+				floatUnion.Float = vect.Y;
+				dataBuffer[4] = (byte)(floatUnion.UInt >> 24);
+				dataBuffer[5] = (byte)(floatUnion.UInt >> 16);
+				dataBuffer[6] = (byte)(floatUnion.UInt >> 8);
+				dataBuffer[7] = (byte)(floatUnion.UInt);
+
+				floatUnion.Float = vect.Z;
+				dataBuffer[8] = (byte)(floatUnion.UInt >> 24);
+				dataBuffer[9] = (byte)(floatUnion.UInt >> 16);
+				dataBuffer[10] = (byte)(floatUnion.UInt >> 8);
+				dataBuffer[11] = (byte)(floatUnion.UInt);
+
+				floatUnion.Float = vect.W;
+				dataBuffer[12] = (byte)(floatUnion.UInt >> 24);
+				dataBuffer[13] = (byte)(floatUnion.UInt >> 16);
+				dataBuffer[14] = (byte)(floatUnion.UInt >> 8);
+				dataBuffer[15] = (byte)(floatUnion.UInt);
+			}
+			else
+			{
+				floatUnion.Float = vect.X;
+				dataBuffer[0] = (byte)(floatUnion.UInt);
+				dataBuffer[1] = (byte)(floatUnion.UInt >> 8);
+				dataBuffer[2] = (byte)(floatUnion.UInt >> 16);
+				dataBuffer[3] = (byte)(floatUnion.UInt >> 24);
+
+				floatUnion.Float = vect.Y;
+				dataBuffer[4] = (byte)(floatUnion.UInt);
+				dataBuffer[5] = (byte)(floatUnion.UInt >> 8);
+				dataBuffer[6] = (byte)(floatUnion.UInt >> 16);
+				dataBuffer[7] = (byte)(floatUnion.UInt >> 24);
+
+				floatUnion.Float = vect.Z;
+				dataBuffer[8] = (byte)(floatUnion.UInt);
+				dataBuffer[9] = (byte)(floatUnion.UInt >> 8);
+				dataBuffer[10] = (byte)(floatUnion.UInt >> 16);
+				dataBuffer[11] = (byte)(floatUnion.UInt >> 24);
+
+				floatUnion.Float = vect.W;
+				dataBuffer[12] = (byte)(floatUnion.UInt);
+				dataBuffer[13] = (byte)(floatUnion.UInt >> 8);
+				dataBuffer[14] = (byte)(floatUnion.UInt >> 16);
+				dataBuffer[15] = (byte)(floatUnion.UInt >> 24);
+			}
+
+			Write(dataBuffer, 0, 16);
+		}
+
+		//TODO: Write override methods for all types.
+	}
 }
