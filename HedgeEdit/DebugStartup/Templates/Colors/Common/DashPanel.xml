@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <OutOfControl type="float" default="0.5" description="How long the game locks your control for after coming in contact with this object." />
+  <Speed type="float" default="0" description="How much speed the dashPanel will send you off with." />
+  <IsVisible type="bool" default="true" description="Whether the DashPanel displays it's model, or is invisible (used in stages like Starlight Carnival)." />
+  <Unknown5 type="bool" default="false" description="Padding?" />
+  <Unknown6 type="bool" default="false" description="Padding?" />
+  <Unknown7 type="bool" default="false" description="Padding?" />
+</Template>
