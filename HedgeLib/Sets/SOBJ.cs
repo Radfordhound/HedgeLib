@@ -35,7 +35,7 @@ namespace HedgeLib.Sets
 			uint unknown2 = reader.ReadUInt32(); //Probably just padding
 
 			if (unknown2 != 0)
-				Console.WriteLine("WARNING: Unknown2 != 0! (" + unknown2 + ")");
+				Console.WriteLine("WARNING: Unknown2 != 0! ({0})", unknown2);
 
 			uint transformsCount = reader.ReadUInt32();
 
@@ -134,20 +134,25 @@ namespace HedgeLib.Sets
 			gameFileData.AddOffsetTable(writer, "objOffset", (uint)objects.Count);
 
 			//Object Types
-			writer.FillInOffset("objTypeOffsetsOffset", false);
-
 			uint i = 0;
-			ushort i2 = 0;
+			writer.FillInOffset("objTypeOffsetsOffset", false);
 
 			foreach (var obj in objectsByType)
 			{
-				//Object Type
-				gameFileData.AddString(writer, "objName_" + i, obj.Key);
+				gameFileData.AddString(writer, $"objName_{i}", obj.Key);
 				writer.Write((uint)obj.Value.Count);
-				gameFileData.AddOffset(writer, "objIndicesOffset");
+				gameFileData.AddOffset(writer, $"objIndicesOffset_{i}");
 
-				//Object Indices
-				writer.FillInOffset("objIndicesOffset", false);
+				++i;
+			}
+
+			//Object Indices
+			ushort i2 = 0;
+			i = 0;
+
+			foreach (var obj in objectsByType)
+			{
+				writer.FillInOffset($"objIndicesOffset_{i}", false);
 				for (int i3 = 0; i3 < obj.Value.Count; ++i3)
 				{
 					writer.Write(i2);
@@ -165,7 +170,7 @@ namespace HedgeLib.Sets
 			{
 				foreach (int objIndex in objType.Value)
 				{
-					writer.FillInOffset("objOffset_" + i, false);
+					writer.FillInOffset($"objOffset_{i}", false);
 					WriteObject(writer, gameFileData, objects[objIndex], isLW);
 					++i;
 				}
@@ -205,8 +210,8 @@ namespace HedgeLib.Sets
 			//Call me crazy, but I have a weird feeling these values aren't JUST padding
 			if (unknown3 != 0 || unknown5 != 0 || unknown6 != 0 || unknown7 != 0)
 			{
-				Console.WriteLine("WARNING: Not padding?! (" + unknown3 + ", " +
-					unknown5 + ", " + unknown6 + ", " + unknown7 + ")");
+				Console.WriteLine("WARNING: Not padding?! ({0},{1},{2},{3})",
+					unknown3, unknown5, unknown6, unknown7);
 			}
 
 			//Add custom data to object
@@ -304,15 +309,17 @@ namespace HedgeLib.Sets
 
 			//World-Space
 			transform.Position = reader.ReadVector3();
-			//TODO: Convert euler angles rotation to quaternion.
-			var rotation = reader.ReadVector3();
+			transform.Rotation = new Quaternion(reader.ReadVector3(), true);
 
 			//Local-Space
 			if (readLocalSpace)
 			{
 				transform.Position += reader.ReadVector3();
+
 				//TODO: Convert euler angles rotation to quaternion and multiply.
 				var localRotation = reader.ReadVector3();
+				if (localRotation.X != 0 || localRotation.Y != 0 || localRotation.Z != 0)
+					Console.WriteLine("Local rotation {0} is not zero!", localRotation);
 			}
 
 			return transform;
@@ -417,9 +424,7 @@ namespace HedgeLib.Sets
 		{
 			//World-Space
 			writer.Write(transform.Position);
-
-			//TODO: Convert rotation to euler angles and write.
-			writer.Write(new Vector3(0, 0, 0));
+			writer.Write(transform.Rotation.ToEulerAngles(true));
 
 			//Local-Space
 			if (writeLocalSpace)
