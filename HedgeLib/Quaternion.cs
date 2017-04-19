@@ -1,4 +1,6 @@
-﻿namespace HedgeLib
+﻿using System;
+
+namespace HedgeLib
 {
     public class Quaternion : Vector4
     {
@@ -18,6 +20,67 @@
 			Y = vect.Y;
 			Z = vect.Z;
 			W = vect.W;
+		}
+
+		public Quaternion(Vector3 eulerAngles, bool inRadians = false)
+		{
+			double m = (inRadians) ? 0.5 : Math.PI / 360;
+			double h = eulerAngles.Y * m;
+			double a = eulerAngles.Z * m;
+			double b = eulerAngles.X * m;
+
+			double c1 = Math.Cos(h);
+			double c2 = Math.Cos(a);
+			double c3 = Math.Cos(b);
+			double s1 = Math.Sin(h);
+			double s2 = Math.Sin(a);
+			double s3 = Math.Sin(b);
+
+			W = (float)(c1 * c2 * c3 - s1 * s2 * s3);
+			Y = (float)(s1 * c2 * c3 + c1 * s2 * s3);
+			Z = (float)(c1 * s2 * c3 - s1 * c2 * s3);
+
+			X = (float)((inRadians) ?
+					(c1 * c2 * s3 + s1 * s2 * c3) :
+					(s1 * s2 * c3 + c1 * c2 * s3));
+		}
+
+		//Methods
+		public Vector3 ToEulerAngles(bool returnResultInRadians = false)
+		{
+			// Credit to http://quat.zachbennett.com/
+			float qw2 = W * W;
+			float qx2 = X * X;
+			float qy2 = Y * Y;
+			float qz2 = Z * Z;
+			float test = X * Y + Z * W;
+
+			if (test > 0.499)
+			{
+				return GetVect(0,
+					360 / Math.PI * Math.Atan2(X, W), 90);
+			}
+			if (test < -0.499)
+			{
+				return GetVect(0,
+					-360 / Math.PI * Math.Atan2(X, W), -90);
+			}
+
+			double h = Math.Atan2(2 * Y * W - 2 * X * Z, 1 - 2 * qy2 - 2 * qz2);
+			double a = Math.Asin(2 * X * Y + 2 * Z * W);
+			double b = Math.Atan2(2 * X * W - 2 * Y * Z, 1 - 2 * qx2 - 2 * qz2);
+
+			return GetVect(Math.Round(b * 180 / Math.PI),
+				Math.Round(h * 180 / Math.PI),
+				Math.Round(a * 180 / Math.PI));
+
+			//Sub-Methods
+			Vector3 GetVect(double x, double y, double z)
+			{
+				float multi = (returnResultInRadians) ? 0.0174533f : 1;
+				return new Vector3((float)x * multi,
+					(float)y * multi, (float)z * multi);
+			}
 		}
     }
 }
