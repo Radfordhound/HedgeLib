@@ -97,6 +97,14 @@ namespace HedgeArchiveEditor
             {
                 arc = new GensArchive();
             }
+            else if (fileInfo.Extension == LWArchive.Extension)
+            {
+                arc = new LWArchive();
+            }
+            else if (fileInfo.Extension == SBArchive.Extension)
+            {
+                arc = new SBArchive();
+            }
             else
                 throw new Exception("The given archive has an unknown extension.");
 

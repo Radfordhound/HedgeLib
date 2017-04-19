@@ -70,7 +70,7 @@ namespace HedgeArchiveEditor
                 {
                     Title = "Save Archive As...",
                     Filter = "Generations/Unleashed Archives (*.ar, *.arl, *.pfd)|*.ar;*.arl;*.pfd"
-                        + "|Lost World Archives (*.pac)|*.pac",
+                     + "|Lost World Archives (*.pac)|*.pac|StoryBook Series Archives (*.one)|*.one"
                 };
 
                 if (sfd.ShowDialog() == DialogResult.OK)
@@ -88,15 +88,27 @@ namespace HedgeArchiveEditor
                 fileLocation = (string)ArchiveFileExtraData[Archives[index]][0];
 
                 // These checks may not work.
-                if (Archives[index].GetType() == typeof(GensArchive)) ArchiveType = 0;
-                if (Archives[index].GetType() == typeof(LWArchive)) ArchiveType = 1;
+                var type = Archives[index].GetType();
+                if (type == typeof(GensArchive)) ArchiveType = 0;
+                else if (type == typeof(LWArchive)) ArchiveType = 1;
+                else if (type == typeof(SBArchive)) ArchiveType = 2;
 
                 if (ArchiveType == -1)
                 {
-                    if (fileLocation.EndsWith(".arl")) ArchiveType = 0;
-                    if (fileLocation.EndsWith(".ar")) ArchiveType = 0;
-                    if (fileLocation.EndsWith(".00")) ArchiveType = 0;
-                    if (fileLocation.EndsWith(".pac")) ArchiveType = 1;
+                    if (fileLocation.EndsWith(GensArchive.ListExtension) ||
+                        fileLocation.EndsWith(GensArchive.Extension) ||
+                        fileLocation.EndsWith(GensArchive.SplitExtension))
+                    {
+                        ArchiveType = 0;
+                    }
+                    else if (fileLocation.EndsWith(LWArchive.Extension))
+                    {
+                        ArchiveType = 1;
+                    }
+                    else if (fileLocation.EndsWith(SBArchive.Extension))
+                    {
+                        ArchiveType = 2;
+                    }
                 }
             }
 
@@ -116,16 +128,20 @@ namespace HedgeArchiveEditor
                         };
                         
                         genArc.Save(fileLocation, saveOptions.CheckBox1.Checked, splitAmount);
-                        CurrentArchive.Saved = true;
                         break;
                     case 1:
-                        var lwArc = new LWArchive(/*CurrentArchive*/);
+                        var lwArc = new LWArchive(CurrentArchive);
                         lwArc.Save(fileLocation);
-                        CurrentArchive.Saved = true;
+                        break;
+                    case 2:
+                        var srArc = new SBArchive(CurrentArchive);
+                        srArc.Save(fileLocation);
                         break;
                     default:
                         throw new NotImplementedException("Unknown Archive Type");
                 }
+
+                CurrentArchive.Saved = true;
             }
             RefreshTabPage(index, false);
         }
@@ -275,7 +291,8 @@ namespace HedgeArchiveEditor
             {
                 Title = "Open Archive(s)...",
                 Filter = "Generations/Unleashed Archives (*.ar, *.arl, *.pfd)|*.ar;*.arl;*.pfd" +
-                "|Lost World Archives (*.pac)|*.pac|All Files (*.*)|*.*",
+                "|Lost World Archives (*.pac)|*.pac|StoryBook Series Archives (*.one)|*.one" +
+                "|All Files (*.*)|*.*",
 
                 Multiselect = true
             };
