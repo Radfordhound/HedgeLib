@@ -56,6 +56,7 @@
     <Compile Include="Archives\Archive.cs" />
     <Compile Include="Archives\ArchiveFile.cs" />
     <Compile Include="Archives\GensArchive.cs" />
+    <Compile Include="Archives\ONEArchive.cs" />
     <Compile Include="Archives\LWArchive.cs" />
     <Compile Include="Archives\SBArchive.cs" />
     <Compile Include="Bases\ColorsFileBase.cs" />
