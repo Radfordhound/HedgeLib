@@ -38,10 +38,11 @@ namespace HedgeLib.Archives
 					new string(stringBuffer).Replace("\0", string.Empty);
 
 				// Read File Entry Data
-				fileEntries[i] = new FileEntry()
+				uint fileIndex = reader.ReadUInt32();
+				fileEntries[fileIndex] = new FileEntry()
 				{
 					FileName = fileName,
-					FileIndex = reader.ReadUInt32(),
+					FileIndex = fileIndex,
 					DataOffset = reader.ReadUInt32(),
 					DataLength = reader.ReadUInt32(),
 					UncompressedSize = reader.ReadUInt32()
