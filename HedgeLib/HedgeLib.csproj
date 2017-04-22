@@ -62,6 +62,7 @@
     <Compile Include="Bases\ColorsFileBase.cs" />
     <Compile Include="Bases\IGameFormatBase.cs" />
     <Compile Include="Bases\LWFileBase.cs" />
+    <Compile Include="Exceptions\InvalidSignatureException.cs" />
     <Compile Include="ExtendedBinary.cs" />
     <Compile Include="Bases\FileBase.cs" />
     <Compile Include="Bases\GensFileBase.cs" />

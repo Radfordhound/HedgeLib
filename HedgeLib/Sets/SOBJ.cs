@@ -1,4 +1,5 @@
 ﻿using HedgeLib.Bases;
+using HedgeLib.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,13 +17,14 @@ namespace HedgeLib.Sets
 		{
 			var objs = new List<SetObject>();
 
-			//SOBJ Header
+			// SOBJ Header
 			var sig = reader.ReadChars(4);
 			if (!reader.IsBigEndian)
 				Array.Reverse(sig);
 
-			if (new string(sig) != Signature)
-				throw new InvalidDataException("Cannot load set data - incorrect signature!");
+			string sigString = new string(sig);
+			if (sigString != Signature)
+				throw new InvalidSignatureException(Signature, sigString);
 
 			uint unknown1 = reader.ReadUInt32();
 			uint objTypeCount = reader.ReadUInt32();
@@ -31,32 +33,32 @@ namespace HedgeLib.Sets
 			reader.JumpAhead(4);
 			uint objOffsetsOffset = reader.ReadUInt32();
 			uint objCount = reader.ReadUInt32();
-			uint unknown2 = reader.ReadUInt32(); //Probably just padding
+			uint unknown2 = reader.ReadUInt32(); // Probably just padding
 
 			if (unknown2 != 0)
 				Console.WriteLine("WARNING: Unknown2 != 0! ({0})", unknown2);
 
 			uint transformsCount = reader.ReadUInt32();
 
-			//Object Offsets
+			// Object Offsets
 			var objOffsets = new uint[objCount];
 			reader.JumpTo(objOffsetsOffset, false);
 
 			for (uint i = 0; i < objCount; ++i)
 				objOffsets[i] = reader.ReadUInt32();
 
-			//Object Types
+			// Object Types
 			reader.JumpTo(objTypeOffsetsOffset, false);
 
 			for (uint i = 0; i < objTypeCount; ++i)
 			{
-				//Object Type
+				// Object Type
 				string objName = reader.GetString();
 				uint objOfTypeCount = reader.ReadUInt32();
 				uint objIndicesOffset = reader.ReadUInt32();
 				long curTypePos = reader.BaseStream.Position;
 
-				//Objects
+				// Objects
 				reader.JumpTo(objIndicesOffset, false);
 
 				for (uint i2 = 0; i2 < objOfTypeCount; ++i2)
@@ -64,17 +66,17 @@ namespace HedgeLib.Sets
 					ushort objIndex = reader.ReadUInt16();
 					long curPos = reader.BaseStream.Position;
 					
-					//We do this check here so we can print an offset that's actually helpful
+					// We do this check here so we can print an offset that's actually helpful
 					if (!objectTemplates.ContainsKey(objName))
 					{
-						Console.WriteLine("WARNING: No object template exists for object type \"" +
-							objName + "\" (Offset: 0x" + (objOffsets[objIndex] +
-							reader.Offset).ToString("X") + ")! Skipping this object...");
+						Console.WriteLine("{0} \"{1}\" (Offset: 0x{2:X})! Skipping this object...",
+							"WARNING: No object template exists for object type",
+							objName, (objOffsets[objIndex] + reader.Offset));
 						
 						break;
 					}
 
-					//Object Data
+					// Object Data
 					reader.JumpTo(objOffsets[objIndex], false);
 					objs.Add(ReadObject(reader,
 						objectTemplates[objName], objName, isLW));
@@ -91,7 +93,7 @@ namespace HedgeLib.Sets
 		public static void Write(ExtendedBinaryWriter writer, IGameFormatBase gameFileData,
 			List<SetObject> objects, bool isLW)
 		{
-			//Get some data we need to write the file
+			// Get some data we need to write the file
 			var objectsByType = new Dictionary<string, List<int>>();
 			uint transformCount = 0, objTypeCount = 0;
 
@@ -111,7 +113,7 @@ namespace HedgeLib.Sets
 				transformCount += (uint)obj.Children.Length + 1;
 			}
 
-			//SOBJ Header
+			// SOBJ Header
 			var sig = Signature.ToCharArray();
 			if (!writer.IsBigEndian)
 				Array.Reverse(sig);
@@ -121,18 +123,18 @@ namespace HedgeLib.Sets
 			writer.Write(objTypeCount);
 			gameFileData.AddOffset(writer, "objTypeOffsetsOffset");
 
-			writer.Write((isLW) ? 0 : 0xFFFFFFFF); //I doubt it really matters tbh.
+			writer.Write((isLW) ? 0 : 0xFFFFFFFF); // I doubt it really matters tbh.
 			gameFileData.AddOffset(writer, "objOffsetsOffset");
 			writer.Write(objects.Count);
 			writer.WriteNulls(4);
 
 			writer.Write(transformCount);
 
-			//Object Offsets
+			// Object Offsets
 			writer.FillInOffset("objOffsetsOffset", false);
 			gameFileData.AddOffsetTable(writer, "objOffset", (uint)objects.Count);
 
-			//Object Types
+			// Object Types
 			uint i = 0;
 			writer.FillInOffset("objTypeOffsetsOffset", false);
 
@@ -145,7 +147,7 @@ namespace HedgeLib.Sets
 				++i;
 			}
 
-			//Object Indices
+			// Object Indices
 			ushort i2 = 0;
 			i = 0;
 
@@ -161,7 +163,7 @@ namespace HedgeLib.Sets
 				++i;
 			}
 
-			//Objects
+			// Objects
 			writer.FixPadding(4);
 			i = 0;
 
@@ -179,9 +181,9 @@ namespace HedgeLib.Sets
 		private static SetObject ReadObject(ExtendedBinaryReader reader,
 			SetObjectType objTemplate, string objType, bool isLW)
 		{
-			//For some reason these separate values are saved as one uint rather than two ushorts.
-			//Because of this, the values are in a different order depending on endianness, and
-			//this is the easiest way to read them.
+			// For some reason these separate values are saved as one uint rather than two ushorts.
+			// Because of this, the values are in a different order depending on endianness, and
+			// this is the easiest way to read them.
 			uint unknownValue = reader.ReadUInt32();
 			ushort unknown1 = (ushort)((unknownValue >> 16) & 0xFFFF);
 			ushort objID = (ushort)(unknownValue & 0xFFFF);
@@ -206,14 +208,14 @@ namespace HedgeLib.Sets
 			uint unknown6 = (isLW) ? reader.ReadUInt32() : 0;
 			uint unknown7 = (isLW) ? reader.ReadUInt32() : 0;
 
-			//Call me crazy, but I have a weird feeling these values aren't JUST padding
+			// Call me crazy, but I have a weird feeling these values aren't JUST padding
 			if (unknown3 != 0 || unknown5 != 0 || unknown6 != 0 || unknown7 != 0)
 			{
 				Console.WriteLine("WARNING: Not padding?! ({0},{1},{2},{3})",
 					unknown3, unknown5, unknown6, unknown7);
 			}
 
-			//Add custom data to object
+			// Add custom data to object
 			obj.CustomData.Add("Unknown1", new SetObjectParam(typeof(ushort), unknown1));
 			obj.CustomData.Add("Unknown2", new SetObjectParam(typeof(uint), unknown2));
 			obj.CustomData.Add("Unknown3", new SetObjectParam(typeof(uint), unknown3));
@@ -223,26 +225,26 @@ namespace HedgeLib.Sets
 
 			if (isLW) obj.CustomData.Add("Parent", new SetObjectParam(typeof(uint), parent));
 
-			//Parameters
+			// Parameters
 			foreach (var param in objTemplate.Parameters)
 			{
-				//For compatibility with SonicGlvl templates.
+				// For compatibility with SonicGlvl templates.
 				if (param.Name == "Unknown1" || param.Name == "Unknown2" ||
 					param.Name == "Unknown3" || param.Name == "RangeIn" ||
 					param.Name == "RangeOut" || param.Name == "Parent")
 					continue;
 
-				//Read Special Types/Fix Padding
+				// Read Special Types/Fix Padding
 				if (param.DataType == typeof(uint[]))
 				{
-					//Data Info
+					// Data Info
 					reader.FixPadding(4);
 					uint arrOffset = reader.ReadUInt32();
 					uint arrLength = reader.ReadUInt32();
 					uint arrUnknown = reader.ReadUInt32();
 					long curPos = reader.BaseStream.Position;
 
-					//Data
+					// Data
 					var arr = new uint[arrLength];
 					reader.JumpTo(arrOffset, false);
 
@@ -255,12 +257,12 @@ namespace HedgeLib.Sets
 				}
 				else if (param.DataType == typeof(string))
 				{
-					//Data Info
+					// Data Info
 					uint strOffset = reader.ReadUInt32();
 					uint strUnknown = reader.ReadUInt32();
 					string str = null;
 
-					//Data
+					// Data
 					if (strOffset != 0)
 					{
 						long curPos = reader.BaseStream.Position;
@@ -283,13 +285,13 @@ namespace HedgeLib.Sets
 					reader.FixPadding(16);
 				}
 
-				//Read Data
+				// Read Data
 				var objParam = new SetObjectParam(param.DataType,
 					reader.ReadByType(param.DataType));
 				obj.Parameters.Add(objParam);
 			}
 
-			//Transforms
+			// Transforms
 			uint childCount = transformCount - 1;
 			obj.Children = new SetObjectTransform[childCount];
 			reader.JumpTo(transformsOffset, false);
@@ -306,11 +308,11 @@ namespace HedgeLib.Sets
 		{
 			var transform = new SetObjectTransform();
 
-			//World-Space
+			// World-Space
 			transform.Position = reader.ReadVector3();
 			transform.Rotation = new Quaternion(reader.ReadVector3(), true);
 
-			//Local-Space
+			// Local-Space
 			if (readLocalSpace)
 			{
 				transform.Position += reader.ReadVector3();
@@ -327,7 +329,7 @@ namespace HedgeLib.Sets
 		private static void WriteObject(ExtendedBinaryWriter writer,
 			IGameFormatBase gameFileData, SetObject obj, bool isLW)
 		{
-			//Get a bunch of values from the object's custom data, if present.
+			// Get a bunch of values from the object's custom data, if present.
 			uint unknown1 = obj.GetCustomDataValue<ushort>("Unknown1");
 			uint unknown2 = obj.GetCustomDataValue<uint>("Unknown2");
 			uint unknown3 = obj.GetCustomDataValue<uint>("Unknown3");
@@ -337,7 +339,7 @@ namespace HedgeLib.Sets
 			float rangeOut = obj.GetCustomDataValue<float>("RangeOut");
 			uint parent = (isLW) ? obj.GetCustomDataValue<uint>("Parent") : 0;
 
-			//Combine the two values back into one so we can write with correct endianness.
+			// Combine the two values back into one so we can write with correct endianness.
 			uint unknownData = (unknown1 << 16) | (obj.ObjectID & 0xFFFF);
 			writer.Write(unknownData);
 
@@ -353,13 +355,13 @@ namespace HedgeLib.Sets
 			writer.Write((uint)obj.Children.Length + 1);
 			writer.WriteNulls((isLW) ? 0xC : 4u);
 
-			//Parameters
+			// Parameters
 			foreach (var param in obj.Parameters)
 			{
-				//Write Special Types/Fix Padding
+				// Write Special Types/Fix Padding
 				if (param.DataType == typeof(uint[]))
 				{
-					//Data Info
+					// Data Info
 					var arr = (uint[])param.Data;
 					writer.FixPadding(4);
 
@@ -367,7 +369,7 @@ namespace HedgeLib.Sets
 					writer.Write((uint)arr.Length);
 					writer.WriteNulls(4); //TODO: Figure out what this is.
 
-					//Data
+					// Data
 					writer.FillInOffset("arrOffset", false);
 
 					foreach (uint value in arr)
@@ -377,7 +379,7 @@ namespace HedgeLib.Sets
 				}
 				else if (param.DataType == typeof(string))
 				{
-					//Data Info
+					// Data Info
 					string str = (string)param.Data;
 					gameFileData.AddOffset(writer, "strOffset");
 					writer.WriteNulls(4); //TODO: Figure out what this is.
@@ -404,11 +406,11 @@ namespace HedgeLib.Sets
 					writer.FixPadding(16);
 				}
 
-				//Write Data
+				// Write Data
 				writer.WriteByType(param.DataType, param.Data);
 			}
 
-			//Transforms
+			// Transforms
 			writer.FillInOffset("transformsOffset", false);
 			WriteTransform(writer, obj.Transform, isLW);
 
@@ -421,11 +423,11 @@ namespace HedgeLib.Sets
 		private static void WriteTransform(ExtendedBinaryWriter writer,
 			SetObjectTransform transform, bool writeLocalSpace)
 		{
-			//World-Space
+			// World-Space
 			writer.Write(transform.Position);
 			writer.Write(transform.Rotation.ToEulerAngles(true));
 
-			//Local-Space
+			// Local-Space
 			if (writeLocalSpace)
 				writer.WriteNulls(0x18);
 		}

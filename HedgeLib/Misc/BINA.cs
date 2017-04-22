@@ -4,6 +4,9 @@ namespace HedgeLib.Misc
 {
 	public static class BINA
 	{
+		//Variables/Constants
+		public const string Signature = "BINA";
+
 		//Methods
 		public static List<uint> ReadFooter(ExtendedBinaryReader reader,
 			uint headerLength, uint finalTableLength)

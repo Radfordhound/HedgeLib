@@ -1,4 +1,5 @@
-﻿using HedgeLib.Headers;
+﻿using HedgeLib.Exceptions;
+using HedgeLib.Headers;
 using HedgeLib.Misc;
 using System.Collections.Generic;
 using System.IO;
@@ -20,11 +21,10 @@ namespace HedgeLib.Bases
 			reader.BaseStream.Position = 0;
 			reader.Offset = LWHeader.Length;
 
-			//BINA Header
+			// BINA Header
 			string sig = reader.ReadSignature();
-			if (sig != LWHeader.Signature)
-				throw new InvalidDataException("The given file's signature was incorrect!" +
-					" (Expected " + LWHeader.Signature + " got " + sig + ".)");
+			if (sig != BINA.Signature)
+				throw new InvalidSignatureException(BINA.Signature, sig);
 
 			header.VersionString = reader.ReadSignature(3);
 			header.IsBigEndian = reader.IsBigEndian = (reader.ReadChar() == 'B');
@@ -32,11 +32,10 @@ namespace HedgeLib.Bases
 
 			reader.JumpAhead(4); //TODO: Figure out what this value is.
 
-			//DATA Header
+			// DATA Header
 			string dataSig = reader.ReadSignature();
 			if (dataSig != LWHeader.DataSignature)
-				throw new InvalidDataException("The given file's signature was incorrect!" +
-					" (Expected " + LWHeader.DataSignature + " got " + dataSig + ".)");
+				throw new InvalidSignatureException(LWHeader.DataSignature, dataSig);
 
 			header.DataLength = reader.ReadUInt32();
 			header.StringTableOffset = reader.ReadUInt32();
@@ -66,8 +65,8 @@ namespace HedgeLib.Bases
 		{
 			writer.BaseStream.Position = 0;
 
-			//BINA Header
-			writer.WriteSignature(LWHeader.Signature);
+			// BINA Header
+			writer.WriteSignature(BINA.Signature);
 			writer.WriteSignature(header.VersionString);
 			writer.Write((header.IsBigEndian) ? 'B' : 'L');
 			writer.Write(header.FileSize);
@@ -76,7 +75,7 @@ namespace HedgeLib.Bases
 			writer.Write((ushort)1);
 			writer.Write((ushort)0);
 
-			//DATA Header
+			// DATA Header
 			writer.WriteSignature(LWHeader.DataSignature);
 			writer.Write(header.DataLength);
 			writer.Write(header.StringTableOffset);
@@ -103,7 +102,7 @@ namespace HedgeLib.Bases
 			uint footerStartPos = (uint)writer.BaseStream.Position;
 			BINA.WriteFooter(writer, offsets, LWHeader.Length);
 
-			//Update header values
+			// Update header values
 			header.FinalTableLength = (uint)writer.BaseStream.Position - footerStartPos;
 			header.FileSize = (uint)writer.BaseStream.Position;
 			header.DataLength = (uint)writer.BaseStream.Position - 0x10;

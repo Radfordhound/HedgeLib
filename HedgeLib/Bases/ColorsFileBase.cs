@@ -21,27 +21,30 @@ namespace HedgeLib.Bases
 			reader.BaseStream.Position = 0;
 			reader.Offset = ColorsHeader.Length;
 
-			//BINA Header
+			// BINA Header
 			header.FileSize = reader.ReadUInt32();
 			header.FinalTableOffset = reader.ReadUInt32();
 			header.FinalTableLength = reader.ReadUInt32();
 
 			uint unknown1 = reader.ReadUInt32();
 			if (unknown1 != 0)
-				Console.WriteLine("WARNING: Unknown1 is not zero! (" + unknown1 + ")");
+				Console.WriteLine("WARNING: Unknown1 is not zero! ({0})", unknown1);
 
 			ushort unknownFlag1 = reader.ReadUInt16();
 			header.IsFooterMagicPresent = (reader.ReadUInt16() == 1);
 
 			reader.ReadSignature(4);
 			string sig = reader.ReadSignature(4);
-			if (sig != ColorsHeader.Signature)
-				throw new InvalidDataException("The given file's signature was incorrect!" +
-					" (Expected " + ColorsHeader.Signature + " got " + sig + ".)");
+			if (sig != BINA.Signature)
+			{
+				throw new InvalidDataException(string.Format(
+					"The given file's signature was incorrect! (Expected {0} got {1}.)",
+					BINA.Signature, sig));
+			}
 
 			uint unknown2 = reader.ReadUInt32();
 			if (unknown2 != 0)
-				Console.WriteLine("WARNING: Unknown2 is not zero! (" + unknown2 + ")");
+				Console.WriteLine("WARNING: Unknown2 is not zero! ({0})", unknown2);
 
 			return header;
 		}
@@ -63,7 +66,7 @@ namespace HedgeLib.Bases
 		{
 			writer.BaseStream.Position = 0;
 
-			//BINA Header
+			// BINA Header
 			writer.Write(header.FileSize);
 			writer.Write(header.FinalTableOffset);
 			writer.Write(header.FinalTableLength);
@@ -73,7 +76,7 @@ namespace HedgeLib.Bases
 			writer.Write((header.IsFooterMagicPresent) ? (ushort)1 : (ushort)0);
 
 			writer.WriteSignature(ColorsHeader.Magic);
-			writer.WriteSignature(ColorsHeader.Signature);
+			writer.WriteSignature(BINA.Signature);
 			writer.WriteNulls(4);
 		}
 
@@ -89,7 +92,7 @@ namespace HedgeLib.Bases
 			uint footerStartPos = (uint)writer.BaseStream.Position;
 			BINA.WriteFooter(writer, offsets, ColorsHeader.Length);
 
-			//Update header values
+			// Update header values
 			header.FinalTableOffset = footerStartPos - ColorsHeader.Length;
 			header.FinalTableLength = (uint)writer.BaseStream.Position - footerStartPos;
 

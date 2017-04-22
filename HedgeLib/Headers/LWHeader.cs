@@ -9,7 +9,7 @@
         public ushort Padding = 0x18;
         public bool IsBigEndian = false;
 
-        public const string Signature = "BINA", DataSignature = "DATA";
+        public const string DataSignature = "DATA";
         public const uint Length = 0x40;
     }
 }

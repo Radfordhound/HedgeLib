@@ -13,8 +13,7 @@ namespace HedgeLib.Archives
         public ArchiveFile(string filePath)
         {
             if (!File.Exists(filePath))
-                throw new FileNotFoundException("The given file could not be found.",
-                    filePath);
+                throw new FileNotFoundException("The given file could not be found.", filePath);
 
             var fileInfo = new FileInfo(filePath);
             Name = fileInfo.Name;
