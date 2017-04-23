@@ -193,6 +193,31 @@ namespace HedgeArchiveEditor
             tabControl.SelectedIndex = tabPageIndex;
         }
 
+        private void toggleLargeIconViewToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Checks if theres a selected tab.
+            if(tabControl.SelectedIndex >= 0)
+            {
+                ListView lv = tabControl.TabPages[tabControl.SelectedIndex].Controls[0] as ListView;
+
+                if (lv.View == View.Details)
+                { // Set to Large Icons.
+                    lv.LargeImageList = new ImageList()
+                    {
+                        ImageSize = new Size(64, 64)
+                    };
+                    lv.View = View.LargeIcon;
+                }
+                else
+                { // Set to Details.
+                    lv.LargeImageList = null;
+                    lv.View = View.Details;
+                }
+                // Refreshes the TabPage and ListView.
+                RefreshTabPage(tabControl.SelectedIndex);
+            }
+        }
+
         public void RefreshTabPage(int index, bool refreshFileList = true)
         {
             TabPage tp = tabControl.TabPages[index];
@@ -206,8 +231,11 @@ namespace HedgeArchiveEditor
             //Update File List
             if (!refreshFileList || lv == null) return;
 
-            lv.SmallImageList = new ImageList();
-            lv.SmallImageList.Images.Add("-", GetIconFromExtension("-"));
+            if(lv.View == View.Details)
+            {
+                lv.SmallImageList = new ImageList();
+                lv.SmallImageList.Images.Add("-", GetIconFromExtension("-"));
+            }
             
             lv.Items.Clear();
 
@@ -228,8 +256,10 @@ namespace HedgeArchiveEditor
 
                 try
                 {
-                    if (!lv.SmallImageList.Images.ContainsKey(fileInfo.Extension))
-                        lv.SmallImageList.Images.Add(fileInfo.Extension, GetIconFromExtension(fileInfo.Extension));
+                    ImageList imgList = lv.LargeImageList ?? lv.SmallImageList;
+
+                    if (!imgList.Images.ContainsKey(fileInfo.Extension))
+                        imgList.Images.Add(fileInfo.Extension, GetIconFromExtension(fileInfo.Extension));
 
                     lvi.ImageKey = fileInfo.Extension;
 
@@ -565,7 +595,7 @@ namespace HedgeArchiveEditor
                     CurrentArchive.Saved = false;
                     foreach (var file in files)
                     {
-                        if (File.GetAttributes(file) == FileAttributes.Normal)
+                        if (File.GetAttributes(file) != FileAttributes.Directory)
                         {
                             for (int i = 0; i < CurrentArchive.Files.Count; ++i)
                             {
@@ -584,7 +614,7 @@ namespace HedgeArchiveEditor
                             }
                             CurrentArchive.Files.Add(new ArchiveFile(file));
                         }
-                        else if (File.GetAttributes(file) == FileAttributes.Directory)
+                        else
                         {
                             bool includeSubfolders = (MessageBox.Show("Include Subfolders?", Text,
                                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes);
@@ -1013,7 +1043,7 @@ namespace HedgeArchiveEditor
             {
                 var shfi = new SHFILEINFO();
                 uint fileAttributes = 0x80; // FILE_ATTRIBUTE_NORMAL
-                uint flags = 0x110; // SHGFI_ICON | SHGFI_USEFILEATTRIBUTES
+                uint flags = 0x112; // SHGFI_ICON | SHGFI_USEFILEATTRIBUTES | SHGFI_EXTRALARGEICON
 
                 SHGetFileInfo(name, fileAttributes, ref shfi, (uint)System.Runtime.InteropServices.Marshal.SizeOf(shfi), flags);
 
