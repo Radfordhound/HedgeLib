@@ -54,7 +54,7 @@
             this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
             this.renameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toggleLargeIconViewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.largeIconViewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.addFilesToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.extractAllToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
@@ -94,7 +94,6 @@
             // fileStrip
             // 
             this.fileStrip.BackColor = System.Drawing.Color.White;
-            this.fileStrip.ImageScalingSize = new System.Drawing.Size(24, 24);
             this.fileStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
             this.editToolStripMenuItem,
@@ -291,17 +290,17 @@
             // viewToolStripMenuItem
             // 
             this.viewToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toggleLargeIconViewToolStripMenuItem});
+            this.largeIconViewToolStripMenuItem});
             this.viewToolStripMenuItem.Name = "viewToolStripMenuItem";
             this.viewToolStripMenuItem.Size = new System.Drawing.Size(44, 22);
             this.viewToolStripMenuItem.Text = "View";
             // 
-            // toggleLargeIconViewToolStripMenuItem
+            // largeIconViewToolStripMenuItem
             // 
-            this.toggleLargeIconViewToolStripMenuItem.Name = "toggleLargeIconViewToolStripMenuItem";
-            this.toggleLargeIconViewToolStripMenuItem.Size = new System.Drawing.Size(196, 22);
-            this.toggleLargeIconViewToolStripMenuItem.Text = "Toggle Large Icon View";
-            this.toggleLargeIconViewToolStripMenuItem.Click += new System.EventHandler(this.toggleLargeIconViewToolStripMenuItem_Click);
+            this.largeIconViewToolStripMenuItem.Name = "largeIconViewToolStripMenuItem";
+            this.largeIconViewToolStripMenuItem.Size = new System.Drawing.Size(157, 22);
+            this.largeIconViewToolStripMenuItem.Text = "Large Icon View";
+            this.largeIconViewToolStripMenuItem.Click += new System.EventHandler(this.largeIconViewToolStripMenuItem_Click);
             // 
             // contextMenu
             // 
@@ -428,7 +427,7 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator6;
         private System.Windows.Forms.ToolStripMenuItem renameToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem viewToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem toggleLargeIconViewToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem largeIconViewToolStripMenuItem;
     }
 }
 

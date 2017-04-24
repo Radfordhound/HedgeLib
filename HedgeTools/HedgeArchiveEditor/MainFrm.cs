@@ -193,12 +193,14 @@ namespace HedgeArchiveEditor
             tabControl.SelectedIndex = tabPageIndex;
         }
 
-        private void toggleLargeIconViewToolStripMenuItem_Click(object sender, EventArgs e)
+        private void largeIconViewToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // Checks if theres a selected tab.
             if(tabControl.SelectedIndex >= 0)
             {
-                ListView lv = tabControl.TabPages[tabControl.SelectedIndex].Controls[0] as ListView;
+                var lv = tabControl.TabPages[tabControl.SelectedIndex].Controls[0] as ListView;
+
+                if (lv == null) return;
 
                 if (lv.View == View.Details)
                 { // Set to Large Icons.
@@ -207,11 +209,13 @@ namespace HedgeArchiveEditor
                         ImageSize = new Size(64, 64)
                     };
                     lv.View = View.LargeIcon;
+                    largeIconViewToolStripMenuItem.CheckState = CheckState.Checked;
                 }
                 else
                 { // Set to Details.
                     lv.LargeImageList = null;
                     lv.View = View.Details;
+                    largeIconViewToolStripMenuItem.CheckState = CheckState.Unchecked;
                 }
                 // Refreshes the TabPage and ListView.
                 RefreshTabPage(tabControl.SelectedIndex);
@@ -654,6 +658,10 @@ namespace HedgeArchiveEditor
             if (e.Data.GetDataPresent(DataFormats.FileDrop) &&
                 e.Data.GetData(DataFormats.FileDrop) is string[] files)
             {
+                // Gets the Current Process PID.
+                string processId = System.Diagnostics.Process.GetCurrentProcess().Id.ToString();
+                if (e.Data.GetDataPresent("SourcePID") && (e.Data.GetData("SourcePID") as string == processId))
+                    return;
                 if (Archives.Count > 0)
                     e.Effect = DragDropEffects.Copy;
 
@@ -950,6 +958,7 @@ namespace HedgeArchiveEditor
                 if (fileList.Count > 0 && extracted)
                 {
                     DataObject d = new DataObject(DataFormats.FileDrop, fileList.ToArray());
+                    d.SetData("SourcePID", System.Diagnostics.Process.GetCurrentProcess().Id.ToString());
                     DoDragDrop(d, DragDropEffects.Copy);
                 }
 
