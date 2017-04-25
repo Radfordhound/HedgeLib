@@ -21,11 +21,6 @@ namespace HedgeArchiveEditor
                 ShowGUI();
             else
             {
-                AttachConsole(-1);
-                int cursorPosition = Console.CursorTop;
-                Console.SetCursorPosition(0, cursorPosition);
-                Console.Write(new string(' ', Console.WindowWidth));
-                Console.SetCursorPosition(0, cursorPosition-1);
                 switch (args[0].ToLower())
                 {
                     case "/e":
@@ -38,14 +33,10 @@ namespace HedgeArchiveEditor
 
                             try
                             {
-                                Console.Write("Loading Archive...");
-                                
                                 //Load the archive
                                 FileInfo fileInfo = new FileInfo(args[1]);
                                 var arc = LoadArchive(args[1]);
 
-                                Console.WriteLine(" Done.");
-                                Console.Write("Extracting...");
                                 //Extract it's contents
                                 var dir = (args.Length < 3) ?
                                     Path.Combine(fileInfo.DirectoryName,
@@ -55,9 +46,7 @@ namespace HedgeArchiveEditor
 
                                 Directory.CreateDirectory(dir);
                                 arc.Extract(dir);
-                                Console.WriteLine(" Done.");
                                 // Prints the working directory.
-                                Console.Write(Directory.GetCurrentDirectory() + ">");
                             }
                             catch (Exception ex)
                             {
@@ -145,9 +134,6 @@ namespace HedgeArchiveEditor
             MainForm = new MainFrm();
             Application.Run(MainForm);
         }
-
-        [System.Runtime.InteropServices.DllImport("kernel32.dll")]
-        static extern bool AttachConsole(int dwProcessId);
 
     }
 }
