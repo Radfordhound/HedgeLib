@@ -1,4 +1,5 @@
 ﻿using HedgeLib.Archives;
+using Microsoft.Win32;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -57,6 +58,43 @@ namespace HedgeArchiveEditor
             ArchiveFileExtraData.Add(arc, new object[] { filePath });
             arc.Saved = true;
             AddTabPage(new FileInfo(filePath).Name);
+            
+                 if(Path.GetExtension(filePath).ToLower() == GensArchive.ListExtension)
+                SetFileAssociation(GensArchive.ListExtension, "GensARLArchive", "Sonic Generations Archive");
+            else if (Path.GetExtension(filePath).ToLower() == GensArchive.PFDExtension)
+                SetFileAssociation(GensArchive.PFDExtension, "GensPFDArchive", "Sonic Generations Archive");
+            else if (Path.GetExtension(filePath).ToLower() == LWArchive.Extension)
+                SetFileAssociation(LWArchive.Extension, "LWPACArchive", "Sonic Lost World Archive");
+            else if (Path.GetExtension(filePath).ToLower() == ONEArchive.Extension)
+                SetFileAssociation(ONEArchive.Extension, "ONEArchive", "Sonic Heroes ONE Archive");
+            else if (Path.GetExtension(filePath).ToLower() == SBArchive.Extension)
+                SetFileAssociation(SBArchive.Extension, "SBArchive", "Story Book Archive");
+        }
+
+        public static void SetFileAssociation(string extension, string typeName, string typeDisplayName)
+        {
+            string typeKey = "HKEY_CURRENT_USER\\Software\\Classes\\" + typeName;
+            string extensionKey = "HKEY_CURRENT_USER\\Software\\Classes\\" + extension;
+
+            if (Registry.GetValue(typeKey + "\\shell\\open\\command", "", "") as string
+                != (Application.ExecutablePath + " \"%1\""))
+            {
+                // TODO: Ask the user if they want the file association changed.
+                if(MessageBox.Show($"Change file association for {extension} to {Application.ExecutablePath}?", 
+                    Program.ProgramName, MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    // HKEY_CURRENT_USER\Software\Classes\{typeName}\(Default) = typeDisplayName
+                    Registry.SetValue(typeKey, "", typeDisplayName);
+                    // HKEY_CURRENT_USER\Software\Classes\{typeName}\shell\open\command\(Default) = Application.ExecutablePath + " "%1""
+                    Registry.SetValue(typeKey + "\\shell\\open\\command", "", Application.ExecutablePath + " \"%1\"");
+                    // HKEY_CURRENT_USER\Software\Classes\{extension}\(Default) = typeName
+                    Registry.SetValue(extensionKey, "", typeName);
+
+                    // Notifies the system that an application has changed the file associations.
+                    long SHCNE_ASSOCCHANGED = 0x8000000;
+                    SHChangeNotify(SHCNE_ASSOCCHANGED, 0, IntPtr.Zero, IntPtr.Zero);
+                }
+            }
         }
 
         public void SaveArchive(int index, bool saveAs)
@@ -193,6 +231,35 @@ namespace HedgeArchiveEditor
             tabControl.SelectedIndex = tabPageIndex;
         }
 
+        private void largeIconViewToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Checks if theres a selected tab.
+            if(tabControl.SelectedIndex >= 0)
+            {
+                var lv = tabControl.TabPages[tabControl.SelectedIndex].Controls[0] as ListView;
+
+                if (lv == null) return;
+
+                if (lv.View == View.Details)
+                { // Set to Large Icons.
+                    lv.LargeImageList = new ImageList()
+                    {
+                        ImageSize = new Size(64, 64)
+                    };
+                    lv.View = View.LargeIcon;
+                    largeIconViewToolStripMenuItem.CheckState = CheckState.Checked;
+                }
+                else
+                { // Set to Details.
+                    lv.LargeImageList = null;
+                    lv.View = View.Details;
+                    largeIconViewToolStripMenuItem.CheckState = CheckState.Unchecked;
+                }
+                // Refreshes the TabPage and ListView.
+                RefreshTabPage(tabControl.SelectedIndex);
+            }
+        }
+
         public void RefreshTabPage(int index, bool refreshFileList = true)
         {
             TabPage tp = tabControl.TabPages[index];
@@ -206,8 +273,11 @@ namespace HedgeArchiveEditor
             //Update File List
             if (!refreshFileList || lv == null) return;
 
-            lv.SmallImageList = new ImageList();
-            lv.SmallImageList.Images.Add("-", GetIconFromExtension("-"));
+            if(lv.View == View.Details)
+            {
+                lv.SmallImageList = new ImageList();
+                lv.SmallImageList.Images.Add("-", GetIconFromExtension("-"));
+            }
             
             lv.Items.Clear();
 
@@ -228,8 +298,10 @@ namespace HedgeArchiveEditor
 
                 try
                 {
-                    if (!lv.SmallImageList.Images.ContainsKey(fileInfo.Extension))
-                        lv.SmallImageList.Images.Add(fileInfo.Extension, GetIconFromExtension(fileInfo.Extension));
+                    ImageList imgList = lv.LargeImageList ?? lv.SmallImageList;
+
+                    if (!imgList.Images.ContainsKey(fileInfo.Extension))
+                        imgList.Images.Add(fileInfo.Extension, GetIconFromExtension(fileInfo.Extension));
 
                     lvi.ImageKey = fileInfo.Extension;
 
@@ -565,7 +637,7 @@ namespace HedgeArchiveEditor
                     CurrentArchive.Saved = false;
                     foreach (var file in files)
                     {
-                        if (File.GetAttributes(file) == FileAttributes.Normal)
+                        if (File.GetAttributes(file) != FileAttributes.Directory)
                         {
                             for (int i = 0; i < CurrentArchive.Files.Count; ++i)
                             {
@@ -584,7 +656,7 @@ namespace HedgeArchiveEditor
                             }
                             CurrentArchive.Files.Add(new ArchiveFile(file));
                         }
-                        else if (File.GetAttributes(file) == FileAttributes.Directory)
+                        else
                         {
                             bool includeSubfolders = (MessageBox.Show("Include Subfolders?", Text,
                                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes);
@@ -624,6 +696,10 @@ namespace HedgeArchiveEditor
             if (e.Data.GetDataPresent(DataFormats.FileDrop) &&
                 e.Data.GetData(DataFormats.FileDrop) is string[] files)
             {
+                // Gets the Current Process PID.
+                string processId = System.Diagnostics.Process.GetCurrentProcess().Id.ToString();
+                if (e.Data.GetDataPresent("SourcePID") && (e.Data.GetData("SourcePID") as string == processId))
+                    return;
                 if (Archives.Count > 0)
                     e.Effect = DragDropEffects.Copy;
 
@@ -920,6 +996,7 @@ namespace HedgeArchiveEditor
                 if (fileList.Count > 0 && extracted)
                 {
                     DataObject d = new DataObject(DataFormats.FileDrop, fileList.ToArray());
+                    d.SetData("SourcePID", System.Diagnostics.Process.GetCurrentProcess().Id.ToString());
                     DoDragDrop(d, DragDropEffects.Copy);
                 }
 
@@ -1001,6 +1078,9 @@ namespace HedgeArchiveEditor
         };
 
         [System.Runtime.InteropServices.DllImport("Shell32.dll")]
+        public static extern void SHChangeNotify(long eventId, uint flags, IntPtr dwItem1, IntPtr dwItem2);
+
+        [System.Runtime.InteropServices.DllImport("Shell32.dll")]
         private static extern uint SHGetFileInfo(string fileName, uint fileAttributes, ref SHFILEINFO psfi,
             uint fileInfoSize, uint flags);
 
@@ -1013,7 +1093,7 @@ namespace HedgeArchiveEditor
             {
                 var shfi = new SHFILEINFO();
                 uint fileAttributes = 0x80; // FILE_ATTRIBUTE_NORMAL
-                uint flags = 0x110; // SHGFI_ICON | SHGFI_USEFILEATTRIBUTES
+                uint flags = 0x112; // SHGFI_ICON | SHGFI_USEFILEATTRIBUTES | SHGFI_EXTRALARGEICON
 
                 SHGetFileInfo(name, fileAttributes, ref shfi, (uint)System.Runtime.InteropServices.Marshal.SizeOf(shfi), flags);
 

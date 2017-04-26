@@ -17,7 +17,6 @@ namespace HedgeArchiveEditor
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-
             if (args.Length < 1)
                 ShowGUI();
             else
@@ -47,6 +46,7 @@ namespace HedgeArchiveEditor
 
                                 Directory.CreateDirectory(dir);
                                 arc.Extract(dir);
+                                // Prints the working directory.
                             }
                             catch (Exception ex)
                             {
@@ -134,5 +134,6 @@ namespace HedgeArchiveEditor
             MainForm = new MainFrm();
             Application.Run(MainForm);
         }
+
     }
 }
