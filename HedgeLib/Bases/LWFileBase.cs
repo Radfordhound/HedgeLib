@@ -2,7 +2,6 @@
 using HedgeLib.Headers;
 using HedgeLib.Misc;
 using System.Collections.Generic;
-using System.IO;
 
 namespace HedgeLib.Bases
 {
