@@ -66,9 +66,7 @@
     <Compile Include="ExtendedBinary.cs" />
     <Compile Include="Bases\FileBase.cs" />
     <Compile Include="Bases\GensFileBase.cs" />
-    <Compile Include="Havok\HavokBinary.cs" />
-    <Compile Include="Havok\HavokData.cs" />
-    <Compile Include="Havok\HavokXML.cs" />
+    <Compile Include="Havok\HavokPackFile.cs" />
     <Compile Include="Headers\ColorsHeader.cs" />
     <Compile Include="Headers\GensHeader.cs" />
     <Compile Include="Headers\LWHeader.cs" />
