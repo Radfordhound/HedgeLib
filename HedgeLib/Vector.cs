@@ -1,15 +1,14 @@
 ﻿namespace HedgeLib
 {
-	//All Vector3s in HedgeLib should use these axes:
-	//X-left, Y-up, Z-forward
-	//This follows the axes used in Sonic Generations.
-    public class Vector3
+	// All Vector3s in HedgeLib should use these axes:
+	// X-left, Y-up, Z-forward
+	// This follows the axes used in Sonic Generations.
+    public struct Vector3
     {
         //Variables/Constants
-        public float X = 0, Y = 0, Z = 0;
+        public float X, Y, Z;
 
         //Constructors
-        public Vector3() { }
         public Vector3(float x, float y)
         {
             X = x;
