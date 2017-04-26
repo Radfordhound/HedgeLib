@@ -87,6 +87,7 @@
     <Compile Include="Sets\SetObject.cs" />
     <Compile Include="Sets\SetObjectType.cs" />
     <Compile Include="Sets\SOBJ.cs" />
+    <Compile Include="Sound\ColorsSNDL.cs" />
     <Compile Include="Terrain\GensTerrainGroup.cs" />
     <Compile Include="Types.cs" />
     <Compile Include="Vector.cs" />

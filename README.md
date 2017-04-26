@@ -19,13 +19,11 @@ Right now it supports the following:
 - Reading/Writing terrain groups.
 - Reading/Writing light lists.
 
-## Sonic Colors
-- Reading/Writing set data.
-
-## Sonic Lost World
+## Sonic Colors/Sonic Lost World
 - Reading/Writing BINA headers/footers.
 - Reading/Writing GISM files.
 - Reading/Writing set data.
+- Reading/Writing SNDL (SouND List) files.
 
 # HedgeEdit
 **IMPORTANT:** Please compile HedgeLib using Visual Studio 2017 and the sln file provided before opening HedgeEdit in Unity!
