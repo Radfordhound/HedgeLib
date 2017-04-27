@@ -11,10 +11,20 @@ namespace HedgeLib.Bases
         //Methods
         public virtual void Load(string filePath)
         {
+			// Throw exceptions if necessary
+			if (string.IsNullOrEmpty(filePath))
+				throw new ArgumentNullException("filePath");
+
+			if (!File.Exists(filePath))
+			{
+				throw new FileNotFoundException(
+					"The given file could not be loaded, as it cannot be found!", filePath);
+			}
+
+			// Load the file
             using (var fileStream = File.OpenRead(filePath))
             {
                 Load(fileStream);
-                fileStream.Close();
             }
         }
 
@@ -23,12 +33,28 @@ namespace HedgeLib.Bases
             throw new NotImplementedException();
         }
 
-        public virtual void Save(string filePath)
+        public virtual void Save(string filePath, bool overwrite = false)
         {
-            using (var fileStream = File.OpenWrite(filePath))
+			// Throw exceptions if necessary
+			if (string.IsNullOrEmpty(filePath))
+				throw new ArgumentNullException("filePath");
+
+			// Overwrite the file if necessary
+			if (File.Exists(filePath))
+			{
+				if (overwrite)
+					File.Delete(filePath);
+				else
+				{
+					throw new Exception(
+						"Cannot save the given file - it already exists!");
+				}
+			}
+
+			// Save the file
+			using (var fileStream = File.OpenWrite(filePath))
             {
                 Save(fileStream);
-                fileStream.Close();
             }
         }
 
