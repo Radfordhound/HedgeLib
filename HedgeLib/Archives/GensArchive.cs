@@ -93,7 +93,7 @@ namespace HedgeLib.Archives
             }
         }
 
-		public override void Save(string filePath)
+		public override void Save(string filePath, bool overwrite = false)
 		{
 			Save(filePath, false, null);
 		}
