@@ -300,7 +300,7 @@
             this.largeIconViewToolStripMenuItem.Name = "largeIconViewToolStripMenuItem";
             this.largeIconViewToolStripMenuItem.Size = new System.Drawing.Size(157, 22);
             this.largeIconViewToolStripMenuItem.Text = "Large Icon View";
-            this.largeIconViewToolStripMenuItem.Click += new System.EventHandler(this.largeIconViewToolStripMenuItem_Click);
+            this.largeIconViewToolStripMenuItem.Click += new System.EventHandler(this.LargeIconViewToolStripMenuItem_Click);
             // 
             // contextMenu
             // 
