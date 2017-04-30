@@ -216,11 +216,14 @@ namespace HedgeArchiveEditor
                 MultiSelect = true,
                 FullRowSelect = true,
                 AllowColumnReorder = true,
+                LabelEdit = true
             };
 
             lv.ContextMenuStrip = contextMenu;
             lv.ColumnClick += Lv_ColumnClick;
             lv.KeyPress += new KeyPressEventHandler(Lv_KeyPress);
+            lv.BeforeLabelEdit += new LabelEditEventHandler(Lv_BeforeLabelEdit);
+            lv.AfterLabelEdit += new LabelEditEventHandler(Lv_AfterLabelEdit);
 
             lv.Columns.Add("Name");
             lv.Columns.Add("Extension");
@@ -229,35 +232,6 @@ namespace HedgeArchiveEditor
             tabPage.Controls.Add(lv);
             RefreshTabPage(tabPageIndex);
             tabControl.SelectedIndex = tabPageIndex;
-        }
-
-        private void largeIconViewToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            // Checks if theres a selected tab.
-            if(tabControl.SelectedIndex >= 0)
-            {
-                var lv = tabControl.TabPages[tabControl.SelectedIndex].Controls[0] as ListView;
-
-                if (lv == null) return;
-
-                if (lv.View == View.Details)
-                { // Set to Large Icons.
-                    lv.LargeImageList = new ImageList()
-                    {
-                        ImageSize = new Size(64, 64)
-                    };
-                    lv.View = View.LargeIcon;
-                    largeIconViewToolStripMenuItem.CheckState = CheckState.Checked;
-                }
-                else
-                { // Set to Details.
-                    lv.LargeImageList = null;
-                    lv.View = View.Details;
-                    largeIconViewToolStripMenuItem.CheckState = CheckState.Unchecked;
-                }
-                // Refreshes the TabPage and ListView.
-                RefreshTabPage(tabControl.SelectedIndex);
-            }
         }
 
         public void RefreshTabPage(int index, bool refreshFileList = true)
@@ -349,6 +323,36 @@ namespace HedgeArchiveEditor
         }
 
         //GUI Events
+
+        private void LargeIconViewToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Checks if theres a selected tab.
+            if (tabControl.SelectedIndex >= 0)
+            {
+                var lv = tabControl.TabPages[tabControl.SelectedIndex].Controls[0] as ListView;
+
+                if (lv == null) return;
+
+                if (lv.View == View.Details)
+                { // Set to Large Icons.
+                    lv.LargeImageList = new ImageList()
+                    {
+                        ImageSize = new Size(64, 64)
+                    };
+                    lv.View = View.LargeIcon;
+                    largeIconViewToolStripMenuItem.CheckState = CheckState.Checked;
+                }
+                else
+                { // Set to Details.
+                    lv.LargeImageList = null;
+                    lv.View = View.Details;
+                    largeIconViewToolStripMenuItem.CheckState = CheckState.Unchecked;
+                }
+                // Refreshes the TabPage and ListView.
+                RefreshTabPage(tabControl.SelectedIndex);
+            }
+        }
+
         private void CreateNewArchiveToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Archive ar = new Archive();
@@ -713,67 +717,11 @@ namespace HedgeArchiveEditor
 
         private void RenameSelectedFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var lv = tabControl.SelectedTab.Controls[0] as ListView;
-            if (lv == null || lv.SelectedItems.Count < 1) return;
-
-            var renameForm = new Form()
-            {
-                Size = new Size(400, 120),
-                FormBorderStyle = FormBorderStyle.Fixed3D,
-                MaximizeBox = false,
-                Text = $"Rename item \"{lv.SelectedItems[0].Text}\""
-            };
-
-            renameForm.Controls.Add(new Label()
-            {
-                Location = new Point(12, 12),
-                Text = "Rename to: "
-            });
-
-            var textBox = new TextBox()
-            {
-                Location = new Point(30, 38),
-                Size = new Size(330, 20),
-                Text = lv.SelectedItems[0].Text
-            };
-
-            textBox.KeyDown += new KeyEventHandler(RenameTextBox_KeyDown);
-            renameForm.Controls.Add(textBox);
-            renameForm.ShowDialog();
+            var listView = tabControl.SelectedTab.Controls[0] as ListView;
+            if (listView == null || listView.SelectedItems.Count < 1) return;
+            listView.FocusedItem.BeginEdit();
         }
-
-        private void RenameTextBox_KeyDown(object sender, KeyEventArgs e)
-        {
-            var tbx = sender as TextBox;
-            var form = tbx.Parent as Form;
-            if (tbx == null) return;
-
-            if (e.KeyCode == Keys.Return && tbx.Text.Length > 1)
-            {
-                var lv = tabControl.SelectedTab.Controls[0] as ListView;
-                foreach (ArchiveFile file in CurrentArchive.Files)
-                {
-                    if (file.Name == lv.SelectedItems[0].Text)
-                    {
-                        file.Name = tbx.Text;
-                        form.Close();
-                        RefreshGUI();
-                        RefreshTabPage(tabControl.SelectedIndex);
-                        form.DialogResult = DialogResult.OK;
-                        form.Close();
-                        return;
-                    }
-                }
-                form.Close();
-            }
-
-            if (e.KeyCode == Keys.Escape)
-            {
-                form.DialogResult = DialogResult.Cancel;
-                form.Close();
-            }
-        }
-
+        
         private void SelectAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
             foreach (ListViewItem item in (tabControl.SelectedTab.Controls[0] as ListView).Items)
@@ -916,6 +864,48 @@ namespace HedgeArchiveEditor
             {
                 Lv_MouseDoubleClick(sender, null);
             }
+        }
+
+        private string prevName;
+
+        private void Lv_BeforeLabelEdit(object sender, LabelEditEventArgs e)
+        {
+            var listView = sender as ListView;
+            prevName = listView.FocusedItem.Text;
+        }
+
+        private void Lv_AfterLabelEdit(object sender, LabelEditEventArgs e)
+        {
+            var listView = sender as ListView;
+            
+            // Checks if the user has changed the name, If not then return.
+            if (prevName == e.Label || e.Label == null) return;
+
+            // Checks for any invalid characters in the new file name.
+            if (e.Label.IndexOfAny(Path.GetInvalidFileNameChars()) != -1)
+            {
+                listView.FocusedItem.Text = prevName;
+                e.CancelEdit = true;
+                MessageBox.Show("The given name contains invalid characters.\n" +
+                    "A file name can't contain any of the following characters:\n \\ / : * ? \" < > |", 
+                    Program.ProgramName);
+                return;
+            }
+
+            // Goes though all the files inside the selected archive
+            //    to see if there is a file with tbe same name. If so, then cancel and return. 
+            foreach (ArchiveFile item in CurrentArchive.Files)
+            {
+                if (item.Name.Equals(e.Label, StringComparison.OrdinalIgnoreCase))
+                {
+                    e.CancelEdit = true;
+                    MessageBox.Show("The given name is already being used by another file.",
+                        Program.ProgramName);
+                    return;
+                }
+            }
+            
+            CurrentArchive.Files.Find(t => t.Name == prevName).Name = e.Label;
         }
 
         private void Lv_MouseDoubleClick(object sender, MouseEventArgs e)
