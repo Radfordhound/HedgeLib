@@ -1,9 +1,9 @@
+![HedgeLib Logo](Logo-small.png?raw=true "Thanks to Gotta Play Fast for the wonderful project logo!")
+*(Thanks to [Gotta Play Fast](https://www.youtube.com/channel/UCZfOGBkXRKICFozWU5bE0Xg) for the wonderful project logo!)*
+
 **IMPORTANT:** All code committed to this repository, preferrably, should follow [these style guidelines](https://github.com/Radfordhound/HedgeLib/wiki/Code-Style).
 
-This repository contains the following tools/libraries:
-
-# HedgeLib
-A C# library [under the MIT license](https://github.com/Radfordhound/HedgeLib/blob/master/License.txt) that aims to make modding games in the Sonic the Hedgehog franchise easier, similar to [Dario's excellent "LibGens."](https://github.com/DarioSamo/libgens-sonicglvl)
+HedgeLib is a C# library [under the MIT license](https://github.com/Radfordhound/HedgeLib/blob/master/License.txt) that aims to make modding games in the Sonic the Hedgehog franchise easier, similar to [Dario's excellent "LibGens."](https://github.com/DarioSamo/libgens-sonicglvl)
 
 Right now it supports the following:
 
