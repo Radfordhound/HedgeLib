@@ -7,7 +7,6 @@ public static class Convert
     {
         //HedgeLib Vectors use X-left, Y-up, Z-forward.
         //Unity Vectors use X-forward, Y-up, Z-left.
-        if (vect == null) return Vector3.zero;
         return new Vector3(vect.Z, vect.Y, vect.X);
     }
 
