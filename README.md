@@ -29,6 +29,8 @@ Right now it supports the following:
 **IMPORTANT:** Please compile HedgeLib using Visual Studio 2017 and the sln file provided before opening HedgeEdit in Unity!
 If done correctly, Visual Studio should automatically copy the generated DLL file to the HedgeEdit Assets\Libraries folder.
 
+Also make sure to open "debugTest" under "Assets\Scenes"!
+
 
 A Unity-based level editor designed to carry much of the same functionality as "SonicGlvl," but with support for a large number of games in the series, rather than just Generations.
 
