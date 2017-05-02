@@ -209,7 +209,7 @@ namespace HedgeArchiveEditor
             TabPage tabPage = tabControl.TabPages[tabPageIndex];
             tabPage.Tag = fileName;
 
-            ListView lv = new ListView()
+            ListView lv = new ListViewSort()
             {
                 Dock = DockStyle.Fill,
                 View = View.Details,
@@ -220,7 +220,6 @@ namespace HedgeArchiveEditor
             };
 
             lv.ContextMenuStrip = contextMenu;
-            lv.ColumnClick += Lv_ColumnClick;
             lv.KeyPress += new KeyPressEventHandler(Lv_KeyPress);
             lv.BeforeLabelEdit += new LabelEditEventHandler(Lv_BeforeLabelEdit);
             lv.AfterLabelEdit += new LabelEditEventHandler(Lv_AfterLabelEdit);
@@ -247,7 +246,10 @@ namespace HedgeArchiveEditor
             //Update File List
             if (!refreshFileList || lv == null) return;
 
-            if(lv.View == View.Details)
+            // Stops the ListView from drawing until we call EndUpdate()
+            lv.BeginUpdate();
+
+            if (lv.View == View.Details)
             {
                 lv.SmallImageList = new ImageList();
                 lv.SmallImageList.Images.Add("-", GetIconFromExtension("-"));
@@ -260,6 +262,9 @@ namespace HedgeArchiveEditor
             lv.MouseDoubleClick += Lv_MouseDoubleClick;
 
             int longestNameLength = 0, longestExtensionLength = 0, longestSizeLength = 0;
+
+            // A list of ListViewItems, which will be added to the ListView later
+            var items = new List<ListViewItem>();
             foreach (var file in arc.Files)
             {
                 FileInfo fileInfo = new FileInfo(file.Name);
@@ -272,20 +277,20 @@ namespace HedgeArchiveEditor
 
                 try
                 {
-                    ImageList imgList = lv.LargeImageList ?? lv.SmallImageList;
-
-                    if (!imgList.Images.ContainsKey(fileInfo.Extension))
-                        imgList.Images.Add(fileInfo.Extension, GetIconFromExtension(fileInfo.Extension));
-
-                    lvi.ImageKey = fileInfo.Extension;
-
                     if (fileInfo.Extension.Length == 0)
                         lvi.ImageKey = "-";
-                }
-                catch//(Exception ex)
-                {
-                }
+                    else
+                    {
+                        var imgList = lv.LargeImageList ?? lv.SmallImageList;
 
+                        if (!imgList.Images.ContainsKey(fileInfo.Extension))
+                            imgList.Images.Add(fileInfo.Extension, GetIconFromExtension(fileInfo.Extension));
+
+                        lvi.ImageKey = fileInfo.Extension;
+                    }
+                }
+                catch { }
+                
                 if (lvi.Text.Length > longestNameLength)
                     longestNameLength = lvi.Text.Length;
 
@@ -295,8 +300,11 @@ namespace HedgeArchiveEditor
                 if (lvi.SubItems[2].Text.Length > longestSizeLength)
                     longestSizeLength = lvi.SubItems[2].Text.Length;
 
-                lv.Items.Add(lvi);
+                items.Add(lvi);
             }
+            // Adds all the items into the ListView
+            lv.Items.AddRange(items.ToArray());
+            
 
             //Update the columns in the file list
             lv.AutoResizeColumn(0, (longestNameLength > lv.Columns[0].Text.Length) ?
@@ -310,6 +318,8 @@ namespace HedgeArchiveEditor
             lv.AutoResizeColumn(2, (longestExtensionLength > lv.Columns[2].Text.Length) ?
                 ColumnHeaderAutoResizeStyle.ColumnContent :
                 ColumnHeaderAutoResizeStyle.HeaderSize);
+
+            lv.EndUpdate();
         }
 
         public void RefreshGUI()
@@ -317,6 +327,9 @@ namespace HedgeArchiveEditor
             saveToolStripMenuItem.Enabled = saveAsToolStripMenuItem.Enabled =
                 addFilesToolStripMenuItem.Enabled = extractAllToolStripMenuItem.Enabled =
                 closeToolStripMenuItem.Enabled = tabControl.TabPages.Count > 0;
+
+            largeIconViewToolStripMenuItem.Checked = 
+                (tabControl.TabPages[tabControl.SelectedIndex].Controls[0] as ListView).View == View.LargeIcon;
 
             //TODO: Update status bar label.
             UpdateTitle();
@@ -538,7 +551,7 @@ namespace HedgeArchiveEditor
                     Invoke(new Action(() => ar = CurrentArchive));
                     ListView lv = null;
                     Invoke(new Action(() => lv = (ListView)tabControl.SelectedTab.Controls[0]));
-                    Invoke(new Action(() => pb.Maximum = lv.Items.Count));
+                    Invoke(new Action(() => pb.Maximum = lv.SelectedItems.Count));
                     Invoke(new Action(() =>
                     {
                         for (int i2 = 0; i2 < ar.Files.Count; ++i2)
@@ -998,41 +1011,31 @@ namespace HedgeArchiveEditor
             }
         }
 
-        private void Lv_ColumnClick(object sender, ColumnClickEventArgs e)
-        {
-            ListView lv = sender as ListView;
-            lv.Sorting = (lv.Sorting == SortOrder.Ascending) ?
-                SortOrder.Descending : SortOrder.Ascending;
-
-            lv.ListViewItemSorter = new ListViewItemSorter(e.Column, lv.Sorting);
-            lv.Sort();
-        }
-
         //Other
-        private class ListViewItemSorter : IComparer
+        private class ListViewSort : ListView, IComparer
         {
-            private int col = 0;
+            private int column = 0;
             private SortOrder order = SortOrder.Ascending;
 
-            public ListViewItemSorter(int column, SortOrder order)
+            public ListViewSort()
             {
-                col = column;
-                this.order = order;
+                DoubleBuffered = true;
+                ListViewItemSorter = this;
             }
 
             public int Compare(object x, object y)
             {
                 int returnVal = -1;
-                returnVal = string.Compare(((ListViewItem)x).SubItems[col].Text,
-                                        ((ListViewItem)y).SubItems[col].Text);
+                returnVal = string.Compare(((ListViewItem)x).SubItems[column].Text,
+                                        ((ListViewItem)y).SubItems[column].Text);
 
-                // Sorting by file size
-                if (col == 2)
+                // Sort by file size
+                if (Columns[column].Text == "Size")
                 {
                     try
                     {
-                        string xx = ((ListViewItem)x).SubItems[col].Text;
-                        string yy = ((ListViewItem)y).SubItems[col].Text;
+                        string xx = ((ListViewItem)x).SubItems[column].Text;
+                        string yy = ((ListViewItem)y).SubItems[column].Text;
 
                         if (xx.EndsWith("MB"))
                             xx = Convert.ToDouble(xx.Substring(0, xx.Length - 3)) * 1024 + " KB";
@@ -1047,14 +1050,20 @@ namespace HedgeArchiveEditor
                             yy = Convert.ToDouble(yy.Substring(0, yy.Length - 3)) * 1024 + " Bytes";
                         if (yy.EndsWith("Bytes"))
                             yy = yy.Substring(0, yy.Length - 6);
-
                         returnVal = Convert.ToDouble(xx) > Convert.ToDouble(yy) ? 1 : -1;
                     }
                     catch { }
                 }
 
-                if (order == SortOrder.Descending) returnVal *= -1;
-                return returnVal;
+                return order == SortOrder.Descending ? -returnVal : returnVal;
+            }
+
+            protected override void OnColumnClick(ColumnClickEventArgs e)
+            {
+                order = order == SortOrder.Ascending ?
+                SortOrder.Descending : SortOrder.Ascending;
+                column = e.Column;
+                Sort();
             }
         }
 
