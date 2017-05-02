@@ -58,43 +58,6 @@ namespace HedgeArchiveEditor
             ArchiveFileExtraData.Add(arc, new object[] { filePath });
             arc.Saved = true;
             AddTabPage(new FileInfo(filePath).Name);
-            
-                 if(Path.GetExtension(filePath).ToLower() == GensArchive.ListExtension)
-                SetFileAssociation(GensArchive.ListExtension, "GensARLArchive", "Sonic Generations Archive");
-            else if (Path.GetExtension(filePath).ToLower() == GensArchive.PFDExtension)
-                SetFileAssociation(GensArchive.PFDExtension, "GensPFDArchive", "Sonic Generations Archive");
-            else if (Path.GetExtension(filePath).ToLower() == LWArchive.Extension)
-                SetFileAssociation(LWArchive.Extension, "LWPACArchive", "Sonic Lost World Archive");
-            else if (Path.GetExtension(filePath).ToLower() == ONEArchive.Extension)
-                SetFileAssociation(ONEArchive.Extension, "ONEArchive", "Sonic Heroes ONE Archive");
-            else if (Path.GetExtension(filePath).ToLower() == SBArchive.Extension)
-                SetFileAssociation(SBArchive.Extension, "SBArchive", "Story Book Archive");
-        }
-
-        public static void SetFileAssociation(string extension, string typeName, string typeDisplayName)
-        {
-            string typeKey = "HKEY_CURRENT_USER\\Software\\Classes\\" + typeName;
-            string extensionKey = "HKEY_CURRENT_USER\\Software\\Classes\\" + extension;
-
-            if (Registry.GetValue(typeKey + "\\shell\\open\\command", "", "") as string
-                != (Application.ExecutablePath + " \"%1\""))
-            {
-                // TODO: Ask the user if they want the file association changed.
-                if(MessageBox.Show($"Change file association for {extension} to {Application.ExecutablePath}?", 
-                    Program.ProgramName, MessageBoxButtons.YesNo) == DialogResult.Yes)
-                {
-                    // HKEY_CURRENT_USER\Software\Classes\{typeName}\(Default) = typeDisplayName
-                    Registry.SetValue(typeKey, "", typeDisplayName);
-                    // HKEY_CURRENT_USER\Software\Classes\{typeName}\shell\open\command\(Default) = Application.ExecutablePath + " "%1""
-                    Registry.SetValue(typeKey + "\\shell\\open\\command", "", Application.ExecutablePath + " \"%1\"");
-                    // HKEY_CURRENT_USER\Software\Classes\{extension}\(Default) = typeName
-                    Registry.SetValue(extensionKey, "", typeName);
-
-                    // Notifies the system that an application has changed the file associations.
-                    long SHCNE_ASSOCCHANGED = 0x8000000;
-                    SHChangeNotify(SHCNE_ASSOCCHANGED, 0, IntPtr.Zero, IntPtr.Zero);
-                }
-            }
         }
 
         public void SaveArchive(int index, bool saveAs)
@@ -1075,9 +1038,6 @@ namespace HedgeArchiveEditor
             public string szDisplayName;
             public string szTypeName;
         };
-
-        [System.Runtime.InteropServices.DllImport("Shell32.dll")]
-        public static extern void SHChangeNotify(long eventId, uint flags, IntPtr dwItem1, IntPtr dwItem2);
 
         [System.Runtime.InteropServices.DllImport("Shell32.dll")]
         private static extern uint SHGetFileInfo(string fileName, uint fileAttributes, ref SHFILEINFO psfi,

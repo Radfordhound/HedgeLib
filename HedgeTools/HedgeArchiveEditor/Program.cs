@@ -1,4 +1,5 @@
 ﻿using HedgeLib.Archives;
+using Microsoft.Win32;
 using System;
 using System.IO;
 using System.Windows.Forms;
@@ -59,6 +60,24 @@ namespace HedgeArchiveEditor
 
                     case "/temp":
                         System.Diagnostics.Process.Start("explorer", $"\"{MainFrm.tempPath}\"");
+                        break;
+
+                    case "/fa":
+                        if (args.Length < 2)
+                        {
+                            ShowHelp();
+                            break;
+                        }
+                             if (args[1].ToLower() == GensArchive.ListExtension)
+                            SetFileAssociation(GensArchive.ListExtension, "GensARLArchive", "Sonic Generations Archive");
+                        else if (args[1].ToLower() == GensArchive.PFDExtension)
+                            SetFileAssociation(GensArchive.PFDExtension, "GensPFDArchive", "Sonic Generations Archive");
+                        else if (args[1].ToLower() == LWArchive.Extension)
+                            SetFileAssociation(LWArchive.Extension, "LWPACArchive", "Sonic Lost World Archive");
+                        else if (args[1].ToLower() == ONEArchive.Extension)
+                            SetFileAssociation(ONEArchive.Extension, "ONEArchive", "Sonic Heroes ONE Archive");
+                        else if (args[1].ToLower() == SBArchive.Extension)
+                            SetFileAssociation(SBArchive.Extension, "SBArchive", "Story Book ONE Archive");
                         break;
 
                     case "/?":
@@ -123,6 +142,10 @@ namespace HedgeArchiveEditor
                     "\t (Opens HedgeArchiveEditor's Temp folder in Explorer.)" +
                     Environment.NewLine +
 
+                    "/FA .{file extension} " + Environment.NewLine +
+                    "\t (Sets the file association for the given file.)" +
+                    Environment.NewLine +
+
                     "/?" + Environment.NewLine +
                     "\t (Shows this help.)",
                     
@@ -134,6 +157,35 @@ namespace HedgeArchiveEditor
             MainForm = new MainFrm();
             Application.Run(MainForm);
         }
+
+        public static void SetFileAssociation(string extension, string typeName, string typeDisplayName)
+        {
+            string typeKey = "HKEY_CURRENT_USER\\Software\\Classes\\" + typeName;
+            string extensionKey = "HKEY_CURRENT_USER\\Software\\Classes\\" + extension;
+
+            if (Registry.GetValue(typeKey + "\\shell\\open\\command", "", "") as string
+                != (Application.ExecutablePath + " \"%1\""))
+            {
+                // TODO: Ask the user if they want the file association changed.
+                if (MessageBox.Show($"Change file association for {extension} to {Application.ExecutablePath}?",
+                    Program.ProgramName, MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    // HKEY_CURRENT_USER\Software\Classes\{typeName}\(Default) = typeDisplayName
+                    Registry.SetValue(typeKey, "", typeDisplayName);
+                    // HKEY_CURRENT_USER\Software\Classes\{typeName}\shell\open\command\(Default) = Application.ExecutablePath + " "%1""
+                    Registry.SetValue(typeKey + "\\shell\\open\\command", "", Application.ExecutablePath + " \"%1\"");
+                    // HKEY_CURRENT_USER\Software\Classes\{extension}\(Default) = typeName
+                    Registry.SetValue(extensionKey, "", typeName);
+
+                    // Notifies the system that an application has changed the file associations.
+                    long SHCNE_ASSOCCHANGED = 0x8000000;
+                    SHChangeNotify(SHCNE_ASSOCCHANGED, 0, IntPtr.Zero, IntPtr.Zero);
+                }
+            }
+        }
+
+        [System.Runtime.InteropServices.DllImport("Shell32.dll")]
+        public static extern void SHChangeNotify(long eventId, uint flags, IntPtr dwItem1, IntPtr dwItem2);
 
     }
 }
