@@ -508,32 +508,18 @@ namespace HedgeArchiveEditor
                 new System.Threading.Thread(() =>
                 {
                     Invoke(new Action(() => Enabled = false));
-                    ToolStripProgressBar pb = new ToolStripProgressBar();
-                    statusStrip.Invoke(new Action(() => statusStrip.Items.AddRange(new ToolStripItem[] { pb })));
                     Archive ar = null;
                     Invoke(new Action(() => ar = CurrentArchive));
                     ListView lv = null;
                     Invoke(new Action(() => lv = (ListView)tabControl.SelectedTab.Controls[0]));
-                    Invoke(new Action(() => pb.Maximum = lv.SelectedItems.Count));
                     Invoke(new Action(() =>
                     {
-                        for (int i2 = 0; i2 < ar.Files.Count; ++i2)
-                        {
-                            for (int i = 0; i < lv.SelectedItems.Count; ++i)
-                            {
-                                if (ar.Files[i2].Name == lv.SelectedItems[i].SubItems[0].Text)
-                                {
-                                    ++pb.Value;
-                                    ar.Files.Remove(ar.Files[i2]);
-                                    continue;
-                                }
-                            }
-                        }
+                        foreach (ListViewItem lvi in lv.SelectedItems)
+                            ar.Files.Remove(ar.Files.Find(t => t.Name == lvi.Text));
                     }));
                     Invoke(new Action(() => RefreshGUI()));
                     Invoke(new Action(() => RefreshTabPage(tabControl.SelectedIndex)));
                     Invoke(new Action(() => Enabled = true));
-                    statusStrip.Invoke(new Action(() => statusStrip.Items.Remove(pb)));
                 }).Start();
             }
             catch (Exception ex)
@@ -619,21 +605,21 @@ namespace HedgeArchiveEditor
                     {
                         if (File.GetAttributes(file) != FileAttributes.Directory)
                         {
-                            for (int i = 0; i < CurrentArchive.Files.Count; ++i)
-                            {
-                                ArchiveFile file2 = CurrentArchive.Files[i];
-                                var fileInfo = new FileInfo(file);
+                            var fileInfo = new FileInfo(file);
 
-                                if (fileInfo.Name.ToLower() == file2.Name.ToLower())
-                                {
-                                    if (MessageBox.Show($"There's already a file called {file2.Name}.\n" +
+                            var archiveFile = CurrentArchive.Files.Find(
+                                   t => t.Name.ToLower() == fileInfo.Name.ToLower());
+
+                            if (archiveFile != null)
+                            {
+                                if (MessageBox.Show($"There's already a file called {fileInfo.Name}.\n" +
                                         $"Do you want to replace {fileInfo.Name}?", Text,
                                         MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
-                                        return;
+                                    return;
 
-                                    CurrentArchive.Files.Remove(file2);
-                                }
+                                CurrentArchive.Files.Remove(archiveFile);
                             }
+
                             CurrentArchive.Files.Add(new ArchiveFile(file));
                         }
                         else
@@ -645,21 +631,21 @@ namespace HedgeArchiveEditor
 
                             foreach (var fileDir in filesInDir)
                             {
-                                for (int i = 0; i < CurrentArchive.Files.Count; ++i)
-                                {
-                                    var fileDir2 = CurrentArchive.Files[i];
-                                    var fileInfo = new FileInfo(fileDir);
+                                var fileInfo = new FileInfo(fileDir);
 
-                                    if (fileInfo.Name.ToLower() == fileDir2.Name.ToLower())
-                                    {
-                                        if (MessageBox.Show($"There's already a file called {fileDir2.Name}.\n" +
+                                var archiveFile = CurrentArchive.Files.Find(
+                                       t => t.Name.ToLower() == fileInfo.Name.ToLower());
+
+                                if (archiveFile != null)
+                                {
+                                    if (MessageBox.Show($"There's already a file called {fileInfo.Name}.\n" +
                                             $"Do you want to replace {fileInfo.Name}?", Text,
                                             MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
-                                            continue;
+                                        continue;
 
-                                        CurrentArchive.Files.Remove(fileDir2);
-                                    }
+                                    CurrentArchive.Files.Remove(archiveFile);
                                 }
+
                                 CurrentArchive.Files.Add(new ArchiveFile(fileDir));
                             }
                         }
@@ -724,22 +710,15 @@ namespace HedgeArchiveEditor
                 Invoke(new Action(() => pb.Maximum = lv.SelectedItems.Count));
                 Invoke(new Action(() =>
                 {
-                    for (int i = 0; i < lv.SelectedItems.Count; ++i)
+                    foreach (ListViewItem lvi in lv.SelectedItems)
                     {
-                        for (int i2 = 0; i2 < ar.Files.Count; ++i2)
-                        {
-                            if (ar.Files[i2].Name == lv.SelectedItems[i].SubItems[0].Text)
-                            {
-                                string filePath = Path.Combine(path, ar.Files[i2].Name);
-                                ar.Files[i2].Extract(filePath);
-                                fileList.Add(filePath);
-                                ++pb.Value;
-                                break;
-                            }
-                        }
+                        ArchiveFile archiveFile = ar.Files.Find(t => t.Name == lvi.Text);
+                        string filePath = Path.Combine(path, archiveFile.Name);
+                        archiveFile.Extract(filePath);
+                        fileList.Add(filePath);
+                        ++pb.Value;
                     }
                 }));
-
                 Invoke(new Action(() => Clipboard.SetData(DataFormats.FileDrop, fileList.ToArray())));
                 statusStrip.Invoke(new Action(() => statusStrip.Items.Remove(pb)));
                 Invoke(new Action(() => Enabled = true));
@@ -755,20 +734,19 @@ namespace HedgeArchiveEditor
 
                 foreach (var file in files)
                 {
-                    for (int i = 0; i < CurrentArchive.Files.Count; ++i)
-                    {
-                        ArchiveFile file2 = CurrentArchive.Files[i];
-                        var fileInfo = new FileInfo(file);
+                    var fileInfo = new FileInfo(file);
 
-                        if (fileInfo.Name.ToLower() == file2.Name.ToLower())
-                        {
-                            if (MessageBox.Show($"There's already a file called {file2.Name}.\n" +
+                    var archiveFile = CurrentArchive.Files.Find(
+                           t => t.Name.ToLower() == fileInfo.Name.ToLower());
+
+                    if (archiveFile != null)
+                    {
+                        if (MessageBox.Show($"There's already a file called {fileInfo.Name}.\n" +
                                 $"Do you want to replace {fileInfo.Name}?", Text,
                                 MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
-                                return;
+                            continue;
 
-                            CurrentArchive.Files.Remove(file2);
-                        }
+                        CurrentArchive.Files.Remove(archiveFile);
                     }
                     CurrentArchive.Files.Add(new ArchiveFile(file));
                 }
