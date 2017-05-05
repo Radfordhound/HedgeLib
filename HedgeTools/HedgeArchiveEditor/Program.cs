@@ -120,9 +120,9 @@ namespace HedgeArchiveEditor
             {
                 arc = new LWArchive();
             }
-            else if (fileInfo.Extension == SBArchive.Extension)
+            else if (fileInfo.Extension == ONEArchive.Extension)
             {
-                arc = new SBArchive();
+                arc = new ONEArchive();
             }
             else
                 throw new Exception("The given archive has an unknown extension.");

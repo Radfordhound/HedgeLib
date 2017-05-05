@@ -72,6 +72,7 @@ namespace HedgeArchiveEditor
                     Title = "Save Archive As...",
                     Filter = "Generations/Unleashed Archives (*.ar, *.arl, *.pfd)|*.ar;*.arl;*.pfd"
                      + "|Lost World Archives (*.pac)|*.pac|StoryBook Series Archives (*.one)|*.one"
+                     + "|Heroes Archives (*.one)|*.one"
                 };
 
                 if (sfd.ShowDialog() == DialogResult.OK)
@@ -135,8 +136,8 @@ namespace HedgeArchiveEditor
                         lwArc.Save(fileLocation);
                         break;
                     case 2:
-                        var srArc = new SBArchive(CurrentArchive);
-                        srArc.Save(fileLocation);
+                        var oneArc = new ONEArchive(CurrentArchive);
+                        oneArc.Save(fileLocation, true);
                         break;
                     default:
                         throw new NotImplementedException("Unknown Archive Type");
@@ -291,8 +292,8 @@ namespace HedgeArchiveEditor
                 addFilesToolStripMenuItem.Enabled = extractAllToolStripMenuItem.Enabled =
                 closeToolStripMenuItem.Enabled = tabControl.TabPages.Count > 0;
 
-            largeIconViewToolStripMenuItem.Checked = 
-                (tabControl.TabPages[tabControl.SelectedIndex].Controls[0] as ListView).View == View.LargeIcon;
+            //largeIconViewToolStripMenuItem.Checked = 
+            //    (tabControl.TabPages[tabControl.SelectedIndex].Controls[0] as ListView).View == View.LargeIcon;
 
             //TODO: Update status bar label.
             UpdateTitle();

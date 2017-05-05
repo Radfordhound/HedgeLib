@@ -34,6 +34,10 @@ namespace HedgeArchiveEditor
                     break;
                 case 1:
                     throw new NotImplementedException("Lost World Archive");
+                case 2:
+                    break;
+                case 3:
+                    break;
                 default:
                     throw new NotImplementedException("Unknown Archive");
             }
@@ -50,6 +54,31 @@ namespace HedgeArchiveEditor
         private void CheckBox2_CheckedChanged(object sender, EventArgs e)
         {
             label5.Enabled = NumericUpDown2.Enabled = CheckBox2.Checked;
+        }
+
+        private void ComboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            ArchiveType = ComboBox1.SelectedIndex;
+            NumericUpDown1.Enabled = NumericUpDown2.Enabled =
+                CheckBox1.Enabled = CheckBox2.Enabled =
+                label2.Enabled = label3.Enabled = label4.Enabled = label5.Enabled = false;
+            switch (ArchiveType)
+            {
+                case 0:
+                    NumericUpDown1.Enabled = NumericUpDown2.Enabled =
+                        CheckBox1.Enabled = CheckBox2.Enabled =
+                        label2.Enabled = label3.Enabled = label4.Enabled = label5.Enabled = true;
+                    break;
+                case 1:
+                    break;
+                case 2:
+                    break;
+                case 3:
+                    break;
+                default:
+                    throw new NotImplementedException("Unknown Archive");
+            }
+
         }
     }
 }

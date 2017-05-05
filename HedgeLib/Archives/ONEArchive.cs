@@ -9,6 +9,15 @@ namespace HedgeLib.Archives
 		//Variables/Constants
 		public const string Extension = ".one";
 		public byte StringLength = 0x40, FileEntryCount = 0xFF;
+		public uint HeroesMagic = 0x1400FFFF;
+
+		//Constructors
+		public ONEArchive() { }
+		public ONEArchive(Archive arc)
+		{
+			Files = arc.Files;
+		}
+
 		//TODO
 
 		//Methods
@@ -75,5 +84,52 @@ namespace HedgeLib.Archives
 				}
 			}
 		}
+
+		public override void Save(Stream fileStream)
+		{
+			byte[] filenames = new byte[256 * 64];
+
+			// HEADER
+			var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, false);
+			// Padding
+			writer.Write((uint)0);
+			// File Size (Will be overwritten later)
+			writer.Write((uint)0);
+			// HeroesMagic
+			writer.Write(HeroesMagic);
+			// Unknown1
+			writer.Write((uint)1);
+			// DataOffset??? or Size of File Names??
+			writer.Write((uint)filenames.Length);
+			// HeroesMagic2
+			writer.Write(HeroesMagic);
+			// Write 16,384 nulls.
+			writer.Write(filenames);
+
+
+			// DATA
+			int fileNameIndex = 2;
+			foreach (var file in Files)
+			{
+				// Writes the filename to the filenames array.
+				Encoding.ASCII.GetBytes(file.Name).CopyTo(filenames, fileNameIndex * 64);
+				// TODO: Compress Data.
+				// FileNameIndex
+				writer.Write(fileNameIndex++);
+				// File Length
+				writer.Write(file.Data.Length);
+				// HeroesMagic3
+				writer.Write(HeroesMagic);
+				// File Data
+				writer.Write(file.Data);
+			}
+			// Seek back to write the file size.
+			writer.Seek(4, SeekOrigin.Begin);
+			writer.Write((uint)(writer.BaseStream.Length - 0xC));
+			// Seek to 24 so we can write the file names.
+			writer.Seek(24, SeekOrigin.Begin);
+			writer.Write(filenames);
+		}
+
 	}
 }
