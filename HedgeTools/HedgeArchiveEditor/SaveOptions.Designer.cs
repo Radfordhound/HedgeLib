@@ -31,6 +31,7 @@
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.ComboBox1 = new System.Windows.Forms.ComboBox();
+            this.ComboBox2 = new System.Windows.Forms.ComboBox();
             this.NumericUpDown1 = new System.Windows.Forms.NumericUpDown();
             this.CheckBox1 = new System.Windows.Forms.CheckBox();
             this.okBtn = new System.Windows.Forms.Button();
@@ -73,13 +74,29 @@
             this.ComboBox1.Items.AddRange(new object[] {
             "Generations/Unleashed",
             "Lost World",
-            "Sonic Heroes"});
+            "Story Books",
+            "Heroes/Shadow"});
             this.ComboBox1.Location = new System.Drawing.Point(97, 6);
             this.ComboBox1.Margin = new System.Windows.Forms.Padding(2);
             this.ComboBox1.Name = "ComboBox1";
             this.ComboBox1.Size = new System.Drawing.Size(148, 21);
             this.ComboBox1.TabIndex = 3;
             this.ComboBox1.SelectedIndexChanged += new System.EventHandler(this.ComboBox1_SelectedIndexChanged);
+            // 
+            // ComboBox2
+            // 
+            this.ComboBox2.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.ComboBox2.FormattingEnabled = true;
+            this.ComboBox2.Visible = false;
+            this.ComboBox2.Items.AddRange(new object[] {
+            "HeroesMagic",
+            "HeroesE3Magic",
+            "HeroesPreE3Magic"});
+            this.ComboBox2.Location = new System.Drawing.Point(97, 28);
+            this.ComboBox2.Margin = new System.Windows.Forms.Padding(2);
+            this.ComboBox2.Name = "ComboBox2";
+            this.ComboBox2.Size = new System.Drawing.Size(148, 21);
+            this.ComboBox2.TabIndex = 14;
             // 
             // NumericUpDown1
             // 
@@ -226,6 +243,7 @@
             this.Controls.Add(this.CheckBox1);
             this.Controls.Add(this.NumericUpDown1);
             this.Controls.Add(this.ComboBox1);
+            this.Controls.Add(this.ComboBox2);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
@@ -253,6 +271,7 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label4;
         public System.Windows.Forms.ComboBox ComboBox1;
+        public System.Windows.Forms.ComboBox ComboBox2;
         public System.Windows.Forms.NumericUpDown NumericUpDown1;
         public System.Windows.Forms.CheckBox CheckBox1;
         public System.Windows.Forms.NumericUpDown NumericUpDown2;

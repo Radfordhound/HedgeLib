@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -8,6 +9,14 @@ namespace HedgeLib.Archives
 	{
 		//Variables/Constants
 		public const string Extension = ".one";
+
+		public static Dictionary<string, uint> Magics = new Dictionary<string, uint>()
+		{
+			{ "HeroesMagic", 0x1400FFFF },
+			{ "HeroesE3Magic", 0x1005FFFF },
+			{ "HeroesPreE3Magic", 0x1003FFFF }
+		};
+		
 		public byte StringLength = 0x40, FileEntryCount = 0xFF;
 		public uint HeroesMagic = 0x1400FFFF;
 
@@ -16,6 +25,8 @@ namespace HedgeLib.Archives
 		public ONEArchive(Archive arc)
 		{
 			Files = arc.Files;
+			if (arc.GetType() == GetType())
+				HeroesMagic = ((ONEArchive)arc).HeroesMagic;
 		}
 
 		//TODO
@@ -38,7 +49,7 @@ namespace HedgeLib.Archives
 					fileSize, reader.BaseStream.Length);
 			}
 
-			uint magic1 = reader.ReadUInt32();
+			HeroesMagic = reader.ReadUInt32();
 			uint unknown1 = reader.ReadUInt32();
 			if (unknown1 != 1)
 				Console.WriteLine("WARNING: Unknown1 is not 1! ({0})", unknown1);
@@ -87,7 +98,7 @@ namespace HedgeLib.Archives
 
 		public override void Save(Stream fileStream)
 		{
-			byte[] filenames = new byte[256 * 64];
+			byte[] filenames = new byte[(FileEntryCount + 1) * StringLength];
 
 			// HEADER
 			var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, false);
@@ -106,11 +117,19 @@ namespace HedgeLib.Archives
 			// Write 16,384 nulls.
 			writer.Write(filenames);
 
-
 			// DATA
 			int fileNameIndex = 2;
 			foreach (var file in Files)
 			{
+
+				// Breaks if its at the 256th file. 
+				if (fileNameIndex >= FileEntryCount)
+					break;
+
+				// Prints out a warning if the file name is larger then 64 characters.
+				if (file.Name.Length > StringLength)
+					Console.WriteLine("WARNING: The file name \"{0}\" is larger then {1}! {2}",
+						file.Name, StringLength, "Part of the filename may get cut off.");
 				// Writes the filename to the filenames array.
 				Encoding.ASCII.GetBytes(file.Name).CopyTo(filenames, fileNameIndex * 64);
 				// TODO: Compress Data.

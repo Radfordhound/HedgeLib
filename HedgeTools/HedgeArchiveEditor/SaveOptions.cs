@@ -14,6 +14,7 @@ namespace HedgeArchiveEditor
             InitializeComponent();
             ArchiveType = 0;
             ComboBox1.Text = ComboBox1.Items[ArchiveType] as string;
+            ComboBox2.Text = ComboBox2.Items[0] as string;
         }
 
         public SaveOptions(int archiveType)
@@ -21,6 +22,7 @@ namespace HedgeArchiveEditor
             InitializeComponent();
             ArchiveType = archiveType;
             ComboBox1.Text = ComboBox1.Items[archiveType] as string;
+            ComboBox2.Text = ComboBox2.Items[0] as string;
         }
 
         //GUI Events
@@ -59,21 +61,24 @@ namespace HedgeArchiveEditor
         private void ComboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
             ArchiveType = ComboBox1.SelectedIndex;
-            NumericUpDown1.Enabled = NumericUpDown2.Enabled =
-                CheckBox1.Enabled = CheckBox2.Enabled =
-                label2.Enabled = label3.Enabled = label4.Enabled = label5.Enabled = false;
+            NumericUpDown1.Visible = NumericUpDown2.Visible = CheckBox1.Visible
+                = CheckBox2.Visible = label2.Visible = label3.Visible
+                = label4.Visible = label5.Visible = ComboBox2.Visible = false;
             switch (ArchiveType)
             {
                 case 0:
-                    NumericUpDown1.Enabled = NumericUpDown2.Enabled =
-                        CheckBox1.Enabled = CheckBox2.Enabled =
-                        label2.Enabled = label3.Enabled = label4.Enabled = label5.Enabled = true;
+                    NumericUpDown1.Visible = NumericUpDown2.Visible =
+                        CheckBox1.Visible = CheckBox2.Visible =
+                        label2.Visible = label3.Visible = label4.Visible = label5.Visible = true;
+                    label2.Text = "Padding: ";
                     break;
                 case 1:
                     break;
                 case 2:
                     break;
                 case 3:
+                    ComboBox2.Visible = label2.Visible = true;
+                    label2.Text = "HeroesMagic: ";
                     break;
                 default:
                     throw new NotImplementedException("Unknown Archive");

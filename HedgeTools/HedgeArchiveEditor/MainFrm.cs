@@ -1,8 +1,8 @@
 ﻿using HedgeLib.Archives;
-using Microsoft.Win32;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
@@ -73,11 +73,12 @@ namespace HedgeArchiveEditor
                     Filter = "Generations/Unleashed Archives (*.ar, *.arl, *.pfd)|*.ar;*.arl;*.pfd"
                      + "|Lost World Archives (*.pac)|*.pac|StoryBook Series Archives (*.one)|*.one"
                      + "|Heroes Archives (*.one)|*.one"
+                     + "|All Files (*.*)|*.*"
                 };
 
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
-                    ArchiveType = sfd.FilterIndex - 1;
+                    ArchiveType = sfd.FilterIndex - 2;
                     fileLocation = sfd.FileName;
 
                     if (!ArchiveFileExtraData.ContainsKey(Archives[index]))
@@ -94,49 +95,69 @@ namespace HedgeArchiveEditor
                 if (type == typeof(GensArchive)) ArchiveType = 0;
                 else if (type == typeof(LWArchive)) ArchiveType = 1;
                 else if (type == typeof(SBArchive)) ArchiveType = 2;
+                else if (type == typeof(ONEArchive)) ArchiveType = 3;
+            }
 
-                if (ArchiveType == -1)
+            if (ArchiveType == -1)
+            {
+                if (fileLocation.EndsWith(GensArchive.ListExtension) ||
+                    fileLocation.EndsWith(GensArchive.Extension) ||
+                    fileLocation.EndsWith(GensArchive.SplitExtension))
                 {
-                    if (fileLocation.EndsWith(GensArchive.ListExtension) ||
-                        fileLocation.EndsWith(GensArchive.Extension) ||
-                        fileLocation.EndsWith(GensArchive.SplitExtension))
-                    {
-                        ArchiveType = 0;
-                    }
-                    else if (fileLocation.EndsWith(LWArchive.Extension))
-                    {
-                        ArchiveType = 1;
-                    }
-                    else if (fileLocation.EndsWith(SBArchive.Extension))
-                    {
-                        ArchiveType = 2;
-                    }
+                    ArchiveType = 0;
+                }
+                else if (fileLocation.EndsWith(LWArchive.Extension))
+                {
+                    ArchiveType = 1;
+                }
+                else if (fileLocation.EndsWith(SBArchive.Extension))
+                {
+                    ArchiveType = 2;
+                }
+                else if (fileLocation.EndsWith(ONEArchive.Extension))
+                {
+                    ArchiveType = 3;
                 }
             }
 
             var saveOptions = new SaveOptions(ArchiveType);
+
+            if (Archives[index].GetType() == typeof(ONEArchive))
+                saveOptions.ComboBox2.Text
+                    = ONEArchive.Magics.First(t => t.Value == ((ONEArchive)Archives[index]).HeroesMagic).Key;
+            
             if (saveOptions.ShowDialog() == DialogResult.OK && saveOptions.ArchiveType != -1)
             {
-                //This is a horrible way of checking this, I know.
-                int val = saveOptions.ComboBox1.SelectedIndex;
-                switch (val)
+                // This is a horrible way of checking this, I know.
+                switch (saveOptions.ComboBox1.SelectedIndex)
                 {
+                    // Generations/Unleashed
                     case 0:
                         uint? splitAmount = (saveOptions.CheckBox2.Checked) ?
                             (uint?)saveOptions.NumericUpDown2.Value : null;
                         var genArc = new GensArchive(CurrentArchive)
                         {
-                            Padding = (uint)saveOptions.NumericUpDown1.Value,
+                            Padding = (uint)saveOptions.NumericUpDown1.Value
                         };
                         
                         genArc.Save(fileLocation, saveOptions.CheckBox1.Checked, splitAmount);
                         break;
+                    // Lost World
                     case 1:
                         var lwArc = new LWArchive(CurrentArchive);
-                        lwArc.Save(fileLocation);
+                        lwArc.Save(fileLocation, true);
                         break;
+                    // Story Books
                     case 2:
-                        var oneArc = new ONEArchive(CurrentArchive);
+                        var sbArc = new SBArchive(CurrentArchive);
+                        sbArc.Save(fileLocation, true);
+                        break;
+                    // Heroes/Shadow
+                    case 3:
+                        var oneArc = new ONEArchive(CurrentArchive)
+                        {
+                            HeroesMagic = ONEArchive.Magics[saveOptions.ComboBox2.Text]
+                        };
                         oneArc.Save(fileLocation, true);
                         break;
                     default:
@@ -268,7 +289,6 @@ namespace HedgeArchiveEditor
             }
             // Adds all the items into the ListView
             lv.Items.AddRange(items.ToArray());
-            
 
             //Update the columns in the file list
             lv.AutoResizeColumn(0, (longestNameLength > lv.Columns[0].Text.Length) ?
@@ -291,16 +311,23 @@ namespace HedgeArchiveEditor
             saveToolStripMenuItem.Enabled = saveAsToolStripMenuItem.Enabled =
                 addFilesToolStripMenuItem.Enabled = extractAllToolStripMenuItem.Enabled =
                 closeToolStripMenuItem.Enabled = tabControl.TabPages.Count > 0;
-
-            //largeIconViewToolStripMenuItem.Checked = 
-            //    (tabControl.TabPages[tabControl.SelectedIndex].Controls[0] as ListView).View == View.LargeIcon;
+            if (tabControl.SelectedIndex > -1)
+                largeIconViewToolStripMenuItem.Checked = 
+                    (tabControl.TabPages[tabControl.SelectedIndex].Controls[0] as ListView).View == View.LargeIcon;
 
             //TODO: Update status bar label.
             UpdateTitle();
         }
 
-        //GUI Events
+        public static bool HasSupportedArchiveExtension(string fileName)
+        {
+            string fileExtension = Path.GetExtension(fileName).ToLower();
+            return (fileExtension == GensArchive.Extension || fileExtension == GensArchive.ListExtension
+                || fileExtension == GensArchive.PFDExtension || fileExtension == LWArchive.Extension
+                || fileExtension == SBArchive.Extension || fileExtension == ONEArchive.Extension);
+        }
 
+        //GUI Events
         private void LargeIconViewToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // Checks if theres a selected tab.
@@ -343,10 +370,12 @@ namespace HedgeArchiveEditor
             var ofd = new OpenFileDialog()
             {
                 Title = "Open Archive(s)...",
-                Filter = "Generations/Unleashed Archives (*.ar, *.arl, *.pfd)|*.ar;*.arl;*.pfd" +
-                "|Lost World Archives (*.pac)|*.pac|StoryBook Series Archives (*.one)|*.one" +
-                "|All Files (*.*)|*.*",
-
+                Filter = "All Supported Archives (*.ar, *.arl, *.pfd, *.pac, *.one)"
+                     + "|*.ar;*.arl;*.pfd;*.pac;*.one"
+                     + "|Generations/Unleashed Archives (*.ar, *.arl, *.pfd)|*.ar;*.arl;*.pfd"
+                     + "|Lost World Archives (*.pac)|*.pac|StoryBook Series Archives (*.one)|*.one"
+                     + "|Heroes Archives (*.one)|*.one"
+                     + "|All Files (*.*)|*.*",
                 Multiselect = true
             };
 
@@ -594,7 +623,7 @@ namespace HedgeArchiveEditor
             if (e.Data.GetDataPresent(DataFormats.FileDrop) &&
                 e.Data.GetData(DataFormats.FileDrop) is string[] files)
             {
-                if (files.Length == 1 & (files[0].EndsWith(".ar.00") || files[0].EndsWith(".arl")))
+                if (files.Length == 1 & HasSupportedArchiveExtension(files[0]))
                 {
                     OpenArchive(files[0]);
                     RefreshGUI();
@@ -670,8 +699,7 @@ namespace HedgeArchiveEditor
                 if (Archives.Count > 0)
                     e.Effect = DragDropEffects.Copy;
 
-                if (files.Length > 0 && (files[0].EndsWith(".ar.00") ||
-                    files[0].EndsWith(".arl")))
+                if (files.Length > 0 && HasSupportedArchiveExtension(files[0]))
                 {
                     e.Effect = DragDropEffects.Copy;
                 }

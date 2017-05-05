@@ -108,6 +108,10 @@ namespace HedgeArchiveEditor
             FileInfo fileInfo = new FileInfo(filePath);
             Archive arc = null;
 
+            // Checks if the file even exist.
+            if(!File.Exists(fileInfo.FullName))
+                throw new FileNotFoundException("The given archive does not exist.");
+            
             //TODO: Add support for other types of archive.
             if (fileInfo.Extension == GensArchive.Extension ||
                 fileInfo.Extension == GensArchive.SplitExtension ||
@@ -122,7 +126,10 @@ namespace HedgeArchiveEditor
             }
             else if (fileInfo.Extension == ONEArchive.Extension)
             {
-                arc = new ONEArchive();
+                // I know This is a horrible way of checking between archives.
+                if (File.ReadAllBytes(fileInfo.FullName)[8] == 0xFF)
+                    arc = new ONEArchive();
+                else arc = new SBArchive();
             }
             else
                 throw new Exception("The given archive has an unknown extension.");
@@ -166,9 +173,8 @@ namespace HedgeArchiveEditor
             if (Registry.GetValue(typeKey + "\\shell\\open\\command", "", "") as string
                 != (Application.ExecutablePath + " \"%1\""))
             {
-                // TODO: Ask the user if they want the file association changed.
                 if (MessageBox.Show($"Change file association for {extension} to {Application.ExecutablePath}?",
-                    Program.ProgramName, MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    ProgramName, MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
                     // HKEY_CURRENT_USER\Software\Classes\{typeName}\(Default) = typeDisplayName
                     Registry.SetValue(typeKey, "", typeDisplayName);
