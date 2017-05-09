@@ -2,7 +2,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
@@ -64,8 +63,9 @@ namespace HedgeArchiveEditor
         {
             string fileLocation = null;
             int ArchiveType = -1;
+            var arc = Archives[index];
 
-            if (!ArchiveFileExtraData.ContainsKey(Archives[index]) || saveAs)
+            if (!ArchiveFileExtraData.ContainsKey(arc) || saveAs)
             {
                 var sfd = new SaveFileDialog()
                 {
@@ -81,14 +81,14 @@ namespace HedgeArchiveEditor
                     ArchiveType = sfd.FilterIndex - 2;
                     fileLocation = sfd.FileName;
 
-                    if (!ArchiveFileExtraData.ContainsKey(Archives[index]))
-                        ArchiveFileExtraData.Add(Archives[index], new object[] { fileLocation });
+                    if (!ArchiveFileExtraData.ContainsKey(arc))
+                        ArchiveFileExtraData.Add(arc, new object[] { fileLocation });
                 }
                 else return;
             }
             else
             {
-                fileLocation = (string)ArchiveFileExtraData[Archives[index]][0];
+                fileLocation = (string)ArchiveFileExtraData[arc][0];
 
                 // These checks may not work.
                 var type = Archives[index].GetType();
@@ -121,11 +121,9 @@ namespace HedgeArchiveEditor
             }
 
             var saveOptions = new SaveOptions(ArchiveType);
+            if (arc.GetType() == typeof(ONEArchive))
+                saveOptions.NumericUpDown1.Value = ((ONEArchive)arc).Magic;
 
-            if (Archives[index].GetType() == typeof(ONEArchive))
-                saveOptions.ComboBox2.Text
-                    = ONEArchive.Magics.First(t => t.Value == ((ONEArchive)Archives[index]).HeroesMagic).Key;
-            
             if (saveOptions.ShowDialog() == DialogResult.OK && saveOptions.ArchiveType != -1)
             {
                 // This is a horrible way of checking this, I know.
@@ -135,7 +133,7 @@ namespace HedgeArchiveEditor
                     case 0:
                         uint? splitAmount = (saveOptions.CheckBox2.Checked) ?
                             (uint?)saveOptions.NumericUpDown2.Value : null;
-                        var genArc = new GensArchive(CurrentArchive)
+                        var genArc = new GensArchive(arc)
                         {
                             Padding = (uint)saveOptions.NumericUpDown1.Value
                         };
@@ -144,19 +142,19 @@ namespace HedgeArchiveEditor
                         break;
                     // Lost World
                     case 1:
-                        var lwArc = new LWArchive(CurrentArchive);
+                        var lwArc = new LWArchive(arc);
                         lwArc.Save(fileLocation, true);
                         break;
                     // Story Books
                     case 2:
-                        var sbArc = new SBArchive(CurrentArchive);
+                        var sbArc = new SBArchive(arc);
                         sbArc.Save(fileLocation, true);
                         break;
                     // Heroes/Shadow
                     case 3:
-                        var oneArc = new ONEArchive(CurrentArchive)
+                        var oneArc = new ONEArchive(arc)
                         {
-                            HeroesMagic = ONEArchive.Magics[saveOptions.ComboBox2.Text]
+                            Magic = (uint)saveOptions.NumericUpDown1.Value
                         };
                         oneArc.Save(fileLocation, true);
                         break;
@@ -164,8 +162,9 @@ namespace HedgeArchiveEditor
                         throw new NotImplementedException("Unknown Archive Type");
                 }
 
-                CurrentArchive.Saved = true;
+                arc.Saved = true;
             }
+
             RefreshTabPage(index, false);
         }
 
@@ -194,7 +193,7 @@ namespace HedgeArchiveEditor
             TabPage tabPage = tabControl.TabPages[tabPageIndex];
             tabPage.Tag = fileName;
 
-            ListView lv = new ListViewSort()
+            var lv = new ListViewSort()
             {
                 Dock = DockStyle.Fill,
                 View = View.Details,

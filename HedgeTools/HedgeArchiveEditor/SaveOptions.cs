@@ -14,7 +14,6 @@ namespace HedgeArchiveEditor
             InitializeComponent();
             ArchiveType = 0;
             ComboBox1.Text = ComboBox1.Items[ArchiveType] as string;
-            ComboBox2.Text = ComboBox2.Items[0] as string;
         }
 
         public SaveOptions(int archiveType)
@@ -22,7 +21,6 @@ namespace HedgeArchiveEditor
             InitializeComponent();
             ArchiveType = archiveType;
             ComboBox1.Text = ComboBox1.Items[archiveType] as string;
-            ComboBox2.Text = ComboBox2.Items[0] as string;
         }
 
         //GUI Events
@@ -63,7 +61,8 @@ namespace HedgeArchiveEditor
             ArchiveType = ComboBox1.SelectedIndex;
             NumericUpDown1.Visible = NumericUpDown2.Visible = CheckBox1.Visible
                 = CheckBox2.Visible = label2.Visible = label3.Visible
-                = label4.Visible = label5.Visible = ComboBox2.Visible = false;
+                = label4.Visible = label5.Visible = false;
+
             switch (ArchiveType)
             {
                 case 0:
@@ -77,13 +76,12 @@ namespace HedgeArchiveEditor
                 case 2:
                     break;
                 case 3:
-                    ComboBox2.Visible = label2.Visible = true;
+                    NumericUpDown1.Visible = label2.Visible = true;
                     label2.Text = "HeroesMagic: ";
                     break;
                 default:
                     throw new NotImplementedException("Unknown Archive");
             }
-
         }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -8,17 +7,16 @@ namespace HedgeLib.Archives
 	public class ONEArchive : Archive
 	{
 		//Variables/Constants
-		public const string Extension = ".one";
-
-		public static Dictionary<string, uint> Magics = new Dictionary<string, uint>()
+		public uint Magic = (uint)Magics.Heroes;
+		public enum Magics
 		{
-			{ "HeroesMagic", 0x1400FFFF },
-			{ "HeroesE3Magic", 0x1005FFFF },
-			{ "HeroesPreE3Magic", 0x1003FFFF }
+			Heroes = 0x1400FFFF,
+			HeroesE3 = 0x1005FFFF,
+			HeroesPreE3 = 0x1003FFFF
 		};
-		
-		public byte StringLength = 0x40, FileEntryCount = 0xFF;
-		public uint HeroesMagic = 0x1400FFFF;
+
+		public const string Extension = ".one";
+		public const byte StringLength = 0x40, FileEntryCount = 0xFF;
 
 		//Constructors
 		public ONEArchive() { }
@@ -26,7 +24,7 @@ namespace HedgeLib.Archives
 		{
 			Files = arc.Files;
 			if (arc.GetType() == GetType())
-				HeroesMagic = ((ONEArchive)arc).HeroesMagic;
+				Magic = ((ONEArchive)arc).Magic;
 		}
 
 		//TODO
@@ -49,7 +47,7 @@ namespace HedgeLib.Archives
 					fileSize, reader.BaseStream.Length);
 			}
 
-			HeroesMagic = reader.ReadUInt32();
+			Magic = reader.ReadUInt32();
 			uint unknown1 = reader.ReadUInt32();
 			if (unknown1 != 1)
 				Console.WriteLine("WARNING: Unknown1 is not 1! ({0})", unknown1);
@@ -98,57 +96,71 @@ namespace HedgeLib.Archives
 
 		public override void Save(Stream fileStream)
 		{
-			byte[] filenames = new byte[(FileEntryCount + 1) * StringLength];
-
 			// HEADER
 			var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, false);
-			// Padding
-			writer.Write((uint)0);
-			// File Size (Will be overwritten later)
-			writer.Write((uint)0);
-			// HeroesMagic
-			writer.Write(HeroesMagic);
-			// Unknown1
-			writer.Write((uint)1);
-			// DataOffset??? or Size of File Names??
-			writer.Write((uint)filenames.Length);
-			// HeroesMagic2
-			writer.Write(HeroesMagic);
-			// Write 16,384 nulls.
-			writer.Write(filenames);
+			writer.Write(0u); // Padding
+			writer.AddOffset("fileSize"); // File Size (will be overwritten later)
+			writer.Write(Magic); // HeroesMagic
+			writer.Write(1u); // Unknown1
+
+			writer.AddOffset("dataOffset"); // Data Offset
+			writer.Write(Magic); // HeroesMagic2
 
 			// DATA
-			int fileNameIndex = 2;
-			foreach (var file in Files)
+			if (Files.Count > FileEntryCount)
 			{
+				Console.WriteLine("{0} {1} files! The remaining {2} will be skipped.",
+					"WARNING: The Heroes archive format only allows for", FileEntryCount,
+					Files.Count - FileEntryCount);
+			}
 
-				// Breaks if its at the 256th file. 
-				if (fileNameIndex >= FileEntryCount)
+			// File Names
+			char[] stringBuffer;
+			int len = 0;
+
+			for (int i = 0; i < FileEntryCount; ++i)
+			{
+				// Write the remainding slots and break if there are less than 256 files.
+				if (i >= Files.Count)
+				{
+					writer.WriteNulls((uint)((FileEntryCount - i) * StringLength));
 					break;
+				}
 
-				// Prints out a warning if the file name is larger then 64 characters.
+				// Print out a warning if the file name is larger then 64 characters.
+				var file = Files[i];
 				if (file.Name.Length > StringLength)
+				{
 					Console.WriteLine("WARNING: The file name \"{0}\" is larger then {1}! {2}",
 						file.Name, StringLength, "Part of the filename may get cut off.");
-				// Writes the filename to the filenames array.
-				Encoding.ASCII.GetBytes(file.Name).CopyTo(filenames, fileNameIndex * 64);
+				}
+
+				// Write FileName with length capped to StringLength.
+				len = (file.Name.Length > StringLength)
+					? StringLength : file.Name.Length;
+
+				stringBuffer = file.Name.ToCharArray(0, len);
+				writer.Write(stringBuffer);
+				
+				if ((StringLength - len) > 0)
+					writer.WriteNulls(StringLength - (uint)len);
+			}
+
+			// File Entries
+			writer.FillInOffset("dataOffset", true);
+			for (int i = 0; i < Files.Count; ++i)
+			{
+				var file = Files[i];
+				writer.Write(i); // File Name Index
+				writer.Write(file.Data.Length); // Data Length
+				writer.Write(Magic); // HeroesMagic3
+
 				// TODO: Compress Data.
-				// FileNameIndex
-				writer.Write(fileNameIndex++);
-				// File Length
-				writer.Write(file.Data.Length);
-				// HeroesMagic3
-				writer.Write(HeroesMagic);
-				// File Data
 				writer.Write(file.Data);
 			}
-			// Seek back to write the file size.
-			writer.Seek(4, SeekOrigin.Begin);
-			writer.Write((uint)(writer.BaseStream.Length - 0xC));
-			// Seek to 24 so we can write the file names.
-			writer.Seek(24, SeekOrigin.Begin);
-			writer.Write(filenames);
-		}
 
+			writer.FillInOffset("fileSize",
+				(uint)writer.BaseStream.Position - 0xC, true);
+		}
 	}
 }
