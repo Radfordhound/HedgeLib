@@ -105,7 +105,7 @@ namespace HedgeLib.Archives
 
             writer.AddOffset("dataOffset"); // Data Offset
             writer.Write(Magic); // HeroesMagic2
-            writer.WriteNulls(FileEntryCount * 2);
+            writer.WriteNulls(StringLength * 2);
 
             // DATA
             if (Files.Count > FileEntryCount)
