@@ -29,7 +29,6 @@ namespace HedgeLib.Sets
             using (var fileStream = File.OpenRead(filePath))
             {
                 Load(fileStream, objectTemplates);
-                fileStream.Close();
             }
         }
 
