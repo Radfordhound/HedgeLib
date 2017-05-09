@@ -105,6 +105,7 @@ namespace HedgeLib.Archives
 
             writer.AddOffset("dataOffset"); // Data Offset
             writer.Write(Magic); // HeroesMagic2
+            writer.WriteNulls(FileEntryCount * 2);
 
             // DATA
             if (Files.Count > FileEntryCount)
@@ -123,7 +124,7 @@ namespace HedgeLib.Archives
                 // Write the remainding slots and break if there are less than 256 files.
                 if (i >= Files.Count)
                 {
-                    writer.WriteNulls((uint)((FileEntryCount - i) * StringLength));
+                    writer.WriteNulls((uint)((FileEntryCount - i - 1) * StringLength));
                     break;
                 }
 
@@ -147,11 +148,11 @@ namespace HedgeLib.Archives
             }
 
             // File Entries
-            writer.FillInOffset("dataOffset", true);
+            writer.FillInOffset("dataOffset", (FileEntryCount + 1) * StringLength, true);
             for (int i = 0; i < Files.Count; ++i)
             {
                 var file = Files[i];
-                writer.Write(i); // File Name Index
+                writer.Write(i + 2); // File Name Index
                 writer.Write(file.Data.Length); // Data Length
                 writer.Write(Magic); // HeroesMagic3
 
