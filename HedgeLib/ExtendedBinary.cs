@@ -8,40 +8,40 @@ namespace HedgeLib
 {
     public class ExtendedBinary
     {
-		//Other
+        //Other
         [StructLayout(LayoutKind.Explicit)]
         public struct FloatUnion
         {
-			//Variables/Constants
+            //Variables/Constants
             [FieldOffset(0)]
             public float Float;
             [FieldOffset(0)]
             public uint UInt;
 
-			//Constructors
-			public FloatUnion(float f)
-			{
-				UInt = 0;
-				Float = f;
-			}
+            //Constructors
+            public FloatUnion(float f)
+            {
+                UInt = 0;
+                Float = f;
+            }
         }
 
         [StructLayout(LayoutKind.Explicit)]
         public struct DoubleUnion
         {
-			//Variables/Constants
+            //Variables/Constants
             [FieldOffset(0)]
             public double Double;
             [FieldOffset(0)]
             public ulong ULong;
 
-			//Constructors
-			public DoubleUnion(double d)
-			{
-				ULong = 0;
-				Double = d;
-			}
-		}
+            //Constructors
+            public DoubleUnion(double d)
+            {
+                ULong = 0;
+                Double = d;
+            }
+        }
     }
 
     public class ExtendedBinaryReader : BinaryReader
@@ -87,23 +87,23 @@ namespace HedgeLib
             JumpAhead(jumpAmount);
         }
 
-		public string GetString(bool isAbsolute = false, bool isNullTerminated = true)
-		{
-			uint offset = (isAbsolute) ? ReadUInt32() : ReadUInt32() + Offset;
-			return GetString(offset, isNullTerminated);
-		}
+        public string GetString(bool isAbsolute = false, bool isNullTerminated = true)
+        {
+            uint offset = (isAbsolute) ? ReadUInt32() : ReadUInt32() + Offset;
+            return GetString(offset, isNullTerminated);
+        }
 
-		public string GetString(uint offset, bool isNullTerminated = true)
-		{
-			long curPos = BaseStream.Position;
-			BaseStream.Position = offset;
+        public string GetString(uint offset, bool isNullTerminated = true)
+        {
+            long curPos = BaseStream.Position;
+            BaseStream.Position = offset;
 
-			string str = (isNullTerminated) ?
-				ReadNullTerminatedString() : ReadString();
+            string str = (isNullTerminated) ?
+                ReadNullTerminatedString() : ReadString();
 
-			BaseStream.Position = curPos;
-			return str;
-		}
+            BaseStream.Position = curPos;
+            return str;
+        }
 
         public string ReadSignature(int length = 4)
         {
@@ -134,38 +134,38 @@ namespace HedgeLib
 
         public object ReadByType(Type type)
         {
-			if (type == typeof(bool))
-				return ReadBoolean();
-			else if (type == typeof(byte))
-				return ReadByte();
-			else if (type == typeof(sbyte))
-				return ReadSByte();
-			else if (type == typeof(char))
-				return ReadChar();
-			else if (type == typeof(short))
-				return ReadInt16();
-			else if (type == typeof(ushort))
-				return ReadUInt16();
-			else if (type == typeof(int))
-				return ReadInt32();
-			else if (type == typeof(uint))
-				return ReadUInt32();
-			else if (type == typeof(float))
-				return ReadSingle();
-			else if (type == typeof(long))
-				return ReadInt64();
-			else if (type == typeof(ulong))
-				return ReadUInt64();
-			else if (type == typeof(double))
-				return ReadDouble();
-			else if (type == typeof(Vector3))
-				return ReadVector3();
-			else if (type == typeof(Quaternion))
-				return new Quaternion(ReadVector4());
-			else if (type == typeof(Vector4))
-				return ReadVector4();
+            if (type == typeof(bool))
+                return ReadBoolean();
+            else if (type == typeof(byte))
+                return ReadByte();
+            else if (type == typeof(sbyte))
+                return ReadSByte();
+            else if (type == typeof(char))
+                return ReadChar();
+            else if (type == typeof(short))
+                return ReadInt16();
+            else if (type == typeof(ushort))
+                return ReadUInt16();
+            else if (type == typeof(int))
+                return ReadInt32();
+            else if (type == typeof(uint))
+                return ReadUInt32();
+            else if (type == typeof(float))
+                return ReadSingle();
+            else if (type == typeof(long))
+                return ReadInt64();
+            else if (type == typeof(ulong))
+                return ReadUInt64();
+            else if (type == typeof(double))
+                return ReadDouble();
+            else if (type == typeof(Vector3))
+                return ReadVector3();
+            else if (type == typeof(Quaternion))
+                return new Quaternion(ReadVector4());
+            else if (type == typeof(Vector4))
+                return ReadVector4();
 
-			//TODO: Add more types.
+            //TODO: Add more types.
 
             throw new NotImplementedException("Cannot read \"" +
                 type + "\" by type yet!");
@@ -340,7 +340,7 @@ namespace HedgeLib
             }
             else
             {
-				floatUnion.UInt = (
+                floatUnion.UInt = (
                     (uint)buffer[3] << 24 | (uint)buffer[2] << 16 |
                     (uint)buffer[1] << 8 | buffer[0]);
                 x = floatUnion.Float;
@@ -358,64 +358,64 @@ namespace HedgeLib
 
             return new Vector3(x, y, z);
         }
-		
-		//16-Byte Types
-		public Vector4 ReadVector4()
-		{
-			float x, y, z, w;
-			var buffer = ReadBytes(16);
-			var floatUnion = new ExtendedBinary.FloatUnion();
+        
+        //16-Byte Types
+        public Vector4 ReadVector4()
+        {
+            float x, y, z, w;
+            var buffer = ReadBytes(16);
+            var floatUnion = new ExtendedBinary.FloatUnion();
 
-			if (IsBigEndian)
-			{
-				floatUnion.UInt = (
-					(uint)buffer[0] << 24 | (uint)buffer[1] << 16 |
-					(uint)buffer[2] << 8 | buffer[3]);
-				x = floatUnion.Float;
+            if (IsBigEndian)
+            {
+                floatUnion.UInt = (
+                    (uint)buffer[0] << 24 | (uint)buffer[1] << 16 |
+                    (uint)buffer[2] << 8 | buffer[3]);
+                x = floatUnion.Float;
 
-				floatUnion.UInt = (
-					(uint)buffer[4] << 24 | (uint)buffer[5] << 16 |
-					(uint)buffer[6] << 8 | buffer[7]);
-				y = floatUnion.Float;
+                floatUnion.UInt = (
+                    (uint)buffer[4] << 24 | (uint)buffer[5] << 16 |
+                    (uint)buffer[6] << 8 | buffer[7]);
+                y = floatUnion.Float;
 
-				floatUnion.UInt = (
-					(uint)buffer[8] << 24 | (uint)buffer[9] << 16 |
-					(uint)buffer[10] << 8 | buffer[11]);
-				z = floatUnion.Float;
+                floatUnion.UInt = (
+                    (uint)buffer[8] << 24 | (uint)buffer[9] << 16 |
+                    (uint)buffer[10] << 8 | buffer[11]);
+                z = floatUnion.Float;
 
-				floatUnion.UInt = (
-					(uint)buffer[12] << 24 | (uint)buffer[13] << 16 |
-					(uint)buffer[14] << 8 | buffer[15]);
-				w = floatUnion.Float;
-			}
-			else
-			{
-				floatUnion.UInt = (
-					(uint)buffer[3] << 24 | (uint)buffer[2] << 16 |
-					(uint)buffer[1] << 8 | buffer[0]);
-				x = floatUnion.Float;
+                floatUnion.UInt = (
+                    (uint)buffer[12] << 24 | (uint)buffer[13] << 16 |
+                    (uint)buffer[14] << 8 | buffer[15]);
+                w = floatUnion.Float;
+            }
+            else
+            {
+                floatUnion.UInt = (
+                    (uint)buffer[3] << 24 | (uint)buffer[2] << 16 |
+                    (uint)buffer[1] << 8 | buffer[0]);
+                x = floatUnion.Float;
 
-				floatUnion.UInt = (
-					(uint)buffer[7] << 24 | (uint)buffer[6] << 16 |
-					(uint)buffer[5] << 8 | buffer[4]);
-				y = floatUnion.Float;
+                floatUnion.UInt = (
+                    (uint)buffer[7] << 24 | (uint)buffer[6] << 16 |
+                    (uint)buffer[5] << 8 | buffer[4]);
+                y = floatUnion.Float;
 
-				floatUnion.UInt = (
-					(uint)buffer[11] << 24 | (uint)buffer[10] << 16 |
-					(uint)buffer[9] << 8 | buffer[8]);
-				z = floatUnion.Float;
+                floatUnion.UInt = (
+                    (uint)buffer[11] << 24 | (uint)buffer[10] << 16 |
+                    (uint)buffer[9] << 8 | buffer[8]);
+                z = floatUnion.Float;
 
-				floatUnion.UInt = (
-					(uint)buffer[15] << 24 | (uint)buffer[14] << 16 |
-					(uint)buffer[13] << 8 | buffer[12]);
-				w = floatUnion.Float;
-			}
+                floatUnion.UInt = (
+                    (uint)buffer[15] << 24 | (uint)buffer[14] << 16 |
+                    (uint)buffer[13] << 8 | buffer[12]);
+                w = floatUnion.Float;
+            }
 
-			return new Vector4(x, y, z, w);
-		}
+            return new Vector4(x, y, z, w);
+        }
 
-		//TODO: Write override methods for all types.
-	}
+        //TODO: Write override methods for all types.
+    }
 
     public class ExtendedBinaryWriter : BinaryWriter
     {
@@ -463,7 +463,7 @@ namespace HedgeLib
             else
                 Offsets.Add(name, position);
 
-			long curPos = BaseStream.Position;
+            long curPos = BaseStream.Position;
             BaseStream.Position = position;
 
             WriteNulls(4);
@@ -472,7 +472,7 @@ namespace HedgeLib
 
         public void FillInOffset(string name, bool absolute = true)
         {
-			long curPos = BaseStream.Position;
+            long curPos = BaseStream.Position;
             BaseStream.Position = Offsets[name];
 
             Write((uint)(curPos - ((absolute) ? 0 : Offset)));
@@ -483,7 +483,7 @@ namespace HedgeLib
 
         public void FillInOffset(string name, uint value, bool absolute = true)
         {
-			long curPos = BaseStream.Position;
+            long curPos = BaseStream.Position;
             BaseStream.Position = Offsets[name];
 
             Write((uint)(value - ((absolute) ? 0 : Offset)));
@@ -522,52 +522,52 @@ namespace HedgeLib
             Write(signature.ToCharArray());
         }
 
-		public void WriteByType<T>(object data)
-		{
-			WriteByType(typeof(T), data);
-		}
+        public void WriteByType<T>(object data)
+        {
+            WriteByType(typeof(T), data);
+        }
 
-		public void WriteByType(Type type, object data)
-		{
-			if (type == typeof(bool))
-				Write((bool)data);
-			else if (type == typeof(byte))
-				Write((byte)data);
-			else if (type == typeof(sbyte))
-				Write((sbyte)data);
-			else if (type == typeof(char))
-				Write((char)data);
-			else if (type == typeof(short))
-				Write((short)data);
-			else if (type == typeof(ushort))
-				Write((ushort)data);
-			else if (type == typeof(int))
-				Write((int)data);
-			else if (type == typeof(uint))
-				Write((uint)data);
-			else if (type == typeof(float))
-				Write((float)data);
-			else if (type == typeof(long))
-				Write((long)data);
-			else if (type == typeof(ulong))
-				Write((ulong)data);
-			else if (type == typeof(double))
-				Write((double)data);
-			else if (type == typeof(Vector3))
-				Write((Vector3)data);
-			else if (type == typeof(Vector4) || type == typeof(Quaternion))
-				Write((Vector4)data);
-			else
-			{
-				throw new NotImplementedException("Cannot write \"" +
-					type + "\" by type yet!");
-			}
+        public void WriteByType(Type type, object data)
+        {
+            if (type == typeof(bool))
+                Write((bool)data);
+            else if (type == typeof(byte))
+                Write((byte)data);
+            else if (type == typeof(sbyte))
+                Write((sbyte)data);
+            else if (type == typeof(char))
+                Write((char)data);
+            else if (type == typeof(short))
+                Write((short)data);
+            else if (type == typeof(ushort))
+                Write((ushort)data);
+            else if (type == typeof(int))
+                Write((int)data);
+            else if (type == typeof(uint))
+                Write((uint)data);
+            else if (type == typeof(float))
+                Write((float)data);
+            else if (type == typeof(long))
+                Write((long)data);
+            else if (type == typeof(ulong))
+                Write((ulong)data);
+            else if (type == typeof(double))
+                Write((double)data);
+            else if (type == typeof(Vector3))
+                Write((Vector3)data);
+            else if (type == typeof(Vector4) || type == typeof(Quaternion))
+                Write((Vector4)data);
+            else
+            {
+                throw new NotImplementedException("Cannot write \"" +
+                    type + "\" by type yet!");
+            }
 
-			//TODO: Add more types.
-		}
+            //TODO: Add more types.
+        }
 
-		//2-Byte Types
-		public override void Write(short value)
+        //2-Byte Types
+        public override void Write(short value)
         {
             if (IsBigEndian)
             {
@@ -801,66 +801,66 @@ namespace HedgeLib
             Write(dataBuffer, 0, 12);
         }
 
-		//16-Byte Types
-		public void Write(Vector4 vect)
-		{
-			var floatUnion = new ExtendedBinary.FloatUnion();
-			if (IsBigEndian)
-			{
-				floatUnion.Float = vect.X;
-				dataBuffer[0] = (byte)(floatUnion.UInt >> 24);
-				dataBuffer[1] = (byte)(floatUnion.UInt >> 16);
-				dataBuffer[2] = (byte)(floatUnion.UInt >> 8);
-				dataBuffer[3] = (byte)(floatUnion.UInt);
+        //16-Byte Types
+        public void Write(Vector4 vect)
+        {
+            var floatUnion = new ExtendedBinary.FloatUnion();
+            if (IsBigEndian)
+            {
+                floatUnion.Float = vect.X;
+                dataBuffer[0] = (byte)(floatUnion.UInt >> 24);
+                dataBuffer[1] = (byte)(floatUnion.UInt >> 16);
+                dataBuffer[2] = (byte)(floatUnion.UInt >> 8);
+                dataBuffer[3] = (byte)(floatUnion.UInt);
 
-				floatUnion.Float = vect.Y;
-				dataBuffer[4] = (byte)(floatUnion.UInt >> 24);
-				dataBuffer[5] = (byte)(floatUnion.UInt >> 16);
-				dataBuffer[6] = (byte)(floatUnion.UInt >> 8);
-				dataBuffer[7] = (byte)(floatUnion.UInt);
+                floatUnion.Float = vect.Y;
+                dataBuffer[4] = (byte)(floatUnion.UInt >> 24);
+                dataBuffer[5] = (byte)(floatUnion.UInt >> 16);
+                dataBuffer[6] = (byte)(floatUnion.UInt >> 8);
+                dataBuffer[7] = (byte)(floatUnion.UInt);
 
-				floatUnion.Float = vect.Z;
-				dataBuffer[8] = (byte)(floatUnion.UInt >> 24);
-				dataBuffer[9] = (byte)(floatUnion.UInt >> 16);
-				dataBuffer[10] = (byte)(floatUnion.UInt >> 8);
-				dataBuffer[11] = (byte)(floatUnion.UInt);
+                floatUnion.Float = vect.Z;
+                dataBuffer[8] = (byte)(floatUnion.UInt >> 24);
+                dataBuffer[9] = (byte)(floatUnion.UInt >> 16);
+                dataBuffer[10] = (byte)(floatUnion.UInt >> 8);
+                dataBuffer[11] = (byte)(floatUnion.UInt);
 
-				floatUnion.Float = vect.W;
-				dataBuffer[12] = (byte)(floatUnion.UInt >> 24);
-				dataBuffer[13] = (byte)(floatUnion.UInt >> 16);
-				dataBuffer[14] = (byte)(floatUnion.UInt >> 8);
-				dataBuffer[15] = (byte)(floatUnion.UInt);
-			}
-			else
-			{
-				floatUnion.Float = vect.X;
-				dataBuffer[0] = (byte)(floatUnion.UInt);
-				dataBuffer[1] = (byte)(floatUnion.UInt >> 8);
-				dataBuffer[2] = (byte)(floatUnion.UInt >> 16);
-				dataBuffer[3] = (byte)(floatUnion.UInt >> 24);
+                floatUnion.Float = vect.W;
+                dataBuffer[12] = (byte)(floatUnion.UInt >> 24);
+                dataBuffer[13] = (byte)(floatUnion.UInt >> 16);
+                dataBuffer[14] = (byte)(floatUnion.UInt >> 8);
+                dataBuffer[15] = (byte)(floatUnion.UInt);
+            }
+            else
+            {
+                floatUnion.Float = vect.X;
+                dataBuffer[0] = (byte)(floatUnion.UInt);
+                dataBuffer[1] = (byte)(floatUnion.UInt >> 8);
+                dataBuffer[2] = (byte)(floatUnion.UInt >> 16);
+                dataBuffer[3] = (byte)(floatUnion.UInt >> 24);
 
-				floatUnion.Float = vect.Y;
-				dataBuffer[4] = (byte)(floatUnion.UInt);
-				dataBuffer[5] = (byte)(floatUnion.UInt >> 8);
-				dataBuffer[6] = (byte)(floatUnion.UInt >> 16);
-				dataBuffer[7] = (byte)(floatUnion.UInt >> 24);
+                floatUnion.Float = vect.Y;
+                dataBuffer[4] = (byte)(floatUnion.UInt);
+                dataBuffer[5] = (byte)(floatUnion.UInt >> 8);
+                dataBuffer[6] = (byte)(floatUnion.UInt >> 16);
+                dataBuffer[7] = (byte)(floatUnion.UInt >> 24);
 
-				floatUnion.Float = vect.Z;
-				dataBuffer[8] = (byte)(floatUnion.UInt);
-				dataBuffer[9] = (byte)(floatUnion.UInt >> 8);
-				dataBuffer[10] = (byte)(floatUnion.UInt >> 16);
-				dataBuffer[11] = (byte)(floatUnion.UInt >> 24);
+                floatUnion.Float = vect.Z;
+                dataBuffer[8] = (byte)(floatUnion.UInt);
+                dataBuffer[9] = (byte)(floatUnion.UInt >> 8);
+                dataBuffer[10] = (byte)(floatUnion.UInt >> 16);
+                dataBuffer[11] = (byte)(floatUnion.UInt >> 24);
 
-				floatUnion.Float = vect.W;
-				dataBuffer[12] = (byte)(floatUnion.UInt);
-				dataBuffer[13] = (byte)(floatUnion.UInt >> 8);
-				dataBuffer[14] = (byte)(floatUnion.UInt >> 16);
-				dataBuffer[15] = (byte)(floatUnion.UInt >> 24);
-			}
+                floatUnion.Float = vect.W;
+                dataBuffer[12] = (byte)(floatUnion.UInt);
+                dataBuffer[13] = (byte)(floatUnion.UInt >> 8);
+                dataBuffer[14] = (byte)(floatUnion.UInt >> 16);
+                dataBuffer[15] = (byte)(floatUnion.UInt >> 24);
+            }
 
-			Write(dataBuffer, 0, 16);
-		}
+            Write(dataBuffer, 0, 16);
+        }
 
-		//TODO: Write override methods for all types.
-	}
+        //TODO: Write override methods for all types.
+    }
 }

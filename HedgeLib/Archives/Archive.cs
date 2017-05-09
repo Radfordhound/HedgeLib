@@ -11,10 +11,10 @@ namespace HedgeLib.Archives
         public bool Saved = false;
 
         //Methods
-		public virtual List<string> GetSplitArchivesList(string filePath)
-		{
-			throw new NotImplementedException();
-		}
+        public virtual List<string> GetSplitArchivesList(string filePath)
+        {
+            throw new NotImplementedException();
+        }
 
         public void Extract(string directory)
         {
