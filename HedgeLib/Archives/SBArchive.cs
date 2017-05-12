@@ -3,153 +3,132 @@ using System.Text;
 
 namespace HedgeLib.Archives
 {
-	public class SBArchive : Archive
-	{
-		//Variables/Constants
-		public const string Extension = ".one";
-		private const int stringBufferSize = 0x20;
+    public class SBArchive : Archive
+    {
+        //Variables/Constants
+        public const string Extension = ".one";
+        private const int stringBufferSize = 0x20;
 
-		//Constructors
-		public SBArchive() { }
-		public SBArchive(Archive arc)
-		{
-			Files = arc.Files;
-		}
+        //Constructors
+        public SBArchive() { }
+        public SBArchive(Archive arc)
+        {
+            Files = arc.Files;
+        }
 
-		//Methods
-		public override void Load(Stream fileStream)
-		{
-			// HEADER
-			var reader = new ExtendedBinaryReader(fileStream, Encoding.ASCII, true);
-			uint fileCount = reader.ReadUInt32();
-			uint entriesOffset = reader.ReadUInt32();
-			uint fileDataOffset = reader.ReadUInt32();
+        //Methods
+        public override void Load(Stream fileStream)
+        {
+            // HEADER
+            var reader = new ExtendedBinaryReader(fileStream, Encoding.ASCII, true);
+            uint fileCount = reader.ReadUInt32();
+            uint entriesOffset = reader.ReadUInt32();
+            uint fileDataOffset = reader.ReadUInt32();
 
-			// DATA
-			var stringBuffer = new char[stringBufferSize];
-			var fileEntries = new FileEntry[fileCount];
-			reader.JumpTo(entriesOffset, true);
+            // DATA
+            var stringBuffer = new char[stringBufferSize];
+            var fileEntries = new FileEntry[fileCount];
+            reader.JumpTo(entriesOffset, true);
 
-			for (uint i = 0; i < fileCount; ++i)
-			{
-				// Read File Name
-				reader.Read(stringBuffer, 0, stringBufferSize);
-				string fileName =
-					new string(stringBuffer).Replace("\0", string.Empty);
+            for (uint i = 0; i < fileCount; ++i)
+            {
+                // Read File Name
+                reader.Read(stringBuffer, 0, stringBufferSize);
+                string fileName =
+                    new string(stringBuffer).Replace("\0", string.Empty);
 
-				// Read File Entry Data
-				uint fileIndex = reader.ReadUInt32();
-				fileEntries[fileIndex] = new FileEntry()
-				{
-					FileName = fileName,
-					FileIndex = fileIndex,
-					DataOffset = reader.ReadUInt32(),
-					DataLength = reader.ReadUInt32(),
-					UncompressedSize = reader.ReadUInt32()
-				};
-			}
+                // Read File Entry Data
+                uint fileIndex = reader.ReadUInt32();
+                fileEntries[fileIndex] = new FileEntry()
+                {
+                    FileName = fileName,
+                    FileIndex = fileIndex,
+                    DataOffset = reader.ReadUInt32(),
+                    DataLength = reader.ReadUInt32(),
+                    UncompressedSize = reader.ReadUInt32()
+                };
+            }
 
-			// Read File Data
-			for (uint i = 0; i < fileCount; ++i)
-			{
-				var fileEntry = fileEntries[i];
-				var data = new byte[fileEntry.DataLength];
-				int pos = 0;
+            // Read File Data
+            for (uint i = 0; i < fileCount; ++i)
+            {
+                var fileEntry = fileEntries[i];
+                var data = new byte[fileEntry.DataLength];
+                int pos = 0;
 
-				reader.JumpTo(fileEntry.DataOffset, true);
-				while (pos < data.Length)
-				{
-					//TODO: De-compress files.
-					pos += reader.Read(data, pos, data.Length - pos);
-				}
+                reader.JumpTo(fileEntry.DataOffset, true);
+                while (pos < data.Length)
+                {
+                    //TODO: De-compress files.
+                    pos += reader.Read(data, pos, data.Length - pos);
+                }
 
-				// Add File to Files List
-				Files.Add(new ArchiveFile(fileEntry.FileName, data));
-			}
-		}
+                // Add File to Files List
+                Files.Add(new ArchiveFile(fileEntry.FileName, data));
+            }
+        }
 
-		//TODO: Make a Proper Write/Save Method.
-		public override void Save(Stream fileStream)
-		{
-			// HEADER
-			var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, true);
-			uint dataOffset = (uint)((stringBufferSize + 16) * Files.Count + 16);
-			
-			// Writes the file count.
-			writer.Write((uint)Files.Count);
+        // NOTE: This method doesn't compress the data yet.
+        // TODO: Make a Proper Write/Save Method.
+        public override void Save(Stream fileStream)
+        {
+            // HEADER
+            var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, true);
+            uint dataOffset = (uint)((stringBufferSize + 16) * Files.Count + 16);
+            
+            writer.Write((uint)Files.Count); // File Count
 
-			// Writes the offset to the file entries.
-			writer.Write((uint)0x10);
-			
-			// Writes the offset to where the data starts.
-			writer.Write(dataOffset);
-			
-			// Unknown, Seems to always be null.
-			writer.Write(0x0);
+            writer.Write(0x10u); // File Entry Offset
 
-			// DATA
-			// Writes enough nulls to store the file entries. Probably a bad idea.
-			writer.WriteNulls((uint)((stringBufferSize + 16) * Files.Count));
-			
-			for (int i = 0; i < Files.Count; ++i)
-			{
-				int fileEntryPosition = i * 48 + 16;
-				
-				// Gets the compressed data array.
-				var compressedBytes = CompressPRS(Files[i].Data);
-				
-				// Writes the file name to +0x000000.
-				writer.Seek(fileEntryPosition, SeekOrigin.Begin);
-				writer.Write(Files[i].Name.ToCharArray());
+            writer.Write(dataOffset); // File Data Offset
+            
+            writer.Write(0x0u); // Unknown1
 
-				// Writes file index to +0x000020.
-				writer.Seek(fileEntryPosition + 32, SeekOrigin.Begin);
-				writer.Write((uint)i);
+            // DATA
 
-				// Writes the data offset to +0x000024.
-				writer.Write(dataOffset);
+            char[] stringBuffer;
+            int length = 0;
 
-				// Adds the compressed size to the offset for the next file.
-				dataOffset += (uint)compressedBytes.Length;
+            for (int i = 0; i < Files.Count; ++i)
+            {
+                var file = Files[i];
+                
+                // TODO: Create a PRS Compression method in HedgeLib.
+                var compressedBytes = file.Data; // Compressed Data, not yet added
 
-				// Writes the data size to +0x000028.
-				writer.Write((uint)compressedBytes.Length);
+                length = (file.Name.Length > stringBufferSize)
+                    ? stringBufferSize : file.Name.Length;
 
-				// Writes the uncompressed size to +0x00002C.
-				writer.Write((uint)Files[i].Data.Length);
-			}
+                stringBuffer = new char[stringBufferSize];
 
-			dataOffset = (uint)((stringBufferSize + 16) * Files.Count + 16);
+                file.Name.CopyTo(0, stringBuffer, 0, length);
 
-			// Writes all the compressed data.
-			for (int i = 0; i < Files.Count; ++i)
-			{
-				// Seeks to the current file data offset.
-				writer.Seek((int)dataOffset, SeekOrigin.Begin);
+                writer.Write(stringBuffer); // Writes StringBuffer to stream (+0x000000)
+                writer.Write((uint)i); // FileIndex (+0x000020)
+                writer.Write(dataOffset); // DataOffset (+0x000024)
+                writer.Write((uint)compressedBytes.Length); // Compressed FileSize (+0x000028)
+                writer.Write((uint)file.Data.Length); // Uncompressed FileSize (+0x00002C)
+                // Adds Compressed FileSize to dataOffset.
+                dataOffset += (uint)compressedBytes.Length; // Offset to where the next file is located
+            }
 
-				// Gets the compressed data.
-				var compressedBytes = CompressPRS(Files[i].Data);
+            // Seeks to dataOffset.
+            writer.Seek((stringBufferSize + 16) * Files.Count + 16, SeekOrigin.Begin);
 
-				// Adds the compressed size to the offset for the next file.
-				dataOffset += (uint)compressedBytes.Length;
+            // Writes all the compressed data.
+            for (int i = 0; i < Files.Count; ++i)
+            {
+                // TODO: Create a PRS Compression method in HedgeLib.
+                writer.Write(Files[i].Data); // Compressed data, Right now its uncompressed.
+            }
+        }
 
-				// Writes all the compressed data into the file.
-				writer.Write(compressedBytes);
-			}
-		}
-
-		// TODO: Make a Compression and Decompression Method for both SBArchive and ONEArchive.
-		public static byte[] CompressPRS(byte[] bytes)
-		{
-			return bytes;
-		}
-
-		//Other
-		private struct FileEntry
-		{
-			public string FileName;
-			public uint FileIndex, DataOffset,
-				DataLength, UncompressedSize;
-		}
-	}
+        //Other
+        private struct FileEntry
+        {
+            public string FileName;
+            public uint FileIndex, DataOffset,
+                DataLength, UncompressedSize;
+        }
+    }
 }
