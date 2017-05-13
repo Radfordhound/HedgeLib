@@ -52,11 +52,18 @@ namespace HedgeArchiveEditor
 
         public void OpenArchive(string filePath)
         {
-            var arc = Program.LoadArchive(filePath);
-            Archives.Add(arc);
-            ArchiveFileExtraData.Add(arc, new object[] { filePath });
-            arc.Saved = true;
-            AddTabPage(new FileInfo(filePath).Name);
+            try
+            {
+                var arc = Program.LoadArchive(filePath);
+                Archives.Add(arc);
+                ArchiveFileExtraData.Add(arc, new object[] { filePath });
+                arc.Saved = true;
+                AddTabPage(new FileInfo(filePath).Name);
+            }catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, Program.ProgramName,
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         public void SaveArchive(int index, bool saveAs)

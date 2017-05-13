@@ -109,9 +109,13 @@ namespace HedgeArchiveEditor
             Archive arc = null;
 
             // Checks if the file even exist.
-            if(!File.Exists(fileInfo.FullName))
+            if (!File.Exists(fileInfo.FullName))
                 throw new FileNotFoundException("The given archive does not exist.");
             
+            // Checks if the file is not empty.
+            if (fileInfo.Length == 0)
+                throw new Exception("The given file is empty.");
+
             //TODO: Add support for other types of archive.
             if (fileInfo.Extension == GensArchive.Extension ||
                 fileInfo.Extension == GensArchive.SplitExtension ||
