@@ -622,9 +622,10 @@ namespace HedgeArchiveEditor
             if (e.Data.GetDataPresent(DataFormats.FileDrop) &&
                 e.Data.GetData(DataFormats.FileDrop) is string[] files)
             {
-                if (files.Length == 1 & HasSupportedArchiveExtension(files[0]))
+                if (HasSupportedArchiveExtension(files[0]))
                 {
-                    OpenArchive(files[0]);
+                    foreach(string fileName in files)
+                        OpenArchive(fileName);
                     RefreshGUI();
                 }
                 else
