@@ -48,9 +48,10 @@
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.label1.Location = new System.Drawing.Point(12, 8);
+            this.label1.Location = new System.Drawing.Point(8, 8);
+            this.label1.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(116, 25);
+            this.label1.Size = new System.Drawing.Size(78, 15);
             this.label1.TabIndex = 0;
             this.label1.Text = "Archive Type:";
             // 
@@ -58,9 +59,10 @@
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(12, 42);
+            this.label2.Location = new System.Drawing.Point(8, 30);
+            this.label2.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(81, 25);
+            this.label2.Size = new System.Drawing.Size(54, 15);
             this.label2.TabIndex = 1;
             this.label2.Text = "Padding:";
             // 
@@ -73,20 +75,26 @@
             "Lost World",
             "Story Books",
             "Heroes/Shadow"});
-            this.ComboBox1.Location = new System.Drawing.Point(146, 9);
+            this.ComboBox1.Location = new System.Drawing.Point(97, 6);
+            this.ComboBox1.Margin = new System.Windows.Forms.Padding(2);
             this.ComboBox1.Name = "ComboBox1";
-            this.ComboBox1.Size = new System.Drawing.Size(220, 28);
-            this.ComboBox1.TabIndex = 3;
+            this.ComboBox1.Size = new System.Drawing.Size(148, 21);
+            this.ComboBox1.TabIndex = 0;
             this.ComboBox1.SelectedIndexChanged += new System.EventHandler(this.ComboBox1_SelectedIndexChanged);
             // 
             // NumericUpDown1
             // 
             this.NumericUpDown1.Hexadecimal = true;
-            this.NumericUpDown1.Location = new System.Drawing.Point(146, 43);
-            this.NumericUpDown1.Maximum = 0xFFFFFFFF;
+            this.NumericUpDown1.Location = new System.Drawing.Point(97, 28);
+            this.NumericUpDown1.Margin = new System.Windows.Forms.Padding(2);
+            this.NumericUpDown1.Maximum = new decimal(new int[] {
+            -1,
+            0,
+            0,
+            0});
             this.NumericUpDown1.Name = "NumericUpDown1";
-            this.NumericUpDown1.Size = new System.Drawing.Size(220, 26);
-            this.NumericUpDown1.TabIndex = 4;
+            this.NumericUpDown1.Size = new System.Drawing.Size(148, 20);
+            this.NumericUpDown1.TabIndex = 1;
             this.NumericUpDown1.Value = new decimal(new int[] {
             64,
             0,
@@ -99,21 +107,23 @@
             this.CheckBox1.Checked = true;
             this.CheckBox1.CheckState = System.Windows.Forms.CheckState.Checked;
             this.CheckBox1.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.CheckBox1.Location = new System.Drawing.Point(344, 77);
+            this.CheckBox1.Location = new System.Drawing.Point(229, 53);
+            this.CheckBox1.Margin = new System.Windows.Forms.Padding(2);
             this.CheckBox1.Name = "CheckBox1";
             this.CheckBox1.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.CheckBox1.Size = new System.Drawing.Size(22, 21);
-            this.CheckBox1.TabIndex = 5;
+            this.CheckBox1.Size = new System.Drawing.Size(15, 14);
+            this.CheckBox1.TabIndex = 2;
             this.CheckBox1.UseVisualStyleBackColor = true;
             // 
             // okBtn
             // 
             this.okBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.okBtn.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.okBtn.Location = new System.Drawing.Point(160, 185);
+            this.okBtn.Location = new System.Drawing.Point(107, 121);
+            this.okBtn.Margin = new System.Windows.Forms.Padding(2);
             this.okBtn.Name = "okBtn";
-            this.okBtn.Size = new System.Drawing.Size(100, 29);
-            this.okBtn.TabIndex = 6;
+            this.okBtn.Size = new System.Drawing.Size(67, 19);
+            this.okBtn.TabIndex = 5;
             this.okBtn.Text = "OK";
             this.okBtn.UseVisualStyleBackColor = true;
             this.okBtn.Click += new System.EventHandler(this.OkBtn_Click);
@@ -123,10 +133,11 @@
             this.cancelBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.cancelBtn.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.cancelBtn.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.cancelBtn.Location = new System.Drawing.Point(266, 185);
+            this.cancelBtn.Location = new System.Drawing.Point(177, 121);
+            this.cancelBtn.Margin = new System.Windows.Forms.Padding(2);
             this.cancelBtn.Name = "cancelBtn";
-            this.cancelBtn.Size = new System.Drawing.Size(100, 29);
-            this.cancelBtn.TabIndex = 7;
+            this.cancelBtn.Size = new System.Drawing.Size(67, 19);
+            this.cancelBtn.TabIndex = 6;
             this.cancelBtn.Text = "Cancel";
             this.cancelBtn.UseVisualStyleBackColor = true;
             this.cancelBtn.Click += new System.EventHandler(this.CancelBtn_Click);
@@ -135,9 +146,10 @@
             // 
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.label3.Location = new System.Drawing.Point(12, 74);
+            this.label3.Location = new System.Drawing.Point(8, 52);
+            this.label3.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(150, 25);
+            this.label3.Size = new System.Drawing.Size(100, 15);
             this.label3.TabIndex = 8;
             this.label3.Text = "Generate ARL file:";
             // 
@@ -145,24 +157,26 @@
             // 
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.label4.Location = new System.Drawing.Point(12, 104);
+            this.label4.Location = new System.Drawing.Point(8, 74);
+            this.label4.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(196, 25);
+            this.label4.Size = new System.Drawing.Size(130, 15);
             this.label4.TabIndex = 10;
             this.label4.Text = "Split Into Multiple Files:";
             // 
             // NumericUpDown2
             // 
             this.NumericUpDown2.Hexadecimal = true;
-            this.NumericUpDown2.Location = new System.Drawing.Point(246, 134);
+            this.NumericUpDown2.Location = new System.Drawing.Point(164, 96);
+            this.NumericUpDown2.Margin = new System.Windows.Forms.Padding(2);
             this.NumericUpDown2.Maximum = new decimal(new int[] {
             -1,
             0,
             0,
             0});
             this.NumericUpDown2.Name = "NumericUpDown2";
-            this.NumericUpDown2.Size = new System.Drawing.Size(120, 26);
-            this.NumericUpDown2.TabIndex = 11;
+            this.NumericUpDown2.Size = new System.Drawing.Size(80, 20);
+            this.NumericUpDown2.TabIndex = 4;
             this.NumericUpDown2.Value = new decimal(new int[] {
             10485760,
             0,
@@ -173,9 +187,10 @@
             // 
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.label5.Location = new System.Drawing.Point(12, 134);
+            this.label5.Location = new System.Drawing.Point(8, 98);
+            this.label5.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(87, 25);
+            this.label5.Size = new System.Drawing.Size(56, 15);
             this.label5.TabIndex = 12;
             this.label5.Text = "Split Size:";
             // 
@@ -185,22 +200,23 @@
             this.CheckBox2.Checked = true;
             this.CheckBox2.CheckState = System.Windows.Forms.CheckState.Checked;
             this.CheckBox2.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.CheckBox2.Location = new System.Drawing.Point(344, 107);
+            this.CheckBox2.Location = new System.Drawing.Point(229, 74);
+            this.CheckBox2.Margin = new System.Windows.Forms.Padding(2);
             this.CheckBox2.Name = "CheckBox2";
             this.CheckBox2.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.CheckBox2.Size = new System.Drawing.Size(22, 21);
-            this.CheckBox2.TabIndex = 13;
+            this.CheckBox2.Size = new System.Drawing.Size(15, 14);
+            this.CheckBox2.TabIndex = 3;
             this.CheckBox2.UseVisualStyleBackColor = true;
             this.CheckBox2.CheckedChanged += new System.EventHandler(this.CheckBox2_CheckedChanged);
             // 
             // SaveOptions
             // 
             this.AcceptButton = this.okBtn;
-            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
             this.CancelButton = this.cancelBtn;
-            this.ClientSize = new System.Drawing.Size(378, 228);
+            this.ClientSize = new System.Drawing.Size(252, 148);
             this.Controls.Add(this.CheckBox2);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.NumericUpDown2);
@@ -214,6 +230,7 @@
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "SaveOptions";
