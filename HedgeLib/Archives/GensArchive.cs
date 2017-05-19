@@ -142,6 +142,9 @@ namespace HedgeLib.Archives
             string arlPath = Path.Combine(fileInfo.DirectoryName,
                 $"{shortName}{ListExtension}");
 
+            if (File.Exists(arlPath))
+                File.Delete(arlPath);
+
             using (var fileStream = File.OpenWrite(arlPath))
             {
                 GenerateARL(fileStream, archiveSizes);
