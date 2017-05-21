@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
@@ -77,7 +78,7 @@ namespace HedgeArchiveEditor
                 var sfd = new SaveFileDialog()
                 {
                     Title = "Save Archive As...",
-                    Filter = "Generations/Unleashed Archives (*.ar, *.arl, *.pfd)|*.ar;*.arl;*.pfd"
+                    Filter = "Generations/Unleashed Archives (*.ar.00, *.pfd)|*.ar.00;*.pfd"
                      + "|Lost World Archives (*.pac)|*.pac|StoryBook Series Archives (*.one)|*.one"
                      + "|Heroes Archives (*.one)|*.one"
                      + "|All Files (*.*)|*.*"
@@ -110,24 +111,18 @@ namespace HedgeArchiveEditor
                 if (fileLocation.EndsWith(GensArchive.ListExtension) ||
                     fileLocation.EndsWith(GensArchive.Extension) ||
                     fileLocation.EndsWith(GensArchive.SplitExtension))
-                {
-                    ArchiveType = 0;
-                }
+                    ArchiveType = 0; // Generations/Unleashed
                 else if (fileLocation.EndsWith(LWArchive.Extension))
-                {
-                    ArchiveType = 1;
-                }
+                    ArchiveType = 1; // Lost World
                 else if (fileLocation.EndsWith(SBArchive.Extension))
-                {
-                    ArchiveType = 2;
-                }
-                else if (fileLocation.EndsWith(ONEArchive.Extension))
-                {
-                    ArchiveType = 3;
-                }
+                    ArchiveType = 2; // Story Books
+                else if (fileLocation.EndsWith(ONEArchive.Extension)) // NOTE: This never gets called
+                    ArchiveType = 3; // Heroes/Shadow
             }
 
             var saveOptions = new SaveOptions(ArchiveType);
+
+            // Automatically set the Magic value if its an ONEArchive
             if (arc.GetType() == typeof(ONEArchive))
                 saveOptions.NumericUpDown1.Value = ((ONEArchive)arc).Magic;
 
@@ -197,10 +192,10 @@ namespace HedgeArchiveEditor
             tabControl.TabPages.Add(fileName);
 
             int tabPageIndex = tabControl.TabPages.Count - 1;
-            TabPage tabPage = tabControl.TabPages[tabPageIndex];
+            var tabPage = tabControl.TabPages[tabPageIndex];
             tabPage.Tag = fileName;
 
-            var lv = new ListViewSort()
+            var listView = new ListViewSort()
             {
                 Dock = DockStyle.Fill,
                 View = View.Details,
@@ -210,69 +205,76 @@ namespace HedgeArchiveEditor
                 LabelEdit = true
             };
 
-            lv.ContextMenuStrip = contextMenu;
-            lv.KeyPress += new KeyPressEventHandler(Lv_KeyPress);
-            lv.BeforeLabelEdit += new LabelEditEventHandler(Lv_BeforeLabelEdit);
-            lv.AfterLabelEdit += new LabelEditEventHandler(Lv_AfterLabelEdit);
+            listView.ContextMenuStrip = contextMenu;
+            listView.KeyPress += new KeyPressEventHandler(Lv_KeyPress);
+            listView.BeforeLabelEdit += new LabelEditEventHandler(Lv_BeforeLabelEdit);
+            listView.AfterLabelEdit += new LabelEditEventHandler(Lv_AfterLabelEdit);
 
-            lv.Columns.Add("Name");
-            lv.Columns.Add("Extension");
-            lv.Columns.Add("Size");
+            listView.Columns.Add("Name");
+            listView.Columns.Add("Extension");
+            listView.Columns.Add("Size");
 
-            tabPage.Controls.Add(lv);
+            tabPage.Controls.Add(listView);
             RefreshTabPage(tabPageIndex);
             tabControl.SelectedIndex = tabPageIndex;
         }
 
         public void RefreshTabPage(int index, bool refreshFileList = true)
         {
-            TabPage tp = tabControl.TabPages[index];
-            ListView lv = tp.Controls[0] as ListView;
-            Archive arc = Archives[index];
+            var tabPage = tabControl.TabPages[index];
+            var listView = tabPage.Controls[0] as ListView;
+            var archive = Archives[index];
 
-            //Update TabPage Text
-            tp.Text = (tp.Tag as string) + ((arc.Saved) ? "" : "*");
+            // Update TabPage Text
+            tabPage.Text = (tabPage.Tag as string) + (archive.Saved ? "" : "*");
             UpdateTitle();
 
-            //Update File List
-            if (!refreshFileList || lv == null) return;
+            // Update File List
+            if (!refreshFileList || listView == null) return;
 
             // Stops the ListView from drawing until we call EndUpdate()
-            lv.BeginUpdate();
+            listView.BeginUpdate();
 
-            if (lv.View == View.Details)
+            // If listView is set to Details View
+            if (listView.View == View.Details)
             {
-                lv.SmallImageList = new ImageList();
-                lv.SmallImageList.Images.Add("-", GetIconFromExtension("-"));
+                listView.SmallImageList = new ImageList();
+                listView.SmallImageList.Images.Add("-", GetIconFromExtension("-"));
             }
             
-            lv.Items.Clear();
+            // Clears/Removes all the items from the ListView.
+            listView.Items.Clear();
 
-            lv.MouseMove += Lv_MouseMove;
-            lv.MouseUp += Lv_MouseUp;
-            lv.MouseDoubleClick += Lv_MouseDoubleClick;
+            // ListView Mouse Events
+            listView.MouseMove += Lv_MouseMove;
+            listView.MouseUp += Lv_MouseUp;
+            listView.MouseDoubleClick += Lv_MouseDoubleClick;
 
             int longestNameLength = 0, longestExtensionLength = 0, longestSizeLength = 0;
 
             // A list of ListViewItems, which will be added to the ListView later
             var items = new List<ListViewItem>();
-            foreach (var file in arc.Files)
+            foreach (var file in archive.Files)
             {
-                FileInfo fileInfo = new FileInfo(file.Name);
-                ListViewItem lvi = new ListViewItem(new string[]
+                var fileInfo = new FileInfo(file.Name);
+                var lvi = new ListViewItem(new string[]
                 {
                     fileInfo.Name,
                     fileInfo.Extension,
-                    file.Data != null ? file.Data.Length >= 1024 ? file.Data.Length >= 1048576 ? (file.Data.Length / 1048576.0).ToString("0.00") + " MB": (file.Data.Length / 1024.0).ToString("0.00") + " KB" : file.Data.Length+" Bytes" : null
+                    file.Data != null ? file.Data.Length >= 1024 ? file.Data.Length >= 1048576 ?
+                        (file.Data.Length / 1048576.0).ToString("0.00") + " MB" :
+                        (file.Data.Length / 1024.0).ToString("0.00") + " KB" :
+                        file.Data.Length + " Bytes" : null
                 });
 
                 try
                 {
+                    // Sets the ImageKey to the current file.
                     if (fileInfo.Extension.Length == 0)
                         lvi.ImageKey = "-";
                     else
                     {
-                        var imgList = lv.LargeImageList ?? lv.SmallImageList;
+                        var imgList = listView.LargeImageList ?? listView.SmallImageList;
 
                         if (!imgList.Images.ContainsKey(fileInfo.Extension))
                             imgList.Images.Add(fileInfo.Extension, GetIconFromExtension(fileInfo.Extension));
@@ -294,22 +296,22 @@ namespace HedgeArchiveEditor
                 items.Add(lvi);
             }
             // Adds all the items into the ListView
-            lv.Items.AddRange(items.ToArray());
+            listView.Items.AddRange(items.ToArray());
 
-            //Update the columns in the file list
-            lv.AutoResizeColumn(0, (longestNameLength > lv.Columns[0].Text.Length) ?
+            // Update the columns in the file list
+            listView.AutoResizeColumn(0, (longestNameLength > listView.Columns[0].Text.Length) ?
                 ColumnHeaderAutoResizeStyle.ColumnContent :
                 ColumnHeaderAutoResizeStyle.HeaderSize);
 
-            lv.AutoResizeColumn(1, (longestExtensionLength > lv.Columns[1].Text.Length) ?
+            listView.AutoResizeColumn(1, (longestExtensionLength > listView.Columns[1].Text.Length) ?
                 ColumnHeaderAutoResizeStyle.ColumnContent :
                 ColumnHeaderAutoResizeStyle.HeaderSize);
 
-            lv.AutoResizeColumn(2, (longestExtensionLength > lv.Columns[2].Text.Length) ?
+            listView.AutoResizeColumn(2, (longestExtensionLength > listView.Columns[2].Text.Length) ?
                 ColumnHeaderAutoResizeStyle.ColumnContent :
                 ColumnHeaderAutoResizeStyle.HeaderSize);
 
-            lv.EndUpdate();
+            listView.EndUpdate();
         }
 
         public void RefreshGUI()
@@ -321,7 +323,7 @@ namespace HedgeArchiveEditor
                 largeIconViewToolStripMenuItem.Checked = 
                     (tabControl.TabPages[tabControl.SelectedIndex].Controls[0] as ListView).View == View.LargeIcon;
 
-            //TODO: Update status bar label.
+            // TODO: Update status bar label.
             UpdateTitle();
         }
 
@@ -329,35 +331,138 @@ namespace HedgeArchiveEditor
         {
             string fileExtension = Path.GetExtension(fileName).ToLower();
             return (fileExtension == GensArchive.Extension || fileExtension == GensArchive.ListExtension
-                || fileExtension == GensArchive.PFDExtension || fileExtension == LWArchive.Extension
+                || fileExtension == GensArchive.PFDExtension || fileExtension == GensArchive.SplitExtension
+                || fileExtension == LWArchive.Extension
                 || fileExtension == SBArchive.Extension || fileExtension == ONEArchive.Extension);
         }
 
-        //GUI Events
+        // GUI Events
+        private void TabControl_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            RefreshGUI();
+        }
+
+        private void TabControl_DragDrop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop) &&
+                e.Data.GetData(DataFormats.FileDrop) is string[] files)
+            {
+                if (HasSupportedArchiveExtension(files[0]))
+                {
+                    foreach (string fileName in files)
+                        OpenArchive(fileName);
+                    RefreshGUI();
+                }
+                else
+                {
+                    CurrentArchive.Saved = false;
+                    foreach (var file in files)
+                    {
+                        if (File.GetAttributes(file) != FileAttributes.Directory)
+                        {
+                            var fileInfo = new FileInfo(file);
+
+                            var archiveFile = CurrentArchive.Files.Find(
+                                   t => t.Name.ToLower() == fileInfo.Name.ToLower());
+
+                            if (archiveFile != null)
+                            {
+                                if (MessageBox.Show($"There's already a file called {fileInfo.Name}.\n" +
+                                        $"Do you want to replace {fileInfo.Name}?", Text,
+                                        MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                                    return;
+
+                                CurrentArchive.Files.Remove(archiveFile);
+                            }
+
+                            CurrentArchive.Files.Add(new ArchiveFile(file));
+                        }
+                        else
+                        {
+                            bool includeSubfolders = (MessageBox.Show("Include Subfolders?", Text,
+                                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes);
+                            string[] filesInDir = Directory.GetFiles(file, "*", includeSubfolders ?
+                                SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+
+                            foreach (var fileDir in filesInDir)
+                            {
+                                var fileInfo = new FileInfo(fileDir);
+                                var archiveFile = CurrentArchive.Files.Find(
+                                       t => t.Name.ToLower() == fileInfo.Name.ToLower());
+
+                                if (archiveFile != null)
+                                {
+                                    if (MessageBox.Show($"There's already a file called {fileInfo.Name}.\n" +
+                                            $"Do you want to replace {fileInfo.Name}?", Text,
+                                            MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                                        continue;
+
+                                    CurrentArchive.Files.Remove(archiveFile);
+                                }
+
+                                CurrentArchive.Files.Add(new ArchiveFile(fileDir));
+                            }
+                        }
+                    }
+
+                    RefreshGUI();
+                    RefreshTabPage(tabControl.SelectedIndex);
+                }
+            }
+        }
+
+        private void TabControl_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop) &&
+                e.Data.GetData(DataFormats.FileDrop) is string[] files)
+            {
+                // Gets the Current Process PID.
+                string processId = Process.GetCurrentProcess().Id.ToString();
+                if (e.Data.GetDataPresent("SourcePID") && (e.Data.GetData("SourcePID") as string == processId))
+                    return;
+                if (Archives.Count > 0)
+                    e.Effect = DragDropEffects.Copy;
+
+                if (files.Length > 0 && HasSupportedArchiveExtension(files[0]))
+                    e.Effect = DragDropEffects.Copy;
+            }
+        }
+
+        private void ContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            var listView = tabControl.SelectedTab.Controls[0] as ListView;
+
+            extractSelectedFilesToolStripMenuItem.Enabled =
+                removeSelectedFilesToolStripMenuItem.Enabled =
+                renameSelectedFileToolStripMenuItem.Enabled = listView.SelectedItems.Count > 0;
+        }
+
+        // GUI Events (ToolStripMenuItem)
         private void LargeIconViewToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // Checks if theres a selected tab.
             if (tabControl.SelectedIndex >= 0)
             {
-                var lv = tabControl.TabPages[tabControl.SelectedIndex].Controls[0] as ListView;
+                var listView = tabControl.SelectedTab.Controls[0] as ListView;
 
-                if (lv == null) return;
+                if (listView == null) return;
 
-                if (lv.View == View.Details)
+                if (listView.View == View.Details)
                 { // Set to Large Icons.
-                    lv.LargeImageList = new ImageList()
+                    listView.LargeImageList = new ImageList()
                     {
                         ImageSize = new Size(64, 64)
                     };
-                    lv.View = View.LargeIcon;
+                    listView.View = View.LargeIcon;
                     largeIconViewToolStripMenuItem.CheckState = CheckState.Checked;
                 }
                 else
                 { // Set to Details.
-                    lv.LargeImageList = null;
-                    lv.View = View.Details;
+                    listView.LargeImageList = null;
+                    listView.View = View.Details;
                     largeIconViewToolStripMenuItem.CheckState = CheckState.Unchecked;
                 }
+
                 // Refreshes the TabPage and ListView.
                 RefreshTabPage(tabControl.SelectedIndex);
             }
@@ -365,7 +470,7 @@ namespace HedgeArchiveEditor
 
         private void CreateNewArchiveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Archive ar = new Archive();
+            var ar = new Archive();
             Archives.Add(ar);
             AddTabPage("Untitled");
             RefreshGUI();
@@ -433,19 +538,20 @@ namespace HedgeArchiveEditor
             {
                 try
                 {
-                    Archive ar = CurrentArchive;
+                    var ar = CurrentArchive;
+                    var fileInfo = new FileInfo(sfd.FileName);
+                    var pb = new ToolStripProgressBar();
+
                     new System.Threading.Thread(() =>
                     {
                         Invoke(new Action(() => Enabled = false));
-                        var fileInfo = new FileInfo(sfd.FileName);
-                        System.Diagnostics.Process.Start("explorer.exe", fileInfo.Directory.FullName);
-                        ToolStripProgressBar pb = new ToolStripProgressBar();
+                        Process.Start("explorer.exe", fileInfo.Directory.FullName);
                         statusStrip.Invoke(new Action(() => statusStrip.Items.AddRange(new ToolStripItem[] { pb })));
                         Invoke(new Action(() => pb.Maximum = ar.Files.Count));
 
-                        foreach (ArchiveFile file in ar.Files)
+                        foreach (var archiveFile in ar.Files)
                         {
-                            file.Extract(HedgeLib.Helpers.CombinePaths(fileInfo.Directory.FullName, file.Name));
+                            archiveFile.Extract(Path.Combine(fileInfo.Directory.FullName, archiveFile.Name));
                             Invoke(new Action(() => ++pb.Value));
                         }
 
@@ -473,20 +579,6 @@ namespace HedgeArchiveEditor
             Close();
         }
 
-        private void TabControl_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            RefreshGUI();
-        }
-
-        private void ContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            var lv = tabControl.SelectedTab.Controls[0] as ListView;
-
-            extractSelectedFilesToolStripMenuItem.Enabled =
-                removeSelectedFilesToolStripMenuItem.Enabled =
-                renameSelectedFileToolStripMenuItem.Enabled = lv.SelectedItems.Count > 0;
-        }
-
         private void ExtractSelectedFilesToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var sfd = new SaveFileDialog()
@@ -499,30 +591,27 @@ namespace HedgeArchiveEditor
             {
                 try
                 {
-                    Archive ar = CurrentArchive;
+                    var archive = CurrentArchive;
+                    var listView = tabControl.SelectedTab.Controls[0] as ListView;
+                    var pb = new ToolStripProgressBar();
+                    string directoryPath = new FileInfo(sfd.FileName).Directory.FullName;
+
                     new System.Threading.Thread(() =>
                     {
                         Invoke(new Action(() => Enabled = false));
-                        System.Diagnostics.Process.Start("explorer.exe", new FileInfo(sfd.FileName).Directory.FullName);
-                        ToolStripProgressBar pb = new ToolStripProgressBar();
                         statusStrip.Invoke(new Action(() => statusStrip.Items.AddRange(new ToolStripItem[] { pb })));
-                        ListView lv = null;
-                        Invoke(new Action(() => lv = (ListView)tabControl.SelectedTab.Controls[0]));
-                        Invoke(new Action(() => pb.Maximum = lv.SelectedItems.Count));
+                        Process.Start("explorer.exe", directoryPath);
+                        Invoke(new Action(() => pb.Maximum = listView.SelectedItems.Count));
                         Invoke(new Action(() =>
                         {
-                            for (int i = 0; i < lv.SelectedItems.Count; ++i)
-                            {
-                                for (int i2 = 0; i2 < ar.Files.Count; ++i2)
-                                {
-                                    if (ar.Files[i2].Name == lv.SelectedItems[i].SubItems[0].Text)
+                            foreach (ListViewItem lvi in listView.SelectedItems)
+                                foreach (var archiveFile in archive.Files)
+                                    if (archiveFile.Name == lvi.SubItems[0].Text)
                                     {
-                                        ar.Files[i2].Extract(Path.Combine(new FileInfo(sfd.FileName).Directory.FullName, ar.Files[i2].Name));
+                                        archiveFile.Extract(Path.Combine(directoryPath, archiveFile.Name));
                                         ++pb.Value;
                                         break;
                                     }
-                                }
-                            }
                         }));
                         statusStrip.Invoke(new Action(() => statusStrip.Items.Remove(pb)));
                         Invoke(new Action(() => Enabled = true));
@@ -540,18 +629,16 @@ namespace HedgeArchiveEditor
         {
             try
             {
-                CurrentArchive.Saved = false;
+                var archive = CurrentArchive;
+                var listView = tabControl.SelectedTab.Controls[0] as ListView;
+                archive.Saved = false;
                 new System.Threading.Thread(() =>
                 {
                     Invoke(new Action(() => Enabled = false));
-                    Archive ar = null;
-                    Invoke(new Action(() => ar = CurrentArchive));
-                    ListView lv = null;
-                    Invoke(new Action(() => lv = (ListView)tabControl.SelectedTab.Controls[0]));
                     Invoke(new Action(() =>
                     {
-                        foreach (ListViewItem lvi in lv.SelectedItems)
-                            ar.Files.Remove(ar.Files.Find(t => t.Name == lvi.Text));
+                        foreach (ListViewItem lvi in listView.SelectedItems)
+                            archive.Files.Remove(archive.Files.Find(t => t.Name == lvi.Text));
                     }));
                     Invoke(new Action(() => RefreshGUI()));
                     Invoke(new Action(() => RefreshTabPage(tabControl.SelectedIndex)));
@@ -577,23 +664,24 @@ namespace HedgeArchiveEditor
 
             if (sfd.ShowDialog() == DialogResult.OK)
             {
+                var fileInfo = new FileInfo(sfd.FileName);
                 bool includeSubfolders = (MessageBox.Show("Include Subfolders?", Text,
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes);
-                string[] files = Directory.GetFiles(new FileInfo(sfd.FileName).Directory.FullName, "*", includeSubfolders ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-                if(files.Length > 3000)
+                string[] files = Directory.GetFiles(fileInfo.Directory.FullName, "*", includeSubfolders ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                if (files.Length > 3000)
                 {
                     if (MessageBox.Show("Theres over 3000 files.\n\tContinue?", Text,
                     MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No) return;
                 }
 
-                Archive ar = new Archive();
+                var ar = new Archive();
                 foreach (string fileLocation in files)
                 {
                     if (new FileInfo(fileLocation).Length < int.MaxValue)
                         ar.Files.Add(new ArchiveFile(fileLocation));
                 }
                 Archives.Add(ar);
-                AddTabPage(new FileInfo(sfd.FileName).Directory.Name);
+                AddTabPage(fileInfo.Directory.Name);
                 RefreshGUI();
             }
         }
@@ -623,95 +711,6 @@ namespace HedgeArchiveEditor
                      MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        
-        private void TabControl_DragDrop(object sender, DragEventArgs e)
-        {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop) &&
-                e.Data.GetData(DataFormats.FileDrop) is string[] files)
-            {
-                if (HasSupportedArchiveExtension(files[0]))
-                {
-                    foreach(string fileName in files)
-                        OpenArchive(fileName);
-                    RefreshGUI();
-                }
-                else
-                {
-                    CurrentArchive.Saved = false;
-                    foreach (var file in files)
-                    {
-                        if (File.GetAttributes(file) != FileAttributes.Directory)
-                        {
-                            var fileInfo = new FileInfo(file);
-
-                            var archiveFile = CurrentArchive.Files.Find(
-                                   t => t.Name.ToLower() == fileInfo.Name.ToLower());
-
-                            if (archiveFile != null)
-                            {
-                                if (MessageBox.Show($"There's already a file called {fileInfo.Name}.\n" +
-                                        $"Do you want to replace {fileInfo.Name}?", Text,
-                                        MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
-                                    return;
-
-                                CurrentArchive.Files.Remove(archiveFile);
-                            }
-
-                            CurrentArchive.Files.Add(new ArchiveFile(file));
-                        }
-                        else
-                        {
-                            bool includeSubfolders = (MessageBox.Show("Include Subfolders?", Text,
-                                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes);
-                            string[] filesInDir = Directory.GetFiles(file, "*", includeSubfolders ?
-                                SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-
-                            foreach (var fileDir in filesInDir)
-                            {
-                                var fileInfo = new FileInfo(fileDir);
-
-                                var archiveFile = CurrentArchive.Files.Find(
-                                       t => t.Name.ToLower() == fileInfo.Name.ToLower());
-
-                                if (archiveFile != null)
-                                {
-                                    if (MessageBox.Show($"There's already a file called {fileInfo.Name}.\n" +
-                                            $"Do you want to replace {fileInfo.Name}?", Text,
-                                            MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
-                                        continue;
-
-                                    CurrentArchive.Files.Remove(archiveFile);
-                                }
-
-                                CurrentArchive.Files.Add(new ArchiveFile(fileDir));
-                            }
-                        }
-                    }
-
-                    RefreshGUI();
-                    RefreshTabPage(tabControl.SelectedIndex);
-                }
-            }
-        }
-
-        private void TabControl_DragEnter(object sender, DragEventArgs e)
-        {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop) &&
-                e.Data.GetData(DataFormats.FileDrop) is string[] files)
-            {
-                // Gets the Current Process PID.
-                string processId = System.Diagnostics.Process.GetCurrentProcess().Id.ToString();
-                if (e.Data.GetDataPresent("SourcePID") && (e.Data.GetData("SourcePID") as string == processId))
-                    return;
-                if (Archives.Count > 0)
-                    e.Effect = DragDropEffects.Copy;
-
-                if (files.Length > 0 && HasSupportedArchiveExtension(files[0]))
-                {
-                    e.Effect = DragDropEffects.Copy;
-                }
-            }
-        }
 
         private void RenameSelectedFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -723,56 +722,54 @@ namespace HedgeArchiveEditor
         private void SelectAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
             foreach (ListViewItem item in (tabControl.SelectedTab.Controls[0] as ListView).Items)
-            {
                 item.Selected = true;
-            }
         }
 
         private void CopyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ListView lv = tabControl.SelectedTab.Controls[0] as ListView;
-            Archive ar = CurrentArchive;
-            if (lv == null) return;
-
+            var archive = CurrentArchive;
+            var listView = tabControl.SelectedTab.Controls[0] as ListView;
+            var pb = new ToolStripProgressBar();
+            var fileList = new List<string>();
             string path = Path.Combine(tempPath, "Extracted_Files\\");
+
+            if (listView == null) return;
+
             Directory.CreateDirectory(path);
-            List<string> fileList = new List<string>();
 
             new System.Threading.Thread(() =>
             {
                 Invoke(new Action(() => Enabled = false));
-                ToolStripProgressBar pb = new ToolStripProgressBar();
                 statusStrip.Invoke(new Action(() => statusStrip.Items.AddRange(new ToolStripItem[] { pb })));
-                Invoke(new Action(() => pb.Maximum = lv.SelectedItems.Count));
+                Invoke(new Action(() => pb.Maximum = listView.SelectedItems.Count));
                 Invoke(new Action(() =>
                 {
-                    foreach (ListViewItem lvi in lv.SelectedItems)
-                    {
-                        ArchiveFile archiveFile = ar.Files.Find(t => t.Name == lvi.Text);
-                        string filePath = Path.Combine(path, archiveFile.Name);
-                        archiveFile.Extract(filePath);
-                        fileList.Add(filePath);
-                        ++pb.Value;
-                    }
+                    foreach (ListViewItem lvi in listView.SelectedItems)
+                        foreach (var archiveFile in archive.Files)
+                        {
+                            string filePath = Path.Combine(path, archiveFile.Name);
+                            archiveFile.Extract(filePath);
+                            fileList.Add(filePath);
+                            ++pb.Value;
+                        }
                 }));
                 Invoke(new Action(() => Clipboard.SetData(DataFormats.FileDrop, fileList.ToArray())));
                 statusStrip.Invoke(new Action(() => statusStrip.Items.Remove(pb)));
                 Invoke(new Action(() => Enabled = true));
-            })
-            { Name = "CopyExtractSelectedItems" }.Start();
+            }).Start();
         }
 
         private void PasteToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if(Clipboard.GetData(DataFormats.FileDrop) is string[] files)
+            if (Clipboard.GetData(DataFormats.FileDrop) is string[] files)
             {
-                CurrentArchive.Saved = false;
+                var archive = CurrentArchive;
+                archive.Saved = false;
 
                 foreach (var file in files)
                 {
                     var fileInfo = new FileInfo(file);
-
-                    var archiveFile = CurrentArchive.Files.Find(
+                    var archiveFile = archive.Files.Find(
                            t => t.Name.ToLower() == fileInfo.Name.ToLower());
 
                     if (archiveFile != null)
@@ -782,9 +779,9 @@ namespace HedgeArchiveEditor
                                 MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
                             continue;
 
-                        CurrentArchive.Files.Remove(archiveFile);
+                        archive.Files.Remove(archiveFile);
                     }
-                    CurrentArchive.Files.Add(new ArchiveFile(file));
+                    archive.Files.Add(new ArchiveFile(file));
                 }
                 RefreshGUI();
                 RefreshTabPage(tabControl.SelectedIndex);
@@ -806,7 +803,7 @@ namespace HedgeArchiveEditor
         {
             for (int i = 0; i < Archives.Count; ++i)
             {
-                Archive archive = Archives[i];
+                var archive = Archives[i];
                 if (!archive.Saved)
                 {
                     var ArchiveName = Path.GetFileName(ArchiveFileExtraData.ContainsKey(archive)
@@ -847,6 +844,7 @@ namespace HedgeArchiveEditor
             }
         }
 
+        // GUI Events (ListView)
         private void Lv_KeyPress(object sender, KeyPressEventArgs e)
         {
             // Enter key
@@ -878,19 +876,19 @@ namespace HedgeArchiveEditor
                 e.CancelEdit = true;
                 MessageBox.Show("The given name contains invalid characters.\n" +
                     "A file name can't contain any of the following characters:\n \\ / : * ? \" < > |", 
-                    Program.ProgramName);
+                    Program.ProgramName, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
             // Goes though all the files inside the selected archive
             //    to see if there is a file with tbe same name. If so, then cancel and return. 
-            foreach (ArchiveFile item in CurrentArchive.Files)
+            foreach (var archiveFile in CurrentArchive.Files)
             {
-                if (item.Name.Equals(e.Label, StringComparison.OrdinalIgnoreCase))
+                if (archiveFile.Name.Equals(e.Label, StringComparison.OrdinalIgnoreCase))
                 {
                     e.CancelEdit = true;
                     MessageBox.Show("The given name is already being used by another file.",
-                        Program.ProgramName);
+                        Program.ProgramName, MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
             }
@@ -900,19 +898,19 @@ namespace HedgeArchiveEditor
 
         private void Lv_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            var lv = sender as ListView;
-            var ar = CurrentArchive;
+            var listView = sender as ListView;
+            var archive = CurrentArchive;
             var path = Path.Combine(tempPath, "Extracted_Files\\");
             Directory.CreateDirectory(path);
-            if (lv.SelectedItems.Count == 1)
+            if (listView.SelectedItems.Count == 1)
             {
-                for (int i = 0; i < ar.Files.Count; ++i)
+                foreach (var archiveFile in archive.Files)
                 {
-                    if (ar.Files[i].Name == lv.SelectedItems[0].SubItems[0].Text)
+                    if (archiveFile.Name == listView.SelectedItems[0].SubItems[0].Text)
                     {
-                        var filePath = Path.Combine(path, ar.Files[i].Name);
-                        ar.Files[i].Extract(filePath);
-                        System.Diagnostics.Process.Start(filePath);
+                        var filePath = Path.Combine(path, archiveFile.Name);
+                        archiveFile.Extract(filePath);
+                        Process.Start(filePath);
                         break;
                     }
                 }                
@@ -927,11 +925,14 @@ namespace HedgeArchiveEditor
 
         private void Lv_MouseMove(object sender, MouseEventArgs e)
         {
-            ListView lv = sender as ListView;
-            if (e.Button == MouseButtons.Left && lv.SelectedItems.Count > 0 &&
-                !lv.FocusedItem.Bounds.Contains(lv.PointToClient(MousePosition)))
+            var archive = CurrentArchive;
+            var listView = sender as ListView;
+            var fileList = new List<string>();
+            string path = Path.Combine(tempPath, "Extracted_Files\\");
+
+            if (e.Button == MouseButtons.Left && listView.SelectedItems.Count > 0 &&
+                !listView.FocusedItem.Bounds.Contains(listView.PointToClient(MousePosition)))
             {
-                List<string> fileList = new List<string>();
                 try
                 {
                     if (!extracting && !extracted)
@@ -939,21 +940,19 @@ namespace HedgeArchiveEditor
                         if (!extracted) extracting = true;
                         Invoke(new Action(() =>
                         {
-                            string path = Path.Combine(tempPath, "Extracted_Files\\");
-                            Directory.CreateDirectory(path);
                             Enabled = false;
-                            Archive ar = CurrentArchive;
-                            ToolStripProgressBar pb = new ToolStripProgressBar();
+                            Directory.CreateDirectory(path);
+                            var pb = new ToolStripProgressBar();
                             statusStrip.Items.AddRange(new ToolStripItem[] { pb });
-                            pb.Maximum = lv.SelectedItems.Count;
-                            for (int i = 0; i < lv.SelectedItems.Count; ++i)
+                            pb.Maximum = listView.SelectedItems.Count;
+                            foreach (ListViewItem lvi in listView.SelectedItems)
                             {
-                                for (int i2 = 0; i2 < ar.Files.Count; ++i2)
+                                foreach (var archiveFile in archive.Files)
                                 {
-                                    if (ar.Files[i2].Name == lv.SelectedItems[i].SubItems[0].Text)
+                                    if (archiveFile.Name == lvi.SubItems[0].Text)
                                     {
-                                        string filePath = Path.Combine(path, ar.Files[i2].Name);
-                                        ar.Files[i2].Extract(filePath);
+                                        string filePath = Path.Combine(path, archiveFile.Name);
+                                        archiveFile.Extract(filePath);
                                         fileList.Add(filePath);
                                         ++pb.Value;
                                         break;
@@ -975,20 +974,19 @@ namespace HedgeArchiveEditor
 
                 if (fileList.Count > 0 && extracted)
                 {
-                    DataObject d = new DataObject(DataFormats.FileDrop, fileList.ToArray());
-                    d.SetData("SourcePID", System.Diagnostics.Process.GetCurrentProcess().Id.ToString());
-                    DoDragDrop(d, DragDropEffects.Copy);
+                    var dataObject = new DataObject(DataFormats.FileDrop, fileList.ToArray());
+                    dataObject.SetData("SourcePID", Process.GetCurrentProcess().Id.ToString());
+                    DoDragDrop(dataObject, DragDropEffects.Copy);
                 }
 
                 if (fileList.Count == 0 && extracted)
                 {
                     extracted = false;
                 }
-
             }
         }
 
-        //Other
+        // Other
         private class ListViewSort : ListView, IComparer
         {
             private int column = 0;
