@@ -110,7 +110,8 @@ namespace HedgeArchiveEditor
             {
                 if (fileLocation.EndsWith(GensArchive.ListExtension) ||
                     fileLocation.EndsWith(GensArchive.Extension) ||
-                    fileLocation.EndsWith(GensArchive.SplitExtension))
+                    fileLocation.EndsWith(GensArchive.SplitExtension) ||
+                    fileLocation.EndsWith(GensArchive.PFDExtension))
                     ArchiveType = 0; // Generations/Unleashed
                 else if (fileLocation.EndsWith(LWArchive.Extension))
                     ArchiveType = 1; // Lost World
@@ -239,6 +240,7 @@ namespace HedgeArchiveEditor
             if (listView.View == View.Details)
             {
                 listView.SmallImageList = new ImageList();
+                listView.SmallImageList.ColorDepth = ColorDepth.Depth32Bit;
                 listView.SmallImageList.Images.Add("-", GetIconFromExtension("-"));
             }
             
@@ -451,7 +453,8 @@ namespace HedgeArchiveEditor
                 { // Set to Large Icons.
                     listView.LargeImageList = new ImageList()
                     {
-                        ImageSize = new Size(64, 64)
+                        ImageSize = new Size(64, 64),
+                        ColorDepth = ColorDepth.Depth32Bit
                     };
                     listView.View = View.LargeIcon;
                     largeIconViewToolStripMenuItem.CheckState = CheckState.Checked;
