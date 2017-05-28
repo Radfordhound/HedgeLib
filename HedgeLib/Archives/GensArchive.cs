@@ -107,6 +107,10 @@ namespace HedgeLib.Archives
 
             if (splitCount.HasValue)
             {
+
+                // Delete the old split Archives
+                GetSplitArchivesList(filePath).ForEach(file => File.Delete(file));
+
                 //Generate split Archives
                 int startIndex = 0, arcIndex = 0;
 
@@ -115,7 +119,7 @@ namespace HedgeLib.Archives
                     string fileName = Path.Combine(fileInfo.DirectoryName,
                         $"{shortName}{Extension}.{arcIndex.ToString("00")}");
 
-                    using (var fileStream = File.OpenWrite(fileName))
+                    using (var fileStream = File.Create(fileName))
                     {
                         startIndex = Save(fileStream, splitCount, startIndex);
 
@@ -129,7 +133,7 @@ namespace HedgeLib.Archives
             else
             {
                 //Generate archive
-                using (var fileStream = File.OpenWrite(filePath))
+                using (var fileStream = File.Create(filePath))
                 {
                     Save(fileStream, splitCount, 0);
                     archiveSizes.Add((uint)fileStream.Length);
@@ -142,10 +146,7 @@ namespace HedgeLib.Archives
             string arlPath = Path.Combine(fileInfo.DirectoryName,
                 $"{shortName}{ListExtension}");
 
-            if (File.Exists(arlPath))
-                File.Delete(arlPath);
-
-            using (var fileStream = File.OpenWrite(arlPath))
+            using (var fileStream = File.Create(arlPath))
             {
                 GenerateARL(fileStream, archiveSizes);
                 fileStream.Close();
@@ -172,7 +173,8 @@ namespace HedgeLib.Archives
             {
                 var file = Files[i];
                 writer.Offset = writer.BaseStream.Position;
-                if (writer.BaseStream.Position + file.Data.Length > sizeLimit)
+                if (writer.BaseStream.Position + file.Data.Length > sizeLimit
+                    && i - startIndex > 1)
                     return i;
 
                 writer.AddOffset("dataEndOffset");
