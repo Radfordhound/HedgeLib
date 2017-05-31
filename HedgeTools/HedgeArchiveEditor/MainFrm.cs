@@ -521,9 +521,27 @@ namespace HedgeArchiveEditor
 
             if (ofd.ShowDialog() == DialogResult.OK)
             {
-                CurrentArchive.Saved = false;
+                var archive = CurrentArchive;
+                archive.Saved = false;
+
                 foreach (var file in ofd.FileNames)
+                {
+                    var fileInfo = new FileInfo(file);
+                    var archiveFile = archive.Files.Find(
+                           t => t.Name.ToLower() == fileInfo.Name.ToLower());
+
+                    if (archiveFile != null)
+                    {
+                        if (MessageBox.Show($"There's already a file called {fileInfo.Name}.\n" +
+                            $"Do you want to replace {fileInfo.Name}?", Text,
+                            MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                            continue;
+
+                        archive.Files.Remove(archiveFile);
+                    }
+
                     CurrentArchive.Files.Add(new ArchiveFile(file));
+                }
 
                 RefreshTabPage(tabControl.SelectedIndex);
             }
@@ -875,7 +893,6 @@ namespace HedgeArchiveEditor
             // Checks for any invalid characters in the new file name.
             if (e.Label.IndexOfAny(Path.GetInvalidFileNameChars()) != -1)
             {
-                listView.FocusedItem.Text = prevName;
                 e.CancelEdit = true;
                 MessageBox.Show("The given name contains invalid characters.\n" +
                     "A file name can't contain any of the following characters:\n \\ / : * ? \" < > |", 
