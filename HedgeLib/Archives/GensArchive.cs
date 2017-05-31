@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -103,15 +104,11 @@ namespace HedgeLib.Archives
             var fileInfo = new FileInfo(filePath);
             var archiveSizes = new List<uint>();
             string shortName = fileInfo.Name.Substring(0,
-                    fileInfo.Name.IndexOf('.'));
+                fileInfo.Name.IndexOf('.'));
 
             if (splitCount.HasValue)
             {
-
-                // Delete the old split Archives
-                GetSplitArchivesList(filePath).ForEach(file => File.Delete(file));
-
-                //Generate split Archives
+                // Generate split Archives
                 int startIndex = 0, arcIndex = 0;
 
                 while (startIndex != -1)
@@ -125,19 +122,16 @@ namespace HedgeLib.Archives
 
                         archiveSizes.Add((uint)fileStream.Length);
                         ++arcIndex;
-
-                        fileStream.Close();
                     }
                 }
             }
             else
             {
-                //Generate archive
+                // Generate archive
                 using (var fileStream = File.Create(filePath))
                 {
                     Save(fileStream, splitCount, 0);
                     archiveSizes.Add((uint)fileStream.Length);
-                    fileStream.Close();
                 }
             }
 
@@ -149,7 +143,6 @@ namespace HedgeLib.Archives
             using (var fileStream = File.Create(arlPath))
             {
                 GenerateARL(fileStream, archiveSizes);
-                fileStream.Close();
             }
         }
 
@@ -162,19 +155,27 @@ namespace HedgeLib.Archives
         {
             //Header
             var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, false);
+
             writer.Write(Sig1);
             writer.Write(Sig2);
             writer.Write(Sig3);
-
             writer.Write(Padding);
+
+            // The absolute smallest an archive with a header and one
+            // valid file entry can be is 37 bytes.
+            if (sizeLimit.HasValue && sizeLimit < 37)
+            {
+                throw new ArgumentOutOfRangeException("sizeLimit", sizeLimit,
+                    "The sizeLimit argument must at least be greater than 36.");
+            }
 
             //Data
             for (int i = startIndex; i < Files.Count; ++i)
             {
                 var file = Files[i];
                 writer.Offset = writer.BaseStream.Position;
-                if (writer.BaseStream.Position + file.Data.Length > sizeLimit
-                    && i - startIndex > 1)
+                if (sizeLimit.HasValue && i > startIndex && writer.BaseStream.Position +
+                    21 + file.Data.Length > sizeLimit) // cuz file entries must be >= 21 bytes
                     return i;
 
                 writer.AddOffset("dataEndOffset");
@@ -183,7 +184,7 @@ namespace HedgeLib.Archives
                 writer.WriteNulls(8); //TODO: Figure out what unknown1 and unknown2 are.
                 writer.WriteNullTerminatedString(file.Name);
                 writer.FixPadding(Padding);
-
+                
                 writer.FillInOffset("dataStartOffset", false);
                 writer.Write(file.Data);
                 writer.FillInOffset("dataEndOffset", false);
@@ -212,7 +213,6 @@ namespace HedgeLib.Archives
             using (var fileStream = File.OpenRead(filePath))
             {
                 Load(fileStream);
-                fileStream.Close();
             }
         }
     }
