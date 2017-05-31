@@ -329,6 +329,56 @@ namespace HedgeArchiveEditor
             UpdateTitle();
         }
 
+        public void AddFilesToCurrentArchive(params string[] filePaths)
+        {
+            AddFilesToArchive(CurrentArchive, filePaths);
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="archive">The Archive you want to add the files to</param>
+        /// <param name="filePaths">An array of file paths</param>
+        public void AddFilesToArchive(Archive archive, params string[] filePaths)
+        { 
+            foreach (var file in filePaths)
+            {
+                if (File.GetAttributes(file) != FileAttributes.Directory)
+                { // File
+                    var fileInfo = new FileInfo(file);
+
+                    var archiveFile = archive.Files.Find(
+                           t => t.Name.ToLower() == fileInfo.Name.ToLower());
+
+                    if (archiveFile != null)
+                    {
+                        if (MessageBox.Show($"There's already a file called \"{fileInfo.Name}\".\n" +
+                                $"Do you want to replace this file?", Text,
+                                MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                            continue;
+
+                        archive.Files.Remove(archiveFile);
+                    }
+
+                    archive.Files.Add(new ArchiveFile(file));
+                    archive.Saved = false;
+                }
+                else
+                { // Directory
+                    bool includeSubfolders = (MessageBox.Show("Include Subfolders?", Text,
+                        MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes);
+                    string[] filesInDir = Directory.GetFiles(file, "*", includeSubfolders ?
+                        SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                    if (filesInDir.Length > 3000)
+                    {
+                        if (MessageBox.Show("There is over 3000 files.\n\tContinue?", Text,
+                        MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No) return;
+                    }
+                    AddFilesToArchive(archive, filesInDir);
+                    archive.Saved = false;
+                }
+            }
+        }
+
         public static bool HasSupportedArchiveExtension(string fileName)
         {
             string fileExtension = Path.GetExtension(fileName).ToLower();
@@ -357,55 +407,8 @@ namespace HedgeArchiveEditor
                 }
                 else
                 {
-                    CurrentArchive.Saved = false;
-                    foreach (var file in files)
-                    {
-                        if (File.GetAttributes(file) != FileAttributes.Directory)
-                        {
-                            var fileInfo = new FileInfo(file);
-
-                            var archiveFile = CurrentArchive.Files.Find(
-                                   t => t.Name.ToLower() == fileInfo.Name.ToLower());
-
-                            if (archiveFile != null)
-                            {
-                                if (MessageBox.Show($"There's already a file called {fileInfo.Name}.\n" +
-                                        $"Do you want to replace {fileInfo.Name}?", Text,
-                                        MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
-                                    return;
-
-                                CurrentArchive.Files.Remove(archiveFile);
-                            }
-
-                            CurrentArchive.Files.Add(new ArchiveFile(file));
-                        }
-                        else
-                        {
-                            bool includeSubfolders = (MessageBox.Show("Include Subfolders?", Text,
-                                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes);
-                            string[] filesInDir = Directory.GetFiles(file, "*", includeSubfolders ?
-                                SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-
-                            foreach (var fileDir in filesInDir)
-                            {
-                                var fileInfo = new FileInfo(fileDir);
-                                var archiveFile = CurrentArchive.Files.Find(
-                                       t => t.Name.ToLower() == fileInfo.Name.ToLower());
-
-                                if (archiveFile != null)
-                                {
-                                    if (MessageBox.Show($"There's already a file called {fileInfo.Name}.\n" +
-                                            $"Do you want to replace {fileInfo.Name}?", Text,
-                                            MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
-                                        continue;
-
-                                    CurrentArchive.Files.Remove(archiveFile);
-                                }
-
-                                CurrentArchive.Files.Add(new ArchiveFile(fileDir));
-                            }
-                        }
-                    }
+                    var archive = CurrentArchive;
+                    AddFilesToArchive(archive, files);
 
                     RefreshGUI();
                     RefreshTabPage(tabControl.SelectedIndex);
@@ -522,26 +525,7 @@ namespace HedgeArchiveEditor
             if (ofd.ShowDialog() == DialogResult.OK)
             {
                 var archive = CurrentArchive;
-                archive.Saved = false;
-
-                foreach (var file in ofd.FileNames)
-                {
-                    var fileInfo = new FileInfo(file);
-                    var archiveFile = archive.Files.Find(
-                           t => t.Name.ToLower() == fileInfo.Name.ToLower());
-
-                    if (archiveFile != null)
-                    {
-                        if (MessageBox.Show($"There's already a file called {fileInfo.Name}.\n" +
-                            $"Do you want to replace {fileInfo.Name}?", Text,
-                            MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
-                            continue;
-
-                        archive.Files.Remove(archiveFile);
-                    }
-
-                    CurrentArchive.Files.Add(new ArchiveFile(file));
-                }
+                AddFilesToArchive(archive, ofd.FileNames);
 
                 RefreshTabPage(tabControl.SelectedIndex);
             }
@@ -785,25 +769,8 @@ namespace HedgeArchiveEditor
             if (Clipboard.GetData(DataFormats.FileDrop) is string[] files)
             {
                 var archive = CurrentArchive;
-                archive.Saved = false;
+                AddFilesToArchive(archive, files);
 
-                foreach (var file in files)
-                {
-                    var fileInfo = new FileInfo(file);
-                    var archiveFile = archive.Files.Find(
-                           t => t.Name.ToLower() == fileInfo.Name.ToLower());
-
-                    if (archiveFile != null)
-                    {
-                        if (MessageBox.Show($"There's already a file called {fileInfo.Name}.\n" +
-                                $"Do you want to replace {fileInfo.Name}?", Text,
-                                MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
-                            continue;
-
-                        archive.Files.Remove(archiveFile);
-                    }
-                    archive.Files.Add(new ArchiveFile(file));
-                }
                 RefreshGUI();
                 RefreshTabPage(tabControl.SelectedIndex);
             }
