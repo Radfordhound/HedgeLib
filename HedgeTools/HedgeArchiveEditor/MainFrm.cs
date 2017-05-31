@@ -884,7 +884,7 @@ namespace HedgeArchiveEditor
             }
 
             // Goes though all the files inside the selected archive
-            //    to see if there is a file with tbe same name. If so, then cancel and return. 
+            // to see if there is a file with the same name. If so, then cancel and return.
             foreach (var archiveFile in CurrentArchive.Files)
             {
                 if (archiveFile.Name.Equals(e.Label, StringComparison.OrdinalIgnoreCase))
@@ -897,6 +897,7 @@ namespace HedgeArchiveEditor
             }
             
             CurrentArchive.Files.Find(t => t.Name == prevName).Name = e.Label;
+            listView.Items[e.Item].SubItems[1].Text = new FileInfo(e.Label).Extension;
         }
 
         private void Lv_MouseDoubleClick(object sender, MouseEventArgs e)
