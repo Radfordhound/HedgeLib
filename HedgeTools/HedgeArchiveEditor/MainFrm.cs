@@ -140,7 +140,9 @@ namespace HedgeArchiveEditor
                         {
                             Padding = (uint)saveOptions.NumericUpDown1.Value
                         };
-                        
+                        if (saveOptions.CheckBox3.Checked && saveOptions.CheckBox2.Checked)
+                            genArc.GetSplitArchivesList(fileLocation)
+                                .ForEach(file => File.Delete(file));
                         genArc.Save(fileLocation, saveOptions.CheckBox1.Checked, splitAmount);
                         break;
                     // Lost World
@@ -333,6 +335,7 @@ namespace HedgeArchiveEditor
         {
             AddFilesToArchive(CurrentArchive, filePaths);
         }
+
         /// <summary>
         /// 
         /// </summary>

@@ -40,6 +40,8 @@
             this.NumericUpDown2 = new System.Windows.Forms.NumericUpDown();
             this.label5 = new System.Windows.Forms.Label();
             this.CheckBox2 = new System.Windows.Forms.CheckBox();
+            this.label6 = new System.Windows.Forms.Label();
+            this.CheckBox3 = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.NumericUpDown1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.NumericUpDown2)).BeginInit();
             this.SuspendLayout();
@@ -118,29 +120,30 @@
             // okBtn
             // 
             this.okBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.okBtn.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.okBtn.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.okBtn.Location = new System.Drawing.Point(107, 121);
+            this.okBtn.Location = new System.Drawing.Point(107, 143);
             this.okBtn.Margin = new System.Windows.Forms.Padding(2);
             this.okBtn.Name = "okBtn";
             this.okBtn.Size = new System.Drawing.Size(67, 19);
-            this.okBtn.TabIndex = 5;
+            this.okBtn.TabIndex = 6;
             this.okBtn.Text = "OK";
             this.okBtn.UseVisualStyleBackColor = true;
-            this.okBtn.Click += new System.EventHandler(this.OkBtn_Click);
+            this.okBtn.Click += new System.EventHandler(this.Btn_Click);
             // 
             // cancelBtn
             // 
             this.cancelBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.cancelBtn.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.cancelBtn.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.cancelBtn.Location = new System.Drawing.Point(177, 121);
+            this.cancelBtn.Location = new System.Drawing.Point(177, 143);
             this.cancelBtn.Margin = new System.Windows.Forms.Padding(2);
             this.cancelBtn.Name = "cancelBtn";
             this.cancelBtn.Size = new System.Drawing.Size(67, 19);
-            this.cancelBtn.TabIndex = 6;
+            this.cancelBtn.TabIndex = 7;
             this.cancelBtn.Text = "Cancel";
             this.cancelBtn.UseVisualStyleBackColor = true;
-            this.cancelBtn.Click += new System.EventHandler(this.CancelBtn_Click);
+            this.cancelBtn.Click += new System.EventHandler(this.Btn_Click);
             // 
             // label3
             // 
@@ -202,6 +205,31 @@
             this.CheckBox2.UseVisualStyleBackColor = true;
             this.CheckBox2.CheckedChanged += new System.EventHandler(this.CheckBox2_CheckedChanged);
             // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.label6.Location = new System.Drawing.Point(8, 121);
+            this.label6.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(117, 15);
+            this.label6.TabIndex = 13;
+            this.label6.Text = "Delete Old Split Files:";
+            // 
+            // CheckBox3
+            // 
+            this.CheckBox3.AutoSize = true;
+            this.CheckBox3.Checked = true;
+            this.CheckBox3.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.CheckBox3.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.CheckBox3.Location = new System.Drawing.Point(229, 122);
+            this.CheckBox3.Margin = new System.Windows.Forms.Padding(2);
+            this.CheckBox3.Name = "CheckBox3";
+            this.CheckBox3.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.CheckBox3.Size = new System.Drawing.Size(15, 14);
+            this.CheckBox3.TabIndex = 5;
+            this.CheckBox3.UseVisualStyleBackColor = true;
+            // 
             // SaveOptions
             // 
             this.AcceptButton = this.okBtn;
@@ -209,7 +237,9 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
             this.CancelButton = this.cancelBtn;
-            this.ClientSize = new System.Drawing.Size(252, 148);
+            this.ClientSize = new System.Drawing.Size(252, 170);
+            this.Controls.Add(this.CheckBox3);
+            this.Controls.Add(this.label6);
             this.Controls.Add(this.CheckBox2);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.NumericUpDown2);
@@ -252,5 +282,7 @@
         public System.Windows.Forms.NumericUpDown NumericUpDown2;
         private System.Windows.Forms.Label label5;
         public System.Windows.Forms.CheckBox CheckBox2;
+        private System.Windows.Forms.Label label6;
+        public System.Windows.Forms.CheckBox CheckBox3;
     }
 }
