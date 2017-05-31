@@ -9,22 +9,22 @@ HedgeLib is a C# library [under the MIT license](https://github.com/Radfordhound
 Right now it supports the following:
 
 ## Havok
-- Reading/Writing XML Havok data.
+- [Reading/Writing XML Havok data.](HedgeLib/Collison/Havok.cs)
 
 ## Hedgehog Engine
-- Reading/Writing lights.
+- [Reading/Writing lights.](HedgeLib/Lights/Light.cs)
 
 ## Sonic Unleashed/Sonic Generations
-- Reading/Writing uncompressed archives.
-- Reading set data.
-- Reading/Writing terrain groups.
-- Reading/Writing light lists.
+- [Reading/Writing uncompressed archives.](HedgeLib/Archives/GensArchive.cs)
+- [Reading set data.](HedgeLib/Sets/GensSetData.cs)
+- [Reading/Writing terrain groups.](HedgeLib/Terrain/GensTerrainGroup.cs)
+- [Reading/Writing light lists.](HedgeLib/Lights/GensLightList.cs)
 
 ## Sonic Colors/Sonic Lost World
-- Reading/Writing BINA headers/footers.
-- Reading/Writing GISM files.
-- Reading/Writing set data.
-- Reading/Writing SNDL (SouND List) files.
+- [Reading/Writing BINA headers/footers.](HedgeLib/Misc/BINA.cs)
+- [Reading/Writing GISM files.](HedgeLib/Misc/LWGism.cs)
+- [Reading/Writing set data.](HedgeLib/Sets/SOBJ.cs)
+- [Reading/Writing SNDL (SouND List) files.](HedgeLib/Sound/ColorsSNDL.cs)
 
 # HedgeEdit
 **IMPORTANT:** Please compile HedgeLib using Visual Studio 2017 and the sln file provided before opening HedgeEdit in Unity!
