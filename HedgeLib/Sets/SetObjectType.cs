@@ -9,12 +9,22 @@ namespace HedgeLib.Sets
     {
         //Variables/Constants
         public List<SetObjectTypeParam> Parameters = new List<SetObjectTypeParam>();
+        public string Name;
         public const string Extension = ".xml";
 
         //Methods
+        public override void Load(string filePath)
+        {
+            Name = Path.GetFileNameWithoutExtension(filePath);
+            base.Load(filePath);
+        }
+
         public override void Load(Stream fileStream)
         {
             var xml = Helpers.GetXDocStream(fileStream);
+            var nameAttr = xml.Root.Attribute("name");
+            if (nameAttr != null)
+                Name = nameAttr.Value;
             
             foreach (var element in xml.Root.Elements())
             {
