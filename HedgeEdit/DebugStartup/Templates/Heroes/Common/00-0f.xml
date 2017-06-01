@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template name="Ramp">
+  <HorizontalSpeed type="float" default="0" description="How much horizontal speed the ramp will send the player off with." />
+  <VerticalSpeed type="float" default="5" description="How much vertical speed the ramp will send the player off with." />
+  <OutOfControl type="uint16" default="0" description="How long the game locks your control for after coming in contact with this object." />
+</Template>
