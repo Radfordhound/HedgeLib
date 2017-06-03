@@ -131,7 +131,7 @@ namespace HedgeArchiveEditor
             else if (fileInfo.Extension == ONEArchive.Extension)
             {
                 // I know This is a horrible way of checking between archives.
-                if (File.ReadAllBytes(fileInfo.FullName)[8] == 0xFF)
+                if (File.ReadAllBytes(fileInfo.FullName)[3] == 0x00)
                     arc = new ONEArchive();
                 else arc = new SBArchive();
             }
