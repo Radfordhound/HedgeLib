@@ -33,9 +33,9 @@ namespace HedgeLib.Sets
             for (uint i = 0; i < HeroesObjectLimit; ++i)
             {
                 var pos = reader.ReadVector3();
-                float rotX = reader.ReadUInt32() / 182;
-                float rotY = reader.ReadUInt32() / 182;
-                float rotZ = reader.ReadUInt32() / 182;
+                float rotX = (float)(reader.ReadInt32() * 180.0 / 32768.0);
+                float rotY = (float)(reader.ReadInt32() * 180.0 / 32768.0);
+                float rotZ = (float)(reader.ReadInt32() * 180.0 / 32768.0);
 
                 ushort unknown1 = reader.ReadUInt16();
                 byte stageType = reader.ReadByte();
@@ -151,9 +151,9 @@ namespace HedgeLib.Sets
                 // Write object entries
                 var rot = obj.Transform.Rotation.ToEulerAngles(false);
                 writer.Write(obj.Transform.Position);
-                writer.Write((uint)(rot.X * 182));
-                writer.Write((uint)(rot.Y * 182));
-                writer.Write((uint)(rot.Z * 182));
+                writer.Write((int)(rot.X * 32768.0 / 180.0));
+                writer.Write((int)(rot.Y * 32768.0 / 180.0));
+                writer.Write((int)(rot.Z * 32768.0 / 180.0));
 
                 // Yeah in the actual game the same thing is just written twice for some reason
                 byte stageType = obj.GetCustomDataValue<byte>("StageType");

@@ -12,7 +12,8 @@ namespace HedgeLib.Archives
         {
             Heroes = 0x1400FFFF,
             HeroesE3 = 0x1005FFFF,
-            HeroesPreE3 = 0x1003FFFF
+            HeroesPreE3 = 0x1003FFFF,
+            Shadow6 = 0x1C020037
         };
 
         public const string Extension = ".one";
@@ -32,8 +33,19 @@ namespace HedgeLib.Archives
         //Methods
         public override void Load(Stream fileStream)
         {
-            // HEADER
             var reader = new ExtendedBinaryReader(fileStream, Encoding.ASCII, false);
+
+            reader.JumpAhead(0x8); // Jump to Magic
+            Magic = reader.ReadUInt32(); // Magic
+            reader.JumpBehind(0xC); // Jump back to the start
+
+            if (Magic == (uint)Magics.Shadow6)
+            {
+                LoadShadowArchive(reader); // Archive for Shadow the Hedgehog
+                return;
+            }
+            
+            // HEADER
             uint padding = reader.ReadUInt32();
             if (padding != 0)
                 Console.WriteLine("WARNING: Padding is not 0! ({0})", padding);
@@ -155,6 +167,59 @@ namespace HedgeLib.Archives
 
             writer.FillInOffset("fileSize",
                 (uint)writer.BaseStream.Position - 0xC, true);
+        }
+
+
+        // TODO
+        public void LoadShadowArchive(ExtendedBinaryReader reader)
+        {
+            reader.JumpAhead(0x4); // Unknown, Seems to always be 0
+            uint fileSize = reader.ReadUInt32(); // File Size - 0xC
+            uint magic = reader.ReadUInt32(); // Magic
+            reader.JumpAhead(0x10); // Jump to File Count
+            uint fileCount = reader.ReadUInt32(); // File Count
+            reader.JumpAhead(0x38 * 2 + 0x20); // Jump to the third/first entry.
+
+            // Read File List
+            var files = new FileEntry[FileEntryCount];
+            for (int i = 0; i < fileCount; i++)
+            {
+                var entry = new FileEntry();
+                entry.FileName = reader.ReadSignature(0x2C).Replace("\0", string.Empty);
+                entry.UncompressedSize = reader.ReadUInt32();
+                entry.DataOffset = reader.ReadUInt32();
+                reader.JumpAhead(4); // Unknown, Seems to always be 1
+                files[i] = entry;
+            }
+
+            // Read File Data
+            if (files.Length != 0)
+            {
+                reader.JumpTo(files[0].DataOffset + 0xC);
+                for (int i = 0; i < fileCount; ++i)
+                {
+                    if (i == fileCount - 1)
+                        files[i].DataLength = fileSize + 0xC - files[i].DataOffset;
+                    else
+                        files[i].DataLength = files[i + 1].DataOffset - files[i].DataOffset;
+
+                    var file = new ArchiveFile()
+                    {
+                        Name = files[i].FileName,
+                        // TODO: Decompress file
+                        Data = reader.ReadBytes((int)files[i].DataLength)
+                    };
+                    Files.Add(file);
+                }
+            }
+        }
+
+        //Other
+        private struct FileEntry
+        {
+            public string FileName;
+            public uint DataOffset,
+                DataLength, UncompressedSize;
         }
     }
 }
