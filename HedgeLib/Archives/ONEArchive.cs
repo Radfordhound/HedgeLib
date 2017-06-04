@@ -81,14 +81,7 @@ namespace HedgeLib.Archives
 
                 if (dataLength > 0)
                 {
-                    var data = new byte[dataLength];
-                    pos = 0; // We re-use the same variable instead of making a new one each time
-
-                    while (pos < dataLength)
-                    {
-                        pos += reader.Read(data, pos, (int)dataLength - pos);
-                    }
-
+                    var data = reader.ReadBytes((int)dataLength);
                     Files.Add(new ArchiveFile(fileNames[fileNameIndex], data));
                 }
             }
