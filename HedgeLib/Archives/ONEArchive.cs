@@ -82,7 +82,6 @@ namespace HedgeLib.Archives
             }
 
             // File Entries
-            int pos = 0;
             reader.JumpTo(dataOffset, true);
 
             while (reader.BaseStream.Position < fileSize)
