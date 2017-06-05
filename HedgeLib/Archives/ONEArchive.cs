@@ -102,6 +102,13 @@ namespace HedgeLib.Archives
         {
             // HEADER
             var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, false);
+
+            if (Magic == (uint)Magics.Shadow6)
+            {
+                SaveShadowArchive(writer); // Archive for Shadow the Hedgehog
+                return;
+            }
+
             writer.Write(0u); // Padding
             writer.AddOffset("fileSize"); // File Size (will be overwritten later)
             writer.Write(Magic); // HeroesMagic
@@ -211,6 +218,54 @@ namespace HedgeLib.Archives
                     Files.Add(file);
                 }
             }
+        }
+
+        // TODO
+        public void SaveShadowArchive(ExtendedBinaryWriter writer)
+        {
+            string versionString = "One Ver 0.60";
+            writer.Write(0); // Padding
+            writer.AddOffset("fileSize"); // File Size (will be overwritten later)
+            writer.Write(Magic); // Magic
+            writer.Write(versionString.ToCharArray()); // Version String (0xC)
+            writer.Write(0); // Unknown
+            writer.Write(Files.Count);
+            writer.Write(0xCDCDCD00); // Null Terminated String?
+            for (int i = 0; i < 7; ++i)
+                writer.Write(0xCDCDCDCD);
+            writer.WriteNulls(0x70); // Skip two entries?
+
+            // Write File Information
+            for (int i = 0; i < Files.Count; ++i)
+            {
+                var file = Files[i];
+                
+                // File Name
+                var fileName = new char[0x2C];
+                if (file.Name.Length > 0x2C)
+                    file.Name.CopyTo(0, fileName, 0, 0x2C);
+                else
+                    file.Name.CopyTo(0, fileName, 0, file.Name.Length);
+                writer.Write(fileName); // File Name
+
+                writer.Write(file.Data.Length); // Uncompressed File Size
+                writer.AddOffset("fileDataOffset" + i); // Data Offset
+                writer.Write(1); // Unknown
+            }
+
+            writer.WriteNulls(0x14); // Unknown, Probably not required
+
+            // Write File Data
+            for (int i = 0; i < Files.Count; ++i)
+            {
+                // Data Offset
+                writer.FillInOffset("fileDataOffset" + i, (uint)writer.BaseStream.Position - 0xC);
+                // TODO: Compress File Data with PRS
+                writer.Write(Files[i].Data); // Write File data
+            }
+            
+            writer.FillInOffset("fileSize", (uint)writer.BaseStream.Position - 0xC);
+
         }
 
         //Other
