@@ -12,7 +12,8 @@ namespace HedgeLib.Archives
         {
             Heroes = 0x1400FFFF,
             HeroesE3 = 0x1005FFFF,
-            HeroesPreE3 = 0x1003FFFF
+            HeroesPreE3 = 0x1003FFFF,
+            Shadow6 = 0x1C020037
         };
 
         public const string Extension = ".one";
@@ -32,8 +33,19 @@ namespace HedgeLib.Archives
         //Methods
         public override void Load(Stream fileStream)
         {
-            // HEADER
             var reader = new ExtendedBinaryReader(fileStream, Encoding.ASCII, false);
+
+            reader.JumpAhead(0x8); // Jump to Magic
+            Magic = reader.ReadUInt32(); // Magic
+            reader.JumpBehind(0xC); // Jump back to the start
+
+            if (Magic == (uint)Magics.Shadow6)
+            {
+                LoadShadowArchive(reader); // Archive for Shadow the Hedgehog
+                return;
+            }
+            
+            // HEADER
             uint padding = reader.ReadUInt32();
             if (padding != 0)
                 Console.WriteLine("WARNING: Padding is not 0! ({0})", padding);
@@ -70,7 +82,6 @@ namespace HedgeLib.Archives
             }
 
             // File Entries
-            int pos = 0;
             reader.JumpTo(dataOffset, true);
 
             while (reader.BaseStream.Position < fileSize)
@@ -81,14 +92,7 @@ namespace HedgeLib.Archives
 
                 if (dataLength > 0)
                 {
-                    var data = new byte[dataLength];
-                    pos = 0; // We re-use the same variable instead of making a new one each time
-
-                    while (pos < dataLength)
-                    {
-                        pos += reader.Read(data, pos, (int)dataLength - pos);
-                    }
-
+                    var data = reader.ReadBytes((int)dataLength);
                     Files.Add(new ArchiveFile(fileNames[fileNameIndex], data));
                 }
             }
@@ -98,6 +102,13 @@ namespace HedgeLib.Archives
         {
             // HEADER
             var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, false);
+
+            if (Magic == (uint)Magics.Shadow6)
+            {
+                SaveShadowArchive(writer); // Archive for Shadow the Hedgehog
+                return;
+            }
+
             writer.Write(0u); // Padding
             writer.AddOffset("fileSize"); // File Size (will be overwritten later)
             writer.Write(Magic); // HeroesMagic
@@ -162,6 +173,107 @@ namespace HedgeLib.Archives
 
             writer.FillInOffset("fileSize",
                 (uint)writer.BaseStream.Position - 0xC, true);
+        }
+
+
+        // TODO
+        public void LoadShadowArchive(ExtendedBinaryReader reader)
+        {
+            reader.JumpAhead(0x4); // Unknown, Seems to always be 0
+            uint fileSize = reader.ReadUInt32(); // File Size - 0xC
+            uint magic = reader.ReadUInt32(); // Magic
+            reader.JumpAhead(0x10); // Jump to File Count
+            uint fileCount = reader.ReadUInt32(); // File Count
+            reader.JumpAhead(0x38 * 2 + 0x20); // Jump to the third/first entry.
+
+            // Read File List
+            var files = new FileEntry[FileEntryCount];
+            for (int i = 0; i < fileCount; i++)
+            {
+                var entry = new FileEntry();
+                entry.FileName = reader.ReadSignature(0x2C).Replace("\0", string.Empty);
+                entry.UncompressedSize = reader.ReadUInt32();
+                entry.DataOffset = reader.ReadUInt32();
+                reader.JumpAhead(4); // Unknown, Seems to always be 1
+                files[i] = entry;
+            }
+
+            // Read File Data
+            if (files.Length != 0)
+            {
+                reader.JumpTo(files[0].DataOffset + 0xC);
+                for (int i = 0; i < fileCount; ++i)
+                {
+                    if (i == fileCount - 1)
+                        files[i].DataLength = fileSize + 0xC - files[i].DataOffset;
+                    else
+                        files[i].DataLength = files[i + 1].DataOffset - files[i].DataOffset;
+
+                    var file = new ArchiveFile()
+                    {
+                        Name = files[i].FileName,
+                        // TODO: Decompress file
+                        Data = reader.ReadBytes((int)files[i].DataLength)
+                    };
+                    Files.Add(file);
+                }
+            }
+        }
+
+        // TODO
+        public void SaveShadowArchive(ExtendedBinaryWriter writer)
+        {
+            string versionString = "One Ver 0.60";
+            writer.Write(0); // Padding
+            writer.AddOffset("fileSize"); // File Size (will be overwritten later)
+            writer.Write(Magic); // Magic
+            writer.Write(versionString.ToCharArray()); // Version String (0xC)
+            writer.Write(0); // Unknown
+            writer.Write(Files.Count);
+            writer.Write(0xCDCDCD00); // Null Terminated String?
+            for (int i = 0; i < 7; ++i)
+                writer.Write(0xCDCDCDCD);
+            writer.WriteNulls(0x70); // Skip two entries?
+
+            // Write File Information
+            for (int i = 0; i < Files.Count; ++i)
+            {
+                var file = Files[i];
+                
+                // File Name
+                var fileName = new char[0x2C];
+                if (file.Name.Length > 0x2C)
+                    file.Name.CopyTo(0, fileName, 0, 0x2C);
+                else
+                    file.Name.CopyTo(0, fileName, 0, file.Name.Length);
+                writer.Write(fileName); // File Name
+
+                writer.Write(file.Data.Length); // Uncompressed File Size
+                writer.AddOffset("fileDataOffset" + i); // Data Offset
+                writer.Write(1); // Unknown
+            }
+
+            writer.WriteNulls(0x14); // Unknown, Probably not required
+
+            // Write File Data
+            for (int i = 0; i < Files.Count; ++i)
+            {
+                // Data Offset
+                writer.FillInOffset("fileDataOffset" + i, (uint)writer.BaseStream.Position - 0xC);
+                // TODO: Compress File Data with PRS
+                writer.Write(Files[i].Data); // Write File data
+            }
+            
+            writer.FillInOffset("fileSize", (uint)writer.BaseStream.Position - 0xC);
+
+        }
+
+        //Other
+        private struct FileEntry
+        {
+            public string FileName;
+            public uint DataOffset,
+                DataLength, UncompressedSize;
         }
     }
 }

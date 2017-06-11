@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template name="WideSpring">
+  <FirstSpeed type="float" default="5" description="How much speed the spring will send you off with." />
+  <Scale type="uint32" default="1" description="How big the spring is." />
+  <OutOfControl type="uint16" default="0" description="How long the game locks your control for after coming in contact with this object." />
+  <Item type="uint16" default="0" description="What item you receive if you light up all three stars on the spring." />
+</Template>

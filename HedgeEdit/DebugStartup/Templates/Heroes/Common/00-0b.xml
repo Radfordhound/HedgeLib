@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template name="DashPanel">
+  <FirstSpeed type="float" default="5" description="How much speed the DashPanel will send you off with." />
+  <OutOfControl type="uint16" default="2" description="How long the game locks your control for after coming in contact with this object." />
+</Template>
