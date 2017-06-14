@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Speed type="float" default="200" description="" />
+  <Unknown4 type="float" default="0" description="" />
+  <Distance type="float" default="1000" description="" />
+</Template>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <!-- 
+   00 = Boost
+   01 = Drill
+   02 = Laser
+   03 = Spikes
+   04 = Rocket
+   05 = Frenzy
+   06 = Cube
+   07 = Hover
+   08 = Unknown
+   09 = Unknown
+   0A = Don't try
+  -->
+  <WispID type="byte" default="0" description="" />
+  <Unknown4 type="byte" default="0" description="" />
+  <Unknown5 type="byte" default="0" description="Padding?" />
+  <Unknown6 type="byte" default="0" description="Padding?" />
+  <Unknown7 type="uint" default="0" description="" />
+</Template>
