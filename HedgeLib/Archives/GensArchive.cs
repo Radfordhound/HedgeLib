@@ -154,6 +154,7 @@ namespace HedgeLib.Archives
         public int Save(Stream fileStream, uint? sizeLimit, int startIndex = 0)
         {
             //Header
+            var files = GetAllFiles();
             var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, false);
 
             writer.Write(Sig1);
@@ -170,9 +171,9 @@ namespace HedgeLib.Archives
             }
 
             //Data
-            for (int i = startIndex; i < Files.Count; ++i)
+            for (int i = startIndex; i < files.Count; ++i)
             {
-                var file = Files[i];
+                var file = files[i];
                 writer.Offset = writer.BaseStream.Position;
                 if (sizeLimit.HasValue && i > startIndex && writer.BaseStream.Position +
                     21 + file.Data.Length > sizeLimit) // cuz file entries must be >= 21 bytes

@@ -2,13 +2,12 @@
 
 namespace HedgeLib.Archives
 {
-    public class ArchiveFile
+    public class ArchiveFile : ArchiveData
     {
-        //Variables/Constants
+        // Variables/Constants
         public byte[] Data;
-        public string Name;
-
-        //Constructors
+        
+        // Constructors
         public ArchiveFile() { }
         public ArchiveFile(string filePath)
         {
@@ -26,8 +25,8 @@ namespace HedgeLib.Archives
             Data = data;
         }
 
-        //Methods
-        public void Extract(string filePath)
+        // Methods
+        public override void Extract(string filePath)
         {
             File.WriteAllBytes(filePath, Data);
         }

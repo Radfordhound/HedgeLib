@@ -101,6 +101,7 @@ namespace HedgeLib.Archives
         public override void Save(Stream fileStream)
         {
             // HEADER
+            var files = GetAllFiles();
             var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, false);
 
             if (Magic == (uint)Magics.Shadow6)
@@ -119,11 +120,11 @@ namespace HedgeLib.Archives
             writer.WriteNulls(StringLength * 2);
 
             // DATA
-            if (Files.Count > FileEntryCount)
+            if (files.Count > FileEntryCount)
             {
                 Console.WriteLine("{0} {1} files! The remaining {2} will be skipped.",
                     "WARNING: The Heroes archive format only allows for", FileEntryCount,
-                    Files.Count - FileEntryCount);
+                    files.Count - FileEntryCount);
             }
 
             // File Names
@@ -133,14 +134,14 @@ namespace HedgeLib.Archives
             for (int i = 0; i < FileEntryCount; ++i)
             {
                 // Write the remainding slots and break if there are less than 256 files.
-                if (i >= Files.Count)
+                if (i >= files.Count)
                 {
                     writer.WriteNulls((uint)((FileEntryCount - i - 1) * StringLength));
                     break;
                 }
 
                 // Print out a warning if the file name is larger then 64 characters.
-                var file = Files[i];
+                var file = files[i];
                 if (file.Name.Length > StringLength)
                 {
                     Console.WriteLine("WARNING: The file name \"{0}\" is larger then {1}! {2}",
@@ -160,15 +161,15 @@ namespace HedgeLib.Archives
 
             // File Entries
             writer.FillInOffset("dataOffset", (FileEntryCount + 1) * StringLength, true);
-            for (int i = 0; i < Files.Count; ++i)
+            for (int i = 0; i < files.Count; ++i)
             {
-                var file = Files[i];
-                writer.Write(i + 2); // File Name Index
+                var file = files[i];
+                writer.Write(i + 2);            // File Name Index
                 writer.Write(file.Data.Length); // Data Length
-                writer.Write(Magic); // HeroesMagic3
+                writer.Write(Magic);            // HeroesMagic3
 
-                // TODO: Compress Data.
-                writer.Write(file.Data);
+                // TODO: Compress Data
+                writer.Write(file.Data);        // Compressed Data
             }
 
             writer.FillInOffset("fileSize",
@@ -223,22 +224,23 @@ namespace HedgeLib.Archives
         // TODO
         public void SaveShadowArchive(ExtendedBinaryWriter writer)
         {
+            var files = GetAllFiles();
             string versionString = "One Ver 0.60";
             writer.Write(0); // Padding
             writer.AddOffset("fileSize"); // File Size (will be overwritten later)
             writer.Write(Magic); // Magic
             writer.Write(versionString.ToCharArray()); // Version String (0xC)
             writer.Write(0); // Unknown
-            writer.Write(Files.Count);
+            writer.Write(files.Count);
             writer.Write(0xCDCDCD00); // Null Terminated String?
             for (int i = 0; i < 7; ++i)
                 writer.Write(0xCDCDCDCD);
             writer.WriteNulls(0x70); // Skip two entries?
 
             // Write File Information
-            for (int i = 0; i < Files.Count; ++i)
+            for (int i = 0; i < files.Count; ++i)
             {
-                var file = Files[i];
+                var file = files[i];
                 
                 // File Name
                 var fileName = new char[0x2C];
@@ -256,12 +258,12 @@ namespace HedgeLib.Archives
             writer.WriteNulls(0x14); // Unknown, Probably not required
 
             // Write File Data
-            for (int i = 0; i < Files.Count; ++i)
+            for (int i = 0; i < files.Count; ++i)
             {
                 // Data Offset
                 writer.FillInOffset("fileDataOffset" + i, (uint)writer.BaseStream.Position - 0xC);
                 // TODO: Compress File Data with PRS
-                writer.Write(Files[i].Data); // Write File data
+                writer.Write(files[i].Data); // Write File data
             }
             
             writer.FillInOffset("fileSize", (uint)writer.BaseStream.Position - 0xC);

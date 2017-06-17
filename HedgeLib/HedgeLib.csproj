@@ -54,6 +54,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Archives\Archive.cs" />
+    <Compile Include="Archives\ArchiveData.cs" />
+    <Compile Include="Archives\ArchiveDirectory.cs" />
     <Compile Include="Archives\ArchiveFile.cs" />
     <Compile Include="Archives\GensArchive.cs" />
     <Compile Include="Archives\ONEArchive.cs" />
