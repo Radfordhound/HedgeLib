@@ -228,8 +228,6 @@ sysinfo.txt
 # Visual Studio / MonoDevelop / Rider generated #
 # ============================================= #
 [Ee]xported[Oo]bj/
-HedgeEdit/*.csproj
-HedgeEdit/*.sln*
 /*.unityproj
 /*.booproj
 /.idea*/
@@ -244,10 +242,3 @@ HedgeEdit/*.sln*
 ehthumbs.db
 [Tt]humbs.db
 [Dd]esktop.ini
-
-# ===== #
-# Other #
-# ===== #
-HedgeEdit/Binaries/
-HedgeEdit/DebugStartup/Cache/
-HedgeEdit/Assets/Libraries/*.dll*
