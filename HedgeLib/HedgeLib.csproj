@@ -82,6 +82,7 @@
     <Compile Include="Quaternion.cs" />
     <Compile Include="Sets\ColorsSetData.cs" />
     <Compile Include="Sets\GensSetData.cs" />
+    <Compile Include="Sets\HeroesSetData.cs" />
     <Compile Include="Sets\LWSetData.cs" />
     <Compile Include="Sets\SetData.cs" />
     <Compile Include="Sets\SetObject.cs" />
