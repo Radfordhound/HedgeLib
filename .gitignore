@@ -13,7 +13,6 @@
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
-[Uu]nityDebug/
 [Rr]elease/
 [Rr]eleases/
 x64/
@@ -48,7 +47,6 @@ artifacts/
 *_p.c
 *_i.h
 *.ilk
-HedgeLib/*.meta
 *.obj
 *.pch
 *.pdb
