@@ -78,6 +78,8 @@
     <Compile Include="Misc\BINA.cs" />
     <Compile Include="Misc\GensStageXML.cs" />
     <Compile Include="Misc\LWGism.cs" />
+    <Compile Include="Models\Mesh.cs" />
+    <Compile Include="Models\Model.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Quaternion.cs" />
     <Compile Include="Sets\ColorsSetData.cs" />
@@ -93,9 +95,7 @@
     <Compile Include="Types.cs" />
     <Compile Include="Vector.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Models\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <None Include=".editorconfig" />
   </ItemGroup>
