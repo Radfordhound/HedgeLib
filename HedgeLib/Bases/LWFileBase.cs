@@ -99,7 +99,7 @@ namespace HedgeLib.Bases
 			LWHeader header, List<uint> offsets)
 		{
 			uint footerStartPos = (uint)writer.BaseStream.Position;
-			BINA.WriteFooter(writer, offsets, LWHeader.Length);
+			BINA.WriteOffsetTable(writer, offsets, LWHeader.Length);
 
 			// Update header values
 			header.FinalTableLength = (uint)writer.BaseStream.Position - footerStartPos;

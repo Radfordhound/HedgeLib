@@ -19,7 +19,7 @@ namespace HedgeLib
             new DataType(typeof(ushort), (ushort)0, "unsigned short", "uint16", "ushort"),
 
             //4-Byte Values
-            new DataType(typeof(int), 0, "signed int", "integer", "sint32", "int"),
+            new DataType(typeof(int), 0, "signed int", "integer", "sint32", "int", "int32"),
             new DataType(typeof(uint), 0u, "unsigned int",
 				"unsigned integer", "uint32", "uint", "target"),
             new DataType(typeof(float), 0f, "single", "float"),

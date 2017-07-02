@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using HedgeLib.Headers;
+using System;
+using System.Collections.Generic;
+using System.IO;
 
 namespace HedgeLib.Misc
 {
@@ -8,6 +11,40 @@ namespace HedgeLib.Misc
 		public const string Signature = "BINA";
 
 		//Methods
+        public static BINAHeader ReadHeader(ExtendedBinaryReader reader)
+        {
+            var header = new BINAHeader();
+            reader.BaseStream.Position = 0;
+            reader.Offset = BINAHeader.Length;
+
+            // BINA Header
+            header.FileSize = reader.ReadUInt32();
+            header.FinalTableOffset = reader.ReadUInt32();
+            header.FinalTableLength = reader.ReadUInt32();
+
+            uint unknown1 = reader.ReadUInt32();
+            if (unknown1 != 0)
+                Console.WriteLine("WARNING: Unknown1 is not zero! ({0})", unknown1);
+
+            ushort unknownFlag1 = reader.ReadUInt16();
+            header.IsFooterMagicPresent = (reader.ReadUInt16() == 1);
+
+            reader.ReadSignature(4);
+            string sig = reader.ReadSignature(4);
+            if (sig != Signature)
+            {
+                throw new InvalidDataException(string.Format(
+                    "The given file's signature was incorrect! (Expected {0} got {1}.)",
+                    Signature, sig));
+            }
+
+            uint unknown2 = reader.ReadUInt32();
+            if (unknown2 != 0)
+                Console.WriteLine("WARNING: Unknown2 is not zero! ({0})", unknown2);
+
+            return header;
+        }
+
 		public static List<uint> ReadFooter(ExtendedBinaryReader reader,
 			uint headerLength, uint finalTableLength)
 		{
@@ -50,7 +87,30 @@ namespace HedgeLib.Misc
 			return offsets;
 		}
 
-		public static void WriteFooter(ExtendedBinaryWriter writer,
+        public static void AddHeader(ExtendedBinaryWriter writer)
+        {
+            writer.Offset = BINAHeader.Length;
+            writer.IsBigEndian = true;
+            writer.WriteNulls(BINAHeader.Length);
+        }
+
+        public static void WriteHeader(ExtendedBinaryWriter writer, BINAHeader header)
+        {
+            writer.BaseStream.Position = 0;
+            writer.Write(header.FileSize);
+            writer.Write(header.FinalTableOffset);
+            writer.Write(header.FinalTableLength);
+            writer.WriteNulls(4); //TODO: Figure out what this is (probably padding).
+
+            writer.WriteNulls(2); //TODO: Figure out what this flag is.
+            writer.Write((header.IsFooterMagicPresent) ? (ushort)1 : (ushort)0);
+
+            writer.WriteSignature(BINAHeader.Magic);
+            writer.WriteSignature(Signature);
+            writer.WriteNulls(4);
+        }
+
+		public static void WriteOffsetTable(ExtendedBinaryWriter writer,
 			List<uint> offsets, uint headerLength)
 		{
 			uint lastOffsetPos = headerLength;
@@ -80,6 +140,23 @@ namespace HedgeLib.Misc
 
 			writer.FixPadding();
 		}
+
+        public static void WriteFooter(ExtendedBinaryWriter writer,
+            BINAHeader header, uint footerStartPos)
+        {
+            // Update header values
+            header.FinalTableOffset = footerStartPos - BINAHeader.Length;
+            header.FinalTableLength = (uint)writer.BaseStream.Position - footerStartPos;
+
+            if (header.IsFooterMagicPresent)
+            {
+                writer.Write(BINAHeader.FooterMagic2);
+                writer.WriteNulls(4);
+                writer.WriteNullTerminatedString(BINAHeader.FooterMagic);
+            }
+
+            header.FileSize = (uint)writer.BaseStream.Position;
+        }
 
 		public static void WriteStrings(ExtendedBinaryWriter writer,
 			 List<StringTableEntry> strings)
