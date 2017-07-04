@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Xml.Linq;
 
 namespace HedgeLib.Sets
 {
@@ -21,7 +22,7 @@ namespace HedgeLib.Sets
 
         public override void Load(Stream fileStream)
         {
-            var xml = Helpers.GetXDocStream(fileStream);
+            var xml = XDocument.Load(fileStream);
             var nameAttr = xml.Root.Attribute("name");
             if (nameAttr != null)
                 Name = nameAttr.Value;

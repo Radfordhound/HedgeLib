@@ -63,7 +63,7 @@ namespace HedgeLib.Collision
 
 		public void LoadXML(Stream fileStream)
 		{
-			var xml = Helpers.GetXDocStream(fileStream);
+			var xml = XDocument.Load(fileStream);
 
 			// HKPackFile
 			var classVersion = xml.Root.Attribute("classversion");
@@ -213,7 +213,7 @@ namespace HedgeLib.Collision
 			}
 
 			var xml = new XDocument(root);
-			Helpers.SaveXDocStream(fileStream, xml);
+            xml.Save(fileStream);
 
 			// Sub-Methods
 			void WriteSection(HavokSection section, string name)

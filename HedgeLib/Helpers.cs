@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Security.Cryptography;
-using System.Xml;
 using System.Xml.Linq;
 
 namespace HedgeLib
@@ -12,61 +11,14 @@ namespace HedgeLib
     public static class Helpers
     {
         //Methods
-        public static XDocument GetXDocStream(Stream fileStream)
-        {
-            /*
-             * So here's the deal: Unity as of now only supports up to .NET 3.5.
-             * As such we have to target that, otherwise this library won't work in Unity.
-             * 
-             * .NET 3.5 doesn't allow you to simply call XDocument.Load with a Stream as
-             * an argument. Because of this, we had to create the following ugly work-around.
-             * 
-             * Dear Unity Technologies: Please add support for .NET 4.6. Thanks!
-             *  ~ Radfordhound
-            */
-
-            var reader = XmlReader.Create(fileStream);
-            return XDocument.Load(reader);
-        }
-
-        public static void SaveXDocStream(Stream fileStream, XDocument xml)
-        {
-			/*
-             * So here's the deal: Unity as of now only supports up to .NET 3.5.
-             * As such we have to target that, otherwise this library won't work in Unity.
-             * 
-             * .NET 3.5 doesn't allow you to simply call XDocument.Save with a Stream as
-             * an argument. Because of this, we had to create the following ugly work-around.
-             * 
-             * Dear Unity Technologies: Please add support for .NET 4.6. Thanks!
-             *  ~ Radfordhound
-            */
-
-			var writerSettings = new XmlWriterSettings()
-			{
-				Indent = true,
-				IndentChars = "\t"
-			};
-
-			using (var writer = XmlWriter.Create(fileStream, writerSettings))
-			{
-				xml.Save(writer);
-				writer.Flush();
-			}
-        }
-
 		public static string GetFileHash(string filePath)
 		{
-			string fileHash;
 			using (var fileStream = File.OpenRead(filePath))
 			{
 				var md5 = MD5.Create();
 				var hash = md5.ComputeHash(fileStream);
-				fileHash = BitConverter.ToString(hash);
-				fileStream.Close();
-			}
-
-			return fileHash;
+                return BitConverter.ToString(hash);
+            }
 		}
 
         public static string CombinePaths(params string[] paths)
@@ -74,7 +26,7 @@ namespace HedgeLib
             string combinedPath = "";
             for (int i = 0; i < paths.Length; i++)
             {
-                //The only OS that doesn't use this type of slash is Windows, which doesn't care.
+                // The only OS that doesn't use this type of slash is Windows, which doesn't care.
                 if (i > 0) combinedPath += '/';
 
 				string pth = paths[i];

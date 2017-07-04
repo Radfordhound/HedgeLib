@@ -14,7 +14,7 @@ namespace HedgeLib.Sets
         public override void Load(Stream fileStream,
             Dictionary<string, SetObjectType> objectTemplates)
         {
-            var xml = Helpers.GetXDocStream(fileStream);
+            var xml = XDocument.Load(fileStream);
             foreach (var element in xml.Root.Elements())
             {
                 string elemName = element.Name.LocalName;
