@@ -4,5 +4,8 @@ in vec4 pos;
 
 void main()
 {
-    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f) * pos;
+    float x = 0.01f * pos.x * (pos.z * 12f);
+    float y = 0.01f * pos.y * (pos.z * 10f);
+    float z = 0.01f * pos.z * (pos.z * 8f);
+    FragColor = vec4(x, y, z, 1f);
 }
