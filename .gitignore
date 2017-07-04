@@ -211,17 +211,6 @@ GeneratedArtifacts/
 _Pvt_Extensions/
 ModelManifest.xml
 
-Ignored/
-
-# =============== #
-# Unity generated #
-# =============== #
-[Tt]emp/
-[Bb]uild
-[Ll]ibrary/
-sysinfo.txt
-*.stackdump
-
 # ============================================= #
 # Visual Studio / MonoDevelop / Rider generated #
 # ============================================= #
@@ -240,3 +229,6 @@ sysinfo.txt
 ehthumbs.db
 [Tt]humbs.db
 [Dd]esktop.ini
+
+# Other
+Ignored/
