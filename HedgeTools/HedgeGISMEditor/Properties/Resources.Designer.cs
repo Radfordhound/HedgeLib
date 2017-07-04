@@ -42,7 +42,7 @@ namespace HedgeGISMEditor.Properties
         {
             get
             {
-                if ((resourceMan == null))
+                if (object.ReferenceEquals(resourceMan, null))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("HedgeGISMEditor.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
