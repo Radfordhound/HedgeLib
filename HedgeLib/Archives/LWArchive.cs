@@ -4,11 +4,11 @@ namespace HedgeLib.Archives
 {
     public class LWArchive : Archive
     {
-		//Variables/Constants
-		public const string Extension = ".pac";
+        //Variables/Constants
+        public const string Extension = ".pac";
 
-		//Constructors
-		public LWArchive() : base() { }
+        //Constructors
+        public LWArchive() : base() { }
         public LWArchive(Archive arc) : base(arc) { }
 
         //Methods
