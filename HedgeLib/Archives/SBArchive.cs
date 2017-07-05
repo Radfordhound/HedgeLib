@@ -1,22 +1,23 @@
-﻿using System.IO;
+﻿using HedgeLib.IO;
+using System.IO;
 using System.Text;
 
 namespace HedgeLib.Archives
 {
     public class SBArchive : Archive
     {
-        // Variables/Constants
+        //Variables/Constants
         public const string Extension = ".one";
         private const int stringBufferSize = 0x20;
 
-        // Constructors
+        //Constructors
         public SBArchive() { }
         public SBArchive(Archive arc)
         {
             Files = arc.Files;
         }
 
-        // Methods
+        //Methods
         public override void Load(Stream fileStream)
         {
             // HEADER
@@ -73,20 +74,16 @@ namespace HedgeLib.Archives
         public override void Save(Stream fileStream)
         {
             // HEADER
-            var files = GetAllFiles();
+            var files = GetFiles(false);
             var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, true);
             uint dataOffset = (uint)((stringBufferSize + 16) * files.Count + 16);
             
             writer.Write((uint)files.Count); // File Count
-
             writer.Write(0x10u); // File Entry Offset
-
             writer.Write(dataOffset); // File Data Offset
-            
             writer.Write(0x0u); // Unknown1
 
             // DATA
-
             char[] stringBuffer;
             int length = 0;
 
@@ -125,7 +122,7 @@ namespace HedgeLib.Archives
             }
         }
 
-        // Other
+        //Other
         private struct FileEntry
         {
             public string FileName;

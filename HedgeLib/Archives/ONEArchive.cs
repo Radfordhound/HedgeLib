@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HedgeLib.IO;
+using System;
 using System.IO;
 using System.Text;
 
@@ -101,7 +102,7 @@ namespace HedgeLib.Archives
         public override void Save(Stream fileStream)
         {
             // HEADER
-            var files = GetAllFiles();
+            var files = GetFiles(false);
             var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, false);
 
             if (Magic == (uint)Magics.Shadow6)
@@ -224,7 +225,7 @@ namespace HedgeLib.Archives
         // TODO
         public void SaveShadowArchive(ExtendedBinaryWriter writer)
         {
-            var files = GetAllFiles();
+            var files = GetFiles(false);
             string versionString = "One Ver 0.60";
             writer.Write(0); // Padding
             writer.AddOffset("fileSize"); // File Size (will be overwritten later)

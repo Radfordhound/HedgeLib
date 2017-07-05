@@ -4,8 +4,10 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace HedgeLib
+namespace HedgeLib.IO
 {
+    // This class was purposely written to avoid unnecessary method
+    // calls for performance, hence it's extreme length.
     public class ExtendedBinary
     {
         //Other
@@ -420,11 +422,11 @@ namespace HedgeLib
     public class ExtendedBinaryWriter : BinaryWriter
     {
         //Variables/Constants
-        public Dictionary<string, long> Offsets = new Dictionary<string, long>();
         public Encoding Encoding = Encoding.ASCII;
-        public long Offset = 0;
+        public uint Offset = 0;
         public bool IsBigEndian = false;
 
+        protected Dictionary<string, uint> offsets = new Dictionary<string, uint>();
         private byte[] dataBuffer = new byte[32];
 
         //Constructors
@@ -446,37 +448,31 @@ namespace HedgeLib
         }
 
         //Methods
-        public void AddOffset(string name)
+        public virtual void AddOffset(string name)
         {
-            if (Offsets.ContainsKey(name))
-                Offsets[name] = BaseStream.Position;
+            if (offsets.ContainsKey(name))
+                offsets[name] = (uint)BaseStream.Position;
             else
-                Offsets.Add(name, BaseStream.Position);
+                offsets.Add(name, (uint)BaseStream.Position);
 
             WriteNulls(4);
         }
 
-        public void AddOffset(string name, long position)
+        public void AddOffsetTable(string namePrefix, uint offsetCount)
         {
-            if (Offsets.ContainsKey(name))
-                Offsets[name] = position;
-            else
-                Offsets.Add(name, position);
-
-            long curPos = BaseStream.Position;
-            BaseStream.Position = position;
-
-            WriteNulls(4);
-            BaseStream.Position = curPos;
+            for (uint i = 0; i < offsetCount; ++i)
+            {
+                AddOffset($"{namePrefix}_{i}");
+            }
         }
 
         public void FillInOffset(string name, bool absolute = true)
         {
             long curPos = BaseStream.Position;
-            BaseStream.Position = Offsets[name];
+            BaseStream.Position = offsets[name];
 
             Write((uint)(curPos - ((absolute) ? 0 : Offset)));
-            Offsets.Remove(name);
+            offsets.Remove(name);
 
             BaseStream.Position = curPos;
         }
@@ -484,10 +480,10 @@ namespace HedgeLib
         public void FillInOffset(string name, uint value, bool absolute = true)
         {
             long curPos = BaseStream.Position;
-            BaseStream.Position = Offsets[name];
+            BaseStream.Position = offsets[name];
 
             Write((uint)(value - ((absolute) ? 0 : Offset)));
-            Offsets.Remove(name);
+            offsets.Remove(name);
 
             BaseStream.Position = curPos;
         }
@@ -861,6 +857,6 @@ namespace HedgeLib
             Write(dataBuffer, 0, 16);
         }
 
-        //TODO: Write override methods for all types.
+        // TODO: Write override methods for all types.
     }
 }

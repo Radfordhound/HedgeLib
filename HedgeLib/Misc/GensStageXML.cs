@@ -1,5 +1,5 @@
 ﻿using System.IO;
-using HedgeLib.Bases;
+using HedgeLib.IO;
 using System.Xml.Linq;
 using System;
 using System.Collections.Generic;

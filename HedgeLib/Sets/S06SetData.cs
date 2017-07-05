@@ -1,9 +1,8 @@
 ﻿using HedgeLib.Headers;
-using HedgeLib.Misc;
+using HedgeLib.IO;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace HedgeLib.Sets
 {
@@ -12,15 +11,14 @@ namespace HedgeLib.Sets
         //Variables/Constants
         public BINAHeader Header = new BINAHeader();
         public const string Extension = ".set";
-        // TODO
 
         //Methods
         public override void Load(Stream fileStream,
             Dictionary<string, SetObjectType> objectTemplates)
         {
             // Header
-            var reader = new ExtendedBinaryReader(fileStream, Encoding.ASCII, true);
-            Header = BINA.ReadHeader(reader);
+            var reader = new BINAReader(fileStream, BINA.BINATypes.Version1);
+            Header = reader.ReadHeader();
 
             reader.JumpAhead(0x2C); // Skip "test" string
             uint objectLength = reader.ReadUInt32();
@@ -130,22 +128,18 @@ namespace HedgeLib.Sets
 
         public override void Save(Stream fileStream)
         {
-            var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, true);
-            var offsets = new List<uint>();
-            var strings = new List<BINA.StringTableEntry>();
+            var writer = new BINAWriter(fileStream, BINA.BINATypes.Version1, true);
             var typeCounts = new Dictionary<string, int>();
             uint stringParamCount = 0;
 
             // Header
-            BINA.AddHeader(writer);
             Header.IsFooterMagicPresent = false;
-
             writer.WriteNulls(0xC);
             writer.WriteNullTerminatedString("test");
             writer.WriteNulls(0x1B);
 
             writer.Write(Objects.Count);
-            BINA.AddOffset(writer, offsets, "objectOffset");
+            writer.AddOffset("objectOffset");
 
             // TODO: Write group count
             writer.Write(0);
@@ -167,15 +161,7 @@ namespace HedgeLib.Sets
             // TODO: Write groups properly
 
             // Write Footer
-            BINA.WriteStrings(writer, strings);
-            uint footerStartPos = (uint)writer.BaseStream.Position;
-            BINA.WriteOffsetTable(writer, offsets, BINAHeader.Length);
-
-            uint footerEndPos = (uint)writer.BaseStream.Position;
-            BINA.WriteFooter(writer, Header, footerStartPos);
-
-            // Fill-in Header
-            BINA.WriteHeader(writer, Header);
+            writer.FinishWrite(Header);
 
             //Sub-Methods
             void WriteObject(int id)
@@ -184,15 +170,16 @@ namespace HedgeLib.Sets
                 var obj = Objects[id];
                 string type = obj.ObjectType;
                 if (!typeCounts.ContainsKey(type))
+                {
                     typeCounts.Add(type, 1);
+                }
                 else
+                {
                     ++typeCounts[type];
+                }
 
-                BINA.AddString(writer, strings, offsets,
-                    $"nameOffset{id}", $"{type}{typeCounts[obj.ObjectType]}");
-
-                BINA.AddString(writer, strings, offsets,
-                    $"typeOffset{id}", type);
+                writer.AddString($"nameOffset{id}", $"{type}{typeCounts[obj.ObjectType]}");
+                writer.AddString($"typeOffset{id}", type);
                 writer.WriteNulls(16);
 
                 writer.Write(obj.Transform.Position);
@@ -200,7 +187,7 @@ namespace HedgeLib.Sets
                 writer.Write(obj.Transform.Rotation);
 
                 writer.Write(obj.Parameters.Count);
-                BINA.AddOffset(writer, offsets, $"paramOffset{id}");
+                writer.AddOffset($"paramOffset{id}");
             }
 
             void WriteObjectParams(int id)
@@ -235,8 +222,7 @@ namespace HedgeLib.Sets
                 else if (param.DataType == typeof(string))
                 {
                     writer.Write(3);
-                    BINA.AddString(writer, strings, offsets,
-                        $"offset{stringParamCount}", (string)param.Data);
+                    writer.AddString($"offset{stringParamCount}", (string)param.Data);
                     writer.Write(1);
 
                     ++stringParamCount;
@@ -254,11 +240,10 @@ namespace HedgeLib.Sets
                 else
                 {
                     Console.WriteLine(
-                        "WARNING: 06 sets do not support object param type {0}!",
+                        "WARNING: '06 sets do not support object param type {0}!",
                         param.DataType);
 
-                    writer.Write(0);
-                    writer.Write(0);
+                    writer.Write(0L);
                 }
             }
         }

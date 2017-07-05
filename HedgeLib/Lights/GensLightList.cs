@@ -1,59 +1,56 @@
 ﻿using System.IO;
-using HedgeLib.Bases;
+using HedgeLib.IO;
 using System.Collections.Generic;
-using System.Text;
+using HedgeLib.Headers;
 
 namespace HedgeLib.Lights
 {
-	//Based off of the wonderful SCHG page on Sonic Generations over at Sonic Retro
-	public class GensLightList : FileBase
-	{
-		//Variables/Constants
-		public List<string> LightNames = new List<string>();
-		public GensFileBase GensFileData = new GensFileBase();
+    // Based off of the wonderful SCHG page on Sonic Generations over at Sonic Retro
+    public class GensLightList : FileBase
+    {
+        //Variables/Constants
+        public List<string> LightNames = new List<string>();
+        public GensHeader Header = new GensHeader();
 
-		//Methods
-		public override void Load(Stream fileStream)
-		{
-			//Header
-			var reader = new ExtendedBinaryReader(fileStream, true);
-			GensFileData.InitRead(reader);
+        //Methods
+        public override void Load(Stream fileStream)
+        {
+            // Header
+            var reader = new GensReader(fileStream, true);
+            Header = reader.ReadHeader();
 
-			//Root Node
-			uint lightTotal = reader.ReadUInt32();
-			uint lightTableOffset = reader.ReadUInt32();
+            // Root Node
+            uint lightTotal = reader.ReadUInt32();
+            uint lightTableOffset = reader.ReadUInt32();
 
-			//Data
-			reader.JumpTo(lightTableOffset, false);
-			for (uint i = 0; i < lightTotal; ++i)
-			{
-				LightNames.Add(reader.GetString());
-			}
+            // Data
+            reader.JumpTo(lightTableOffset, false);
+            for (uint i = 0; i < lightTotal; ++i)
+            {
+                LightNames.Add(reader.GetString());
+            }
+        }
 
-			GensFileData.FinishRead(reader);
-		}
+        public override void Save(Stream fileStream)
+        {
+            // Header
+            var writer = new GensWriter(fileStream, Header, true);
 
-		public override void Save(Stream fileStream)
-		{
-			//Header
-			var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, true);
-			GensFileData.InitWrite(writer);
+            // Root Node
+            writer.Write((uint)LightNames.Count);
+            writer.AddOffset("lightTableOffset");
 
-			//Root Node
-			writer.Write((uint)LightNames.Count);
-			GensFileData.AddOffset(writer, "lightTableOffset");
+            // Data
+            writer.FillInOffset("lightTableOffset", false);
+            writer.AddOffsetTable("lightOffset", (uint)LightNames.Count);
 
-			//Data
-			writer.FillInOffset("lightTableOffset", false);
-			GensFileData.AddOffsetTable(writer, "lightOffset", (uint)LightNames.Count);
+            for (int i = 0; i < LightNames.Count; ++i)
+            {
+                writer.FillInOffset($"lightOffset_{i}", false);
+                writer.WriteNullTerminatedString(LightNames[i]);
+            }
 
-			for (int i = 0; i < LightNames.Count; ++i)
-			{
-				writer.FillInOffset("lightOffset_" + i, false);
-				writer.WriteNullTerminatedString(LightNames[i]);
-			}
-
-			GensFileData.FinishWrite(writer);
-		}
-	}
+            writer.FinishWrite(Header);
+        }
+    }
 }

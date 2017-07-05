@@ -1,6 +1,7 @@
 ﻿using HedgeLib.Misc;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Windows.Forms;
 
 namespace HedgeGISMEditor
@@ -73,15 +74,17 @@ namespace HedgeGISMEditor
                 "(Wii U)? Choosing \"No\" will save the file as Little Endian (PC).",
                 Text, MessageBoxButtons.YesNoCancel, MessageBoxIcon.Information,
 
-                (Gism.LWFileData.Header.IsBigEndian) ?
+                (Gism.IsBigEndian) ?
                     MessageBoxDefaultButton.Button1 : MessageBoxDefaultButton.Button2);
 
             if (dr == DialogResult.Cancel) return;
-            Gism.LWFileData.Header.IsBigEndian = (dr == DialogResult.Yes);
-
             Gism.Gismos = Gismos.ToArray();
             Gism.UnknownBoolean1 = (checkBox1.Checked) ? 1u : 0u;
-            Gism.Save(FileName);
+
+            using (var fileStream = File.Create(FileName))
+            {
+                Gism.Save(fileStream, (dr == DialogResult.Yes));
+            }
         }
 
         //GUI Events

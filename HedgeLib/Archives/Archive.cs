@@ -1,4 +1,4 @@
-﻿using HedgeLib.Bases;
+﻿using HedgeLib.IO;
 using System;
 using System.Collections.Generic;
 
@@ -16,17 +16,28 @@ namespace HedgeLib.Archives
             throw new NotImplementedException();
         }
 
-        public List<ArchiveFile> GetAllFiles()
+        public static List<ArchiveFile> GetFiles(
+            List<ArchiveData> files, bool includeSubDirectories = true)
         {
             var list = new List<ArchiveFile>();
-            foreach (var data in Files)
+            foreach (var data in files)
             {
-                if (data.GetType() == typeof(ArchiveFile))
-                    list.Add((ArchiveFile)data);
-                else
-                    list.AddRange(((ArchiveDirectory)data).GetAllFiles());
+                if (data is ArchiveDirectory dir && includeSubDirectories)
+                {
+                    list.AddRange(GetFiles(dir.Files));
+                }
+                else if (data is ArchiveFile file)
+                {
+                    list.Add(file);
+                }
             }
+
             return list;
+        }
+
+        public List<ArchiveFile> GetFiles(bool includeSubDirectories = true)
+        {
+            return GetFiles(Files, includeSubDirectories);
         }
 
         public void Extract(string directory)

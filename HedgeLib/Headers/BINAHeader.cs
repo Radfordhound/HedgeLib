@@ -3,11 +3,13 @@
     public class BINAHeader
     {
         //Variables/Constants
-        public uint FileSize, FinalTableOffset, FinalTableLength;
-        public bool IsFooterMagicPresent = true;
+        public uint FileSize, FinalTableOffset, FinalTableLength,
+            DataLength, StringTableOffset, StringTableLength;
+        public bool IsFooterMagicPresent = false;
 
-        public const string FooterMagic = "bvh",
-            Magic = "\0\01B"; //I think this is the version number followed by the Big-Endian flag.
-        public const uint Length = 0x20, FooterMagic2 = 0x10;
+        public const string Signature = "BINA";
+        public const string DataSignature = "DATA";
+        public const string Ver1String = "\0\01", Ver2String = "200", FooterMagic = "bvh";
+        public const uint Ver1Length = 0x20, Ver2Length = 0x40, FooterMagic2 = 0x10;
     }
 }
