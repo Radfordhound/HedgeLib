@@ -57,7 +57,7 @@ namespace HedgeLib.Archives
                 SaveHeroesArchive(writer);  // Sonic Heroes Archive
         }
 
-        public void LoadHeroesArchive(ExtendedBinaryReader reader)
+        protected void LoadHeroesArchive(ExtendedBinaryReader reader)
         {
             // HEADER
             uint padding = reader.ReadUInt32();
@@ -67,7 +67,7 @@ namespace HedgeLib.Archives
             uint fileSize = reader.ReadUInt32() + 0xC;
             if (fileSize != reader.BaseStream.Length)
             {
-                // Written like this to avoid the + operator and keep the line under 100 chars.
+                // Written like this to avoid the + operator and keep the line under 100 chars
                 Console.WriteLine("{0} (Got {1} expected {2})",
                     "WARNING: File-Size in archive appears incorrect!",
                     fileSize, reader.BaseStream.Length);
@@ -78,7 +78,7 @@ namespace HedgeLib.Archives
             if (unknown1 != 1)
                 Console.WriteLine("WARNING: Unknown1 is not 1! ({0})", unknown1);
 
-            uint dataOffset = reader.ReadUInt32(); //TODO: Ensure this is correct.
+            uint dataOffset = reader.ReadUInt32(); // TODO: Ensure this is correct
             uint magic2 = reader.ReadUInt32();
 
             // DATA
@@ -112,18 +112,9 @@ namespace HedgeLib.Archives
             }
         }
 
-        public void SaveHeroesArchive(ExtendedBinaryWriter writer)
+        protected void SaveHeroesArchive(ExtendedBinaryWriter writer)
         {
-            // HEADER
             var files = GetFiles(false);
-            var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, false);
-
-            if (Magic == (uint)Magics.Shadow6)
-            {
-                SaveShadowArchive(writer); // Archive for Shadow the Hedgehog
-                return;
-            }
-
             writer.Write(0u); // Padding
             writer.AddOffset("fileSize"); // File Size (will be overwritten later)
             writer.Write(Magic); // HeroesMagic
@@ -191,48 +182,52 @@ namespace HedgeLib.Archives
         }
 
         // TODO
-        public void LoadShadowArchive(ExtendedBinaryReader reader)
+        protected void LoadShadowArchive(ExtendedBinaryReader reader)
         {
-            reader.JumpAhead(0x4);                                  // Unknown, Seems to always be 0
-            uint fileSize = reader.ReadUInt32();                    // File Size - 0xC
-            uint magic = reader.ReadUInt32();                       // Magic
-            string ONEVersion = reader.ReadNullTerminatedString();  // Gets the version String
-            reader.FixPadding();                                    // Aligns the reader
-            uint fileCount = reader.ReadUInt32();                   // File Count
-            reader.JumpAhead(0x38 * 2 + 0x20);                      // Jump to the third/first entry
-            bool isVersion6 = ONEVersion == "ONE Ver 0.60";         // Checks if its version is 0.60
-            int fileNameLength = isVersion6 ? 0x2C : 0x20;          // The max file name size
+            reader.JumpAhead(0x4);                                 // Unknown, Seems to always be 0
+            uint fileSize = reader.ReadUInt32();                   // File Size - 0xC
+            uint magic = reader.ReadUInt32();                      // Magic
+            string ONEVersion = reader.ReadNullTerminatedString(); // Gets the version String
+            reader.FixPadding();                                   // Aligns the reader
+
+            uint fileCount = reader.ReadUInt32();                  // File Count
+            reader.JumpAhead(0x38 * 2 + 0x20);                     // Jump to the third/first entry
+            bool isVersion6 = ONEVersion == "ONE Ver 0.60";        // Checks if its version is 0.60
+            int fileNameLength = isVersion6 ? 0x2C : 0x20;         // The max file name size
 
             // Read File List
             var files = new FileEntry[FileEntryCount];
             for (int i = 0; i < fileCount; i++)
             {
                 var entry = new FileEntry();
-                entry.FileName = reader.ReadSignature(fileNameLength).Replace("\0", string.Empty);
+                entry.FileName = reader.ReadSignature(
+                    fileNameLength).Replace("\0", string.Empty);
+
                 entry.UncompressedSize = reader.ReadUInt32();
                 entry.DataOffset = reader.ReadUInt32();
-                reader.JumpAhead(4);                                // Unknown, Seems to always be 1
+                reader.JumpAhead(4); // Unknown, Seems to always be 1
+
                 if (!isVersion6)
-                    reader.JumpAhead(0xC);                          // Unknown, Seems to always be 0
+                    reader.JumpAhead(0xC); // Unknown, Seems to always be 0
+
                 files[i] = entry;
             }
 
             // Read File Data
-            if (files.Length != 0)
+            if (files.Length > 0)
             {
                 reader.JumpTo(files[0].DataOffset + 0xC);
                 for (int i = 0; i < fileCount; ++i)
                 {
-                    if (i == fileCount - 1)
-                        files[i].DataLength = fileSize + 0xC - files[i].DataOffset;
-                    else
-                        files[i].DataLength = files[i + 1].DataOffset - files[i].DataOffset;
+                    // Compute the file's data length
+                    files[i].DataLength = ((i == fileCount-1) ?
+                        fileSize + 0xC : files[i + 1].DataOffset) - files[i].DataOffset;
 
                     var file = new ArchiveFile()
                     {
                         Name = files[i].FileName,
-                        // TODO: Decompress file
-                        Data = reader.ReadBytes((int)files[i].DataLength)
+                        Data = reader.ReadBytes(
+                            (int)files[i].DataLength) // TODO: Decompress file
                     };
                     Files.Add(file);
                 }
@@ -240,20 +235,25 @@ namespace HedgeLib.Archives
         }
 
         // TODO
-        public void SaveShadowArchive(ExtendedBinaryWriter writer)
+        protected void SaveShadowArchive(ExtendedBinaryWriter writer)
         {
             var files = GetFiles(false);
-            string versionString = "One Ver 0.60";
-            writer.Write(0); // Padding
-            writer.AddOffset("fileSize"); // File Size (will be overwritten later)
-            writer.Write(Magic); // Magic
-            writer.Write(versionString.ToCharArray()); // Version String (0xC)
-            writer.Write(0); // Unknown
+            bool isVersion6 = (Magic == (uint)Magics.Shadow6);
+            string version = isVersion6 ? "One Ver 0.60" : "One Ver 0.50";
+            int maxNameLength = isVersion6 ? 0x2C : 0x20;  // The max file name size
+
+            writer.Write(0);                               // Padding
+            writer.AddOffset("fileSize");                  // File Size (will be overwritten later)
+            writer.Write(Magic);                           // Magic
+            writer.WriteSignature(version);                // Version String
+            writer.Write(0);                               // Unknown
             writer.Write(files.Count);
-            writer.Write(0xCDCDCD00);                   // Null Terminated String?
+            writer.Write(0xCDCDCD00);                      // Null Terminated String?
+
             for (int i = 0; i < 7; ++i)
                 writer.Write(0xCDCDCDCD);
-            writer.WriteNulls(0x70);                    // Skip two entries?
+
+            writer.WriteNulls(0x70);                       // Skip two entries?
 
             // Write File Information
             for (int i = 0; i < files.Count; ++i)
@@ -261,16 +261,16 @@ namespace HedgeLib.Archives
                 var file = files[i];
                 
                 // File Name
-                var fileName = new char[fileNameLength];
-                if (file.Name.Length > fileNameLength)
-                    file.Name.CopyTo(0, fileName, 0, fileNameLength);
-                else
-                    file.Name.CopyTo(0, fileName, 0, file.Name.Length);
+                var fileName = new char[maxNameLength];
+                file.Name.CopyTo(0, fileName, 0,
+                    (file.Name.Length > maxNameLength) ?
+                    maxNameLength : file.Name.Length);
 
                 writer.Write(fileName);                 // File Name
                 writer.Write(file.Data.Length);         // Uncompressed File Size
                 writer.AddOffset("fileDataOffset" + i); // Data Offset
                 writer.Write(1);                        // Unknown
+
                 if (!isVersion6)
                     writer.WriteNulls(0xC);             // Unknown
             }
@@ -281,13 +281,14 @@ namespace HedgeLib.Archives
             for (int i = 0; i < files.Count; ++i)
             {
                 // Data Offset
-                writer.FillInOffset("fileDataOffset" + i, (uint)writer.BaseStream.Position - 0xC);
+                writer.FillInOffset($"fileDataOffset{i}",
+                    (uint)writer.BaseStream.Position - 0xC);
+
                 // TODO: Compress File Data with PRS
                 writer.Write(files[i].Data); // Write File data
             }
             
             writer.FillInOffset("fileSize", (uint)writer.BaseStream.Position - 0xC);
-
         }
 
         //Other
