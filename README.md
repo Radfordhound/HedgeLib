@@ -12,7 +12,7 @@ Right now it supports the following:
 - [Reading/Writing XML Havok data.](HedgeLib/Collison/Havok.cs)
 
 ### Hedgehog Engine
-- [Reading/Writing lights.](HedgeLib/Lights/Light.cs)
+- [Reading/Writing Lights.](HedgeLib/Lights/Light.cs)
 
 ### Sonic Heroes/Shadow the Hedgehog
 - [Reading/Writing Uncompressed Archvies.](HedgeLib/Archives/ONEArchive.cs)
@@ -57,7 +57,7 @@ As such, you don't have to manually build any of the tools/libraries in this rep
 - [Latest (development) builds](https://ci.appveyor.com/project/Radfordhound/hedgelib/build/artifacts)
 
 ## Manually building
-If you do with to manually build, however, all that's required is the following:
+If you do wish to manually build, however, all that's required is the following:
 - [Visual Studio 2017 (or later).](https://www.visualstudio.com/downloads/)
 - .NET Framework 4.6/4.7 (can be downloaded from Visual Studio).
 - OpenTK and OpenTK.GLControl (both are automatically downloaded as a NuGet package when HedgeEdit is first opened in Visual Studio).
