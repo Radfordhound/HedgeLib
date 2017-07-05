@@ -11,11 +11,8 @@ namespace HedgeLib.Archives
         private const int stringBufferSize = 0x20;
 
         //Constructors
-        public SBArchive() { }
-        public SBArchive(Archive arc)
-        {
-            Files = arc.Files;
-        }
+        public SBArchive() : base() { }
+        public SBArchive(Archive arc) : base(arc) { }
 
         //Methods
         public override void Load(Stream fileStream)
@@ -65,7 +62,7 @@ namespace HedgeLib.Archives
                 }
 
                 // Add File to Files List
-                Files.Add(new ArchiveFile(fileEntry.FileName, data));
+                Data.Add(new ArchiveFile(fileEntry.FileName, data));
             }
         }
 

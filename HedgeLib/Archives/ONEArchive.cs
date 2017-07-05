@@ -22,10 +22,9 @@ namespace HedgeLib.Archives
         public const byte StringLength = 0x40, FileEntryCount = 0xFF;
 
         //Constructors
-        public ONEArchive() { }
-        public ONEArchive(Archive arc)
+        public ONEArchive() : base() { }
+        public ONEArchive(Archive arc) : base(arc)
         {
-            Files = arc.Files;
             if (arc.GetType() == GetType())
                 Magic = ((ONEArchive)arc).Magic;
         }
@@ -107,7 +106,7 @@ namespace HedgeLib.Archives
                 if (dataLength > 0)
                 {
                     var data = reader.ReadBytes((int)dataLength);
-                    Files.Add(new ArchiveFile(fileNames[fileNameIndex], data));
+                    Data.Add(new ArchiveFile(fileNames[fileNameIndex], data));
                 }
             }
         }
@@ -229,7 +228,7 @@ namespace HedgeLib.Archives
                         Data = reader.ReadBytes(
                             (int)files[i].DataLength) // TODO: Decompress file
                     };
-                    Files.Add(file);
+                    Data.Add(file);
                 }
             }
         }

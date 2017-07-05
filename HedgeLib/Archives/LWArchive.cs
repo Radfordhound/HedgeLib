@@ -8,11 +8,8 @@ namespace HedgeLib.Archives
 		public const string Extension = ".pac";
 
 		//Constructors
-		public LWArchive() { }
-		public LWArchive(Archive arc)
-		{
-			Files = arc.Files;
-		}
+		public LWArchive() : base() { }
+        public LWArchive(Archive arc) : base(arc) { }
 
         //Methods
         public override void Load(Stream fileStream)

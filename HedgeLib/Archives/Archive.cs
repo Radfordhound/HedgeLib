@@ -7,8 +7,15 @@ namespace HedgeLib.Archives
     public class Archive : FileBase
     {
         //Variables/Constants
-        public List<ArchiveData> Files = new List<ArchiveData>();
+        public List<ArchiveData> Data = new List<ArchiveData>();
         public bool Saved = false;
+
+        //Constructors
+        public Archive() { }
+        public Archive(Archive arc)
+        {
+            Data = arc.Data;
+        }
 
         //Methods
         public virtual List<string> GetSplitArchivesList(string filePath)
@@ -22,7 +29,7 @@ namespace HedgeLib.Archives
             var list = new List<ArchiveFile>();
             foreach (var data in files)
             {
-                if (data is ArchiveDirectory dir && includeSubDirectories)
+                if (includeSubDirectories && data is ArchiveDirectory dir)
                 {
                     list.AddRange(GetFiles(dir.Files));
                 }
@@ -37,14 +44,14 @@ namespace HedgeLib.Archives
 
         public List<ArchiveFile> GetFiles(bool includeSubDirectories = true)
         {
-            return GetFiles(Files, includeSubDirectories);
+            return GetFiles(Data, includeSubDirectories);
         }
 
         public void Extract(string directory)
         {
-            foreach (var file in Files)
+            foreach (var entry in Data)
             {
-                file.Extract(Helpers.CombinePaths(directory, file.Name));
+                entry.Extract(Helpers.CombinePaths(directory, entry.Name));
             }
         }
     }

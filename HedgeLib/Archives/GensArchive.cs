@@ -17,11 +17,8 @@ namespace HedgeLib.Archives
         public const uint Sig1 = 0, Sig2 = 0x10, Sig3 = 0x14;
 
         //Constructors
-        public GensArchive() { }
-        public GensArchive(Archive arc)
-        {
-            Files = arc.Files;
-        }
+        public GensArchive() : base() { }
+        public GensArchive(Archive arc) : base(arc) { }
 
         //Methods
         public override void Load(string filePath)
@@ -91,7 +88,7 @@ namespace HedgeLib.Archives
                     Name = name,
                     Data = data
                 };
-                Files.Add(file);
+                Data.Add(file);
             }
         }
 
@@ -206,7 +203,7 @@ namespace HedgeLib.Archives
                 writer.Write(arcSize);
 
             // Data
-            foreach (var file in Files)
+            foreach (var file in Data)
                 writer.Write(file.Name);
         }
 

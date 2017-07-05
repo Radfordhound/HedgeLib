@@ -20,7 +20,6 @@ namespace HedgeLib.Archives
         public override void Extract(string directory)
         {
             Directory.CreateDirectory(directory);
-
             foreach (var file in Files)
             {
                 file.Extract(Helpers.CombinePaths(directory, file.Name));
