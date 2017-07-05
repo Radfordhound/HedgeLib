@@ -14,7 +14,8 @@ namespace HedgeLib.Archives
             Heroes = 0x1400FFFF,
             HeroesE3 = 0x1005FFFF,
             HeroesPreE3 = 0x1003FFFF,
-            Shadow6 = 0x1C020037
+            Shadow6 = 0x1C020037,
+            Shadow5 = 0x1C020020 // TODO: Ensure this is correct
         };
 
         public const string Extension = ".one";
@@ -29,23 +30,35 @@ namespace HedgeLib.Archives
                 Magic = ((ONEArchive)arc).Magic;
         }
 
-        //TODO
-
         //Methods
         public override void Load(Stream fileStream)
         {
             var reader = new ExtendedBinaryReader(fileStream, Encoding.ASCII, false);
 
-            reader.JumpAhead(0x8); // Jump to Magic
-            Magic = reader.ReadUInt32(); // Magic
-            reader.JumpBehind(0xC); // Jump back to the start
+            // Checks the Magic
+            reader.JumpAhead(0x8);          // Jump to Magic
+            Magic = reader.ReadUInt32();    // Magic
+            reader.JumpBehind(0xC);         // Jump back to the start
 
-            if (Magic == (uint)Magics.Shadow6)
-            {
-                LoadShadowArchive(reader); // Archive for Shadow the Hedgehog
-                return;
-            }
-            
+            if (Magic == (uint)Magics.Shadow6 || Magic == (uint)Magics.Shadow5)
+                LoadShadowArchive(reader);  // Shadow the Hedgehog Archive
+            else
+                LoadHeroesArchive(reader);  // Sonic Heroes Archive
+        }
+
+        public override void Save(Stream fileStream)
+        {
+            // HEADER
+            var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, false);
+
+            if (Magic == (uint)Magics.Shadow6 || Magic == (uint)Magics.Shadow5)
+                SaveShadowArchive(writer);  // Shadow the Hedgehog Archive
+            else
+                SaveHeroesArchive(writer);  // Sonic Heroes Archive
+        }
+
+        public void LoadHeroesArchive(ExtendedBinaryReader reader)
+        {
             // HEADER
             uint padding = reader.ReadUInt32();
             if (padding != 0)
@@ -75,7 +88,7 @@ namespace HedgeLib.Archives
             // File Names
             for (uint i = 0; i < FileEntryCount; ++i)
             {
-                if (reader.BaseStream.Position+StringLength >= fileSize)
+                if (reader.BaseStream.Position + StringLength >= fileSize)
                     break;
 
                 reader.Read(stringBuffer, 0, StringLength);
@@ -99,7 +112,7 @@ namespace HedgeLib.Archives
             }
         }
 
-        public override void Save(Stream fileStream)
+        public void SaveHeroesArchive(ExtendedBinaryWriter writer)
         {
             // HEADER
             var files = GetFiles(false);
@@ -155,7 +168,7 @@ namespace HedgeLib.Archives
 
                 stringBuffer = file.Name.ToCharArray(0, len);
                 writer.Write(stringBuffer);
-                
+
                 if ((StringLength - len) > 0)
                     writer.WriteNulls(StringLength - (uint)len);
             }
@@ -177,26 +190,30 @@ namespace HedgeLib.Archives
                 (uint)writer.BaseStream.Position - 0xC, true);
         }
 
-
         // TODO
         public void LoadShadowArchive(ExtendedBinaryReader reader)
         {
-            reader.JumpAhead(0x4); // Unknown, Seems to always be 0
-            uint fileSize = reader.ReadUInt32(); // File Size - 0xC
-            uint magic = reader.ReadUInt32(); // Magic
-            reader.JumpAhead(0x10); // Jump to File Count
-            uint fileCount = reader.ReadUInt32(); // File Count
-            reader.JumpAhead(0x38 * 2 + 0x20); // Jump to the third/first entry.
+            reader.JumpAhead(0x4);                                  // Unknown, Seems to always be 0
+            uint fileSize = reader.ReadUInt32();                    // File Size - 0xC
+            uint magic = reader.ReadUInt32();                       // Magic
+            string ONEVersion = reader.ReadNullTerminatedString();  // Gets the version String
+            reader.FixPadding();                                    // Aligns the reader
+            uint fileCount = reader.ReadUInt32();                   // File Count
+            reader.JumpAhead(0x38 * 2 + 0x20);                      // Jump to the third/first entry
+            bool isVersion6 = ONEVersion == "ONE Ver 0.60";         // Checks if its version is 0.60
+            int fileNameLength = isVersion6 ? 0x2C : 0x20;          // The max file name size
 
             // Read File List
             var files = new FileEntry[FileEntryCount];
             for (int i = 0; i < fileCount; i++)
             {
                 var entry = new FileEntry();
-                entry.FileName = reader.ReadSignature(0x2C).Replace("\0", string.Empty);
+                entry.FileName = reader.ReadSignature(fileNameLength).Replace("\0", string.Empty);
                 entry.UncompressedSize = reader.ReadUInt32();
                 entry.DataOffset = reader.ReadUInt32();
-                reader.JumpAhead(4); // Unknown, Seems to always be 1
+                reader.JumpAhead(4);                                // Unknown, Seems to always be 1
+                if (!isVersion6)
+                    reader.JumpAhead(0xC);                          // Unknown, Seems to always be 0
                 files[i] = entry;
             }
 
@@ -233,10 +250,10 @@ namespace HedgeLib.Archives
             writer.Write(versionString.ToCharArray()); // Version String (0xC)
             writer.Write(0); // Unknown
             writer.Write(files.Count);
-            writer.Write(0xCDCDCD00); // Null Terminated String?
+            writer.Write(0xCDCDCD00);                   // Null Terminated String?
             for (int i = 0; i < 7; ++i)
                 writer.Write(0xCDCDCDCD);
-            writer.WriteNulls(0x70); // Skip two entries?
+            writer.WriteNulls(0x70);                    // Skip two entries?
 
             // Write File Information
             for (int i = 0; i < files.Count; ++i)
@@ -244,19 +261,21 @@ namespace HedgeLib.Archives
                 var file = files[i];
                 
                 // File Name
-                var fileName = new char[0x2C];
-                if (file.Name.Length > 0x2C)
-                    file.Name.CopyTo(0, fileName, 0, 0x2C);
+                var fileName = new char[fileNameLength];
+                if (file.Name.Length > fileNameLength)
+                    file.Name.CopyTo(0, fileName, 0, fileNameLength);
                 else
                     file.Name.CopyTo(0, fileName, 0, file.Name.Length);
-                writer.Write(fileName); // File Name
 
-                writer.Write(file.Data.Length); // Uncompressed File Size
+                writer.Write(fileName);                 // File Name
+                writer.Write(file.Data.Length);         // Uncompressed File Size
                 writer.AddOffset("fileDataOffset" + i); // Data Offset
-                writer.Write(1); // Unknown
+                writer.Write(1);                        // Unknown
+                if (!isVersion6)
+                    writer.WriteNulls(0xC);             // Unknown
             }
 
-            writer.WriteNulls(0x14); // Unknown, Probably not required
+            writer.WriteNulls(0x14);                    // Unknown, Probably not required
 
             // Write File Data
             for (int i = 0; i < files.Count; ++i)
