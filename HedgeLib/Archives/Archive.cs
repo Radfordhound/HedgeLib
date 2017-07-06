@@ -1,6 +1,7 @@
 ﻿using HedgeLib.IO;
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace HedgeLib.Archives
 {
@@ -49,6 +50,7 @@ namespace HedgeLib.Archives
 
         public void Extract(string directory)
         {
+            Directory.CreateDirectory(directory);
             foreach (var entry in Data)
             {
                 entry.Extract(Helpers.CombinePaths(directory, entry.Name));
