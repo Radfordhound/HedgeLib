@@ -32,7 +32,7 @@ namespace HedgeLib.Archives
             {
                 if (includeSubDirectories && data is ArchiveDirectory dir)
                 {
-                    list.AddRange(GetFiles(dir.Files));
+                    list.AddRange(GetFiles(dir.Data));
                 }
                 else if (data is ArchiveFile file)
                 {
@@ -55,6 +55,36 @@ namespace HedgeLib.Archives
             {
                 entry.Extract(Helpers.CombinePaths(directory, entry.Name));
             }
+        }
+
+        public void AddDirectory(string dir, bool includeSubDirectories = false)
+        {
+            Data.AddRange(GetFilesFromDir(dir, includeSubDirectories));
+        }
+
+        public static List<ArchiveData> GetFilesFromDir(string dir,
+            bool includeSubDirectories = false)
+        {
+            // Add each file in the current sub-directory
+            var data = new List<ArchiveData>();
+            foreach (string filePath in Directory.GetFiles(dir))
+            {
+                data.Add(new ArchiveFile(filePath));
+            }
+
+            // Repeat for each sub directory
+            if (includeSubDirectories)
+            {
+                foreach (string subDir in Directory.GetDirectories(dir))
+                {
+                    data.Add(new ArchiveDirectory()
+                    {
+                        Data = GetFilesFromDir(subDir, includeSubDirectories)
+                    });
+                }
+            }
+
+            return data;
         }
     }
 }
