@@ -15,7 +15,7 @@ Right now it supports the following:
 - [Reading/Writing Lights.](HedgeLib/Lights/Light.cs)
 
 ### Sonic Heroes/Shadow the Hedgehog
-- [Reading/Writing Uncompressed Archvies.](HedgeLib/Archives/ONEArchive.cs)
+- [Reading/Writing Uncompressed Archives.](HedgeLib/Archives/ONEArchive.cs)
 
 ### Sonic '06
 - [Reading/Writing Set Data.](HedgeLib/Sets/S06SetData.cs)
