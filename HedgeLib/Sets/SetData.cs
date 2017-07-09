@@ -1,4 +1,4 @@
-﻿using HedgeLib.Bases;
+﻿using HedgeLib.IO;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -49,7 +49,7 @@ namespace HedgeLib.Sets
 		public void ImportXML(Stream fileStream)
 		{
 			//Load XML and add loaded data to set data
-			var xml = Helpers.GetXDocStream(fileStream);
+			var xml = XDocument.Load(fileStream);
 			uint objID = 0; //For Object elements with no ID attribute.
 
 			foreach (var objElem in xml.Root.Elements("Object"))
@@ -220,7 +220,7 @@ namespace HedgeLib.Sets
 			}
 
 			var xml = new XDocument(rootElem);
-			Helpers.SaveXDocStream(fileStream, xml);
+			xml.Save(fileStream);
 
 			//Sub-Methods
 			XElement GenerateParamElement(

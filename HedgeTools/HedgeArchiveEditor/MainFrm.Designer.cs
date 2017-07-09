@@ -56,6 +56,7 @@
             this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.largeIconViewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.newFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addFilesToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.extractAllToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
@@ -142,9 +143,9 @@
             // createFromDirectoryToolStripMenuItem
             // 
             this.createFromDirectoryToolStripMenuItem.Name = "createFromDirectoryToolStripMenuItem";
-            this.createFromDirectoryToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift) 
+            this.createFromDirectoryToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt) 
             | System.Windows.Forms.Keys.N)));
-            this.createFromDirectoryToolStripMenuItem.Size = new System.Drawing.Size(274, 22);
+            this.createFromDirectoryToolStripMenuItem.Size = new System.Drawing.Size(265, 22);
             this.createFromDirectoryToolStripMenuItem.Text = "Create From &Directory...";
             this.createFromDirectoryToolStripMenuItem.Click += new System.EventHandler(this.CreateFromDirectoryToolStripMenuItem_Click);
             // 
@@ -307,6 +308,7 @@
             this.contextMenu.BackColor = System.Drawing.Color.White;
             this.contextMenu.ImageScalingSize = new System.Drawing.Size(24, 24);
             this.contextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.newFolderToolStripMenuItem,
             this.addFilesToolStripMenuItem1,
             this.extractAllToolStripMenuItem1,
             this.toolStripSeparator3,
@@ -315,8 +317,17 @@
             this.toolStripSeparator4,
             this.renameSelectedFileToolStripMenuItem});
             this.contextMenu.Name = "contextMenu";
-            this.contextMenu.Size = new System.Drawing.Size(240, 126);
+            this.contextMenu.Size = new System.Drawing.Size(240, 148);
             this.contextMenu.Opening += new System.ComponentModel.CancelEventHandler(this.ContextMenu_Opening);
+            // 
+            // newFolderToolStripMenuItem
+            // 
+            this.newFolderToolStripMenuItem.Name = "newFolderToolStripMenuItem";
+            this.newFolderToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift) 
+            | System.Windows.Forms.Keys.N)));
+            this.newFolderToolStripMenuItem.Size = new System.Drawing.Size(239, 22);
+            this.newFolderToolStripMenuItem.Text = "New Folder";
+            this.newFolderToolStripMenuItem.Click += new System.EventHandler(this.NewFolderToolStripMenuItem_Click);
             // 
             // addFilesToolStripMenuItem1
             // 
@@ -428,6 +439,7 @@
         private System.Windows.Forms.ToolStripMenuItem renameToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem viewToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem largeIconViewToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem newFolderToolStripMenuItem;
     }
 }
 

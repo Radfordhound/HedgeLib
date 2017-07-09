@@ -13,7 +13,6 @@
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
-[Uu]nityDebug/
 [Rr]elease/
 [Rr]eleases/
 x64/
@@ -48,7 +47,6 @@ artifacts/
 *_p.c
 *_i.h
 *.ilk
-HedgeLib/*.meta
 *.obj
 *.pch
 *.pdb
@@ -213,23 +211,10 @@ GeneratedArtifacts/
 _Pvt_Extensions/
 ModelManifest.xml
 
-Ignored/
-
-# =============== #
-# Unity generated #
-# =============== #
-[Tt]emp/
-[Bb]uild
-[Ll]ibrary/
-sysinfo.txt
-*.stackdump
-
 # ============================================= #
 # Visual Studio / MonoDevelop / Rider generated #
 # ============================================= #
 [Ee]xported[Oo]bj/
-HedgeEdit/*.csproj
-HedgeEdit/*.sln*
 /*.unityproj
 /*.booproj
 /.idea*/
@@ -245,9 +230,5 @@ ehthumbs.db
 [Tt]humbs.db
 [Dd]esktop.ini
 
-# ===== #
-# Other #
-# ===== #
-HedgeEdit/Binaries/
-HedgeEdit/DebugStartup/Cache/
-HedgeEdit/Assets/Libraries/*.dll*
+# Other
+Ignored/

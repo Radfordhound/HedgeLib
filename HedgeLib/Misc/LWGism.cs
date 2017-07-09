@@ -1,72 +1,79 @@
-﻿using HedgeLib.Bases;
+﻿using HedgeLib.IO;
+using HedgeLib.Headers;
+using System;
 using System.IO;
-using System.Text;
 
 namespace HedgeLib.Misc
 {
-	public class LWGism : FileBase
+    public class LWGism : FileBase
     {
-		//Variables/Constants
-		public LWFileBase LWFileData = new LWFileBase();
+        //Variables/Constants
+        public BINAHeader Header = new BINAHeader();
         public LWGismo[] Gismos;
         public uint UnknownBoolean1 = 1;
+        public bool IsBigEndian
+        {
+            get;
+            protected set;
+        }
 
         public const string Signature = "GISM", Extension = ".gism";
 
         //Methods
         public override void Load(Stream fileStream)
         {
-			//Header
-			var reader = new ExtendedBinaryReader(fileStream, Encoding.ASCII, false);
-			LWFileData.InitRead(reader);
+            // Header
+            var reader = new BINAReader(fileStream, BINA.BINATypes.Version2);
+            Header = reader.ReadHeader();
+            IsBigEndian = reader.IsBigEndian;
 
-			uint gismOffset = reader.ReadUInt32();
-            UnknownBoolean1 = reader.ReadUInt32(); //TODO: Find out what this is.
-			uint gismoCount = reader.ReadUInt32();
+            uint gismOffset = reader.ReadUInt32();
+            UnknownBoolean1 = reader.ReadUInt32(); // TODO: Find out what this is.
+            uint gismoCount = reader.ReadUInt32();
             Gismos = new LWGismo[gismoCount];
 
-			//Containers
-			uint containerOffset = reader.ReadUInt32();
+            // Containers
+            uint containerOffset = reader.ReadUInt32();
             reader.JumpTo(containerOffset, false);
 
             for (uint i = 0; i < gismoCount; ++i)
             {
                 var gismo = new LWGismo();
 
-				//Container 1
-				uint fileNameOffset = reader.ReadUInt32();
-				uint fileNameOffset2 = reader.ReadUInt32(); //TODO: Find out what this is for.
-				uint unknownNameOffset = reader.ReadUInt32();
+                // Container 1
+                uint fileNameOffset = reader.ReadUInt32();
+                uint fileNameOffset2 = reader.ReadUInt32(); // TODO: Find out what this is for.
+                uint unknownNameOffset = reader.ReadUInt32();
                 gismo.Unknown1 = reader.ReadUInt32();
 
                 gismo.Unknown2 = reader.ReadSingle();
                 gismo.Unknown3 = reader.ReadSingle();
                 gismo.DoesAnimate = (reader.ReadUInt32() == 1);
-				uint havokOffset = reader.ReadUInt32();
+                uint havokOffset = reader.ReadUInt32();
 
                 gismo.UnknownBoolean1 = (reader.ReadUInt32() == 1);
-				uint containerTwoOffset = reader.ReadUInt32();
+                uint containerTwoOffset = reader.ReadUInt32();
 
-                //TODO: Remove this debug code
                 if (fileNameOffset != fileNameOffset2)
-                    System.Console.WriteLine("WARNING: fileNameOffset != fileNameOffset2 (" +
-                        fileNameOffset + " vs. " + fileNameOffset2 + ")");
+                {
+                    Console.WriteLine(
+                        "WARNING: fileNameOffset != fileNameOffset2 ({0} vs. {1})",
+                        fileNameOffset, fileNameOffset2);
+                }
 
-				long curPos = reader.BaseStream.Position;
+                long curPos = reader.BaseStream.Position;
                 gismo.FileName = reader.GetString(fileNameOffset, true);
 
-                //Havok Array
+                // Havok Array
                 reader.JumpTo(havokOffset, false);
-				uint unknown10 = reader.ReadUInt32();
+                uint unknown10 = reader.ReadUInt32();
 
-                //TODO: Remove this debug code
                 if (unknown10 != 0)
-                    System.Console.WriteLine("WARNING: Unknown10 != 0 (" +
-                        unknown10 + ".)");
+                    Console.WriteLine("WARNING: Unknown10 != 0 ({0})!", unknown10);
 
                 gismo.HavokName = reader.GetString();
 
-                //Container 2
+                // Container 2
                 reader.JumpTo(containerTwoOffset, false);
 
                 gismo.UnknownBoolean2 = (reader.ReadUInt32() == 1);
@@ -83,56 +90,59 @@ namespace HedgeLib.Misc
                 reader.BaseStream.Position = curPos;
                 Gismos[i] = gismo;
             }
-
-			LWFileData.FinishRead(reader);
         }
 
         public override void Save(Stream fileStream)
         {
-			//Header
-			var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, false);
-			LWFileData.InitWrite(writer);
+            Save(fileStream, true);
+        }
 
-			LWFileData.AddString(writer, "gismOffset", Signature);
+        public void Save(Stream fileStream, bool isBigEndian)
+        {
+            // Header
+            var writer = new BINAWriter(fileStream,
+                BINA.BINATypes.Version2, isBigEndian);
+
+            IsBigEndian = isBigEndian;
+            writer.AddString("gismOffset", Signature);
             writer.Write(UnknownBoolean1);
             writer.Write((uint)Gismos.Length);
 
-			//Containers
-			LWFileData.AddOffset(writer, "containerOffset");
+            // Containers
+            writer.AddOffset("containerOffset");
             writer.FillInOffset("containerOffset", false);
 
-            //Container 1
+            // Container 1
             for (int i = 0; i < Gismos.Length; ++i)
             {
                 var gismo = Gismos[i];
-
-				LWFileData.AddString(writer, "fileNameOffset_" + i, gismo.FileName);
-				LWFileData.AddString(writer, "fileNameOffset2_" + i, gismo.FileName);
-				LWFileData.AddString(writer, "unknownOffset1_" + i, gismo.FileName); //TODO
+                writer.AddString($"fileNameOffset_{i}", gismo.FileName);
+                writer.AddString($"fileNameOffset2_{i}", gismo.FileName);
+                writer.AddString($"unknownOffset1_{i}", gismo.FileName); // TODO
                 writer.Write(gismo.Unknown1);
 
                 writer.Write(gismo.Unknown2);
                 writer.Write(gismo.Unknown3);
                 writer.Write((gismo.DoesAnimate) ? 1u : 0u);
-				LWFileData.AddOffset(writer, "havokOffset_" + i);
+                writer.AddOffset($"havokOffset_{i}");
 
                 writer.Write((gismo.UnknownBoolean1) ? 1u : 0u);
-				LWFileData.AddOffset(writer, "containerTwoOffset_" + i);
+                writer.AddOffset($"containerTwoOffset_{i}");
             }
 
-            //Havok Array
+            // Havok Array
             for (int i = 0; i < Gismos.Length; ++i)
             {
-                writer.FillInOffset("havokOffset_" + i, false);
-                writer.WriteNulls(4); //TODO: Figure out what this is
-				LWFileData.AddString(writer, "havokNameOffset_" + i, Gismos[i].HavokName);
+                writer.FillInOffset($"havokOffset_{i}", false);
+                writer.WriteNulls(4); // TODO: Figure out what this is
+                writer.AddString($"havokNameOffset_{i}", Gismos[i].HavokName);
             }
 
-            //Container 2
+            // Container 2
             for (int i = 0; i < Gismos.Length; ++i)
             {
                 var gismo = Gismos[i];
-                writer.FillInOffset("containerTwoOffset_" + i, false);
+                writer.FillInOffset($"containerTwoOffset_{i}", false);
 
                 writer.Write((gismo.UnknownBoolean2) ? 1u : 0u);
                 writer.Write((gismo.UnknownBoolean3) ? 1u : 0u);
@@ -146,7 +156,7 @@ namespace HedgeLib.Misc
                 writer.Write(gismo.Unknown9);
             }
 
-			LWFileData.FinishWrite(writer);
+            writer.FinishWrite(Header);
         }
     }
 

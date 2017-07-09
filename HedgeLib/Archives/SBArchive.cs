@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using HedgeLib.IO;
+using System.IO;
 using System.Text;
 
 namespace HedgeLib.Archives
@@ -10,11 +11,8 @@ namespace HedgeLib.Archives
         private const int stringBufferSize = 0x20;
 
         //Constructors
-        public SBArchive() { }
-        public SBArchive(Archive arc)
-        {
-            Files = arc.Files;
-        }
+        public SBArchive() : base() { }
+        public SBArchive(Archive arc) : base(arc) { }
 
         //Methods
         public override void Load(Stream fileStream)
@@ -64,7 +62,7 @@ namespace HedgeLib.Archives
                 }
 
                 // Add File to Files List
-                Files.Add(new ArchiveFile(fileEntry.FileName, data));
+                Data.Add(new ArchiveFile(fileEntry.FileName, data));
             }
         }
 
@@ -73,28 +71,25 @@ namespace HedgeLib.Archives
         public override void Save(Stream fileStream)
         {
             // HEADER
+            var files = GetFiles(false);
             var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, true);
-            uint dataOffset = (uint)((stringBufferSize + 16) * Files.Count + 16);
+            uint dataOffset = (uint)((stringBufferSize + 16) * files.Count + 16);
             
-            writer.Write((uint)Files.Count); // File Count
-
+            writer.Write((uint)files.Count); // File Count
             writer.Write(0x10u); // File Entry Offset
-
             writer.Write(dataOffset); // File Data Offset
-            
             writer.Write(0x0u); // Unknown1
 
             // DATA
-
             char[] stringBuffer;
             int length = 0;
 
-            for (int i = 0; i < Files.Count; ++i)
+            for (int i = 0; i < files.Count; ++i)
             {
-                var file = Files[i];
+                var file = files[i];
                 
-                // TODO: Create a PRS Compression method in HedgeLib.
-                var compressedBytes = file.Data; // Compressed Data, not yet added
+                // TODO: Create a PRS Compression method in HedgeLib
+                var compressedBytes = file.Data; // Compressed Data
 
                 length = (file.Name.Length > stringBufferSize)
                     ? stringBufferSize : file.Name.Length;
@@ -103,23 +98,24 @@ namespace HedgeLib.Archives
 
                 file.Name.CopyTo(0, stringBuffer, 0, length);
 
-                writer.Write(stringBuffer); // Writes StringBuffer to stream (+0x000000)
-                writer.Write((uint)i); // FileIndex (+0x000020)
-                writer.Write(dataOffset); // DataOffset (+0x000024)
+                writer.Write(stringBuffer);                 // Writes StringBuffer to stream (+0x000000)
+                writer.Write((uint)i);                      // FileIndex (+0x000020)
+                writer.Write(dataOffset);                   // DataOffset (+0x000024)
                 writer.Write((uint)compressedBytes.Length); // Compressed FileSize (+0x000028)
-                writer.Write((uint)file.Data.Length); // Uncompressed FileSize (+0x00002C)
+                writer.Write((uint)file.Data.Length);       // Uncompressed FileSize (+0x00002C)
                 // Adds Compressed FileSize to dataOffset.
                 dataOffset += (uint)compressedBytes.Length; // Offset to where the next file is located
             }
 
-            // Seeks to dataOffset.
-            writer.Seek((stringBufferSize + 16) * Files.Count + 16, SeekOrigin.Begin);
+            // Seeks to dataOffset
+            writer.Seek((stringBufferSize + 16) * files.Count + 16, SeekOrigin.Begin);
 
-            // Writes all the compressed data.
-            for (int i = 0; i < Files.Count; ++i)
+            // Writes all the compressed data
+            for (int i = 0; i < files.Count; ++i)
             {
-                // TODO: Create a PRS Compression method in HedgeLib.
-                writer.Write(Files[i].Data); // Compressed data, Right now its uncompressed.
+                // TODO: Create a PRS Compression method in HedgeLib
+                var compressedBytes = files[i].Data;
+                writer.Write(compressedBytes); // Compressed data
             }
         }
 

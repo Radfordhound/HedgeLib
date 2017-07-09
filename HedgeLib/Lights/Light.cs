@@ -1,13 +1,14 @@
-﻿using HedgeLib.Bases;
+﻿using HedgeLib.Headers;
+using HedgeLib.IO;
 using System.IO;
 
 namespace HedgeLib.Lights
 {
-	//Based off of the wonderful SCHG page on Sonic Generations over at Sonic Retro
-	public class Light : FileBase
+    // Based off of the wonderful SCHG page on Sonic Generations over at Sonic Retro
+    public class Light : FileBase
     {
-		//Variables/Constants
-		public GensFileBase GensFileData = new GensFileBase();
+        //Variables/Constants
+        public GensHeader Header = new GensHeader();
         public Vector3 Position, Color;
         public float UnknownTotal1, UnknownTotal2, UnknownTotal3,
             UnknownFloat1, UnknownFloat2;
@@ -18,18 +19,19 @@ namespace HedgeLib.Lights
         //Methods
         public override void Load(Stream fileStream)
         {
-            //Header
-            var reader = new ExtendedBinaryReader(fileStream, true);
-			GensFileData.InitRead(reader);
+            // Header
+            var reader = new GensReader(fileStream, true);
+            Header = reader.ReadHeader();
 
-            //Root Node
+            // Root Node
             uint lightType = reader.ReadUInt32();
-			if (lightType < 0 || lightType > 1)
-			{
-				throw new InvalidDataException("Cannot read light - unknown light type!");
-			}
+            if (lightType < 0 || lightType > 1)
+            {
+                throw new InvalidDataException(
+                    $"Cannot read light - unknown light type! ({lightType})");
+            }
 
-            //Data
+            // Data
             LightType = (LightTypes)lightType;
 
             Position = reader.ReadVector3();
@@ -44,20 +46,17 @@ namespace HedgeLib.Lights
                 UnknownFloat1 = reader.ReadSingle();
                 UnknownFloat2 = reader.ReadSingle();
             }
-
-			GensFileData.FinishRead(reader);
         }
 
         public override void Save(Stream fileStream)
         {
-            //Header
-            var writer = new ExtendedBinaryWriter(fileStream, true);
-			GensFileData.InitWrite(writer);
+            // Header
+            var writer = new GensWriter(fileStream, true);
 
-            //Root Node
+            // Root Node
             writer.Write((uint)LightType);
 
-            //Data
+            // Data
             writer.Write(Position);
             writer.Write(Color);
 
@@ -71,13 +70,13 @@ namespace HedgeLib.Lights
                 writer.Write(UnknownFloat2);
             }
 
-			GensFileData.FinishWrite(writer);
+            writer.FinishWrite(Header);
         }
 
-		//Other
-		public enum LightTypes
-		{
-			Directional, Omni
-		}
-	}
+        //Other
+        public enum LightTypes
+        {
+            Directional, Omni
+        }
+    }
 }

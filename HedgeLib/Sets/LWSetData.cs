@@ -1,15 +1,15 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using HedgeLib.Bases;
 using System;
-using System.Text;
+using HedgeLib.Headers;
+using HedgeLib.IO;
 
 namespace HedgeLib.Sets
 {
-	public class LWSetData : SetData
+    public class LWSetData : SetData
     {
-		//Variables/Constants
-		public LWFileBase LWFileData = new LWFileBase();
+        //Variables/Constants
+        public BINAHeader Header = new BINAHeader();
 
         //Methods
         public override void Load(Stream fileStream,
@@ -19,24 +19,29 @@ namespace HedgeLib.Sets
                 throw new ArgumentNullException("objectTemplates",
                     "Cannot load LW set data without object templates.");
 
-			//Header
-			var reader = new ExtendedBinaryReader(fileStream);
-			LWFileData.InitRead(reader);
+            // Header
+            var reader = new BINAReader(fileStream, BINA.BINATypes.Version2);
+            Header = reader.ReadHeader();
 
-			//SOBJ Data
-			Objects = SOBJ.Read(reader, objectTemplates, true);
-			LWFileData.FinishRead(reader);
+            // SOBJ Data
+            Objects = SOBJ.Read(reader,
+                objectTemplates, SOBJ.SOBJType.LostWorld);
         }
 
-		public override void Save(Stream fileStream)
-		{
-			//Header
-			var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, true);
-			LWFileData.InitWrite(writer);
+        public override void Save(Stream fileStream)
+        {
+            Save(fileStream, true);
+        }
 
-			//SOBJ Data
-			SOBJ.Write(writer, LWFileData, Objects, true);
-			LWFileData.FinishWrite(writer);
-		}
-	}
+        public void Save(Stream fileStream, bool isBigEndian)
+        {
+            // Header
+            var writer = new BINAWriter(fileStream,
+                BINA.BINATypes.Version2, isBigEndian);
+
+            // SOBJ Data
+            SOBJ.Write(writer, Objects, SOBJ.SOBJType.LostWorld);
+            writer.FinishWrite(Header);
+        }
+    }
 }

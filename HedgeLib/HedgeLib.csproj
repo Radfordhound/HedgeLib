@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>HedgeLib</RootNamespace>
     <AssemblyName>HedgeLib</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -54,33 +54,35 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Archives\Archive.cs" />
+    <Compile Include="Archives\ArchiveData.cs" />
+    <Compile Include="Archives\ArchiveDirectory.cs" />
     <Compile Include="Archives\ArchiveFile.cs" />
     <Compile Include="Archives\GensArchive.cs" />
     <Compile Include="Archives\ONEArchive.cs" />
     <Compile Include="Archives\LWArchive.cs" />
     <Compile Include="Archives\SBArchive.cs" />
-    <Compile Include="Bases\ColorsFileBase.cs" />
-    <Compile Include="Bases\IGameFormatBase.cs" />
-    <Compile Include="Bases\LWFileBase.cs" />
+    <Compile Include="IO\Gens.cs" />
     <Compile Include="Exceptions\InvalidSignatureException.cs" />
-    <Compile Include="ExtendedBinary.cs" />
-    <Compile Include="Bases\FileBase.cs" />
-    <Compile Include="Bases\GensFileBase.cs" />
+    <Compile Include="IO\ExtendedBinary.cs" />
+    <Compile Include="IO\FileBase.cs" />
     <Compile Include="Collison\Havok.cs" />
-    <Compile Include="Headers\ColorsHeader.cs" />
+    <Compile Include="Headers\BINAHeader.cs" />
     <Compile Include="Headers\GensHeader.cs" />
-    <Compile Include="Headers\LWHeader.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="Lights\GensLightList.cs" />
     <Compile Include="Lights\Light.cs" />
-    <Compile Include="Misc\BINA.cs" />
+    <Compile Include="IO\BINA.cs" />
     <Compile Include="Misc\GensStageXML.cs" />
     <Compile Include="Misc\LWGism.cs" />
+    <Compile Include="Models\Mesh.cs" />
+    <Compile Include="Models\Model.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Quaternion.cs" />
     <Compile Include="Sets\ColorsSetData.cs" />
     <Compile Include="Sets\GensSetData.cs" />
+    <Compile Include="Sets\HeroesSetData.cs" />
     <Compile Include="Sets\LWSetData.cs" />
+    <Compile Include="Sets\S06SetData.cs" />
     <Compile Include="Sets\SetData.cs" />
     <Compile Include="Sets\SetObject.cs" />
     <Compile Include="Sets\SetObjectType.cs" />
@@ -90,15 +92,14 @@
     <Compile Include="Types.cs" />
     <Compile Include="Vector.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Models\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <None Include=".editorconfig" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>IF EXIST "$(SolutionDir)HedgeEdit\Assets\Libraries" copy /Y "$(TargetPath)" "$(SolutionDir)HedgeEdit\Assets\Libraries\$(TargetFileName)"</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

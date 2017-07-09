@@ -1,24 +1,25 @@
-﻿using HedgeLib.Bases;
+﻿using HedgeLib.IO;
 using HedgeLib.Exceptions;
+using HedgeLib.Headers;
+using HedgeLib.Misc;
 using System.IO;
-using System.Text;
 
 namespace HedgeLib.Sound
 {
-	public class ColorsSNDL : FileBase
+    public class ColorsSNDL : FileBase
 	{
 		//Variables/Constants
 		public string[] SoundEntries;
+		public BINAHeader Header = new BINAHeader();
 
-		public ColorsFileBase ColorsFileData = new ColorsFileBase();
 		public const string Signature = "\0SOU", Extension = ".sndl.orc";
 
 		//Methods
 		public override void Load(Stream fileStream)
 		{
 			// HEADER
-			var reader = new ExtendedBinaryReader(fileStream, Encoding.ASCII, true);
-			ColorsFileData.InitRead(reader);
+			var reader = new BINAReader(fileStream, BINA.BINATypes.Version1);
+            Header = reader.ReadHeader();
 
 			string sig = reader.ReadSignature(4);
 			if (sig != Signature)
@@ -45,20 +46,18 @@ namespace HedgeLib.Sound
 				reader.JumpTo(soundNameOffsets[i], false);
 				SoundEntries[i] = reader.ReadNullTerminatedString();
 			}
-
-			ColorsFileData.FinishRead(reader);
 		}
 
 		public override void Save(Stream fileStream)
 		{
 			// HEADER
-			var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, true);
-			ColorsFileData.InitWrite(writer);
+			var writer = new BINAWriter(fileStream,
+                BINA.BINATypes.Version1, true);
 
 			writer.WriteSignature(Signature);
-			writer.Write(1u); //TODO: Figure out what this value is.
+			writer.Write(1u); // TODO: Figure out what this value is.
 			writer.Write(SoundEntries.Length);
-			ColorsFileData.AddOffset(writer, "soundEntriesOffset");
+			writer.AddOffset("soundEntriesOffset");
 
 			// DATA
 			writer.FillInOffset("soundEntriesOffset", false);
@@ -66,11 +65,10 @@ namespace HedgeLib.Sound
 			for (uint i = 0; i < SoundEntries.Length; ++i)
 			{
 				writer.Write(i);
-				ColorsFileData.AddString(writer,
-					$"soundEntry_{i}", SoundEntries[i]);
+				writer.AddString($"soundEntry_{i}", SoundEntries[i]);
 			}
 
-			ColorsFileData.FinishWrite(writer);
+			writer.FinishWrite(Header);
 		}
 	}
 }

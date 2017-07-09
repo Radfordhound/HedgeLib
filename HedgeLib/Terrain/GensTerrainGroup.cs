@@ -1,31 +1,32 @@
-﻿using HedgeLib.Bases;
+﻿using HedgeLib.Headers;
+using HedgeLib.IO;
 using System.IO;
 
 namespace HedgeLib.Terrain
 {
-	//Based off of the wonderful SCHG page on Sonic Generations over at Sonic Retro
-	public class GensTerrainGroup : FileBase
+    // Based off of the wonderful SCHG page on Sonic Generations over at Sonic Retro
+    public class GensTerrainGroup : FileBase
     {
         //Variables/Constants
         public InstanceInfo[] InstanceInfos;
         public string[] TerrainModels;
-        public GensFileBase GensFileData = new GensFileBase();
+        public GensHeader Header = new GensHeader();
 
         //Methods
         public override void Load(Stream fileStream)
         {
-            //Header
-            var reader = new ExtendedBinaryReader(fileStream, true);
-			GensFileData.InitRead(reader);
+            // Header
+            var reader = new GensReader(fileStream, true);
+            Header = reader.ReadHeader();
 
-            //Root Node
+            // Root Node
             uint instanceInfoCount = reader.ReadUInt32();
             uint instanceInfoOffsetsOffset = reader.ReadUInt32();
 
             uint terrainModelCount = reader.ReadUInt32();
             uint terrainModelOffsetsOffset = reader.ReadUInt32();
 
-            //Instance Infos
+            // Instance Infos
             InstanceInfos = new InstanceInfo[instanceInfoCount];
             reader.JumpTo(instanceInfoOffsetsOffset, false);
 
@@ -33,7 +34,7 @@ namespace HedgeLib.Terrain
             {
                 var instanceInfo = new InstanceInfo();
                 uint instanceInfoOffset = reader.ReadUInt32();
-				long curPos = reader.BaseStream.Position;
+                long curPos = reader.BaseStream.Position;
                 reader.JumpTo(instanceInfoOffset, false);
 
                 uint fileNameCount = reader.ReadUInt32();
@@ -41,14 +42,14 @@ namespace HedgeLib.Terrain
                 uint boundingSphereOffset = reader.ReadUInt32();
                 reader.JumpTo(fileNameOffsetsOffset, false);
 
-                //File Names
+                // File Names
                 instanceInfo.FileNames = new string[fileNameCount];
                 for (uint i2 = 0; i2 < fileNameCount; ++i2)
                 {
                     instanceInfo.FileNames[i2] = reader.GetString();
                 }
 
-                //Bounding Sphere
+                // Bounding Sphere
                 reader.JumpTo(boundingSphereOffset, false);
                 instanceInfo.BoundingSphereCenter = reader.ReadVector3();
                 instanceInfo.BoundingSphereRadius = reader.ReadSingle();
@@ -57,7 +58,7 @@ namespace HedgeLib.Terrain
                 reader.BaseStream.Position = curPos;
             }
 
-            //Terrain Models
+            // Terrain Models
             TerrainModels = new string[terrainModelCount];
             reader.JumpTo(terrainModelOffsetsOffset, false);
 
@@ -65,27 +66,23 @@ namespace HedgeLib.Terrain
             {
                 TerrainModels[i] = reader.GetString();
             }
-
-			GensFileData.FinishRead(reader);
         }
 
         public override void Save(Stream fileStream)
         {
-            //Header
-            var writer = new ExtendedBinaryWriter(fileStream, true);
-			GensFileData.InitWrite(writer);
+            // Header
+            var writer = new GensWriter(fileStream, Header, true);
 
-            //Root Node
+            // Root Node
             writer.Write(InstanceInfos.Length);
-            GensFileData.AddOffset(writer, "instanceInfoOffsetsOffset");
+            writer.AddOffset("instanceInfoOffsetsOffset");
 
             writer.Write(TerrainModels.Length);
-            GensFileData.AddOffset(writer, "terrainModelOffsetsOffset");
+            writer.AddOffset("terrainModelOffsetsOffset");
 
-            //Instance Infos
+            // Instance Infos
             writer.FillInOffset("instanceInfoOffsetsOffset", false);
-			GensFileData.AddOffsetTable(writer, "instanceInfoOffset",
-				(uint)InstanceInfos.Length);
+            writer.AddOffsetTable("instanceInfoOffset", (uint)InstanceInfos.Length);
 
             for (int i = 0; i < InstanceInfos.Length; ++i)
             {
@@ -93,47 +90,45 @@ namespace HedgeLib.Terrain
                 writer.FillInOffset("instanceInfoOffset_" + i, false);
 
                 writer.Write(instanceInfo.FileNames.Length);
-				GensFileData.AddOffset(writer, "fileNameOffsetOffset");
-				GensFileData.AddOffset(writer, "boundingSphereOffset");
+                writer.AddOffset("fileNameOffsetOffset");
+                writer.AddOffset("boundingSphereOffset");
 
-                //File Names
+                // File Names
                 writer.FillInOffset("fileNameOffsetOffset", false);
-				GensFileData.AddOffsetTable(writer, "fileNameOffset",
-					(uint)instanceInfo.FileNames.Length);
+                writer.AddOffsetTable("fileNameOffset",
+                    (uint)instanceInfo.FileNames.Length);
 
                 for (int i2 = 0; i2 < instanceInfo.FileNames.Length; ++i2)
                 {
-                    writer.FillInOffset("fileNameOffset_" + i2, false);
+                    writer.FillInOffset($"fileNameOffset_{i2}", false);
                     writer.WriteNullTerminatedString(instanceInfo.FileNames[i2]);
                     writer.FixPadding(4);
                 }
 
-                //Bounding Sphere
+                // Bounding Sphere
                 writer.FillInOffset("boundingSphereOffset", false);
                 writer.Write(instanceInfo.BoundingSphereCenter);
                 writer.Write(instanceInfo.BoundingSphereRadius);
             }
 
-            //Terrain Models
+            // Terrain Models
             writer.FillInOffset("terrainModelOffsetsOffset", false);
-			GensFileData.AddOffsetTable(writer, "terrainModelOffset",
-				(uint)TerrainModels.Length);
+            writer.AddOffsetTable("terrainModelOffset", (uint)TerrainModels.Length);
 
             for (int i = 0; i < TerrainModels.Length; ++i)
             {
-                writer.FillInOffset("terrainModelOffset_" + i, false);
+                writer.FillInOffset($"terrainModelOffset_{i}", false);
                 writer.WriteNullTerminatedString(TerrainModels[i]);
                 writer.FixPadding(4);
             }
 
-			GensFileData.FinishWrite(writer);
+            writer.FinishWrite(Header);
         }
 
         //Other
         public struct InstanceInfo
         {
             public string[] FileNames;
-
             public Vector3 BoundingSphereCenter;
             public float BoundingSphereRadius;
         }

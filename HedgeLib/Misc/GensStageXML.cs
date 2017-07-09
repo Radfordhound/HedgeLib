@@ -1,5 +1,5 @@
 ﻿using System.IO;
-using HedgeLib.Bases;
+using HedgeLib.IO;
 using System.Xml.Linq;
 using System;
 using System.Collections.Generic;
@@ -18,7 +18,7 @@ namespace HedgeLib.Misc
 		//Methods
 		public override void Load(Stream fileStream)
 		{
-			var xml = Helpers.GetXDocStream(fileStream);
+			var xml = XDocument.Load(fileStream);
 
 			foreach (var elem in xml.Root.Elements())
 			{

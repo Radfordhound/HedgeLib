@@ -4,15 +4,12 @@ namespace HedgeLib.Archives
 {
     public class LWArchive : Archive
     {
-		//Variables/Constants
-		public const string Extension = ".pac";
+        //Variables/Constants
+        public const string Extension = ".pac";
 
-		//Constructors
-		public LWArchive() { }
-		public LWArchive(Archive arc)
-		{
-			Files = arc.Files;
-		}
+        //Constructors
+        public LWArchive() : base() { }
+        public LWArchive(Archive arc) : base(arc) { }
 
         //Methods
         public override void Load(Stream fileStream)

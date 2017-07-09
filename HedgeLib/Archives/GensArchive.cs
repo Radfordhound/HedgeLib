@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HedgeLib.IO;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -16,11 +17,8 @@ namespace HedgeLib.Archives
         public const uint Sig1 = 0, Sig2 = 0x10, Sig3 = 0x14;
 
         //Constructors
-        public GensArchive() { }
-        public GensArchive(Archive arc)
-        {
-            Files = arc.Files;
-        }
+        public GensArchive() : base() { }
+        public GensArchive(Archive arc) : base(arc) { }
 
         //Methods
         public override void Load(string filePath)
@@ -61,15 +59,15 @@ namespace HedgeLib.Archives
 
         public override void Load(Stream fileStream)
         {
-            //Header
+            // Header
             var reader = new ExtendedBinaryReader(fileStream);
 
-            //Apparently SEGA doesn't even do signature checking (try loading an AR in-game
-            //with the first 0xC bytes set to 0, it works just fine), so why should we?
+            // Apparently SEGA doesn't even do signature checking (try loading an AR in-game
+            // with the first 0xC bytes set to 0, it works just fine), so why should we?
             reader.JumpAhead(0xC);
             Padding = reader.ReadUInt32();
 
-            //Data
+            // Data
             while (reader.BaseStream.Position < reader.BaseStream.Length)
             {
                 reader.Offset = (uint)reader.BaseStream.Position;
@@ -90,7 +88,7 @@ namespace HedgeLib.Archives
                     Name = name,
                     Data = data
                 };
-                Files.Add(file);
+                Data.Add(file);
             }
         }
 
@@ -135,7 +133,7 @@ namespace HedgeLib.Archives
                 }
             }
 
-            //Generate ARL
+            // Generate ARL
             if (!generateARL) return;
             string arlPath = Path.Combine(fileInfo.DirectoryName,
                 $"{shortName}{ListExtension}");
@@ -154,6 +152,7 @@ namespace HedgeLib.Archives
         public int Save(Stream fileStream, uint? sizeLimit, int startIndex = 0)
         {
             //Header
+            var files = GetFiles(false);
             var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, false);
 
             writer.Write(Sig1);
@@ -169,19 +168,19 @@ namespace HedgeLib.Archives
                     "The sizeLimit argument must at least be greater than 36.");
             }
 
-            //Data
-            for (int i = startIndex; i < Files.Count; ++i)
+            // Data
+            for (int i = startIndex; i < files.Count; ++i)
             {
-                var file = Files[i];
-                writer.Offset = writer.BaseStream.Position;
+                var file = files[i];
+                writer.Offset = (uint)writer.BaseStream.Position;
                 if (sizeLimit.HasValue && i > startIndex && writer.BaseStream.Position +
-                    21 + file.Data.Length > sizeLimit) // cuz file entries must be >= 21 bytes
+                    21 + file.Data.Length > sizeLimit) // 'Cuz file entries must be >= 21 bytes
                     return i;
 
                 writer.AddOffset("dataEndOffset");
                 writer.Write((uint)file.Data.LongLength);
                 writer.AddOffset("dataStartOffset");
-                writer.WriteNulls(8); //TODO: Figure out what unknown1 and unknown2 are.
+                writer.WriteNulls(8); // TODO: Figure out what unknown1 and unknown2 are.
                 writer.WriteNullTerminatedString(file.Name);
                 writer.FixPadding(Padding);
                 
@@ -195,7 +194,7 @@ namespace HedgeLib.Archives
 
         public void GenerateARL(Stream fileStream, List<uint> archiveSizes)
         {
-            //Header
+            // Header
             var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, false);
             writer.WriteSignature(ARLSignature);
 
@@ -203,8 +202,8 @@ namespace HedgeLib.Archives
             foreach (uint arcSize in archiveSizes)
                 writer.Write(arcSize);
 
-            //Data
-            foreach (var file in Files)
+            // Data
+            foreach (var file in Data)
                 writer.Write(file.Name);
         }
 

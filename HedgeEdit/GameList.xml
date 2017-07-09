@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<GameList version="1.0">
+	<Game shortName="Generations" name="Sonic Generations" dataType="Gens">
+		<UnpackInfo>
+			<!-- #Arc (E.G. #ghz200) -->
+			<Archive path="#{0}.ar.00" cachePath="#{0}" /> 
+			<!-- Arc (E.G. ghz200) -->
+			<Archive path="{0}.ar.00" cachePath="{0}" /> 
+			<!-- Packed Arc (E.G. Packed/ghz200) -->
+			<Archive path="Packed/{0}/{0}.ar.00" cachePath="Packed/{0}" />
+			<!-- TODO: Add Stage.pfd -->
+			<!-- TODO: Add Stage-Add.pfd -->
+		</UnpackInfo>
+		
+		<LoadInfo>
+			<File type="gensStageXML">#{0}/Stage.stg.xml</File>
+			<File type="lightList">Packed/{0}/light-list.light-list</File>
+			<Directory type="setData" filter="*.set.xml">#{0}</Directory>
+			<!-- TODO -->
+		</LoadInfo>
+	</Game>
+	
+	<Game shortName="Unleashed" name="Sonic Unleashed" dataType="Gens">
+		<UnpackInfo>
+			<!-- #Arc (E.G. #ActD_MykonosAct2) -->
+			<Archive path="#{0}.ar.00" cachePath="#{0}" /> 
+			<!-- Arc (E.G. ActD_MykonosAct2) -->
+			<Archive path="{0}.ar.00" cachePath="{0}" /> 
+			<!-- TODO: Add Stage.pfd -->
+			<!-- TODO: Add Stage-Add.pfd -->
+		</UnpackInfo>
+		
+		<LoadInfo>
+			<!-- TODO: SU Stage XML -->
+			<Directory type="setData" filter="*.set.xml">#{0}</Directory>
+			<File type="lightList">Packed/{0}/light-list.light-list</File>
+			<!-- TODO -->
+		</LoadInfo>
+	</Game>
+	
+	<Game shortName="Lost World" name="Sonic Lost World" dataType="LW" unitMultiplier="0.1">
+		<UnpackInfo>
+			<!-- Misc PAC (E.G. w1a01_misc) -->
+			<!-- <Archive path="{0}/{0}_misc.pac" cachePath="{0}/misc" /> -->
+			<!-- Far PAC (E.G. w1a01_far) -->
+			<!-- <Archive path="{0}/{0}_far.pac" cachePath="{0}/far" /> -->
+			<!-- Obj PAC (E.G. w1a01_obj) -->
+			<!-- <Archive path="{0}/{0}_obj.pac" cachePath="{0}/obj" /> -->
+			<!-- Sky PAC (E.G. w1a01_sky) -->
+			<!-- <Archive path="{0}/{0}_sky.pac" cachePath="{0}/sky" /> -->
+			<!-- Trr_Cmn PAC (E.G w1a01_trr_cmn) -->
+			<!-- <Archive path="{0}/{0}_trr_cmn.pac" cachePath="{0}/trr_cmn"/> -->
+			
+			<!-- Set Data -->
+			<Files searchPattern="{0}_obj_**.orc" path="set" cachePath="set/{1}" />
+			<!-- Config.lua -->
+			<File path="{0}/{0}_config.lua" cachePath="{0}/{0}_config.lua" />
+		</UnpackInfo>
+		
+		<LoadInfo>
+			<Directory type="setData" filter="*.orc">set</Directory>
+			<Directory type="light" filter="*.light">{0}/trr_cmn</Directory>
+			
+			<!-- TODO: Add filters to these directory elements -->
+			<Directory type="terrain">{0}/trr_cmn|{0}/far</Directory>
+			<Directory type="sky">{0}/sky</Directory>
+			<Directory type="objects">{0}/obj</Directory>
+			
+			<File type="collision">{0}/misc/{0}_col.phy.hkx</File>
+			<File type="sceneEffect">{0}/misc/{0}.hhd</File>
+			<!-- <File type="pathData">{0}/misc/{0}_path.path2.bin</File> -->
+		</LoadInfo>
+	</Game>
+	
+	<Game shortName="Colors" name="Sonic Colors" dataType="Colors" unitMultiplier="0.1">
+		<UnpackInfo>
+			<!-- Set Data -->
+			<Files searchPattern="{0}_obj_**.orc" path="set" cachePath="set/{1}" />
+			<!-- Config.lua -->
+			<File path="{0}/{0}_config.lua" cachePath="{0}/{0}_config.lua" />
+		</UnpackInfo>
+		
+		<LoadInfo>
+			<Directory type="setData" filter="*.orc">set</Directory>
+			<File type="pathData">{0}/path/{0}_path.path.bin</File>
+		</LoadInfo>
+	</Game>
+	
+	<Game shortName="Heroes" name="Sonic Heroes" dataType="Heroes" unitMultiplier="0.1">
+		<UnpackInfo>
+			<!-- Set Data -->
+			<Files searchPattern="{0}_P*.bin" path="test" cachePath="set/{1}" />
+		</UnpackInfo>
+		
+		<LoadInfo>
+			<Directory type="setData" filter="*.bin">set</Directory>
+		</LoadInfo>
+	</Game>
+</GameList>
