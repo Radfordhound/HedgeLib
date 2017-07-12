@@ -6,7 +6,7 @@ using System.Xml.Linq;
 
 namespace HedgeLib.Sets
 {
-	public class SetObjectType : FileBase
+    public class SetObjectType : FileBase
     {
         //Variables/Constants
         public List<SetObjectTypeParam> Parameters = new List<SetObjectTypeParam>();
@@ -26,7 +26,7 @@ namespace HedgeLib.Sets
             var nameAttr = xml.Root.Attribute("name");
             if (nameAttr != null)
                 Name = nameAttr.Value;
-            
+
             foreach (var element in xml.Root.Elements())
             {
                 string elemName = element.Name.LocalName;
@@ -58,6 +58,28 @@ namespace HedgeLib.Sets
             }
         }
 
+        public override void Save(Stream fileStream)
+        {
+            var xml = new XDocument();
+            var root = new XElement("Template");
+            if (!string.IsNullOrEmpty(Name))
+                root.Add(new XAttribute("name", Name));
+
+            foreach (var param in Parameters)
+            {
+                var paramElement = new XElement(param.Name);
+                // TODO
+                string typeName = new Microsoft.CSharp.CSharpCodeProvider()
+                    .GetTypeOutput(new System.CodeDom.CodeTypeReference(param.DataType));
+                paramElement.Add(new XAttribute("type", typeName));
+                paramElement.Add(new XAttribute("default", param.DefaultValue));
+                paramElement.Add(new XAttribute("description", param.Description));
+                root.Add(paramElement);
+            }
+            xml.Add(root);
+            xml.Save(fileStream);
+        }
+
         public SetObjectTypeParam GetParameter(string name)
         {
             foreach (var param in Parameters)
@@ -74,7 +96,7 @@ namespace HedgeLib.Sets
             var param = new SetObjectTypeParam(name, dataType);
             Parameters.Add(param);
 
-            return Parameters[Parameters.Count-1];
+            return Parameters[Parameters.Count - 1];
         }
     }
 
