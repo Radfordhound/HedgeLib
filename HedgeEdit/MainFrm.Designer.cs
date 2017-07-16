@@ -28,10 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.ListViewItem listViewItem9 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem(new string[] {
             "FirstSpeed",
             "100"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem10 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem4 = new System.Windows.Forms.ListViewItem(new string[] {
             "OutOfControl",
             "0.5"}, -1);
             this.menuStrip = new System.Windows.Forms.MenuStrip();
@@ -71,9 +71,9 @@
             this.viewSelectedBtn = new System.Windows.Forms.Button();
             this.objectSelectedLbl = new System.Windows.Forms.Label();
             this.objectProperties = new System.Windows.Forms.ListView();
-            this.objectNameLbl = new System.Windows.Forms.Label();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.objectNameLbl = new System.Windows.Forms.Label();
             this.menuStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.mainSplitContainer)).BeginInit();
             this.mainSplitContainer.Panel1.SuspendLayout();
@@ -273,7 +273,7 @@
             // 
             this.viewSelectedMenuItem.Enabled = false;
             this.viewSelectedMenuItem.Name = "viewSelectedMenuItem";
-            this.viewSelectedMenuItem.Size = new System.Drawing.Size(210, 30);
+            this.viewSelectedMenuItem.Size = new System.Drawing.Size(204, 30);
             this.viewSelectedMenuItem.Text = "View &Selected";
             this.viewSelectedMenuItem.Click += new System.EventHandler(this.ViewSelectedMenuItem_Click);
             // 
@@ -288,6 +288,8 @@
             this.viewport.TabIndex = 1;
             this.viewport.VSync = true;
             this.viewport.Paint += new System.Windows.Forms.PaintEventHandler(this.Viewport_Paint);
+            this.viewport.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Viewport_MouseDown);
+            this.viewport.MouseUp += new System.Windows.Forms.MouseEventHandler(this.Viewport_MouseUp);
             this.viewport.Resize += new System.EventHandler(this.Viewport_Resize);
             // 
             // mainSplitContainer
@@ -505,11 +507,11 @@
             this.columnHeader2});
             this.objectProperties.Dock = System.Windows.Forms.DockStyle.Fill;
             this.objectProperties.FullRowSelect = true;
-            listViewItem9.ToolTipText = "How much speed the spring sends you off with.";
-            listViewItem10.ToolTipText = "How long the game locks your control.";
+            listViewItem3.ToolTipText = "How much speed the spring sends you off with.";
+            listViewItem4.ToolTipText = "How long the game locks your control.";
             this.objectProperties.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem9,
-            listViewItem10});
+            listViewItem3,
+            listViewItem4});
             this.objectProperties.Location = new System.Drawing.Point(0, 35);
             this.objectProperties.MultiSelect = false;
             this.objectProperties.Name = "objectProperties";
@@ -518,6 +520,16 @@
             this.objectProperties.TabIndex = 0;
             this.objectProperties.UseCompatibleStateImageBehavior = false;
             this.objectProperties.View = System.Windows.Forms.View.Details;
+            // 
+            // columnHeader1
+            // 
+            this.columnHeader1.Text = "Name";
+            this.columnHeader1.Width = 150;
+            // 
+            // columnHeader2
+            // 
+            this.columnHeader2.Text = "Value";
+            this.columnHeader2.Width = 90;
             // 
             // objectNameLbl
             // 
@@ -530,16 +542,6 @@
             this.objectNameLbl.TabIndex = 2;
             this.objectNameLbl.Text = "Spring";
             this.objectNameLbl.TextAlign = System.Drawing.ContentAlignment.TopCenter;
-            // 
-            // columnHeader1
-            // 
-            this.columnHeader1.Text = "Name";
-            this.columnHeader1.Width = 150;
-            // 
-            // columnHeader2
-            // 
-            this.columnHeader2.Text = "Value";
-            this.columnHeader2.Width = 90;
             // 
             // MainFrm
             // 
