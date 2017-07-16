@@ -6,7 +6,7 @@ namespace HedgeLib.Archives
     public class ArchiveDirectory : ArchiveData
     {
         //Variables/Constants
-        public List<ArchiveData> Files = new List<ArchiveData>();
+        public List<ArchiveData> Data = new List<ArchiveData>();
         public ArchiveDirectory Parent = null;
 
         //Constructors
@@ -20,7 +20,7 @@ namespace HedgeLib.Archives
         public override void Extract(string directory)
         {
             Directory.CreateDirectory(directory);
-            foreach (var file in Files)
+            foreach (var file in Data)
             {
                 file.Extract(Helpers.CombinePaths(directory, file.Name));
             }

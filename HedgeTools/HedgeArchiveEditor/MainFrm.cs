@@ -245,7 +245,7 @@ namespace HedgeArchiveEditor
             if (!refreshFileList || listView == null) return;
 
             var files = ArchiveCurrentDir[archive] == null ?
-                archive.Data : ArchiveCurrentDir[archive].Files;
+                archive.Data : ArchiveCurrentDir[archive].Data;
             
             UpdateList(files, ArchiveCurrentDir[archive] == null);
         }
@@ -287,7 +287,7 @@ namespace HedgeArchiveEditor
                 // Current Directory
                 var dir = ArchiveCurrentDir[archive];
 
-                files = dir.Files;                          // Change List to the Current Directory's List
+                files = dir.Data;                          // Change List to the Current Directory's List
                 var lvi = new ListViewItem("..");
                 lvi.Tag = dir.Parent;                       // Paent Directory
                 lvi.ImageKey = "-Directory";                // Directory Icon
@@ -402,7 +402,7 @@ namespace HedgeArchiveEditor
         public void AddFilesToArchive(Archive archive, params string[] filePaths)
         {
             var files = ArchiveCurrentDir[archive] == null ?
-                archive.Data : ArchiveCurrentDir[archive].Files;
+                archive.Data : ArchiveCurrentDir[archive].Data;
             foreach (var file in filePaths)
             {
                 if (File.GetAttributes(file) != FileAttributes.Directory)
@@ -435,7 +435,7 @@ namespace HedgeArchiveEditor
 
         public void AddDirectoryToArchiveDirectory(Archive archive, ArchiveDirectory directory, string directoryPath)
         {
-            var files = directory == null ? archive.Data : directory.Files;
+            var files = directory == null ? archive.Data : directory.Data;
             var fileInfo = new FileInfo(directoryPath);
             var archiveFile = files.Find(
                    t => t.Name.ToLower() == fileInfo.Name.ToLower());
@@ -453,7 +453,7 @@ namespace HedgeArchiveEditor
             newDirectory.Parent = directory;
 
             foreach (string filePath in Directory.GetFiles(directoryPath))
-                newDirectory.Files.Add(new ArchiveFile(filePath));
+                newDirectory.Data.Add(new ArchiveFile(filePath));
 
             foreach (string directoryPath2 in Directory.GetDirectories(directoryPath, "*",
                 SearchOption.TopDirectoryOnly))
@@ -622,7 +622,7 @@ namespace HedgeArchiveEditor
         {
             var archive = CurrentArchive;
             var files = ArchiveCurrentDir[archive] == null ?
-                archive.Data : ArchiveCurrentDir[archive].Files;
+                archive.Data : ArchiveCurrentDir[archive].Data;
             // TODO: Allow user to change the directory name at creation
             var directory = new ArchiveDirectory("New Folder");
             if (files.FindIndex(t => t.Name == "New Folder") != -1)
@@ -656,7 +656,7 @@ namespace HedgeArchiveEditor
                 {
                     var archive = CurrentArchive;
                     var files = ArchiveCurrentDir[archive] == null ?
-                        archive.Data : ArchiveCurrentDir[archive].Files;
+                        archive.Data : ArchiveCurrentDir[archive].Data;
                     var fileInfo = new FileInfo(sfd.FileName);
                     var pb = new ToolStripProgressBar();
 
@@ -711,7 +711,7 @@ namespace HedgeArchiveEditor
                 {
                     var archive = CurrentArchive;
                     var files = ArchiveCurrentDir[archive] == null ?
-                        archive.Data : ArchiveCurrentDir[archive].Files;
+                        archive.Data : ArchiveCurrentDir[archive].Data;
                     var listView = tabControl.SelectedTab.Controls[0] as ListView;
                     var pb = new ToolStripProgressBar();
                     string directoryPath = new FileInfo(sfd.FileName).Directory.FullName;
@@ -751,7 +751,7 @@ namespace HedgeArchiveEditor
             {
                 var archive = CurrentArchive;
                 var files = ArchiveCurrentDir[archive] == null ?
-                    archive.Data : ArchiveCurrentDir[archive].Files;
+                    archive.Data : ArchiveCurrentDir[archive].Data;
                 var listView = tabControl.SelectedTab.Controls[0] as ListView;
                 archive.Saved = false;
                 new System.Threading.Thread(() =>
@@ -848,7 +848,7 @@ namespace HedgeArchiveEditor
         {
             var archive = CurrentArchive;
             var files = ArchiveCurrentDir[archive] == null ?
-                archive.Data : ArchiveCurrentDir[archive].Files;
+                archive.Data : ArchiveCurrentDir[archive].Data;
             var listView = tabControl.SelectedTab.Controls[0] as ListView;
             var pb = new ToolStripProgressBar();
             var fileList = new List<string>();
@@ -979,7 +979,7 @@ namespace HedgeArchiveEditor
             var listView = sender as ListView;
             var archive = CurrentArchive;
             var files = ArchiveCurrentDir[archive] == null ?
-                archive.Data : ArchiveCurrentDir[archive].Files;
+                archive.Data : ArchiveCurrentDir[archive].Data;
             // Checks if the user has changed the name, If not then return.
             if (prevName == e.Label || e.Label == null) return;
 
@@ -1017,7 +1017,7 @@ namespace HedgeArchiveEditor
             var listView = sender as ListView;
             var archive = CurrentArchive;
             var files = ArchiveCurrentDir[archive] == null ?
-                archive.Data : ArchiveCurrentDir[archive].Files;
+                archive.Data : ArchiveCurrentDir[archive].Data;
             var path = Path.Combine(tempPath, "Extracted_Files\\");
             Directory.CreateDirectory(path);
             if (listView.SelectedItems.Count == 1)
@@ -1052,7 +1052,7 @@ namespace HedgeArchiveEditor
         {
             var archive = CurrentArchive;
             var files = ArchiveCurrentDir[archive] == null ?
-                archive.Data : ArchiveCurrentDir[archive].Files;
+                archive.Data : ArchiveCurrentDir[archive].Data;
             var listView = sender as ListView;
             var fileList = new List<string>();
             string path = Path.Combine(tempPath, "Extracted_Files\\");
