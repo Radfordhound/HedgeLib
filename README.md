@@ -2,7 +2,7 @@
 
 *(Thanks to [Gotta Play Fast](https://www.youtube.com/channel/UCZfOGBkXRKICFozWU5bE0Xg) for the wonderful project logo!)*
 
-**IMPORTANT:** All code committed to this repository, preferrably, should follow [these style guidelines](https://github.com/Radfordhound/HedgeLib/wiki/Code-Style).
+**IMPORTANT:** All code committed to this repository, preferably, should follow [these style guidelines](https://github.com/Radfordhound/HedgeLib/wiki/Code-Style).
 
 HedgeLib is a C# library [under the MIT license](https://github.com/Radfordhound/HedgeLib/blob/master/License.txt) that aims to make modding games in the Sonic the Hedgehog franchise easier, similar to [Dario's excellent "LibGens".](https://github.com/DarioSamo/libgens-sonicglvl)
 
@@ -43,8 +43,11 @@ A collection of miscellaneous tools that utilize HedgeLib to allow editing a wid
 
 Right now this includes the following:
 
+- [Hedge Archive Packer](HedgeTools/HedgeArcPack)
+  * A Command Line tool that allows quick and powerful editing of archiving formats from all games HedgeLib supports.
+
 - [Hedge Archive Editor](HedgeTools/HedgeArchiveEditor)
-  * A GUI/Command-Line tool that allows editing of archiving formats from all games HedgeLib supports.
+  * A GUI tool that allows easy editing of archiving formats from all games HedgeLib supports.
 
 - [Hedge GISM Editor](HedgeTools/HedgeGISMEditor)
   * A GUI tool that allows editing of the Lost World GISM format (basically a list of "Gismos" used by a stage).

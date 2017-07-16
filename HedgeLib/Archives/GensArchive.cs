@@ -16,6 +16,8 @@ namespace HedgeLib.Archives
             PFDExtension = ".pfd", SplitExtension = ".00";
         public const uint Sig1 = 0, Sig2 = 0x10, Sig3 = 0x14;
 
+        public override bool HasSplitArchives => true;
+
         //Constructors
         public GensArchive() : base() { }
         public GensArchive(Archive arc) : base(arc) { }

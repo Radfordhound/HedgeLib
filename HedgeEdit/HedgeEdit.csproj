@@ -58,6 +58,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EditorCache.cs" />
+    <Compile Include="GameList.cs" />
     <Compile Include="HedgeEditModel.cs" />
     <Compile Include="MainFrm.cs">
       <SubType>Form</SubType>
@@ -68,6 +70,14 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Shaders.cs" />
+    <Compile Include="Stage.cs" />
+    <Compile Include="StgOpenDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="StgOpenDialog.Designer.cs">
+      <DependentUpon>StgOpenDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Types.cs" />
     <Compile Include="Viewport.cs" />
     <EmbeddedResource Include="MainFrm.resx">
       <DependentUpon>MainFrm.cs</DependentUpon>
@@ -82,6 +92,9 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="StgOpenDialog.resx">
+      <DependentUpon>StgOpenDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="app.manifest" />
     <None Include="Cache\README.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -100,6 +113,7 @@
     <None Include="Resources\README.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Resources\DefaultCube.txt" />
     <Content Include="Shaders\Default.frag">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -142,6 +156,7 @@
   <ItemGroup>
     <Content Include="GameList.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
     </Content>
     <Content Include="Templates\Colors\Common\1UP.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

@@ -14,6 +14,43 @@ namespace HedgeLib.Sets
         public const string Extension = ".xml";
 
         //Methods
+        public static Dictionary<string, SetObjectType>
+            LoadObjectTemplates(string templatesDir, string gameName)
+        {
+            return LoadObjectTemplates(
+                Helpers.CombinePaths(templatesDir, gameName));
+        }
+
+        public static Dictionary<string, SetObjectType>
+            LoadObjectTemplates(string directory)
+        {
+            if (!Directory.Exists(directory))
+                throw new DirectoryNotFoundException();
+
+            var objectTemplates = new Dictionary<string, SetObjectType>();
+            foreach (string dir in Directory.GetDirectories(directory))
+            {
+                // TODO: Categories.
+                foreach (string file in Directory.GetFiles(dir, $"*{Extension}"))
+                {
+                    var template = new SetObjectType();
+                    string objTypeName = Path.GetFileNameWithoutExtension(file);
+                    template.Load(file);
+
+                    if (objectTemplates.ContainsKey(objTypeName))
+                    {
+                        Console.WriteLine("WARNING: Skipping over duplicate template \"{0}\".",
+                            objTypeName);
+                        continue;
+                    }
+
+                    objectTemplates.Add(objTypeName, template);
+                }
+            }
+
+            return objectTemplates;
+        }
+
         public override void Load(string filePath)
         {
             Name = Path.GetFileNameWithoutExtension(filePath);
@@ -71,6 +108,7 @@ namespace HedgeLib.Sets
                 // TODO
                 string typeName = new Microsoft.CSharp.CSharpCodeProvider()
                     .GetTypeOutput(new System.CodeDom.CodeTypeReference(param.DataType));
+
                 paramElement.Add(new XAttribute("type", typeName));
                 paramElement.Add(new XAttribute("default", param.DefaultValue));
                 paramElement.Add(new XAttribute("description", param.Description));

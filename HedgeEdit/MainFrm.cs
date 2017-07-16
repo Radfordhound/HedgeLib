@@ -61,6 +61,7 @@ namespace HedgeEdit
 
         private void MainFrm_Load(object sender, EventArgs e)
         {
+            GameList.Load(Program.StartupPath);
             Viewport.Init(viewport);
         }
 
@@ -80,6 +81,24 @@ namespace HedgeEdit
         private void Viewport_Resize(object sender, EventArgs e)
         {
             Viewport.Resize(viewport.Width, viewport.Height);
+        }
+
+        private void Viewport_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                Viewport.MovingCamera = true;
+                Cursor.Hide();
+            }
+        }
+
+        private void Viewport_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                Viewport.MovingCamera = false;
+                Cursor.Show();
+            }
         }
         #endregion
 
@@ -137,7 +156,12 @@ namespace HedgeEdit
 
         private void OpenMenuItem_Click(object sender, EventArgs e)
         {
-            // TODO
+            var openDialog = new StgOpenDialog();
+            if (openDialog.ShowDialog() == DialogResult.OK)
+            {
+                Stage.Load(openDialog.DataDir,
+                    openDialog.StageID, GameList.Games[openDialog.GameID]);
+            }
         }
 
         private void SaveMenuItem_Click(object sender, EventArgs e)

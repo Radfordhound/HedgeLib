@@ -5,9 +5,11 @@ namespace HedgeEdit
 {
     public static class Program
     {
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
+        //Variables/Constants
+        public static string StartupPath = Application.StartupPath;
+        public const string ResourcesPath = "Resources", CachePath = "Cache";
+
+        //Methods
         [STAThread]
         public static void Main()
         {
