@@ -11,6 +11,8 @@ namespace HedgeLib.Archives
         public List<ArchiveData> Data = new List<ArchiveData>();
         public bool Saved = false;
 
+        public virtual bool HasSplitArchives => false;
+
         //Constructors
         public Archive() { }
         public Archive(Archive arc)
