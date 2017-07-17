@@ -44,7 +44,10 @@ namespace HedgeLib.Sets
             reader.JumpTo(objOffsetsOffset, false);
 
             for (uint i = 0; i < objCount; ++i)
+            {
                 objOffsets[i] = reader.ReadUInt32();
+                objs.Add(new SetObject());
+            }
 
             // Object Types
             reader.JumpTo(objTypeOffsetsOffset, false);
@@ -80,14 +83,19 @@ namespace HedgeLib.Sets
                     var obj = ReadObject(reader,
                         objectTemplates[objName], objName, type);
 
-                    objs.Add(obj);
+                    objs[objIndex] = obj;
                     reader.BaseStream.Position = curPos;
                 }
 
                 reader.BaseStream.Position = curTypePos;
             }
-
+            objs.RemoveAll(PurgeNoTemplateObjects);
             return objs;
+        }
+
+        private static bool PurgeNoTemplateObjects(SetObject obj)
+        {
+            return obj.ObjectID.Equals(0);
         }
 
         public static void Write(BINAWriter writer, List<SetObject> objects, SOBJType type)
