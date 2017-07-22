@@ -27,14 +27,14 @@ namespace HedgeArcPack
                     return ArcType.LostWorld;
             }
 
-            Program.Error("Unknown game type!\n");
             return ArcType.Unknown;
         }
 
         public static ArcType AutoDetectType(string input)
         {
             string ext = Path.GetExtension(input).ToLower();
-            if (ext.Contains(GensArchive.Extension) || ext == GensArchive.PFDExtension)
+            if (ext.Contains(GensArchive.Extension) || ext == GensArchive.PFDExtension ||
+                ext.Contains(GensArchive.ListExtension))
             {
                 return ArcType.Gens;
             }
@@ -42,13 +42,32 @@ namespace HedgeArcPack
             {
                 return ArcType.LostWorld;
             }
+            else if (ext.Contains(ONEArchive.Extension))
+            {
+                return ArcType.Heroes;
+            }
+            else if (ext.Contains(SBArchive.Extension))
+            {
+                return ArcType.Storybook;
+            }
+
+            var type = ArcType.Unknown;
 
             // If the type can't be auto-detected, prompt the user to input one instead
             Console.WriteLine("Archive type could not be auto-determined.");
             Console.WriteLine("Please enter one manually:");
 
-            string type = Console.ReadLine();
-            return SetType(type);
+            while (type == ArcType.Unknown)
+            {
+                string userInput = Console.ReadLine();
+
+                type = SetType(userInput);
+
+                // Cancel if nothing is typed
+                if (userInput.Length == 0)
+                    return ArcType.Unknown;
+            }
+            return type;
         }
 
         public static string GetExtension(ArcType type)
