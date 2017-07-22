@@ -56,9 +56,9 @@ namespace HedgeArcPack
                 PrintDebug("Finished Executing");
             }
             // End of command
-            Print("Press any key to exit...", false);
-            if (!Quiet)
-                Console.ReadKey(true);
+            //Print("Press any key to exit...", false);
+            //if (!Quiet)
+            //    Console.ReadKey(true);
         }
 
         /// <summary>
@@ -282,7 +282,11 @@ namespace HedgeArcPack
 
                 // Create an output path if not specified
                 if (string.IsNullOrEmpty(Output))
+                {
                     Output = Path.ChangeExtension(Input, null);
+                    if (Path.HasExtension(Output))
+                        Output = Path.ChangeExtension(Output, null);
+                }
 
                 // DEBUG
                 PrintDebug("Output: " + Output);

@@ -33,6 +33,11 @@ namespace HedgeArcPack
         public static ArcType AutoDetectType(string input)
         {
             string ext = Path.GetExtension(input).ToLower();
+
+            // Sets ext to the previous extension if its current extension is a number
+            if (int.TryParse(ext.Substring(1), out int splitIndex))
+                ext = Path.GetExtension(Path.ChangeExtension(input, null)).ToLower();
+
             if (ext.Contains(GensArchive.Extension) || ext == GensArchive.PFDExtension ||
                 ext.Contains(GensArchive.ListExtension))
             {
