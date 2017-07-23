@@ -1,4 +1,6 @@
-﻿using System;
+﻿using HedgeLib;
+using HedgeLib.Sets;
+using System;
 using System.Windows.Forms;
 
 namespace HedgeEdit
@@ -6,6 +8,27 @@ namespace HedgeEdit
     public partial class MainFrm : Form
     {
         //Variables/Constants
+        public static SceneView SceneView
+        {
+            get => sceneView;
+        }
+
+        public SetObject SelectedObject
+        {
+            get
+            {
+                return selectedObject;
+            }
+
+            set
+            {
+                selectedObject = value;
+                RefreshGUI();
+            }
+        }
+
+        private static SceneView sceneView = null;
+        private static SetObject selectedObject = null;
         private Control activeTxtBx = null;
 
         //Constructors
@@ -13,6 +36,40 @@ namespace HedgeEdit
         {
             InitializeComponent();
             Application.Idle += Application_Idle;
+        }
+
+        //Methods
+        public void RefreshGUI()
+        {
+            // TODO: Change this lol
+            bool objectSelected = (selectedObject != null);
+            int selectedObjectsCount =
+                (objectSelected) ? 1 : 0;
+
+            // Update Labels
+            objectSelectedLbl.Text = $"{selectedObjectsCount} Object(s) Selected";
+
+            // Enable/Disable EVERYTHING
+            posXBox.Enabled = posYBox.Enabled = posZBox.Enabled =
+            rotXBox.Enabled = rotYBox.Enabled = rotZBox.Enabled =
+            viewSelectedBtn.Enabled = removeObjectBtn.Enabled = 
+            viewSelectedMenuItem.Enabled = objectSelected;
+
+            // Update Position Boxes
+            posXBox.Text = (objectSelected) ? selectedObject.Transform.Position.X.ToString() : "0";
+            posYBox.Text = (objectSelected) ? selectedObject.Transform.Position.Y.ToString() : "0";
+            posZBox.Text = (objectSelected) ? selectedObject.Transform.Position.Z.ToString() : "0";
+
+            // Update Rotation Boxes
+            var eulerAngles = (objectSelected) ?
+                selectedObject.Transform.Rotation.ToEulerAngles() : new Vector3();
+
+            rotXBox.Text = eulerAngles.X.ToString();
+            rotYBox.Text = eulerAngles.Y.ToString();
+            rotZBox.Text = eulerAngles.Z.ToString();
+
+            // Update Parameters
+            // TODO
         }
 
         //GUI Events
@@ -161,6 +218,9 @@ namespace HedgeEdit
             {
                 Stage.Load(openDialog.DataDir,
                     openDialog.StageID, GameList.Games[openDialog.GameID]);
+
+                if (sceneView != null)
+                    sceneView.RefreshView();
             }
         }
 
@@ -220,13 +280,28 @@ namespace HedgeEdit
         {
             // TODO
         }
-        #endregion
 
-        #region View Menu Events
-        private void ViewSelectedMenuItem_Click(object sender, EventArgs e)
+        private void AdvancedModeMenuItem_Click(object sender, EventArgs e)
         {
-            // TODO
+            if (sceneView == null || sceneView.IsDisposed)
+            {
+                sceneView = new SceneView(this);
+                sceneView.Show();
+            }
+            else
+            {
+                sceneView.Focus();
+            }
         }
         #endregion
+
+        private void ViewSelected(object sender, EventArgs e)
+        {
+            if (selectedObject != null)
+            {
+                Viewport.CameraPos =
+                    Types.ToOpenTK(selectedObject.Transform.Position);
+            }
+        }
     }
 }

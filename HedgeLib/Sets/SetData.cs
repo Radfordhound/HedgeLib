@@ -11,6 +11,7 @@ namespace HedgeLib.Sets
     {
         //Variables/Constants
         public List<SetObject> Objects = new List<SetObject>();
+        public string Name = null;
 
         //Methods
         public override void Load(string filePath)

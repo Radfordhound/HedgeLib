@@ -1,4 +1,5 @@
-﻿using HedgeLib.Archives;
+﻿using HedgeLib;
+using HedgeLib.Archives;
 using HedgeLib.Sets;
 using System;
 
@@ -68,6 +69,31 @@ namespace HedgeEdit
 
             throw new NotSupportedException(
                 $"Cannot read set data of dataType \"{dataType}\"");
+        }
+
+        public static Vector3 ToHedgeLib(OpenTK.Vector3 vector)
+        {
+            return new Vector3(vector.X, vector.Y, vector.Z);
+        }
+
+        public static OpenTK.Vector3 ToOpenTK(Vector3 vector)
+        {
+            return new OpenTK.Vector3(vector.X, vector.Y, vector.Z);
+        }
+
+        public static Vector4 ToHedgeLib(OpenTK.Vector4 vector)
+        {
+            return new Vector4(vector.X, vector.Y, vector.Z, vector.W);
+        }
+
+        public static OpenTK.Vector4 ToOpenTK(Vector4 vector)
+        {
+            return new OpenTK.Vector4(vector.X, vector.Y, vector.Z, vector.W);
+        }
+
+        public static OpenTK.Quaternion ToOpenTK(Quaternion quat)
+        {
+            return new OpenTK.Quaternion(quat.X, quat.Y, quat.Z, quat.W);
         }
 
         //Other

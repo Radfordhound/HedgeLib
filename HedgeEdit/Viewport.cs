@@ -182,10 +182,8 @@ namespace HedgeEdit
 
         public static void AddModel(Model mdl, HedgeLib.Vector3 pos, HedgeLib.Quaternion rot)
         {
-            // TODO: Make a convert method for HedgeLib Vectors/Quaternions
             Models.Add(new HedgeEditModel(mdl, 
-                new Vector3(pos.X, pos.Y, pos.Z),
-                new Quaternion(rot.X, rot.Y, rot.Z, rot.W)));
+                Types.ToOpenTK(pos), Types.ToOpenTK(rot)));
         }
 
         public static void Clear()
