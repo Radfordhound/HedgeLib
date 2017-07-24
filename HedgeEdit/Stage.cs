@@ -1,6 +1,7 @@
 ﻿using HedgeLib;
 using HedgeLib.Archives;
 using HedgeLib.Misc;
+using HedgeLib.Sets;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,6 +11,7 @@ namespace HedgeEdit
     public class Stage
     {
         //Variables/Constants
+        public static List<SetData> Sets = new List<SetData>();
         public static Types.DataTypes DataType;
 
         //Methods
@@ -295,6 +297,9 @@ namespace HedgeEdit
                                     transform.Rotation);
                             }
                         }
+
+                        setData.Name = Path.GetFileNameWithoutExtension(filePath);
+                        Sets.Add(setData);
                         return;
                     }
 

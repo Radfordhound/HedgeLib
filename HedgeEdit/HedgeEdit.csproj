@@ -58,6 +58,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="SceneView.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SceneView.Designer.cs">
+      <DependentUpon>SceneView.cs</DependentUpon>
+    </Compile>
     <Compile Include="EditorCache.cs" />
     <Compile Include="GameList.cs" />
     <Compile Include="HedgeEditModel.cs" />
@@ -79,6 +85,9 @@
     </Compile>
     <Compile Include="Types.cs" />
     <Compile Include="Viewport.cs" />
+    <EmbeddedResource Include="SceneView.resx">
+      <DependentUpon>SceneView.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="MainFrm.resx">
       <DependentUpon>MainFrm.cs</DependentUpon>
     </EmbeddedResource>

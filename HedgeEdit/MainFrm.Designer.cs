@@ -28,10 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem(new string[] {
             "FirstSpeed",
             "100"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem4 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem(new string[] {
             "OutOfControl",
             "0.5"}, -1);
             this.menuStrip = new System.Windows.Forms.MenuStrip();
@@ -53,6 +53,8 @@
             this.selectSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.selectAllMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.selectNoneMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.selectSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            this.advancedModeMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.viewSelectedMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewport = new OpenTK.GLControl();
@@ -174,7 +176,9 @@
             this.deleteMenuItem,
             this.selectSeparator2,
             this.selectAllMenuItem,
-            this.selectNoneMenuItem});
+            this.selectNoneMenuItem,
+            this.selectSeparator3,
+            this.advancedModeMenuItem});
             this.editMenu.Name = "editMenu";
             this.editMenu.Size = new System.Drawing.Size(54, 29);
             this.editMenu.Text = "&Edit";
@@ -261,6 +265,19 @@
             this.selectNoneMenuItem.Text = "Select &None";
             this.selectNoneMenuItem.Click += new System.EventHandler(this.SelectNoneMenuItem_Click);
             // 
+            // selectSeparator3
+            // 
+            this.selectSeparator3.Name = "selectSeparator3";
+            this.selectSeparator3.Size = new System.Drawing.Size(251, 6);
+            // 
+            // advancedModeMenuItem
+            // 
+            this.advancedModeMenuItem.Name = "advancedModeMenuItem";
+            this.advancedModeMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.E)));
+            this.advancedModeMenuItem.Size = new System.Drawing.Size(254, 30);
+            this.advancedModeMenuItem.Text = "Scene &View";
+            this.advancedModeMenuItem.Click += new System.EventHandler(this.AdvancedModeMenuItem_Click);
+            // 
             // viewMenu
             // 
             this.viewMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -273,9 +290,9 @@
             // 
             this.viewSelectedMenuItem.Enabled = false;
             this.viewSelectedMenuItem.Name = "viewSelectedMenuItem";
-            this.viewSelectedMenuItem.Size = new System.Drawing.Size(204, 30);
+            this.viewSelectedMenuItem.Size = new System.Drawing.Size(210, 30);
             this.viewSelectedMenuItem.Text = "View &Selected";
-            this.viewSelectedMenuItem.Click += new System.EventHandler(this.ViewSelectedMenuItem_Click);
+            this.viewSelectedMenuItem.Click += new System.EventHandler(this.ViewSelected);
             // 
             // viewport
             // 
@@ -349,12 +366,13 @@
             // 
             this.removeObjectBtn.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.removeObjectBtn.Enabled = false;
             this.removeObjectBtn.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.removeObjectBtn.Location = new System.Drawing.Point(8, 72);
             this.removeObjectBtn.Name = "removeObjectBtn";
             this.removeObjectBtn.Size = new System.Drawing.Size(235, 30);
             this.removeObjectBtn.TabIndex = 2;
-            this.removeObjectBtn.Text = "&Remove Object";
+            this.removeObjectBtn.Text = "&Remove Selected Object(s)";
             this.removeObjectBtn.UseVisualStyleBackColor = true;
             // 
             // objectCountLbl
@@ -402,6 +420,7 @@
             // 
             this.rotZBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.rotZBox.Enabled = false;
             this.rotZBox.Location = new System.Drawing.Point(168, 71);
             this.rotZBox.Name = "rotZBox";
             this.rotZBox.Size = new System.Drawing.Size(75, 26);
@@ -415,6 +434,7 @@
             // 
             this.rotYBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.rotYBox.Enabled = false;
             this.rotYBox.Location = new System.Drawing.Point(88, 71);
             this.rotYBox.Name = "rotYBox";
             this.rotYBox.Size = new System.Drawing.Size(75, 26);
@@ -428,6 +448,7 @@
             // 
             this.rotXBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.rotXBox.Enabled = false;
             this.rotXBox.Location = new System.Drawing.Point(8, 71);
             this.rotXBox.Name = "rotXBox";
             this.rotXBox.Size = new System.Drawing.Size(75, 26);
@@ -441,6 +462,7 @@
             // 
             this.posZBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.posZBox.Enabled = false;
             this.posZBox.Location = new System.Drawing.Point(168, 39);
             this.posZBox.Name = "posZBox";
             this.posZBox.Size = new System.Drawing.Size(75, 26);
@@ -454,6 +476,7 @@
             // 
             this.posYBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.posYBox.Enabled = false;
             this.posYBox.Location = new System.Drawing.Point(88, 39);
             this.posYBox.Name = "posYBox";
             this.posYBox.Size = new System.Drawing.Size(75, 26);
@@ -467,6 +490,7 @@
             // 
             this.posXBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.posXBox.Enabled = false;
             this.posXBox.Location = new System.Drawing.Point(8, 39);
             this.posXBox.Name = "posXBox";
             this.posXBox.Size = new System.Drawing.Size(75, 26);
@@ -480,6 +504,7 @@
             // 
             this.viewSelectedBtn.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.viewSelectedBtn.Enabled = false;
             this.viewSelectedBtn.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.viewSelectedBtn.Location = new System.Drawing.Point(8, 107);
             this.viewSelectedBtn.Name = "viewSelectedBtn";
@@ -487,6 +512,7 @@
             this.viewSelectedBtn.TabIndex = 2;
             this.viewSelectedBtn.Text = "&View Selected";
             this.viewSelectedBtn.UseVisualStyleBackColor = true;
+            this.viewSelectedBtn.Click += new System.EventHandler(this.ViewSelected);
             // 
             // objectSelectedLbl
             // 
@@ -497,7 +523,7 @@
             this.objectSelectedLbl.Padding = new System.Windows.Forms.Padding(0, 5, 0, 0);
             this.objectSelectedLbl.Size = new System.Drawing.Size(250, 140);
             this.objectSelectedLbl.TabIndex = 1;
-            this.objectSelectedLbl.Text = "0 Objects Selected";
+            this.objectSelectedLbl.Text = "0 Object(s) Selected";
             this.objectSelectedLbl.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
             // objectProperties
@@ -507,11 +533,11 @@
             this.columnHeader2});
             this.objectProperties.Dock = System.Windows.Forms.DockStyle.Fill;
             this.objectProperties.FullRowSelect = true;
-            listViewItem3.ToolTipText = "How much speed the spring sends you off with.";
-            listViewItem4.ToolTipText = "How long the game locks your control.";
+            listViewItem1.ToolTipText = "How much speed the spring sends you off with.";
+            listViewItem2.ToolTipText = "How long the game locks your control.";
             this.objectProperties.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem3,
-            listViewItem4});
+            listViewItem1,
+            listViewItem2});
             this.objectProperties.Location = new System.Drawing.Point(0, 35);
             this.objectProperties.MultiSelect = false;
             this.objectProperties.Name = "objectProperties";
@@ -619,6 +645,8 @@
         private System.Windows.Forms.Label objectNameLbl;
         private System.Windows.Forms.ColumnHeader columnHeader1;
         private System.Windows.Forms.ColumnHeader columnHeader2;
+        private System.Windows.Forms.ToolStripSeparator selectSeparator3;
+        private System.Windows.Forms.ToolStripMenuItem advancedModeMenuItem;
     }
 }
 
