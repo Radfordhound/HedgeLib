@@ -7,7 +7,8 @@ namespace HedgeEdit
     {
         //Variables/Constants
         public static string StartupPath = Application.StartupPath;
-        public const string ResourcesPath = "Resources", CachePath = "Cache";
+        public const string ResourcesPath = "Resources", CachePath = "Cache",
+            Name = "HedgeEdit";
 
         //Methods
         [STAThread]

@@ -1,4 +1,5 @@
 ﻿using HedgeLib.Sets;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace HedgeEdit
@@ -15,6 +16,11 @@ namespace HedgeEdit
 
             InitializeComponent();
             RefreshView();
+
+            Height = mainFrm.Height - 78;
+            Location = new Point(
+                mainFrm.Width - Width,
+                mainFrm.Location.Y + 78);
         }
 
         //Methods

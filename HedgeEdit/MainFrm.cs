@@ -35,6 +35,7 @@ namespace HedgeEdit
         public MainFrm()
         {
             InitializeComponent();
+            UpdateTitle();
             Application.Idle += Application_Idle;
         }
 
@@ -70,6 +71,13 @@ namespace HedgeEdit
 
             // Update Parameters
             // TODO
+        }
+
+        public void UpdateTitle(string stgID = null)
+        {
+            Text = string.Format("{0} - {1}",
+                (string.IsNullOrEmpty(stgID)) ? "Untitled" : stgID,
+                Program.Name);
         }
 
         //GUI Events
@@ -216,9 +224,14 @@ namespace HedgeEdit
             var openDialog = new StgOpenDialog();
             if (openDialog.ShowDialog() == DialogResult.OK)
             {
+                // Update title
+                UpdateTitle(openDialog.StageID);
+
+                // Load stage
                 Stage.Load(openDialog.DataDir,
                     openDialog.StageID, GameList.Games[openDialog.GameID]);
 
+                // Update Scene View
                 if (sceneView != null)
                     sceneView.RefreshView();
             }
