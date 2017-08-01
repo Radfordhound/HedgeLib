@@ -19,7 +19,7 @@ namespace HedgeEdit
 
             Height = mainFrm.Height - 78;
             Location = new Point(
-                mainFrm.Width - Width,
+                mainFrm.Location.X + mainFrm.Width - Width,
                 mainFrm.Location.Y + 78);
         }
 
