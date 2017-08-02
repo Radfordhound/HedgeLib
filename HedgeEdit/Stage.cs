@@ -306,8 +306,10 @@ namespace HedgeEdit
         private static void SpawnObject(SetObjectTransform transform,
             float unitMultiplier, object customData)
         {
+            transform.Position *= unitMultiplier;
+
             Viewport.AddModel(Viewport.DefaultCube,
-                transform.Position * unitMultiplier,
+                transform.Position,
                 transform.Rotation, customData);
         }
     }

@@ -16,12 +16,18 @@ namespace HedgeEdit
         //Variables/Constants
         public static List<ViewportObject> Objects = new List<ViewportObject>();
         public static Model DefaultCube;
-        public static Vector3 CameraPos = Vector3.Zero, CameraRot = Vector3.Zero;
+
+        public static Vector3 CameraPos = Vector3.Zero, CameraRot = new Vector3(-90, 0, 0);
         public static float FOV = 40.0f, NearDistance = 0.1f, FarDistance = 1000f;
         public static bool IsMovingCamera = false;
 
         private static GLControl vp = null;
         private static Point prevMousePos = Point.Empty;
+        private static Vector3 camUp = new Vector3(0, 1, 0),
+            camForward = new Vector3(0, 0, -1);
+
+        private static float camSpeed = normalSpeed;
+        private const float normalSpeed = 1, fastSpeed = 4;
 
         //Methods
         public static void Init(GLControl viewport)
@@ -108,22 +114,27 @@ namespace HedgeEdit
 
                 // Position
                 var keyState = Keyboard.GetState();
+                camSpeed = (keyState.IsKeyDown(Key.ShiftLeft) ||
+                    keyState.IsKeyDown(Key.ShiftRight)) ? fastSpeed : normalSpeed;
+
                 if (keyState.IsKeyDown(Key.W))
                 {
-                    ++CameraPos.Z;
+                    CameraPos += camSpeed * camForward;
                 }
                 else if (keyState.IsKeyDown(Key.S))
                 {
-                    --CameraPos.Z;
+                    CameraPos -= camSpeed * camForward;
                 }
 
                 if (keyState.IsKeyDown(Key.A))
                 {
-                    ++CameraPos.X;
+                    CameraPos -= Vector3.Normalize(
+                        Vector3.Cross(camForward, camUp)) * camSpeed;
                 }
                 else if (keyState.IsKeyDown(Key.D))
                 {
-                    --CameraPos.X;
+                    CameraPos += Vector3.Normalize(
+                        Vector3.Cross(camForward, camUp)) * camSpeed;
                 }
 
                 // Snap cursor to center of viewport
@@ -132,12 +143,21 @@ namespace HedgeEdit
             }
 
             // Update Transforms
-            var view = Matrix4.CreateFromAxisAngle(new Vector3(0, 1, 0),
-                MathHelper.DegreesToRadians(CameraRot.X));
-            view *= Matrix4.CreateFromAxisAngle(new Vector3(-1, 0, 0),
-                MathHelper.DegreesToRadians(CameraRot.Y));
+            float x = MathHelper.DegreesToRadians(CameraRot.X);
+            float y = MathHelper.DegreesToRadians(CameraRot.Y);
+            float yCos = (float)Math.Cos(y);
 
-            view *= Matrix4.CreateTranslation(CameraPos);
+            var front = new Vector3()
+            {
+                X = (float)Math.Cos(x) * yCos,
+                Y = (float)Math.Sin(y),
+                Z = (float)Math.Sin(x) * yCos
+            };
+
+            camForward = Vector3.Normalize(front);
+
+            var view = Matrix4.LookAt(CameraPos,
+                CameraPos + camForward, camUp);
 
             var projection = Matrix4.CreatePerspectiveFieldOfView(
                 MathHelper.DegreesToRadians(FOV),
