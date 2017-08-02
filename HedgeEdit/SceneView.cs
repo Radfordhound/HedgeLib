@@ -1,4 +1,5 @@
 ﻿using HedgeLib.Sets;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace HedgeEdit
@@ -15,6 +16,11 @@ namespace HedgeEdit
 
             InitializeComponent();
             RefreshView();
+
+            Height = mainFrm.Height - 78;
+            Location = new Point(
+                mainFrm.Location.X + mainFrm.Width - Width,
+                mainFrm.Location.Y + 78);
         }
 
         //Methods
@@ -43,9 +49,10 @@ namespace HedgeEdit
                     {
                         for (int i2 = 0; i2 < obj.Children.Length;)
                         {
+                            var child = obj.Children[i2];
                             objNode.Nodes.Add(new TreeNode($"Child {++i2}")
                             {
-                                Tag = obj
+                                Tag = child
                             });
                         }
                     }
@@ -64,7 +71,9 @@ namespace HedgeEdit
         {
             if (e.Node.Tag != null)
             {
-                mainForm.SelectedObject = (e.Node.Tag as SetObject);
+                mainForm.SelectedObjects.Clear();
+                mainForm.SelectedObjects.Add(e.Node.Tag);
+                mainForm.RefreshGUI();
             }
         }
     }

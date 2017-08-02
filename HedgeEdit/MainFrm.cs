@@ -1,6 +1,7 @@
 ﻿using HedgeLib;
 using HedgeLib.Sets;
 using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace HedgeEdit
@@ -13,63 +14,110 @@ namespace HedgeEdit
             get => sceneView;
         }
 
-        public SetObject SelectedObject
+        public SetObject SelectedSetObject
         {
             get
             {
-                return selectedObject;
-            }
-
-            set
-            {
-                selectedObject = value;
-                RefreshGUI();
+                // Returns the currently-selected set object if only one is selected
+                return (SelectedObjects.Count == 1) ?
+                    (SelectedObjects[0] as SetObject) : null;
             }
         }
 
+        public SetObjectTransform SelectedTransform
+        {
+            get
+            {
+                // Returns the transform of the currently-selected set object
+                // if only one object is selected.
+                var obj = SelectedSetObject;
+
+                return (obj == null) ? ((SelectedObjects.Count == 1) ?
+                    (SelectedObjects[0] as SetObjectTransform) :
+                    null) : obj.Transform;
+            }
+        }
+
+        public List<object> SelectedObjects = new List<object>();
         private static SceneView sceneView = null;
-        private static SetObject selectedObject = null;
         private Control activeTxtBx = null;
 
         //Constructors
         public MainFrm()
         {
             InitializeComponent();
+            UpdateTitle();
             Application.Idle += Application_Idle;
         }
 
         //Methods
         public void RefreshGUI()
         {
-            // TODO: Change this lol
-            bool objectSelected = (selectedObject != null);
-            int selectedObjectsCount =
-                (objectSelected) ? 1 : 0;
+            // Get the selected object(s), if any
+            int selectedObjs = SelectedObjects.Count;
+            bool objsSelected = (selectedObjs > 0),
+                 singleObjSelected = (selectedObjs == 1);
+
+            SetObject obj = (singleObjSelected) ?
+                (SelectedObjects[0] as SetObject) : null;
+            SetObjectTransform transform = (obj == null) ? ((singleObjSelected) ?
+                (SelectedObjects[0] as SetObjectTransform) :
+                null) : obj.Transform;
 
             // Update Labels
-            objectSelectedLbl.Text = $"{selectedObjectsCount} Object(s) Selected";
+            objectSelectedLbl.Text = $"{selectedObjs} Object(s) Selected";
 
             // Enable/Disable EVERYTHING
             posXBox.Enabled = posYBox.Enabled = posZBox.Enabled =
             rotXBox.Enabled = rotYBox.Enabled = rotZBox.Enabled =
-            viewSelectedBtn.Enabled = removeObjectBtn.Enabled = 
-            viewSelectedMenuItem.Enabled = objectSelected;
+            viewSelectedBtn.Enabled =
+            viewSelectedMenuItem.Enabled = singleObjSelected;
+
+            removeObjectBtn.Enabled = objsSelected;
 
             // Update Position Boxes
-            posXBox.Text = (objectSelected) ? selectedObject.Transform.Position.X.ToString() : "0";
-            posYBox.Text = (objectSelected) ? selectedObject.Transform.Position.Y.ToString() : "0";
-            posZBox.Text = (objectSelected) ? selectedObject.Transform.Position.Z.ToString() : "0";
+            posXBox.Text = (transform != null) ? transform.Position.X.ToString() : "0";
+            posYBox.Text = (transform != null) ? transform.Position.Y.ToString() : "0";
+            posZBox.Text = (transform != null) ? transform.Position.Z.ToString() : "0";
 
             // Update Rotation Boxes
-            var eulerAngles = (objectSelected) ?
-                selectedObject.Transform.Rotation.ToEulerAngles() : new Vector3();
+            var eulerAngles = (transform != null) ?
+                transform.Rotation.ToEulerAngles() : new Vector3();
 
             rotXBox.Text = eulerAngles.X.ToString();
             rotYBox.Text = eulerAngles.Y.ToString();
             rotZBox.Text = eulerAngles.Z.ToString();
 
             // Update Parameters
-            // TODO
+            objectTypeLbl.Text = (obj != null) ? obj.ObjectType : "";
+            objectProperties.Items.Clear();
+
+            if (obj == null) return;
+            var objTemplate = (Stage.GameType == null ||
+                    !Stage.GameType.ObjectTemplates.ContainsKey(obj.ObjectType)) ?
+                    null : Stage.GameType.ObjectTemplates[obj.ObjectType];
+
+            for (int i = 0; i < obj.Parameters.Count; ++i)
+            {
+                var param = obj.Parameters[i];
+                var templateParam = objTemplate?.Parameters[i];
+
+                var lvi = new ListViewItem((templateParam == null) ?
+                    $"Parameter {i}" : templateParam.Name)
+                {
+                    ToolTipText = templateParam?.Description
+                };
+
+                lvi.SubItems.Add(param.Data.ToString());
+                objectProperties.Items.Add(lvi);
+            }
+        }
+
+        public void UpdateTitle(string stgID = null)
+        {
+            Text = string.Format("{0} - {1}",
+                (string.IsNullOrEmpty(stgID)) ? "Untitled" : stgID,
+                Program.Name);
         }
 
         //GUI Events
@@ -144,7 +192,7 @@ namespace HedgeEdit
         {
             if (e.Button == MouseButtons.Right)
             {
-                Viewport.MovingCamera = true;
+                Viewport.IsMovingCamera = true;
                 Cursor.Hide();
             }
         }
@@ -153,7 +201,7 @@ namespace HedgeEdit
         {
             if (e.Button == MouseButtons.Right)
             {
-                Viewport.MovingCamera = false;
+                Viewport.IsMovingCamera = false;
                 Cursor.Show();
             }
         }
@@ -216,9 +264,14 @@ namespace HedgeEdit
             var openDialog = new StgOpenDialog();
             if (openDialog.ShowDialog() == DialogResult.OK)
             {
+                // Update title
+                UpdateTitle(openDialog.StageID);
+
+                // Load stage
                 Stage.Load(openDialog.DataDir,
                     openDialog.StageID, GameList.Games[openDialog.GameID]);
 
+                // Update Scene View
                 if (sceneView != null)
                     sceneView.RefreshView();
             }
@@ -297,10 +350,17 @@ namespace HedgeEdit
 
         private void ViewSelected(object sender, EventArgs e)
         {
-            if (selectedObject != null)
+            if (SelectedObjects.Count == 1)
             {
+                var selectedTransform = SelectedTransform;
+                if (selectedTransform == null) return;
+
                 Viewport.CameraPos =
-                    Types.ToOpenTK(selectedObject.Transform.Position);
+                    Types.ToOpenTK(selectedTransform.Position);
+            }
+            else if (SelectedObjects.Count > 0)
+            {
+                // TODO: Show all of the objects currently selected.
             }
         }
     }
