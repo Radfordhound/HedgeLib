@@ -12,7 +12,7 @@ namespace HedgeEdit
     {
         //Variables/Constants
         public static List<SetData> Sets = new List<SetData>();
-        public static Types.DataTypes DataType;
+        public static GameEntry GameType;
 
         //Methods
         public static void Load(string dataDir, string stageID, GameEntry game)
@@ -31,7 +31,7 @@ namespace HedgeEdit
                 throw new Exception("Cannot load stage. Invalid Stage ID!");
             }
 
-            DataType = game.DataType;
+            GameType = game;
 
             // Make cache directory
             string cacheDir = Helpers.CombinePaths(Program.StartupPath,

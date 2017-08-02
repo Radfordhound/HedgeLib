@@ -28,12 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem(new string[] {
-            "FirstSpeed",
-            "100"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem(new string[] {
-            "OutOfControl",
-            "0.5"}, -1);
             this.menuStrip = new System.Windows.Forms.MenuStrip();
             this.fileMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.newMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -75,7 +69,7 @@
             this.objectProperties = new System.Windows.Forms.ListView();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.objectNameLbl = new System.Windows.Forms.Label();
+            this.objectTypeLbl = new System.Windows.Forms.Label();
             this.menuStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.mainSplitContainer)).BeginInit();
             this.mainSplitContainer.Panel1.SuspendLayout();
@@ -290,7 +284,7 @@
             // 
             this.viewSelectedMenuItem.Enabled = false;
             this.viewSelectedMenuItem.Name = "viewSelectedMenuItem";
-            this.viewSelectedMenuItem.Size = new System.Drawing.Size(210, 30);
+            this.viewSelectedMenuItem.Size = new System.Drawing.Size(204, 30);
             this.viewSelectedMenuItem.Text = "View &Selected";
             this.viewSelectedMenuItem.Click += new System.EventHandler(this.ViewSelected);
             // 
@@ -410,7 +404,7 @@
             // bottomSplitContainer.Panel2
             // 
             this.bottomSplitContainer.Panel2.Controls.Add(this.objectProperties);
-            this.bottomSplitContainer.Panel2.Controls.Add(this.objectNameLbl);
+            this.bottomSplitContainer.Panel2.Controls.Add(this.objectTypeLbl);
             this.bottomSplitContainer.Panel2MinSize = 150;
             this.bottomSplitContainer.Size = new System.Drawing.Size(250, 397);
             this.bottomSplitContainer.SplitterDistance = 140;
@@ -533,11 +527,6 @@
             this.columnHeader2});
             this.objectProperties.Dock = System.Windows.Forms.DockStyle.Fill;
             this.objectProperties.FullRowSelect = true;
-            listViewItem1.ToolTipText = "How much speed the spring sends you off with.";
-            listViewItem2.ToolTipText = "How long the game locks your control.";
-            this.objectProperties.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem1,
-            listViewItem2});
             this.objectProperties.Location = new System.Drawing.Point(0, 35);
             this.objectProperties.MultiSelect = false;
             this.objectProperties.Name = "objectProperties";
@@ -557,17 +546,16 @@
             this.columnHeader2.Text = "Value";
             this.columnHeader2.Width = 90;
             // 
-            // objectNameLbl
+            // objectTypeLbl
             // 
-            this.objectNameLbl.Dock = System.Windows.Forms.DockStyle.Top;
-            this.objectNameLbl.Font = new System.Drawing.Font("Segoe UI", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.objectNameLbl.Location = new System.Drawing.Point(0, 0);
-            this.objectNameLbl.Name = "objectNameLbl";
-            this.objectNameLbl.Padding = new System.Windows.Forms.Padding(0, 5, 0, 0);
-            this.objectNameLbl.Size = new System.Drawing.Size(250, 35);
-            this.objectNameLbl.TabIndex = 2;
-            this.objectNameLbl.Text = "Spring";
-            this.objectNameLbl.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.objectTypeLbl.Dock = System.Windows.Forms.DockStyle.Top;
+            this.objectTypeLbl.Font = new System.Drawing.Font("Segoe UI", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.objectTypeLbl.Location = new System.Drawing.Point(0, 0);
+            this.objectTypeLbl.Name = "objectTypeLbl";
+            this.objectTypeLbl.Padding = new System.Windows.Forms.Padding(0, 5, 0, 0);
+            this.objectTypeLbl.Size = new System.Drawing.Size(250, 35);
+            this.objectTypeLbl.TabIndex = 2;
+            this.objectTypeLbl.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
             // MainFrm
             // 
@@ -642,7 +630,7 @@
         private System.Windows.Forms.TextBox rotYBox;
         private System.Windows.Forms.TextBox rotXBox;
         private System.Windows.Forms.ListView objectProperties;
-        private System.Windows.Forms.Label objectNameLbl;
+        private System.Windows.Forms.Label objectTypeLbl;
         private System.Windows.Forms.ColumnHeader columnHeader1;
         private System.Windows.Forms.ColumnHeader columnHeader2;
         private System.Windows.Forms.ToolStripSeparator selectSeparator3;

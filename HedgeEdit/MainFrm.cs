@@ -76,12 +76,12 @@ namespace HedgeEdit
             removeObjectBtn.Enabled = objsSelected;
 
             // Update Position Boxes
-            posXBox.Text = (singleObjSelected) ? transform.Position.X.ToString() : "0";
-            posYBox.Text = (singleObjSelected) ? transform.Position.Y.ToString() : "0";
-            posZBox.Text = (singleObjSelected) ? transform.Position.Z.ToString() : "0";
+            posXBox.Text = (transform != null) ? transform.Position.X.ToString() : "0";
+            posYBox.Text = (transform != null) ? transform.Position.Y.ToString() : "0";
+            posZBox.Text = (transform != null) ? transform.Position.Z.ToString() : "0";
 
             // Update Rotation Boxes
-            var eulerAngles = (singleObjSelected) ?
+            var eulerAngles = (transform != null) ?
                 transform.Rotation.ToEulerAngles() : new Vector3();
 
             rotXBox.Text = eulerAngles.X.ToString();
@@ -89,7 +89,28 @@ namespace HedgeEdit
             rotZBox.Text = eulerAngles.Z.ToString();
 
             // Update Parameters
-            // TODO
+            objectTypeLbl.Text = (obj != null) ? obj.ObjectType : "";
+            objectProperties.Items.Clear();
+
+            if (obj == null) return;
+            var objTemplate = (Stage.GameType == null ||
+                    !Stage.GameType.ObjectTemplates.ContainsKey(obj.ObjectType)) ?
+                    null : Stage.GameType.ObjectTemplates[obj.ObjectType];
+
+            for (int i = 0; i < obj.Parameters.Count; ++i)
+            {
+                var param = obj.Parameters[i];
+                var templateParam = objTemplate?.Parameters[i];
+
+                var lvi = new ListViewItem((templateParam == null) ?
+                    $"Parameter {i}" : templateParam.Name)
+                {
+                    ToolTipText = templateParam?.Description
+                };
+
+                lvi.SubItems.Add(param.Data.ToString());
+                objectProperties.Items.Add(lvi);
+            }
         }
 
         public void UpdateTitle(string stgID = null)
