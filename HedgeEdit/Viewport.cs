@@ -14,11 +14,11 @@ namespace HedgeEdit
     public static class Viewport
     {
         //Variables/Constants
-        public static List<HedgeEditModel> Models = new List<HedgeEditModel>();
+        public static List<ViewportObject> Objects = new List<ViewportObject>();
         public static Model DefaultCube;
         public static Vector3 CameraPos = Vector3.Zero, CameraRot = Vector3.Zero;
         public static float FOV = 40.0f, NearDistance = 0.1f, FarDistance = 1000f;
-        public static bool MovingCamera = false;
+        public static bool IsMovingCamera = false;
 
         private static GLControl vp = null;
         private static Point prevMousePos = Point.Empty;
@@ -92,7 +92,7 @@ namespace HedgeEdit
 
             // Update camera transform
             var mouseState = Mouse.GetState();
-            if (MovingCamera && mouseState.RightButton == OpenTK.Input.ButtonState.Pressed)
+            if (IsMovingCamera && mouseState.RightButton == OpenTK.Input.ButtonState.Pressed)
             {
                 var vpMousePos = vp.PointToClient(Cursor.Position);
                 float screenX = (float)vpMousePos.X / vp.Size.Width;
@@ -161,7 +161,7 @@ namespace HedgeEdit
             GL.UniformMatrix4(projectionLoc, false, ref projection);
 
             // Draw all models in the scene
-            foreach (var mdl in Models)
+            foreach (var mdl in Objects)
             {
                 mdl.Draw(defaultID);
             }
@@ -172,23 +172,26 @@ namespace HedgeEdit
 
         public static void AddModel(Model mdl)
         {
-            Models.Add(new HedgeEditModel(mdl));
+            Objects.Add(new ViewportObject(mdl));
         }
 
-        public static void AddModel(Model mdl, Vector3 pos, Quaternion rot)
+        public static void AddModel(Model mdl, Vector3 pos,
+            Quaternion rot, object customData = null)
         {
-            Models.Add(new HedgeEditModel(mdl, pos, rot));
+            Objects.Add(new ViewportObject(mdl,
+                pos, rot, customData));
         }
 
-        public static void AddModel(Model mdl, HedgeLib.Vector3 pos, HedgeLib.Quaternion rot)
+        public static void AddModel(Model mdl, HedgeLib.Vector3 pos,
+            HedgeLib.Quaternion rot, object customData = null)
         {
-            Models.Add(new HedgeEditModel(mdl, 
-                Types.ToOpenTK(pos), Types.ToOpenTK(rot)));
+            AddModel(mdl, Types.ToOpenTK(pos),
+                Types.ToOpenTK(rot), customData);
         }
 
         public static void Clear()
         {
-            Models.Clear();
+            Objects.Clear();
         }
     }
 }

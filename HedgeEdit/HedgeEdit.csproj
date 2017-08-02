@@ -66,7 +66,7 @@
     </Compile>
     <Compile Include="EditorCache.cs" />
     <Compile Include="GameList.cs" />
-    <Compile Include="HedgeEditModel.cs" />
+    <Compile Include="ViewportObject.cs" />
     <Compile Include="MainFrm.cs">
       <SubType>Form</SubType>
     </Compile>

@@ -281,20 +281,16 @@ namespace HedgeEdit
                         {
                             // TODO: Load actual models.
                             var obj = setData.Objects[i];
-                            Viewport.AddModel(Viewport.DefaultCube,
-                                obj.Transform.Position * game.UnitMultiplier,
-                                obj.Transform.Rotation);
+                            SpawnObject(obj.Transform, game.UnitMultiplier, obj);
 
                             // Spawn Child Objects
-                            // TODO: Move this to it's own SpawnObject method
                             if (obj.Children == null) continue;
                             foreach (var transform in obj.Children)
                             {
                                 if (transform == null) continue;
 
-                                Viewport.AddModel(Viewport.DefaultCube,
-                                    transform.Position * game.UnitMultiplier,
-                                    transform.Rotation);
+                                SpawnObject(transform,
+                                    game.UnitMultiplier, transform);
                             }
                         }
 
@@ -305,6 +301,14 @@ namespace HedgeEdit
 
                 // TODO: Add more types.
             }
+        }
+
+        private static void SpawnObject(SetObjectTransform transform,
+            float unitMultiplier, object customData)
+        {
+            Viewport.AddModel(Viewport.DefaultCube,
+                transform.Position * unitMultiplier,
+                transform.Rotation, customData);
         }
     }
 }
