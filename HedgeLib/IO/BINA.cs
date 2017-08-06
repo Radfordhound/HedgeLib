@@ -317,6 +317,27 @@ namespace HedgeLib.IO
                 strings.Add(tableEntry);
         }
 
+        // TODO
+        public override void FillInOffset(string name, bool absolute = true)
+        {
+            long curPos = BaseStream.Position;
+            BaseStream.Position = offsets[name];
+
+            Write((uint)(curPos - ((absolute) ? 0 : Offset)));
+
+            BaseStream.Position = curPos;
+        }
+
+        public override void FillInOffset(string name, uint value, bool absolute = true)
+        {
+            long curPos = BaseStream.Position;
+            BaseStream.Position = offsets[name];
+
+            Write((uint)(value - ((absolute) ? 0 : Offset)));
+
+            BaseStream.Position = curPos;
+        }
+
         //Other
         protected class StringTableEntry
         {

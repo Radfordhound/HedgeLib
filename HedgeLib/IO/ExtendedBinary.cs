@@ -466,7 +466,7 @@ namespace HedgeLib.IO
             }
         }
 
-        public void FillInOffset(string name, bool absolute = true)
+        public virtual void FillInOffset(string name, bool absolute = true)
         {
             long curPos = BaseStream.Position;
             BaseStream.Position = offsets[name];
@@ -477,7 +477,7 @@ namespace HedgeLib.IO
             BaseStream.Position = curPos;
         }
 
-        public void FillInOffset(string name, uint value, bool absolute = true)
+        public virtual void FillInOffset(string name, uint value, bool absolute = true)
         {
             long curPos = BaseStream.Position;
             BaseStream.Position = offsets[name];

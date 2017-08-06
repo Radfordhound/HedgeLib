@@ -89,13 +89,7 @@ namespace HedgeLib.Sets
 
                 reader.BaseStream.Position = curTypePos;
             }
-            objs.RemoveAll(PurgeNoTemplateObjects);
             return objs;
-        }
-
-        private static bool PurgeNoTemplateObjects(SetObject obj)
-        {
-            return obj.ObjectID.Equals(0);
         }
 
         public static void Write(BINAWriter writer, List<SetObject> objects, SOBJType type)
