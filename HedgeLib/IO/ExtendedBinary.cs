@@ -466,26 +466,39 @@ namespace HedgeLib.IO
             }
         }
 
-        public virtual void FillInOffset(string name, bool absolute = true)
+        public virtual void FillInOffset(string name,
+            bool absolute = true, bool removeOffset = true)
         {
             long curPos = BaseStream.Position;
-            BaseStream.Position = offsets[name];
+            WriteOffsetValueAtPos(offsets[name], (uint)curPos, absolute);
 
-            Write((uint)(curPos - ((absolute) ? 0 : Offset)));
-            offsets.Remove(name);
+            if (removeOffset)
+            {
+                offsets.Remove(name);
+            }
 
             BaseStream.Position = curPos;
         }
 
-        public virtual void FillInOffset(string name, uint value, bool absolute = true)
+        public virtual void FillInOffset(string name, uint value,
+            bool absolute = true, bool removeOffset = true)
         {
             long curPos = BaseStream.Position;
-            BaseStream.Position = offsets[name];
+            WriteOffsetValueAtPos(offsets[name], value, absolute);
 
-            Write((uint)(value - ((absolute) ? 0 : Offset)));
-            offsets.Remove(name);
+            if (removeOffset)
+            {
+                offsets.Remove(name);
+            }
 
             BaseStream.Position = curPos;
+        }
+
+        protected virtual void WriteOffsetValueAtPos(
+            uint pos, uint value, bool absolute = true)
+        {
+            BaseStream.Position = pos;
+            Write((absolute) ? value : value - Offset);
         }
 
         public void WriteNull()
