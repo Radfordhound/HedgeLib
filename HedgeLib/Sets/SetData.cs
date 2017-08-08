@@ -197,16 +197,19 @@ namespace HedgeLib.Sets
 
 				//Generate Parameters Element
 				var paramsElem = new XElement("Parameters");
-				var template = objectTemplates?[obj.ObjectType];
+                if (objectTemplates.ContainsKey(obj.ObjectType))
+                {
+                    var template = objectTemplates?[obj.ObjectType];
 
-				for (int i = 0; i < obj.Parameters.Count; ++i)
-				{
-					paramsElem.Add(GenerateParamElement(obj.Parameters[i],
-						template?.Parameters[i].Name));
-				}
+                    for (int i = 0; i < obj.Parameters.Count; ++i)
+                    {
+                        paramsElem.Add(GenerateParamElement(obj.Parameters[i],
+                            template?.Parameters[i].Name));
+                    }
+                }
 
-				//Generate Transforms Element
-				var transformElem = GenerateTransformElement(obj.Transform);
+                //Generate Transforms Element
+                var transformElem = GenerateTransformElement(obj.Transform);
 				var transformsElem = new XElement("Transforms", transformElem);
 
 				foreach (var transform in obj.Children)

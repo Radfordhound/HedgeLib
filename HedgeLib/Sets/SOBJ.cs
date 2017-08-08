@@ -67,21 +67,27 @@ namespace HedgeLib.Sets
                 {
                     ushort objIndex = reader.ReadUInt16();
                     long curPos = reader.BaseStream.Position;
-                    
+
+                    // Object Data
+                    reader.JumpTo(objOffsets[objIndex], false);
+                    var obj = new SetObject();
+
                     // We do this check here so we can print an offset that's actually helpful
                     if (!objectTemplates.ContainsKey(objName))
                     {
                         Console.WriteLine("{0} \"{1}\" (Offset: 0x{2:X})! Skipping this object...",
                             "WARNING: No object template exists for object type",
                             objName, (objOffsets[objIndex] + reader.Offset));
-                        
-                        break;
-                    }
 
-                    // Object Data
-                    reader.JumpTo(objOffsets[objIndex], false);
-                    var obj = ReadObject(reader,
-                        objectTemplates[objName], objName, type);
+                        obj = ReadObject(reader,
+                            null, objName, type);
+                        obj.IsTemplateExists = false;
+                    }
+                    else
+                    {
+                        obj = ReadObject(reader,
+                            objectTemplates[objName], objName, type);
+                    }
 
                     objs[objIndex] = obj;
                     reader.BaseStream.Position = curPos;
@@ -97,21 +103,25 @@ namespace HedgeLib.Sets
             // Get some data we need to write the file
             var objectsByType = new Dictionary<string, List<int>>();
             uint transformCount = 0, objTypeCount = 0;
+            objects.RemoveAll(PurgeNoTemplateObjects);
 
             for (int objIndex = 0; objIndex < objects.Count; ++objIndex)
             {
                 var obj = objects[objIndex];
-                if (!objectsByType.ContainsKey(obj.ObjectType))
+                if (obj.IsTemplateExists != false)
                 {
-                    objectsByType.Add(obj.ObjectType, new List<int>() { objIndex });
-                    ++objTypeCount;
-                }
-                else
-                {
-                    objectsByType[obj.ObjectType].Add(objIndex);
-                }
+                    if (!objectsByType.ContainsKey(obj.ObjectType))
+                    {
+                        objectsByType.Add(obj.ObjectType, new List<int>() { objIndex });
+                        ++objTypeCount;
+                    }
+                    else
+                    {
+                        objectsByType[obj.ObjectType].Add(objIndex);
+                    }
 
-                transformCount += (uint)obj.Children.Length + 1;
+                    transformCount += (uint)obj.Children.Length + 1;
+                }
             }
 
             // SOBJ Header
@@ -180,6 +190,11 @@ namespace HedgeLib.Sets
             }
         }
 
+        private static bool PurgeNoTemplateObjects(SetObject obj)
+        {
+            return obj.IsTemplateExists.Equals(false);
+        }
+
         private static SetObject ReadObject(ExtendedBinaryReader reader,
             SetObjectType objTemplate, string objType, SOBJType type)
         {
@@ -230,71 +245,76 @@ namespace HedgeLib.Sets
                 obj.CustomData.Add("Parent", new SetObjectParam(typeof(uint), parent));
             }
 
-            // Parameters
-            foreach (var param in objTemplate.Parameters)
+            //Skip loading templates if template doesn't exist
+            if (objTemplate != null)
             {
-                // For compatibility with SonicGlvl templates.
-                if (param.Name == "Unknown1" || param.Name == "Unknown2" ||
-                    param.Name == "Unknown3" || param.Name == "RangeIn" ||
-                    param.Name == "RangeOut" || param.Name == "Parent")
-                    continue;
-
-                // Read Special Types/Fix Padding
-                if (param.DataType == typeof(uint[]))
+                // Parameters
+                foreach (var param in objTemplate.Parameters)
                 {
-                    // Data Info
-                    reader.FixPadding(4);
-                    uint arrOffset = reader.ReadUInt32();
-                    uint arrLength = reader.ReadUInt32();
-                    uint arrUnknown = reader.ReadUInt32();
-                    long curPos = reader.BaseStream.Position;
+                    // For compatibility with SonicGlvl templates.
+                    if (param.Name == "Unknown1" || param.Name == "Unknown2" ||
+                        param.Name == "Unknown3" || param.Name == "RangeIn" ||
+                        param.Name == "RangeOut" || param.Name == "Parent")
+                        continue;
 
-                    // Data
-                    var arr = new uint[arrLength];
-                    reader.JumpTo(arrOffset, false);
-
-                    for (uint i = 0; i < arrLength; ++i)
-                        arr[i] = reader.ReadUInt32();
-
-                    obj.Parameters.Add(new SetObjectParam(param.DataType, arr));
-                    reader.BaseStream.Position = curPos;
-                    continue;
-                }
-                else if (param.DataType == typeof(string))
-                {
-                    // Data Info
-                    uint strOffset = reader.ReadUInt32();
-                    uint strUnknown = reader.ReadUInt32();
-                    string str = null;
-
-                    // Data
-                    if (strOffset != 0)
+                    // Read Special Types/Fix Padding
+                    if (param.DataType == typeof(uint[]))
                     {
+                        // Data Info
+                        reader.FixPadding(4);
+                        uint arrOffset = reader.ReadUInt32();
+                        uint arrLength = reader.ReadUInt32();
+                        uint arrUnknown = reader.ReadUInt32();
                         long curPos = reader.BaseStream.Position;
-                        reader.JumpTo(strOffset, false);
 
-                        str = reader.ReadNullTerminatedString();
+                        // Data
+                        var arr = new uint[arrLength];
+                        reader.JumpTo(arrOffset, false);
+
+                        for (uint i = 0; i < arrLength; ++i)
+                            arr[i] = reader.ReadUInt32();
+
+                        obj.Parameters.Add(new SetObjectParam(param.DataType, arr));
                         reader.BaseStream.Position = curPos;
+                        continue;
+                    }
+                    else if (param.DataType == typeof(string))
+                    {
+                        // Data Info
+                        uint strOffset = reader.ReadUInt32();
+                        uint strUnknown = reader.ReadUInt32();
+                        string str = null;
+
+                        // Data
+                        if (strOffset != 0)
+                        {
+                            long curPos = reader.BaseStream.Position;
+                            reader.JumpTo(strOffset, false);
+
+                            str = reader.ReadNullTerminatedString();
+                            reader.BaseStream.Position = curPos;
+                        }
+
+                        obj.Parameters.Add(new SetObjectParam(param.DataType, str));
+                        continue;
+                    }
+                    else if (param.DataType == typeof(float) ||
+                        param.DataType == typeof(int) || param.DataType == typeof(uint))
+                    {
+                        reader.FixPadding(4);
+                    }
+                    else if (type == SOBJType.LostWorld && param.DataType == typeof(Vector3))
+                    {
+                        reader.FixPadding(16);
                     }
 
-                    obj.Parameters.Add(new SetObjectParam(param.DataType, str));
-                    continue;
+                    // Read Data
+                    var objParam = new SetObjectParam(param.DataType,
+                        reader.ReadByType(param.DataType));
+                    obj.Parameters.Add(objParam);
                 }
-                else if (param.DataType == typeof(float) ||
-                    param.DataType == typeof(int) || param.DataType == typeof(uint))
-                {
-                    reader.FixPadding(4);
-                }
-                else if (type == SOBJType.LostWorld && param.DataType == typeof(Vector3))
-                {
-                    reader.FixPadding(16);
-                }
-
-                // Read Data
-                var objParam = new SetObjectParam(param.DataType,
-                    reader.ReadByType(param.DataType));
-                obj.Parameters.Add(objParam);
             }
+
 
             // Transforms
             uint childCount = transformCount - 1;
