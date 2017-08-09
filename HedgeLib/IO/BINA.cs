@@ -318,24 +318,16 @@ namespace HedgeLib.IO
         }
 
         // TODO
-        public override void FillInOffset(string name, bool absolute = true)
+        public override void FillInOffset(string name,
+            bool absolute = true, bool removeOffset = false)
         {
-            long curPos = BaseStream.Position;
-            BaseStream.Position = offsets[name];
-
-            Write((uint)(curPos - ((absolute) ? 0 : Offset)));
-
-            BaseStream.Position = curPos;
+            base.FillInOffset(name, absolute, removeOffset);
         }
 
-        public override void FillInOffset(string name, uint value, bool absolute = true)
+        public override void FillInOffset(string name, uint value,
+            bool absolute = true, bool removeOffset = false)
         {
-            long curPos = BaseStream.Position;
-            BaseStream.Position = offsets[name];
-
-            Write((uint)(value - ((absolute) ? 0 : Offset)));
-
-            BaseStream.Position = curPos;
+            base.FillInOffset(name, value, absolute, removeOffset);
         }
 
         //Other
