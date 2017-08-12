@@ -258,17 +258,17 @@ namespace HedgeLib.IO
             var buffer = ReadBytes(8);
             if (IsBigEndian)
             {
-                return buffer[0] << 56 | buffer[1] << 48 |
-                    buffer[2] << 40 | buffer[3] << 32 |
-                    buffer[4] << 24 | buffer[5] << 16 |
-                    buffer[6] << 8 | buffer[7];
+                return ((long)buffer[0] << 56 | (long)buffer[1] << 48 |
+                    (long)buffer[2] << 40 | (long)buffer[3] << 32 |
+                    (long)buffer[4] << 24 | (long)buffer[5] << 16 |
+                    (long)buffer[6] << 8 | buffer[7]);
             }
             else
             {
-                return buffer[7] << 56 | buffer[6] << 48 |
-                    buffer[5] << 40 | buffer[4] << 32 |
-                    buffer[3] << 24 | buffer[2] << 16 |
-                    buffer[1] << 8 | buffer[0];
+                return ((long)buffer[7] << 56 | (long)buffer[6] << 48 |
+                    (long)buffer[5] << 40 | (long)buffer[4] << 32 |
+                    (long)buffer[3] << 24 | (long)buffer[2] << 16 |
+                    (long)buffer[1] << 8 | buffer[0]);
             }
         }
 
