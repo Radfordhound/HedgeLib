@@ -18,6 +18,12 @@ namespace HedgeArchiveEditor
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+
+            // Load Addons
+            if (Directory.Exists("Addons"))
+                Addon.LoadAddons(new DirectoryInfo("Addons").FullName);
+
+
             if (args.Length < 1)
                 ShowGUI();
             else
@@ -115,6 +121,16 @@ namespace HedgeArchiveEditor
             // Checks if the file is not empty.
             if (fileInfo.Length == 0)
                 throw new Exception("The given file is empty.");
+
+            // Addons
+            foreach (var addon in Addon.Addons)
+                foreach (var archive in addon.Archives)
+                    if (archive.FileExtensions.Contains(fileInfo.Extension))
+                    {
+                        arc = Activator.CreateInstance(archive.ArchiveType) as Archive;
+                        arc.Load(filePath);
+                        return arc;
+                    }
 
             //TODO: Add support for other types of archive.
             if (fileInfo.Extension == GensArchive.Extension ||

@@ -12,6 +12,7 @@ namespace HedgeArchiveEditor
         public SaveOptions()
         {
             InitializeComponent();
+
             ArchiveType = 0;
             ComboBox1.Text = ComboBox1.Items[ArchiveType] as string;
         }
@@ -20,6 +21,12 @@ namespace HedgeArchiveEditor
         {
             InitializeComponent();
             ArchiveType = archiveType;
+
+            // Addon
+            foreach (var addon in Addon.Addons)
+                foreach (var archive in addon.Archives)
+                    ComboBox1.Items.Add(archive.ArchiveName);
+
             ComboBox1.Text = ComboBox1.Items[archiveType] as string;
         }
 
@@ -33,7 +40,7 @@ namespace HedgeArchiveEditor
             
             // Sets the positions
             label.Location = new System.Drawing.Point(8, y + 2);
-            value.Location = new System.Drawing.Point(x, y + (22 - value.Size.Height) / 2);
+            value.Location = new System.Drawing.Point(x - 8, y + (22 - value.Size.Height) / 2);
             
             // Makes the option visible
             label.Visible = true;
@@ -104,7 +111,7 @@ namespace HedgeArchiveEditor
 
                     break;
                 default:
-                    throw new NotImplementedException("Unknown Archive");
+                    break;
             }
         }
     }
