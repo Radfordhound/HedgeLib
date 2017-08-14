@@ -2,7 +2,7 @@
 {
     public class BINAHeader
     {
-        //Variables/Constants
+        // Variables/Constants
         public uint FileSize, FinalTableOffset, FinalTableLength,
             DataLength, StringTableOffset, StringTableLength;
         public bool IsFooterMagicPresent = false;

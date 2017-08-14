@@ -1,14 +1,10 @@
-﻿using System;
-using System.IO;
-
-namespace HedgeArcPack
+﻿namespace HedgeArcPack
 {
     public class Program
     {
-        //Methods
+        // Methods
         public static void Main(string[] args)
         {
-
             // Default Options
             Commands.Options.Add("split", "false");
             Commands.Options.Add("splitsize", "10485760");

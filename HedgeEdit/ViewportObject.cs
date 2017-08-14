@@ -7,7 +7,7 @@ namespace HedgeEdit
 {
     public class ViewportObject
     {
-        //Variables/Constants
+        // Variables/Constants
         public Quaternion Rotation = Quaternion.Identity;
         public Vector3 Position = Vector3.Zero;
         public object CustomData = null;
@@ -15,7 +15,7 @@ namespace HedgeEdit
         private Model model = null;
         private uint[] vaos;
 
-        //Constructors
+        // Constructors
         public ViewportObject(Model mdl) : this(mdl, Vector3.Zero, Quaternion.Identity) { }
         public ViewportObject(Model mdl, Vector3 pos,
             Quaternion rot, object customData = null)
@@ -63,7 +63,7 @@ namespace HedgeEdit
             }
         }
 
-        //Methods
+        // Methods
         public void Draw(int shaderID)
         {
             if (model == null)

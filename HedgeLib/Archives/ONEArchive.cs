@@ -7,7 +7,7 @@ namespace HedgeLib.Archives
 {
     public class ONEArchive : Archive
     {
-        //Variables/Constants
+        // Variables/Constants
         public uint Magic = (uint)Magics.Heroes;
         public enum Magics
         {
@@ -21,7 +21,7 @@ namespace HedgeLib.Archives
         public const string Extension = ".one";
         public const byte StringLength = 0x40, FileEntryCount = 0xFF;
 
-        //Constructors
+        // Constructors
         public ONEArchive() : base() { }
         public ONEArchive(Archive arc) : base(arc)
         {
@@ -29,7 +29,7 @@ namespace HedgeLib.Archives
                 Magic = ((ONEArchive)arc).Magic;
         }
 
-        //Methods
+        // Methods
         public override void Load(Stream fileStream)
         {
             var reader = new ExtendedBinaryReader(fileStream, Encoding.ASCII, false);
@@ -290,7 +290,7 @@ namespace HedgeLib.Archives
             writer.FillInOffset("fileSize", (uint)writer.BaseStream.Position - 0xC);
         }
 
-        //Other
+        // Other
         private struct FileEntry
         {
             public string FileName;

@@ -4,10 +4,10 @@ namespace HedgeLib.Archives
 {
     public class ArchiveData
     {
-        //Variables/Constants
+        // Variables/Constants
         public string Name;
         
-        //Methods
+        // Methods
         public virtual void Extract(string filePath)
         {
             throw new NotImplementedException();

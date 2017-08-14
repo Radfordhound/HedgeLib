@@ -9,11 +9,11 @@ namespace HedgeLib.Sets
 {
     public class SetData : FileBase
     {
-        //Variables/Constants
+        // Variables/Constants
         public List<SetObject> Objects = new List<SetObject>();
         public string Name = null;
 
-        //Methods
+        // Methods
         public override void Load(string filePath)
         {
             Load(filePath, null);
@@ -49,13 +49,13 @@ namespace HedgeLib.Sets
 
 		public void ImportXML(Stream fileStream)
 		{
-			//Load XML and add loaded data to set data
+			// Load XML and add loaded data to set data
 			var xml = XDocument.Load(fileStream);
-			uint objID = 0; //For Object elements with no ID attribute.
+			uint objID = 0; // For Object elements with no ID attribute.
 
 			foreach (var objElem in xml.Root.Elements("Object"))
 			{
-				//Generate Object
+				// Generate Object
 				var typeAttr = objElem.Attribute("type");
 				var objIDAttr = objElem.Attribute("id");
 				if (typeAttr == null) continue;
@@ -67,7 +67,7 @@ namespace HedgeLib.Sets
 						objID : Convert.ToUInt32(objIDAttr.Value),
 				};
 
-				//Assign CustomData to Object
+				// Assign CustomData to Object
 				var customDataElem = objElem.Element("CustomData");
 				if (customDataElem != null)
 				{
@@ -78,7 +78,7 @@ namespace HedgeLib.Sets
 					}
 				}
 
-				//Assign Parameters to Object
+				// Assign Parameters to Object
 				var parametersElem = objElem.Element("Parameters");
 				if (parametersElem != null)
 				{
@@ -88,7 +88,7 @@ namespace HedgeLib.Sets
 					}
 				}
 
-				//Assign Transforms to Object
+				// Assign Transforms to Object
 				var transformsElem = objElem.Element("Transforms");
 				if (transformsElem != null)
 				{
@@ -121,7 +121,7 @@ namespace HedgeLib.Sets
 				Objects.Add(obj);
 			}
 
-			//Sub-Methods
+			// Sub-Methods
 			SetObjectParam LoadParam(XElement paramElem)
 			{
 				var dataTypeAttr = paramElem.Attribute("type");
@@ -177,17 +177,17 @@ namespace HedgeLib.Sets
 		public void ExportXML(Stream fileStream,
 			Dictionary<string, SetObjectType> objectTemplates = null)
 		{
-			//Convert to XML file and save
+			// Convert to XML file and save
 			var rootElem = new XElement("SetData");
 
 			foreach (var obj in Objects)
 			{
-				//Generate Object Element
+				// Generate Object Element
 				var objElem = new XElement("Object");
 				var typeAttr = new XAttribute("type", obj.ObjectType);
 				var objIDAttr = new XAttribute("id", obj.ObjectID);
 
-				//Generate CustomData Element
+				// Generate CustomData Element
 				var customDataElem = new XElement("CustomData");
 				foreach (var customData in obj.CustomData)
 				{
@@ -195,7 +195,7 @@ namespace HedgeLib.Sets
 						customData.Value, customData.Key));
 				}
 
-				//Generate Parameters Element
+				// Generate Parameters Element
 				var paramsElem = new XElement("Parameters");
 				var template = objectTemplates?[obj.ObjectType];
 
@@ -205,7 +205,7 @@ namespace HedgeLib.Sets
 						template?.Parameters[i].Name));
 				}
 
-				//Generate Transforms Element
+				// Generate Transforms Element
 				var transformElem = GenerateTransformElement(obj.Transform);
 				var transformsElem = new XElement("Transforms", transformElem);
 
@@ -214,7 +214,7 @@ namespace HedgeLib.Sets
 					transformsElem.Add(GenerateTransformElement(transform));
 				}
 
-				//Add all of this to the XDocument
+				// Add all of this to the XDocument
 				objElem.Add(typeAttr, objIDAttr, customDataElem,
 					paramsElem, transformsElem);
 				rootElem.Add(objElem);
@@ -223,7 +223,7 @@ namespace HedgeLib.Sets
 			var xml = new XDocument(rootElem);
 			xml.Save(fileStream);
 
-			//Sub-Methods
+			// Sub-Methods
 			XElement GenerateParamElement(
 				SetObjectParam param, string name = "Parameter")
 			{
@@ -251,7 +251,7 @@ namespace HedgeLib.Sets
 			XElement GenerateTransformElement(
 				SetObjectTransform transform, string name = "Transform")
 			{
-				//Convert Position/Rotation/Scale into elements.
+				// Convert Position/Rotation/Scale into elements.
 				var posElem = new XElement("Position");
 				var rotElem = new XElement("Rotation");
 				var scaleElem = new XElement("Scale");
@@ -260,7 +260,7 @@ namespace HedgeLib.Sets
 				Helpers.XMLWriteVector4(rotElem, transform.Rotation);
 				Helpers.XMLWriteVector3(scaleElem, transform.Scale);
 
-				//Add elements to new transform element and return it.
+				// Add elements to new transform element and return it.
 				return new XElement(name, posElem, rotElem, scaleElem);
 			}
 		}

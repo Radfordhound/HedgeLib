@@ -7,10 +7,10 @@ namespace HedgeLib.Sets
 {
     public class GensSetData : SetData
     {
-        //Variables/Constants
+        // Variables/Constants
         public const string Extension = ".set.xml";
 
-        //Methods
+        // Methods
         public override void Load(Stream fileStream,
             Dictionary<string, SetObjectType> objectTemplates)
         {
@@ -20,11 +20,11 @@ namespace HedgeLib.Sets
                 string elemName = element.Name.LocalName;
                 if (elemName.ToLower() == "layerdefine")
                 {
-                    //TODO: Parse LayerDefine XML elements.
+                    // TODO: Parse LayerDefine XML elements.
                 }
                 else
                 {
-                    //Read Parameters
+                    // Read Parameters
                     var parameters = new List<SetObjectParam>();
                     var transform = new SetObjectTransform();
                     SetObjectTransform[] children = null;
@@ -32,7 +32,7 @@ namespace HedgeLib.Sets
 
                     foreach (var paramElement in element.Elements())
                     {
-                        //Load special parameters
+                        // Load special parameters
                         string paramName = paramElement.Name.LocalName;
                         switch (paramName.ToLower())
                         {
@@ -86,14 +86,14 @@ namespace HedgeLib.Sets
                                                     break;
                                                 }
 
-                                            //TODO: Parse other elements.
+                                            // TODO: Parse other elements.
                                         }
                                     }
                                     continue;
                                 }
                         }
 
-                        //Get the parameter's type.
+                        // Get the parameter's type.
                         bool doAutoDetect = (objectTemplates == null ||
                             !objectTemplates.ContainsKey(elemName));
 
@@ -105,13 +105,13 @@ namespace HedgeLib.Sets
                             templateParam.DataType;
                         if (paramType == null) continue;
 
-                        //Read the parameter's data
+                        // Read the parameter's data
                         object data =
                             (paramType == typeof(Vector3)) ? Helpers.XMLReadVector3(paramElement) :
                             (paramType == typeof(Quaternion)) ? Helpers.XMLReadQuat(paramElement) :
                             Helpers.ChangeType(paramElement.Value, paramType);
 
-                        //Add the Parameter to the list
+                        // Add the Parameter to the list
                         var param = new SetObjectParam()
                         {
                             Data = data,
@@ -120,7 +120,7 @@ namespace HedgeLib.Sets
                         parameters.Add(param);
                     }
 
-                    //Ensure Object has ID
+                    // Ensure Object has ID
                     if (!objID.HasValue)
                     {
                         Console.WriteLine("WARNING: Object of type \"" + elemName +
@@ -128,7 +128,7 @@ namespace HedgeLib.Sets
                         continue;
                     }
 
-                    //Add Object to List
+                    // Add Object to List
                     var obj = new SetObject()
                     {
                         ObjectType = elemName,
@@ -142,7 +142,7 @@ namespace HedgeLib.Sets
             }
         }
 
-        //TODO: Save Method.
+        // TODO: Save Method.
 
         private static Type AutoDetectParamType(XElement element)
         {

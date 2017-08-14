@@ -7,7 +7,7 @@ namespace HedgeArcPack
 {
     public static class Types
     {
-        //Methods
+        // Methods
         public static ArcType SetType(string typeString)
         {
             switch (typeString.ToLower())
@@ -115,7 +115,7 @@ namespace HedgeArcPack
             return null;
         }
 
-        //Other
+        // Other
         public enum ArcType
         {
             Unknown, Heroes, Storybook, Gens, LostWorld

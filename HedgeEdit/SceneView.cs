@@ -6,10 +6,10 @@ namespace HedgeEdit
 {
     public partial class SceneView : Form
     {
-        //Variables/Constants
+        // Variables/Constants
         private MainFrm mainForm = null;
 
-        //Constructors
+        // Constructors
         public SceneView(MainFrm mainFrm)
         {
             Owner = mainForm = mainFrm;
@@ -23,7 +23,7 @@ namespace HedgeEdit
                 mainFrm.Location.Y + 78);
         }
 
-        //Methods
+        // Methods
         public void RefreshView()
         {
             treeView.BeginUpdate();
@@ -66,7 +66,7 @@ namespace HedgeEdit
             treeView.EndUpdate();
         }
 
-        //GUI Events
+        // GUI Events
         private void TreeView_AfterSelect(object sender, TreeViewEventArgs e)
         {
             if (e.Node.Tag != null)

@@ -11,7 +11,7 @@ namespace HedgeArchiveEditor
 {
     public partial class MainFrm : Form
     {
-        //Variables/Constants
+        // Variables/Constants
         public static string tempPath = Path.Combine(Path.GetTempPath(), "HedgeArchiveEditor\\");
 
         public Dictionary<Archive, string> ArchiveFilePaths = new Dictionary<Archive, string>();
@@ -37,7 +37,7 @@ namespace HedgeArchiveEditor
 
         private bool extracting, extracted = false;
 
-        //Constructors
+        // Constructors
         public MainFrm()
         {
             InitializeComponent();
@@ -45,7 +45,7 @@ namespace HedgeArchiveEditor
             Directory.CreateDirectory(tempPath);
         }
 
-        //Methods
+        // Methods
         public void UpdateTitle()
         {
             Text = ((tabControl.TabPages.Count > 0) ?

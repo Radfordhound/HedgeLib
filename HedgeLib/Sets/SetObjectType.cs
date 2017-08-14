@@ -8,12 +8,12 @@ namespace HedgeLib.Sets
 {
     public class SetObjectType : FileBase
     {
-        //Variables/Constants
+        // Variables/Constants
         public List<SetObjectTypeParam> Parameters = new List<SetObjectTypeParam>();
         public string Name;
         public const string Extension = ".xml";
 
-        //Methods
+        // Methods
         public static Dictionary<string, SetObjectType>
             LoadObjectTemplates(string templatesDir, string gameName)
         {
@@ -72,7 +72,7 @@ namespace HedgeLib.Sets
 
                 if (elemName.ToLower() == "extra")
                 {
-                    //TODO: Parse Extra XML elements.
+                    // TODO: Parse Extra XML elements.
                 }
                 else
                 {
@@ -140,12 +140,12 @@ namespace HedgeLib.Sets
 
     public class SetObjectTypeParam
     {
-        //Variables/Constants
+        // Variables/Constants
         public object DefaultValue;
         public Type DataType;
         public string Name, Description;
 
-        //Constructors
+        // Constructors
         public SetObjectTypeParam() { }
         public SetObjectTypeParam(string name, Type dataType)
         {

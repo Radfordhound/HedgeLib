@@ -10,17 +10,17 @@ namespace HedgeLib.IO
     // calls for performance, hence it's extreme length.
     public class ExtendedBinary
     {
-        //Other
+        // Other
         [StructLayout(LayoutKind.Explicit)]
         public struct FloatUnion
         {
-            //Variables/Constants
+            // Variables/Constants
             [FieldOffset(0)]
             public float Float;
             [FieldOffset(0)]
             public uint UInt;
 
-            //Constructors
+            // Constructors
             public FloatUnion(float f)
             {
                 UInt = 0;
@@ -31,13 +31,13 @@ namespace HedgeLib.IO
         [StructLayout(LayoutKind.Explicit)]
         public struct DoubleUnion
         {
-            //Variables/Constants
+            // Variables/Constants
             [FieldOffset(0)]
             public double Double;
             [FieldOffset(0)]
             public ulong ULong;
 
-            //Constructors
+            // Constructors
             public DoubleUnion(double d)
             {
                 ULong = 0;
@@ -48,12 +48,12 @@ namespace HedgeLib.IO
 
     public class ExtendedBinaryReader : BinaryReader
     {
-        //Variables/Constants
+        // Variables/Constants
         public Encoding Encoding = Encoding.ASCII;
         public uint Offset = 0;
         public bool IsBigEndian = false;
 
-        //Constructors
+        // Constructors
         public ExtendedBinaryReader(Stream input, bool isBigEndian = false) : base(input)
         {
             IsBigEndian = isBigEndian;
@@ -66,7 +66,7 @@ namespace HedgeLib.IO
             IsBigEndian = isBigEndian;
         }
 
-        //Methods
+        // Methods
         public void JumpTo(long position, bool absolute = true)
         {
             BaseStream.Position = (absolute) ? position : position + Offset;
@@ -167,13 +167,13 @@ namespace HedgeLib.IO
             else if (type == typeof(Vector4))
                 return ReadVector4();
 
-            //TODO: Add more types.
+            // TODO: Add more types.
 
             throw new NotImplementedException("Cannot read \"" +
                 type + "\" by type yet!");
         }
 
-        //2-Byte Types
+        // 2-Byte Types
         public override short ReadInt16()
         {
             var buffer = ReadBytes(2);
@@ -200,7 +200,7 @@ namespace HedgeLib.IO
             }
         }
 
-        //4-Byte Types
+        // 4-Byte Types
         public override int ReadInt32()
         {
             var buffer = ReadBytes(4);
@@ -252,7 +252,7 @@ namespace HedgeLib.IO
             return floatUnion.Float;
         }
 
-        //8-Byte Types
+        // 8-Byte Types
         public override long ReadInt64()
         {
             var buffer = ReadBytes(8);
@@ -316,7 +316,7 @@ namespace HedgeLib.IO
             return doubleUnion.Double;
         }
 
-        //12-Byte Types
+        // 12-Byte Types
         public Vector3 ReadVector3()
         {
             float x, y, z;
@@ -361,7 +361,7 @@ namespace HedgeLib.IO
             return new Vector3(x, y, z);
         }
         
-        //16-Byte Types
+        // 16-Byte Types
         public Vector4 ReadVector4()
         {
             float x, y, z, w;
@@ -416,12 +416,12 @@ namespace HedgeLib.IO
             return new Vector4(x, y, z, w);
         }
 
-        //TODO: Write override methods for all types.
+        // TODO: Write override methods for all types.
     }
 
     public class ExtendedBinaryWriter : BinaryWriter
     {
-        //Variables/Constants
+        // Variables/Constants
         public Encoding Encoding = Encoding.ASCII;
         public uint Offset = 0;
         public bool IsBigEndian = false;
@@ -429,7 +429,7 @@ namespace HedgeLib.IO
         protected Dictionary<string, uint> offsets = new Dictionary<string, uint>();
         private byte[] dataBuffer = new byte[32];
 
-        //Constructors
+        // Constructors
         public ExtendedBinaryWriter(bool isBigEndian = false) : base()
         {
             IsBigEndian = isBigEndian;
@@ -447,7 +447,7 @@ namespace HedgeLib.IO
             IsBigEndian = isBigEndian;
         }
 
-        //Methods
+        // Methods
         public virtual void AddOffset(string name)
         {
             if (offsets.ContainsKey(name))
@@ -572,10 +572,10 @@ namespace HedgeLib.IO
                     type + "\" by type yet!");
             }
 
-            //TODO: Add more types.
+            // TODO: Add more types.
         }
 
-        //2-Byte Types
+        // 2-Byte Types
         public override void Write(short value)
         {
             if (IsBigEndian)
@@ -608,7 +608,7 @@ namespace HedgeLib.IO
             Write(dataBuffer, 0, 2);
         }
 
-        //4-Byte Types
+        // 4-Byte Types
         public override void Write(int value)
         {
             if (IsBigEndian)
@@ -670,7 +670,7 @@ namespace HedgeLib.IO
             Write(dataBuffer, 0, 4);
         }
 
-        //8-Byte Types
+        // 8-Byte Types
         public override void Write(long value)
         {
             if (IsBigEndian)
@@ -762,7 +762,7 @@ namespace HedgeLib.IO
             Write(dataBuffer, 0, 8);
         }
 
-        //12-Byte Types
+        // 12-Byte Types
         public void Write(Vector3 vect)
         {
             var floatUnion = new ExtendedBinary.FloatUnion();
@@ -810,7 +810,7 @@ namespace HedgeLib.IO
             Write(dataBuffer, 0, 12);
         }
 
-        //16-Byte Types
+        // 16-Byte Types
         public void Write(Vector4 vect)
         {
             var floatUnion = new ExtendedBinary.FloatUnion();

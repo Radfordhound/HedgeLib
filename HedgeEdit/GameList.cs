@@ -9,12 +9,12 @@ namespace HedgeEdit
 {
     public static class GameList
     {
-        //Variables/Constants
+        // Variables/Constants
         public static List<GameEntry> Games = new List<GameEntry>();
         public const string FilePath = "GameList.xml", TemplatesDir = "Templates";
         public const float HighestSupportedVersion = 1.0f;
 
-        //Methods
+        // Methods
         public static void Load(string startupPath)
         {
             string filePath = Helpers.CombinePaths(startupPath, FilePath);
@@ -126,7 +126,7 @@ namespace HedgeEdit
 
     public class GameEntry
     {
-        //Variables/Constants
+        // Variables/Constants
         public Dictionary<string, SetObjectType> ObjectTemplates =
             new Dictionary<string, SetObjectType>();
 
@@ -140,14 +140,14 @@ namespace HedgeEdit
 
     public class UnpackInfoEntry
     {
-        //Variables/Constants
+        // Variables/Constants
         public string Type;
         public string Path, CachePath, SearchPattern;
     }
 
     public class LoadInfo
     {
-        //Variables/Constants
+        // Variables/Constants
         public Dictionary<string, LoadInfoDirectory> Directories =
             new Dictionary<string, LoadInfoDirectory>();
         public Dictionary<string, string> Files = new Dictionary<string, string>();
@@ -155,7 +155,7 @@ namespace HedgeEdit
 
     public class LoadInfoDirectory
     {
-        //Variables/Constants
+        // Variables/Constants
         public string Directory, Filter;
     }
 }

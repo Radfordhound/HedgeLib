@@ -5,10 +5,10 @@ namespace HedgeArchiveEditor
 {
     public partial class SaveOptions : Form
     {
-        //Variables/Constants
+        // Variables/Constants
         public int ArchiveType = -1;
 
-        //Constructors
+        // Constructors
         public SaveOptions()
         {
             InitializeComponent();
@@ -55,7 +55,7 @@ namespace HedgeArchiveEditor
         }
 
 
-        //GUI Events
+        // GUI Events
         private void Btn_Click(object sender, EventArgs e)
         {
             Close();

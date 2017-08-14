@@ -8,11 +8,11 @@ namespace HedgeLib.Sets
 {
     public class S06SetData : SetData
     {
-        //Variables/Constants
+        // Variables/Constants
         public BINAHeader Header = new BINAHeader();
         public const string Extension = ".set";
 
-        //Methods
+        // Methods
         public override void Load(Stream fileStream,
             Dictionary<string, SetObjectType> objectTemplates)
         {
@@ -36,7 +36,7 @@ namespace HedgeLib.Sets
             // TODO: Read Groups
             // TODO: Read Footer
 
-            //Sub-Methods
+            // Sub-Methods
             SetObject ReadObject()
             {
                 // Object Entry
@@ -163,7 +163,7 @@ namespace HedgeLib.Sets
             // Write Footer
             writer.FinishWrite(Header);
 
-            //Sub-Methods
+            // Sub-Methods
             void WriteObject(int id)
             {
                 // Object Entry

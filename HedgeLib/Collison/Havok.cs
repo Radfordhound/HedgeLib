@@ -8,7 +8,7 @@ namespace HedgeLib.Collision
 {
     public class HavokPackFile : FileBase
     {
-        //Variables/Constants
+        // Variables/Constants
         public Dictionary<string, HavokSection> Sections =
             new Dictionary<string, HavokSection>();
 
@@ -18,7 +18,7 @@ namespace HedgeLib.Collision
 
         public const string Extension = ".hkx";
 
-        //Methods
+        // Methods
         public override void Load(Stream fileStream)
         {
             // Header
@@ -51,15 +51,15 @@ namespace HedgeLib.Collision
                 string sectionName = new string(reader.ReadChars(16));
                 sectionName = sectionName.Replace("\0", string.Empty);
 
-                //TODO
+                // TODO
                 reader.JumpAhead(0x20);
             }
 
-            //TODO
+            // TODO
             throw new NotImplementedException();
         }
 
-        //TODO: Write a Save Method
+        // TODO: Write a Save Method
 
         public void LoadXML(Stream fileStream)
         {
@@ -277,20 +277,20 @@ namespace HedgeLib.Collision
 
     public class HavokSection
     {
-        //Variables/Constants
+        // Variables/Constants
         public Dictionary<string, HavokObject> Objects = new Dictionary<string, HavokObject>();
     }
 
     public class HavokObject
     {
-        //Variables/Constants
+        // Variables/Constants
         public Dictionary<string, HavokParam> Parameters = new Dictionary<string, HavokParam>();
         public string Class, Signature;
     }
 
     public class HavokParam
     {
-        //Variables/Constants
+        // Variables/Constants
         public List<HavokObject> SubObjects = new List<HavokObject>();
         public string Data;
         public int NumElements;

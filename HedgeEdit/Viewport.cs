@@ -13,7 +13,7 @@ namespace HedgeEdit
 {
     public static class Viewport
     {
-        //Variables/Constants
+        // Variables/Constants
         public static List<ViewportObject> Objects = new List<ViewportObject>();
         public static Model DefaultCube;
 
@@ -29,7 +29,7 @@ namespace HedgeEdit
         private static float camSpeed = normalSpeed;
         private const float normalSpeed = 1, fastSpeed = 4;
 
-        //Methods
+        // Methods
         public static void Init(GLControl viewport)
         {
             vp = viewport;
@@ -166,10 +166,10 @@ namespace HedgeEdit
             prevMousePos = Cursor.Position;
 
             // Transform Gizmos
-            //float screenX = (float)Math.Min(Math.Max(0,
+            // float screenX = (float)Math.Min(Math.Max(0,
             //    vpMousePos.X), vp.Size.Width) / vp.Size.Width;
 
-            //float screenY = (float)Math.Min(Math.Max(0,
+            // float screenY = (float)Math.Min(Math.Max(0,
             //    vpMousePos.Y), vp.Size.Height) / vp.Size.Height;
             // TODO
 

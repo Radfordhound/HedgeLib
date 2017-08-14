@@ -7,20 +7,20 @@ namespace HedgeLib.Archives
 {
     public class Archive : FileBase
     {
-        //Variables/Constants
+        // Variables/Constants
         public List<ArchiveData> Data = new List<ArchiveData>();
         public bool Saved = false;
 
         public virtual bool HasSplitArchives => false;
 
-        //Constructors
+        // Constructors
         public Archive() { }
         public Archive(Archive arc)
         {
             Data = arc.Data;
         }
 
-        //Methods
+        // Methods
         public virtual List<string> GetSplitArchivesList(string filePath)
         {
             throw new NotImplementedException();

@@ -5,20 +5,20 @@ namespace HedgeLib
 {
     public static class Types
     {
-        //Variables/Constants
+        // Variables/Constants
         public static readonly DataType[] SupportedTypes = new DataType[]
         {
-            //1-Byte Values
+            // 1-Byte Values
             new DataType(typeof(bool), false, "boolean", "bool"),
             new DataType(typeof(byte), (byte)0, "unsigned byte", "uint8", "byte", "enum"),
             new DataType(typeof(sbyte), (sbyte)0, "signed byte", "sint8", "sbyte"),
             new DataType(typeof(char), '\0', "char"),
 
-            //2-Byte Values
+            // 2-Byte Values
             new DataType(typeof(short), (short)0, "signed short", "sint16", "short"),
             new DataType(typeof(ushort), (ushort)0, "unsigned short", "uint16", "ushort"),
 
-            //4-Byte Values
+            // 4-Byte Values
             new DataType(typeof(int), 0, "signed int", "integer", "sint32", "int", "int32"),
             new DataType(typeof(uint), 0u, "unsigned int",
 				"unsigned integer", "uint32", "uint", "target"),
@@ -26,26 +26,26 @@ namespace HedgeLib
 
             new DataType(typeof(uint[]), new uint[0], "uint32array"),
 
-            //8-Byte Values
+            // 8-Byte Values
             new DataType(typeof(long), 0L, "signed long", "sint64", "long"),
             new DataType(typeof(ulong), 0UL, "unsigned long", "uint64", "ulong"),
             new DataType(typeof(double), 0D, "double"),
 
-            //12-Byte Values
+            // 12-Byte Values
             new DataType(typeof(Vector3), new Vector3(), "vect", "vector", "vector3", "position"),
 
-            //16-Byte Values
+            // 16-Byte Values
             new DataType(typeof(decimal), 0M, "decimal"),
             new DataType(typeof(Vector4), new Vector4(), "vector4"),
             new DataType(typeof(Quaternion), new Quaternion(), "quat", "quaternion"),
 
-            //Other Values
+            // Other Values
             new DataType(typeof(string), string.Empty, "string")
 
-            //TODO: Add other data types if necessary.
+            // TODO: Add other data types if necessary.
         };
 
-        //Methods
+        // Methods
         public static Type GetTypeFromString(string type)
         {
             string lowerType = type.ToLower();
@@ -83,12 +83,12 @@ namespace HedgeLib
 
     public struct DataType
     {
-        //Variables/Constants
+        // Variables/Constants
         public string[] Identifiers;
         public object DefaultValue;
         public Type Type;
 
-        //Constructors
+        // Constructors
         public DataType(Type type, object defaultValue, params string[] identifiers)
         {
             Type = type;

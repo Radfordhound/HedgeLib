@@ -7,7 +7,7 @@ namespace HedgeLib.Misc
 {
     public class LWGism : FileBase
     {
-        //Variables/Constants
+        // Variables/Constants
         public BINAHeader Header = new BINAHeader();
         public LWGismo[] Gismos;
         public uint UnknownBoolean1 = 1;
@@ -19,7 +19,7 @@ namespace HedgeLib.Misc
 
         public const string Signature = "GISM", Extension = ".gism";
 
-        //Methods
+        // Methods
         public override void Load(Stream fileStream)
         {
             // Header
@@ -162,7 +162,7 @@ namespace HedgeLib.Misc
 
     public class LWGismo
     {
-        //Variables/Constants
+        // Variables/Constants
         public string FileName, HavokName;
         public float Unknown2, Unknown3, Unknown5,
             Unknown6, Unknown7, Unknown8,

@@ -5,18 +5,18 @@ namespace HedgeLib.Archives
 {
     public class ArchiveDirectory : ArchiveData
     {
-        //Variables/Constants
+        // Variables/Constants
         public List<ArchiveData> Data = new List<ArchiveData>();
         public ArchiveDirectory Parent = null;
 
-        //Constructors
+        // Constructors
         public ArchiveDirectory() { }
         public ArchiveDirectory(string directoryName)
         {
             Name = directoryName;
         }
 
-        //Methods
+        // Methods
         public override void Extract(string directory)
         {
             Directory.CreateDirectory(directory);

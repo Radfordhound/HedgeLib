@@ -8,11 +8,11 @@ namespace HedgeArchiveEditor
 {
     public static class Program
     {
-        //Variables/Constants
+        // Variables/Constants
         public static MainFrm MainForm;
         public const string ProgramName = "Hedge Archive Editor";
 
-        //Methods
+        // Methods
         [STAThread]
         public static void Main(string[] args)
         {
@@ -40,11 +40,11 @@ namespace HedgeArchiveEditor
 
                             try
                             {
-                                //Load the archive
+                                // Load the archive
                                 FileInfo fileInfo = new FileInfo(args[1]);
                                 var arc = LoadArchive(args[1]);
 
-                                //Extract it's contents
+                                // Extract it's contents
                                 var dir = (args.Length < 3) ?
                                     Path.Combine(fileInfo.DirectoryName,
                                         fileInfo.Name.Substring(0, fileInfo.Name.Length -
@@ -132,7 +132,7 @@ namespace HedgeArchiveEditor
                         return arc;
                     }
 
-            //TODO: Add support for other types of archive.
+            // TODO: Add support for other types of archive.
             if (fileInfo.Extension == GensArchive.Extension ||
                 fileInfo.Extension == GensArchive.SplitExtension ||
                 fileInfo.Extension == GensArchive.PFDExtension ||

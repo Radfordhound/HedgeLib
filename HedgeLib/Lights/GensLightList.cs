@@ -8,11 +8,11 @@ namespace HedgeLib.Lights
     // Based off of the wonderful SCHG page on Sonic Generations over at Sonic Retro
     public class GensLightList : FileBase
     {
-        //Variables/Constants
+        // Variables/Constants
         public List<string> LightNames = new List<string>();
         public GensHeader Header = new GensHeader();
 
-        //Methods
+        // Methods
         public override void Load(Stream fileStream)
         {
             // Header

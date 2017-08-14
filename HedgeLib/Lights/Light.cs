@@ -7,7 +7,7 @@ namespace HedgeLib.Lights
     // Based off of the wonderful SCHG page on Sonic Generations over at Sonic Retro
     public class Light : FileBase
     {
-        //Variables/Constants
+        // Variables/Constants
         public GensHeader Header = new GensHeader();
         public Vector3 Position, Color;
         public float UnknownTotal1, UnknownTotal2, UnknownTotal3,
@@ -16,7 +16,7 @@ namespace HedgeLib.Lights
         public LightTypes LightType;
         public const string Extension = ".light";
 
-        //Methods
+        // Methods
         public override void Load(Stream fileStream)
         {
             // Header
@@ -73,7 +73,7 @@ namespace HedgeLib.Lights
             writer.FinishWrite(Header);
         }
 
-        //Other
+        // Other
         public enum LightTypes
         {
             Directional, Omni

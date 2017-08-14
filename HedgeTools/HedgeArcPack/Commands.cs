@@ -56,8 +56,8 @@ namespace HedgeArcPack
                 PrintDebug("Finished Executing");
             }
             // End of command
-            //Print("Press any key to exit...", false);
-            //if (!Quiet)
+            // Print("Press any key to exit...", false);
+            // if (!Quiet)
             //    Console.ReadKey(true);
         }
 

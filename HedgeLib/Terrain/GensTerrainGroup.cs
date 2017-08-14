@@ -7,12 +7,12 @@ namespace HedgeLib.Terrain
     // Based off of the wonderful SCHG page on Sonic Generations over at Sonic Retro
     public class GensTerrainGroup : FileBase
     {
-        //Variables/Constants
+        // Variables/Constants
         public InstanceInfo[] InstanceInfos;
         public string[] TerrainModels;
         public GensHeader Header = new GensHeader();
 
-        //Methods
+        // Methods
         public override void Load(Stream fileStream)
         {
             // Header
@@ -125,7 +125,7 @@ namespace HedgeLib.Terrain
             writer.FinishWrite(Header);
         }
 
-        //Other
+        // Other
         public struct InstanceInfo
         {
             public string[] FileNames;

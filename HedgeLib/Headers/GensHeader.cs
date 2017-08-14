@@ -2,7 +2,7 @@
 {
     public class GensHeader
     {
-        //Variables/Constants
+        // Variables/Constants
         public uint FileSize, RootNodeType, OffsetFinalTable,
             RootNodeOffset = Length, OffsetFinalTableAbs, FileEndOffset;
 

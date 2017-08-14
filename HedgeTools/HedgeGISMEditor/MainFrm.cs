@@ -8,18 +8,18 @@ namespace HedgeGISMEditor
 {
     public partial class MainFrm : Form
     {
-        //Variables/Constants
+        // Variables/Constants
         public LWGism Gism = null;
         public List<LWGismo> Gismos = new List<LWGismo>();
         public string FileName = null;
 
-        //Constructors
+        // Constructors
         public MainFrm()
         {
             InitializeComponent();
         }
 
-        //Methods
+        // Methods
         public void UpdateGUI()
         {
             mainPnl.Enabled = (Gismos != null);
@@ -87,7 +87,7 @@ namespace HedgeGISMEditor
             }
         }
 
-        //GUI Events
+        // GUI Events
         private void CreateNewGISMToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Gism = new LWGism();

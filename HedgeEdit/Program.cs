@@ -5,12 +5,12 @@ namespace HedgeEdit
 {
     public static class Program
     {
-        //Variables/Constants
+        // Variables/Constants
         public static string StartupPath = Application.StartupPath;
         public const string ResourcesPath = "Resources", CachePath = "Cache",
             Name = "HedgeEdit";
 
-        //Methods
+        // Methods
         [STAThread]
         public static void Main()
         {
