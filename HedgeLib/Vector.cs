@@ -5,10 +5,10 @@
     // This follows the axes used in Sonic Generations.
     public struct Vector3
     {
-        //Variables/Constants
+        // Variables/Constants
         public float X, Y, Z;
 
-        //Constructors
+        // Constructors
         public Vector3(float x, float y)
         {
             X = x;
@@ -23,7 +23,7 @@
             Z = z;
         }
 
-        //Methods
+        // Methods
         public override string ToString()
         {
             return $"({X}, {Y}, {Z})";
@@ -38,10 +38,10 @@
 
     public class Vector4
     {
-        //Variables/Constants
+        // Variables/Constants
         public float X = 0, Y = 0, Z = 0, W = 0;
 
-        //Constructors
+        // Constructors
         public Vector4() { }
         public Vector4(float x, float y)
         {
@@ -67,7 +67,7 @@
             W = w;
         }
 
-        //Methods
+        // Methods
         public override string ToString()
         {
             return $"({X}, {Y}, {Z}, {W})";

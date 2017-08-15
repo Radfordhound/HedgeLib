@@ -11,12 +11,12 @@ namespace HedgeLib.Sets
     // http://info.sonicretro.org/SCHG:Sonic_Heroes/Object_Editing
     public class HeroesSetData : SetData
     {
-        //Variables/Constants
+        // Variables/Constants
         public const uint HeroesObjectLimit = 2048; // Unfortunately this is all we can have
         private const uint MiscEntriesStartPos = 0x18000; // Yes, they MUST always start here.
         private const uint MainEntryLength = 0x30, MiscEntryLength = 0x24;
 
-        //Methods
+        // Methods
         public override void Load(Stream fileStream,
             Dictionary<string, SetObjectType> objectTemplates)
         {

@@ -5,7 +5,7 @@ namespace HedgeLib.Sets
 {
     public class SetObject
     {
-        //Variables/Constants
+        // Variables/Constants
         public Dictionary<string, SetObjectParam> CustomData =
             new Dictionary<string, SetObjectParam>();
         public List<SetObjectParam> Parameters = new List<SetObjectParam>();
@@ -17,7 +17,7 @@ namespace HedgeLib.Sets
         public uint ObjectID;
         public bool IsTemplateExists = true;
 
-		//Constructors
+		// Constructors
 		public SetObject() { }
 		public SetObject(SetObjectType type, string typeName, uint objID)
 		{
@@ -31,7 +31,7 @@ namespace HedgeLib.Sets
 			}
 		}
 
-		//Methods
+		// Methods
 		public T GetCustomDataValue<T>(string name)
 		{
 			return (CustomData.ContainsKey(name)) ?
@@ -41,11 +41,11 @@ namespace HedgeLib.Sets
 
     public class SetObjectParam
     {
-        //Variables/Constants
+        // Variables/Constants
         public object Data;
         public Type DataType;
 
-        //Constructors
+        // Constructors
         public SetObjectParam() { }
         public SetObjectParam(Type dataType, object data)
         {
@@ -56,7 +56,7 @@ namespace HedgeLib.Sets
 
     public class SetObjectTransform
     {
-        //Variables/Constants
+        // Variables/Constants
         public Quaternion Rotation = new Quaternion(0, 0, 0, 1);
         public Vector3 Position = new Vector3(0, 0, 0),
 			Scale = new Vector3(1, 1, 1);

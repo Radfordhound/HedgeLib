@@ -8,16 +8,22 @@ namespace HedgeArchiveEditor
 {
     public static class Program
     {
-        //Variables/Constants
+        // Variables/Constants
         public static MainFrm MainForm;
         public const string ProgramName = "Hedge Archive Editor";
 
-        //Methods
+        // Methods
         [STAThread]
         public static void Main(string[] args)
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+
+            // Load Addons
+            if (Directory.Exists("Addons"))
+                Addon.LoadAddons(new DirectoryInfo("Addons").FullName);
+
+
             if (args.Length < 1)
                 ShowGUI();
             else
@@ -34,11 +40,11 @@ namespace HedgeArchiveEditor
 
                             try
                             {
-                                //Load the archive
+                                // Load the archive
                                 FileInfo fileInfo = new FileInfo(args[1]);
                                 var arc = LoadArchive(args[1]);
 
-                                //Extract it's contents
+                                // Extract it's contents
                                 var dir = (args.Length < 3) ?
                                     Path.Combine(fileInfo.DirectoryName,
                                         fileInfo.Name.Substring(0, fileInfo.Name.Length -
@@ -116,7 +122,17 @@ namespace HedgeArchiveEditor
             if (fileInfo.Length == 0)
                 throw new Exception("The given file is empty.");
 
-            //TODO: Add support for other types of archive.
+            // Addons
+            foreach (var addon in Addon.Addons)
+                foreach (var archive in addon.Archives)
+                    if (archive.FileExtensions.Contains(fileInfo.Extension))
+                    {
+                        arc = Activator.CreateInstance(archive.ArchiveType) as Archive;
+                        arc.Load(filePath);
+                        return arc;
+                    }
+
+            // TODO: Add support for other types of archive.
             if (fileInfo.Extension == GensArchive.Extension ||
                 fileInfo.Extension == GensArchive.SplitExtension ||
                 fileInfo.Extension == GensArchive.PFDExtension ||

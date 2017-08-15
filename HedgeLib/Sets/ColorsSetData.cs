@@ -8,10 +8,10 @@ namespace HedgeLib.Sets
 {
     public class ColorsSetData : SetData
     {
-        //Variables/Constants
+        // Variables/Constants
         public BINAHeader Header = new BINAHeader();
 
-        //Methods
+        // Methods
         public override void Load(Stream fileStream,
             Dictionary<string, SetObjectType> objectTemplates)
         {

@@ -7,13 +7,13 @@ namespace HedgeEdit
 {
     public class EditorCache : FileBase
     {
-        //Variables/Constants
+        // Variables/Constants
         public List<List<string>> ArcHashes = new List<List<string>>();
         public string GameType;
 
         public const string FileName = "EditorCache.xml";
 
-        //Methods
+        // Methods
         public override void Load(Stream fileStream)
         {
             var xml = XDocument.Load(fileStream);

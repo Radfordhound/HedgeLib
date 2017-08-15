@@ -8,7 +8,7 @@ namespace HedgeLib.Archives
 {
     public class GensArchive : Archive
     {
-        //Variables/Constants
+        // Variables/Constants
         public uint Padding = 0x40;
 
         public const string ARLSignature = "ARL2";
@@ -18,11 +18,11 @@ namespace HedgeLib.Archives
 
         public override bool HasSplitArchives => true;
 
-        //Constructors
+        // Constructors
         public GensArchive() : base() { }
         public GensArchive(Archive arc) : base(arc) { }
 
-        //Methods
+        // Methods
         public override void Load(string filePath)
         {
             var fileInfo = new FileInfo(filePath);
@@ -153,7 +153,7 @@ namespace HedgeLib.Archives
 
         public int Save(Stream fileStream, uint? sizeLimit, int startIndex = 0)
         {
-            //Header
+            // Header
             var files = GetFiles(false);
             var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, false);
 

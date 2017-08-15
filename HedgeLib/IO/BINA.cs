@@ -24,10 +24,10 @@ namespace HedgeLib.IO
 
     public class BINAReader : ExtendedBinaryReader
     {
-        //Variables/Constants
+        // Variables/Constants
         private BINA.BINATypes version = BINA.BINATypes.Version1;
 
-        //Constructors
+        // Constructors
         public BINAReader(Stream input, BINA.BINATypes type =
             BINA.BINATypes.Version1) : base(input, Encoding.ASCII, true)
         {
@@ -36,7 +36,7 @@ namespace HedgeLib.IO
                 BINAHeader.Ver2Length : BINAHeader.Ver1Length;
         }
 
-        //Methods
+        // Methods
         public BINAHeader ReadHeader()
         {
             var header = new BINAHeader();
@@ -163,11 +163,11 @@ namespace HedgeLib.IO
 
     public class BINAWriter : ExtendedBinaryWriter
     {
-        //Variables/Constants
+        // Variables/Constants
         protected List<StringTableEntry> strings = new List<StringTableEntry>();
         protected BINA.BINATypes version = BINA.BINATypes.Version1;
 
-        //Constructors
+        // Constructors
         public BINAWriter(Stream output, BINA.BINATypes type = BINA.BINATypes.Version1,
             bool isBigEndian = true) : base(output, Encoding.ASCII, isBigEndian)
         {
@@ -177,7 +177,7 @@ namespace HedgeLib.IO
             WriteNulls(Offset);
         }
 
-        //Methods
+        // Methods
         public void FinishWrite(BINAHeader header)
         {
             WriteStringTable(header);
@@ -330,14 +330,14 @@ namespace HedgeLib.IO
             base.FillInOffset(name, value, absolute, removeOffset);
         }
 
-        //Other
+        // Other
         protected class StringTableEntry
         {
-            //Variables/Constants
+            // Variables/Constants
             public List<string> OffsetNames = new List<string>();
             public string Data;
 
-            //Constructors
+            // Constructors
             public StringTableEntry() { }
             public StringTableEntry(string data)
             {

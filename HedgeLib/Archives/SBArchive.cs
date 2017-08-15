@@ -6,15 +6,15 @@ namespace HedgeLib.Archives
 {
     public class SBArchive : Archive
     {
-        //Variables/Constants
+        // Variables/Constants
         public const string Extension = ".one";
         private const int stringBufferSize = 0x20;
 
-        //Constructors
+        // Constructors
         public SBArchive() : base() { }
         public SBArchive(Archive arc) : base(arc) { }
 
-        //Methods
+        // Methods
         public override void Load(Stream fileStream)
         {
             // HEADER
@@ -57,7 +57,7 @@ namespace HedgeLib.Archives
                 reader.JumpTo(fileEntry.DataOffset, true);
                 while (pos < data.Length)
                 {
-                    //TODO: De-compress files.
+                    // TODO: De-compress files.
                     pos += reader.Read(data, pos, data.Length - pos);
                 }
 
@@ -119,7 +119,7 @@ namespace HedgeLib.Archives
             }
         }
 
-        //Other
+        // Other
         private struct FileEntry
         {
             public string FileName;

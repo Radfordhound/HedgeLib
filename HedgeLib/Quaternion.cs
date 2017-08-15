@@ -4,7 +4,7 @@ namespace HedgeLib
 {
     public class Quaternion : Vector4
     {
-        //Constructors
+        // Constructors
         public Quaternion() { }
         public Quaternion(float x, float y, float z, float w)
         {
@@ -45,7 +45,7 @@ namespace HedgeLib
                     (s1 * s2 * c3 + c1 * c2 * s3));
         }
 
-        //Methods
+        // Methods
         public Vector3 ToEulerAngles(bool returnResultInRadians = false)
         {
             // Credit to http://quat.zachbennett.com/
@@ -74,7 +74,7 @@ namespace HedgeLib
                 Math.Round(h * 180 / Math.PI),
                 Math.Round(a * 180 / Math.PI));
 
-            //Sub-Methods
+            // Sub-Methods
             Vector3 GetVect(double x, double y, double z)
             {
                 float multi = (returnResultInRadians) ? 0.0174533f : 1;

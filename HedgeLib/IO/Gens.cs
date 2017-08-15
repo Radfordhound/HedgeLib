@@ -6,14 +6,14 @@ namespace HedgeLib.IO
 {
     public class GensReader : ExtendedBinaryReader
     {
-        //Constructors
+        // Constructors
         public GensReader(Stream input, bool isBigEndian = true) :
             base(input, Encoding.ASCII, isBigEndian) { }
 
         public GensReader(Stream input, Encoding encoding,
             bool isBigEndian = true) : base(input, encoding, isBigEndian) { }
 
-        //Methods
+        // Methods
         public GensHeader ReadHeader()
         {
             var header = new GensHeader()
@@ -47,7 +47,7 @@ namespace HedgeLib.IO
 
     public class GensWriter : ExtendedBinaryWriter
     {
-        //Constructors
+        // Constructors
         public GensWriter(Stream output, bool isBigEndian = true) :
             base(output, Encoding.ASCII, isBigEndian)
         {
@@ -82,7 +82,7 @@ namespace HedgeLib.IO
             WriteNulls(Offset);
         }
 
-        //Methods
+        // Methods
         public void FinishWrite(GensHeader header)
         {
             WriteFooter(header);

@@ -8,7 +8,7 @@ namespace HedgeEdit
 {
     public partial class MainFrm : Form
     {
-        //Variables/Constants
+        // Variables/Constants
         public static SceneView SceneView
         {
             get => sceneView;
@@ -42,7 +42,7 @@ namespace HedgeEdit
         private static SceneView sceneView = null;
         private Control activeTxtBx = null;
 
-        //Constructors
+        // Constructors
         public MainFrm()
         {
             InitializeComponent();
@@ -50,7 +50,7 @@ namespace HedgeEdit
             Application.Idle += Application_Idle;
         }
 
-        //Methods
+        // Methods
         public void RefreshGUI()
         {
             // Get the selected object(s), if any
@@ -120,7 +120,7 @@ namespace HedgeEdit
                 Program.Name);
         }
 
-        //GUI Events
+        // GUI Events
         #region MainFrm/Viewport Events
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {

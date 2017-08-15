@@ -8,13 +8,13 @@ namespace HedgeLib.Sound
 {
     public class ColorsSNDL : FileBase
 	{
-		//Variables/Constants
+		// Variables/Constants
 		public string[] SoundEntries;
 		public BINAHeader Header = new BINAHeader();
 
 		public const string Signature = "\0SOU", Extension = ".sndl.orc";
 
-		//Methods
+		// Methods
 		public override void Load(Stream fileStream)
 		{
 			// HEADER

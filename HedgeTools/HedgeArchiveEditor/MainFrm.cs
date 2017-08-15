@@ -11,7 +11,7 @@ namespace HedgeArchiveEditor
 {
     public partial class MainFrm : Form
     {
-        //Variables/Constants
+        // Variables/Constants
         public static string tempPath = Path.Combine(Path.GetTempPath(), "HedgeArchiveEditor\\");
 
         public Dictionary<Archive, string> ArchiveFilePaths = new Dictionary<Archive, string>();
@@ -37,7 +37,7 @@ namespace HedgeArchiveEditor
 
         private bool extracting, extracted = false;
 
-        //Constructors
+        // Constructors
         public MainFrm()
         {
             InitializeComponent();
@@ -45,11 +45,51 @@ namespace HedgeArchiveEditor
             Directory.CreateDirectory(tempPath);
         }
 
-        //Methods
+        // Methods
         public void UpdateTitle()
         {
             Text = ((tabControl.TabPages.Count > 0) ?
                 $"{tabControl.SelectedTab.Text} - " : "") + Program.ProgramName;
+        }
+
+        public string GetFilters(bool includeAllArchives)
+        {
+            string filters = "";
+
+            if (includeAllArchives)
+            {
+                filters += "All Supported Archives (*.ar, *.arl, *.pfd, *.pac, *.one";
+
+                // Addons
+                foreach (var addon in Addon.Addons)
+                    foreach (var archive in addon.Archives)
+                        foreach (string ext in archive.FileExtensions)
+                            filters += $", *{ext}";
+                filters += ")|*.ar;*.arl;*.pfd;*.pac;*.one";
+
+                // Addons
+                foreach (var addon in Addon.Addons)
+                    foreach (var archive in addon.Archives)
+                        foreach (string ext in archive.FileExtensions)
+                            filters += $";*{ext}";
+            }
+
+            // Generations/Unleashed
+            filters += "|Generations/Unleashed Archives (*.ar, *.arl, *.pfd)|*.ar;*.arl;*.pfd";
+            // Lost World
+            filters += "|Lost World Archives (*.pac)|*.pac";
+            // StoryBooks
+            filters += "|StoryBook Series Archives (*.one)|*.one";
+            // Heroes/Shadow
+            filters += "|Heroes Archives (*.one)|*.one";
+            // Addons
+            filters += AddFiltersFromAddons();
+            // All Files
+            filters += "|All Files (*.*)|*.*";
+
+            if (!includeAllArchives)
+                filters = filters.Substring(1);
+            return filters;
         }
 
         public void OpenArchive(string filePath)
@@ -67,6 +107,7 @@ namespace HedgeArchiveEditor
                 MessageBox.Show(ex.Message, Program.ProgramName,
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+            RefreshGUI();
         }
 
         public void SaveArchive(int index, bool saveAs)
@@ -80,15 +121,12 @@ namespace HedgeArchiveEditor
                 var sfd = new SaveFileDialog()
                 {
                     Title = "Save Archive As...",
-                    Filter = "Generations/Unleashed Archives (*.ar.00, *.pfd)|*.ar.00;*.pfd"
-                     + "|Lost World Archives (*.pac)|*.pac|StoryBook Series Archives (*.one)|*.one"
-                     + "|Heroes Archives (*.one)|*.one"
-                     + "|All Files (*.*)|*.*"
+                    Filter = GetFilters(false)
                 };
 
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
-                    ArchiveType = sfd.FilterIndex - 2;
+                    ArchiveType = sfd.FilterIndex - 1;
                     fileLocation = sfd.FileName;
                     ArchiveFilePaths[archive] = fileLocation;
                 }
@@ -119,8 +157,22 @@ namespace HedgeArchiveEditor
                     ArchiveType = 2; // Story Books
                 else if (fileLocation.EndsWith(ONEArchive.Extension)) // NOTE: This never gets called
                     ArchiveType = 3; // Heroes/Shadow
-            }
 
+                // Addons
+                if (ArchiveType == -1)
+                {
+                    int i = 3;
+                    foreach (var addon in Addon.Addons)
+                        foreach (var addonArchive in addon.Archives)
+                        {
+                            i++;
+                            if (addonArchive.FileExtensions.Contains
+                                (Path.GetExtension(fileLocation.ToLower())))
+                                ArchiveType = i;
+                        }
+                }
+            }
+            
             var saveOptions = new SaveOptions(ArchiveType);
 
             // Automatically set the Magic value if its an ONEArchive
@@ -164,7 +216,20 @@ namespace HedgeArchiveEditor
                         oneArc.Save(fileLocation, true);
                         break;
                     default:
-                        throw new NotImplementedException("Unknown Archive Type");
+                        int archiveIndex = saveOptions.ComboBox1.SelectedIndex - 4;
+                        int i = 0;
+                        foreach (var addon in Addon.Addons)
+                            foreach (var addonArchive in addon.Archives)
+                            {
+                                if (i++ == archiveIndex)
+                                {
+                                    var arc = Activator.CreateInstance(
+                                        addonArchive.ArchiveType) as Archive;
+                                    arc.Data = archive.Data;
+                                    arc.Save(fileLocation, true);
+                                }
+                            }
+                        break;
                 }
 
                 archive.Saved = true;
@@ -381,6 +446,7 @@ namespace HedgeArchiveEditor
             saveToolStripMenuItem.Enabled = saveAsToolStripMenuItem.Enabled =
                 addFilesToolStripMenuItem.Enabled = extractAllToolStripMenuItem.Enabled =
                 closeToolStripMenuItem.Enabled = tabControl.TabPages.Count > 0;
+            RefreshTabPage(tabControl.SelectedIndex);
             if (tabControl.SelectedIndex > -1)
                 largeIconViewToolStripMenuItem.Checked = 
                     (tabControl.TabPages[tabControl.SelectedIndex].Controls[0] as ListView).View == View.LargeIcon;
@@ -462,9 +528,31 @@ namespace HedgeArchiveEditor
             files.Add(newDirectory);
         }
 
+        public string AddFiltersFromAddons()
+        {
+            string s = "";
+            foreach (var addon in Addon.Addons)
+            {
+                foreach (var archive in addon.Archives)
+                {
+                    s += $"|{archive.ArchiveName}|";
+                    foreach (string ext in archive.FileExtensions)
+                        s += $"*{ext};";
+                    s = s.Substring(0, s.Length-1);
+                }
+            }
+            return s;
+        }
+
         public static bool HasSupportedArchiveExtension(string fileName)
         {
             string fileExtension = Path.GetExtension(fileName).ToLower();
+
+            foreach (var addon in Addon.Addons)
+                foreach (var archive in addon.Archives)
+                    if (archive.FileExtensions.Contains(fileExtension)) return true;
+
+
             return (fileExtension == GensArchive.Extension || fileExtension == GensArchive.ListExtension
                 || fileExtension == GensArchive.PFDExtension || fileExtension == GensArchive.SplitExtension
                 || fileExtension == LWArchive.Extension
@@ -495,7 +583,6 @@ namespace HedgeArchiveEditor
                     AddFilesToArchive(archive, files);
 
                     RefreshGUI();
-                    RefreshTabPage(tabControl.SelectedIndex);
                 }
             }
         }
@@ -574,12 +661,7 @@ namespace HedgeArchiveEditor
             var ofd = new OpenFileDialog()
             {
                 Title = "Open Archive(s)...",
-                Filter = "All Supported Archives (*.ar, *.arl, *.pfd, *.pac, *.one)"
-                     + "|*.ar;*.arl;*.pfd;*.pac;*.one"
-                     + "|Generations/Unleashed Archives (*.ar, *.arl, *.pfd)|*.ar;*.arl;*.pfd"
-                     + "|Lost World Archives (*.pac)|*.pac|StoryBook Series Archives (*.one)|*.one"
-                     + "|Heroes Archives (*.one)|*.one"
-                     + "|All Files (*.*)|*.*",
+                Filter = GetFilters(true),
                 Multiselect = true
             };
 

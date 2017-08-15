@@ -6,10 +6,10 @@ namespace HedgeGISMEditor
 {
     public partial class EditGismoFrm : Form
     {
-        //Variables/Constants
+        // Variables/Constants
         private LWGismo gismo;
 
-        //Constructors
+        // Constructors
         public EditGismoFrm(LWGismo gismo)
         {
             InitializeComponent();
@@ -17,10 +17,10 @@ namespace HedgeGISMEditor
             UpdateGUI();
         }
 
-        //Methods
+        // Methods
         public void UpdateGUI()
         {
-            //Container 1
+            // Container 1
             fileNameTxtBx.Text = gismo.FileName;
             unknown1Nud.Value = gismo.Unknown1;
             unknown2Nud.Value = (decimal)gismo.Unknown2;
@@ -29,10 +29,10 @@ namespace HedgeGISMEditor
             doesAnimateChkbx.Checked = gismo.DoesAnimate;
             unknownBoolean1Chkbx.Checked = gismo.UnknownBoolean1;
 
-            //Havok Container
+            // Havok Container
             havokNameTxtBx.Text = gismo.HavokName;
 
-            //Container 2
+            // Container 2
             unknownBoolean2Chkbx.Checked = gismo.UnknownBoolean2;
             unknownBoolean3Chkbx.Checked = gismo.UnknownBoolean3;
 
@@ -46,7 +46,7 @@ namespace HedgeGISMEditor
 
         public void UpdateGismo()
         {
-            //Container 1
+            // Container 1
             gismo.FileName = fileNameTxtBx.Text;
             gismo.Unknown1 = (uint)unknown1Nud.Value;
             gismo.Unknown2 = (float)unknown2Nud.Value;
@@ -55,10 +55,10 @@ namespace HedgeGISMEditor
             gismo.DoesAnimate = doesAnimateChkbx.Checked;
             gismo.UnknownBoolean1 = unknownBoolean1Chkbx.Checked;
 
-            //Havok Container
+            // Havok Container
             gismo.HavokName = havokNameTxtBx.Text;
 
-            //Container 2
+            // Container 2
             gismo.UnknownBoolean2 = unknownBoolean2Chkbx.Checked;
             gismo.UnknownBoolean3 = unknownBoolean3Chkbx.Checked;
 
@@ -70,7 +70,7 @@ namespace HedgeGISMEditor
             gismo.Unknown9 = (float)unknown9Nud.Value;
         }
 
-        //GUI Events
+        // GUI Events
         private void okBtn_Click(object sender, EventArgs e)
         {
             UpdateGismo();

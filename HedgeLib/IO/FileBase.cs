@@ -8,7 +8,7 @@ namespace HedgeLib.IO
     /// </summary>
     public class FileBase
     {
-        //Methods
+        // Methods
         public virtual void Load(string filePath)
         {
             // Throw exceptions if necessary

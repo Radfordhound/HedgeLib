@@ -10,7 +10,7 @@ namespace HedgeLib
     /// </summary>
     public static class Helpers
     {
-        //Methods
+        // Methods
 		public static string GetFileHash(string filePath)
 		{
 			using (var fileStream = File.OpenRead(filePath))
@@ -70,7 +70,7 @@ namespace HedgeLib
 
             return Convert.ChangeType(value, conversionType);
 
-			//Sub-Methods
+			// Sub-Methods
 			Vector4 StringToVector4()
 			{
 				var singles = ((string)value).Split();

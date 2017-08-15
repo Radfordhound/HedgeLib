@@ -7,7 +7,7 @@ namespace HedgeEdit
 {
     public partial class StgOpenDialog : Form
     {
-        //Variables/Constants
+        // Variables/Constants
         public string DataDir
         {
             get
@@ -32,7 +32,7 @@ namespace HedgeEdit
             }
         }
 
-        //Constructors
+        // Constructors
         public StgOpenDialog()
         {
             InitializeComponent();
@@ -56,7 +56,7 @@ namespace HedgeEdit
                 gameComboBx.Text = config.AppSettings.Settings["LastGameName"].Value;
         }
 
-        //GUI Events
+        // GUI Events
         private void DataDirBtn_Click(object sender, EventArgs e)
         {
             var fbd = new FolderBrowserDialog()

@@ -7,7 +7,7 @@ namespace HedgeEdit
 {
     public static class Types
     {
-        //Methods
+        // Methods
         public static DataTypes GetDataType(string dataTypeString)
         {
             switch (dataTypeString.ToLower())
@@ -96,7 +96,7 @@ namespace HedgeEdit
             return new OpenTK.Quaternion(quat.X, quat.Y, quat.Z, quat.W);
         }
 
-        //Other
+        // Other
         public enum DataTypes
         {
             Heroes, S06, Colors, Gens, LW

@@ -6,14 +6,14 @@ namespace HedgeEdit
 {
     public static class Shaders
     {
-        //Variables/Constants
+        // Variables/Constants
         public static Dictionary<string, int> ShaderPrograms =
             new Dictionary<string, int>();
 
         public const string ShadersDirectory = "Shaders", ShaderList = "ShaderList.txt",
             VertExtension = ".vert", FragExtension = ".frag";
 
-        //Methods
+        // Methods
         public static void LoadAll()
         {
             // Make some generic variables we can re-use

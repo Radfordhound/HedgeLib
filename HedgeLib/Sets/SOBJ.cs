@@ -7,10 +7,10 @@ namespace HedgeLib.Sets
 {
     public static class SOBJ
     {
-        //Variables/Constants
+        // Variables/Constants
         public const string Signature = "SOBJ", Extension = ".orc";
 
-        //Methods
+        // Methods
         public static List<SetObject> Read(ExtendedBinaryReader reader,
             Dictionary<string, SetObjectType> objectTemplates, SOBJType type)
         {
@@ -130,7 +130,7 @@ namespace HedgeLib.Sets
                 Array.Reverse(sig);
 
             writer.Write(sig);
-            writer.Write(1u); //TODO: Figure out what this value is.
+            writer.Write(1u); // TODO: Figure out what this value is.
             writer.Write(objTypeCount);
             writer.AddOffset("objTypeOffsetsOffset");
 
@@ -395,7 +395,7 @@ namespace HedgeLib.Sets
 
                     writer.AddOffset("arrOffset");
                     writer.Write((uint)arr.Length);
-                    writer.WriteNulls(4); //TODO: Figure out what this is.
+                    writer.WriteNulls(4); // TODO: Figure out what this is.
 
                     // Data
                     writer.FillInOffset("arrOffset", false);
@@ -462,7 +462,7 @@ namespace HedgeLib.Sets
                 writer.WriteNulls(0x18);
         }
 
-        //Other
+        // Other
         public enum SOBJType
         {
             Colors, LostWorld

@@ -10,11 +10,11 @@ namespace HedgeEdit
 {
     public class Stage
     {
-        //Variables/Constants
+        // Variables/Constants
         public static List<SetData> Sets = new List<SetData>();
         public static GameEntry GameType;
 
-        //Methods
+        // Methods
         public static void Load(string dataDir, string stageID, GameEntry game)
         {
             Viewport.Clear();
@@ -170,7 +170,7 @@ namespace HedgeEdit
 
             return arcHashes;
 
-            //Sub-Methods
+            // Sub-Methods
             void CopyData(string path, string destPath)
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(destPath));
@@ -264,8 +264,8 @@ namespace HedgeEdit
                         var stageXML = new GensStageXML();
                         stageXML.Load(filePath);
 
-                        //TODO: Load sonic spawn data.
-                        //TODO: Load path data.
+                        // TODO: Load sonic spawn data.
+                        // TODO: Load path data.
 
                         return;
                     }
