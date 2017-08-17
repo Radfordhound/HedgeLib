@@ -1,5 +1,6 @@
 ﻿using HedgeLib.Archives;
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -375,10 +376,8 @@ namespace HedgeArchiveEditor
                     {
                         fileInfo.Name,
                         fileInfo.Extension,
-                        file.Data != null ? file.Data.Length >= 1024 ? file.Data.Length >= 1048576 ?
-                            (file.Data.Length / 1048576.0).ToString("0.00") + " MB" :
-                            (file.Data.Length / 1024.0).ToString("0.00") + " KB" :
-                            file.Data.Length + " Bytes" : null
+                        file.Data != null ? 
+                        ConvertSize(file.Data.LongLength) : null
                     });
 
                     try
@@ -1230,27 +1229,10 @@ namespace HedgeArchiveEditor
                 // Sort by file size
                 if (Columns[column].Text == "Size")
                 {
-                    try
-                    {
-                        string xx = ((ListViewItem)x).SubItems[column].Text;
-                        string yy = ((ListViewItem)y).SubItems[column].Text;
+                    string xx = ((ListViewItem)x).SubItems[column].Text;
+                    string yy = ((ListViewItem)y).SubItems[column].Text;
 
-                        if (xx.EndsWith("MB"))
-                            xx = Convert.ToDouble(xx.Substring(0, xx.Length - 3)) * 1024 + " KB";
-                        if (xx.EndsWith("KB"))
-                            xx = Convert.ToDouble(xx.Substring(0, xx.Length - 3)) * 1024 + " Bytes";
-                        if (xx.EndsWith("Bytes"))
-                            xx = xx.Substring(0, xx.Length - 6);
-
-                        if (yy.EndsWith("MB"))
-                            yy = Convert.ToDouble(yy.Substring(0, yy.Length - 3)) * 1024 + " KB";
-                        if (yy.EndsWith("KB"))
-                            yy = Convert.ToDouble(yy.Substring(0, yy.Length - 3)) * 1024 + " Bytes";
-                        if (yy.EndsWith("Bytes"))
-                            yy = yy.Substring(0, yy.Length - 6);
-                        returnVal = Convert.ToDouble(xx) > Convert.ToDouble(yy) ? 1 : -1;
-                    }
-                    catch { }
+                    returnVal = ConvertSize(xx) > ConvertSize(yy) ? 1 : -1;
                 }
 
                 return order == SortOrder.Descending ? -returnVal : returnVal;
@@ -1263,6 +1245,52 @@ namespace HedgeArchiveEditor
                 column = e.Column;
                 Sort();
             }
+        }
+
+        // TODO: Think of better names for these 2 functions
+        public static string ConvertSize(long byteCount)
+        {
+            // Unit Names
+            var units = new string[] { "Bytes", "KB", "MB", "GB", "TB" };
+
+            // If the size is 1
+            if (byteCount == 1)
+                return "1 Byte";
+
+            int index = 0;
+            decimal buffer = byteCount;
+            while (buffer > 1024)
+            {
+                ++index;
+                buffer /= (decimal)1024.0;
+            }
+
+            return (buffer.ToString("0.##") + ' ' + units[index]);
+        }
+
+        public static long ConvertSize(string byteString)
+        {
+            // Unit Names
+            var units = new string[] { "Byte", "Bytes", "KB", "MB", "GB", "TB" };
+            int unitIndex = units.ToList().FindIndex(t => byteString.EndsWith(t));
+
+            // Didn't work
+            if (unitIndex == -1)
+                return 0;
+
+            // Removes the unit name
+            byteString = 
+                byteString.Substring(0, byteString.IndexOf(units[unitIndex]) - 1);
+
+            // If its only 1 byte
+            if (unitIndex == 0)
+                return 1;
+
+            // If its less then a kilobyte
+            if (unitIndex == 1)
+                return long.Parse(byteString);
+
+            return (long)(Convert.ToDouble(byteString) * Math.Pow(1024, unitIndex - 1));
         }
 
         private struct SHFILEINFO
