@@ -64,6 +64,33 @@ namespace HedgeLib.Archives
             Data.AddRange(GetFilesFromDir(dir, includeSubDirectories));
         }
 
+        public ArchiveDirectory CreateDirectories(string dirPath)
+        {
+            ArchiveDirectory dir = null;
+            foreach (string dirName in dirPath.Split('/'))
+            {
+                var data = (dir == null) ? Data : dir.Data;
+                if (data.Exists(t => t.Name == dirName))
+                {
+                    dir = data.Find(t => t.Name == dirName) as ArchiveDirectory;
+                }
+                else if (dir == null)
+                {
+                    var directory = new ArchiveDirectory(dirName);
+                    Data.Add(directory);
+                    dir = directory;
+                }
+                else
+                {
+                    var newDirectory = new ArchiveDirectory(dirName);
+                    dir.Data.Add(newDirectory);
+                    newDirectory.Parent = dir;
+                    dir = newDirectory;
+                }
+            }
+            return dir;
+        }
+
         public static List<ArchiveData> GetFilesFromDir(string dir,
             bool includeSubDirectories = false)
         {
