@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Unknown4 type="uint32" default="0" description="" />
+  <Unknown5 type="uint32" default="0" description="" />
+  <Unknown6 type="float" default="0" description="" />
+  <Unknown7 type="uint32" default="0" description="" />
+  <Unknown8 type="uint32" default="0" description="" />
+  <Unknown9 type="uint32" default="0" description="" />
+  <Unknown10 type="uint32" default="0" description="" />
+  <Unknown11 type="float" default="0" description="" />
+  <Unknown12 type="float" default="0" description="" />
+</Template>

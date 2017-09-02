@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <MedalID type="uint32" default="0" description="Item number" />
+  <Unknown4 type="uint32" default="0" description="" />
+  <Unknown-EventType type="enum" default="0" description="The event enabled" />
+  <Unknown-PlaceType type="enum" default="0" description="The type of location that is set" />
+  <Unknown-IsPopup type="bool" default="false" description="Or pop-up" />
+  <Unknown-IsMoveItem type="bool" default="false" description="Flow or items" />
+</Template>

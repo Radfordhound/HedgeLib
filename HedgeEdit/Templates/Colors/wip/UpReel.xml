@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Speed type="float" default="0" description="" />
+  <Unknown4 type="uint32" default="0" description="" />
+  <MaxSpeed type="float" default="0" description="" />
+  <Unknown5 type="float" default="0" description="" />
+</Template>

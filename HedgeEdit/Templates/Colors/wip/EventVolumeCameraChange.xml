@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Collision_Width type="float" default="0" multiplier="0.2" />
+  <Collision_Height type="float" default="0" multiplier="0.2" />
+  <Collision_Length type="float" default="0" multiplier="0.2" />
+  <Target type="target" description="associate camera" />
+  <Unknown-IsHigherPhantomCamera type="bool" default="false" description="priority than phantom camera" />
+  <Unknown-PriorityCategory type="enum" default="0" description="priority category" />
+  <Unknown4 type="bool" default="false" description="" />
+  <Unknown5 type="bool" default="false" description="" />
+  <Priority type="uint32" default="0" description="priority (higher takes precedence)" />
+  <Ease_Time_Enter type="float" default="0" description="transition time at the time of invasion (sec)" />
+  <Ease_Time_Leave type="float" default="0" description="transition time at the time of withdrawal (sec)" />
+  <Unknown-IsStop type="enum" default="0" description="kind" />
+  <IsEnableCollision type="bool" default="false" description="[unsupported] it may need to do a collision judgment at the time of transition" />
+  <Unknown-InterpolateType type="enum" default="0" description="interpolation method" />
+  <Unknown-PhantomType type="enum" default="0" description="The reaction to the phantom" />
+  <Unknown-NoneEffectiveBoost type="bool" default="false" description="it wants to boost angle without change" />
+  <Shape_Type type="enum" default="0" description="form" />
+</Template>

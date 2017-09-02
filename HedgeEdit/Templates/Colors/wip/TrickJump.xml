@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <ImpulseSpeedOnNormal type="float" default="0" description="Speed" />
+  <Unknown4 type="float" default="0" description="Maybe Trick Time?" />
+  <Unknown5 type="float" default="0" description="Maybe trick delay?" />
+  <ImpulseSpeedOnBoost type="float" default="0" description="Speed while boosting." />
+  <OutOfControl type="float" default="0" description="Inoperable time" />
+  <Unknown6 type="float" default="0" description="?" />
+  <SizeType type="enum" default="1" description="The size of the ramp." />
+</Template>

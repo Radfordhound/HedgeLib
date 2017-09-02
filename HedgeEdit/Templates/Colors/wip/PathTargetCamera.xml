@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <IsCameraView type="bool" default="false" description="camera view" />
+  <IsCollision type="bool" default="false" description="take the collision?" />
+  <Ease_Time_Enter type="float" default="0" description="transition time at the time of invasion (sec) ※ use only events" />
+  <Ease_Time_Leave type="float" default="0" description="transition time at the time of withdrawal (sec) ※ use only events" />
+  <Fovy type="float" default="0" description="angle of view" />
+  <ZRot type="float" default="0" description="rotation around the Z axis" />
+  <PathID type="uint32" default="0" description="ID of path" />
+  <EyePathType type="enum" default="0" description="camera moving method on the path" />
+  <CameraPositionMode type="enum" default="0" description="specify the distance" />
+  <Distance type="float" default="0" description="distance from the target" />
+  <EyeSpeed type="float" default="0" description="movement speed on the path" />
+  <Target_Type type="enum" default="0" description="type of target" />
+  <Target type="target" description="Target" />
+  <TargetPositionFix type="position" description="coordinates as a target" />
+  <PanAndTangentBlend type="float" default="0" description="target direction and the path direction of interpolation rate" />
+  <OffsetOnEyePath type="float" default="0" description="offset on the path" />
+  <TargetOffset_Right type="float" default="0" description="offset left and right of the target coordinate system" />
+  <TargetOffset_Up type="float" default="0" description="offset the top and bottom of the target coordinate system" />
+  <TargetOffset_Front type="float" default="0" description="before and after the offset of the target coordinate system" />
+</Template>
