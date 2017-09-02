@@ -1,4 +1,4 @@
-Usage: HedgeArcPack [[command]] [[options]] [arc type] input [output]
+Usage: !FILENAME! [[command]] [[options]] [arc type] input [output]
 
 Arguments surrounded by square brackets are optional
 Arguments surrounded by double-square brackets can appear anywhere in the command

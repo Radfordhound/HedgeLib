@@ -14,6 +14,8 @@
 
             Commands.Options.Add("magic", "335609855");
 
+            Commands.OptionAliases.Add("p", "padding");
+
             Commands.ProcessCommand(args);
         }
     }

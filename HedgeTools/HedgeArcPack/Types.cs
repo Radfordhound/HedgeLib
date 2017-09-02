@@ -35,25 +35,28 @@ namespace HedgeArcPack
             string ext = Path.GetExtension(input).ToLower();
 
             // Sets ext to the previous extension if its current extension is a number
-            if (int.TryParse(ext.Substring(1), out int splitIndex))
-                ext = Path.GetExtension(Path.ChangeExtension(input, null)).ToLower();
+            if (!string.IsNullOrEmpty(ext))
+            {
+                if (int.TryParse(ext.Substring(ext.IndexOf('.')), out int splitIndex))
+                    ext = Path.GetExtension(Path.ChangeExtension(input, null)).ToLower();
 
-            if (ext.Contains(GensArchive.Extension) || ext == GensArchive.PFDExtension ||
-                ext.Contains(GensArchive.ListExtension))
-            {
-                return ArcType.Gens;
-            }
-            else if (ext.Contains(LWArchive.Extension))
-            {
-                return ArcType.LostWorld;
-            }
-            else if (ext.Contains(ONEArchive.Extension))
-            {
-                return ArcType.Heroes;
-            }
-            else if (ext.Contains(SBArchive.Extension))
-            {
-                return ArcType.Storybook;
+                if (ext.Contains(GensArchive.Extension) || ext == GensArchive.PFDExtension ||
+                    ext.Contains(GensArchive.ListExtension))
+                {
+                    return ArcType.Gens;
+                }
+                else if (ext.Contains(LWArchive.Extension))
+                {
+                    return ArcType.LostWorld;
+                }
+                else if (ext.Contains(ONEArchive.Extension))
+                {
+                    return ArcType.Heroes;
+                }
+                else if (ext.Contains(SBArchive.Extension))
+                {
+                    return ArcType.Storybook;
+                }
             }
 
             var type = ArcType.Unknown;
