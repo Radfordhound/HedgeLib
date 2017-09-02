@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Move to Templates/Colors directory in Sonic Colors Set Editor directory.-->
+<Modifiers>
+	<Rename>
+		<!-- Element is Generations name, Value is Colors name.-->
+		<!-- Common -->
+		<ObjectPhysics>Gismo</ObjectPhysics>
+		<Omochao>HintRing</Omochao>
+		<Item>1UP</Item>
+		<GrindDashPanel>GrindBooster</GrindDashPanel>
+		<JumpPole>SpringPole</JumpPole>
+		<AdlibTrickJump>TrickJump</AdlibTrickJump>
+		<PlaReleaseBox>ReleaseBoxSmall</PlaReleaseBox>
+		<GeneralFloor>CommonFloor</GeneralFloor>
+		<RedMedal>RedRing</RedMedal>
+		<GoalRing>ReleaseBoxBig</GoalRing>
+		<!-- Camera -->
+		<ChangeVolumeCamera>EventVolumeCameraChange</ChangeVolumeCamera>
+		<ObjCameraFix>FixCamera</ObjCameraFix>
+		<ObjCameraPan>PanCamera</ObjCameraPan>
+		<ObjCameraParallel>ParallelCamera</ObjCameraParallel>
+		<ObjCameraPathPath>PathPathCamera</ObjCameraPathPath>
+		<ObjCameraPathTarget>PathTargetCamera</ObjCameraPathTarget>
+		<ObjCameraPoint>PointCamera</ObjCameraPoint>
+		<ObjCameraNormal>Camera3D</ObjCameraNormal>
+		<!-- Changers -->
+		<ChangeMode_3Dto2D>ChageMode_3Dto2D</ChangeMode_3Dto2D>
+		<!-- Collision -->
+		<AutorunFinishCollision>AutorunCollisionEnd</AutorunFinishCollision>
+		<AutorunStartCollision>AutorunCollisionStart</AutorunStartCollision>
+		<JumpCollision>EventJumpCollision</JumpCollision>
+		<LayerChangeCollisionFlat>LayerBoard</LayerChangeCollisionFlat>
+		<NavigationCollision>EventNavigationCollision</NavigationCollision>
+		<StumbleCollision>EventStumbleCollision</StumbleCollision>
+		<PlaPhantomCancelVolume>PhantomCancelCollision</PlaPhantomCancelVolume>
+		<!-- Enemies -->
+		<EnemyPawn3D>enmEggPawn</EnemyPawn3D>
+		<EnemyPawnPla3D>enmEggPawn_rso</EnemyPawnPla3D>
+		<EnemySpinner>enmSpinner</EnemySpinner>
+		<!-- Sound -->
+		<SoundPoint>EnvSound</SoundPoint>
+	</Rename>
+	<Parameters>
+		<Speed>10</Speed>
+		<Velocity>10</Velocity>
+		<TargetOffset>10</TargetOffset>
+		<Distance>10</Distance>
+		<Collision>5</Collision>
+	</Parameters>
+	<Rotation>
+		<DashRing>-180</DashRing>
+		<JumpBoard>-180</JumpBoard>
+		<ChageMode_3Dto2D>-180</ChageMode_3Dto2D>
+		<RainbowRing>-180</RainbowRing>
+		<TrickJump>-180</TrickJump>
+		<CameraCollisionBoard>-180</CameraCollisionBoard>
+	</Rotation>
+</Modifiers>
