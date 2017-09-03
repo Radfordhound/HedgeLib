@@ -9,20 +9,17 @@ namespace HedgeLib.Sprites
     public class ManiaSprite : FileBase
     {
         // Variables/Constants
-        public List<FileEntry> FileEntries = new List<FileEntry>();
+        public List<Texture> Textures = new List<Texture>();
+        public List<Animation> Animations = new List<Animation>();
         public int TotalFrameCount
         {
             get
             {
+                // Get the total amount of frames present in all animations
                 int frameCount = 0;
-
-                // Get the total amount of frames present in all chunks
-                foreach (var entry in FileEntries)
+                foreach (var anim in Animations)
                 {
-                    foreach (var chunk in entry.Chunks)
-                    {
-                        frameCount += chunk.Frames.Count;
-                    }
+                    frameCount += anim.Frames.Count;
                 }
 
                 return frameCount;
@@ -41,48 +38,50 @@ namespace HedgeLib.Sprites
             if (sig != Signature)
                 throw new InvalidSignatureException(Signature, sig);
 
-            // File Entires
-            uint totalChunkCount = reader.ReadUInt32();
-            byte fileEntryCount = reader.ReadByte();
+            // Textures
+            uint totalFrameCount = reader.ReadUInt32();
+            byte textureCount = reader.ReadByte();
 
-            for (int i = 0; i < fileEntryCount; ++i)
+            for (int i = 0; i < textureCount; ++i)
             {
-                var entry = new FileEntry();
-                entry.FilePath = reader.ReadString();
-                entry.Unknown1 = reader.ReadByte();
-
-                // Sprite Chunks
-                ushort chunkCount = reader.ReadUInt16();
-                for (int i2 = 0; i2 < chunkCount; ++i2)
+                Textures.Add(new Texture()
                 {
-                    var chunk = new Chunk();
-                    chunk.Name = reader.ReadString();
+                    FilePath = reader.ReadString(),
+                    Unknown1 = reader.ReadByte()
+                });
+            }
 
-                    // Animation Frames
-                    ushort frameCount = reader.ReadUInt16();
-                    for (int i3 = 0; i3 < frameCount;)
+            // Animations
+            ushort animCount = reader.ReadUInt16();
+            for (int i2 = 0; i2 < animCount; ++i2)
+            {
+                var anim = new Animation()
+                {
+                    Name = reader.ReadString()
+                };
+
+                ushort frameCount = reader.ReadUInt16();
+                anim.Unknown1 = reader.ReadInt16();
+                anim.Unknown2 = reader.ReadInt16();
+
+                // Animation Frames
+                for (int i3 = 0; i3 < frameCount; ++i3)
+                {
+                    anim.Frames.Add(new Frame()
                     {
-                        var frame = new Frame();
-                        frame.UnknownPosOffsets1 = reader.ReadBytes(9);
-
-                        frame.X = reader.ReadUInt16();
-                        frame.Y = reader.ReadUInt16();
-                        frame.Width = reader.ReadUInt16();
-                        frame.Height = reader.ReadUInt16();
-
-                        // TODO: Figure this out
-                        if (++i3 >= frameCount)
-                        {
-                            frame.UnknownPosOffsets2 = reader.ReadBytes(4);
-                        }
-
-                        chunk.Frames.Add(frame);
-                    }
-
-                    entry.Chunks.Add(chunk);
+                        TextureIndex = reader.ReadByte(),
+                        Unknown1 = reader.ReadInt16(),
+                        Unknown2 = reader.ReadInt16(),
+                        X = reader.ReadUInt16(),
+                        Y = reader.ReadUInt16(),
+                        Width = reader.ReadUInt16(),
+                        Height = reader.ReadUInt16(),
+                        OriginX = reader.ReadInt16(),
+                        OriginY = reader.ReadInt16()
+                    });
                 }
 
-                FileEntries.Add(entry);
+                Animations.Add(anim);
             }
         }
 
@@ -92,65 +91,62 @@ namespace HedgeLib.Sprites
             var writer = new ExtendedBinaryWriter(fileStream, Encoding.ASCII, false);
             writer.WriteSignature(Signature);
 
-            // File Entries
+            // Textures
             writer.Write(TotalFrameCount);
-            writer.Write((byte)FileEntries.Count);
+            writer.Write((byte)Textures.Count);
 
-            foreach (var entry in FileEntries)
+            foreach (var tex in Textures)
             {
-                writer.Write(entry.FilePath);
-                writer.Write(entry.Unknown1);
+                writer.Write(tex.FilePath);
+                writer.Write(tex.Unknown1);
+            }
 
-                // Sprite Chunks
-                writer.Write((ushort)entry.Chunks.Count);
-                foreach (var chunk in entry.Chunks)
+            // Animations
+            writer.Write((ushort)Animations.Count);
+            foreach (var anim in Animations)
+            {
+                ushort frameCount = (ushort)anim.Frames.Count;
+                writer.Write(anim.Name);
+
+                writer.Write(frameCount);
+                writer.Write(anim.Unknown1);
+                writer.Write(anim.Unknown2);
+
+                // Animation Frames
+                foreach (var frame in anim.Frames)
                 {
-                    writer.Write(chunk.Name);
-
-                    // Animation Frames
-                    ushort frameCount = (ushort)chunk.Frames.Count;
-                    writer.Write(frameCount);
-
-                    for (int i = 0; i < frameCount;)
-                    {
-                        var frame = chunk.Frames[i];
-                        writer.Write(frame.UnknownPosOffsets1);
-
-                        writer.Write(frame.X);
-                        writer.Write(frame.Y);
-                        writer.Write(frame.Width);
-                        writer.Write(frame.Height);
-
-                        // TODO: Figure this out
-                        if (++i >= frameCount)
-                        {
-                            writer.Write(frame.UnknownPosOffsets2);
-                        }
-                    }
+                    writer.Write(frame.TextureIndex);
+                    writer.Write(frame.Unknown1);
+                    writer.Write(frame.Unknown2);
+                    writer.Write(frame.X);
+                    writer.Write(frame.Y);
+                    writer.Write(frame.Width);
+                    writer.Write(frame.Height);
+                    writer.Write(frame.OriginX);
+                    writer.Write(frame.OriginY);
                 }
             }
         }
 
         // Other
-        public class FileEntry
+        public class Texture
         {
-            public List<Chunk> Chunks = new List<Chunk>();
             public string FilePath; // Relative to Data/Sprites directory
             public byte Unknown1;
         }
 
-        public class Chunk
+        public class Animation
         {
             public List<Frame> Frames = new List<Frame>();
             public string Name;
+            public short Unknown1, Unknown2;
         }
 
         public class Frame
         {
-            public byte[] UnknownPosOffsets1 = new byte[9],
-                UnknownPosOffsets2 = new byte[4];
-
             public ushort X, Y, Width, Height;
+            public short Unknown1, Unknown2, OriginX, OriginY;
+            public byte TextureIndex;
         }
     }
 }
