@@ -53,6 +53,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Sprites\ManiaSprite.cs" />
     <Compile Include="Archives\Archive.cs" />
     <Compile Include="Archives\ArchiveData.cs" />
     <Compile Include="Archives\ArchiveDirectory.cs" />
