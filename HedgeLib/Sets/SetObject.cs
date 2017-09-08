@@ -16,6 +16,7 @@ namespace HedgeLib.Sets
         public string ObjectType;
         public uint ObjectID;
         public bool IsTemplateExists = true;
+        public byte[] RawParamData;
 
 		// Constructors
 		public SetObject() { }

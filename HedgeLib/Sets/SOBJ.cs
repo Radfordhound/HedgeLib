@@ -248,6 +248,13 @@ namespace HedgeLib.Sets
             //Skip loading templates if template doesn't exist
             if (objTemplate != null)
             {
+                // Raw Parameter Data
+                if (objTemplate.RawLength != 0)
+                {
+                    var paramBegin = reader.BaseStream.Position;
+                    obj.RawParamData = reader.ReadBytes(objTemplate.RawLength);
+                    reader.JumpTo(paramBegin);
+                }
                 // Parameters
                 foreach (var param in objTemplate.Parameters)
                 {
@@ -384,58 +391,66 @@ namespace HedgeLib.Sets
             writer.WriteNulls((type == SOBJType.LostWorld) ? 0xC : 4u);
 
             // Parameters
-            foreach (var param in obj.Parameters)
+            if (obj.Parameters.Count > 0)
             {
-                // Write Special Types/Fix Padding
-                if (param.DataType == typeof(uint[]))
+                foreach (var param in obj.Parameters)
                 {
-                    // Data Info
-                    var arr = (uint[])param.Data;
-                    writer.FixPadding(4);
-
-                    writer.AddOffset("arrOffset");
-                    writer.Write((uint)arr.Length);
-                    writer.WriteNulls(4); // TODO: Figure out what this is.
-
-                    // Data
-                    writer.FillInOffset("arrOffset", false);
-
-                    foreach (uint value in arr)
-                        writer.Write(value);
-
-                    continue;
-                }
-                else if (param.DataType == typeof(string))
-                {
-                    // Data Info
-                    string str = (string)param.Data;
-                    writer.AddOffset("strOffset");
-                    writer.WriteNulls(4); // TODO: Figure out what this is.
-
-                    if (string.IsNullOrEmpty(str))
+                    // Write Special Types/Fix Padding
+                    if (param.DataType == typeof(uint[]))
                     {
-                        writer.FillInOffset("strOffset", 0, true);
+                        // Data Info
+                        var arr = (uint[])param.Data;
+                        writer.FixPadding(4);
+
+                        writer.AddOffset("arrOffset");
+                        writer.Write((uint)arr.Length);
+                        writer.WriteNulls(4); // TODO: Figure out what this is.
+
+                        // Data
+                        writer.FillInOffset("arrOffset", false);
+
+                        foreach (uint value in arr)
+                            writer.Write(value);
+
+                        continue;
                     }
-                    else
+                    else if (param.DataType == typeof(string))
                     {
-                        writer.FillInOffset("strOffset", false);
-                        writer.WriteNullTerminatedString(str);
+                        // Data Info
+                        string str = (string)param.Data;
+                        writer.AddOffset("strOffset");
+                        writer.WriteNulls(4); // TODO: Figure out what this is.
+
+                        if (string.IsNullOrEmpty(str))
+                        {
+                            writer.FillInOffset("strOffset", 0, true);
+                        }
+                        else
+                        {
+                            writer.FillInOffset("strOffset", false);
+                            writer.WriteNullTerminatedString(str);
+                        }
+
+                        continue;
+                    }
+                    else if (param.DataType == typeof(float) ||
+                        param.DataType == typeof(int) || param.DataType == typeof(uint))
+                    {
+                        writer.FixPadding(4);
+                    }
+                    else if (type == SOBJType.LostWorld && param.DataType == typeof(Vector3))
+                    {
+                        writer.FixPadding(16);
                     }
 
-                    continue;
+                    // Write Data
+                    writer.WriteByType(param.DataType, param.Data);
                 }
-                else if (param.DataType == typeof(float) ||
-                    param.DataType == typeof(int) || param.DataType == typeof(uint))
-                {
-                    writer.FixPadding(4);
-                }
-                else if (type == SOBJType.LostWorld && param.DataType == typeof(Vector3))
-                {
-                    writer.FixPadding(16);
-                }
-
-                // Write Data
-                writer.WriteByType(param.DataType, param.Data);
+            }
+            else
+            {
+                //Write unedited raw data retrieved from loaded orc
+                writer.Write(obj.RawParamData);
             }
 
             // Transforms
