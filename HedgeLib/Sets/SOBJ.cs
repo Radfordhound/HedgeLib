@@ -175,9 +175,32 @@ namespace HedgeLib.Sets
                 {
                     writer.FillInOffset($"objOffset_{i}", false);
                     WriteObject(writer, objects[objIndex], type);
+                    writer.FixPadding(0x4);
                     ++i;
                 }
             }
+
+            // TODO: Clean this up
+            writer.FixPadding(4);
+            
+            foreach (var objType in objectsByType)
+            {
+                foreach (int objIndex in objType.Value)
+                {
+                    // Transforms
+                    writer.FixPadding(0x4);
+                    writer.FillInOffset($"transformsOffset_{objects[objIndex].ObjectID}", false);
+                    WriteTransform(writer, objects[objIndex].Transform,
+                        type == SOBJType.LostWorld);
+
+                    foreach (var childTransform in objects[objIndex].Children)
+                    {
+                        WriteTransform(writer, childTransform,
+                            type == SOBJType.LostWorld);
+                    }
+                }
+            }
+
         }
 
         private static SetObject ReadObject(ExtendedBinaryReader reader,
@@ -358,7 +381,8 @@ namespace HedgeLib.Sets
             writer.Write(rangeIn);
             writer.Write(rangeOut);
             if (type == SOBJType.LostWorld) writer.Write(parent);
-            writer.AddOffset("transformsOffset");
+            writer.FixPadding(4);
+            writer.AddOffset($"transformsOffset_{obj.ObjectID}");
 
             writer.Write((uint)obj.Children.Length + 1);
             writer.WriteNulls((type == SOBJType.LostWorld) ? 0xC : 4u);
@@ -418,16 +442,6 @@ namespace HedgeLib.Sets
                 writer.WriteByType(param.DataType, param.Data);
             }
 
-            // Transforms
-            writer.FillInOffset("transformsOffset", false);
-            WriteTransform(writer, obj.Transform,
-                type == SOBJType.LostWorld);
-
-            foreach (var childTransform in obj.Children)
-            {
-                WriteTransform(writer, childTransform,
-                    type == SOBJType.LostWorld);
-            }
         }
 
         private static void WriteTransform(ExtendedBinaryWriter writer,
