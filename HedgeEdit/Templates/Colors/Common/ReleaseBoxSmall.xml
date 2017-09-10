@@ -13,7 +13,16 @@
    09 = Unknown
    0A = Don't try
   -->
-  <WispID type="byte" default="0" description="" />
+  <WispID type="byte" default="0" description="" >
+    <Enum value="0" description="Boost" />
+    <Enum value="1" description="Drill" />
+    <Enum value="2" description="Laser" />
+    <Enum value="3" description="Spikes" />
+    <Enum value="4" description="Rocket" />
+    <Enum value="5" description="Frenzy" />
+    <Enum value="6" description="Cube" />
+    <Enum value="7" description="Hover" />
+  </WispID>
   <Unknown4 type="byte" default="0" description="" />
   <Unknown5 type="byte" default="0" description="Padding?" />
   <Unknown6 type="byte" default="0" description="Padding?" />

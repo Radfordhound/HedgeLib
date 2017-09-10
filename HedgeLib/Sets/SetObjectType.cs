@@ -90,6 +90,23 @@ namespace HedgeLib.Sets
                             Types.GetDefaultFromType(dataType) :
                             Helpers.ChangeType(defaultAttr.Value, dataType)
                     };
+
+                    // Enums
+                    foreach (var enumElement in element.Elements())
+                    {
+                        if (enumElement.Name != "Enum")
+                            continue;
+
+                        var valueAttr = enumElement.Attribute("value");
+                        descAttr = enumElement.Attribute("description");
+
+                        var enumType = new SetObjectTypeParamEnum()
+                        {
+                            Value = valueAttr.Value,
+                            Description = (descAttr == null) ? "" : descAttr.Value
+                        };
+                        param.Enums.Add(enumType);
+                    }
                     Parameters.Add(param);
                 }
             }
@@ -144,6 +161,7 @@ namespace HedgeLib.Sets
         public object DefaultValue;
         public Type DataType;
         public string Name, Description;
+        public List<SetObjectTypeParamEnum> Enums = new List<SetObjectTypeParamEnum>();
 
         // Constructors
         public SetObjectTypeParam() { }
@@ -151,6 +169,19 @@ namespace HedgeLib.Sets
         {
             Name = name;
             DataType = dataType;
+        }
+    }
+
+    public class SetObjectTypeParamEnum
+    {
+        // Variables/Constants
+        public string Description;
+        public object Value;
+
+        // Methods
+        public override string ToString()
+        {
+            return $"{Description} ({Value})";
         }
     }
 }
