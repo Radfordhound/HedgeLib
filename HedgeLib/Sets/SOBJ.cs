@@ -76,7 +76,7 @@ namespace HedgeLib.Sets
                             "WARNING: No object template exists for object type",
                             objName, (objOffsets[objIndex] + reader.Offset));
 
-                        // Object Data
+                        // Object Data without a template
                         reader.JumpTo(objOffsets[objIndex], false);
                         obj = ReadObject(reader,
                             null, objName, type);
@@ -84,7 +84,7 @@ namespace HedgeLib.Sets
                     }
                     else
                     {
-                        // Object Data
+                        // Object Data with a template
                         reader.JumpTo(objOffsets[objIndex], false);
                         obj = ReadObject(reader,
                             objectTemplates[objName], objName, type);
@@ -106,10 +106,9 @@ namespace HedgeLib.Sets
             var objectsByType = new Dictionary<string, List<int>>();
             uint transformCount = 0, objTypeCount = 0;
 
-            objects.RemoveAll(PurgeNoTemplateObjects);
-
             for (int objIndex = 0; objIndex < objects.Count; ++objIndex)
             {
+                if (objects[objIndex].IsTemplateExists == false) continue;
                 var obj = objects[objIndex];
                 if (!objectsByType.ContainsKey(obj.ObjectType))
                 {
@@ -211,11 +210,6 @@ namespace HedgeLib.Sets
                 }
             }
 
-        }
-
-        private static bool PurgeNoTemplateObjects(SetObject obj)
-        {
-            return obj.IsTemplateExists.Equals(false);
         }
 
         private static SetObject ReadObject(ExtendedBinaryReader reader,
@@ -414,7 +408,7 @@ namespace HedgeLib.Sets
             writer.WriteNulls((type == SOBJType.LostWorld) ? 0xC : 4u);
 
             // Parameters
-            if (obj.Parameters.Count > 0)
+            if (obj.Parameters.Count > 0) //Objects with template with proper parameters defined
             {
                 foreach (var param in obj.Parameters)
                 {
@@ -470,7 +464,7 @@ namespace HedgeLib.Sets
                     writer.WriteByType(param.DataType, param.Data);
                 }
             }
-            else if (obj.RawParamData != null)
+            else if (obj.RawParamData != null) //Objects with template but without parameters, but do have a byte length definition.
             {
                 //Write unedited raw data retrieved from loaded orc
                 writer.Write(obj.RawParamData);
