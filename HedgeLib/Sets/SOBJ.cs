@@ -67,11 +67,8 @@ namespace HedgeLib.Sets
                 {
                     ushort objIndex = reader.ReadUInt16();
                     long curPos = reader.BaseStream.Position;
-
-                    // Object Data
-                    reader.JumpTo(objOffsets[objIndex], false);
                     var obj = new SetObject();
-
+                    
                     // We do this check here so we can print an offset that's actually helpful
                     if (!objectTemplates.ContainsKey(objName))
                     {
@@ -79,14 +76,19 @@ namespace HedgeLib.Sets
                             "WARNING: No object template exists for object type",
                             objName, (objOffsets[objIndex] + reader.Offset));
 
+                        // Object Data
+                        reader.JumpTo(objOffsets[objIndex], false);
                         obj = ReadObject(reader,
                             null, objName, type);
                         obj.IsTemplateExists = false;
                     }
                     else
                     {
+                        // Object Data
+                        reader.JumpTo(objOffsets[objIndex], false);
                         obj = ReadObject(reader,
                             objectTemplates[objName], objName, type);
+                        obj.IsTemplateExists = true;
                     }
 
                     objs[objIndex] = obj;
@@ -103,25 +105,23 @@ namespace HedgeLib.Sets
             // Get some data we need to write the file
             var objectsByType = new Dictionary<string, List<int>>();
             uint transformCount = 0, objTypeCount = 0;
+
             objects.RemoveAll(PurgeNoTemplateObjects);
 
             for (int objIndex = 0; objIndex < objects.Count; ++objIndex)
             {
                 var obj = objects[objIndex];
-                if (obj.IsTemplateExists != false)
+                if (!objectsByType.ContainsKey(obj.ObjectType))
                 {
-                    if (!objectsByType.ContainsKey(obj.ObjectType))
-                    {
-                        objectsByType.Add(obj.ObjectType, new List<int>() { objIndex });
-                        ++objTypeCount;
-                    }
-                    else
-                    {
-                        objectsByType[obj.ObjectType].Add(objIndex);
-                    }
-
-                    transformCount += (uint)obj.Children.Length + 1;
+                    objectsByType.Add(obj.ObjectType, new List<int>() { objIndex });
+                    ++objTypeCount;
                 }
+                else
+                {
+                    objectsByType[obj.ObjectType].Add(objIndex);
+                }
+
+                transformCount += (uint)obj.Children.Length + 1;
             }
 
             // SOBJ Header
@@ -268,7 +268,7 @@ namespace HedgeLib.Sets
                 obj.CustomData.Add("Parent", new SetObjectParam(typeof(uint), parent));
             }
 
-            //Skip loading templates if template doesn't exist
+            //Skip loading parameters if template doesn't exist
             if (objTemplate != null)
             {
                 // Raw Parameter Data
@@ -344,7 +344,6 @@ namespace HedgeLib.Sets
                     obj.Parameters.Add(objParam);
                 }
             }
-
 
             // Transforms
             uint childCount = transformCount - 1;
@@ -471,12 +470,12 @@ namespace HedgeLib.Sets
                     writer.WriteByType(param.DataType, param.Data);
                 }
             }
-            else
+            else if (obj.RawParamData != null)
             {
                 //Write unedited raw data retrieved from loaded orc
                 writer.Write(obj.RawParamData);
             }
-
+            writer.FixPadding(4);
         }
 
         private static void WriteTransform(ExtendedBinaryWriter writer,
