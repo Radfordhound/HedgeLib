@@ -5,4 +5,5 @@
   <Unknown6 type="bool" default="false" description="Padding?" />
   <Unknown7 type="bool" default="false" description="Padding?" />
   <Unknown8 type="bool" default="false" description="Padding?" />
+  <Extra type="RawBitLength" length="8" />
 </Template>

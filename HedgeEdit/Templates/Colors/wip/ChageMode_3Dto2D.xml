@@ -9,4 +9,5 @@
   <m_IsAutoChange2DPath type="bool" default="false" description="automatic path switching?" />
   <m_IsEnableFromFront type="bool" default="false" description="forward effective?" />
   <m_IsEnableFromBack type="bool" default="false" description="reverse direction effective?" />
+  <Extra type="RawBitLength" length="32" />
 </Template>

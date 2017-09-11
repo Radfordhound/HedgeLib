@@ -2,5 +2,6 @@
 <Template>
   <Unknown4 type="float"  default="0" description="Probably Width" />
   <Unknown5 type="float"  default="0" description="Probably Height" />
-  <Unknown6 type="uint32" default="0" description="Probably CheckNo" />
+  <Unknown6 type="enum" default="0" description="Probably CheckNo" />
+  <Extra type="RawBitLength" length="12" />
 </Template>

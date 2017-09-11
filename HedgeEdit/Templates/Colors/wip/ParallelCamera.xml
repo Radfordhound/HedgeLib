@@ -17,4 +17,5 @@
   <TargetOffset_Front type="float" default="0" description="before and after the offset of the target coordinate system" />
   <OffsetYaw type="float" default="0" description="gazing point offset (Yaw)" />
   <OffsetPitch type="float" default="0" description="gazing point offset (Pitch)" />
+  <Extra type="RawBitLength" length="72" />
 </Template>

@@ -17,4 +17,5 @@
   <Unknown-PhantomType type="enum" default="0" description="The reaction to the phantom" />
   <Unknown-NoneEffectiveBoost type="bool" default="false" description="it wants to boost angle without change" />
   <Shape_Type type="enum" default="0" description="form" />
+  <Extra type="RawBitLength" length="40" />
 </Template>

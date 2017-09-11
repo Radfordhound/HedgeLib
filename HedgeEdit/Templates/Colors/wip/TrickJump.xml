@@ -6,5 +6,7 @@
   <ImpulseSpeedOnBoost type="float" default="0" description="Speed while boosting." />
   <OutOfControl type="float" default="0" description="Inoperable time" />
   <Unknown6 type="float" default="0" description="?" />
+  <Unknown7 type="float" default="0" description="?" />
   <SizeType type="enum" default="1" description="The size of the ramp." />
+  <Extra type="RawBitLength" length="32" />
 </Template>

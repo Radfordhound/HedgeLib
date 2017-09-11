@@ -6,4 +6,5 @@
   <Unknown-PlaceType type="enum" default="0" description="The type of location that is set" />
   <Unknown-IsPopup type="bool" default="false" description="Or pop-up" />
   <Unknown-IsMoveItem type="bool" default="false" description="Flow or items" />
+  <Extra type="RawBitLength" length="12" />
 </Template>

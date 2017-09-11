@@ -51,7 +51,7 @@ namespace HedgeLib.Sets
 		{
 			// Load XML and add loaded data to set data
 			var xml = XDocument.Load(fileStream);
-			uint objID = 0; //For Object elements with no ID attribute.
+			uint objID = 0; // For Object elements with no ID attribute.
 
 			foreach (var objElem in xml.Root.Elements("Object"))
 			{
@@ -197,19 +197,19 @@ namespace HedgeLib.Sets
 
 				// Generate Parameters Element
 				var paramsElem = new XElement("Parameters");
-                if (objectTemplates.ContainsKey(obj.ObjectType))
-                {
-                    var template = objectTemplates?[obj.ObjectType];
+				if (objectTemplates.ContainsKey(obj.ObjectType))
+				{
+					var template = objectTemplates?[obj.ObjectType];
 
-                    for (int i = 0; i < obj.Parameters.Count; ++i)
-                    {
-                        paramsElem.Add(GenerateParamElement(obj.Parameters[i],
-                            template?.Parameters[i].Name));
-                    }
-                }
+					for (int i = 0; i < obj.Parameters.Count; ++i)
+					{
+						paramsElem.Add(GenerateParamElement(obj.Parameters[i],
+							template?.Parameters[i].Name));
+					}
+				}
 
-                // Generate Transforms Element
-                var transformElem = GenerateTransformElement(obj.Transform);
+				// Generate Transforms Element
+				var transformElem = GenerateTransformElement(obj.Transform);
 				var transformsElem = new XElement("Transforms", transformElem);
 
 				foreach (var transform in obj.Children)

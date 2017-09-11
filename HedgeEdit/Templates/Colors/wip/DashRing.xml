@@ -3,4 +3,5 @@
   <FirstSpeed type="float" default="0" description="" />
   <OutOfControl type="float" default="0" description="" />
   <KeepVelocityDistance type="float" default="0" description="" />
+  <Extra type="RawBitLength" length="12" />
 </Template>

@@ -7,5 +7,5 @@
   <Fovy type="float" default="0" description="angle of view" />
   <ZRot type="float" default="0" description="rotation around the Z axis" />
   <TargetPosition type="position" description="gazing point" />
-  <Unknown-IsRotateUpDir type="bool" default="false" description="in the calculation of the UpDir you can either use the rotation?" />
+  <Extra type="RawBitLength" length="32" />
 </Template>

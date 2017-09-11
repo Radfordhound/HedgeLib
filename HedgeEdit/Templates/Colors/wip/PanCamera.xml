@@ -17,4 +17,5 @@
   <OffsetYaw type="float" default="0" description="gazing point offset (Yaw)" />
   <OffsetPitch type="float" default="0" description="gazing point offset (Pitch)" />
   <!-- <IsRotateUpDir type="bool" default="false" description="in the calculation of the UpDir you can either use the rotation?" /> -->
+  <Extra type="RawBitLength" length="68" />
 </Template>

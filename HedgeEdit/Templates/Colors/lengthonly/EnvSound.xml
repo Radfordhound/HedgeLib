@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Unknown5 type="uint32" default="0" description="" />
+  <Unknown6 type="float" default="0" description="" />
+  <Unknown7 type="uint32" default="0" description="" />
+  <Extra type="RawBitLength" length="12" />
+</Template>

@@ -7,4 +7,5 @@
   <SetPlaceType type="enum" default="0" description="" />
   <Unknown5 type="enum" default="0" description="" />
   <Unknown6 type="uint" default="0" description="" />
+  <Extra type="RawBitLength" length="16" />
 </Template>
