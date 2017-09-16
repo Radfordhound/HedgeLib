@@ -53,8 +53,8 @@ namespace HedgeLib.Sets
                                     var countElem = paramElement.Element("Count");
                                     if (countElem == null) continue;
 
-									if (!int.TryParse(countElem.Value, out int childCount)) continue;
-									children = new SetObjectTransform[childCount-1];
+                                    if (!int.TryParse(countElem.Value, out int childCount)) continue;
+                                    children = new SetObjectTransform[childCount-1];
 
                                     foreach (var specialElem in paramElement.Elements())
                                     {
@@ -67,15 +67,15 @@ namespace HedgeLib.Sets
                                                     var rotElem = specialElem.Element("Rotation");
 
                                                     if (indexElem == null ||
-													 !int.TryParse(indexElem.Value, out int index))
+                                                     !int.TryParse(indexElem.Value, out int index))
                                                         continue;
 
                                                     var pos = (posElem == null) ?
                                                         new Vector3() :
-														Helpers.XMLReadVector3(posElem);
+                                                        Helpers.XMLReadVector3(posElem);
                                                     var rot = (rotElem == null) ?
                                                         new Quaternion() :
-														Helpers.XMLReadQuat(rotElem);
+                                                        Helpers.XMLReadQuat(rotElem);
 
                                                     var childTransform = new SetObjectTransform()
                                                     {
@@ -165,16 +165,16 @@ namespace HedgeLib.Sets
 
                     default:
                         {
-							if (float.TryParse(data, out float f))
-							{
-								if (data.Contains("."))
-									return typeof(float);
-								else
-									return typeof(int);
-							}
-							else
-								return typeof(string);
-						}
+                            if (float.TryParse(data, out float f))
+                            {
+                                if (data.Contains("."))
+                                    return typeof(float);
+                                else
+                                    return typeof(int);
+                            }
+                            else
+                                return typeof(string);
+                        }
                 }
             }
 
