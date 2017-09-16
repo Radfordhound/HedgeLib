@@ -4,41 +4,69 @@
 	<Rename>
 		<!-- Element is Generations name, Value is Colors name.-->
 		<!-- Common -->
-		<ObjectPhysics>Gismo</ObjectPhysics>
-		<Omochao>HintRing</Omochao>
-		<Item>1UP</Item>
+		<SpringFake>DummySpring</SpringFake>
 		<GrindDashPanel>GrindBooster</GrindDashPanel>
+		<SelectCanon>JumpSelector</SelectCanon>
 		<JumpPole>SpringPole</JumpPole>
 		<AdlibTrickJump>TrickJump</AdlibTrickJump>
-		<PlaReleaseBox>ReleaseBoxSmall</PlaReleaseBox>
-		<GeneralFloor>CommonFloor</GeneralFloor>
+		<MovingThorn>MovingThornBall</MovingThorn>
+		<Item>1UP</Item>
+		<BubbleGenerator>SshBubble</BubbleGenerator>
 		<RedMedal>RedRing</RedMedal>
-		<GoalRing>ReleaseBoxBig</GoalRing>
+		<ObjectPhysics>Gismo</ObjectPhysics>
+		<GeneralFloor>CommonFloor</GeneralFloor>
+		<!-- System -->
+		<LayerChangeCollisionFlat>LayerBoard</LayerChangeCollisionFlat>
+		<!-- Player System -->
+		<AutorunFinishCollision>AutorunCollisionEnd</AutorunFinishCollision>
+		<AutorunStartCollision>AutorunCollisionStart</AutorunStartCollision>
+		<ChangeMode_2DtoForward>ChageMode_2DtoForward</ChangeMode_2DtoForward>
+		<ChangeMode_3Dto2D>ChageMode_3Dto2D</ChangeMode_3Dto2D>
+		<ChangeMode_3DtoForward>ChageMode_3DtoForward</ChangeMode_3DtoForward>
+		<ChangeDiveBegin>ChangeDiveModeStart</ChangeDiveBegin>
+		<ChangeDiveEnd>ChangeDiveEndNoEvent</ChangeDiveEnd>
+		<JumpCollision>EventJumpCollision</JumpCollision>
+		<StumbleCollision>EventStumbleCollision</StumbleCollision>
+		<!-- Navigator -->
+		<NavigationCollision>EventNavigationCollision</NavigationCollision>
+		<Omochao>HintRing</Omochao>
 		<!-- Camera -->
+		<ObjCameraPathParallel>Camera2D</ObjCameraPathParallel>
+		<ObjCameraNormal>Camera3D</ObjCameraNormal>
 		<ChangeVolumeCamera>EventVolumeCameraChange</ChangeVolumeCamera>
 		<ObjCameraFix>FixCamera</ObjCameraFix>
 		<ObjCameraPan>PanCamera</ObjCameraPan>
+		<ObjCameraPanVertical>PanVerticalCamera</ObjCameraPanVertical>
 		<ObjCameraParallel>ParallelCamera</ObjCameraParallel>
+		<ObjCameraPathLook>PathLookCamera</ObjCameraPathLook>
 		<ObjCameraPathPath>PathPathCamera</ObjCameraPathPath>
 		<ObjCameraPathTarget>PathTargetCamera</ObjCameraPathTarget>
 		<ObjCameraPoint>PointCamera</ObjCameraPoint>
-		<ObjCameraNormal>Camera3D</ObjCameraNormal>
-		<!-- Changers -->
-		<ChangeMode_3Dto2D>ChageMode_3Dto2D</ChangeMode_3Dto2D>
-		<!-- Collision -->
-		<AutorunFinishCollision>AutorunCollisionEnd</AutorunFinishCollision>
-		<AutorunStartCollision>AutorunCollisionStart</AutorunStartCollision>
-		<JumpCollision>EventJumpCollision</JumpCollision>
-		<LayerChangeCollisionFlat>LayerBoard</LayerChangeCollisionFlat>
-		<NavigationCollision>EventNavigationCollision</NavigationCollision>
-		<StumbleCollision>EventStumbleCollision</StumbleCollision>
-		<PlaPhantomCancelVolume>PhantomCancelCollision</PlaPhantomCancelVolume>
+		<ObjCameraVertical>PointVerticalCamera</ObjCameraVertical>
 		<!-- Enemies -->
+		<EnemyBatabata2D>enmBatabata</EnemyBatabata2D>
+		<EnemyBeeton2D>enmBeeton</EnemyBeeton2D>
 		<EnemyPawn3D>enmEggPawn</EnemyPawn3D>
 		<EnemyPawnPla3D>enmEggPawn_rso</EnemyPawnPla3D>
+		<EnemyPawnGun3D>enmEggPawnGun</EnemyPawnGun3D>
+		<EnemyPawnLance3D>enmEggPawnLance</EnemyPawnLance3D>
+		<EnemyGanigani3D>enmGanigani</EnemyGanigani3D>
+		<EnemyLander3D>enmLander</EnemyLander3D>
+		<EnemyMotora3D>enmMotora</EnemyMotora3D>
+		<EnemyNal3D>enmNal</EnemyNal3D>
+		<EnemySpanner>enmSpanner</EnemySpanner>
 		<EnemySpinner>enmSpinner</EnemySpinner>
+		<MissionSprinkler>enmSprinkler</MissionSprinkler>
+		<!-- Wisp -->
+		<PlaReleaseBox>ReleaseBoxSmall</PlaReleaseBox>
+		<CpzPipeEnterCollision>EventSpiralPipe</CpzPipeEnterCollision>
+		<GoalRing>ReleaseBoxBig</GoalRing>
+		<PlaPhantomCancelVolume>PhantomCancelCollision</PlaPhantomCancelVolume>
 		<!-- Sound -->
 		<SoundPoint>EnvSound</SoundPoint>
+		<!-- Mission -->
+		<MissionChainFloor>ChainFloor</MissionChainFloor>
+		<MissionChainThornBall>ChainSpikeBall</MissionChainThornBall>
 	</Rename>
 	<Parameters>
 		<Speed>10</Speed>
