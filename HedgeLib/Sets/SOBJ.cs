@@ -262,7 +262,7 @@ namespace HedgeLib.Sets
                 obj.CustomData.Add("Parent", new SetObjectParam(typeof(uint), parent));
             }
 
-            //Skip loading parameters if template doesn't exist
+            // Skip loading parameters if template doesn't exist
             if (objTemplate != null)
             {
                 // Raw Parameter Data
@@ -408,7 +408,7 @@ namespace HedgeLib.Sets
             writer.WriteNulls((type == SOBJType.LostWorld) ? 0xC : 4u);
 
             // Parameters
-            if (obj.Parameters.Count > 0) //Objects with template with proper parameters defined
+            if (obj.Parameters.Count > 0) // Objects with template with proper parameters defined
             {
                 foreach (var param in obj.Parameters)
                 {
@@ -464,9 +464,10 @@ namespace HedgeLib.Sets
                     writer.WriteByType(param.DataType, param.Data);
                 }
             }
-            else if (obj.RawParamData != null) //Objects with template but without parameters, but do have a byte length definition.
+            // Objects with template but without parameters, but do have a byte length definition.
+            else if (obj.RawParamData != null)
             {
-                //Write unedited raw data retrieved from loaded orc
+                // Write unedited raw data retrieved from loaded orc
                 writer.Write(obj.RawParamData);
             }
             writer.FixPadding(4);
