@@ -6,5 +6,5 @@
   <IsVisibleModel type="bool" default="true" description="Whether the booster displays it's model, or is invisible." />
   <Unknown6 type="bool" default="false" description="Padding?" />
   <Unknown7 type="bool" default="false" description="Padding?" />
-  <Extra type="RawBitLength" length="12" />
+  <Extra type="RawByteLength" length="12" />
 </Template>

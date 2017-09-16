@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <Extra type="RawBitLength" length="56" />
+  <Extra type="RawByteLength" length="56" />
 </Template>

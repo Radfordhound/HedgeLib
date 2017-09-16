@@ -3,5 +3,5 @@
   <Unknown4 type="float"  default="0" description="Probably Width" />
   <Unknown5 type="float"  default="0" description="Probably Height" />
   <Unknown6 type="enum" default="0" description="Probably CheckNo" />
-  <Extra type="RawBitLength" length="12" />
+  <Extra type="RawByteLength" length="12" />
 </Template>

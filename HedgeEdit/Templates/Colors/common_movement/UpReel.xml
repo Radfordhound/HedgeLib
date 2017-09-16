@@ -5,5 +5,5 @@
   <MaxSpeed type="float" default="0" description="" />
   <Unknown5 type="float" default="0" description="" />
   <Unknown6 type="float" default="0" description="" />
-  <Extra type="RawBitLength" length="20" />
+  <Extra type="RawByteLength" length="20" />
 </Template>

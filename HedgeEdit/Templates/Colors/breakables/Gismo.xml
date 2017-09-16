@@ -2,5 +2,5 @@
 <Template>
   <Unknown5 type="uint32" default="0" description="" />
   <Type type="uint32" default="0" description="Numerical ID of Gismo, set by stage info." />
-  <Extra type="RawBitLength" length="8" />
+  <Extra type="RawByteLength" length="8" />
 </Template>

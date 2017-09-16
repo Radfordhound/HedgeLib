@@ -17,5 +17,5 @@
   <Unknown-EaseTime_BtoA type="float" default="0" description="transition time B" />
   <EaseTime_BtoA type="float" default="0" description="priority of B of the camera" />
   <Unknown-NoneEffectiveBoostB type="bool" default="false" description="I to the B-side boost angle without change" />
-  <Extra type="RawBitLength" length="56" />
+  <Extra type="RawByteLength" length="56" />
 </Template>

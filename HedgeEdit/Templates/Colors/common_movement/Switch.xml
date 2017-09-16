@@ -23,5 +23,5 @@
   <Unknown19 type="uint32" default="0" description="Padding?" />
   -->
   <!-- Special case where Target Object IDs are listed after the other parameters, changing the total length of the parameter data. -->
-  <Extra type="RawBitLength" length="88" /> <!-- Dummy length -->
+  <Extra type="RawByteLength" length="88" /> <!-- Dummy length -->
 </Template>

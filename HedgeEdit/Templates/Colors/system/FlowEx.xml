@@ -9,5 +9,5 @@
   <Unknown11 type="float" default="0" description="" />
   <Unknown12 type="float" default="0" description="" />
   <Unknown13 type="float" default="0" description="" />
-  <Extra type="RawBitLength" length="36" />
+  <Extra type="RawByteLength" length="36" />
 </Template>

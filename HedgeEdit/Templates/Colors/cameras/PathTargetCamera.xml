@@ -19,5 +19,5 @@
   <TargetOffset_Right type="float" default="0" description="offset left and right of the target coordinate system" />
   <TargetOffset_Up type="float" default="0" description="offset the top and bottom of the target coordinate system" />
   <TargetOffset_Front type="float" default="0" description="before and after the offset of the target coordinate system" />
-  <Extra type="RawBitLength" length="76" />
+  <Extra type="RawByteLength" length="76" />
 </Template>

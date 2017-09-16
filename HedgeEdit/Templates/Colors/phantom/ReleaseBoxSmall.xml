@@ -27,5 +27,5 @@
   <Unknown5 type="byte" default="0" description="Padding?" />
   <Unknown6 type="byte" default="0" description="Padding?" />
   <Unknown7 type="uint" default="0" description="" />
-  <Extra type="RawBitLength" length="8" />
+  <Extra type="RawByteLength" length="8" />
 </Template>

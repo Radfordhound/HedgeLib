@@ -77,7 +77,7 @@ namespace HedgeLib.Sets
                     // TODO: Parse Extra XML elements.
 
                     // Length of raw parameter data
-                    if (typeAttr.Value == "RawBitLength")
+                    if (typeAttr.Value == "RawByteLength")
                     {
                         RawLength = Convert.ToInt32(element.Attribute("length").Value);
                     }

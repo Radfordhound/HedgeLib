@@ -8,5 +8,5 @@
   <Unknown6 type="float" default="0" description="?" />
   <Unknown7 type="float" default="0" description="?" />
   <SizeType type="enum" default="1" description="The size of the ramp." />
-  <Extra type="RawBitLength" length="32" />
+  <Extra type="RawByteLength" length="32" />
 </Template>

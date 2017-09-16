@@ -5,5 +5,5 @@
   <Collision_Length type="float" default="0" />
   <Unknown5 type="uint32" default="0" />
   <Unknown6 type="uint32" default="0" />
-  <Extra type="RawBitLength" length="20" />
+  <Extra type="RawByteLength" length="20" />
 </Template>

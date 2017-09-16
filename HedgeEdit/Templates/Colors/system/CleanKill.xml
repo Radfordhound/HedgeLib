@@ -7,5 +7,5 @@
   <Unknown6 type="uint32" default="0" description="Padding?" />
   <Unknown7 type="float" default="0" description="Padding?" />
   -->
-  <Extra type="RawBitLength" length="60" /> <!-- Dummy length -->
+  <Extra type="RawByteLength" length="60" /> <!-- Dummy length -->
 </Template>

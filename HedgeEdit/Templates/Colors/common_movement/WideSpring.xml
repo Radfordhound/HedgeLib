@@ -3,5 +3,5 @@
   <FirstSpeed type="float" default="500" description="How much speed the spring will send you off with." />
   <OutOfControl type="float" default="0.5" description="How long the game locks your control for after coming in contact with this object." />
   <KeepVelocityDistance type="float" default="50" description="How far away Sonic must travel after coming in contact with this object before he begins to loose speed." />
-  <Extra type="RawBitLength" length="12" />
+  <Extra type="RawByteLength" length="12" />
 </Template>
