@@ -80,7 +80,6 @@ namespace HedgeLib.Sets
                         reader.JumpTo(objOffsets[objIndex], false);
                         obj = ReadObject(reader,
                             null, objName, type);
-                        obj.IsTemplateExists = false;
                     }
                     else
                     {
@@ -88,7 +87,6 @@ namespace HedgeLib.Sets
                         reader.JumpTo(objOffsets[objIndex], false);
                         obj = ReadObject(reader,
                             objectTemplates[objName], objName, type);
-                        obj.IsTemplateExists = true;
                     }
 
                     objs[objIndex] = obj;
@@ -108,7 +106,6 @@ namespace HedgeLib.Sets
 
             for (int objIndex = 0; objIndex < objects.Count; ++objIndex)
             {
-                if (objects[objIndex].IsTemplateExists == false) continue;
                 var obj = objects[objIndex];
                 if (!objectsByType.ContainsKey(obj.ObjectType))
                 {
@@ -408,7 +405,8 @@ namespace HedgeLib.Sets
             writer.WriteNulls((type == SOBJType.LostWorld) ? 0xC : 4u);
 
             // Parameters
-            if (obj.Parameters.Count > 0) // Objects with template with proper parameters defined
+            // Objects with template with proper parameters defined
+            if (obj.Parameters.Count > 0)
             {
                 foreach (var param in obj.Parameters)
                 {
