@@ -15,7 +15,6 @@ namespace HedgeLib.Sets
 
         public string ObjectType;
         public uint ObjectID;
-        public byte[] RawParamData;
 
 		// Constructors
 		public SetObject() { }

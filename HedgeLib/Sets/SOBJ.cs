@@ -266,7 +266,8 @@ namespace HedgeLib.Sets
                 if (objTemplate.RawLength != 0)
                 {
                     var paramBegin = reader.BaseStream.Position;
-                    obj.RawParamData = reader.ReadBytes(objTemplate.RawLength);
+                    obj.CustomData.Add("RawParamData", new SetObjectParam(typeof(byte[]),
+                        reader.ReadBytes(objTemplate.RawLength)));
                     reader.JumpTo(paramBegin);
                 }
                 // Parameters
@@ -387,6 +388,8 @@ namespace HedgeLib.Sets
             uint parent = (type == SOBJType.LostWorld) ?
                 obj.GetCustomDataValue<uint>("Parent") : 0;
 
+            byte [] rawParamData = obj.GetCustomDataValue<byte[]>("RawParamData");
+
             // Combine the two values back into one so we can write with correct endianness.
             uint unknownData = (unknown1 << 16) | (obj.ObjectID & 0xFFFF);
             writer.Write(unknownData);
@@ -463,10 +466,10 @@ namespace HedgeLib.Sets
                 }
             }
             // Objects with template but without parameters, but do have a byte length definition.
-            else if (obj.RawParamData != null)
+            else if (rawParamData != null)
             {
                 // Write unedited raw data retrieved from loaded orc
-                writer.Write(obj.RawParamData);
+                writer.Write(rawParamData);
             }
             writer.FixPadding(4);
         }
