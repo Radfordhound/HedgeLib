@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Template>
-  <Unknown5 type="uint" default="0" description="" />
-  <Extra type="RawBitLength" length="4" />
-</Template>
