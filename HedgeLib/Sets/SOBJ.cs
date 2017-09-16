@@ -210,7 +210,8 @@ namespace HedgeLib.Sets
         }
 
         private static SetObject ReadObject(ExtendedBinaryReader reader,
-            SetObjectType objTemplate, string objType, SOBJType type)
+            SetObjectType objTemplate, string objType, SOBJType type,
+            bool rawDataMode = false) // true = full, false = only remaining bytes
         {
             // For some reason these separate values are saved as one uint rather than two ushorts.
             // Because of this, the values are in a different order depending on endianness, and
@@ -262,10 +263,10 @@ namespace HedgeLib.Sets
             // Skip loading parameters if template doesn't exist
             if (objTemplate != null)
             {
-                // Raw Parameter Data
-                if (objTemplate.RawLength != 0)
+                var paramBegin = reader.BaseStream.Position;
+                // Read all the data then return to beginning
+                if ((rawDataMode == true) && (objTemplate.RawLength != 0))
                 {
-                    var paramBegin = reader.BaseStream.Position;
                     obj.CustomData.Add("RawParamData", new SetObjectParam(typeof(byte[]),
                         reader.ReadBytes(objTemplate.RawLength)));
                     reader.JumpTo(paramBegin);
@@ -335,6 +336,14 @@ namespace HedgeLib.Sets
                         reader.ReadByType(param.DataType));
                     obj.Parameters.Add(objParam);
                 }
+
+                if (rawDataMode == false)
+                {
+                    var knownParamLength = reader.BaseStream.Position - paramBegin;
+                    var remainingBytes = objTemplate.RawLength - knownParamLength;
+                    obj.CustomData.Add("RawParamData", new SetObjectParam(typeof(byte[]),
+                        reader.ReadBytes((int)remainingBytes)));
+                }
             }
 
             // Transforms
@@ -375,7 +384,8 @@ namespace HedgeLib.Sets
             return transform;
         }
 
-        private static void WriteObject(BINAWriter writer, SetObject obj, SOBJType type)
+        private static void WriteObject(BINAWriter writer, SetObject obj, SOBJType type,
+            bool rawDataMode = false) // true = full, false = only remaining bytes)
         {
             // Get a bunch of values from the object's custom data, if present.
             uint unknown1 = obj.GetCustomDataValue<ushort>("Unknown1");
@@ -408,68 +418,69 @@ namespace HedgeLib.Sets
             writer.WriteNulls((type == SOBJType.LostWorld) ? 0xC : 4u);
 
             // Parameters
-            // Objects with template with proper parameters defined
-            if (obj.Parameters.Count > 0)
+            var paramBegin = writer.BaseStream.Position;
+            foreach (var param in obj.Parameters)
             {
-                foreach (var param in obj.Parameters)
+                // Write Special Types/Fix Padding
+                if (param.DataType == typeof(uint[]))
                 {
-                    // Write Special Types/Fix Padding
-                    if (param.DataType == typeof(uint[]))
-                    {
-                        // Data Info
-                        var arr = (uint[])param.Data;
-                        writer.FixPadding(4);
+                    // Data Info
+                    var arr = (uint[])param.Data;
+                    writer.FixPadding(4);
 
-                        writer.AddOffset("arrOffset");
-                        writer.Write((uint)arr.Length);
-                        writer.WriteNulls(4); // TODO: Figure out what this is.
+                    writer.AddOffset("arrOffset");
+                    writer.Write((uint)arr.Length);
+                    writer.WriteNulls(4); // TODO: Figure out what this is.
 
-                        // Data
-                        writer.FillInOffset("arrOffset", false);
+                    // Data
+                    writer.FillInOffset("arrOffset", false);
 
-                        foreach (uint value in arr)
-                            writer.Write(value);
+                    foreach (uint value in arr)
+                        writer.Write(value);
 
-                        continue;
-                    }
-                    else if (param.DataType == typeof(string))
-                    {
-                        // Data Info
-                        string str = (string)param.Data;
-                        writer.AddOffset("strOffset");
-                        writer.WriteNulls(4); // TODO: Figure out what this is.
-
-                        if (string.IsNullOrEmpty(str))
-                        {
-                            writer.FillInOffset("strOffset", 0, true);
-                        }
-                        else
-                        {
-                            writer.FillInOffset("strOffset", false);
-                            writer.WriteNullTerminatedString(str);
-                        }
-
-                        continue;
-                    }
-                    else if (param.DataType == typeof(float) ||
-                        param.DataType == typeof(int) || param.DataType == typeof(uint))
-                    {
-                        writer.FixPadding(4);
-                    }
-                    else if (type == SOBJType.LostWorld && param.DataType == typeof(Vector3))
-                    {
-                        writer.FixPadding(16);
-                    }
-
-                    // Write Data
-                    writer.WriteByType(param.DataType, param.Data);
+                    continue;
                 }
+                else if (param.DataType == typeof(string))
+                {
+                    // Data Info
+                    string str = (string)param.Data;
+                    writer.AddOffset("strOffset");
+                    writer.WriteNulls(4); // TODO: Figure out what this is.
+
+                    if (string.IsNullOrEmpty(str))
+                    {
+                        writer.FillInOffset("strOffset", 0, true);
+                    }
+                    else
+                    {
+                        writer.FillInOffset("strOffset", false);
+                        writer.WriteNullTerminatedString(str);
+                    }
+
+                    continue;
+                }
+                else if (param.DataType == typeof(float) ||
+                    param.DataType == typeof(int) || param.DataType == typeof(uint))
+                {
+                    writer.FixPadding(4);
+                }
+                else if (type == SOBJType.LostWorld && param.DataType == typeof(Vector3))
+                {
+                    writer.FixPadding(16);
+                }
+
+                // Write Data
+                writer.WriteByType(param.DataType, param.Data);
             }
-            // Objects with template but without parameters, but do have a byte length definition.
-            else if (rawParamData != null)
+            // Write remaining raw data from loaded orc
+            if (rawDataMode == false)
             {
-                // Write unedited raw data retrieved from loaded orc
                 writer.Write(rawParamData);
+            }
+            else
+            {
+                var knownParamLength = (int)writer.BaseStream.Position - (int)paramBegin;
+                writer.Write(rawParamData, knownParamLength, rawParamData.Length - knownParamLength);
             }
             writer.FixPadding(4);
         }
