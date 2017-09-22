@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <Speed type="float" default="0" description="" />
-  <Unknown4 type="uint32" default="0" description="" />
-  <MaxSpeed type="float" default="0" description="" />
-  <Unknown5 type="float" default="0" description="" />
-  <Unknown6 type="float" default="0" description="" />
+  <Length type="float" default="0" description="" />
+  <IsWaitUp type="bool" default="false" description="" />
+  <ImpulseVelocity type="float" default="0" description="" />
+  <OutOfControl type="float" default="0" description="" />
+  <UpSpeedMax type="float" default="0" description="" />
   <Extra type="RawByteLength" length="20" />
 </Template>

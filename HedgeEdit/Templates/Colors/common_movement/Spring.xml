@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <!--
   <FirstSpeed type="float" default="500" description="How much speed the spring will send you off with." />
   <OutOfControl type="float" default="0.5" description="How long the game locks your control for after coming in contact with this object." />
   <KeepVelocityDistance type="float" default="50" description="How far away Sonic must travel after coming in contact with this object before he begins to loose speed." />
@@ -19,6 +18,5 @@
   <Unknown14 type="bool" default="true" description="" />
   <Unknown15 type="bool" default="false" description="" />
   <Unknown16 type="bool" default="false" description="" />
-  -->
   <Extra type="RawByteLength" length="44" />
 </Template>
