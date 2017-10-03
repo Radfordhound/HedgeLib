@@ -1,4 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <Extra type="RawByteLength" length="0" />
+  <FirstSpeed type="float" default="500" description="How much speed the spring will send you off with." />
+  <OutOfControl type="float" default="0.5" description="How long the game locks your control for after coming in contact with this object." />
+  <KeepVelocityDistance type="float" default="50" description="How far away Sonic must travel after coming in contact with this object before he begins to loose speed." />
+  <Unknown4 type="float" default="1" description="Spring Type? Seems to be 2 for springs that only appear when you have Super Sonic enabled. Odd that it's a float though." />
+  <Unknown5 type="bool" default="false" description="" />
+  <Unknown6 type="bool" default="false" description="" />
+  <Unknown7 type="bool" default="false" description="" />
+  <m_IsMonkeyHunting type="bool" default="false" description="Whether or not the spring should attempt to send Sonic towards the target position." />
+  <m_MonkeyTarget type="position" description="The position the spring will attempt to send Sonic towards if IsTargeting is set to true." />
+  <Unknown8 type="bool" default="true" description="" />
+  <Unknown9 type="bool" default="false" description="" />
+  <Unknown10 type="bool" default="true" description="" />
+  <Unknown11 type="bool" default="true" description="" />
+  <Unknown12 type="uint" default="1" description="Probably four booleans, actually." />
+  <Unknown13 type="bool" default="false" description="" />
+  <Unknown14 type="bool" default="true" description="" />
+  <Unknown15 type="bool" default="false" description="" />
+  <Unknown16 type="bool" default="false" description="" />
+  <Extra type="RawByteLength" length="44" />
 </Template>

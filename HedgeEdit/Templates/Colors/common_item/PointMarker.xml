@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <Unknown4 type="float"  default="0" description="Probably Width" />
-  <Unknown5 type="float"  default="0" description="Probably Height" />
-  <Unknown6 type="enum" default="0" description="Probably CheckNo" />
+  <Width type="float"  default="0" description="" />
+  <Height type="float"  default="0" description="" />
+  <DimensionType type="enum" default="0" description="?" />
   <Extra type="RawByteLength" length="12" />
 </Template>

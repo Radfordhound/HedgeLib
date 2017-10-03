@@ -6,7 +6,7 @@
   <SpeedMin type="float" default="0" description="" />
   <SpeedMax type="float" default="0" description="" />
   <OutOfControl type="float" default="0" description="" />
-  <Unknown5 type="float" default="0" description="" />
+  <Unknown5 type="float" default="0" description="?" />
   <IsReset type="bool" default="false" description="" />
   <Extra type="RawByteLength" length="32" />
 </Template>
