@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Move to Templates/Colors directory in Sonic Colors Set Editor directory.-->
+<Modifiers>
+	<Rename>
+		<!-- Element is Generations name, Value is Colors name.-->
+		<!-- Common -->
+		<SpringFake>DummySpring</SpringFake>
+		<GrindDashPanel>GrindBooster</GrindDashPanel>
+		<SelectCanon>JumpSelector</SelectCanon>
+		<JumpPole>SpringPole</JumpPole>
+		<AdlibTrickJump>TrickJump</AdlibTrickJump>
+		<MovingThorn>MovingThornBall</MovingThorn>
+		<Item>1UP</Item>
+		<BubbleGenerator>SshBubble</BubbleGenerator>
+		<RedMedal>RedRing</RedMedal>
+		<ObjectPhysics>Gismo</ObjectPhysics>
+		<GeneralFloor>CommonFloor</GeneralFloor>
+		<!-- System -->
+		<LayerChangeCollisionFlat>LayerBoard</LayerChangeCollisionFlat>
+		<!-- Player System -->
+		<AutorunFinishCollision>AutorunCollisionEnd</AutorunFinishCollision>
+		<AutorunStartCollision>AutorunCollisionStart</AutorunStartCollision>
+		<ChangeMode_2DtoForward>ChageMode_2DtoForward</ChangeMode_2DtoForward>
+		<ChangeMode_3Dto2D>ChageMode_3Dto2D</ChangeMode_3Dto2D>
+		<ChangeMode_3DtoForward>ChageMode_3DtoForward</ChangeMode_3DtoForward>
+		<ChangeDiveBegin>ChangeDiveModeStart</ChangeDiveBegin>
+		<ChangeDiveEnd>ChangeDiveEndNoEvent</ChangeDiveEnd>
+		<JumpCollision>EventJumpCollision</JumpCollision>
+		<StumbleCollision>EventStumbleCollision</StumbleCollision>
+		<!-- Navigator -->
+		<NavigationCollision>EventNavigationCollision</NavigationCollision>
+		<Omochao>HintRing</Omochao>
+		<!-- Camera -->
+		<ObjCameraPathParallel>Camera2D</ObjCameraPathParallel>
+		<ObjCameraNormal>Camera3D</ObjCameraNormal>
+		<ChangeVolumeCamera>EventVolumeCameraChange</ChangeVolumeCamera>
+		<ObjCameraFix>FixCamera</ObjCameraFix>
+		<ObjCameraPan>PanCamera</ObjCameraPan>
+		<ObjCameraPanVertical>PanVerticalCamera</ObjCameraPanVertical>
+		<ObjCameraParallel>ParallelCamera</ObjCameraParallel>
+		<ObjCameraPathLook>PathLookCamera</ObjCameraPathLook>
+		<ObjCameraPathPath>PathPathCamera</ObjCameraPathPath>
+		<ObjCameraPathTarget>PathTargetCamera</ObjCameraPathTarget>
+		<ObjCameraPoint>PointCamera</ObjCameraPoint>
+		<ObjCameraVertical>PointVerticalCamera</ObjCameraVertical>
+		<!-- Enemies -->
+		<EnemyBatabata2D>enmBatabata</EnemyBatabata2D>
+		<EnemyBeeton2D>enmBeeton</EnemyBeeton2D>
+		<EnemyPawn3D>enmEggPawn</EnemyPawn3D>
+		<EnemyPawnPla3D>enmEggPawn_rso</EnemyPawnPla3D>
+		<EnemyPawnGun3D>enmEggPawnGun</EnemyPawnGun3D>
+		<EnemyPawnLance3D>enmEggPawnLance</EnemyPawnLance3D>
+		<EnemyGanigani3D>enmGanigani</EnemyGanigani3D>
+		<EnemyLander3D>enmLander</EnemyLander3D>
+		<EnemyMotora3D>enmMotora</EnemyMotora3D>
+		<EnemyNal3D>enmNal</EnemyNal3D>
+		<EnemySpanner>enmSpanner</EnemySpanner>
+		<EnemySpinner>enmSpinner</EnemySpinner>
+		<MissionSprinkler>enmSprinkler</MissionSprinkler>
+		<!-- Wisp -->
+		<PlaReleaseBox>ReleaseBoxSmall</PlaReleaseBox>
+		<CpzPipeEnterCollision>EventSpiralPipe</CpzPipeEnterCollision>
+		<GoalRing>ReleaseBoxBig</GoalRing>
+		<PlaPhantomCancelVolume>PhantomCancelCollision</PlaPhantomCancelVolume>
+		<!-- Sound -->
+		<SoundPoint>EnvSound</SoundPoint>
+		<!-- Mission -->
+		<MissionChainFloor>ChainFloor</MissionChainFloor>
+		<MissionChainThornBall>ChainSpikeBall</MissionChainThornBall>
+	</Rename>
+	<Position-Y> <!-- Local rotation -->
+		<Ring>0.5</Ring>
+	</Position-Y>
+	<Rotation-X>
+		<FallDeadCollision>-90</FallDeadCollision>
+	</Rotation-X>
+	<Rotation-Y>
+		<DashRing>-180</DashRing>
+		<JumpBoard>-180</JumpBoard>
+		<PointMarker>-180</PointMarker>
+		<ChageMode_2DtoForward>-180</ChageMode_2DtoForward>
+		<ChageMode_3Dto2D>-180</ChageMode_3Dto2D>
+		<ChageMode_3DtoForward>-180</ChageMode_3DtoForward>
+		<RainbowRing>-180</RainbowRing>
+		<TrickJump>-180</TrickJump>
+		<CameraCollisionBoard>-180</CameraCollisionBoard>
+	</Rotation-Y>
+	<Param-Divide>
+		<Collision>5</Collision>
+		<Speed>10</Speed>
+		<Velocity>10</Velocity>
+		<TargetOffset>10</TargetOffset>
+		<Distance>10</Distance>
+		<Height>10</Height>
+		<Width>10</Width>
+		<Length>10</Length>
+	</Param-Divide>
+</Modifiers>

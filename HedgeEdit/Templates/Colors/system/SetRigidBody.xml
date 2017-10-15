@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Height type="float" default="0" />
+  <Width type="float" default="0" />
+  <Length type="float" default="0" />
+  <DefaultON type="bool" default="true" description="" />
+  <IsEffect type="bool" default="false" description="?" />
+  <IsPlayerTerrain type="bool" default="false" description="?" />
+  <m_IsSearchInsulateOnly type="bool" default="false" description="Disables normal collision, prevents homing attack searching through" />
+  <Unknown9 type="bool" default="false" description="Disabled if true?" />
+  <Unknown10 type="bool" default="false" description="" />
+  <Unknown11 type="bool" default="false" description="" />
+  <Unknown12 type="bool" default="false" description="" />
+  <Extra type="RawByteLength" length="20" />
+</Template>

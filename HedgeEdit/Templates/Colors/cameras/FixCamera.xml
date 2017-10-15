@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <IsCameraView type="bool" default="false" description="camera view" />
+  <IsCollision type="bool" default="false" description="take the collision?" />
+  <Ease_Time_Enter type="float" default="0" description="transition time at the time of invasion (sec) ※ use only events" />
+  <Ease_Time_Leave type="float" default="0" description="transition time at the time of withdrawal (sec) ※ use only events" />
+  <Fovy type="float" default="0" description="angle of view" />
+  <ZRot type="float" default="0" description="rotation around the Z axis" />
+  <TargetPosition type="position" description="gazing point" />
+  <Extra type="RawByteLength" length="32" />
+</Template>

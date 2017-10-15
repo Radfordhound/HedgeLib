@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <ImpulseSpeedOnNormal type="float" default="0" description="Initial Speed" />
+  <Pitch type="float" default="30" description="Angle of initial launch" />
+  <OutOfControl type="float" default="0" description="" />
+  <ImpulseSpeedOnBoost type="float" default="0" description="Speed on 'AMAZING!' (correct name: SecondSpeed)" />
+  <SecondPitch type="float" default="0" description="Angle on 'AMAZING!'" />
+  <SecondOutOfControl type="float" default="0" description="" />
+  <IntervalSpeed type="float" default="0" description="Speed while doing 'GOOD' 'GREAT' 'AWESOME' 'OUTSTANDING'" />
+  <SizeType type="enum" default="1" description="The size of the ramp." />
+  <Extra type="RawByteLength" length="32" />
+</Template>

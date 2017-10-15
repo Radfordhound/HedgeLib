@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <State type="uint" default="1" description="?" />
+  <Extra type="RawByteLength" length="4" />
+</Template>

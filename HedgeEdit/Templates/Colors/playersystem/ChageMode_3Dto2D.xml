@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Collision_Width type="float" default="0" description="collision of width" />
+  <Collision_Height type="float" default="0" description="the height of the collision" />
+  <m_PathEaseTime type="float" default="0" description="SideView path transition time" />
+  <TargetDirection type="vector" description="path search-facing" />
+  <m_IsChangeCamera type="bool" default="false" description="to switch the camera?" />
+  <m_IsPadCorrect type="bool" default="false" description="to pad correction?" />
+  <m_IsAutoChange2DPath type="bool" default="false" description="automatic path switching?" />
+  <m_IsEnableFromFront type="bool" default="false" description="forward effective?" />
+  <m_IsEnableFromBack type="bool" default="false" description="reverse direction effective?" />
+  <Extra type="RawByteLength" length="32" />
+</Template>

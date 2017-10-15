@@ -11,6 +11,7 @@ namespace HedgeLib.Sets
         // Variables/Constants
         public List<SetObjectTypeParam> Parameters = new List<SetObjectTypeParam>();
         public string Name;
+        public int RawLength;
         public const string Extension = ".xml";
 
         // Methods
@@ -68,11 +69,18 @@ namespace HedgeLib.Sets
             {
                 string elemName = element.Name.LocalName;
                 var typeAttr = element.Attribute("type");
+                RawLength = 0;
                 if (typeAttr == null) continue;
 
                 if (elemName.ToLower() == "extra")
                 {
                     // TODO: Parse Extra XML elements.
+
+                    // Length of raw parameter data
+                    if (typeAttr.Value == "RawByteLength")
+                    {
+                        RawLength = Convert.ToInt32(element.Attribute("length").Value);
+                    }
                 }
                 else
                 {

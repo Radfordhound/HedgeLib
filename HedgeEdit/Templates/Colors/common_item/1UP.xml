@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Unknown4 type="uint" default="0" description="GroundOffset?" />
+  <Unknown5 type="bool" default="true" description="IsCastShadow?" />
+  <Unknown6 type="bool" default="false" description="Padding?" />
+  <Unknown7 type="bool" default="false" description="Padding?" />
+  <Unknown8 type="bool" default="false" description="Padding?" />
+  <Extra type="RawByteLength" length="8" />
+</Template>

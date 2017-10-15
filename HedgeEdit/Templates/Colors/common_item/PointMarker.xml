@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Width type="float"  default="0" description="" />
+  <Height type="float"  default="0" description="" />
+  <DimensionType type="enum" default="0" description="?" />
+  <Extra type="RawByteLength" length="12" />
+</Template>
