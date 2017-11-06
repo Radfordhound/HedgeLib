@@ -52,8 +52,6 @@ namespace HedgeLib.Terrain
                 reader.JumpTo(centerPosOffset, false);
                 group.CenterPosition = reader.ReadVector3();
                 group.CenterRadius = reader.ReadSingle();
-                System.Console.WriteLine(group.CenterPosition);
-                System.Console.WriteLine(group.CenterRadius);
 
                 // FileName
                 reader.JumpTo(fileNameOffset, false);
