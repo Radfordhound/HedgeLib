@@ -1,7 +1,9 @@
 ﻿using HedgeLib;
 using HedgeLib.Archives;
 using HedgeLib.Misc;
+using HedgeLib.Models;
 using HedgeLib.Sets;
+using HedgeLib.Terrain;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -215,7 +217,7 @@ namespace HedgeEdit
 
                     foreach (string file in Directory.GetFiles(fullDir, dirEntry.Filter))
                     {
-                        LoadFile(entry.Key, file, game);
+                        LoadFile(entry.Key, file, game, dirEntry.Arguments);
                     }
                 }
             }
@@ -223,13 +225,15 @@ namespace HedgeEdit
             // Load Files
             foreach (var entry in game.LoadInfo.Files)
             {
-                string fileName = string.Format(entry.Value, stageID);
+                var fileEntry = entry.Value;
+                string fileName = string.Format(fileEntry.FilePath, stageID);
                 string file = Helpers.CombinePaths(cacheDir, fileName);
-                LoadFile(entry.Key, file, game);
+                LoadFile(entry.Key, file, game, fileEntry.Arguments);
             }
         }
 
-        private static void LoadFile(string type, string filePath, GameEntry game)
+        private static void LoadFile(string type, string filePath,
+            GameEntry game, List<string> args)
         {
             if (!File.Exists(filePath))
             {
@@ -244,6 +248,8 @@ namespace HedgeEdit
             {
                 case "lightlist":
                     {
+                        ChangeUILoadStatus("Lights");
+
                         // Load Light-List
                         var lightList = new HedgeLib.Lights.GensLightList();
                         lightList.Load(filePath);
@@ -253,8 +259,10 @@ namespace HedgeEdit
                         {
                             string lightPath = Helpers.CombinePaths(fileInfo.DirectoryName,
                                 lightName + HedgeLib.Lights.Light.Extension);
-                            LoadFile("light", lightPath, game);
+                            LoadFile("light", lightPath, game, null);
                         }
+
+                        // TODO: Spawn lights in viewport
 
                         return;
                     }
@@ -272,8 +280,9 @@ namespace HedgeEdit
 
                 case "setdata":
                     {
+                        ChangeUILoadStatus("Set Data");
+
                         var setData = Types.GetSetDataOfType(game.DataType);
-                        Console.WriteLine("Loading sets " + filePath);
                         setData.Load(filePath, game.ObjectTemplates);
 
                         // Spawn Objects in World
@@ -296,6 +305,123 @@ namespace HedgeEdit
 
                         setData.Name = Path.GetFileNameWithoutExtension(filePath);
                         Sets.Add(setData);
+
+                        // Refresh UI Scene View
+                        Program.MainForm.Invoke(new Action(() =>
+                        {
+                            Program.MainForm.RefreshSceneView();
+                        }));
+
+                        return;
+                    }
+
+                case "terrain":
+                    {
+                        // TODO: Do this properly
+                        var model = new GensModel();
+                        model.Load(filePath);
+                        Viewport.AddModel(model);
+                        return;
+                    }
+
+                case "terrainlist":
+                    {
+                        if (args == null || args.Count < 1)
+                        {
+                            Console.WriteLine(
+                                "Skipped loading terrain, no extracted PFD path given.");
+                            return;
+                        }
+
+                        // Terrain List
+                        ChangeUILoadStatus("Terrain List");
+                        string dir = fileInfo.DirectoryName;
+
+                        var terrainList = new GensTerrainList();
+                        terrainList.Load(filePath);
+
+                        var modelCache = new Dictionary<string, GensModel>();
+                        int groupCount = terrainList.GroupEntries.Length;
+
+                        // Terrain Groups
+                        for (int i = 0; i < groupCount; ++i)
+                        {
+                            // Update UI
+                            ChangeUILoadStatus($"Terrain Group {i}/{groupCount}");
+                            ChangeUIProgress((int)((i / (float)groupCount) * 100), true);
+
+                            // Get the path to the terrain group
+                            var groupEntry = terrainList.GroupEntries[i];
+                            string groupDir = Path.Combine(
+                                fileInfo.Directory.Parent.FullName, args[0],
+                                groupEntry.FileName);
+
+                            string path = Path.Combine(dir,
+                                $"{groupEntry.FileName}{GensTerrainGroup.Extension}");
+
+                            // Ensure the group exists
+                            if (!File.Exists(path))
+                            {
+                                Console.WriteLine(
+                                    "Terrain group {0} was skipped because it was not found!",
+                                    groupEntry.FileName);
+
+                                continue;
+                            }
+
+                            // Load the group
+                            var group = new GensTerrainGroup();
+                            group.Load(path);
+
+                            // Terrain Instance Infos
+                            for (int i2 = 0; i2 < group.InstanceInfos.Length; ++i2)
+                            {
+                                var instanceInfo = group.InstanceInfos[i2];
+                                for (int i3 = 0; i3 < instanceInfo.FileNames.Length; ++i3)
+                                {
+                                    string instancePath = Path.Combine(groupDir,
+                                        string.Format("{0}{1}",
+                                        instanceInfo.FileNames[i3],
+                                        GensTerrainInstanceInfo.Extension));
+
+                                    if (!File.Exists(instancePath))
+                                        continue;
+
+                                    var info = new GensTerrainInstanceInfo();
+                                    info.Load(instancePath);
+
+                                    // Terrain Models
+                                    string modelPth = Path.Combine(groupDir,
+                                        string.Format("{0}{1}",
+                                        info.ModelFileName,
+                                        GensModel.TerrainExtension));
+
+                                    GensModel model;
+                                    if (modelCache.ContainsKey(modelPth))
+                                    {
+                                        model = modelCache[modelPth];
+                                    }
+                                    else
+                                    {
+                                        model = new GensModel();
+                                        model.Load(modelPth);
+                                        modelCache.Add(modelPth, model);
+                                    }
+
+                                    // TODO: Use scaling
+                                    info.Position *= game.UnitMultiplier;
+
+                                    if (Program.MainForm == null) return;
+                                    Program.MainForm.Invoke(new Action(() =>
+                                    {
+                                        Viewport.AddModel(model,
+                                            info.Position, info.Rotation);
+                                    }));
+                                }
+                            }
+                        }
+
+                        ChangeUIProgress(100, false);
                         return;
                     }
 
@@ -308,9 +434,36 @@ namespace HedgeEdit
         {
             transform.Position *= unitMultiplier;
 
-            Viewport.AddModel(Viewport.DefaultCube,
+            Program.MainForm.Invoke(new Action(() =>
+            {
+                Viewport.AddModel(Viewport.DefaultCube,
                 transform.Position,
                 transform.Rotation, customData);
+            }));
+        }
+
+        private static void ChangeUILoadStatus(string status)
+        {
+            Program.MainForm.Invoke(new Action(() =>
+            {
+                Program.MainForm.UpdateStatus($"Loading {status}...");
+            }));
+        }
+
+        private static void ChangeUIStatus(string status)
+        {
+            Program.MainForm.Invoke(new Action(() =>
+            {
+                Program.MainForm.UpdateStatus(status);
+            }));
+        }
+
+        private static void ChangeUIProgress(int progress, bool visible)
+        {
+            Program.MainForm.Invoke(new Action(() =>
+            {
+                Program.MainForm.UpdateProgress(progress, visible);
+            }));
         }
     }
 }

@@ -53,6 +53,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Models\GensModel.cs" />
     <Compile Include="Sprites\ManiaSprite.cs" />
     <Compile Include="Archives\Archive.cs" />
     <Compile Include="Archives\ArchiveData.cs" />
@@ -90,6 +91,8 @@
     <Compile Include="Sets\SOBJ.cs" />
     <Compile Include="Sound\ColorsSNDL.cs" />
     <Compile Include="Terrain\GensTerrainGroup.cs" />
+    <Compile Include="Terrain\GensTerrainInstanceInfo.cs" />
+    <Compile Include="Terrain\GensTerrainList.cs" />
     <Compile Include="Types.cs" />
     <Compile Include="Vector.cs" />
   </ItemGroup>

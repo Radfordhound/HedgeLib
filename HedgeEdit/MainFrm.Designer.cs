@@ -70,6 +70,9 @@
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.objectTypeLbl = new System.Windows.Forms.Label();
+            this.statusStrip = new System.Windows.Forms.StatusStrip();
+            this.statusBarLbl = new System.Windows.Forms.ToolStripStatusLabel();
+            this.statusBarProgressBar = new System.Windows.Forms.ToolStripProgressBar();
             this.menuStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.mainSplitContainer)).BeginInit();
             this.mainSplitContainer.Panel1.SuspendLayout();
@@ -83,6 +86,7 @@
             this.bottomSplitContainer.Panel1.SuspendLayout();
             this.bottomSplitContainer.Panel2.SuspendLayout();
             this.bottomSplitContainer.SuspendLayout();
+            this.statusStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // menuStrip
@@ -295,7 +299,7 @@
             this.viewport.Location = new System.Drawing.Point(0, 0);
             this.viewport.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.viewport.Name = "viewport";
-            this.viewport.Size = new System.Drawing.Size(524, 511);
+            this.viewport.Size = new System.Drawing.Size(524, 481);
             this.viewport.TabIndex = 1;
             this.viewport.VSync = true;
             this.viewport.Paint += new System.Windows.Forms.PaintEventHandler(this.Viewport_Paint);
@@ -318,7 +322,7 @@
             // mainSplitContainer.Panel2
             // 
             this.mainSplitContainer.Panel2.Controls.Add(this.viewport);
-            this.mainSplitContainer.Size = new System.Drawing.Size(778, 511);
+            this.mainSplitContainer.Size = new System.Drawing.Size(778, 481);
             this.mainSplitContainer.SplitterDistance = 250;
             this.mainSplitContainer.TabIndex = 2;
             // 
@@ -340,7 +344,7 @@
             // topSplitContainer.Panel2
             // 
             this.topSplitContainer.Panel2.Controls.Add(this.bottomSplitContainer);
-            this.topSplitContainer.Size = new System.Drawing.Size(250, 511);
+            this.topSplitContainer.Size = new System.Drawing.Size(250, 481);
             this.topSplitContainer.SplitterDistance = 110;
             this.topSplitContainer.TabIndex = 1;
             // 
@@ -406,7 +410,7 @@
             this.bottomSplitContainer.Panel2.Controls.Add(this.objectProperties);
             this.bottomSplitContainer.Panel2.Controls.Add(this.objectTypeLbl);
             this.bottomSplitContainer.Panel2MinSize = 150;
-            this.bottomSplitContainer.Size = new System.Drawing.Size(250, 397);
+            this.bottomSplitContainer.Size = new System.Drawing.Size(250, 367);
             this.bottomSplitContainer.SplitterDistance = 140;
             this.bottomSplitContainer.TabIndex = 0;
             // 
@@ -531,7 +535,7 @@
             this.objectProperties.MultiSelect = false;
             this.objectProperties.Name = "objectProperties";
             this.objectProperties.ShowItemToolTips = true;
-            this.objectProperties.Size = new System.Drawing.Size(250, 218);
+            this.objectProperties.Size = new System.Drawing.Size(250, 188);
             this.objectProperties.TabIndex = 0;
             this.objectProperties.UseCompatibleStateImageBehavior = false;
             this.objectProperties.View = System.Windows.Forms.View.Details;
@@ -557,6 +561,32 @@
             this.objectTypeLbl.TabIndex = 2;
             this.objectTypeLbl.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
+            // statusStrip
+            // 
+            this.statusStrip.BackColor = System.Drawing.Color.White;
+            this.statusStrip.ImageScalingSize = new System.Drawing.Size(24, 24);
+            this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.statusBarLbl,
+            this.statusBarProgressBar});
+            this.statusStrip.Location = new System.Drawing.Point(0, 514);
+            this.statusStrip.Name = "statusStrip";
+            this.statusStrip.Size = new System.Drawing.Size(778, 30);
+            this.statusStrip.TabIndex = 2;
+            this.statusStrip.Text = "statusStrip1";
+            // 
+            // statusBarLbl
+            // 
+            this.statusBarLbl.Name = "statusBarLbl";
+            this.statusBarLbl.Size = new System.Drawing.Size(60, 25);
+            this.statusBarLbl.Text = "Ready";
+            // 
+            // statusBarProgressBar
+            // 
+            this.statusBarProgressBar.Name = "statusBarProgressBar";
+            this.statusBarProgressBar.Size = new System.Drawing.Size(100, 24);
+            this.statusBarProgressBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            this.statusBarProgressBar.Visible = false;
+            // 
             // MainFrm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
@@ -565,6 +595,7 @@
             this.ClientSize = new System.Drawing.Size(778, 544);
             this.Controls.Add(this.mainSplitContainer);
             this.Controls.Add(this.menuStrip);
+            this.Controls.Add(this.statusStrip);
             this.DoubleBuffered = true;
             this.MainMenuStrip = this.menuStrip;
             this.MinimumSize = new System.Drawing.Size(800, 600);
@@ -586,6 +617,8 @@
             this.bottomSplitContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.bottomSplitContainer)).EndInit();
             this.bottomSplitContainer.ResumeLayout(false);
+            this.statusStrip.ResumeLayout(false);
+            this.statusStrip.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -635,6 +668,9 @@
         private System.Windows.Forms.ColumnHeader columnHeader2;
         private System.Windows.Forms.ToolStripSeparator selectSeparator3;
         private System.Windows.Forms.ToolStripMenuItem advancedModeMenuItem;
+        private System.Windows.Forms.StatusStrip statusStrip;
+        private System.Windows.Forms.ToolStripStatusLabel statusBarLbl;
+        private System.Windows.Forms.ToolStripProgressBar statusBarProgressBar;
     }
 }
 

@@ -3,7 +3,9 @@
     public class Mesh
     {
         // Variables/Constants
-        public float[] Vertices, Normals; // Not Vector3s for better control/GL performance
+        public float[] Vertices, Normals,
+            Colors, UVs; // Not Vectors for better control/GL performance
+
         public uint[] Triangles;
     }
 }

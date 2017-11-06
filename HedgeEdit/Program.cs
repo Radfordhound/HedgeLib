@@ -6,6 +6,7 @@ namespace HedgeEdit
     public static class Program
     {
         // Variables/Constants
+        public static MainFrm MainForm;
         public static string StartupPath = Application.StartupPath;
         public const string ResourcesPath = "Resources", CachePath = "Cache",
             Name = "HedgeEdit";
@@ -16,7 +17,9 @@ namespace HedgeEdit
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainFrm());
+
+            MainForm = new MainFrm();
+            Application.Run(MainForm);
         }
     }
 }

@@ -10,17 +10,17 @@ namespace HedgeEdit
         private MainFrm mainForm = null;
 
         // Constructors
-        public SceneView(MainFrm mainFrm)
+        public SceneView()
         {
-            Owner = mainForm = mainFrm;
+            Owner = mainForm = Program.MainForm;
 
             InitializeComponent();
             RefreshView();
 
-            Height = mainFrm.Height - 78;
+            Height = mainForm.Height - 78;
             Location = new Point(
-                mainFrm.Location.X + mainFrm.Width - Width,
-                mainFrm.Location.Y + 78);
+                mainForm.Location.X + mainForm.Width - Width,
+                mainForm.Location.Y + 78);
         }
 
         // Methods

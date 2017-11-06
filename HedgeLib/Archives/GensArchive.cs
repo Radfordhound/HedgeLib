@@ -41,19 +41,34 @@ namespace HedgeLib.Archives
             var fileInfo = new FileInfo(filePath);
             var splitArchivesList = new List<string>();
 
-            string ext = (fileInfo.Extension == ListExtension) ? ".ar" : "";
-            string shortName = fileInfo.Name.Substring(0,
-                fileInfo.Name.Length - fileInfo.Extension.Length);
-
-            for (int i = 0; i <= 99; ++i)
+            // PFD
+            if (fileInfo.Extension == PFDExtension)
             {
-                string fileName = Path.Combine(fileInfo.DirectoryName,
-                $"{shortName}{ext}.{i.ToString("00")}");
+                splitArchivesList.Add(filePath);
+            }
 
-                if (!File.Exists(fileName))
-                    break;
+            // ARL, AR.00, AR, and everything else
+            else
+            {
+                string ext = (fileInfo.Extension == ListExtension) ? ".ar" :
+                    (fileInfo.Extension == SplitExtension) ? "" : fileInfo.Extension;
 
-                splitArchivesList.Add(fileName);
+                // fileInfo.Extension only gets the last extension in the fileName.
+                // Therefore if the fileName is something like "ghz200.ar.00", this
+                // will only remove the ".00" from the end.
+                string shortName = fileInfo.Name.Substring(0,
+                    fileInfo.Name.Length - fileInfo.Extension.Length);
+
+                for (int i = 0; i <= 99; ++i)
+                {
+                    string fileName = Path.Combine(fileInfo.DirectoryName,
+                        $"{shortName}{ext}.{i.ToString("00")}");
+
+                    if (!File.Exists(fileName))
+                        break;
+
+                    splitArchivesList.Add(fileName);
+                }
             }
 
             return splitArchivesList;

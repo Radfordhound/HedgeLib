@@ -103,13 +103,36 @@ namespace HedgeEdit
                                         Directory = subElem.Value,
                                         Filter = filterAttr.Value
                                     };
+
+                                    // Get arguments
+                                    for (int i = 0; i < 10; ++i)
+                                    {
+                                        var argAttr = subElem.Attribute($"arg{i}");
+                                        if (argAttr == null) break;
+                                        dirEntry.Arguments.Add(argAttr.Value);
+                                    }
+
                                     game.LoadInfo.Directories.Add(typeAttr.Value, dirEntry);
                                     break;
                                 }
 
                             case "file":
                                 if (game.LoadInfo.Files.ContainsKey(typeAttr.Value)) continue;
-                                game.LoadInfo.Files.Add(typeAttr.Value, subElem.Value);
+
+                                var fileEntry = new LoadInfoFile()
+                                {
+                                    FilePath = subElem.Value,
+                                };
+
+                                // Get arguments
+                                for (int i = 0; i < 10; ++i)
+                                {
+                                    var argAttr = subElem.Attribute($"arg{i}");
+                                    if (argAttr == null) break;
+                                    fileEntry.Arguments.Add(argAttr.Value);
+                                }
+
+                                game.LoadInfo.Files.Add(typeAttr.Value, fileEntry);
                                 break;
                         }
                     }
@@ -150,12 +173,21 @@ namespace HedgeEdit
         // Variables/Constants
         public Dictionary<string, LoadInfoDirectory> Directories =
             new Dictionary<string, LoadInfoDirectory>();
-        public Dictionary<string, string> Files = new Dictionary<string, string>();
+
+        public Dictionary<string, LoadInfoFile> Files =
+            new Dictionary<string, LoadInfoFile>();
     }
 
     public class LoadInfoDirectory
     {
         // Variables/Constants
+        public List<string> Arguments = new List<string>();
         public string Directory, Filter;
+    }
+
+    public class LoadInfoFile
+    {
+        public List<string> Arguments = new List<string>();
+        public string FilePath;
     }
 }

@@ -18,7 +18,7 @@ namespace HedgeEdit
         public static Model DefaultCube;
 
         public static Vector3 CameraPos = Vector3.Zero, CameraRot = new Vector3(-90, 0, 0);
-        public static float FOV = 40.0f, NearDistance = 0.1f, FarDistance = 1000f;
+        public static float FOV = 40.0f, NearDistance = 0.1f, FarDistance = 1000000f;
         public static bool IsMovingCamera = false;
 
         private static GLControl vp = null;
@@ -27,7 +27,7 @@ namespace HedgeEdit
             camForward = new Vector3(0, 0, -1);
 
         private static float camSpeed = normalSpeed;
-        private const float normalSpeed = 1, fastSpeed = 4;
+        private const float normalSpeed = 1, fastSpeed = 8, slowSpeed = 0.25f;
 
         // Methods
         public static void Init(GLControl viewport)
@@ -71,9 +71,19 @@ namespace HedgeEdit
                 {
                     mesh.Triangles[i] = uint.Parse(indices[i]) - 1;
                 }
+
+                // UV Coordinates
+                var coords = reader.ReadLine().Split(',');
+                mesh.UVs = new float[coords.Length];
+
+                for (int i = 0; i < coords.Length; ++i)
+                {
+                    mesh.UVs[i] = float.Parse(coords[i]);
+                }
             }
 
             DefaultCube = new Model(mesh);
+
             watch.Stop();
             Console.WriteLine("Debug model init time: {0}", watch.ElapsedMilliseconds);
         }
@@ -93,7 +103,7 @@ namespace HedgeEdit
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             // Start using our "Default" program and bind our VAO
-            int defaultID = Shaders.ShaderPrograms["ColorTest"]; // TODO: Make this more efficient
+            int defaultID = Shaders.ShaderPrograms["ColorTest2"]; // TODO: Make this more efficient
             GL.UseProgram(defaultID);
 
             // Update camera transform
@@ -104,7 +114,7 @@ namespace HedgeEdit
                 float screenX = (float)vpMousePos.X / vp.Size.Width;
                 float screenY = (float)vpMousePos.Y / vp.Size.Height;
 
-                // Rotation
+                // Set Camera Rotation
                 var mouseDifference = new Point(
                     Cursor.Position.X - prevMousePos.X,
                     Cursor.Position.Y - prevMousePos.Y);
@@ -112,11 +122,24 @@ namespace HedgeEdit
                 CameraRot.X += mouseDifference.X * 0.1f;
                 CameraRot.Y -= mouseDifference.Y * 0.1f;
 
-                // Position
+                // Set Camera Movement Speed
                 var keyState = Keyboard.GetState();
-                camSpeed = (keyState.IsKeyDown(Key.ShiftLeft) ||
-                    keyState.IsKeyDown(Key.ShiftRight)) ? fastSpeed : normalSpeed;
+                if (keyState.IsKeyDown(Key.ShiftLeft) ||
+                    keyState.IsKeyDown(Key.ShiftRight))
+                {
+                    camSpeed = fastSpeed;
+                }
+                else if (keyState.IsKeyDown(Key.AltLeft) ||
+                    keyState.IsKeyDown(Key.AltRight))
+                {
+                    camSpeed = slowSpeed;
+                }
+                else
+                {
+                    camSpeed = normalSpeed;
+                }
 
+                // Set Camera Position
                 if (keyState.IsKeyDown(Key.W))
                 {
                     CameraPos += camSpeed * camForward;

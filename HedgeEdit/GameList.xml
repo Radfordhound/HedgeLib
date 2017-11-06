@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <GameList version="1.0">
+  <!-- Sonic Generations -->
 	<Game shortName="Generations" name="Sonic Generations" dataType="Gens">
 		<UnpackInfo>
 			<!-- #Arc (E.G. #ghz200) -->
@@ -8,7 +9,8 @@
 			<Archive path="{0}.ar.00" cachePath="{0}" /> 
 			<!-- Packed Arc (E.G. Packed/ghz200) -->
 			<Archive path="Packed/{0}/{0}.ar.00" cachePath="Packed/{0}" />
-			<!-- TODO: Add Stage.pfd -->
+      <!-- Stage PFD (E.G. Packed/Stage) -->
+      <Archive path="Packed/{0}/Stage.pfd" cachePath="Packed/Stage" />
 			<!-- TODO: Add Stage-Add.pfd -->
 		</UnpackInfo>
 		
@@ -16,10 +18,12 @@
 			<File type="gensStageXML">#{0}/Stage.stg.xml</File>
 			<File type="lightList">Packed/{0}/light-list.light-list</File>
 			<Directory type="setData" filter="*.set.xml">#{0}</Directory>
+      <File type="terrainlist" arg0="Stage">Packed/{0}/terrain.terrain</File>
 			<!-- TODO -->
 		</LoadInfo>
 	</Game>
-	
+
+  <!-- Sonic Unleashed -->
 	<Game shortName="Unleashed" name="Sonic Unleashed" dataType="Gens">
 		<UnpackInfo>
 			<!-- #Arc (E.G. #ActD_MykonosAct2) -->
@@ -32,12 +36,14 @@
 		
 		<LoadInfo>
 			<!-- TODO: SU Stage XML -->
-			<Directory type="setData" filter="*.set.xml">#{0}</Directory>
-			<File type="lightList">Packed/{0}/light-list.light-list</File>
+      <File type="lightList">#{0}/light-list.light-list</File>
+      <Directory type="setData" filter="*.set.xml">#{0}</Directory>
+      <File type="terrainlist" arg0="Packed/Stage">#{0}/terrain.terrain</File>
 			<!-- TODO -->
 		</LoadInfo>
 	</Game>
-	
+
+  <!-- Sonic Lost World -->
 	<Game shortName="Lost World" name="Sonic Lost World" dataType="LW" unitMultiplier="0.1">
 		<UnpackInfo>
 			<!-- Misc PAC (E.G. w1a01_misc) -->
@@ -71,7 +77,8 @@
 			<!-- <File type="pathData">{0}/misc/{0}_path.path2.bin</File> -->
 		</LoadInfo>
 	</Game>
-	
+
+  <!-- Sonic Colors -->
 	<Game shortName="Colors" name="Sonic Colors" dataType="Colors" unitMultiplier="0.1">
 		<UnpackInfo>
 			<!-- Set Data -->
@@ -85,7 +92,8 @@
 			<File type="pathData">{0}/path/{0}_path.path.bin</File>
 		</LoadInfo>
 	</Game>
-	
+
+  <!-- Sonic Heroes -->
 	<Game shortName="Heroes" name="Sonic Heroes" dataType="Heroes" unitMultiplier="0.1">
 		<UnpackInfo>
 			<!-- Set Data -->

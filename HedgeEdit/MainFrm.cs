@@ -1,7 +1,9 @@
 ﻿using HedgeLib;
+using HedgeLib.Models;
 using HedgeLib.Sets;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace HedgeEdit
@@ -40,6 +42,7 @@ namespace HedgeEdit
 
         public List<object> SelectedObjects = new List<object>();
         private static SceneView sceneView = null;
+        private Thread loadThread;
         private Control activeTxtBx = null;
 
         // Constructors
@@ -48,6 +51,7 @@ namespace HedgeEdit
             InitializeComponent();
             UpdateTitle();
             Application.Idle += Application_Idle;
+            statusBarLbl.Text = "";
         }
 
         // Methods
@@ -118,6 +122,23 @@ namespace HedgeEdit
             Text = string.Format("{0} - {1}",
                 (string.IsNullOrEmpty(stgID)) ? "Untitled" : stgID,
                 Program.Name);
+        }
+
+        public void UpdateStatus(string status)
+        {
+            statusBarLbl.Text = status;
+        }
+
+        public void UpdateProgress(int progress, bool visible)
+        {
+            statusBarProgressBar.Value = progress;
+            statusBarProgressBar.Visible = visible;
+        }
+
+        public void RefreshSceneView()
+        {
+            if (sceneView != null)
+                sceneView.RefreshView();
         }
 
         // GUI Events
@@ -256,7 +277,13 @@ namespace HedgeEdit
         #region File Menu Events
         private void NewMenuItem_Click(object sender, EventArgs e)
         {
-            // TODO
+            UpdateTitle();
+            statusBarLbl.Text = "";
+
+            Viewport.Clear();
+            RefreshSceneView();
+
+            // TODO: Ask for GameType
         }
 
         private void OpenMenuItem_Click(object sender, EventArgs e)
@@ -268,12 +295,22 @@ namespace HedgeEdit
                 UpdateTitle(openDialog.StageID);
 
                 // Load stage
-                Stage.Load(openDialog.DataDir,
-                    openDialog.StageID, GameList.Games[openDialog.GameID]);
+                // TODO: Stop any previous loading threads before starting this new one
+                loadThread = new Thread(new ThreadStart(() =>
+                {
+                    // Load the stage
+                    Stage.Load(openDialog.DataDir,
+                        openDialog.StageID, GameList.Games[openDialog.GameID]);
 
-                // Update Scene View
-                if (sceneView != null)
-                    sceneView.RefreshView();
+                    // Update Scene View
+                    Invoke(new Action(() =>
+                    {
+                        statusBarLbl.Text = "Done Loading";
+                        statusBarProgressBar.Visible = false;
+                    }));
+                }));
+
+                loadThread.Start();
             }
         }
 
@@ -338,7 +375,7 @@ namespace HedgeEdit
         {
             if (sceneView == null || sceneView.IsDisposed)
             {
-                sceneView = new SceneView(this);
+                sceneView = new SceneView();
                 sceneView.Show();
             }
             else
