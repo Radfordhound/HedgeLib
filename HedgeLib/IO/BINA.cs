@@ -37,7 +37,7 @@ namespace HedgeLib.IO
         }
 
         // Methods
-        public BINAHeader ReadHeader()
+        public BINAHeader ReadHeader(bool ignoreSignature = false)
         {
             var header = new BINAHeader();
             if (version == BINA.BINATypes.Version1)
@@ -67,7 +67,7 @@ namespace HedgeLib.IO
 
                 // BINA Signature
                 string sig = ReadSignature(4);
-                if (sig != BINAHeader.Signature)
+                if (!ignoreSignature && sig != BINAHeader.Signature)
                     throw new InvalidSignatureException(BINAHeader.Signature, sig);
 
                 // TODO: Find out what this is - maybe additional data length?
@@ -79,41 +79,67 @@ namespace HedgeLib.IO
             {
                 // BINA Header
                 string sig = ReadSignature(4);
-                if (sig != BINAHeader.Signature)
+                if (!ignoreSignature && sig != BINAHeader.Signature)
                     throw new InvalidSignatureException(BINAHeader.Signature, sig);
 
                 // Version String
-                string versionString = ReadSignature(3);
-                if (versionString != BINAHeader.Ver2String)
+                string verString = ReadSignature(3);
+                if (!ushort.TryParse(verString, out header.Version))
                 {
                     Console.WriteLine(
-                        "WARNING: Unknown BINA header version, expected {0} got {1}!",
-                        BINAHeader.Ver2String, versionString);
+                        "WARNING: BINA header version was invalid {0}",
+                        verString);
                 }
 
                 IsBigEndian = (ReadChar() == 'B');
-                header.FileSize = ReadUInt32();
 
-                // TODO: Figure out what these values are.
-                ushort unknown1 = ReadUInt16();
-                ushort unknown2 = ReadUInt16();
+                // Version 3.00
+                if (header.Version >= 300)
+                {
+                    uint unknown1 = ReadUInt32();
+                    header.FileSize = ReadUInt32();
 
-                // DATA Header
-                string dataSig = ReadSignature();
-                if (dataSig != BINAHeader.DataSignature)
-                    throw new InvalidSignatureException(BINAHeader.DataSignature, dataSig);
+                    uint unknown2 = ReadUInt32();
+                    uint unknown3 = ReadUInt32();
+                    uint unknown4 = ReadUInt32();
+                    uint unknown5 = ReadUInt32();
 
-                header.DataLength = ReadUInt32();
-                header.StringTableOffset = ReadUInt32();
-                header.StringTableLength = ReadUInt32();
-                header.FinalTableLength = ReadUInt32();
+                    uint unknown6 = ReadUInt32();
+                    header.FinalTableLength = ReadUInt32();
+                    ushort unknown7 = ReadUInt16(); // Same as unknown1 from type2?
+                    ushort unknown8 = ReadUInt16(); // Always 0x108?
 
-                // Additional data
-                ushort additionalDataLength = ReadUInt16();
-                ushort unknown3 = ReadUInt16();
+                    // TODO: Does the header go on longer or has it actually already stopped here? Lol
 
-                JumpAhead(additionalDataLength);
-                Offset = (uint)BaseStream.Position;
+                    Offset = 0;
+                }
+
+                // Version 2.00
+                else
+                {
+                    header.FileSize = ReadUInt32();
+
+                    // TODO: Figure out what these values are.
+                    ushort unknown1 = ReadUInt16();
+                    ushort unknown2 = ReadUInt16();
+
+                    // DATA Header
+                    string dataSig = ReadSignature();
+                    if (dataSig != BINAHeader.DataSignature)
+                        throw new InvalidSignatureException(BINAHeader.DataSignature, dataSig);
+
+                    header.DataLength = ReadUInt32();
+                    header.StringTableOffset = ReadUInt32();
+                    header.StringTableLength = ReadUInt32();
+                    header.FinalTableLength = ReadUInt32();
+
+                    // Additional data
+                    ushort additionalDataLength = ReadUInt16();
+                    ushort unknown3 = ReadUInt16();
+
+                    JumpAhead(additionalDataLength);
+                    Offset = (uint)BaseStream.Position;
+                }
             }
 
             return header;
@@ -272,7 +298,7 @@ namespace HedgeLib.IO
             {
                 // BINA Header
                 WriteSignature(BINAHeader.Signature);
-                WriteSignature(BINAHeader.Ver2String);
+                WriteSignature(header.Version.ToString());
                 Write((IsBigEndian) ? 'B' : 'L');
                 Write(header.FileSize);
 
