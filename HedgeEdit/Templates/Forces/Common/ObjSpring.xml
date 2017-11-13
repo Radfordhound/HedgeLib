@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <FirstSpeed type="float" default="550" description="Initial velocity" />
+  <OutOfControl type="float" default="5" description="Inoperable time" />
+  <KeepVelocityDistance type="float" default="300" description="This distance is a constant speed" />
+  <IsPathChange type="bool" default="false" description="Path to switching?" />
+  <IsChangeCameraWhenPathChange type="bool" default="false" description="To switch the camera at the time of path switching?" />
+  <IsVisible type="bool" default="false" description="To be in 3D?" />
+  <Targeting type="bool" default="false" description="Designated target coordinates?" />
+  <TargetPos type="position" description="Target point" />
+  <IsMoveCylinderFloor type="bool" default="false" description="Move the hierarchy of multi-cylinder" />
+  <MoveCylinderTime type="float" default="0" description="Time during cylinder hierarchy move" />
+  <IsEventOn type="bool" default="false" description="Or event-triggered" />
+  <IsUpdateYaw type="bool" default="false" description="Or face the specified direction" />
+  <Padding1 type="byte" default="0" description="PLEASE REMOVE THIS RAD GEEZ" />
+  
+  <Unknown1 type="ulong" default="0" description="Always 0?" />
+  <Unknown2 type="ulong" default="0" description="Always 0?" />
+  <Unknown3 type="ulong" default="0" description="Always 0?" />
+  <Unknown4 type="ulong" default="0" description="Always 0?" />
+  <Unknown5 type="ulong" default="0" description="Always 0?" />
+  <Unknown6 type="ulong" default="0" description="Always 0?" />
+  <Unknown7 type="ulong" default="0" description="Always 0?" />
+  <Unknown8 type="ulong" default="0" description="Always 0?" />
+  <Unknown9 type="ulong" default="0" description="Always 0?" />
+  <Unknown10 type="uint" default="0" description="Always 0?" />
+  
+  <Extra type="RawByteLength" length="112" />
+</Template>

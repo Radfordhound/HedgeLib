@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <OutOfControl type="float" default="0.5" description="How long the game locks your control for after coming in contact with this object." />
+  <Speed type="float" default="500" description="How much speed the DashPanel will send you off with." />
+  <IsVisibleModel type="bool" default="true" description="Setting it to true the model will be visible in-game" />
+  <IsSideView type="bool" default="false" description="For side-view" />
+  <IsDirectionPath type="bool" default="false" description="Correct to move in the path direction" />
+  
+  <Unknown1 type="ulong" default="0" description="Always 0?" />
+  <Unknown2 type="ulong" default="0" description="Always 0?" />
+  <Unknown3 type="ulong" default="0" description="Always 0?" />
+  <Unknown4 type="ulong" default="0" description="Always 0?" />
+  <Unknown5 type="ulong" default="0" description="Always 0?" />
+  <Unknown6 type="ulong" default="0" description="Always 0?" />
+  <Unknown7 type="ulong" default="0" description="Always 0?" />
+  <Unknown8 type="ulong" default="0" description="Always 0?" />
+  <Unknown9 type="ulong" default="0" description="Always 0?" />
+  <Unknown10 type="ulong" default="0" description="Always 0?" />
+  <Unknown11 type="ulong" default="0" description="Always 0?" />
+  <Unknown12 type="ulong" default="0" description="Always 0?" />
+  <Unknown13 type="uint" default="0" description="Always 0?" />
+  
+  <Extra type="RawByteLength" length="112" />
+</Template>

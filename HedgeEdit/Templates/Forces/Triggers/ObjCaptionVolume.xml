@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <CaptionID type="ulong" default="0" description="The ID of the caption this trigger should play" />
+  <Size type="vector3" default="0,0,0" description="The size of the trigger" />
+  <Extra type="RawByteLength" length="20" />
+</Template>

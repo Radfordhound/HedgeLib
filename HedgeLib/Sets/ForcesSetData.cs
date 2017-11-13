@@ -171,6 +171,8 @@ namespace HedgeLib.Sets
                 Console.WriteLine(
                     "WARNING: Skipped {0} because there is no template for type {1}!",
                     objName, objType);
+                Console.WriteLine("Params at: {0:X}",
+                    objParamsOffset + reader.Offset);
                 return null;
             }
 
