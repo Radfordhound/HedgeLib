@@ -448,21 +448,22 @@ namespace HedgeLib.IO
         }
 
         // Methods
-        public virtual void AddOffset(string name)
+        public virtual void AddOffset(string name, uint offsetLength = 4)
         {
             if (offsets.ContainsKey(name))
                 offsets[name] = (uint)BaseStream.Position;
             else
                 offsets.Add(name, (uint)BaseStream.Position);
 
-            WriteNulls(4);
+            WriteNulls(offsetLength);
         }
 
-        public void AddOffsetTable(string namePrefix, uint offsetCount)
+        public void AddOffsetTable(string namePrefix,
+            uint offsetCount, uint offsetLength = 4)
         {
             for (uint i = 0; i < offsetCount; ++i)
             {
-                AddOffset($"{namePrefix}_{i}");
+                AddOffset($"{namePrefix}_{i}", offsetLength);
             }
         }
 
@@ -471,6 +472,20 @@ namespace HedgeLib.IO
         {
             long curPos = BaseStream.Position;
             WriteOffsetValueAtPos(offsets[name], (uint)curPos, absolute);
+
+            if (removeOffset)
+            {
+                offsets.Remove(name);
+            }
+
+            BaseStream.Position = curPos;
+        }
+
+        public virtual void FillInOffsetLong(string name,
+            bool absolute = true, bool removeOffset = true)
+        {
+            long curPos = BaseStream.Position;
+            WriteOffsetValueAtPos(offsets[name], (ulong)curPos, absolute);
 
             if (removeOffset)
             {
@@ -494,8 +509,29 @@ namespace HedgeLib.IO
             BaseStream.Position = curPos;
         }
 
+        public virtual void FillInOffset(string name, ulong value,
+            bool absolute = true, bool removeOffset = true)
+        {
+            long curPos = BaseStream.Position;
+            WriteOffsetValueAtPos(offsets[name], value, absolute);
+
+            if (removeOffset)
+            {
+                offsets.Remove(name);
+            }
+
+            BaseStream.Position = curPos;
+        }
+
         protected virtual void WriteOffsetValueAtPos(
             uint pos, uint value, bool absolute = true)
+        {
+            BaseStream.Position = pos;
+            Write((absolute) ? value : value - Offset);
+        }
+
+        protected virtual void WriteOffsetValueAtPos(
+            long pos, ulong value, bool absolute = true)
         {
             BaseStream.Position = pos;
             Write((absolute) ? value : value - Offset);

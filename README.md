@@ -14,11 +14,14 @@ Right now it supports the following:
 ### Hedgehog Engine
 - [Reading/Writing Lights.](HedgeLib/Lights/Light.cs)
 
-### Sonic Heroes/Shadow the Hedgehog
-- [Reading/Writing Uncompressed Archives.](HedgeLib/Archives/ONEArchive.cs)
+### Sonic Forces
+- [Reading/Writing Set Data.](HedgeLib/Sets/ForcesSetData.cs)
 
-### Sonic '06
-- [Reading/Writing Set Data.](HedgeLib/Sets/S06SetData.cs)
+### Sonic Colors/Sonic Lost World
+- [Reading/Writing BINA headers/footers.](HedgeLib/IO/BINA.cs)
+- [Reading/Writing GISM files.](HedgeLib/Misc/LWGism.cs)
+- [Reading/Writing Set Data.](HedgeLib/Sets/SOBJ.cs)
+- [Reading/Writing SNDL (SouND List) files.](HedgeLib/Sound/ColorsSNDL.cs)
 
 ### Sonic Unleashed/Sonic Generations
 - [Reading/Writing Uncompressed Archives.](HedgeLib/Archives/GensArchive.cs)
@@ -26,11 +29,11 @@ Right now it supports the following:
 - [Reading/Writing Terrain Groups.](HedgeLib/Terrain/GensTerrainGroup.cs)
 - [Reading/Writing Light Lists.](HedgeLib/Lights/GensLightList.cs)
 
-### Sonic Colors/Sonic Lost World
-- [Reading/Writing BINA headers/footers.](HedgeLib/IO/BINA.cs)
-- [Reading/Writing GISM files.](HedgeLib/Misc/LWGism.cs)
-- [Reading/Writing Set Data.](HedgeLib/Sets/SOBJ.cs)
-- [Reading/Writing SNDL (SouND List) files.](HedgeLib/Sound/ColorsSNDL.cs)
+### Sonic '06
+- [Reading/Writing Set Data.](HedgeLib/Sets/S06SetData.cs)
+
+### Sonic Heroes/Shadow the Hedgehog
+- [Reading/Writing Uncompressed Archives.](HedgeLib/Archives/ONEArchive.cs)
 
 ## HedgeEdit
 A level editor built with OpenTK/Winforms designed to carry much of the same

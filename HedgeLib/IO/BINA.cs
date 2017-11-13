@@ -96,21 +96,10 @@ namespace HedgeLib.IO
                 // Version 3.00
                 if (header.Version >= 300)
                 {
-                    uint unknown1 = ReadUInt32();
+                    header.ID = ReadUInt32();
                     header.FileSize = ReadUInt32();
 
-                    uint unknown2 = ReadUInt32();
-                    uint unknown3 = ReadUInt32();
-                    uint unknown4 = ReadUInt32();
-                    uint unknown5 = ReadUInt32();
-
-                    uint unknown6 = ReadUInt32();
-                    header.FinalTableLength = ReadUInt32();
-                    ushort unknown7 = ReadUInt16(); // Same as unknown1 from type2?
-                    ushort unknown8 = ReadUInt16(); // Always 0x108?
-
-                    // TODO: Does the header go on longer or has it actually already stopped here? Lol
-
+                    // The rest is PAC specific
                     Offset = 0;
                 }
 
@@ -166,7 +155,7 @@ namespace HedgeLib.IO
                 else if (type == (byte)BINA.OffsetTypes.FourteenBit)
                 {
                     byte b2 = ReadByte();
-                    ushort d2 = (ushort)(((d << 8) & b2) << 2);
+                    ushort d2 = (ushort)(((d << 8) | b2) << 2);
 
                     offsets.Add(d2 + lastOffsetPos);
                 }
@@ -195,12 +184,15 @@ namespace HedgeLib.IO
 
         // Constructors
         public BINAWriter(Stream output, BINA.BINATypes type = BINA.BINATypes.Version1,
-            bool isBigEndian = true) : base(output, Encoding.ASCII, isBigEndian)
+            bool isBigEndian = true, bool writeHeader = true) :
+            base(output, Encoding.ASCII, isBigEndian)
         {
             version = type;
             Offset = (version == BINA.BINATypes.Version2) ?
                 BINAHeader.Ver2Length : BINAHeader.Ver1Length;
-            WriteNulls(Offset);
+
+            if (writeHeader)
+                WriteNulls(Offset);
         }
 
         // Methods
@@ -276,7 +268,7 @@ namespace HedgeLib.IO
             header.FileSize = (uint)BaseStream.Position;
         }
 
-        public void FillInHeader(BINAHeader header)
+        public void FillInHeader(BINAHeader header, string sig = BINAHeader.Signature)
         {
             BaseStream.Position = 0;
             if (version == BINA.BINATypes.Version1)
@@ -291,33 +283,45 @@ namespace HedgeLib.IO
 
                 WriteSignature(BINAHeader.Ver1String);
                 Write((IsBigEndian) ? 'B' : 'L');
-                WriteSignature(BINAHeader.Signature);
+                WriteSignature(sig);
                 WriteNulls(4); // TODO: Find out what this is.
             }
             else
             {
                 // BINA Header
-                WriteSignature(BINAHeader.Signature);
+                WriteSignature(sig);
                 WriteSignature(header.Version.ToString());
                 Write((IsBigEndian) ? 'B' : 'L');
-                Write(header.FileSize);
 
-                // TODO: Figure out what these values are.
-                Write((ushort)1);
-                Write((ushort)0); // Possibly IsFooterMagicPresent?
+                // Version 3.00
+                if (header.Version >= 300)
+                {
+                    Write(header.ID);
+                    Write(header.FileSize);
+                }
 
-                // DATA Header
-                WriteSignature(BINAHeader.DataSignature);
-                Write(header.DataLength);
-                Write(header.StringTableOffset);
-                Write(header.StringTableLength);
+                // Version 2.00
+                else
+                {
+                    Write(header.FileSize);
 
-                Write(header.FinalTableLength);
-                Write((ushort)(Offset - BaseStream.Position + 4));
+                    // TODO: Figure out what these values are.
+                    Write((ushort)1);
+                    Write((ushort)0); // Possibly IsFooterMagicPresent?
+
+                    // DATA Header
+                    WriteSignature(BINAHeader.DataSignature);
+                    Write(header.DataLength);
+                    Write(header.StringTableOffset);
+                    Write(header.StringTableLength);
+
+                    Write(header.FinalTableLength);
+                    Write((ushort)(Offset - (BaseStream.Position + 4)));
+                }
             }
         }
 
-        public void AddString(string offsetName, string str)
+        public void AddString(string offsetName, string str, uint offsetLength = 4)
         {
             if (string.IsNullOrEmpty(offsetName)) return;
 
@@ -336,7 +340,7 @@ namespace HedgeLib.IO
             }
 
             // Add an offset to the string we're going to write into the string table later
-            AddOffset(offsetName);
+            AddOffset(offsetName, offsetLength);
             tableEntry.OffsetNames.Add(offsetName);
 
             if (newEntry)

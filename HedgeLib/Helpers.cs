@@ -45,7 +45,7 @@ namespace HedgeLib
             {
                 if (value.GetType() == typeof(string))
                 {
-                    var singles = ((string)value).Split();
+                    var singles = ((string)value).Split(',');
                     return new Vector3(Convert.ToSingle(singles[0]),
                         Convert.ToSingle(singles[1]), Convert.ToSingle(singles[2]));
                 }
@@ -73,7 +73,7 @@ namespace HedgeLib
 			// Sub-Methods
 			Vector4 StringToVector4()
 			{
-				var singles = ((string)value).Split();
+				var singles = ((string)value).Split(',');
 				return new Vector4(Convert.ToSingle(singles[0]), Convert.ToSingle(singles[1]),
 					Convert.ToSingle(singles[2]), Convert.ToSingle(singles[3]));
 			}
