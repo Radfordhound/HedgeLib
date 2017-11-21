@@ -26,6 +26,9 @@ namespace HedgeEdit
 
                 case "lw":
                     return DataTypes.LW;
+
+                case "forces":
+                    return DataTypes.Forces;
             }
 
             throw new NotSupportedException(
@@ -41,6 +44,9 @@ namespace HedgeEdit
 
                 case DataTypes.Gens:
                     return new GensArchive();
+
+                case DataTypes.Forces:
+                    return new ForcesArchive();
             }
 
             throw new NotSupportedException(
@@ -65,6 +71,9 @@ namespace HedgeEdit
 
                 case DataTypes.LW:
                     return new LWSetData();
+
+                case DataTypes.Forces:
+                    return new ForcesSetData();
             }
 
             throw new NotSupportedException(
@@ -99,7 +108,7 @@ namespace HedgeEdit
         // Other
         public enum DataTypes
         {
-            Heroes, S06, Colors, Gens, LW
+            Heroes, S06, Colors, Gens, LW, Forces
         }
     }
 }

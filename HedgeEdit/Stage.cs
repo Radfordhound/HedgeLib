@@ -107,46 +107,38 @@ namespace HedgeEdit
                 {
                     case "archive":
                         {
-                            // Get file hashes
-                            var arc = Types.GetArchiveOfType(game.DataType);
-                            if (arc == null)
+                            if (!string.IsNullOrEmpty(entry.SearchPattern))
                             {
-                                ++arcIndex;
-                                continue;
-                            }
-
-                            bool hashesMatch = true;
-
-                            var arcFileList = arc.GetSplitArchivesList(fullPath);
-                            var arcHashesSub = new List<string>();
-                            var editorCacheHashes = (editorCache == null ||
-                                arcIndex >= editorCache.ArcHashes.Count) ?
-                                    null : editorCache.ArcHashes[arcIndex];
-
-                            for (int i = 0; i < arcFileList.Count; ++i)
-                            {
-                                string file = arcFileList[i];
-                                string arcHash = Helpers.GetFileHash(file);
-                                arcHashesSub.Add(arcHash);
-
-                                if (editorCacheHashes == null || i >= editorCacheHashes.Count ||
-                                    editorCacheHashes[i] != arcHash)
+                                string searchPattern = string.Format(entry.SearchPattern, stgID);
+                                foreach (var file in Directory.GetFiles(fullPath, searchPattern))
                                 {
-                                    hashesMatch = false;
+                                    var fileInfo = new FileInfo(file);
+                                    string shortName = fileInfo.Name.Substring(0,
+                                        fileInfo.Name.Length - fileInfo.Extension.Length);
+
+                                    string dest = string.Format(
+                                        fullCachePath, stgID, shortName);
+
+                                    var hashes = UnpackArchive(game, file,
+                                        dest, editorCache, arcIndex);
+
+                                    if (hashes != null)
+                                        arcHashes.Add(hashes);
+
+                                    ++arcIndex;
                                 }
                             }
-                            arcHashes.Add(arcHashesSub);
-
-                            // Unpack Archive if hash changed (or was not present)
-                            if (!hashesMatch)
+                            else
                             {
-                                if (Directory.Exists(fullCachePath))
-                                    Directory.Delete(fullCachePath, true);
+                                var hashes = UnpackArchive(game, fullPath,
+                                    fullCachePath, editorCache, arcIndex);
 
-                                UnpackArchive(arc, fullPath, fullCachePath);
+                                if (hashes != null)
+                                    arcHashes.Add(hashes);
+
+                                ++arcIndex;
                             }
-
-                            ++arcIndex;
+                            
                             break;
                         }
 
@@ -178,21 +170,57 @@ namespace HedgeEdit
                 Directory.CreateDirectory(Path.GetDirectoryName(destPath));
                 File.Copy(path, destPath, true);
             }
+        }
 
-            void UnpackArchive(Archive arc, string arcPath, string dir)
+        private static List<string> UnpackArchive(GameEntry game, string fullPath,
+            string fullCachePath, EditorCache editorCache, int arcIndex)
+        {
+            // Get file hashes
+            var arc = Types.GetArchiveOfType(game.DataType);
+            if (arc == null)
+                return null;
+
+            bool hashesMatch = true;
+
+            var arcFileList = arc.GetSplitArchivesList(fullPath);
+            var arcHashesSub = new List<string>();
+            var editorCacheHashes = (editorCache == null ||
+                arcIndex >= editorCache.ArcHashes.Count) ?
+                    null : editorCache.ArcHashes[arcIndex];
+
+            for (int i = 0; i < arcFileList.Count; ++i)
             {
-                if (arc == null) return;
-                if (!File.Exists(arcPath))
+                string file = arcFileList[i];
+                string arcHash = Helpers.GetFileHash(file);
+                arcHashesSub.Add(arcHash);
+
+                if (editorCacheHashes == null || i >= editorCacheHashes.Count ||
+                    editorCacheHashes[i] != arcHash)
+                {
+                    hashesMatch = false;
+                }
+            }
+
+            // Unpack Archive if hash changed (or was not present)
+            if (!hashesMatch)
+            {
+                if (Directory.Exists(fullCachePath))
+                    Directory.Delete(fullCachePath, true);
+
+                if (arc == null) return null;
+                if (!File.Exists(fullPath))
                 {
                     throw new FileNotFoundException(
-                        "The given archive could not be found!", arcPath);
+                        "The given archive could not be found!", fullPath);
                 }
 
-                Directory.CreateDirectory(dir);
+                Directory.CreateDirectory(fullCachePath);
 
-                arc.Load(arcPath);
-                arc.Extract(dir);
+                arc.Load(fullPath);
+                arc.Extract(fullCachePath);
             }
+
+            return arcHashesSub;
         }
 
         private static void LoadFromCache(string cacheDir,
@@ -411,7 +439,10 @@ namespace HedgeEdit
                                     // TODO: Use scaling
                                     info.Position *= game.UnitMultiplier;
 
-                                    if (Program.MainForm == null) return;
+                                    if (Program.MainForm == null || Program.MainForm.Disposing ||
+                                        Program.MainForm.IsDisposed)
+                                        return;
+
                                     Program.MainForm.Invoke(new Action(() =>
                                     {
                                         Viewport.AddModel(model,

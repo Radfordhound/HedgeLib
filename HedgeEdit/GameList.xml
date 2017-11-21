@@ -78,6 +78,32 @@
 		</LoadInfo>
 	</Game>
 
+  <!-- Sonic Forces -->
+  <Game shortName="Forces" name="Sonic Forces" dataType="Forces" unitMultiplier="0.1">
+    <UnpackInfo>
+      <!-- Miscellaneous (E.G. w5a01/w5a01_misc.pac) -->
+      <Archive path="{0}/{0}_misc.pac" cachePath="{0}/{0}_misc" />
+      <!-- Object (E.G. w5a01/w5a01_obj.pac) -->
+      <Archive path="{0}/{0}_obj.pac" cachePath="{0}/{0}_obj" />
+      <!-- Sky (E.G. w5a01/w5a01_sky.pac) -->
+      <Archive path="{0}/{0}_sky.pac" cachePath="{0}/{0}_sky" />
+      <!-- Terrain Common (E.G. w5a01/w5a01_trr_cmn.pac) -->
+      <Archive path="{0}/{0}_trr_cmn.pac" cachePath="{0}/{0}_trr_cmn"/>
+      
+      <!-- Terrain Blocks (E.G. w5a01/w5a01_trr_s00.pac) -->
+      <Archive searchPattern="{0}_trr_s**.pac" path="{0}" cachePath="{0}/{1}" />
+
+      <!-- Set Data (E.G. gedit/w5a01_gedit.pac) -->
+      <Archive path="gedit/{0}_gedit.pac" cachePath="gedit/{0}_gedit"/>
+    </UnpackInfo>
+
+    <LoadInfo>
+      <Directory type="setData" filter="*.gedit">gedit/{0}_gedit</Directory>
+      <Directory type="light" filter="*.light">{0}/{0}_trr_cmn</Directory>
+      <!-- TODO -->
+    </LoadInfo>
+  </Game>
+
   <!-- Sonic Colors -->
 	<Game shortName="Colors" name="Sonic Colors" dataType="Colors" unitMultiplier="0.1">
 		<UnpackInfo>
