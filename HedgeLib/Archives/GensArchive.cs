@@ -50,8 +50,11 @@ namespace HedgeLib.Archives
             // ARL, AR.00, AR, and everything else
             else
             {
-                string ext = (fileInfo.Extension == ListExtension) ? ".ar" :
-                    (fileInfo.Extension == SplitExtension) ? "" : fileInfo.Extension;
+                string ext = (fileInfo.Extension == ListExtension) ?
+                    ".ar" : fileInfo.Extension;
+
+                if (int.TryParse(ext, out int e))
+                    ext = "";
 
                 // fileInfo.Extension only gets the last extension in the fileName.
                 // Therefore if the fileName is something like "ghz200.ar.00", this

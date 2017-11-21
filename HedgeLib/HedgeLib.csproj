@@ -53,6 +53,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Archives\ForcesArchive.cs" />
     <Compile Include="Models\GensModel.cs" />
     <Compile Include="Sets\ForcesSetData.cs" />
     <Compile Include="Sprites\ManiaSprite.cs" />

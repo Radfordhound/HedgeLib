@@ -229,8 +229,10 @@ namespace HedgeLib.IO
         public void WriteFooter(BINAHeader header)
         {
             // Write offset table
+            bool isBigEndian = IsBigEndian;
             uint footerStartPos = (uint)BaseStream.Position;
             uint lastOffsetPos = Offset;
+            IsBigEndian = true;
 
             foreach (var offset in offsets)
             {
@@ -252,6 +254,7 @@ namespace HedgeLib.IO
             }
 
             FixPadding(4);
+            IsBigEndian = isBigEndian;
 
             // Update header values and write footer magic
             header.FinalTableOffset = footerStartPos - Offset;
