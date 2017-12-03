@@ -78,7 +78,10 @@ namespace HedgeLib.Sets
 
             ushort id = reader.ReadUInt16(); // ?
             ushort unknown1 = reader.ReadUInt16();
-            uint padding2 = reader.ReadUInt32();
+            ushort parentID = reader.ReadUInt16();
+            ushort parentUnknown1 = reader.ReadUInt16();
+            obj.CustomData.Add("ParentID", new SetObjectParam(
+                typeof(ushort), parentID));
 
             obj.ObjectID = id;
 
@@ -145,8 +148,11 @@ namespace HedgeLib.Sets
                 {
                     case "RangeSpawning":
                     {
-                        obj.CustomData.Add(name, new SetObjectParam(
-                            typeof(ulong), BitConverter.ToUInt64(data, 0)));
+                        obj.CustomData.Add("RangeIn", new SetObjectParam(
+                            typeof(float), BitConverter.ToSingle(data, 0)));
+
+                        obj.CustomData.Add("RangeOut", new SetObjectParam(
+                            typeof(float), BitConverter.ToSingle(data, 4)));
                         continue;
                     }
                 }
@@ -168,6 +174,7 @@ namespace HedgeLib.Sets
 
             if (!objectTemplates.ContainsKey(objType))
             {
+                // TODO: Un-comment this before committing!
                 Console.WriteLine(
                     "WARNING: Skipped {0} because there is no template for type {1}!",
                     objName, objType);
@@ -184,17 +191,65 @@ namespace HedgeLib.Sets
             {
                 // TODO: Figure out how arrays and special values work
 
+                // Special Param Types
+                if (param.DataType == typeof(uint[]))
+                {
+                    // TODO: Make sure all of this is right, and make it so
+                    // you can write these as well
+                    reader.FixPadding(4);
+                    long arrOffset = reader.ReadInt64();
+                    ulong arrLength = reader.ReadUInt64();
+                    ulong arrLength2 = reader.ReadUInt64();
+                    long curPos = reader.BaseStream.Position;
+
+                    if (arrLength != arrLength2)
+                    {
+                        Console.WriteLine(
+                            "WARNING: ArrLength ({0}) != ArrLength2 ({1})",
+                            arrLength, arrLength2);
+                    }
+
+                    var arr = new uint[arrLength];
+                    reader.JumpTo(arrOffset, false);
+
+                    for (uint i = 0; i < arrLength; ++i)
+                    {
+                        arr[i] = reader.ReadUInt32();
+                    }
+
+                    obj.Parameters.Add(new SetObjectParam(
+                        typeof(uint[]), arr));
+
+                    reader.JumpTo(curPos);
+                    continue;
+                }
+
+                // Pre-Param Padding
+                if (param.DataType == typeof(float) ||
+                    param.DataType == typeof(uint) || param.DataType == typeof(int))
+                {
+                    reader.FixPadding(4);
+                }
+                else if (param.DataType == typeof(double) ||
+                    param.DataType == typeof(ulong) || param.DataType == typeof(long))
+                {
+                    reader.FixPadding(8);
+                }
+
                 var objParam = new SetObjectParam(param.DataType,
                     reader.ReadByType(param.DataType));
                 obj.Parameters.Add(objParam);
+
+                // Post-Param Padding
+                if (param.DataType == typeof(Vector3))
+                {
+                    reader.FixPadding(16); // TODO: Is this correct?
+                }
             }
 
             // Padding Checks
             if (padding1 != 0)
                 Console.WriteLine($"WARNING: Obj Padding1 != 0 ({padding1})");
-
-            if (padding2 != 0)
-                Console.WriteLine($"WARNING: Obj Padding2 != 0 ({padding2})");
 
             if (padding3 != 0)
                 Console.WriteLine($"WARNING: Obj Padding3 != 0 ({padding3})");
@@ -264,7 +319,9 @@ namespace HedgeLib.Sets
             // Object Entry
             writer.Write((ushort)obj.ObjectID);
             writer.Write((ushort)0);
-            writer.Write(0);
+            writer.Write((obj.CustomData.ContainsKey("ParentID")) ?
+                (ushort)obj.CustomData["ParentID"].Data : (ushort)0);
+            writer.Write((ushort)0);
 
             writer.Write(obj.Transform.Position);
             writer.Write(new Vector3(0, 0, 0)); // TODO: Write actual rotation data
@@ -290,7 +347,8 @@ namespace HedgeLib.Sets
             int i = -1;
             foreach (var customData in obj.CustomData)
             {
-                if (customData.Key == "Name")
+                if (customData.Key == "Name" || customData.Key == "ParentID" ||
+                    customData.Key == "RangeOut")
                     continue;
 
                 writer.FillInOffsetLong(
@@ -298,7 +356,7 @@ namespace HedgeLib.Sets
 
                 writer.Write(0UL);
                 writer.AddString($"extraParamNameOffset{objID}{i}",
-                    customData.Key, 8);
+                    (customData.Key == "RangeIn") ? "RangeSpawning" : customData.Key, 8);
 
                 if (!WriteExtraParamLength(writer, customData))
                 {
@@ -313,13 +371,13 @@ namespace HedgeLib.Sets
             // Extra Parameter Data
             foreach (var customData in obj.CustomData)
             {
-                if (customData.Key == "Name")
+                if (customData.Key == "Name" || customData.Key == "RangeOut")
                     continue;
 
                 writer.FillInOffsetLong(
                     $"extraParamDataOffset{objID}{i}", false, false);
 
-                if (!WriteExtraParamData(writer, customData))
+                if (!WriteExtraParamData(writer, obj, customData))
                     writer.Write(0UL);
             }
         }
@@ -330,18 +388,33 @@ namespace HedgeLib.Sets
             writer.FillInOffsetLong($"objParamsOffset{objID}", false, false);
             foreach (var param in obj.Parameters)
             {
+                if (param.DataType == typeof(float) ||
+                    param.DataType == typeof(uint) || param.DataType == typeof(int))
+                {
+                    writer.FixPadding(4);
+                }
+                else if (param.DataType == typeof(double) ||
+                    param.DataType == typeof(ulong) || param.DataType == typeof(long))
+                {
+                    writer.FixPadding(8);
+                }
+
                 // TODO: Write special types
                 writer.WriteByType(param.DataType, param.Data);
+
+                if (param.DataType == typeof(Vector3))
+                {
+                    writer.FixPadding(16); // TODO: Is this correct?
+                }
             }
         }
-
 
         protected bool WriteExtraParamLength(BINAWriter writer,
             KeyValuePair<string, SetObjectParam> customData)
         {
             switch (customData.Key)
             {
-                case "RangeSpawning":
+                case "RangeIn":
                     writer.Write(8UL);
                     return true;
             }
@@ -349,14 +422,16 @@ namespace HedgeLib.Sets
             return false;
         }
 
-        protected bool WriteExtraParamData(BINAWriter writer,
+        protected bool WriteExtraParamData(
+            BINAWriter writer, SetObject obj,
             KeyValuePair<string, SetObjectParam> customData)
         {
             var param = customData.Value;
             switch (customData.Key)
             {
-                case "RangeSpawning":
-                    writer.Write((ulong)param.Data);
+                case "RangeIn":
+                    writer.Write((float)param.Data);
+                    writer.Write((float)obj.CustomData["RangeOut"].Data);
                     return true;
             }
 
