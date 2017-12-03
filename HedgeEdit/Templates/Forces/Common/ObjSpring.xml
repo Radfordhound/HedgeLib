@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <FirstSpeed type="float" default="550" description="Initial velocity" />
-  <OutOfControl type="float" default="5" description="Inoperable time" />
+  <FirstSpeed type="float" default="500" description="How much speed the Spring will send you off with." />
+  <OutOfControl type="float" default="0.5" description="How long the game locks your control for after coming in contact with this object." />
   <KeepVelocityDistance type="float" default="300" description="This distance is a constant speed" />
   <IsPathChange type="bool" default="false" description="Path to switching?" />
-  <IsChangeCameraWhenPathChange type="bool" default="false" description="To switch the camera at the time of path switching?" />
+  <ChangeCameraWhenPathChange type="bool" default="false" description="To switch the camera at the time of path switching?" />
   <IsVisible type="bool" default="false" description="To be in 3D?" />
   <Targeting type="bool" default="false" description="Designated target coordinates?" />
   <TargetPos type="position" description="Target point" />
@@ -12,18 +12,27 @@
   <MoveCylinderTime type="float" default="0" description="Time during cylinder hierarchy move" />
   <IsEventOn type="bool" default="false" description="Or event-triggered" />
   <IsUpdateYaw type="bool" default="false" description="Or face the specified direction" />
-  <Padding1 type="byte" default="0" description="PLEASE REMOVE THIS RAD GEEZ" />
   
-  <Unknown1 type="ulong" default="0" description="Always 0?" />
-  <Unknown2 type="ulong" default="0" description="Always 0?" />
-  <Unknown3 type="ulong" default="0" description="Always 0?" />
-  <Unknown4 type="ulong" default="0" description="Always 0?" />
-  <Unknown5 type="ulong" default="0" description="Always 0?" />
-  <Unknown6 type="ulong" default="0" description="Always 0?" />
-  <Unknown7 type="ulong" default="0" description="Always 0?" />
-  <Unknown8 type="ulong" default="0" description="Always 0?" />
-  <Unknown9 type="ulong" default="0" description="Always 0?" />
+  <Unknown1 type="uint" default="0" description="Always 0?" />
+  <Unknown2 type="uint" default="0" description="Always 0?" />
+  <Unknown3 type="uint" default="0" description="Always 0?" />
+  <Unknown4 type="uint" default="0" description="Always 0?" />
+  <Unknown5 type="uint" default="0" description="Always 0?" />
+  <Unknown6 type="uint" default="0" description="Always 0?" />
+  <Unknown7 type="uint" default="0" description="Always 0?" />
+  <Unknown8 type="uint" default="0" description="Always 0?" />
+  <Unknown9 type="uint" default="0" description="Always 0?" />
   <Unknown10 type="uint" default="0" description="Always 0?" />
+  <Unknown11 type="uint" default="0" description="Always 0?" />
+  <Unknown12 type="uint" default="0" description="Always 0?" />
+  <Unknown13 type="float" default="0" description="" />
+  <Unknown14 type="float" default="0" description="" />
+  <Unknown15 type="float" default="0" description="" />
+  <Unknown16 type="bool" default="false" description="" />
+  <Unknown17 type="bool" default="false" description="" />
+  <Unknown18 type="bool" default="false" description="" />
+  <Unknown19 type="bool" default="false" description="" />
+  <Unknown20 type="uint" default="0" description="Always 0?" />
   
   <Extra type="RawByteLength" length="112" />
 </Template>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Size type="vector3" description="Size of the RigidBody. I think it goes Height, Width, then Length?" />
+  
+  <DefaultON type="bool" default="false" description="initial state is ON" />
+  <IsEffect type="bool" default="false" description="issuing a reflection effect (※ now is not supported)" />
+  <IsPlayerTerrain type="bool" default="false" description="either a player dedicated collision" />
+  <m_IsSearchInsulateOnly type="bool" default="false" description="and only interfere with the search (lock-on, etc.)" />
+  <PhysicsType type="enum" default="0" description="type of collision" />
+  
+  <Unknown1 type="uint" default="0" description="" />
+  <Unknown2 type="uint" default="0" description="" />
+  
+  <Extra type="RawByteLength" length="32" />
+</Template>
