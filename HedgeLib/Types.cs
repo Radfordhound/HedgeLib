@@ -24,7 +24,7 @@ namespace HedgeLib
 				"unsigned integer", "uint32", "uint", "target"),
             new DataType(typeof(float), 0f, "single", "float"),
 
-            new DataType(typeof(uint[]), new uint[0], "uint32array"),
+            new DataType(typeof(uint[]), new uint[0], "uint32array", "uint32[]", "uint[]"),
 
             // 8-Byte Values
             new DataType(typeof(long), 0L, "signed long", "sint64", "long"),

@@ -142,6 +142,28 @@ namespace HedgeLib.Sets
                 {
                     data = Helpers.XMLReadQuat(paramElem);
                 }
+                else if (dataType == typeof(uint[]))
+                {
+                    var countAttr = paramElem.Attribute("count");
+                    uint arrLength = 0;
+
+                    if (countAttr != null)
+                    {
+                        uint.TryParse(countAttr.Value, out arrLength);
+                    }
+
+                    var values = paramElem.Value.Split(',');
+                    var arr = new uint[arrLength];
+                    for (uint i = 0; i < arrLength; ++i)
+                    {
+                        if (i >= values.Length)
+                            break;
+
+                        uint.TryParse(values[i], out arr[i]);
+                    }
+
+                    data = arr;
+                }
                 else
                 {
                     data = Convert.ChangeType(paramElem.Value, dataType);
@@ -239,6 +261,16 @@ namespace HedgeLib.Sets
                 else if (dataType == typeof(Vector4) || dataType == typeof(Quaternion))
                 {
                     Helpers.XMLWriteVector4(elem, (Vector4)param.Data);
+                }
+                else if (dataType == typeof(uint[]))
+                {
+                    var arr = (param.Data as uint[]);
+                    elem.Add(new XAttribute("count", (arr == null) ? 0 : arr.Length));
+
+                    if (arr == null)
+                        return elem;
+
+                    elem.Value = string.Join(",", arr);
                 }
                 else
                 {
