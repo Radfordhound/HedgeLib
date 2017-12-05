@@ -82,20 +82,24 @@ namespace HedgeLib.Sets
             ushort parentUnknown1 = reader.ReadUInt16();
             obj.CustomData.Add("ParentID", new SetObjectParam(
                 typeof(ushort), parentID));
+            obj.CustomData.Add("ParentUnknown1", new SetObjectParam(
+                typeof(ushort), parentUnknown1));
 
             obj.ObjectID = id;
+            obj.CustomData.Add("Unknown1", new SetObjectParam(
+                typeof(ushort), unknown1));
 
             var pos = reader.ReadVector3();
-            var rot = reader.ReadVector3(); // ?
-            var pos2 = reader.ReadVector3(); // TODO: Find out what this is for
-            var rot2 = reader.ReadVector3(); // TODO: Find out what this is for
+            var rot = reader.ReadVector3();
+            var pos2 = reader.ReadVector3(); // Unused. I think this is the origin of the object?
+            var rot2 = reader.ReadVector3(); // TODO: Find out if the game uses this
 
             obj.Transform.Position = pos;
-            //obj.Transform.Rotation = rot; // TODO: Set rotation
+            obj.Transform.Rotation = new Quaternion(rot, true);
 
             long extraParamsOffset = reader.ReadInt64();
-            ulong unknownCount1 = reader.ReadUInt64(); // TODO: Is this a ulong?
-            ulong unknownCount2 = reader.ReadUInt64(); // TODO: Is this a ulong?
+            ulong unknownCount1 = reader.ReadUInt64();
+            ulong unknownCount2 = reader.ReadUInt64();
             ulong padding3 = reader.ReadUInt64();
 
             long objParamsOffset = reader.ReadInt64();
@@ -174,7 +178,6 @@ namespace HedgeLib.Sets
 
             if (!objectTemplates.ContainsKey(objType))
             {
-                // TODO: Un-comment this before committing!
                 Console.WriteLine(
                     "WARNING: Skipped {0} because there is no template for type {1}!",
                     objName, objType);
@@ -189,13 +192,10 @@ namespace HedgeLib.Sets
             reader.JumpTo(objParamsOffset, false);
             foreach (var param in template.Parameters)
             {
-                // TODO: Figure out how arrays and special values work
-
                 // Special Param Types
                 if (param.DataType == typeof(uint[]))
                 {
-                    // TODO: Make sure all of this is right, and make it so
-                    // you can write these as well
+                    // TODO: Make sure all of this is right
                     reader.FixPadding(4);
                     long arrOffset = reader.ReadInt64();
                     ulong arrLength = reader.ReadUInt64();
@@ -236,6 +236,7 @@ namespace HedgeLib.Sets
                     reader.FixPadding(8);
                 }
 
+                // Data
                 var objParam = new SetObjectParam(param.DataType,
                     reader.ReadByType(param.DataType));
                 obj.Parameters.Add(objParam);
@@ -294,7 +295,6 @@ namespace HedgeLib.Sets
                 WriteObjectParameters(writer, Objects[i], i);
             }
 
-            writer.Write(0U); // TODO: Is this required?
             writer.FixPadding(4);
             writer.FinishWrite(Header);
         }
@@ -318,15 +318,19 @@ namespace HedgeLib.Sets
 
             // Object Entry
             writer.Write((ushort)obj.ObjectID);
-            writer.Write((ushort)0);
+            writer.Write((obj.CustomData.ContainsKey("Unknown1")) ?
+                (ushort)obj.CustomData["Unknown1"].Data : (ushort)0);
+
             writer.Write((obj.CustomData.ContainsKey("ParentID")) ?
                 (ushort)obj.CustomData["ParentID"].Data : (ushort)0);
-            writer.Write((ushort)0);
+
+            writer.Write((obj.CustomData.ContainsKey("ParentUnknown1")) ?
+                (ushort)obj.CustomData["ParentUnknown1"].Data : (ushort)0);
 
             writer.Write(obj.Transform.Position);
-            writer.Write(new Vector3(0, 0, 0)); // TODO: Write actual rotation data
+            writer.Write(obj.Transform.Rotation.ToEulerAngles(true));
             writer.Write(obj.Transform.Position);
-            writer.Write(new Vector3(0, 0, 0)); // TODO: Write actual rotation data
+            writer.Write(obj.Transform.Rotation.ToEulerAngles(true));
 
             writer.AddOffset($"extraParamsOffset{objID}", 8);
             writer.Write(1UL); // TODO
@@ -340,6 +344,18 @@ namespace HedgeLib.Sets
             if (obj.CustomData.ContainsKey("Name"))
                 extraParamCounts -= 1;
 
+            if (obj.CustomData.ContainsKey("RangeIn"))
+                extraParamCounts -= 1;
+
+            if (obj.CustomData.ContainsKey("Unknown1"))
+                extraParamCounts -= 1;
+
+            if (obj.CustomData.ContainsKey("ParentID"))
+                extraParamCounts -= 1;
+
+            if (obj.CustomData.ContainsKey("ParentUnknown1"))
+                extraParamCounts -= 1;
+
             writer.FillInOffsetLong($"extraParamsOffset{objID}", false, false);
             writer.AddOffsetTable($"extraParamOffset{objID}", extraParamCounts, 8);
             writer.FixPadding(16); // TODO: Make sure this is correct
@@ -347,7 +363,8 @@ namespace HedgeLib.Sets
             int i = -1;
             foreach (var customData in obj.CustomData)
             {
-                if (customData.Key == "Name" || customData.Key == "ParentID" ||
+                if (customData.Key == "Name" || customData.Key == "Unknown1" ||
+                    customData.Key == "ParentID" || customData.Key == "ParentUnknown1" ||
                     customData.Key == "RangeOut")
                     continue;
 
@@ -371,7 +388,9 @@ namespace HedgeLib.Sets
             // Extra Parameter Data
             foreach (var customData in obj.CustomData)
             {
-                if (customData.Key == "Name" || customData.Key == "RangeOut")
+                if (customData.Key == "Name" || customData.Key == "Unknown1" ||
+                    customData.Key == "ParentID" || customData.Key == "ParentUnknown1" ||
+                    customData.Key == "RangeOut")
                     continue;
 
                 writer.FillInOffsetLong(
@@ -385,9 +404,27 @@ namespace HedgeLib.Sets
         protected void WriteObjectParameters(BINAWriter writer,
             SetObject obj, int objID)
         {
+            uint arrIndex = 0;
             writer.FillInOffsetLong($"objParamsOffset{objID}", false, false);
+
+            // Write Normal Parameters
             foreach (var param in obj.Parameters)
             {
+                // Special Param Types
+                if (param.DataType == typeof(uint[]))
+                {
+                    var arr = (param.Data as uint[]);
+                    if (arr == null) continue;
+
+                    writer.FixPadding(4);
+                    writer.AddOffset($"obj{objID}ArrOffset{arrIndex}", 8);
+                    writer.Write((ulong)arr.Length);
+                    writer.Write((ulong)arr.Length);
+                    ++arrIndex;
+                    continue;
+                }
+
+                // Pre-Param Padding
                 if (param.DataType == typeof(float) ||
                     param.DataType == typeof(uint) || param.DataType == typeof(int))
                 {
@@ -399,12 +436,35 @@ namespace HedgeLib.Sets
                     writer.FixPadding(8);
                 }
 
-                // TODO: Write special types
+                // Data
                 writer.WriteByType(param.DataType, param.Data);
 
+                // Post-Param Padding
                 if (param.DataType == typeof(Vector3))
                 {
                     writer.FixPadding(16); // TODO: Is this correct?
+                }
+            }
+
+            // Write Arrays
+            if (arrIndex < 1)
+                return; // Don't bother if there's not even any arrays
+
+            arrIndex = 0;
+            foreach (var param in obj.Parameters)
+            {
+                if (param.DataType == typeof(uint[]))
+                {
+                    var arr = (param.Data as uint[]);
+                    if (arr == null) continue;
+
+                    writer.FillInOffsetLong($"obj{objID}ArrOffset{arrIndex}", false, false);
+                    for (uint i = 0; i < arr.Length; ++i)
+                    {
+                        writer.Write(arr[i]);
+                    }
+
+                    ++arrIndex;
                 }
             }
         }
