@@ -1,5 +1,4 @@
-﻿using HedgeLib.Headers;
-using HedgeLib.IO;
+﻿using HedgeLib.IO;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,9 +8,9 @@ namespace HedgeLib.Models
     public class GensModel : Model
     {
         // Variables/Constants
-        public GensHeader Header = new GensHeader();
         public const string Extension = ".model", TerrainExtension = ".terrain-model";
         public const int SubMeshSlotCount = 4;
+        public const uint NextGenSignature = 0x133054A;
 
         // Methods
         public override void Load(string filePath)
@@ -53,7 +52,43 @@ namespace HedgeLib.Models
         {
             // Header
             var reader = new GensReader(fileStream);
-            Header = reader.ReadHeader();
+            uint fileSize = reader.ReadUInt32();
+            uint rootNodeType = reader.ReadUInt32();
+
+            // Next-Gen Header
+            byte nextGenMarker = (byte)(fileSize >> 24);
+            if (nextGenMarker == 0x80 && rootNodeType == NextGenSignature)
+            {
+                uint finalTableOffset = reader.ReadUInt32();
+                uint finalTableLength = reader.ReadUInt32();
+                reader.Offset = 0x10;
+
+                // Sections
+                // TODO: Do something with these
+                fileSize >>= 8;
+                while (fileStream.Position < fileSize)
+                {
+                    uint sectionOffset = reader.ReadUInt32();
+                    byte sectionType = (byte)(sectionOffset & 0xFF);
+                    sectionOffset >>= 8;
+
+                    uint sectionValue = reader.ReadUInt32();
+                    string sectionName = new string(reader.ReadChars(8));
+
+                    if (sectionName == "Contexts")
+                        break;
+                }
+            }
+
+            // Generations Header
+            else
+            {
+                uint finalTableOffset = reader.ReadUInt32();
+                uint rootNodeOffset = reader.ReadUInt32();
+                uint finalTableAbsOffset = reader.ReadUInt32();
+                uint fileEndOffset = reader.ReadUInt32();
+                reader.Offset = rootNodeOffset;
+            }
 
             // Data
             uint meshCount = reader.ReadUInt32();
@@ -120,7 +155,6 @@ namespace HedgeLib.Models
 
         protected void ReadSubMesh(GensReader reader, float scale = 1)
         {
-            var mesh = new Mesh();
             uint offset; // Generic uint reused for different data
 
             // Offsets
@@ -198,16 +232,6 @@ namespace HedgeLib.Models
             //    }
             //}
 
-            mesh.Triangles = new uint[newFaces.Count * 3];
-            //mesh.Triangles = faces;
-            for (int i = 0; i < newFaces.Count; ++i)
-            {
-                var vect = newFaces[i];
-                mesh.Triangles[i * 3] = (uint)vect.X;
-                mesh.Triangles[(i * 3) + 1] = (uint)vect.Y;
-                mesh.Triangles[(i * 3) + 2] = (uint)vect.Z;
-            }
-
             // Vertex Format
             var vertexFormat = new List<VertexFormatElement>();
             reader.JumpTo(vertexFormatOffset, false);
@@ -230,8 +254,7 @@ namespace HedgeLib.Models
             }
 
             // Vertices
-            var verts = new float[vertexCount * 3];
-            var norms = new float[vertexCount * 3];
+            var data = new float[vertexCount * Mesh.StructureLength];
             var idc = new float[vertexCount * 4]; // TODO: Care
 
             for (uint i = 0; i < vertexCount; ++i)
@@ -243,9 +266,10 @@ namespace HedgeLib.Models
                     reader.JumpTo(offset + element.Offset, false);
                     switch (element.ID)
                     {
-                        // Vertex position
+                        // Vertex Positions
                         case 0:
-                            element.Read(reader, verts, i, scale);
+                            element.Read(reader, data,
+                                (i * Mesh.StructureLength) + Mesh.VertPos, scale);
                             break;
 
                         // Bone Weights
@@ -260,40 +284,47 @@ namespace HedgeLib.Models
                             element.Read(reader, idc, i);
                             break;
 
-                        // Normal
+                        // Normals
                         case 3:
-                            element.Read(reader, norms, i); // TODO: Do I need to scale normals?
+                            // TODO: Do I need to scale normals?
+                            element.Read(reader, data,
+                                (i * Mesh.StructureLength) + Mesh.NormPos);
                             break;
 
-                        // UV Coordinate
+                        // UV Coordinates
                         case 5:
-                            // TODO
-                            element.Read(reader, idc, i);
+                            if (element.Index < 1)
+                            {
+                                element.Read(reader, data,
+                                    (i * Mesh.StructureLength) + Mesh.UVPos);
+                            }
+                            else
+                            {
+                                // TODO: Read multi-UV Channels
+                                element.Read(reader, idc, i);
+                            }
                             break;
 
-                        // Tangent
+                        // Tangents
                         case 6:
                             // TODO
                             element.Read(reader, idc, i);
                             break;
 
-                        // Binormal
+                        // Binormals
                         case 7:
                             // TODO
                             element.Read(reader, idc, i);
                             break;
 
-                        // Vertex Color
+                        // Vertex Colors
                         case 10:
-                            // TODO
-                            element.Read(reader, idc, i);
+                            element.Read(reader, data,
+                                (i * Mesh.StructureLength) + Mesh.ColorPos);
                             break;
                     }
                 }
             }
-
-            mesh.Vertices = verts;
-            mesh.Normals = norms;
 
             // Bones
             var bones = new byte[boneCount];
@@ -328,7 +359,23 @@ namespace HedgeLib.Models
 
             // Material Name
             reader.JumpTo(materialNameOffset, false);
-            string materialName = reader.ReadNullTerminatedString(); // TODO: Use this lol
+            string materialName = reader.ReadNullTerminatedString();
+
+            // Generate a HedgeLib mesh and add it to the array
+            var mesh = new Mesh()
+            {
+                VertexData = data,
+                Triangles = new uint[newFaces.Count * 3],
+                MaterialName = materialName
+            };
+
+            for (int i = 0; i < newFaces.Count; ++i)
+            {
+                var vect = newFaces[i];
+                mesh.Triangles[i * 3] = (uint)vect.X;
+                mesh.Triangles[(i * 3) + 1] = (uint)vect.Y;
+                mesh.Triangles[(i * 3) + 2] = (uint)vect.Z;
+            }
 
             Meshes.Add(mesh);
         }
@@ -361,8 +408,8 @@ namespace HedgeLib.Models
                 switch ((DataTypes)Type)
                 {
                     case DataTypes.Vector2:
-                        data[i * 2] = reader.ReadSingle() * scale;
-                        data[(i * 2) + 1] = reader.ReadSingle() * scale;
+                        data[i] = reader.ReadSingle() * scale;
+                        data[i + 1] = reader.ReadSingle() * scale;
                         break;
 
                     case DataTypes.Vector2_Half:
@@ -371,9 +418,9 @@ namespace HedgeLib.Models
                         break;
 
                     case DataTypes.Vector3:
-                        data[i * 3] = reader.ReadSingle() * scale;
-                        data[(i * 3) + 1] = reader.ReadSingle() * scale;
-                        data[(i * 3) + 2] = reader.ReadSingle() * scale;
+                        data[i] = reader.ReadSingle() * scale;
+                        data[i + 1] = reader.ReadSingle() * scale;
+                        data[i + 2] = reader.ReadSingle() * scale;
                         break;
 
                     case DataTypes.Vector3_360:
@@ -382,10 +429,10 @@ namespace HedgeLib.Models
                         break;
 
                     case DataTypes.Vector4:
-                        data[i * 4] = reader.ReadSingle() * scale;
-                        data[(i * 4) + 1] = reader.ReadSingle() * scale;
-                        data[(i * 4) + 2] = reader.ReadSingle() * scale;
-                        data[(i * 4) + 3] = reader.ReadSingle() * scale;
+                        data[i] = reader.ReadSingle() * scale;
+                        data[i + 1] = reader.ReadSingle() * scale;
+                        data[i + 2] = reader.ReadSingle() * scale;
+                        data[i + 3] = reader.ReadSingle() * scale;
                         break;
 
                     case DataTypes.Vector4_Byte:

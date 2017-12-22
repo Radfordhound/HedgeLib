@@ -4,11 +4,11 @@
 	<Game shortName="Generations" name="Sonic Generations" dataType="Gens">
 		<UnpackInfo>
 			<!-- #Arc (E.G. #ghz200) -->
-			<Archive path="#{0}.ar.00" cachePath="#{0}" /> 
+			<Archive path="#{0}.arl" cachePath="#{0}" /> 
 			<!-- Arc (E.G. ghz200) -->
-			<Archive path="{0}.ar.00" cachePath="{0}" /> 
+			<Archive path="{0}.arl" cachePath="{0}" /> 
 			<!-- Packed Arc (E.G. Packed/ghz200) -->
-			<Archive path="Packed/{0}/{0}.ar.00" cachePath="Packed/{0}" />
+			<Archive path="Packed/{0}/{0}.arl" cachePath="Packed/{0}" />
       <!-- Stage PFD (E.G. Packed/Stage) -->
       <Archive path="Packed/{0}/Stage.pfd" cachePath="Packed/Stage" />
 			<!-- TODO: Add Stage-Add.pfd -->

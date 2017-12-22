@@ -1,9 +1,10 @@
 ﻿using HedgeLib;
-using HedgeLib.Archives;
+using HedgeLib.Materials;
 using HedgeLib.Misc;
 using HedgeLib.Models;
 using HedgeLib.Sets;
 using HedgeLib.Terrain;
+using HedgeLib.Textures;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,7 +15,9 @@ namespace HedgeEdit
     {
         // Variables/Constants
         public static List<SetData> Sets = new List<SetData>();
+        public static SetData CurrentSetLayer = null;
         public static GameEntry GameType;
+        public static string ID, CacheDir;
 
         // Methods
         public static void Load(string dataDir, string stageID, GameEntry game)
@@ -34,10 +37,13 @@ namespace HedgeEdit
             }
 
             GameType = game;
+            ID = stageID;
 
             // Make cache directory
             string cacheDir = Helpers.CombinePaths(Program.StartupPath,
                 Program.CachePath, stageID);
+
+            CacheDir = cacheDir;
 
             string editorCachePath = Helpers.CombinePaths(cacheDir, EditorCache.FileName);
             Directory.CreateDirectory(cacheDir);
@@ -75,6 +81,8 @@ namespace HedgeEdit
             // Load Data
             var loadStopWatch = System.Diagnostics.Stopwatch.StartNew();
             LoadFromCache(cacheDir, stageID, game);
+            CurrentSetLayer = Sets[0];
+
             loadStopWatch.Stop();
             Console.WriteLine("Done loading! Time: {0}(ms).",
                 loadStopWatch.ElapsedMilliseconds);
@@ -317,25 +325,14 @@ namespace HedgeEdit
                         for (int i = 0; i < setData.Objects.Count; ++i)
                         {
                             // TODO: Load actual models.
-                            var obj = setData.Objects[i];
-                            SpawnObject(obj.Transform, game.UnitMultiplier, obj);
-
-                            // Spawn Child Objects
-                            if (obj.Children == null) continue;
-                            foreach (var transform in obj.Children)
-                            {
-                                if (transform == null) continue;
-
-                                SpawnObject(transform,
-                                    game.UnitMultiplier, transform);
-                            }
+                            SpawnObject(setData.Objects[i], game.UnitMultiplier);
                         }
 
                         setData.Name = Path.GetFileNameWithoutExtension(filePath);
                         Sets.Add(setData);
 
                         // Refresh UI Scene View
-                        Program.MainForm.Invoke(new Action(() =>
+                        GUIInvoke(new Action(() =>
                         {
                             Program.MainForm.RefreshSceneView();
                         }));
@@ -345,10 +342,20 @@ namespace HedgeEdit
 
                 case "terrain":
                     {
-                        // TODO: Do this properly
+                        // TODO: Load terrain instance info?
                         var model = new GensModel();
                         model.Load(filePath);
-                        Viewport.AddModel(model);
+
+                        // TODO: Load textures/materials
+
+                        model.Name = fileInfo.Name.Substring(0,
+                            fileInfo.Name.Length - fileInfo.Extension.Length);
+
+                        GUIInvoke(new Action(() =>
+                        {
+                            Viewport.AddTerrainModel(model);
+                            Viewport.AddInstance(model.Name, false);
+                        }));
                         return;
                     }
 
@@ -368,10 +375,8 @@ namespace HedgeEdit
                         var terrainList = new GensTerrainList();
                         terrainList.Load(filePath);
 
-                        var modelCache = new Dictionary<string, GensModel>();
-                        int groupCount = terrainList.GroupEntries.Length;
-
                         // Terrain Groups
+                        int groupCount = terrainList.GroupEntries.Length;
                         for (int i = 0; i < groupCount; ++i)
                         {
                             // Update UI
@@ -419,34 +424,62 @@ namespace HedgeEdit
                                     info.Load(instancePath);
 
                                     // Terrain Models
+                                    if (Viewport.Terrain.ContainsKey(info.ModelFileName))
+                                    {
+                                        // Don't bother loading the model again if we've
+                                        // already loaded a model with the same name.
+                                        GUIInvoke(new Action(() =>
+                                        {
+                                            Viewport.AddInstance(info.ModelFileName,
+                                                info.Position, info.Rotation,
+                                                info.Scale, false);
+                                        }));
+                                        continue;
+                                    }
+
                                     string modelPth = Path.Combine(groupDir,
                                         string.Format("{0}{1}",
                                         info.ModelFileName,
                                         GensModel.TerrainExtension));
 
-                                    GensModel model;
-                                    if (modelCache.ContainsKey(modelPth))
+                                    var model = new GensModel();
+                                    model.Load(modelPth);
+                                    model.Name = info.ModelFileName;
+
+                                    // Materials
+                                    foreach (var mesh in model.Meshes)
                                     {
-                                        model = modelCache[modelPth];
+                                        if (Viewport.Materials.ContainsKey(mesh.MaterialName))
+                                            continue;
+
+                                        var mat = new GensMaterial();
+                                        mat.Load(Path.Combine(fileInfo.DirectoryName,
+                                            $"{mesh.MaterialName}{GensMaterial.Extension}"));
+
+                                        Viewport.Materials.Add(mesh.MaterialName, mat);
+
+                                        // Textures
+                                        foreach (var tex in mat.Textures)
+                                        {
+                                            if (Viewport.Textures.ContainsKey(tex.TextureName))
+                                                continue;
+
+                                            var dds = new DDS();
+                                            dds.Load(Path.Combine(fileInfo.DirectoryName,
+                                                $"{tex.TextureName}{DDS.Extension}"));
+
+                                            GUIInvoke(new Action(() =>
+                                            {
+                                                Viewport.AddTexture(tex.TextureName, dds);
+                                            }));
+                                        }
                                     }
-                                    else
+
+                                    GUIInvoke(new Action(() =>
                                     {
-                                        model = new GensModel();
-                                        model.Load(modelPth);
-                                        modelCache.Add(modelPth, model);
-                                    }
-
-                                    // TODO: Use scaling
-                                    info.Position *= game.UnitMultiplier;
-
-                                    if (Program.MainForm == null || Program.MainForm.Disposing ||
-                                        Program.MainForm.IsDisposed)
-                                        return;
-
-                                    Program.MainForm.Invoke(new Action(() =>
-                                    {
-                                        Viewport.AddModel(model,
-                                            info.Position, info.Rotation);
+                                        Viewport.AddTerrainModel(model);
+                                        Viewport.AddInstance(model.Name, info.Position,
+                                            info.Rotation, info.Scale, false);
                                     }));
                                 }
                             }
@@ -460,22 +493,41 @@ namespace HedgeEdit
             }
         }
 
-        private static void SpawnObject(SetObjectTransform transform,
-            float unitMultiplier, object customData)
+        private static void GUIInvoke(Action action)
         {
-            transform.Position *= unitMultiplier;
+            if (Program.MainForm == null || Program.MainForm.Disposing ||
+                Program.MainForm.IsDisposed)
+                return;
 
-            Program.MainForm.Invoke(new Action(() =>
+            Program.MainForm.Invoke(action);
+        }
+
+        private static void SpawnObject(
+            SetObject obj, float unitMultiplier)
+        {
+            GUIInvoke(new Action(() =>
             {
-                Viewport.AddModel(Viewport.DefaultCube,
-                transform.Position,
-                transform.Rotation, customData);
+                Viewport.AddInstance(obj.ObjectType,
+                    obj.Transform.Position * unitMultiplier,
+                    obj.Transform.Rotation, obj.Transform.Scale,
+                    true, obj);
+
+                if (obj.Children == null) return;
+                foreach (var child in obj.Children)
+                {
+                    if (child == null) continue;
+
+                    Viewport.AddInstance(obj.ObjectType,
+                        child.Position * unitMultiplier,
+                        child.Rotation, child.Scale,
+                        true, child);
+                }
             }));
         }
 
         private static void ChangeUILoadStatus(string status)
         {
-            Program.MainForm.Invoke(new Action(() =>
+            GUIInvoke(new Action(() =>
             {
                 Program.MainForm.UpdateStatus($"Loading {status}...");
             }));
@@ -483,7 +535,7 @@ namespace HedgeEdit
 
         private static void ChangeUIStatus(string status)
         {
-            Program.MainForm.Invoke(new Action(() =>
+            GUIInvoke(new Action(() =>
             {
                 Program.MainForm.UpdateStatus(status);
             }));
@@ -491,7 +543,7 @@ namespace HedgeEdit
 
         private static void ChangeUIProgress(int progress, bool visible)
         {
-            Program.MainForm.Invoke(new Action(() =>
+            GUIInvoke(new Action(() =>
             {
                 Program.MainForm.UpdateProgress(progress, visible);
             }));

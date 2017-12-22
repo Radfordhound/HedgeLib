@@ -1,5 +1,7 @@
 ﻿using HedgeEdit.Properties;
+using HedgeLib.Materials;
 using HedgeLib.Models;
+using HedgeLib.Textures;
 using OpenTK;
 using OpenTK.Graphics.ES30;
 using OpenTK.Input;
@@ -14,11 +16,23 @@ namespace HedgeEdit
     public static class Viewport
     {
         // Variables/Constants
-        public static List<ViewportObject> Objects = new List<ViewportObject>();
-        public static Model DefaultCube;
+        public static Dictionary<string, VPModel> Terrain =
+            new Dictionary<string, VPModel>();
 
+        public static Dictionary<string, VPModel> Objects =
+            new Dictionary<string, VPModel>();
+
+        public static Dictionary<string, GensMaterial> Materials =
+            new Dictionary<string, GensMaterial>();
+
+        public static Dictionary<string, int> Textures =
+            new Dictionary<string, int>();
+
+        public static VPModel DefaultCube;
+        public static GensMaterial DefaultMaterial;
         public static Vector3 CameraPos = Vector3.Zero, CameraRot = new Vector3(-90, 0, 0);
         public static float FOV = 40.0f, NearDistance = 0.1f, FarDistance = 1000000f;
+        public static int DefaultTexture;
         public static bool IsMovingCamera = false;
 
         private static GLControl vp = null;
@@ -38,51 +52,83 @@ namespace HedgeEdit
             // Load the shaders
             Shaders.LoadAll();
 
+            // Set Texture Parameters
+            // TODO: Are these necessary?
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
+
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+
+            // Setup default material/texture
+            DefaultMaterial = new GensMaterial();
+            DefaultTexture = GenTexture(new Texture()
+            {
+                Width = 1,
+                Height = 1,
+                PixelFormat = Texture.PixelFormats.RGB,
+                MipmapCount = 1,
+                ColorData = new byte[][]
+                {
+                    new byte[] { 255, 255, 255 }
+                }
+            });
+
             // TODO: Remove the following debug stuff
             // YES I KNOW THIS IS TRASH LOL
             var watch = System.Diagnostics.Stopwatch.StartNew();
-            var mesh = new Mesh();
-
             using (var reader = new StringReader(Resources.DefaultCube))
             {
                 // Vertices
                 var vertices = reader.ReadLine().Split(',');
-                mesh.Vertices = new float[vertices.Length];
+                var verts = new float[vertices.Length];
 
                 for (int i = 0; i < vertices.Length; ++i)
                 {
-                    mesh.Vertices[i] = float.Parse(vertices[i]);
+                    verts[i] = float.Parse(vertices[i]);
                 }
 
                 // Normals
                 var normals = reader.ReadLine().Split(',');
-                mesh.Normals = new float[normals.Length];
+                var norms = new float[normals.Length];
 
                 for (int i = 0; i < normals.Length; ++i)
                 {
-                    mesh.Normals[i] = float.Parse(normals[i]);
+                    norms[i] = float.Parse(normals[i]);
                 }
 
                 // Indices
                 var indices = reader.ReadLine().Split(',');
-                mesh.Triangles = new uint[indices.Length];
+                var tris = new uint[indices.Length];
 
                 for (int i = 0; i < indices.Length; ++i)
                 {
-                    mesh.Triangles[i] = uint.Parse(indices[i]) - 1;
+                    tris[i] = uint.Parse(indices[i]) - 1;
                 }
 
                 // UV Coordinates
                 var coords = reader.ReadLine().Split(',');
-                mesh.UVs = new float[coords.Length];
+                var UVs = new float[coords.Length];
 
                 for (int i = 0; i < coords.Length; ++i)
                 {
-                    mesh.UVs[i] = float.Parse(coords[i]);
+                    UVs[i] = float.Parse(coords[i]);
                 }
-            }
 
-            DefaultCube = new Model(mesh);
+                // Generate Mesh Data
+                var mesh = new Mesh(verts, norms, null, UVs)
+                {
+                    Triangles = tris
+                };
+
+                DefaultCube = new VPModel(new Model(mesh));
+            }
 
             watch.Stop();
             Console.WriteLine("Debug model init time: {0}", watch.ElapsedMilliseconds);
@@ -103,7 +149,7 @@ namespace HedgeEdit
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             // Start using our "Default" program and bind our VAO
-            int defaultID = Shaders.ShaderPrograms["ColorTest2"]; // TODO: Make this more efficient
+            int defaultID = Shaders.ShaderPrograms["Default"];
             GL.UseProgram(defaultID);
 
             // Update camera transform
@@ -188,6 +234,13 @@ namespace HedgeEdit
 
             prevMousePos = Cursor.Position;
 
+            // Update shader transform matrices
+            int viewLoc = GL.GetUniformLocation(defaultID, "view");
+            int projectionLoc = GL.GetUniformLocation(defaultID, "projection");
+
+            GL.UniformMatrix4(viewLoc, false, ref view);
+            GL.UniformMatrix4(projectionLoc, false, ref projection);
+
             // Transform Gizmos
             // float screenX = (float)Math.Min(Math.Max(0,
             //    vpMousePos.X), vp.Size.Width) / vp.Size.Width;
@@ -196,40 +249,169 @@ namespace HedgeEdit
             //    vpMousePos.Y), vp.Size.Height) / vp.Size.Height;
             // TODO
 
-            // Update shader transform matrices
-            int viewLoc = GL.GetUniformLocation(defaultID, "view");
-            int projectionLoc = GL.GetUniformLocation(defaultID, "projection");
-
-            GL.UniformMatrix4(viewLoc, false, ref view);
-            GL.UniformMatrix4(projectionLoc, false, ref projection);
-
             // Draw all models in the scene
+            DefaultCube.Draw(defaultID);
+
+            foreach (var mdl in Terrain)
+            {
+                mdl.Value.Draw(defaultID);
+            }
+
             foreach (var mdl in Objects)
             {
-                mdl.Draw(defaultID);
+                mdl.Value.Draw(defaultID);
             }
 
             // Swap our buffers
             vp.SwapBuffers();
         }
 
-        public static void AddModel(Model mdl)
+        public static int AddTexture(string name, Texture tex)
         {
-            Objects.Add(new ViewportObject(mdl));
+            if (Textures.ContainsKey(name))
+                return Textures[name];
+
+            int texture = GenTexture(tex);
+            Textures.Add(name, texture);
+            return texture;
         }
 
-        public static void AddModel(Model mdl, Vector3 pos,
-            Quaternion rot, object customData = null)
+        private static int GenTexture(Texture tex)
         {
-            Objects.Add(new ViewportObject(mdl,
-                pos, rot, customData));
+            int texture = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, texture);
+
+            if (tex == null)
+                throw new ArgumentNullException("tex");
+
+            // Set Parameters
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureMinFilter,
+                (float)TextureMinFilter.LinearMipmapLinear);
+
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureMagFilter,
+                (int)TextureMagFilter.Linear);
+
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapS,
+                (int)TextureWrapMode.Repeat);
+
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureWrapT,
+                (int)TextureWrapMode.Repeat);
+
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureBaseLevel,
+                0);
+
+            GL.TexParameter(TextureTarget.Texture2D,
+                TextureParameterName.TextureMaxLevel,
+                (int)tex.MipmapCount - 1);
+
+            // Generate textures
+            uint mipmapCount = ((tex.MipmapCount == 0) ? 1 : tex.MipmapCount);
+            int w = (int)tex.Width, h = (int)tex.Height;
+            for (int i = 0; i < mipmapCount; ++i)
+            {
+                // Un-Compressed
+                if (tex.CompressionFormat == Texture.CompressionFormats.None)
+                {
+                    GL.TexImage2D(TextureTarget2d.Texture2D,
+                        i, // level
+                        (TextureComponentCount)tex.PixelFormat,
+                        w,
+                        h,
+                        0, // border
+                        (PixelFormat)tex.PixelFormat,
+                        PixelType.UnsignedByte,
+                        tex.ColorData[i]);
+                }
+
+                // Compressed
+                else
+                {
+                    GL.CompressedTexImage2D(TextureTarget2d.Texture2D,
+                        i, // level
+                        (CompressedInternalFormat)tex.CompressionFormat,
+                        w,
+                        h,
+                        0, // border
+                        tex.ColorData[i].Length,
+                        tex.ColorData[i]);
+                }
+
+                w /= 2;
+                h /= 2;
+            }
+
+            // TODO: Is this good? :P
+            if (mipmapCount < 2)
+            {
+                GL.GenerateMipmap(TextureTarget.Texture2D);
+            }
+
+            return texture;
         }
 
-        public static void AddModel(Model mdl, HedgeLib.Vector3 pos,
-            HedgeLib.Quaternion rot, object customData = null)
+        public static void AddTerrainModel(Model mdl)
         {
-            AddModel(mdl, Types.ToOpenTK(pos),
-                Types.ToOpenTK(rot), customData);
+            if (!Terrain.ContainsKey(mdl.Name))
+            {
+                var trr = new VPModel(mdl);
+                Terrain[mdl.Name] = trr;
+            }
+        }
+
+        public static void AddObjectModel(string type, Model mdl)
+        {
+            if (!Objects.ContainsKey(type))
+            {
+                Objects.Add(type, new VPModel(mdl));
+            }
+        }
+
+        public static void AddInstance(string type,
+            VPObjectInstance instance, bool isObject)
+        {
+            bool hasModel = (isObject) || (Terrain.ContainsKey(type));
+            if (!hasModel)
+            {
+                throw new Exception(
+                    "Could not add instance of model. Model has not yet been loaded!");
+            }
+
+            if (isObject)
+                hasModel = Objects.ContainsKey(type);
+
+            var obj = (!hasModel) ? DefaultCube :
+                (isObject) ? Objects[type] : Terrain[type];
+
+            obj.Instances.Add(instance);
+        }
+
+        public static void AddInstance(string type,
+            bool isObject, object customData = null)
+        {
+            AddInstance(type, new VPObjectInstance(
+                customData), isObject);
+        }
+
+        public static void AddInstance(string type, Vector3 pos,
+            Quaternion rot, Vector3 scale,
+            bool isObject, object customData = null)
+        {
+            AddInstance(type, new VPObjectInstance(
+                pos, rot, scale, customData), isObject);
+        }
+
+        public static void AddInstance(string type, HedgeLib.Vector3 pos,
+            HedgeLib.Quaternion rot, HedgeLib.Vector3 scale,
+            bool isObject, object customData = null)
+        {
+            AddInstance(type, new VPObjectInstance(
+                Types.ToOpenTK(pos), Types.ToOpenTK(rot),
+                Types.ToOpenTK(scale), customData), isObject);
         }
 
         public static void Clear()
