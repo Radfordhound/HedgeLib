@@ -40,7 +40,11 @@ namespace HedgeLib.Textures
             RGB_S3TC_DXT1_EXT = 0x83F0,
             RGBA_S3TC_DXT1_EXT = 0x83F1,
             RGBA_S3TC_DXT3_EXT = 0x83F2,
-            RGBA_S3TC_DXT5_EXT = 0x83F3
+            RGBA_S3TC_DXT5_EXT = 0x83F3,
+            RGBA_BPTC_UNORM_EXT = 0x8E8C,
+            SRGB_ALPHA_BPTC_UNORM_EXT = 0x8E8D,
+            RGB_BPTC_SIGNED_FLOAT_EXT = 0x8E8E,
+            RGB_BPTC_UNSIGNED_FLOAT_EXT = 0x8E8F
         }
     }
 }

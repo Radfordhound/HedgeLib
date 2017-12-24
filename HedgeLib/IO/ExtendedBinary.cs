@@ -129,6 +129,22 @@ namespace HedgeLib.IO
             return str;
         }
 
+        public string ReadNullTerminatedStringUTF16()
+        {
+            var chars = new List<byte>();
+            do
+            {
+                byte b1 = ReadByte();
+                byte b2 = ReadByte();
+
+                if (b1 == 0 && b2 == 0) break;
+                chars.Add(b1);
+                chars.Add(b2);
+            }
+            while (BaseStream.Position < BaseStream.Length);
+            return Encoding.Unicode.GetString(chars.ToArray());
+        }
+
         public T ReadByType<T>()
         {
             return (T)ReadByType(typeof(T));
@@ -148,6 +164,8 @@ namespace HedgeLib.IO
                 return ReadInt16();
             else if (type == typeof(ushort))
                 return ReadUInt16();
+            else if (type == typeof(Half))
+                return ReadHalf();
             else if (type == typeof(int))
                 return ReadInt32();
             else if (type == typeof(uint))
@@ -169,8 +187,8 @@ namespace HedgeLib.IO
 
             // TODO: Add more types.
 
-            throw new NotImplementedException("Cannot read \"" +
-                type + "\" by type yet!");
+            throw new NotImplementedException(
+                $"Cannot read \"{type}\" by type yet!");
         }
 
         // 2-Byte Types
@@ -198,6 +216,11 @@ namespace HedgeLib.IO
             {
                 return (ushort)(buffer[1] << 8 | buffer[0]);
             }
+        }
+
+        public Half ReadHalf()
+        {
+            return Half.ToHalf(ReadUInt16());
         }
 
         // 4-Byte Types
@@ -555,6 +578,14 @@ namespace HedgeLib.IO
             WriteNull();
         }
 
+        public void WriteNullTerminatedStringUTF16(string value)
+        {
+            var chArr = value.ToCharArray();
+            var bytes = Encoding.Unicode.GetBytes(chArr);
+            Write(bytes);
+            WriteNulls(2);
+        }
+
         public void FixPadding(uint amount = 4)
         {
             uint padAmount = 0;
@@ -586,6 +617,8 @@ namespace HedgeLib.IO
                 Write((short)data);
             else if (type == typeof(ushort))
                 Write((ushort)data);
+            else if (type == typeof(Half))
+                WriteHalf((Half)data);
             else if (type == typeof(int))
                 Write((int)data);
             else if (type == typeof(uint))
@@ -604,8 +637,8 @@ namespace HedgeLib.IO
                 Write((Vector4)data);
             else
             {
-                throw new NotImplementedException("Cannot write \"" +
-                    type + "\" by type yet!");
+                throw new NotImplementedException(
+                    $"Cannot write \"{type} by type yet!");
             }
 
             // TODO: Add more types.
@@ -642,6 +675,11 @@ namespace HedgeLib.IO
             }
 
             Write(dataBuffer, 0, 2);
+        }
+
+        public void WriteHalf(Half value)
+        {
+            Write(value.value);
         }
 
         // 4-Byte Types

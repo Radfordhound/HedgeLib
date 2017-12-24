@@ -259,6 +259,12 @@ namespace HedgeLib.Models
 
             for (uint i = 0; i < vertexCount; ++i)
             {
+                // Set default vertex coloring
+                data[(i * Mesh.StructureLength) + Mesh.ColorPos] = 1;
+                data[(i * Mesh.StructureLength) + Mesh.ColorPos + 1] = 1;
+                data[(i * Mesh.StructureLength) + Mesh.ColorPos + 2] = 1;
+                data[(i * Mesh.StructureLength) + Mesh.ColorPos + 3] = 1;
+
                 // Just to be accurate
                 offset = (vertexOffset + (i * vertexSize));
                 foreach (var element in vertexFormat)
@@ -413,8 +419,8 @@ namespace HedgeLib.Models
                         break;
 
                     case DataTypes.Vector2_Half:
-                        // TODO: Read this properly
-                        reader.ReadUInt32();
+                        data[i] = reader.ReadHalf();
+                        data[i + 1] = reader.ReadHalf();
                         break;
 
                     case DataTypes.Vector3:

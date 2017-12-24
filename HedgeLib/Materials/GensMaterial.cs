@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using HedgeLib.Headers;
 using HedgeLib.IO;
 using System;
 using System.Collections.Generic;
@@ -10,7 +9,6 @@ namespace HedgeLib.Materials
     public class GensMaterial : FileBase
     {
         // Variables/Constants
-        public GensHeader Header = new GensHeader();
         public List<Parameter> Parameters = new List<Parameter>();
         public List<TextureEntry> Textures = new List<TextureEntry>();
         public string ShaderName = "Common_d", SubShaderName = "Common_d";
@@ -20,13 +18,50 @@ namespace HedgeLib.Materials
             AdditiveBlending = false, UnknownFlag1 = false;
 
         public const string Extension = ".material";
+        public const uint NextGenSignature = 0x133054A;
 
         // Methods
         public override void Load(Stream fileStream)
         {
             // Header
             var reader = new GensReader(fileStream);
-            Header = reader.ReadHeader();
+            uint fileSize = reader.ReadUInt32();
+            uint rootNodeType = reader.ReadUInt32();
+
+            // Next-Gen Header
+            byte nextGenMarker = (byte)(fileSize >> 24);
+            if (nextGenMarker == 0x80 && rootNodeType == NextGenSignature)
+            {
+                uint finalTableOffset = reader.ReadUInt32();
+                uint finalTableLength = reader.ReadUInt32();
+                reader.Offset = 0x10;
+
+                // Sections
+                // TODO: Do something with these
+                fileSize >>= 8;
+                while (fileStream.Position < fileSize)
+                {
+                    uint sectionOffset = reader.ReadUInt32();
+                    byte sectionType = (byte)(sectionOffset & 0xFF);
+                    sectionOffset >>= 8;
+
+                    uint sectionValue = reader.ReadUInt32();
+                    string sectionName = new string(reader.ReadChars(8));
+
+                    if (sectionName == "Contexts")
+                        break;
+                }
+            }
+
+            // Generations Header
+            else
+            {
+                uint finalTableOffset = reader.ReadUInt32();
+                uint rootNodeOffset = reader.ReadUInt32();
+                uint finalTableAbsOffset = reader.ReadUInt32();
+                uint fileEndOffset = reader.ReadUInt32();
+                reader.Offset = rootNodeOffset;
+            }
 
             // Root Node
             uint shaderOffset = reader.ReadUInt32();

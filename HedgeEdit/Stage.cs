@@ -342,19 +342,89 @@ namespace HedgeEdit
 
                 case "terrain":
                     {
-                        // TODO: Load terrain instance info?
+                        ChangeUILoadStatus("Terrain");
+                        string shortName = fileInfo.Name.Substring(0,
+                            fileInfo.Name.Length - fileInfo.Extension.Length);
+
+                        // Terrain Instance Info
+                        string instancePath = Path.Combine(fileInfo.DirectoryName,
+                            string.Format("{0}{1}",
+                            shortName, GensTerrainInstanceInfo.Extension));
+
+                        var info = new GensTerrainInstanceInfo();
+                        if (File.Exists(instancePath))
+                            info.Load(instancePath);
+
+                        // Terrain Model
+                        if (Viewport.Terrain.ContainsKey(shortName))
+                        {
+                            // Don't bother loading the model again if we've
+                            // already loaded a model with the same name.
+                            GUIInvoke(new Action(() =>
+                            {
+                                Viewport.AddInstance(shortName,
+                                    info.Position, info.Rotation,
+                                    info.Scale, false);
+                            }));
+                            break;
+                        }
+
+                        // TODO
+                        if (shortName.Contains("_noGI"))
+                        {
+                            break;
+                        }
+
                         var model = new GensModel();
                         model.Load(filePath);
+                        model.Name = shortName;
 
-                        // TODO: Load textures/materials
+                        // Materials
+                        string matDir = (args == null || args.Count < 1) ?
+                            fileInfo.DirectoryName : Path.Combine(CacheDir,
+                            string.Format(args[0], ID));
 
-                        model.Name = fileInfo.Name.Substring(0,
-                            fileInfo.Name.Length - fileInfo.Extension.Length);
+                        foreach (var mesh in model.Meshes)
+                        {
+                            if (Viewport.Materials.ContainsKey(mesh.MaterialName))
+                                continue;
+
+                            var mat = new GensMaterial();
+                            mat.Load(Path.Combine(matDir,
+                                $"{mesh.MaterialName}{GensMaterial.Extension}"));
+
+                            Viewport.Materials.Add(mesh.MaterialName, mat);
+
+                            // Textures
+                            foreach (var tex in mat.Textures)
+                            {
+                                if (Viewport.Textures.ContainsKey(tex.TextureName))
+                                    continue;
+
+                                var dds = new DDS();
+                                try
+                                {
+                                    dds.Load(Path.Combine(matDir,
+                                        $"{tex.TextureName}{DDS.Extension}"));
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine(ex.Message);
+                                    continue;
+                                }
+
+                                GUIInvoke(new Action(() =>
+                                {
+                                    Viewport.AddTexture(tex.TextureName, dds);
+                                }));
+                            }
+                        }
 
                         GUIInvoke(new Action(() =>
                         {
                             Viewport.AddTerrainModel(model);
-                            Viewport.AddInstance(model.Name, false);
+                            Viewport.AddInstance(model.Name, info.Position,
+                                info.Rotation, info.Scale, false);
                         }));
                         return;
                     }
@@ -465,8 +535,16 @@ namespace HedgeEdit
                                                 continue;
 
                                             var dds = new DDS();
-                                            dds.Load(Path.Combine(fileInfo.DirectoryName,
-                                                $"{tex.TextureName}{DDS.Extension}"));
+                                            try
+                                            {
+                                                dds.Load(Path.Combine(fileInfo.DirectoryName,
+                                                    $"{tex.TextureName}{DDS.Extension}"));
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                Console.WriteLine(ex.Message);
+                                                continue;
+                                            }
 
                                             GUIInvoke(new Action(() =>
                                             {
