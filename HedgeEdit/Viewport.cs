@@ -416,7 +416,11 @@ namespace HedgeEdit
 
         public static void Clear()
         {
+            DefaultCube.Instances.Clear();
+            Terrain.Clear();
             Objects.Clear();
+            Materials.Clear();
+            Textures.Clear();
         }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using HedgeLib.Models;
-using OpenTK;
 using OpenTK.Graphics.ES30;
 using System;
 using System.Collections.Generic;
@@ -92,10 +91,7 @@ namespace HedgeEdit
             foreach (var transform in Instances)
             {
                 // Update Transforms
-                var modelTransform =
-                    Matrix4.CreateScale(transform.Scale) *
-                    Matrix4.CreateFromQuaternion(transform.Rotation) *
-                    Matrix4.CreateTranslation(transform.Position);
+                var modelTransform = transform.Matrix;
 
                 // Update shader transform matrices
                 GL.UniformMatrix4(modelLoc, false, ref modelTransform);
