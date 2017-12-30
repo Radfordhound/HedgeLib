@@ -5,6 +5,7 @@ using System.Text;
 
 namespace HedgeLib.Archives
 {
+    // Based off of the HeroesONE library by MainMemory and sewer56lol
     public class ONEArchive : Archive
     {
         // Variables/Constants
