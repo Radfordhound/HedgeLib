@@ -1,5 +1,4 @@
-﻿using HedgeEdit.Properties;
-using HedgeLib.Materials;
+﻿using HedgeLib.Materials;
 using HedgeLib.Models;
 using HedgeLib.Textures;
 using OpenTK;
@@ -66,72 +65,46 @@ namespace HedgeEdit
             GL.TexParameter(TextureTarget.Texture2D,
                 TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
 
-            // Setup default material/texture
-            DefaultMaterial = new GensMaterial();
-            DefaultTexture = GenTexture(new Texture()
-            {
-                Width = 1,
-                Height = 1,
-                PixelFormat = Texture.PixelFormats.RGB,
-                MipmapCount = 1,
-                ColorData = new byte[][]
-                {
-                    new byte[] { 255, 255, 255 }
-                }
-            });
-
-            // TODO: Remove the following debug stuff
-            // YES I KNOW THIS IS TRASH LOL
+            // Load default model
             var watch = System.Diagnostics.Stopwatch.StartNew();
-            using (var reader = new StringReader(Resources.DefaultCube))
+            string cubePth = Path.Combine(Program.StartupPath,
+                Program.ResourcesPath, $"DefaultCube{Model.MDLExtension}");
+
+            var mdl = new Model();
+            mdl.Load(cubePth);
+
+            // Load default texture
+            string defaultTexPath = Path.Combine(Program.StartupPath,
+                Program.ResourcesPath, $"DefaultTexture{DDS.Extension}");
+
+            Texture defaultTex;
+            if (File.Exists(defaultTexPath))
             {
-                // Vertices
-                var vertices = reader.ReadLine().Split(',');
-                var verts = new float[vertices.Length];
-
-                for (int i = 0; i < vertices.Length; ++i)
+                defaultTex = new DDS();
+                defaultTex.Load(defaultTexPath);
+            }
+            else
+            {
+                defaultTex = new Texture()
                 {
-                    verts[i] = float.Parse(vertices[i]);
-                }
-
-                // Normals
-                var normals = reader.ReadLine().Split(',');
-                var norms = new float[normals.Length];
-
-                for (int i = 0; i < normals.Length; ++i)
-                {
-                    norms[i] = float.Parse(normals[i]);
-                }
-
-                // Indices
-                var indices = reader.ReadLine().Split(',');
-                var tris = new uint[indices.Length];
-
-                for (int i = 0; i < indices.Length; ++i)
-                {
-                    tris[i] = uint.Parse(indices[i]) - 1;
-                }
-
-                // UV Coordinates
-                var coords = reader.ReadLine().Split(',');
-                var UVs = new float[coords.Length];
-
-                for (int i = 0; i < coords.Length; ++i)
-                {
-                    UVs[i] = float.Parse(coords[i]);
-                }
-
-                // Generate Mesh Data
-                var mesh = new Mesh(verts, norms, null, UVs)
-                {
-                    Triangles = tris
+                    Width = 1,
+                    Height = 1,
+                    PixelFormat = Texture.PixelFormats.RGB,
+                    MipmapCount = 1,
+                    ColorData = new byte[][]
+                    {
+                        new byte[] { 255, 255, 255 }
+                    }
                 };
-
-                DefaultCube = new VPModel(new Model(mesh));
             }
 
+            // Setup default texture/material/model
+            DefaultTexture = GenTexture(defaultTex);
+            DefaultMaterial = new GensMaterial();
+            DefaultCube = new VPModel(mdl);
+
             watch.Stop();
-            Console.WriteLine("Debug model init time: {0}", watch.ElapsedMilliseconds);
+            Console.WriteLine("Default assets init time: {0}", watch.ElapsedMilliseconds);
         }
 
         public static void Resize(int width, int height)
@@ -367,7 +340,8 @@ namespace HedgeEdit
         {
             if (!Objects.ContainsKey(type))
             {
-                Objects.Add(type, new VPModel(mdl));
+                var obj = new VPModel(mdl);
+                Objects.Add(type, obj);
             }
         }
 
@@ -411,15 +385,6 @@ namespace HedgeEdit
         {
             AddInstance(type, new VPObjectInstance(
                 Types.ToOpenTK(pos), Types.ToOpenTK(rot),
-                Types.ToOpenTK(scale), customData), isObject);
-        }
-
-        public static void AddInstance(string type, HedgeLib.Vector3 pos,
-            float[,] rot, HedgeLib.Vector3 scale,
-            bool isObject, object customData = null)
-        {
-            AddInstance(type, new VPObjectInstance(
-                Types.ToOpenTK(pos), rot,
                 Types.ToOpenTK(scale), customData), isObject);
         }
 
