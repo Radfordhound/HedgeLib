@@ -14,9 +14,10 @@ Right now it supports the following:
 ### Hedgehog Engine
 - [Reading/Writing Lights.](HedgeLib/Lights/Light.cs)
 - [Reading/Writing Models.](HedgeLib/Models/GensModel.cs)
-- [Reading/Writing Materials.](HedgeLib/Models/GensMaterial.cs)
+- [Reading/Writing Materials.](HedgeLib/Materials/GensMaterial.cs)
 
 ### Sonic Forces
+- [Reading Archives.](HedgeLib/Archives/ForcesArchive.cs)
 - [Reading/Writing Set Data.](HedgeLib/Sets/ForcesSetData.cs)
 
 ### Sonic Colors/Sonic Lost World
