@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Unknown1 type="uint" default="0" description="An ID of some type?" />
+  <Unknown2 type="bool" default="false" description="No idea" />
+  <Unknown3 type="bool" default="false" description="Always 0?" />
+  <Unknown4 type="byte" default="0" description="Always 0? Maybe SetPlaceType" />
+  <Unknown5 type="byte" default="0" description="Always 0? Maybe EventType" />
+  <Extra type="RawByteLength" length="16" />
+</Template>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Unknown1 type="uint" default="0" description="" />
+  <Unknown2 type="float" default="30" description="" />
+  
+  <Unknown3 type="uint" default="0" description="" />
+  <Unknown4 type="uint" default="0" description="" />
+  <Unknown5 type="uint" default="0" description="" />
+  <Unknown6 type="uint" default="0" description="" />
+  <Unknown7 type="uint" default="0" description="" />
+  <Unknown8 type="uint" default="0" description="" />
+  
+  <Unknown9 type="float" default="0" description="" />
+  <Unknown10 type="vector3" description="" />
+  <Unknown11 type="uint" default="0" description="" />
+  <Unknown12 type="bool" default="true" description="" />
+  <Unknown13 type="bool" default="false" description="" />
+  <Unknown14 type="bool" default="false" description="" />
+  <Unknown15 type="bool" default="false" description="" />
+  
+  <Unknown16 type="uint" default="0" description="" />
+  <Unknown17 type="uint" default="0" description="" />
+  
+  <Extra type="model" value="enm_potos01.model" />
+  <Extra type="description" value="Generic green circular badniks floating via a propeller that can shoot generic bullets." />
+  <Extra type="RawByteLength" length="64" />
+</Template>
