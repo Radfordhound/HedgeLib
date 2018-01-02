@@ -98,7 +98,9 @@ namespace HedgeLib.Textures
             // TODO
 
             // DX10 Header/Pixel Format
+            uint pixelsPerBlock = 16;
             byte blockSize;
+
             if (Header.PixelFormat.HasFlag(DDSPixelFormat.FLAGS.FOURCC))
             {
                 switch ((DDSPixelFormat.FOURCCS)Header.PixelFormat.FourCC)
@@ -185,9 +187,43 @@ namespace HedgeLib.Textures
             }
             else
             {
-                throw new NotImplementedException(
-                    "Reading DDS files without FOURCCs is not yet supported.");
+                if (!Header.PixelFormat.HasFlag(DDSPixelFormat.FLAGS.RGB))
+                {
+                    throw new NotImplementedException(
+                        "Reading DDS files without RGB data is not yet supported.");
+                }
+
+                if (Header.PixelFormat.RGBBitCount % 8 != 0)
+                {
+                    throw new InvalidDataException(
+                        "RGBBitCount must be divisible by 8.");
+                }
+
+                if (Header.PixelFormat.RGBBitCount > 32)
+                {
+                    throw new InvalidDataException(
+                        "RGBBitCount must be less than or equal to 32.");
+                }
+
+                if (Header.PixelFormat.RGBBitCount != 32)
+                {
+                    throw new NotImplementedException(
+                        "Reading DDS files with non 32-bit data is not yet supported.");
+                }
+
+                pixelsPerBlock = 1;
+                CompressionFormat = CompressionFormats.None;
+                blockSize = (byte)(Header.PixelFormat.RGBBitCount / 8);
+                PixelFormat = PixelFormats.RGBA;
             }
+
+            // Whether or not uncompressed pixels need to be re-arranged to RGBA
+            bool isARGB = (CompressionFormat == CompressionFormats.None &&
+                Header.PixelFormat.RGBBitCount == 32 &&
+                Header.PixelFormat.ABitMask == 0xFF000000 &&
+                Header.PixelFormat.RBitMask == 0xFF0000 &&
+                Header.PixelFormat.GBitMask == 0xFF00 &&
+                Header.PixelFormat.BBitMask == 0xFF);
 
             // Data
             uint width = Width, height = Height;
@@ -198,15 +234,43 @@ namespace HedgeLib.Textures
                 for (uint level = 0; level < mipmapCount; ++level)
                 {
                     // Pad out width/height to 4x4 blocks
-                    if (width % 4 != 0)
-                        width = ((width / 4) + 1) * 4;
+                    if (CompressionFormat != CompressionFormats.None)
+                    {
+                        if (width % 4 != 0)
+                            width = ((width / 4) + 1) * 4;
 
-                    if (height % 4 != 0)
-                        height = ((height / 4) + 1) * 4;
+                        if (height % 4 != 0)
+                            height = ((height / 4) + 1) * 4;
+                    }
 
-                    // Compute size of this block, then read it
-                    uint size = ((width * height) / 16) * blockSize;
-                    ColorData[level] = reader.ReadBytes((int)size);
+                    // Compute size of this block
+                    uint size = ((width * height) / pixelsPerBlock) * blockSize;
+
+                    // Re-arrange uncompressed pixels to RGBA8 format if necessary
+                    if (isARGB)
+                    {
+                        uint p;
+                        ColorData[level] = new byte[size];
+
+                        for (uint i = 0; i < size; i += 4)
+                        {
+                            // Convert from ARGB8 to RGBA8
+                            p = reader.ReadUInt32();
+                            ColorData[level][i] = (byte)((p & Header.PixelFormat.RBitMask) >> 16);
+                            ColorData[level][i + 1] =
+                                (byte)((p & Header.PixelFormat.GBitMask) >> 8);
+
+                            ColorData[level][i + 2] = (byte)(p & Header.PixelFormat.BBitMask);
+                            ColorData[level][i + 3] =
+                                (byte)((p & Header.PixelFormat.ABitMask) >> 24);
+                        }
+                    }
+
+                    // Otherwise, simply read the block
+                    else
+                    {
+                        ColorData[level] = reader.ReadBytes((int)size);
+                    }
 
                     // Divide width/height by 2 for the next mipmap
                     width /= 2;
