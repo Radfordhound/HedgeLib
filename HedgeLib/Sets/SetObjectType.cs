@@ -10,7 +10,8 @@ namespace HedgeLib.Sets
     {
         // Variables/Constants
         public List<SetObjectTypeParam> Parameters = new List<SetObjectTypeParam>();
-        public string Name;
+        public Vector3 OffsetPosition = new Vector3(0, 0, 0);
+        public string Name, ModelName;
         public int RawLength;
         public const string Extension = ".xml";
 
@@ -67,19 +68,65 @@ namespace HedgeLib.Sets
 
             foreach (var element in xml.Root.Elements())
             {
+                RawLength = 0;
                 string elemName = element.Name.LocalName;
                 var typeAttr = element.Attribute("type");
-                RawLength = 0;
                 if (typeAttr == null) continue;
 
                 if (elemName.ToLower() == "extra")
                 {
-                    // TODO: Parse Extra XML elements.
+                    var valueAttr = element.Attribute("value");
+                    if (valueAttr == null)
+                        valueAttr = element.Attribute("name");
 
-                    // Length of raw parameter data
-                    if (typeAttr.Value == "RawByteLength")
+                    // TODO: Parse other Extra XML elements.
+                    string v;
+                    switch (typeAttr.Value.ToLower())
                     {
-                        RawLength = Convert.ToInt32(element.Attribute("length").Value);
+                        case "model":
+                            ModelName = valueAttr?.Value;
+                            break;
+
+                        case "offsetposition":
+                            v = valueAttr?.Value;
+                            if (!string.IsNullOrEmpty(v))
+                            {
+                                OffsetPosition = (Vector3)Helpers.ChangeType(
+                                    v, typeof(Vector3));
+                            }
+                            break;
+
+                        case "offset_position_x":
+                        case "offsetpositionx":
+                            float.TryParse((string.IsNullOrEmpty(valueAttr?.Value)) ?
+                                "0" : valueAttr.Value, out float x);
+
+                            OffsetPosition.X = x;
+                            break;
+
+                        case "offset_position_y":
+                        case "offsetpositiony":
+                            float.TryParse((string.IsNullOrEmpty(valueAttr?.Value)) ?
+                                "0" : valueAttr.Value, out float y);
+
+                            OffsetPosition.Y = y;
+                            break;
+
+                        case "offset_position_z":
+                        case "offsetpositionz":
+                            float.TryParse((string.IsNullOrEmpty(valueAttr?.Value)) ?
+                                "0" : valueAttr.Value, out float z);
+
+                            OffsetPosition.Z = z;
+                            break;
+
+                        case "rawbytelength":
+                            v = (valueAttr != null) ? valueAttr.Value :
+                                element.Attribute("length")?.Value;
+
+                            int.TryParse((string.IsNullOrEmpty(v)) ?
+                                "0" : v, out RawLength);
+                            break;
                     }
                 }
                 else
@@ -92,29 +139,33 @@ namespace HedgeLib.Sets
                     {
                         Name = elemName,
                         DataType = dataType,
-                        Description = (descAttr == null) ? "" : descAttr.Value,
+                        Description = descAttr?.Value,
 
                         DefaultValue = (defaultAttr == null) ?
                             Types.GetDefaultFromType(dataType) :
                             Helpers.ChangeType(defaultAttr.Value, dataType)
                     };
 
-                    // Enums
+                    // Enumerator Values
                     foreach (var enumElement in element.Elements())
                     {
-                        if (enumElement.Name != "Enum")
+                        elemName = enumElement.Name.LocalName;
+                        if (elemName.ToLower() != "enum")
                             continue;
 
                         var valueAttr = enumElement.Attribute("value");
-                        descAttr = enumElement.Attribute("description");
+                        if (valueAttr == null) continue;
 
+                        descAttr = enumElement.Attribute("description");
                         var enumType = new SetObjectTypeParamEnum()
                         {
                             Value = valueAttr.Value,
-                            Description = (descAttr == null) ? "" : descAttr.Value
+                            Description = descAttr?.Value
                         };
+
                         param.Enums.Add(enumType);
                     }
+
                     Parameters.Add(param);
                 }
             }
@@ -139,6 +190,7 @@ namespace HedgeLib.Sets
                 paramElement.Add(new XAttribute("description", param.Description));
                 root.Add(paramElement);
             }
+
             xml.Add(root);
             xml.Save(fileStream);
         }
@@ -167,8 +219,8 @@ namespace HedgeLib.Sets
     {
         // Variables/Constants
         public object DefaultValue;
-        public Type DataType;
         public string Name, Description;
+        public Type DataType;
         public List<SetObjectTypeParamEnum> Enums = new List<SetObjectTypeParamEnum>();
 
         // Constructors
