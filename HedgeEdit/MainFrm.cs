@@ -1,5 +1,4 @@
 ﻿using HedgeLib;
-using HedgeLib.Models;
 using HedgeLib.Sets;
 using System;
 using System.Collections.Generic;
@@ -42,7 +41,7 @@ namespace HedgeEdit
 
         public List<object> SelectedObjects = new List<object>();
         private static SceneView sceneView = null;
-        private Thread loadThread;
+        private Thread loadSaveThread;
         private Control activeTxtBx = null;
 
         // Constructors
@@ -129,9 +128,13 @@ namespace HedgeEdit
             statusBarLbl.Text = status;
         }
 
-        public void UpdateProgress(int progress, bool visible)
+        public void UpdateProgress(int progress)
         {
             statusBarProgressBar.Value = progress;
+        }
+
+        public void UpdateProgressVisible(bool visible)
+        {
             statusBarProgressBar.Visible = visible;
         }
 
@@ -187,6 +190,8 @@ namespace HedgeEdit
 
         private void MainFrm_Load(object sender, EventArgs e)
         {
+            LuaScript.Initialize();
+            LuaTerminal.InitLog();
             GameList.Load(Program.StartupPath);
             Viewport.Init(viewport);
         }
@@ -296,30 +301,47 @@ namespace HedgeEdit
 
                 // Load stage
                 // TODO: Stop any previous loading threads before starting this new one
-                loadThread = new Thread(new ThreadStart(() =>
+                loadSaveThread = new Thread(new ThreadStart(() =>
                 {
                     // Load the stage
                     Stage.Load(openDialog.DataDir,
                         openDialog.StageID, GameList.Games[openDialog.GameID]);
 
-                    // Update Scene View
+                    // Update GUI
                     Invoke(new Action(() =>
                     {
                         statusBarLbl.Text = "Done Loading";
                         statusBarProgressBar.Visible = false;
+                        openMenuItem.Enabled = saveSetsMenuItem.Enabled = true;
                     }));
                 }));
 
-                loadThread.Start();
+                openMenuItem.Enabled = saveSetsMenuItem.Enabled = false;
+                loadSaveThread.Start();
             }
         }
 
-        private void SaveMenuItem_Click(object sender, EventArgs e)
+        private void SaveSetsMenuItem_Click(object sender, EventArgs e)
         {
-            // TODO
+            loadSaveThread = new Thread(new ThreadStart(() =>
+            {
+                // Save the sets
+                Stage.SaveSets();
+
+                // Update GUI
+                Invoke(new Action(() =>
+                {
+                    statusBarLbl.Text = "Done Saving";
+                    statusBarProgressBar.Visible = false;
+                    openMenuItem.Enabled = saveSetsMenuItem.Enabled = true;
+                }));
+            }));
+
+            openMenuItem.Enabled = saveSetsMenuItem.Enabled = false;
+            loadSaveThread.Start();
         }
 
-        private void SaveAsMenuItem_Click(object sender, EventArgs e)
+        private void SaveAllMenuItem_Click(object sender, EventArgs e)
         {
             // TODO
         }
@@ -371,16 +393,26 @@ namespace HedgeEdit
             // TODO
         }
 
-        private void AdvancedModeMenuItem_Click(object sender, EventArgs e)
+        private void SceneViewMenuItem_Click(object sender, EventArgs e)
         {
-            if (sceneView == null || sceneView.IsDisposed)
+            if (sceneViewMenuItem.Checked)
             {
-                sceneView = new SceneView();
-                sceneView.Show();
+                if (sceneView == null || sceneView.IsDisposed)
+                {
+                    sceneView = new SceneView();
+                    sceneView.Show();
+                }
+                else
+                {
+                    sceneView.Focus();
+                }
             }
-            else
+            else if (sceneView != null)
             {
-                sceneView.Focus();
+                if (!sceneView.IsDisposed)
+                    sceneView.Close();
+
+                sceneView = null;
             }
         }
         #endregion
@@ -393,11 +425,27 @@ namespace HedgeEdit
                 if (selectedTransform == null) return;
 
                 Viewport.CameraPos =
-                    Types.ToOpenTK(selectedTransform.Position);
+                    Types.ToOpenTK(selectedTransform.Position * 
+                    ((Stage.GameType == null) ? 1 : Stage.GameType.UnitMultiplier));
+
+                // TODO: Set rotation
             }
             else if (SelectedObjects.Count > 0)
             {
                 // TODO: Show all of the objects currently selected.
+            }
+        }
+
+        private void OpenLuaTerminal(object sender, EventArgs e)
+        {
+            if (LuaTerminal.Instance == null || LuaTerminal.Instance.IsDisposed)
+            {
+                var terminal = new LuaTerminal();
+                terminal.Show();
+            }
+            else
+            {
+                LuaTerminal.Instance.Focus();
             }
         }
     }

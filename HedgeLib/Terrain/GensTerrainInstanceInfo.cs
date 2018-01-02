@@ -9,12 +9,11 @@ namespace HedgeLib.Terrain
     {
         // Variables/Constants
         public GensHeader Header = new GensHeader();
-        public Quaternion Rotation = new Quaternion();
-        public Vector3 Position = new Vector3(), Scale = new Vector3();
+        public float[,] TransformMatrix => matrix;
         public string FileName, ModelFileName;
 
+        private float[,] matrix = new float[4, 4];
         public const string Extension = ".terrain-instanceinfo";
-        // TODO
 
         // Methods
         public override void Load(Stream fileStream)
@@ -36,8 +35,6 @@ namespace HedgeLib.Terrain
 
             // Matrix
             reader.JumpTo(matrixOffset, false);
-            var matrix = new float[4, 4];
-
             for (int x = 0; x < 4; ++x)
             {
                 for (int y = 0; y < 4; ++y)
@@ -45,12 +42,6 @@ namespace HedgeLib.Terrain
                     matrix[x, y] = reader.ReadSingle();
                 }
             }
-
-            Position = new Vector3(matrix[0, 3], matrix[1, 3], matrix[2, 3]);
-
-            // TODO: Set Rotation and Scale Properly
-            Rotation = new Quaternion(0, 0, 0, 1);
-            Scale = new Vector3(0, 0, 0);
 
             // Model File Name
             reader.JumpTo(modelFileNameOffset, false);

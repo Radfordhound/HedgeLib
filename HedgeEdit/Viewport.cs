@@ -414,6 +414,15 @@ namespace HedgeEdit
                 Types.ToOpenTK(scale), customData), isObject);
         }
 
+        public static void AddInstance(string type, HedgeLib.Vector3 pos,
+            float[,] rot, HedgeLib.Vector3 scale,
+            bool isObject, object customData = null)
+        {
+            AddInstance(type, new VPObjectInstance(
+                Types.ToOpenTK(pos), rot,
+                Types.ToOpenTK(scale), customData), isObject);
+        }
+
         public static void Clear()
         {
             DefaultCube.Instances.Clear();

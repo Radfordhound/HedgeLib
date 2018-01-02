@@ -1,5 +1,4 @@
-﻿using HedgeLib.Sets;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Windows.Forms;
 
 namespace HedgeEdit
@@ -74,6 +73,18 @@ namespace HedgeEdit
                 mainForm.SelectedObjects.Clear();
                 mainForm.SelectedObjects.Add(e.Node.Tag);
                 mainForm.RefreshGUI();
+            }
+            else
+            {
+                for (int i = 0; i < Stage.Sets.Count; ++i)
+                {
+                    var layer = Stage.Sets[i];
+                    if (layer.Name == e.Node.Text)
+                    {
+                        Stage.CurrentSetLayer = layer;
+                        break;
+                    }
+                }
             }
         }
     }

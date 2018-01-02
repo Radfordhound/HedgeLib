@@ -5,8 +5,9 @@
   <IsVisibleModel type="bool" default="true" description="Setting it to true the model will be visible in-game" />
   <IsSideView type="bool" default="false" description="For side-view" />
   <IsDirectionPath type="bool" default="false" description="Correct to move in the path direction" />
+  <UnknownFlag1 type="bool" default="true" description="" />
   
-  <Unknown1 type="ulong" default="0" description="Always 0?" />
+  <Unknown1 type="uint" default="0" description="Always 0?" />
   <Unknown2 type="ulong" default="0" description="Always 0?" />
   <Unknown3 type="ulong" default="0" description="Always 0?" />
   <Unknown4 type="ulong" default="0" description="Always 0?" />
@@ -18,7 +19,9 @@
   <Unknown10 type="ulong" default="0" description="Always 0?" />
   <Unknown11 type="ulong" default="0" description="Always 0?" />
   <Unknown12 type="ulong" default="0" description="Always 0?" />
-  <Unknown13 type="uint" default="0" description="Always 0?" />
+  <Unknown13 type="ulong" default="0" description="Always 0?" />
   
+  <Extra type="model" value="cmn_obj_dashroller.model" />
+  <Extra type="description" value="Gotta go fast" />
   <Extra type="RawByteLength" length="112" />
 </Template>

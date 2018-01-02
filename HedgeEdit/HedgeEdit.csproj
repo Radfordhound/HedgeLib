@@ -39,6 +39,9 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="MoonSharp.Interpreter, Version=2.0.0.0, Culture=neutral, PublicKeyToken=921e73ce94aa17f8, processorArchitecture=MSIL">
+      <HintPath>..\packages\MoonSharp.2.0.0.0\lib\net40-client\MoonSharp.Interpreter.dll</HintPath>
+    </Reference>
     <Reference Include="OpenTK, Version=3.0.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
       <HintPath>..\packages\OpenTK.3.0.0-pre\lib\net20\OpenTK.dll</HintPath>
     </Reference>
@@ -59,6 +62,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GameEntry.cs" />
+    <Compile Include="LuaScript.cs" />
+    <Compile Include="LuaTerminal.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="LuaTerminal.Designer.cs">
+      <DependentUpon>LuaTerminal.cs</DependentUpon>
+    </Compile>
     <Compile Include="SceneView.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -87,6 +98,9 @@
     <Compile Include="Types.cs" />
     <Compile Include="Viewport.cs" />
     <Compile Include="VPObjectInstance.cs" />
+    <EmbeddedResource Include="LuaTerminal.resx">
+      <DependentUpon>LuaTerminal.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="SceneView.resx">
       <DependentUpon>SceneView.cs</DependentUpon>
     </EmbeddedResource>
@@ -112,6 +126,7 @@
     <None Include="Cache\README.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <Content Include="License.txt" />
     <None Include="OpenTK.dll.config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
@@ -126,13 +141,22 @@
     <None Include="Resources\README.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Resources\DefaultCube.txt" />
+	<None Include="Resources\DefaultCube.txt" />
     <Content Include="Shaders\Default.frag">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Shaders\Default.vert">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Include="Scripts\Games\Forces.lua">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Scripts\Games\Generations.lua">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Scripts\Plugins\README.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

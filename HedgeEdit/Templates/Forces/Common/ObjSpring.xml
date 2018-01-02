@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <FirstSpeed type="float" default="500" description="How much speed the Spring will send you off with." />
+  <Speed type="float" default="500" description="How much speed the Spring will send you off with." />
   <OutOfControl type="float" default="0.5" description="How long the game locks your control for after coming in contact with this object." />
   <KeepVelocityDistance type="float" default="300" description="This distance is a constant speed" />
   <IsPathChange type="bool" default="false" description="Path to switching?" />
@@ -34,5 +34,7 @@
   <Unknown19 type="bool" default="false" description="" />
   <Unknown20 type="uint" default="0" description="Always 0?" />
   
+  <Extra type="model" value="cmn_obj_spring.model" />
+  <Extra type="description" value="Makes you high" />
   <Extra type="RawByteLength" length="112" />
 </Template>

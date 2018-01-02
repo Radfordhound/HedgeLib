@@ -32,8 +32,8 @@
             this.fileMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.newMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.saveMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.saveAsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.saveSetsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.saveAllMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.fileSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.exitMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editMenu = new System.Windows.Forms.ToolStripMenuItem();
@@ -48,9 +48,11 @@
             this.selectAllMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.selectNoneMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.selectSeparator3 = new System.Windows.Forms.ToolStripSeparator();
-            this.advancedModeMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.sceneViewMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.viewSelectedMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.luaMenu = new System.Windows.Forms.ToolStripMenuItem();
+            this.openLuaTerminalMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewport = new OpenTK.GLControl();
             this.mainSplitContainer = new System.Windows.Forms.SplitContainer();
             this.topSplitContainer = new System.Windows.Forms.SplitContainer();
@@ -96,7 +98,8 @@
             this.menuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileMenu,
             this.editMenu,
-            this.viewMenu});
+            this.viewMenu,
+            this.luaMenu});
             this.menuStrip.Location = new System.Drawing.Point(0, 0);
             this.menuStrip.Name = "menuStrip";
             this.menuStrip.Padding = new System.Windows.Forms.Padding(4, 1, 0, 1);
@@ -109,8 +112,8 @@
             this.fileMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.newMenuItem,
             this.openMenuItem,
-            this.saveMenuItem,
-            this.saveAsMenuItem,
+            this.saveSetsMenuItem,
+            this.saveAllMenuItem,
             this.fileSeparator1,
             this.exitMenuItem});
             this.fileMenu.Name = "fileMenu";
@@ -133,22 +136,24 @@
             this.openMenuItem.Text = "&Open...";
             this.openMenuItem.Click += new System.EventHandler(this.OpenMenuItem_Click);
             // 
-            // saveMenuItem
+            // saveSetsMenuItem
             // 
-            this.saveMenuItem.Name = "saveMenuItem";
-            this.saveMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            this.saveMenuItem.Size = new System.Drawing.Size(195, 22);
-            this.saveMenuItem.Text = "&Save";
-            this.saveMenuItem.Click += new System.EventHandler(this.SaveMenuItem_Click);
+            this.saveSetsMenuItem.Name = "saveSetsMenuItem";
+            this.saveSetsMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
+            this.saveSetsMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.saveSetsMenuItem.Text = "&Save Sets";
+            this.saveSetsMenuItem.Enabled = false;
+            this.saveSetsMenuItem.Click += new System.EventHandler(this.SaveSetsMenuItem_Click);
             // 
-            // saveAsMenuItem
+            // saveAllMenuItem
             // 
-            this.saveAsMenuItem.Name = "saveAsMenuItem";
-            this.saveAsMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift) 
+            this.saveAllMenuItem.Name = "saveAllMenuItem";
+            this.saveAllMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift) 
             | System.Windows.Forms.Keys.S)));
-            this.saveAsMenuItem.Size = new System.Drawing.Size(195, 22);
-            this.saveAsMenuItem.Text = "Save &As...";
-            this.saveAsMenuItem.Click += new System.EventHandler(this.SaveAsMenuItem_Click);
+            this.saveAllMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.saveAllMenuItem.Text = "Save &All";
+            this.saveAllMenuItem.Enabled = false;
+            this.saveAllMenuItem.Click += new System.EventHandler(this.SaveAllMenuItem_Click);
             // 
             // fileSeparator1
             // 
@@ -177,7 +182,7 @@
             this.selectAllMenuItem,
             this.selectNoneMenuItem,
             this.selectSeparator3,
-            this.advancedModeMenuItem});
+            this.sceneViewMenuItem});
             this.editMenu.Name = "editMenu";
             this.editMenu.Size = new System.Drawing.Size(39, 22);
             this.editMenu.Text = "&Edit";
@@ -269,13 +274,14 @@
             this.selectSeparator3.Name = "selectSeparator3";
             this.selectSeparator3.Size = new System.Drawing.Size(176, 6);
             // 
-            // advancedModeMenuItem
+            // sceneViewMenuItem
             // 
-            this.advancedModeMenuItem.Name = "advancedModeMenuItem";
-            this.advancedModeMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.E)));
-            this.advancedModeMenuItem.Size = new System.Drawing.Size(179, 22);
-            this.advancedModeMenuItem.Text = "Scene &View";
-            this.advancedModeMenuItem.Click += new System.EventHandler(this.AdvancedModeMenuItem_Click);
+            this.sceneViewMenuItem.Name = "sceneViewMenuItem";
+            this.sceneViewMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.E)));
+            this.sceneViewMenuItem.Size = new System.Drawing.Size(179, 22);
+            this.sceneViewMenuItem.Text = "Scene &View";
+            this.sceneViewMenuItem.Click += new System.EventHandler(this.SceneViewMenuItem_Click);
+            this.sceneViewMenuItem.CheckOnClick = true;
             // 
             // viewMenu
             // 
@@ -289,9 +295,25 @@
             // 
             this.viewSelectedMenuItem.Enabled = false;
             this.viewSelectedMenuItem.Name = "viewSelectedMenuItem";
+            this.viewSelectedMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.W)));
             this.viewSelectedMenuItem.Size = new System.Drawing.Size(146, 22);
             this.viewSelectedMenuItem.Text = "View &Selected";
             this.viewSelectedMenuItem.Click += new System.EventHandler(this.ViewSelected);
+            // 
+            // luaMenu
+            // 
+            this.luaMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.openLuaTerminalMenuItem});
+            this.luaMenu.Name = "luaMenu";
+            this.luaMenu.Size = new System.Drawing.Size(44, 22);
+            this.luaMenu.Text = "&Lua";
+            // 
+            // openLuaTerminalMenuItem
+            // 
+            this.openLuaTerminalMenuItem.Name = "openLuaTerminalMenuItem";
+            this.openLuaTerminalMenuItem.Size = new System.Drawing.Size(146, 22);
+            this.openLuaTerminalMenuItem.Text = "Open Lua &Terminal";
+            this.openLuaTerminalMenuItem.Click += new System.EventHandler(this.OpenLuaTerminal);
             // 
             // viewport
             // 
@@ -650,8 +672,8 @@
         private System.Windows.Forms.ToolStripMenuItem fileMenu;
         private System.Windows.Forms.ToolStripMenuItem newMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem saveMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem saveAsMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem saveSetsMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem saveAllMenuItem;
         private System.Windows.Forms.ToolStripSeparator fileSeparator1;
         private System.Windows.Forms.ToolStripMenuItem exitMenuItem;
         private System.Windows.Forms.ToolStripMenuItem editMenu;
@@ -667,6 +689,8 @@
         private System.Windows.Forms.ToolStripMenuItem selectAllMenuItem;
         private System.Windows.Forms.ToolStripMenuItem selectNoneMenuItem;
         private System.Windows.Forms.ToolStripMenuItem viewSelectedMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem luaMenu;
+        private System.Windows.Forms.ToolStripMenuItem openLuaTerminalMenuItem;
         private OpenTK.GLControl viewport;
         private System.Windows.Forms.SplitContainer mainSplitContainer;
         private System.Windows.Forms.Label objectCountLbl;
@@ -687,7 +711,7 @@
         private System.Windows.Forms.ColumnHeader columnHeader1;
         private System.Windows.Forms.ColumnHeader columnHeader2;
         private System.Windows.Forms.ToolStripSeparator selectSeparator3;
-        private System.Windows.Forms.ToolStripMenuItem advancedModeMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem sceneViewMenuItem;
         private System.Windows.Forms.StatusStrip statusStrip;
         private System.Windows.Forms.ToolStripStatusLabel statusBarLbl;
         private System.Windows.Forms.ToolStripProgressBar statusBarProgressBar;

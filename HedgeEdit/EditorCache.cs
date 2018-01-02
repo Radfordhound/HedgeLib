@@ -8,15 +8,23 @@ namespace HedgeEdit
     public class EditorCache : FileBase
     {
         // Variables/Constants
-        public List<List<string>> ArcHashes = new List<List<string>>();
-        public string GameType;
+        public Dictionary<string, List<string>> ArcHashes =
+            new Dictionary<string, List<string>>();
 
+        public string GameType;
         public const string FileName = "EditorCache.xml";
+        public const float Version = 1.0f;
 
         // Methods
         public override void Load(Stream fileStream)
         {
             var xml = XDocument.Load(fileStream);
+
+            // Version Check
+            var versionAttr = xml.Root.Attribute("version");
+            if (versionAttr == null || !float.TryParse(versionAttr.Value,
+                out float v) || v > Version)
+                return;
 
             // Game Type
             var gameTypeElem = xml.Root.Element("GameType");
@@ -29,30 +37,40 @@ namespace HedgeEdit
             {
                 foreach (var archiveElem in arcHashesElem.Elements("Archive"))
                 {
+                    var idAttr = archiveElem.Attribute("id");
+                    if (idAttr == null || string.IsNullOrEmpty(idAttr.Value))
+                        continue;
+
                     var arcHashes = new List<string>();
                     foreach (var arcHashElem in archiveElem.Elements("ArcHash"))
                     {
                         arcHashes.Add(arcHashElem.Value);
                     }
-                    ArcHashes.Add(arcHashes);
+
+                    ArcHashes.Add(idAttr.Value, arcHashes);
                 }
             }
         }
 
         public override void Save(Stream fileStream)
         {
-            var rootElem = new XElement("EditorCache");
+            var versionAttr = new XAttribute("version", Version);
+            var rootElem = new XElement("EditorCache", versionAttr);
             var gameTypeElem = new XElement("GameType", GameType);
             var arcHashesElem = new XElement("ArcHashes");
 
-            foreach (var arcHashes in ArcHashes)
+            foreach (var arc in ArcHashes)
             {
-                var arcElem = new XElement("Archive");
+                var idAttr = new XAttribute("id", arc.Key);
+                var arcElem = new XElement("Archive", idAttr);
+                var arcHashes = arc.Value;
+
                 foreach (var arcHash in arcHashes)
                 {
                     var arcHashElem = new XElement("ArcHash", arcHash);
                     arcElem.Add(arcHashElem);
                 }
+
                 arcHashesElem.Add(arcElem);
             }
 
