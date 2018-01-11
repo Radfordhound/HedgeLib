@@ -66,6 +66,12 @@ namespace HedgeEdit
             script.Globals["IOGetFilesInDir"] = (Func<string,
                 string, bool, string[]>)IOGetFilesInDir;
 
+            script.Globals["IOGetExtension"] = (Func<string, string>)IOGetExtension;
+            script.Globals["IOGetName"] = (Func<string, string>)IOGetName;
+
+            script.Globals["IOGetNameWithoutExtension"] =
+                (Func<string, string>)IOGetNameWithoutExtension;
+
             // Values
             script.Globals["GetSetLayer"] = (Func<int, SetData>)GetSetLayer;
             script.Globals["GetSetLayerCount"] = (Func<int>)GetSetLayerCount;
@@ -75,15 +81,15 @@ namespace HedgeEdit
             script.Globals["LoadTerrainList"] = (Func<string, string,
                 string, GensTerrainList>)LoadTerrainList;
 
-            script.Globals["LoadTerrain"] = (Func<string, string, Model>)LoadTerrain;
+            script.Globals["LoadTerrain"] = (Func<string, string, bool, Model>)LoadTerrain;
             script.Globals["LoadObjectModel"] = (Func<string,
-                string, string, Vector3, Model>)LoadObjectModel;
+                string, bool, Vector3?, Model>)LoadObjectModel;
 
             script.Globals["LoadMaterial"] = (Func<string,
                 string, string, GensMaterial>)LoadMaterial;
 
             script.Globals["LoadTexture"] = (Func<string, string, Texture>)LoadTexture;
-            script.Globals["LoadSetData"] = (Func<string, SetData>)LoadSetData;
+            script.Globals["LoadSetData"] = (Func<string, bool, string[], SetData>)LoadSetData;
 
             // Saving
             script.Globals["Repack"] = (Action<string, string, string, bool, bool, uint?>)Repack;
@@ -107,6 +113,45 @@ namespace HedgeEdit
             UserData.RegisterType<GensMaterial>();
             UserData.RegisterType<Model>();
             UserData.RegisterType<GensTerrainList>();
+        }
+
+        public static bool EvaluateCondition(string condition)
+        {
+            try
+            {
+                var s = new Script();
+                string txt = $"return ({condition.Replace("!=", "~=")})";
+                var v = s.DoString(txt);
+                return v.Boolean;
+            }
+            catch (Exception ex)
+            {
+                LuaTerminal.LogError($"ERROR: {ex.Message}");
+                return false;
+            }
+        }
+
+        public static bool EvaluateObjectCondition(SetObject obj,
+            SetObjectType template, string condition)
+        {
+            try
+            {
+                var s = new Script();
+                for (int i = 0; i < template.Parameters.Count; ++i)
+                {
+                    var param = template.Parameters[i];
+                    s.Globals[param.Name] = obj.Parameters[i].Data;
+                }
+
+                string txt = $"return ({condition.Replace("!=", "~=")})";
+                var v = s.DoString(txt);
+                return v.Boolean;
+            }
+            catch (Exception ex)
+            {
+                LuaTerminal.LogError($"ERROR: {ex.Message}");
+                return false;
+            }
         }
 
         public void DoScript(string filePath)
@@ -133,13 +178,13 @@ namespace HedgeEdit
             Program.MainForm.Invoke(action);
         }
 
-        private static void SpawnObject(
-            SetObject obj, float unitMultiplier)
+        private static void SpawnObject(SetObject obj, string modelName,
+            float unitMultiplier, Vector3 posOffset)
         {
             MainUIInvoke(() =>
             {
-                Viewport.AddInstance(obj.ObjectType,
-                    obj.Transform.Position * unitMultiplier,
+                var instance = Viewport.AddInstance(modelName,
+                    (obj.Transform.Position * unitMultiplier) + posOffset,
                     obj.Transform.Rotation, obj.Transform.Scale,
                     true, obj);
 
@@ -148,8 +193,8 @@ namespace HedgeEdit
                 {
                     if (child == null) continue;
 
-                    Viewport.AddInstance(obj.ObjectType,
-                        child.Position * unitMultiplier,
+                    Viewport.AddInstance(modelName,
+                        (child.Position * unitMultiplier) + posOffset,
                         child.Rotation, child.Scale,
                         true, child);
                 }
@@ -293,6 +338,24 @@ namespace HedgeEdit
             return Directory.GetFiles(path, filter,
                 (includeSubDirs) ? SearchOption.AllDirectories :
                 SearchOption.TopDirectoryOnly);
+        }
+
+        public string IOGetExtension(string path)
+        {
+            path = string.Format(path, Stage.CacheDir, Stage.ID);
+            return Path.GetExtension(path);
+        }
+
+        public string IOGetName(string path)
+        {
+            path = string.Format(path, Stage.CacheDir, Stage.ID);
+            return Path.GetFileName(path);
+        }
+
+        public string IOGetNameWithoutExtension(string path)
+        {
+            path = string.Format(path, Stage.CacheDir, Stage.ID);
+            return Path.GetFileNameWithoutExtension(path);
         }
 
         // Value Callbacks
@@ -573,7 +636,7 @@ namespace HedgeEdit
             return terrainList;
         }
 
-        public Model LoadTerrain(string path, string resDir)
+        public Model LoadTerrain(string path, string resDir, bool loadMats = true)
         {
             // Format path strings, return if file doesn't exist
             path = string.Format(path, Stage.CacheDir, Stage.ID);
@@ -669,11 +732,14 @@ namespace HedgeEdit
             }
 
             // Materials
-            foreach (var mesh in mdl.Meshes)
+            if (loadMats)
             {
-                LoadMaterial(Path.Combine(resDir,
-                    $"{mesh.MaterialName}{GensMaterial.Extension}"),
-                    mesh.MaterialName, resDir);
+                foreach (var mesh in mdl.Meshes)
+                {
+                    LoadMaterial(Path.Combine(resDir,
+                        $"{mesh.MaterialName}{GensMaterial.Extension}"),
+                        mesh.MaterialName, resDir);
+                }
             }
 
             MainUIInvoke(() =>
@@ -686,14 +752,14 @@ namespace HedgeEdit
         }
 
         public Model LoadObjectModel(string path, string resDir,
-            string type, Vector3 posOffset)
+            bool loadMats = true, Vector3? scale = null)
         {
             // Format path strings, return if file doesn't exist
             path = string.Format(path, Stage.CacheDir, Stage.ID);
             resDir = string.Format(resDir, Stage.CacheDir, Stage.ID);
 
-            if (!File.Exists(path) || !Directory.Exists(resDir) ||
-                string.IsNullOrEmpty(type)) return null;
+            if (!File.Exists(path) || !Directory.Exists(resDir))
+                return null;
 
             // Figure out what type of model to use
             Model mdl;
@@ -732,48 +798,45 @@ namespace HedgeEdit
                         "Could not load, game type has not been set!");
             }
 
-            string shortName = Path.GetFileNameWithoutExtension(path);
+            string shortName = Path.GetFileName(path);
 
             // Model
             if (Viewport.Objects.ContainsKey(shortName))
-            {
-                LuaTerminal.LogWarning(string.Format(
-                    "WARNING: Skipped model {0} as a model with that {1}",
-                    shortName, "name has already been loaded!"));
                 return null;
-            }
-            else
-            {
-                mdl.Load(path);
-                mdl.Name = shortName;
 
-                // Offset Position
-                if (posOffset.X != 0 || posOffset.Y != 0 || posOffset.Z != 0)
+            mdl.Load(path);
+            mdl.Name = shortName;
+
+            // Scale
+            if (scale.HasValue)
+            {
+                foreach (var mesh in mdl.Meshes)
                 {
-                    foreach (var mesh in mdl.Meshes)
+                    for (uint i = Mesh.VertPos; i < mesh.VertexData.Length;)
                     {
-                        for (uint i = Mesh.VertPos; i < mesh.VertexData.Length;)
-                        {
-                            mesh.VertexData[i] += posOffset.X;
-                            mesh.VertexData[i + 1] += posOffset.Y;
-                            mesh.VertexData[i + 2] += posOffset.Z;
-                            i += Mesh.StructureLength;
-                        }
+                        mesh.VertexData[i] *= scale.Value.X;
+                        mesh.VertexData[i + 1] *= scale.Value.Y;
+                        mesh.VertexData[i + 2] *= scale.Value.Z;
+                        i += Mesh.StructureLength;
                     }
                 }
             }
 
             // Materials
-            foreach (var mesh in mdl.Meshes)
+            if (loadMats)
             {
-                LoadMaterial(Path.Combine(resDir,
-                    $"{mesh.MaterialName}{GensMaterial.Extension}"),
-                    mesh.MaterialName, resDir);
+                foreach (var mesh in mdl.Meshes)
+                {
+                    // TODO: Make extension type-specific
+                    LoadMaterial(Path.Combine(resDir,
+                        $"{mesh.MaterialName}{GensMaterial.Extension}"),
+                        mesh.MaterialName, resDir);
+                }
             }
 
             MainUIInvoke(() =>
             {
-                Viewport.AddObjectModel(type, mdl);
+                Viewport.AddObjectModel(shortName, mdl);
             });
 
             return mdl;
@@ -782,8 +845,8 @@ namespace HedgeEdit
         public GensMaterial LoadMaterial(string path, string name, string texDir)
         {
             // Don't bother loading this material again if we've already loaded it
-            name = (string.IsNullOrEmpty(name)) ?
-                Path.GetFileNameWithoutExtension(path) : name;
+            if (string.IsNullOrEmpty(name))
+                name = Path.GetFileNameWithoutExtension(path);
 
             if (Viewport.Materials.ContainsKey(name))
                 return null;
@@ -842,16 +905,9 @@ namespace HedgeEdit
             foreach (var tex in mat.Textures)
             {
                 // TODO: Make extension type-specific
-                try
-                {
-                    LoadTexture(Path.Combine(texDir,
-                        $"{tex.TextureName}{DDS.Extension}"),
-                        tex.TextureName);
-                }
-                catch (Exception ex)
-                {
-                    LuaTerminal.LogError($"ERROR: {ex.Message}");
-                }
+                LoadTexture(Path.Combine(texDir,
+                    $"{tex.TextureName}{DDS.Extension}"),
+                    tex.TextureName);
             }
 
             return mat;
@@ -905,16 +961,25 @@ namespace HedgeEdit
             }
 
             // Load Texture
-            tex.Load(path);
-            MainUIInvoke(() =>
+            try
             {
-                Viewport.AddTexture(name, tex);
-            });
+                tex.Load(path);
+                MainUIInvoke(() =>
+                {
+                    Viewport.AddTexture(name, tex);
+                });
+            }
+            catch (Exception ex)
+            {
+                LuaTerminal.LogError($"ERROR: {ex.Message}");
+                return null;
+            }
 
             return tex;
         }
 
-        public SetData LoadSetData(string path)
+        public SetData LoadSetData(string path, bool loadModels = true,
+            string[] altModelDirs = null)
         {
             // Format path strings, return if file doesn't exist
             path = string.Format(path, Stage.CacheDir, Stage.ID);
@@ -976,22 +1041,146 @@ namespace HedgeEdit
 
             foreach (var obj in setData.Objects)
             {
-                // Load Object Model
-                if (resDirExists && !Viewport.Objects.ContainsKey(obj.ObjectType) &&
-                    gameType.ObjectTemplates.ContainsKey(obj.ObjectType))
+                var offsetPos = new Vector3(0, 0, 0);
+                SetObjectType type = null;
+
+                if (gameType.ObjectTemplates.ContainsKey(obj.ObjectType))
+                    type = gameType.ObjectTemplates[obj.ObjectType];
+
+                if (type != null)
                 {
-                    var type = gameType.ObjectTemplates[obj.ObjectType];
-                    if (type != null && !string.IsNullOrEmpty(type.ModelName))
+                    var offsetPosExtra = type.GetExtra("OffsetPosition");
+                    if (offsetPosExtra == null)
                     {
-                        LoadObjectModel(
-                            Path.Combine(resDir, type.ModelName),
-                            resDir, obj.ObjectType,
-                            type.OffsetPosition);
+                        offsetPos.X = GetFloatExtra("OffsetPositionX", "Offset_Position_X");
+                        offsetPos.Y = GetFloatExtra("OffsetPositionY", "Offset_Position_Y");
+                        offsetPos.Z = GetFloatExtra("OffsetPositionZ", "Offset_Position_Z");
+                    }
+                    else if (!string.IsNullOrEmpty(offsetPosExtra.Value))
+                    {
+                        offsetPos = (Vector3)Helpers.ChangeType(
+                            offsetPosExtra.Value, typeof(Vector3));
+                    }
+
+                    // Sub-Methods
+                    float GetFloatExtra(string name, string altName)
+                    {
+                        var extra = type.GetExtra(name);
+                        if (extra == null)
+                            extra = type.GetExtra(altName);
+
+                        float.TryParse((string.IsNullOrEmpty(extra?.Value)) ?
+                            "0" : extra.Value, out float f);
+                        return f;
+                    }
+                }
+
+                // Load Object Model
+                string mdlName = null;
+                if (loadModels && resDirExists && type != null)
+                {
+                    foreach (var extra in type.Extras)
+                    {
+                        if (extra.Type.ToLower() != "model")
+                            continue;
+
+                        if (string.IsNullOrEmpty(extra.Condition) ||
+                            EvaluateObjectCondition(obj, type, extra.Condition))
+                        {
+                            mdlName = extra.Value;
+                            break;
+                        }
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(mdlName) &&
+                    !Viewport.Objects.ContainsKey(mdlName))
+                {
+                    // If the model name is actually supposed to be the value of
+                    // another parameter (e.g. in Gismos), get the name from that instead.
+                    if (mdlName.IndexOf('.') == -1)
+                    {
+                        int mdlNameParamIndex = type.GetParameterIndex(mdlName);
+                        if (mdlNameParamIndex != -1)
+                        {
+                            mdlName = (obj.Parameters[
+                                mdlNameParamIndex].Data as string);
+                        }
+                    }
+                    else
+                    {
+                        int openIndex = mdlName.IndexOf('{');
+                        int closeIndex = mdlName.IndexOf('}');
+
+                        if (openIndex != -1 && closeIndex > openIndex)
+                        {
+                            ++openIndex;
+                            if (int.TryParse(mdlName.Substring(openIndex,
+                                closeIndex - openIndex), out int index) &&
+                                index >= 0 && index < type.Parameters.Count)
+                            {
+                                mdlName = mdlName.Replace($"{{{index}}}",
+                                    (obj.Parameters[index].Data as string));
+                            }
+                        }
+                    }
+
+                    // Get scale if any
+                    Vector3? scale = null;
+                    var scaleExtra = type.GetExtra("scale");
+
+                    if (scaleExtra != null && !string.IsNullOrEmpty(scaleExtra.Value))
+                    {
+                        if (float.TryParse(scaleExtra.Value, out float s))
+                        {
+                            scale = new Vector3(s, s, s);
+                        }
+
+                        // TODO: Maybe try to parse it as a Vector3 as well?
+
+                        else
+                        {
+                            int scaleParamIndex = type.GetParameterIndex(scaleExtra.Value);
+                            if (scaleParamIndex != -1)
+                            {
+                                var param = obj.Parameters[scaleParamIndex];
+                                if (param != null)
+                                {
+                                    if (param.DataType == typeof(Vector3))
+                                    {
+                                        scale = (Vector3)param.Data;
+                                    }
+                                    else if (param.DataType == typeof(float))
+                                    {
+                                        float f = (float)param.Data;
+                                        scale = new Vector3(f, f, f);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Load the model from the standard resources directory
+                    var mdl = LoadObjectModel(
+                        Path.Combine(resDir, mdlName),
+                        resDir, true, scale);
+
+                    // If the model could not be found, attempt to load from
+                    // any given alternative resources directories.
+                    if (altModelDirs != null && mdl == null)
+                    {
+                        foreach (string dir in altModelDirs)
+                        {
+                            mdl = LoadObjectModel(
+                                Path.Combine(dir, mdlName),
+                                dir, true, scale);
+                        }
                     }
                 }
 
                 // Spawn Object in World
-                SpawnObject(obj, gameType.UnitMultiplier);
+                SpawnObject(obj, mdlName,
+                    gameType.UnitMultiplier, offsetPos);
             }
 
             setData.Name = Path.GetFileNameWithoutExtension(path);
@@ -1008,7 +1197,8 @@ namespace HedgeEdit
 
         // Saving Callbacks
         public void Repack(string path, string inDir, string hashID,
-            bool includeSubDirs = false, bool generateList = false, uint? splitCount = 0xA00000)
+            bool includeSubDirs = false, bool generateList = false,
+            uint? splitCount = 0xA00000)
         {
             // Format path strings
             path = string.Format(path, Stage.DataDir, Stage.ID);

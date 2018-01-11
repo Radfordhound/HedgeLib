@@ -1,6 +1,26 @@
-﻿function ExtractResources(sourceDir, destDir)
+﻿function LoadTexturesInDir(dir, loadingTxt)
+	local files = IOGetFilesInDir(
+		dir, "*.dds", false)
+
+	if files ~= nil and #files > 0 then
+		UIShowProgress()
+
+		for i = 1, #files do
+			UIChangeProgress(((i - 1) / #files) * 100)
+			UIChangeLoadStatus(string.format(
+				loadingTxt .. " %02d/%02d", i, #files))
+
+			LoadTexture(files[i], IOGetNameWithoutExtension(files[i]))
+		end
+
+		UIHideProgress()
+	end
+end
+
+function ExtractResources(sourceDir, destDir)
 	SetDataType("Forces")
 	Extract("{0}/CommonObject.pac", "{0}")
+	-- TODO: Finish this
 end
 
 function Load(dataDir, cacheDir, stageID)
@@ -13,6 +33,12 @@ function Load(dataDir, cacheDir, stageID)
 	-- Object (E.G. w5a01/w5a01_obj.pac)
 	UIChangeStatus("Extracting Object PAC...")
 	Extract("{0}/{1}/{1}_obj.pac", "{0}/{1}/{1}_obj", "Object")
+	LoadTexturesInDir("{0}/{1}/{1}_obj", "Object Textures")
+
+	-- Terrain Common (E.G. w5a01/w5a01_trr_cmn.pac)
+	UIChangeStatus("Extracting Terrain Common PAC...")
+	Extract("{0}/{1}/{1}_trr_cmn.pac", "{0}/{1}/{1}_trr_cmn", "TerrainCommon")
+	LoadTexturesInDir("{0}/{1}/{1}_trr_cmn", "Terrain Common Textures")
 
 	-- Set Data (E.G. gedit/w5a01_gedit.pac)
 	UIChangeStatus("Extracting Set Data...")
@@ -29,7 +55,8 @@ function Load(dataDir, cacheDir, stageID)
 			UIChangeLoadStatus(string.format(
 				"Set Data %02d/%02d", i, #files))
 
-			LoadSetData(files[i])
+			LoadSetData(files[i], true,
+				{ "{0}/{1}/{1}_obj", "{0}/{1}/{1}_trr_cmn" })
 		end
 
 		UIHideProgress()
@@ -38,10 +65,6 @@ function Load(dataDir, cacheDir, stageID)
 	-- Sky (E.G. w5a01/w5a01_sky.pac)
 	UIChangeStatus("Extracting Sky PAC...")
 	Extract("{0}/{1}/{1}_sky.pac", "{0}/{1}/{1}_sky", "Sky")
-
-	-- Terrain Common (E.G. w5a01/w5a01_trr_cmn.pac)
-	UIChangeStatus("Extracting Terrain Common PAC...")
-	Extract("{0}/{1}/{1}_trr_cmn.pac", "{0}/{1}/{1}_trr_cmn", "TerrainCommon")
 
 	-- Terrain Blocks (E.G. w5a01/w5a01_trr_s00.pac)
 	UIShowProgress()

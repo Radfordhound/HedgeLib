@@ -10,12 +10,37 @@ namespace HedgeLib.Sets
     {
         // Variables/Constants
         public List<SetObjectTypeParam> Parameters = new List<SetObjectTypeParam>();
-        public Vector3 OffsetPosition = new Vector3(0, 0, 0);
-        public string Name, ModelName;
-        public int RawLength;
+        public List<SetObjectTypeParamExtra> Extras = new List<SetObjectTypeParamExtra>();
+        public string Name;
         public const string Extension = ".xml";
 
         // Methods
+        public SetObjectTypeParamExtra AddExtra(string type,
+            object value, string condition = null)
+        {
+            var extra = new SetObjectTypeParamExtra()
+            {
+                Type = type,
+                Value = value.ToString(),
+                Condition = condition
+            };
+
+            Extras.Add(extra);
+            return extra;
+        }
+
+        public SetObjectTypeParamExtra GetExtra(string type)
+        {
+            type = type.ToLower();
+            foreach (var extra in Extras)
+            {
+                if (extra.Type.ToLower() == type)
+                    return extra;
+            }
+
+            return null;
+        }
+
         public static Dictionary<string, SetObjectType>
             LoadObjectTemplates(string templatesDir, string gameName)
         {
@@ -68,7 +93,6 @@ namespace HedgeLib.Sets
 
             foreach (var element in xml.Root.Elements())
             {
-                RawLength = 0;
                 string elemName = element.Name.LocalName;
                 var typeAttr = element.Attribute("type");
                 if (typeAttr == null) continue;
@@ -76,58 +100,18 @@ namespace HedgeLib.Sets
                 if (elemName.ToLower() == "extra")
                 {
                     var valueAttr = element.Attribute("value");
+                    var condAttr = element.Attribute("condition");
+
                     if (valueAttr == null)
                         valueAttr = element.Attribute("name");
 
-                    // TODO: Parse other Extra XML elements.
-                    string v;
-                    switch (typeAttr.Value.ToLower())
-                    {
-                        case "model":
-                            ModelName = valueAttr?.Value;
-                            break;
+                    if (valueAttr == null)
+                        valueAttr = element.Attribute("length");
 
-                        case "offsetposition":
-                            v = valueAttr?.Value;
-                            if (!string.IsNullOrEmpty(v))
-                            {
-                                OffsetPosition = (Vector3)Helpers.ChangeType(
-                                    v, typeof(Vector3));
-                            }
-                            break;
+                    string v = valueAttr?.Value;
+                    string condition = condAttr?.Value;
 
-                        case "offset_position_x":
-                        case "offsetpositionx":
-                            float.TryParse((string.IsNullOrEmpty(valueAttr?.Value)) ?
-                                "0" : valueAttr.Value, out float x);
-
-                            OffsetPosition.X = x;
-                            break;
-
-                        case "offset_position_y":
-                        case "offsetpositiony":
-                            float.TryParse((string.IsNullOrEmpty(valueAttr?.Value)) ?
-                                "0" : valueAttr.Value, out float y);
-
-                            OffsetPosition.Y = y;
-                            break;
-
-                        case "offset_position_z":
-                        case "offsetpositionz":
-                            float.TryParse((string.IsNullOrEmpty(valueAttr?.Value)) ?
-                                "0" : valueAttr.Value, out float z);
-
-                            OffsetPosition.Z = z;
-                            break;
-
-                        case "rawbytelength":
-                            v = (valueAttr != null) ? valueAttr.Value :
-                                element.Attribute("length")?.Value;
-
-                            int.TryParse((string.IsNullOrEmpty(v)) ?
-                                "0" : v, out RawLength);
-                            break;
-                    }
+                    AddExtra(typeAttr.Value, v, condition);
                 }
                 else
                 {
@@ -206,6 +190,17 @@ namespace HedgeLib.Sets
             return null;
         }
 
+        public int GetParameterIndex(string name)
+        {
+            for (int i = 0; i < Parameters.Count; ++i)
+            {
+                if (Parameters[i].Name == name)
+                    return i;
+            }
+
+            return -1;
+        }
+
         public SetObjectTypeParam AddParameter(string name, Type dataType)
         {
             var param = new SetObjectTypeParam(name, dataType);
@@ -243,5 +238,11 @@ namespace HedgeLib.Sets
         {
             return $"{Description} ({Value})";
         }
+    }
+
+    public class SetObjectTypeParamExtra
+    {
+        // Variables/Constants
+        public string Type, Value, Condition;
     }
 }
