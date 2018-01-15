@@ -13,12 +13,14 @@ Right now it supports the following:
 
 ### Hedgehog Engine
 - [Reading/Writing Lights.](HedgeLib/Lights/Light.cs)
+- [Reading/Writing Models.](HedgeLib/Models/GensModel.cs)
+- [Reading/Writing Materials.](HedgeLib/Materials/GensMaterial.cs)
 
 ### Sonic Forces
+- [Reading Archives.](HedgeLib/Archives/ForcesArchive.cs)
 - [Reading/Writing Set Data.](HedgeLib/Sets/ForcesSetData.cs)
 
 ### Sonic Colors/Sonic Lost World
-- [Reading/Writing BINA headers/footers.](HedgeLib/IO/BINA.cs)
 - [Reading/Writing GISM files.](HedgeLib/Misc/LWGism.cs)
 - [Reading/Writing Set Data.](HedgeLib/Sets/SOBJ.cs)
 - [Reading/Writing SNDL (SouND List) files.](HedgeLib/Sound/ColorsSNDL.cs)
@@ -34,6 +36,10 @@ Right now it supports the following:
 
 ### Sonic Heroes/Shadow the Hedgehog
 - [Reading/Writing Uncompressed Archives.](HedgeLib/Archives/ONEArchive.cs)
+
+### Other
+- [Reading DDS Texures.](HedgeLib/Textures/DDS.cs)
+- [Reading/Writing BINA headers/footers.](HedgeLib/IO/BINA.cs)
 
 ## HedgeEdit
 A level editor built with OpenTK/Winforms designed to carry much of the same
@@ -66,4 +72,4 @@ As such, you don't have to manually build any of the tools/libraries in this rep
 If you do wish to manually build, however, all that's required is the following:
 - [Visual Studio 2017 (or later).](https://www.visualstudio.com/downloads/)
 - .NET Framework 4.6/4.7 (can be downloaded from Visual Studio).
-- OpenTK and OpenTK.GLControl (both are automatically downloaded as a NuGet package when HedgeEdit is first opened in Visual Studio).
+- OpenTK, OpenTK.GLControl, and MoonSharp (these are all automatically downloaded as NuGet packages when HedgeEdit is first opened in Visual Studio).
