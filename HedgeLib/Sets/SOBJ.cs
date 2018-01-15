@@ -263,14 +263,25 @@ namespace HedgeLib.Sets
             // Skip loading parameters if template doesn't exist
             if (objTemplate != null)
             {
-                var paramBegin = reader.BaseStream.Position;
+                // Get Raw Byte Length
+                var rawDataLenExtra = objTemplate.GetExtra("RawByteLength");
+                long paramBegin = reader.BaseStream.Position;
+                int rawLength = 0;
+
+                if (rawDataLenExtra != null &&
+                    !string.IsNullOrEmpty(rawDataLenExtra.Value))
+                {
+                    int.TryParse(rawDataLenExtra.Value, out rawLength);
+                }
+
                 // Read all the data then return to beginning
-                if ((rawDataMode == true) && (objTemplate.RawLength != 0))
+                if (rawDataMode == true && rawLength != 0)
                 {
                     obj.CustomData.Add("RawParamData", new SetObjectParam(typeof(byte[]),
-                        reader.ReadBytes(objTemplate.RawLength)));
+                        reader.ReadBytes(rawLength)));
                     reader.JumpTo(paramBegin);
                 }
+
                 // Parameters
                 foreach (var param in objTemplate.Parameters)
                 {
@@ -339,8 +350,9 @@ namespace HedgeLib.Sets
 
                 if (rawDataMode == false)
                 {
-                    var knownParamLength = reader.BaseStream.Position - paramBegin;
-                    var remainingBytes = objTemplate.RawLength - knownParamLength;
+                    long knownParamLength = (reader.BaseStream.Position - paramBegin);
+                    long remainingBytes = (rawLength - knownParamLength);
+
                     obj.CustomData.Add("RawParamData", new SetObjectParam(typeof(byte[]),
                         reader.ReadBytes((int)remainingBytes)));
                 }
@@ -398,7 +410,7 @@ namespace HedgeLib.Sets
             uint parent = (type == SOBJType.LostWorld) ?
                 obj.GetCustomDataValue<uint>("Parent") : 0;
 
-            byte [] rawParamData = obj.GetCustomDataValue<byte[]>("RawParamData");
+            var rawParamData = obj.GetCustomDataValue<byte[]>("RawParamData");
 
             // Combine the two values back into one so we can write with correct endianness.
             uint unknownData = (unknown1 << 16) | (obj.ObjectID & 0xFFFF);
@@ -418,7 +430,7 @@ namespace HedgeLib.Sets
             writer.WriteNulls((type == SOBJType.LostWorld) ? 0xC : 4u);
 
             // Parameters
-            var paramBegin = writer.BaseStream.Position;
+            long paramBegin = writer.BaseStream.Position;
             foreach (var param in obj.Parameters)
             {
                 // Write Special Types/Fix Padding
@@ -472,16 +484,19 @@ namespace HedgeLib.Sets
                 // Write Data
                 writer.WriteByType(param.DataType, param.Data);
             }
-            // Write remaining raw data from loaded orc
+
+            // Write remaining raw data from loaded ORC
             if (rawDataMode == false)
             {
                 writer.Write(rawParamData);
             }
             else
             {
-                var knownParamLength = (int)writer.BaseStream.Position - (int)paramBegin;
-                writer.Write(rawParamData, knownParamLength, rawParamData.Length - knownParamLength);
+                int knownParamLength = (int)(writer.BaseStream.Position - paramBegin);
+                writer.Write(rawParamData, knownParamLength,
+                    rawParamData.Length - knownParamLength);
             }
+
             writer.FixPadding(4);
         }
 
