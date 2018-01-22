@@ -462,9 +462,6 @@ namespace HedgeEdit
                     true, obj)
             };
 
-            obj.CustomData.Add(SetData.HedgeEditInstances,
-                new SetObjectParam(typeof(List<VPObjectInstance>), instances));
-
             if (obj.Children == null) return;
             foreach (var child in obj.Children)
             {
