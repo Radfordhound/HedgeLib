@@ -9,7 +9,7 @@ HedgeLib is a C# library [under the MIT license](https://github.com/Radfordhound
 Right now it supports the following:
 
 ### Havok
-- [Reading/Writing XML Havok data.](HedgeLib/Collison/Havok.cs)
+- [Reading/Writing XML Havok data.](HedgeLib/Havok/HavokXML.cs)
 
 ### Hedgehog Engine
 - [Reading/Writing Lights.](HedgeLib/Lights/Light.cs)
@@ -32,6 +32,7 @@ Right now it supports the following:
 - [Reading/Writing Light Lists.](HedgeLib/Lights/GensLightList.cs)
 
 ### Sonic '06
+- [Reading Archives.](HedgeLib/Archives/S06Archive.cs)
 - [Reading/Writing Set Data.](HedgeLib/Sets/S06SetData.cs)
 
 ### Sonic Heroes/Shadow the Hedgehog
