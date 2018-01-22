@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace HedgeLib
+﻿namespace HedgeLib
 {
     public class Quaternion : Vector4
     {
@@ -24,17 +22,17 @@ namespace HedgeLib
 
         public Quaternion(Vector3 eulerAngles, bool inRadians = false)
         {
-            double m = (inRadians) ? 0.5 : Math.PI / 360;
+            double m = (inRadians) ? 0.5 : System.Math.PI / 360;
             double h = eulerAngles.Y * m;
             double a = eulerAngles.Z * m;
             double b = eulerAngles.X * m;
 
-            double c1 = Math.Cos(h);
-            double c2 = Math.Cos(a);
-            double c3 = Math.Cos(b);
-            double s1 = Math.Sin(h);
-            double s2 = Math.Sin(a);
-            double s3 = Math.Sin(b);
+            double c1 = System.Math.Cos(h);
+            double c2 = System.Math.Cos(a);
+            double c3 = System.Math.Cos(b);
+            double s1 = System.Math.Sin(h);
+            double s2 = System.Math.Sin(a);
+            double s3 = System.Math.Sin(b);
 
             W = (float)(c1 * c2 * c3 - s1 * s2 * s3);
             Y = (float)(s1 * c2 * c3 + c1 * s2 * s3);
@@ -58,21 +56,21 @@ namespace HedgeLib
             if (test > 0.499)
             {
                 return GetVect(0,
-                    360 / Math.PI * Math.Atan2(X, W), 90);
+                    360 / System.Math.PI * System.Math.Atan2(X, W), 90);
             }
             if (test < -0.499)
             {
                 return GetVect(0,
-                    -360 / Math.PI * Math.Atan2(X, W), -90);
+                    -360 / System.Math.PI * System.Math.Atan2(X, W), -90);
             }
 
-            double h = Math.Atan2(2 * Y * W - 2 * X * Z, 1 - 2 * qy2 - 2 * qz2);
-            double a = Math.Asin(2 * X * Y + 2 * Z * W);
-            double b = Math.Atan2(2 * X * W - 2 * Y * Z, 1 - 2 * qx2 - 2 * qz2);
+            double h = System.Math.Atan2(2 * Y * W - 2 * X * Z, 1 - 2 * qy2 - 2 * qz2);
+            double a = System.Math.Asin(2 * X * Y + 2 * Z * W);
+            double b = System.Math.Atan2(2 * X * W - 2 * Y * Z, 1 - 2 * qx2 - 2 * qz2);
 
-            return GetVect(Math.Round(b * 180 / Math.PI),
-                Math.Round(h * 180 / Math.PI),
-                Math.Round(a * 180 / Math.PI));
+            return GetVect(System.Math.Round(b * 180 / System.Math.PI),
+                System.Math.Round(h * 180 / System.Math.PI),
+                System.Math.Round(a * 180 / System.Math.PI));
 
             // Sub-Methods
             Vector3 GetVect(double x, double y, double z)
