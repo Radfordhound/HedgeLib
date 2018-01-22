@@ -1,69 +1,15 @@
-﻿using HedgeLib.IO;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
 using System.Xml.Linq;
 
-namespace HedgeLib.Collision
+namespace HedgeLib.Havok
 {
-    public class HavokPackFile : FileBase
+    public static class HavokXML
     {
-        // Variables/Constants
-        public Dictionary<string, HavokSection> Sections =
-            new Dictionary<string, HavokSection>();
-
-        public string ContentsVersion, TopLevelObject;
-        public uint UserTag = 0;
-        public int ClassVersion;
-
-        public const string Extension = ".hkx";
-
         // Methods
-        public override void Load(Stream fileStream)
+        public static void Read(HavokFile h, Stream fs)
         {
-            // Header
-            var reader = new ExtendedBinaryReader(fileStream, false);
-            reader.JumpAhead(0x10);
-
-            // A lot of this was gathered from the Max Havok exporter.
-            byte bytesInPointer = reader.ReadByte();
-            reader.IsBigEndian = !reader.ReadBoolean();
-            byte reusePaddingOpt = reader.ReadByte();
-            byte emptyBaseClassOpt = reader.ReadByte();
-
-            // We jump around a lot here, but there's not really a much cleaner way to do it.
-            reader.JumpTo(8, true);
-            UserTag = reader.ReadUInt32();
-            ClassVersion = reader.ReadInt32();
-            reader.JumpAhead(4);
-
-            uint sectionsCount = reader.ReadUInt32();
-            uint unknown4 = reader.ReadUInt32();
-            reader.JumpAhead(8); // Almost surely just padding.
-
-            uint unknown5 = reader.ReadUInt32();
-            ContentsVersion = reader.ReadNullTerminatedString();
-            reader.JumpAhead(9); // Seems to be padding
-
-            // Sections
-            for (uint i = 0; i < sectionsCount; ++i)
-            {
-                string sectionName = new string(reader.ReadChars(16));
-                sectionName = sectionName.Replace("\0", string.Empty);
-
-                // TODO
-                reader.JumpAhead(0x20);
-            }
-
-            // TODO
-            throw new NotImplementedException();
-        }
-
-        // TODO: Write a Save Method
-
-        public void LoadXML(Stream fileStream)
-        {
-            var xml = XDocument.Load(fileStream);
+            var xml = XDocument.Load(fs);
 
             // HKPackFile
             var classVersion = xml.Root.Attribute("classversion");
@@ -79,9 +25,9 @@ namespace HedgeLib.Collision
             if (topLevelObject == null)
                 throw new InvalidDataException("No toplevelobject element could be found!");
 
-            ClassVersion = Convert.ToInt32(classVersion.Value);
-            ContentsVersion = contentsVersion.Value;
-            TopLevelObject = topLevelObject.Value;
+            int.TryParse(classVersion.Value, out h.ClassVersion);
+            h.ContentsVersion = contentsVersion.Value;
+            h.TopLevelObject = topLevelObject.Value;
 
             // HKSections
             foreach (var elem in xml.Root.Elements())
@@ -91,7 +37,7 @@ namespace HedgeLib.Collision
                     case "hksection":
                         {
                             var section = ReadSection(elem, out string name);
-                            Sections.Add(name, section);
+                            h.Sections.Add(name, section);
                             break;
                         }
 
@@ -198,22 +144,22 @@ namespace HedgeLib.Collision
             }
         }
 
-        public void SaveXML(Stream fileStream)
+        public static void Write(HavokFile h, Stream fs)
         {
             // HKPackFile
             var root = new XElement("hkpackfile");
-            root.Add(new XAttribute("classversion", ClassVersion));
-            root.Add(new XAttribute("contentsversion", ContentsVersion));
-            root.Add(new XAttribute("toplevelobject", TopLevelObject));
+            root.Add(new XAttribute("classversion", h.ClassVersion));
+            root.Add(new XAttribute("contentsversion", h.ContentsVersion));
+            root.Add(new XAttribute("toplevelobject", h.TopLevelObject));
 
             // HKSections
-            foreach (var section in Sections)
+            foreach (var section in h.Sections)
             {
                 WriteSection(section.Value, section.Key);
             }
 
             var xml = new XDocument(root);
-            xml.Save(fileStream);
+            xml.Save(fs);
 
             // Sub-Methods
             void WriteSection(HavokSection section, string name)
@@ -273,26 +219,5 @@ namespace HedgeLib.Collision
                 rootElem.Add(elem);
             }
         }
-    }
-
-    public class HavokSection
-    {
-        // Variables/Constants
-        public Dictionary<string, HavokObject> Objects = new Dictionary<string, HavokObject>();
-    }
-
-    public class HavokObject
-    {
-        // Variables/Constants
-        public Dictionary<string, HavokParam> Parameters = new Dictionary<string, HavokParam>();
-        public string Class, Signature;
-    }
-
-    public class HavokParam
-    {
-        // Variables/Constants
-        public List<HavokObject> SubObjects = new List<HavokObject>();
-        public string Data;
-        public int NumElements;
     }
 }

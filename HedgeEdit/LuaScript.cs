@@ -39,8 +39,7 @@ namespace HedgeEdit
         public LuaScript()
         {
             // TODO: Maybe set more CoreModules?
-            script = new Script(CoreModules.Basic |
-                CoreModules.String | CoreModules.IO);
+            script = new Script(CoreModules.Basic | CoreModules.String);
 
             // General
             script.Globals["Log"] = (Action<object>)LuaTerminal.Log;
@@ -72,6 +71,8 @@ namespace HedgeEdit
             script.Globals["IOGetNameWithoutExtension"] =
                 (Func<string, string>)IOGetNameWithoutExtension;
 
+            script.Globals["IOCopyFile"] = (Action<string, string, bool>)IOCopyFile;
+
             // Values
             script.Globals["GetSetLayer"] = (Func<int, SetData>)GetSetLayer;
             script.Globals["GetSetLayerCount"] = (Func<int>)GetSetLayerCount;
@@ -89,7 +90,7 @@ namespace HedgeEdit
                 string, string, GensMaterial>)LoadMaterial;
 
             script.Globals["LoadTexture"] = (Func<string, string, Texture>)LoadTexture;
-            script.Globals["LoadSetData"] = (Func<string, bool, string[], SetData>)LoadSetData;
+            script.Globals["LoadSetLayer"] = (Func<string, bool, string[], SetData>)LoadSetLayer;
 
             // Saving
             script.Globals["Repack"] = (Action<string, string, string, bool, bool, uint?>)Repack;
@@ -228,7 +229,7 @@ namespace HedgeEdit
                 case "storybook":
                     return Games.Storybook;
 
-                case "S06":
+                case "s06":
                 case "06":
                     return Games.S06;
 
@@ -358,6 +359,14 @@ namespace HedgeEdit
             return Path.GetFileNameWithoutExtension(path);
         }
 
+        public void IOCopyFile(string source,
+            string dest, bool overwrite = true)
+        {
+            source = string.Format(source, Stage.CacheDir, Stage.ID);
+            dest = string.Format(dest, Stage.CacheDir, Stage.ID);
+            File.Copy(source, dest, overwrite);
+        }
+
         // Value Callbacks
         public int GetSetLayerCount()
         {
@@ -412,10 +421,9 @@ namespace HedgeEdit
                     throw new NotImplementedException(
                         "Could not unpack, Colors archives are not yet supported!");
 
-                // TODO: Add 06 Support
                 case Games.S06:
-                    throw new NotImplementedException(
-                        "Could not unpack, '06 archives are not yet supported!");
+                    arc = new S06Archive();
+                    break;
 
                 case Games.Shadow:
                 case Games.Heroes:
@@ -978,7 +986,7 @@ namespace HedgeEdit
             return tex;
         }
 
-        public SetData LoadSetData(string path, bool loadModels = true,
+        public SetData LoadSetLayer(string path, bool loadModels = true,
             string[] altModelDirs = null)
         {
             // Format path strings, return if file doesn't exist

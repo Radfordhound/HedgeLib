@@ -10,7 +10,6 @@ namespace HedgeLib.Sets
     public class ForcesSetData : SetData
     {
         // Variables/Constants
-        public List<SetObjectType> Types = new List<SetObjectType>();
         public BINAHeader Header = new BINAHeader();
         public const string Extension = ".gedit";
 
@@ -186,6 +185,8 @@ namespace HedgeLib.Sets
                 return null;
             }
 
+            //Console.WriteLine("Params at: {0:X}",
+            //    objParamsOffset + reader.Offset);
             var template = objectTemplates[objType];
 
             // Object Parameters
@@ -221,6 +222,19 @@ namespace HedgeLib.Sets
                         typeof(uint[]), arr));
 
                     reader.JumpTo(curPos);
+                    continue;
+                }
+                else if (param.DataType == typeof(string))
+                {
+                    long offset = reader.ReadInt64();
+                    long curPos = reader.BaseStream.Position;
+
+                    reader.JumpTo(offset, false);
+                    obj.Parameters.Add(new SetObjectParam(
+                        typeof(string), reader.ReadNullTerminatedString()));
+
+                    reader.JumpTo(curPos);
+                    reader.FixPadding(16); // TODO: Is this correct?
                     continue;
                 }
 
@@ -404,7 +418,7 @@ namespace HedgeLib.Sets
         protected void WriteObjectParameters(BINAWriter writer,
             SetObject obj, int objID)
         {
-            uint arrIndex = 0;
+            uint arrIndex = 0, strIndex = 0;
             writer.FillInOffsetLong($"objParamsOffset{objID}", false, false);
 
             // Write Normal Parameters
@@ -414,13 +428,32 @@ namespace HedgeLib.Sets
                 if (param.DataType == typeof(uint[]))
                 {
                     var arr = (param.Data as uint[]);
-                    if (arr == null) continue;
-
                     writer.FixPadding(4);
+
+                    if (arr == null)
+                    {
+                        writer.WriteNulls(24);
+                        continue;
+                    }
+
                     writer.AddOffset($"obj{objID}ArrOffset{arrIndex}", 8);
                     writer.Write((ulong)arr.Length);
                     writer.Write((ulong)arr.Length);
                     ++arrIndex;
+                    continue;
+                }
+                else if (param.DataType == typeof(string))
+                {
+                    string str = (param.Data as string);
+                    if (string.IsNullOrEmpty(str))
+                    {
+                        writer.Write(0UL);
+                        continue;
+                    }
+
+                    writer.AddString($"obj{objID}StrOffset{strIndex}", str, 8);
+                    writer.FixPadding(16); // TODO: Is this correct?
+                    ++strIndex;
                     continue;
                 }
 

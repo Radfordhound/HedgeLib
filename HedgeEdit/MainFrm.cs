@@ -1,7 +1,6 @@
 ﻿using HedgeLib;
 using HedgeLib.Sets;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -15,31 +14,6 @@ namespace HedgeEdit
             get => sceneView;
         }
 
-        public SetObject SelectedSetObject
-        {
-            get
-            {
-                // Returns the currently-selected set object if only one is selected
-                return (SelectedObjects.Count == 1) ?
-                    (SelectedObjects[0] as SetObject) : null;
-            }
-        }
-
-        public SetObjectTransform SelectedTransform
-        {
-            get
-            {
-                // Returns the transform of the currently-selected set object
-                // if only one object is selected.
-                var obj = SelectedSetObject;
-
-                return (obj == null) ? ((SelectedObjects.Count == 1) ?
-                    (SelectedObjects[0] as SetObjectTransform) :
-                    null) : obj.Transform;
-            }
-        }
-
-        public List<object> SelectedObjects = new List<object>();
         private static SceneView sceneView = null;
         private Thread loadSaveThread;
         private Control activeTxtBx = null;
@@ -57,15 +31,18 @@ namespace HedgeEdit
         public void RefreshGUI()
         {
             // Get the selected object(s), if any
-            int selectedObjs = SelectedObjects.Count;
+            int selectedObjs = Viewport.SelectedInstances.Count;
             bool objsSelected = (selectedObjs > 0),
                  singleObjSelected = (selectedObjs == 1);
 
-            SetObject obj = (singleObjSelected) ?
-                (SelectedObjects[0] as SetObject) : null;
-            SetObjectTransform transform = (obj == null) ? ((singleObjSelected) ?
-                (SelectedObjects[0] as SetObjectTransform) :
-                null) : obj.Transform;
+            var instance = (singleObjSelected) ?
+                Viewport.SelectedInstances[0] : null;
+
+            var obj = (singleObjSelected) ?
+                (instance.CustomData as SetObject) : null;
+
+            var transform = (obj != null) ? obj.Transform : ((singleObjSelected) ?
+                (instance.CustomData as SetObjectTransform) : null);
 
             // Update Labels
             objectSelectedLbl.Text = $"{selectedObjs} Object(s) Selected";
@@ -93,12 +70,18 @@ namespace HedgeEdit
 
             // Update Parameters
             objectTypeLbl.Text = (obj != null) ? obj.ObjectType : "";
+            objectProperties.BeginUpdate();
             objectProperties.Items.Clear();
 
-            if (obj == null) return;
+            if (obj == null)
+            {
+                objectProperties.EndUpdate();
+                return;
+            }
+
             var objTemplate = (Stage.GameType == null ||
-                    !Stage.GameType.ObjectTemplates.ContainsKey(obj.ObjectType)) ?
-                    null : Stage.GameType.ObjectTemplates[obj.ObjectType];
+                !Stage.GameType.ObjectTemplates.ContainsKey(obj.ObjectType)) ?
+                null : Stage.GameType.ObjectTemplates[obj.ObjectType];
 
             for (int i = 0; i < obj.Parameters.Count; ++i)
             {
@@ -114,6 +97,8 @@ namespace HedgeEdit
                 lvi.SubItems.Add(param.Data.ToString());
                 objectProperties.Items.Add(lvi);
             }
+
+            objectProperties.EndUpdate();
         }
 
         public void UpdateTitle(string stgID = null)
@@ -268,7 +253,70 @@ namespace HedgeEdit
 
             if (float.TryParse(txtBx.Text, out float f))
             {
+                // Remove un-necessary 0s and such
                 txtBx.Text = f.ToString();
+
+                // Get any selected objects
+                var instance = (Viewport.SelectedInstances.Count == 1) ?
+                    Viewport.SelectedInstances[0] : null;
+
+                var obj = (instance != null) ?
+                    (instance.CustomData as SetObject) : null;
+
+                var transform = (instance != null) ?
+                    ((obj == null) ? (instance.CustomData as SetObjectTransform) :
+                    obj.Transform) : null;
+
+                if (transform == null)
+                    return;
+
+                // Move any selected objects in the SetData
+                if (sender == posXBox)
+                {
+                    transform.Position.X = f;
+                }
+                else if (sender == posYBox)
+                {
+                    transform.Position.Y = f;
+                }
+                else if (sender == posZBox)
+                {
+                    transform.Position.Z = f;
+                }
+                else if (sender == rotXBox || sender == rotYBox || sender == rotZBox)
+                {
+                    float x = (sender == rotXBox) ? f : float.Parse(rotXBox.Text);
+                    float y = (sender == rotYBox) ? f : float.Parse(rotYBox.Text);
+                    float z = (sender == rotZBox) ? f : float.Parse(rotZBox.Text);
+                    transform.Rotation = new Quaternion(new Vector3(x, y, z), false);
+                }
+
+                // Move any selected objects in the Viewport
+                var pos = instance.Position;
+                var rot = instance.Rotation;
+
+                if (sender == posXBox)
+                {
+                    pos.X = (f * Stage.GameType.UnitMultiplier);
+                }
+                else if (sender == posYBox)
+                {
+                    pos.Y = (f * Stage.GameType.UnitMultiplier);
+                }
+                else if (sender == posZBox)
+                {
+                    pos.Z = (f * Stage.GameType.UnitMultiplier);
+                }
+                else if (sender == rotXBox || sender == rotYBox || sender == rotZBox)
+                {
+                    float x = (sender == rotXBox) ? f : float.Parse(rotXBox.Text);
+                    float y = (sender == rotYBox) ? f : float.Parse(rotYBox.Text);
+                    float z = (sender == rotZBox) ? f : float.Parse(rotZBox.Text);
+                    rot = Types.ToOpenTK(transform.Rotation);
+                }
+
+                instance.Position = pos;
+                instance.Rotation = rot;
             }
             else
             {
@@ -417,20 +465,30 @@ namespace HedgeEdit
         }
         #endregion
 
+        private void AddObject(object sender, EventArgs e)
+        {
+            // TODO
+        }
+
         private void ViewSelected(object sender, EventArgs e)
         {
-            if (SelectedObjects.Count == 1)
+            if (Viewport.SelectedInstances.Count == 1)
             {
-                var selectedTransform = SelectedTransform;
-                if (selectedTransform == null) return;
+                var instance = Viewport.SelectedInstances[0];
+                var obj = (instance.CustomData as SetObject);
+                var transform = (obj == null) ?
+                    (instance.CustomData as SetObjectTransform) :
+                    obj.Transform;
+
+                if (transform == null) return;
 
                 Viewport.CameraPos =
-                    Types.ToOpenTK(selectedTransform.Position * 
+                    Types.ToOpenTK(transform.Position * 
                     ((Stage.GameType == null) ? 1 : Stage.GameType.UnitMultiplier));
 
-                // TODO: Set rotation
+                // TODO: Set camera rotation
             }
-            else if (SelectedObjects.Count > 0)
+            else if (Viewport.SelectedInstances.Count > 0)
             {
                 // TODO: Show all of the objects currently selected.
             }

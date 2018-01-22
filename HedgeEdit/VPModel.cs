@@ -1,4 +1,6 @@
-﻿using HedgeLib.Models;
+﻿using HedgeLib;
+using HedgeLib.Math;
+using HedgeLib.Models;
 using OpenTK.Graphics.ES30;
 using System;
 using System.Collections.Generic;
@@ -9,13 +11,14 @@ namespace HedgeEdit
     {
         // Variables/Constants
         public List<VPObjectInstance> Instances = new List<VPObjectInstance>();
+        public Vector3 BoundingSize;
 
         private string[] matNames;
         private int[] triLengths;
         private uint[] vaos;
 
         // Constructors
-        public VPModel(Model mdl)
+        public VPModel(Model mdl, bool generateAABB = false)
         {
             if (mdl == null)
                 throw new ArgumentNullException("mdl");
@@ -23,6 +26,7 @@ namespace HedgeEdit
             int meshCount = mdl.Meshes.Count;
             Mesh mesh;
 
+            var aabb = new AABB();
             vaos = new uint[meshCount];
             triLengths = new int[meshCount];
             matNames = new string[meshCount];
@@ -31,6 +35,19 @@ namespace HedgeEdit
             {
                 mesh = mdl.Meshes[i];
                 triLengths[i] = mesh.Triangles.Length;
+
+                // Generate an AABB
+                if (generateAABB)
+                {
+                    for (uint i2 = Mesh.VertPos; i2 < mesh.VertexData.Length;
+                        i2 += Mesh.StructureLength)
+                    {
+                        aabb.AddPoint(
+                            mesh.VertexData[i2],
+                            mesh.VertexData[i2 + 1],
+                            mesh.VertexData[i2 + 2]);
+                    }
+                }
 
                 // Setup a vertex array object and vertex buffer object
                 GL.GenVertexArrays(1, out uint vao);
@@ -79,6 +96,9 @@ namespace HedgeEdit
                 // Assign the VAO/VBO/EBO to their corresponding arrays
                 vaos[i] = vao;
             }
+
+            if (generateAABB)
+                BoundingSize = aabb.Size;
         }
 
         // Methods
@@ -88,6 +108,9 @@ namespace HedgeEdit
                 throw new Exception("Cannot draw model - model not initialized!");
 
             int modelLoc = GL.GetUniformLocation(shaderID, "model");
+            int highlightLoc = GL.GetUniformLocation(shaderID, "highlight");
+            GL.Uniform4(highlightLoc, new OpenTK.Vector4(1, 1, 1, 1));
+
             foreach (var transform in Instances)
             {
                 // Update Transforms
@@ -95,6 +118,11 @@ namespace HedgeEdit
 
                 // Update shader transform matrices
                 GL.UniformMatrix4(modelLoc, false, ref modelTransform);
+
+                // Update Highlight Color
+                bool selected = Viewport.SelectedInstances.Contains(transform);
+                if (selected)
+                    GL.Uniform4(highlightLoc, new OpenTK.Vector4(1, 0, 0, 1));
 
                 // Draw the meshes
                 for (int i = 0; i < vaos.Length; ++i)
@@ -124,7 +152,31 @@ namespace HedgeEdit
                     // Un-bind the mesh's VAO
                     GL.BindVertexArray(0);
                 }
+
+                // Set Highlight Color back to default
+                if (selected)
+                    GL.Uniform4(highlightLoc, new OpenTK.Vector4(1, 1, 1, 1));
             }
+        }
+
+        public VPObjectInstance InstanceIntersects(OpenTK.Vector3 origin,
+            OpenTK.Vector3 direction, uint distance = 100)
+        {
+            //var dest = (origin + (direction * distance));
+            var o = Types.ToHedgeLib(origin);
+            var d = Types.ToHedgeLib(direction);
+
+            foreach (var instance in Instances)
+            {
+                // TODO: Try to make this more efficient if possible
+                if (AABB.Intersects(o, d, Types.ToHedgeLib(
+                    instance.Position), BoundingSize, distance))
+                {
+                    return instance;
+                }
+            }
+
+            return null;
         }
     }
 }

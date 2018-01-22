@@ -15,7 +15,7 @@
 			UIChangeLoadStatus(string.format(
 				"Set Data %02d/%02d", i, #files))
 
-			LoadSetData(files[i])
+			LoadSetLayer(files[i])
 		end
 
 		UIHideProgress()
@@ -48,9 +48,7 @@ end
 
 function SaveSets(dataDir, cacheDir, stageID)
 	-- Set Data
-	-- TODO: Finish GensSetData Save method then uncomment these lines:
-
-	--UIChangeSaveStatus("Set Data")
+	-- TODO: Finish GensSetData Save method then uncomment this line:
 	--SaveSetLayers("{0}/#{1}", "", ".xml", true)
 
 	UIChangeStatus("Repacking #" .. stageID .. "...")

@@ -33,12 +33,10 @@ function Load(dataDir, cacheDir, stageID)
 	-- Object (E.G. w5a01/w5a01_obj.pac)
 	UIChangeStatus("Extracting Object PAC...")
 	Extract("{0}/{1}/{1}_obj.pac", "{0}/{1}/{1}_obj", "Object")
-	LoadTexturesInDir("{0}/{1}/{1}_obj", "Object Textures")
 
 	-- Terrain Common (E.G. w5a01/w5a01_trr_cmn.pac)
 	UIChangeStatus("Extracting Terrain Common PAC...")
 	Extract("{0}/{1}/{1}_trr_cmn.pac", "{0}/{1}/{1}_trr_cmn", "TerrainCommon")
-	LoadTexturesInDir("{0}/{1}/{1}_trr_cmn", "Terrain Common Textures")
 
 	-- Set Data (E.G. gedit/w5a01_gedit.pac)
 	UIChangeStatus("Extracting Set Data...")
@@ -55,12 +53,16 @@ function Load(dataDir, cacheDir, stageID)
 			UIChangeLoadStatus(string.format(
 				"Set Data %02d/%02d", i, #files))
 
-			LoadSetData(files[i], true,
+			LoadSetLayer(files[i], true,
 				{ "{0}/{1}/{1}_obj", "{0}/{1}/{1}_trr_cmn" })
 		end
 
 		UIHideProgress()
 	end
+
+	-- Additional Object Textures
+	LoadTexturesInDir("{0}/{1}/{1}_obj", "Object Textures")
+	LoadTexturesInDir("{0}/{1}/{1}_trr_cmn", "Terrain Common Textures")
 
 	-- Sky (E.G. w5a01/w5a01_sky.pac)
 	UIChangeStatus("Extracting Sky PAC...")
@@ -94,10 +96,9 @@ end
 
 function SaveSets(dataDir, cacheDir, stageID)
 	-- Set Data (E.G. gedit/w5a01_gedit.pac)
-	UIChangeSaveStatus("Set Data")
-	SaveSetLayers("{0}/gedit/{1}_gedit", "", ".gedit", true)
-
 	SetDataType("Forces")
+	SaveSetLayers("{0}/gedit/{1}_gedit", "", ".gedit", true)
+	
 	-- TODO: Repack
 end
 

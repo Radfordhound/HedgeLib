@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using HedgeLib.Sets;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace HedgeEdit
@@ -32,13 +33,24 @@ namespace HedgeEdit
             for (int i = 0; i < Stage.Sets.Count; ++i)
             {
                 var layer = Stage.Sets[i];
-                var layerNode = new TreeNode((string.IsNullOrEmpty(layer.Name)) ?
-                    $"Layer #{i}" : layer.Name);
+                string layerName = (string.IsNullOrEmpty(layer.Name)) ?
+                    $"Layer #{i + 1}" : layer.Name;
+
+                var layerNode = new TreeNode(layerName)
+                {
+                    Tag = layer
+                };
 
                 // Objects
                 foreach (var obj in layer.Objects)
                 {
-                    var objNode = new TreeNode($"{obj.ObjectType} ({obj.ObjectID})")
+                    // If the object has a custom name, use it.
+                    // Otherwise, use object type + ID.
+                    string name = (obj.CustomData.ContainsKey("Name")) ?
+                        (obj.CustomData["Name"].Data as string) :
+                        $"{obj.ObjectType} ({obj.ObjectID})";
+
+                    var objNode = new TreeNode(name)
                     {
                         Tag = obj
                     };
@@ -68,23 +80,20 @@ namespace HedgeEdit
         // GUI Events
         private void TreeView_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            if (e.Node.Tag != null)
+            var tag = e.Node.Tag;
+            if (tag == null)
+                return;
+
+            var layer = (tag as SetData);
+            if (layer != null)
             {
-                mainForm.SelectedObjects.Clear();
-                mainForm.SelectedObjects.Add(e.Node.Tag);
-                mainForm.RefreshGUI();
+                Stage.CurrentSetLayer = layer;
             }
             else
             {
-                for (int i = 0; i < Stage.Sets.Count; ++i)
-                {
-                    var layer = Stage.Sets[i];
-                    if (layer.Name == e.Node.Text)
-                    {
-                        Stage.CurrentSetLayer = layer;
-                        break;
-                    }
-                }
+                Viewport.SelectedInstances.Clear();
+                Viewport.SelectObject(tag);
+                mainForm.RefreshGUI();
             }
         }
     }

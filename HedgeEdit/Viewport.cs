@@ -1,5 +1,6 @@
 ﻿using HedgeLib.Materials;
 using HedgeLib.Models;
+using HedgeLib.Sets;
 using HedgeLib.Textures;
 using OpenTK;
 using OpenTK.Graphics.ES30;
@@ -27,6 +28,9 @@ namespace HedgeEdit
         public static Dictionary<string, int> Textures =
             new Dictionary<string, int>();
 
+        public static List<VPObjectInstance> SelectedInstances =
+            new List<VPObjectInstance>();
+
         public static VPModel DefaultCube;
         public static GensMaterial DefaultMaterial;
         public static Vector3 CameraPos = Vector3.Zero, CameraRot = new Vector3(-90, 0, 0);
@@ -36,6 +40,7 @@ namespace HedgeEdit
 
         private static GLControl vp = null;
         private static Point prevMousePos = Point.Empty;
+        private static MouseState prevMouseState;
         private static Vector3 camUp = new Vector3(0, 1, 0),
             camForward = new Vector3(0, 0, -1);
 
@@ -101,7 +106,7 @@ namespace HedgeEdit
             // Setup default texture/material/model
             DefaultTexture = GenTexture(defaultTex);
             DefaultMaterial = new GensMaterial();
-            DefaultCube = new VPModel(mdl);
+            DefaultCube = new VPModel(mdl, true);
 
             watch.Stop();
             Console.WriteLine("Default assets init time: {0}", watch.ElapsedMilliseconds);
@@ -127,16 +132,18 @@ namespace HedgeEdit
 
             // Update camera transform
             var mouseState = Mouse.GetState();
+            var mousePos = Cursor.Position;
+            var vpMousePos = vp.PointToClient(mousePos);
+
             if (IsMovingCamera && mouseState.RightButton == OpenTK.Input.ButtonState.Pressed)
             {
-                var vpMousePos = vp.PointToClient(Cursor.Position);
                 float screenX = (float)vpMousePos.X / vp.Size.Width;
                 float screenY = (float)vpMousePos.Y / vp.Size.Height;
 
                 // Set Camera Rotation
                 var mouseDifference = new Point(
-                    Cursor.Position.X - prevMousePos.X,
-                    Cursor.Position.Y - prevMousePos.Y);
+                    mousePos.X - prevMousePos.X,
+                    mousePos.Y - prevMousePos.Y);
 
                 CameraRot.X += mouseDifference.X * 0.1f;
                 CameraRot.Y -= mouseDifference.Y * 0.1f;
@@ -214,6 +221,73 @@ namespace HedgeEdit
             GL.UniformMatrix4(viewLoc, false, ref view);
             GL.UniformMatrix4(projectionLoc, false, ref projection);
 
+            // Object Selection
+            if (mouseState.LeftButton == OpenTK.Input.ButtonState.Pressed &&
+                prevMouseState.LeftButton == OpenTK.Input.ButtonState.Released &&
+                vpMousePos.X >= 0 && vpMousePos.Y >= 0 && vpMousePos.X <= vp.Width &&
+                vpMousePos.Y <= vp.Height)
+            {
+                // Get mouse world coordinates/direction
+                view.Invert();
+                projection.Invert();
+
+                var near = UnProject(0);
+                var far = UnProject(1);
+                var direction = (far - near);
+                direction.Normalize(); // TODO: Is NormalizeFast accurate enough?
+
+                // Fire a ray from mouse coordinates in camera direction and
+                // select any object that ray comes in contact with.
+                if (!SelectObject(DefaultCube))
+                {
+                    foreach (var obj in Objects)
+                    {
+                        SelectObject(obj.Value);
+                    }
+                }
+
+                // Sub-Methods
+                bool SelectObject(VPModel mdl)
+                {
+                    // TODO: Fix farther objects being selected first due to dictionary order
+                    var instance = mdl.InstanceIntersects(near, direction);
+                    if (instance != null && instance.CustomData != null)
+                    {
+                        SelectedInstances.Clear(); // TODO: Only do this if ctrl is not held
+                        SelectedInstances.Add(instance);
+                        Program.MainForm.RefreshGUI();
+                        return true;
+                    }
+
+                    return false;
+                }
+
+                Vector3 UnProject(float z)
+                {
+                    // This method was hacked together from
+                    // a bunch of StackOverflow posts lol
+                    var vec = new Vector4()
+                    {
+                        X = 2.0f * vpMousePos.X / vp.Width - 1,
+                        Y = -(2.0f * vpMousePos.Y / vp.Height - 1),
+                        Z = z,
+                        W = 1.0f
+                    };
+
+                    Vector4.Transform(ref vec, ref projection, out vec);
+                    Vector4.Transform(ref vec, ref view, out vec);
+
+                    if (vec.W > float.Epsilon || vec.W < float.Epsilon)
+                    {
+                        vec.X /= vec.W;
+                        vec.Y /= vec.W;
+                        vec.Z /= vec.W;
+                    }
+
+                    return vec.Xyz;
+                }
+            }
+
             // Transform Gizmos
             // float screenX = (float)Math.Min(Math.Max(0,
             //    vpMousePos.X), vp.Size.Width) / vp.Size.Width;
@@ -237,6 +311,56 @@ namespace HedgeEdit
 
             // Swap our buffers
             vp.SwapBuffers();
+            prevMouseState = mouseState;
+        }
+
+        public static VPObjectInstance GetInstance(VPModel model, object obj)
+        {
+            foreach (var instance in model.Instances)
+            {
+                if (instance.CustomData == obj)
+                    return instance;
+            }
+
+            return null;
+        }
+
+        public static VPObjectInstance GetTerrainInstance(string modelName, object obj)
+        {
+            if (!Terrain.ContainsKey(modelName))
+                return null;
+
+            return GetInstance(Terrain[modelName], obj);
+        }
+
+        public static VPObjectInstance GetObjectInstance(string modelName, object obj)
+        {
+            if (!Objects.ContainsKey(modelName))
+                return null;
+
+            return GetInstance(Objects[modelName], obj);
+        }
+
+        public static VPObjectInstance GetObjectInstance(object obj)
+        {
+            foreach (var model in Objects)
+            {
+                var instance = GetInstance(model.Value, obj);
+                if (instance != null && instance.CustomData == obj)
+                    return instance;
+            }
+
+            return null;
+        }
+
+        public static VPObjectInstance SelectObject(object obj)
+        {
+            var instance = GetObjectInstance(obj);
+            if (instance == null)
+                instance = GetInstance(DefaultCube, obj);
+
+            SelectedInstances.Add(instance);
+            return instance;
         }
 
         public static int AddTexture(string name, Texture tex)
@@ -327,6 +451,41 @@ namespace HedgeEdit
             return texture;
         }
 
+        public static void SpawnObject(SetObject obj,
+            float unitMultiplier, HedgeLib.Vector3 posOffset)
+        {
+            var instances = new List<VPObjectInstance>
+            {
+                AddInstance(obj.ObjectType,
+                    (obj.Transform.Position * unitMultiplier) + posOffset,
+                    obj.Transform.Rotation, obj.Transform.Scale,
+                    true, obj)
+            };
+
+            obj.CustomData.Add(SetData.HedgeEditInstances,
+                new SetObjectParam(typeof(List<VPObjectInstance>), instances));
+
+            if (obj.Children == null) return;
+            foreach (var child in obj.Children)
+            {
+                if (child == null) continue;
+                var transform = AddTransform(obj,
+                    unitMultiplier, child, posOffset);
+
+                instances.Add(transform);
+            }
+        }
+
+        public static VPObjectInstance AddTransform(SetObject obj,
+            float unitMultiplier, SetObjectTransform child,
+            HedgeLib.Vector3 posOffset)
+        {
+            return AddInstance(obj.ObjectType,
+                (child.Position * unitMultiplier) + posOffset,
+                child.Rotation, child.Scale,
+                true, child);
+        }
+
         public static void AddTerrainModel(Model mdl)
         {
             if (!Terrain.ContainsKey(mdl.Name))
@@ -336,54 +495,51 @@ namespace HedgeEdit
             }
         }
 
-        public static void AddObjectModel(string type, Model mdl)
+        public static void AddObjectModel(string name, Model mdl)
         {
-            if (!Objects.ContainsKey(type))
+            if (!Objects.ContainsKey(name))
             {
-                var obj = new VPModel(mdl);
-                Objects.Add(type, obj);
+                var obj = new VPModel(mdl, true);
+                Objects.Add(name, obj);
             }
         }
 
-        public static void AddInstance(string type,
+        public static VPObjectInstance AddInstance(string type,
             VPObjectInstance instance, bool isObject)
         {
-            bool hasModel = (isObject) || (Terrain.ContainsKey(type));
-            if (!hasModel)
-            {
-                throw new Exception(
-                    "Could not add instance of model. Model has not yet been loaded!");
-            }
+            bool hasModel = (!string.IsNullOrEmpty(type)) &&
+                ((isObject) || (Terrain.ContainsKey(type)));
 
-            if (isObject)
+            if (isObject && !string.IsNullOrEmpty(type))
                 hasModel = Objects.ContainsKey(type);
 
             var obj = (!hasModel) ? DefaultCube :
                 (isObject) ? Objects[type] : Terrain[type];
 
             obj.Instances.Add(instance);
+            return instance;
         }
 
-        public static void AddInstance(string type,
+        public static VPObjectInstance AddInstance(string type,
             bool isObject, object customData = null)
         {
-            AddInstance(type, new VPObjectInstance(
+            return AddInstance(type, new VPObjectInstance(
                 customData), isObject);
         }
 
-        public static void AddInstance(string type, Vector3 pos,
-            Quaternion rot, Vector3 scale,
+        public static VPObjectInstance AddInstance(string type,
+            Vector3 pos, Quaternion rot, Vector3 scale,
             bool isObject, object customData = null)
         {
-            AddInstance(type, new VPObjectInstance(
+            return AddInstance(type, new VPObjectInstance(
                 pos, rot, scale, customData), isObject);
         }
 
-        public static void AddInstance(string type, HedgeLib.Vector3 pos,
-            HedgeLib.Quaternion rot, HedgeLib.Vector3 scale,
-            bool isObject, object customData = null)
+        public static VPObjectInstance AddInstance(string type,
+            HedgeLib.Vector3 pos, HedgeLib.Quaternion rot,
+            HedgeLib.Vector3 scale, bool isObject, object customData = null)
         {
-            AddInstance(type, new VPObjectInstance(
+            return AddInstance(type, new VPObjectInstance(
                 Types.ToOpenTK(pos), Types.ToOpenTK(rot),
                 Types.ToOpenTK(scale), customData), isObject);
         }

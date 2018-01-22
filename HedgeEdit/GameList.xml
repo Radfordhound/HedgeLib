@@ -5,5 +5,6 @@
   <Game shortName="Generations" name="Sonic Generations" />
   <Game shortName="Colors" name="Sonic Colors" unitMultiplier="0.1" />
   <Game shortName="Unleashed" name="Sonic Unleashed" />
+  <Game shortName="S06" name="Sonic '06" unitMultiplier="0.01" />
   <Game shortName="Heroes" name="Sonic Heroes" unitMultiplier="0.1" />
 </GameList>
