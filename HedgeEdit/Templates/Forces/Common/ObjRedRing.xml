@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <RedRingID type="int" default="0" description="Which red ring this is. Must be 0-4." />
+  <EventType type="enum" default="0" description="The event enabled" />
+  <PlaceType type="enum" default="0" description="The type of location that is set" />
+  <IsPopup type="bool" default="false" description="Or pop-up" />
+  <IsMoveItem type="bool" default="false" description="Flow or items" />
+  
+  <Extra type="model" value="cmn_obj_redring.model" />
+  <Extra type="description" value="They're rings which are red" />
+  <Extra type="OffsetPositionY" value="0.6" />
+  <Extra type="RawByteLength" length="16" />
+</Template>

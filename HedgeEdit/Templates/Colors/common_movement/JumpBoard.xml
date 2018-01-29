@@ -3,6 +3,11 @@
   <ImpulseSpeedOnNormal type="float" default="500" description="Initial speed Sonic is sent off with." />
   <ImpulseSpeedOnBoost type="float" default="500" description="Initial speed Sonic is sent off with while boosting." />
   <OutOfControl type="float" default="2.5" description="How long the game locks your control for after coming in contact with this object, in seconds." />
-  <AngleType type="enum" default="2" description="Size of object; 0 for Small, 1 for Medium, 2 for Large. All have an angle of 30°, 15° variant does not exist in Colors unlike Generations and Unleashed." />
+  <Size type="enum" default="2" description="Size of object. All have an angle of 30°, 15° variant does not exist in Colors unlike Generations and Unleashed.">
+	<Enum value="0" description="Small" />
+	<Enum value="1" description="Medium" />
+	<Enum value="2" description="Large" />
+  </Size>
+  
   <Extra type="RawByteLength" length="16" />
 </Template>

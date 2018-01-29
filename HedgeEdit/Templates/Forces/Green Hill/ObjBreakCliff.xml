@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Unknown1 type="uint" default="4" description="An enum?" />
+  <Unknown2 type="uint" default="0" description="Always 0?" />
+  <Unknown3 type="uint" default="0" description="Always 0?" />
+  <Unknown4 type="float" default="1" description="Crumble time?" />
+  
+  <Unknown5 type="float" default="-1" description="Fall speed?" />
+  <Unknown6 type="uint" default="0" description="Always 0?" />
+  <Unknown7 type="uint" default="0" description="Always 0?" />
+  <Unknown8 type="uint" default="0" description="Always 0?" />
+  
+  <!-- TODO: Figure out how models work for this object type -->
+  <Extra type="model" value="w5_obj_breakfloor01SV.model" />
+  
+  <Extra type="description" value="Ledges that crumble into pieces after standing on them for a set amount of time." />
+  <Extra type="RawByteLength" length="32" />
+</Template>

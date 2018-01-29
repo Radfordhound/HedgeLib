@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Name type="string" default="" description="The name of the Gismo's model, skeleton, and animation." />
+  <Scale type="float" description="Scale of the Gismo's model." />
+  
+  <Extra type="model" value="{0}.model" />
+  <Extra type="skeleton" value="{0}.skl.hkx" />
+  <Extra type="animation" value="{0}.anm.hkx" />
+  <Extra type="scale" value="Scale" />
+  <Extra type="description" value="An object used purely for decoration, e.g. the flowers in Lost Valley." />
+  <Extra type="RawByteLength" length="64" />
+</Template>

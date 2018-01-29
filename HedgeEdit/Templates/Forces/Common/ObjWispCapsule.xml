@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Unknown1 type="uint" default="1" description="Capsule type?" />
+  <Unknown2 type="uint" default="0" description="Always 0?" />
+  <Unknown3 type="byte" default="0" description="Always 0?" />
+  <Unknown4 type="byte" default="1" description="" />
+  <Unknown5 type="byte" default="1" description="" />
+  <Unknown6 type="byte" default="1" description="" />
+  <Unknown7 type="byte" default="1" description="" />
+  <Unknown8 type="byte" default="1" description="" />
+  <Unknown9 type="byte" default="1" description="" />
+  <Unknown10 type="byte" default="1" description="" />
+  
+  <Unknown11 type="uint" default="0" description="Always 0?" />
+  <Unknown12 type="uint" default="0" description="Always 0?" />
+  <Unknown13 type="uint" default="0" description="Always 0?" />
+  <Unknown14 type="uint" default="0" description="Always 0?" />
+  
+  <Unknown15 type="uint" default="0" description="Always 0?" />
+  <Unknown16 type="uint" default="0" description="Always 0?" />
+  <Unknown17 type="uint" default="0" description="Always 0?" />
+  <Unknown18 type="uint" default="0" description="Always 0?" />
+  
+  <Unknown19 type="uint" default="0" description="Always 0?" />
+  <Unknown20 type="uint" default="0" description="Always 0?" />
+  <Unknown21 type="uint" default="0" description="Always 0?" />
+  <Unknown22 type="uint" default="0" description="Always 0?" />
+  
+  <Unknown23 type="uint" default="0" description="Always 0?" />
+  <Unknown24 type="uint" default="0" description="Always 0?" />
+  <Unknown25 type="uint" default="0" description="Always 0?" />
+  <Unknown26 type="uint" default="0" description="Always 0?" />
+  
+  <Unknown27 type="uint" default="0" description="Always 0?" />
+  <Unknown28 type="uint" default="0" description="Always 0?" />
+  <Unknown29 type="uint" default="0" description="Always 0?" />
+  <Unknown30 type="uint" default="0" description="Always 0?" />
+  
+  <Unknown31 type="uint" default="0" description="Always 0?" />
+  <Unknown32 type="uint" default="0" description="Always 0?" />
+  <Unknown33 type="uint" default="0" description="Always 0?" />
+  <Unknown34 type="uint" default="0" description="Always 0?" />
+  
+  <Extra type="model" value="cmn_obj_wispcapsule.model" />
+  <Extra type="OffsetPositionY" value="0.7" />
+  <Extra type="description" value="Red capsules containing those cute little aliens that absolutely everyone in the fanbase completely adores" />
+  <Extra type="RawByteLength" length="112" />
+</Template>

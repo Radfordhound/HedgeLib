@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <ImpulseSpeedOnNormal type="float" default="500" description="Initial speed Sonic is sent off with." />
+  <ImpulseSpeedOnBoost type="float" default="500" description="Initial speed Sonic is sent off with while boosting." />
+  <OutOfControl type="float" default="2.5" description="How long the game locks your control for after coming in contact with this object, in seconds." />
+  <OutOfControlBoost type="float" default="2.5" description="How long the game locks your control for after coming in contact with this object while boosting, in seconds." />
+  <Unknown1 type="byte" default="0" description="Always 0?" />
+  <Size type="enum" default="2" description="Size of object. All have an angle of 30°, 15° variant does not exist in Forces (?) unlike Generations and Unleashed.">
+	  <Enum value="0" description="Small" />
+	  <Enum value="1" description="Medium" />
+	  <Enum value="2" description="Large" />
+  </Size>
+  
+  <Unknown2 type="uint" default="0" description="Always 0?" />
+  <Unknown3 type="uint" default="0" description="" />
+  <Unknown4 type="uint" default="0" description="Always 0?" />
+  <Unknown5 type="uint" default="0" description="" />
+  <Unknown6 type="uint" default="0" description="Always 0?" />
+  <Unknown7 type="uint" default="0" description="" />
+  <Unknown8 type="uint" default="0" description="Always 0?" />
+  <Unknown9 type="uint" default="0" description="Always 0?" />
+  <Unknown10 type="uint" default="0" description="Always 0?" />
+  <Unknown11 type="uint" default="0" description="Always 0?" />
+  <Unknown12 type="uint" default="0" description="Always 0?" />
+  <Unknown13 type="uint" default="0" description="Always 0?" />
+  <Unknown14 type="uint" default="0" description="Always 0?" />
+  <Unknown15 type="uint" default="0" description="Always 0?" />
+  <Unknown16 type="uint" default="0" description="Always 0?" />
+  <Unknown17 type="uint" default="0" description="Always 0?" />
+  <Unknown18 type="uint" default="0" description="Always 0?" />
+  <Unknown19 type="uint" default="0" description="Always 0?" />
+  <Unknown20 type="uint" default="0" description="Always 0?" />
+  <Unknown21 type="uint" default="0" description="Always 0?" />
+  <Unknown22 type="uint" default="0" description="Always 0?" />
+  <Unknown23 type="uint" default="0" description="Always 0?" />
+  <Unknown24 type="uint" default="0" description="Always 0?" />
+  <Unknown25 type="uint" default="0" description="Always 0?" />
+  <Unknown26 type="uint" default="0" description="Always 0?" />
+  <Unknown27 type="float" default="0" description="" />
+  <Unknown28 type="uint" default="0" description="Always 0?" />
+  
+  <Extra type="model" name="cmn_obj_jumppanel30S.model" condition="Size == 0" />
+  <Extra type="model" name="cmn_obj_jumppanel30M.model" condition="Size == 1" />
+  <Extra type="model" name="cmn_obj_jumppanel30L.model" condition="Size == 2" />
+  <Extra type="description" value="Launches you off at an angle over obstacles." />
+  <Extra type="RawByteLength" length="128" />
+</Template>

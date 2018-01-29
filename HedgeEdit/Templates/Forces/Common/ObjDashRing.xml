@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <RingType type="uint" default="0" description="0 for Dash Hoops, 1 for Rainbow Rings." />
+  <OutOfControl type="float" default="0.5" description="How long the game locks your control for after coming in contact with this object." />
+  <KeepVelocityDistance type="float" default="0.25" description="This distance is a constant speed" />
+  <Speed type="float" default="500" description="How much speed the Dash Hoop will send you off with." />
+  
+  <Unknown2 type="bool" default="true" description="" />
+  <Unknown3 type="bool" default="true" description="" />
+  <Unknown4 type="bool" default="true" description="" />
+  <Unknown5 type="bool" default="false" description="" />
+  <Unknown6 type="uint" default="0" description="Always 0?" />
+  <Unknown7 type="uint" default="0" description="Always 0?" />
+  <Unknown8 type="uint" default="0" description="Always 0?" />
+  
+  <Unknown9 type="uint" default="0" description="Always 0?" />
+  <Unknown10 type="uint" default="0" description="Always 0?" />
+  <Unknown11 type="uint" default="0" description="Always 0?" />
+  <Unknown12 type="uint" default="0" description="Always 0?" />
+  
+  <Unknown13 type="uint" default="0" description="Always 0?" />
+  <Unknown14 type="uint" default="0" description="Always 0?" />
+  <Unknown15 type="uint" default="0" description="Always 0?" />
+  <Unknown16 type="uint" default="0" description="Always 0?" />
+  
+  <Unknown17 type="uint" default="0" description="Always 0?" />
+  <Unknown18 type="uint" default="0" description="Always 0?" />
+  <Unknown19 type="uint" default="0" description="Always 0?" />
+  <Unknown20 type="uint" default="0" description="Always 0?" />
+  
+  <Unknown21 type="uint" default="0" description="Always 0?" />
+  <Unknown22 type="uint" default="0" description="Always 0?" />
+  <Unknown23 type="uint" default="0" description="Always 0?" />
+  <Unknown24 type="uint" default="0" description="Always 0?" />
+  
+  <Unknown25 type="uint" default="0" description="Always 0?" />
+  <Unknown26 type="uint" default="0" description="Always 0?" />
+  <Unknown27 type="uint" default="0" description="Always 0?" />
+  <Unknown28 type="uint" default="0" description="Always 0?" />
+  
+  <Unknown29 type="uint" default="0" description="Always 0?" />
+  <Unknown30 type="uint" default="0" description="Always 0?" />
+  <Unknown31 type="uint" default="0" description="Always 0?" />
+  <Unknown32 type="uint" default="0" description="Always 0?" />
+  
+  <Extra type="model" value="cmn_obj_rainbowring.model" condition="RingType == 1" />
+  <Extra type="model" value="cmn_obj_dashring.model" condition="RingType == 0" />
+  <Extra type="description" value="Floating hoops" />
+  <Extra type="RawByteLength" length="128" />
+</Template>

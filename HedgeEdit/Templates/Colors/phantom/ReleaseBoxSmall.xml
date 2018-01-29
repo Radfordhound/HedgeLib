@@ -13,7 +13,7 @@
    09 = Unknown
    0A = Don't try
   -->
-  <WispID type="byte" default="0" description="" >
+  <WispID type="enum" default="0" description="" >
     <Enum value="0" description="Boost" />
     <Enum value="1" description="Drill" />
     <Enum value="2" description="Laser" />

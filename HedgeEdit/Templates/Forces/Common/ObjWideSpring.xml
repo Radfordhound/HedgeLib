@@ -34,7 +34,7 @@
   <Unknown19 type="bool" default="false" description="" />
   <Unknown20 type="uint" default="0" description="Always 0?" />
   
-  <Extra type="model" value="cmn_obj_spring.model" />
+  <Extra type="model" value="cmn_obj_widespring.model" />
   <Extra type="description" value="Makes you high" />
   <Extra type="RawByteLength" length="112" />
 </Template>

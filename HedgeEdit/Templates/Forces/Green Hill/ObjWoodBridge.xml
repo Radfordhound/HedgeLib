@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Unknown1 type="float" default="5" description="" />
+  <Unknown2 type="uint" default="17" description="" />
+  <Unknown3 type="uint" default="1" description="An enum type?" />
+  <Unknown4 type="uint" default="0" description="Always 0?" />
+  
+  <Unknown5 type="float" default="2" description="" />
+  <Unknown6 type="float" default="2" description="" />
+  <Unknown7 type="uint" default="0" description="Always 0?" />
+  <Unknown8 type="uint" default="0" description="Always 0?" />
+  
+  <!-- TODO: Figure out how models work for this object type -->
+  <Extra type="model" value="w5_obj_woodbridge_long.model" />
+  <Extra type="description" value="fricken bridges" />
+  <Extra type="RawByteLength" length="32" />
+</Template>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <BranchType type="uint" default="1" description="What kind of branch to use." />
+  <Unknown2 type="float" default="1" description="" />
+  <Unknown3 type="uint" default="1" description="Probably leaf type" />
+  <Unknown4 type="float" default="90" description="" />
+  
+  <Unknown5 type="float" default="50" description="" />
+  <Unknown6 type="float" default="2" description="" />
+  <Unknown7 type="float" default="10" description="" />
+  <Unknown8 type="float" default="10" description="" />
+  
+  <Unknown9 type="float" default="1" description="" />
+  <BranchType0 type="float" default="100" description="" />
+  <BranchType1 type="float" default="1400" description="" />
+  <BranchType2 type="float" default="3" description="" />
+  
+  <Extra type="model" value="w5_obj_palmtreeA01.model" condition="BranchType == 0" />
+  <Extra type="model" value="w5_obj_palmtreeA02.model" condition="BranchType == 1" />
+  <Extra type="model" value="w5_obj_palmtreeA03.model" condition="BranchType == 2" />
+  <Extra type="model" value="w5_obj_palmtreeB01.model" condition="BranchType == 3" />
+  <Extra type="model" value="w5_obj_palmtreeB02.model" condition="BranchType == 4" />
+  <Extra type="model" value="w5_obj_palmtreeB03.model" condition="BranchType == 5" />
+  
+  <Extra type="description" value="literally just palm trees" />
+  <Extra type="RawByteLength" length="48" />
+</Template>
