@@ -12,6 +12,7 @@ namespace HedgeEdit
         public static SetData CurrentSetLayer = null;
         public static GameEntry GameType;
         public static EditorCache EditorCache;
+        public static LuaScript Script => script;
         public static string ID, DataDir, CacheDir;
 
         private static LuaScript script;

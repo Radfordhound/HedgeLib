@@ -1,6 +1,7 @@
 ﻿using HedgeLib;
 using HedgeLib.Sets;
 using System;
+using System.IO;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -91,7 +92,8 @@ namespace HedgeEdit
                 var lvi = new ListViewItem((templateParam == null) ?
                     $"Parameter {i}" : templateParam.Name)
                 {
-                    ToolTipText = templateParam?.Description
+                    ToolTipText = templateParam?.Description,
+                    Tag = param
                 };
 
                 lvi.SubItems.Add(param.Data.ToString());
@@ -394,6 +396,124 @@ namespace HedgeEdit
             // TODO
         }
 
+        private void ImportXMLMenuItem_Click(object sender, EventArgs e)
+        {
+            var script = Stage.Script;
+            if (script == null)
+                return;
+
+            var ofd = new OpenFileDialog()
+            {
+                Title = "Import Set Layer...",
+                Filter = "HedgeLib XML Set Layer (*.xml)|*.xml|All Files (*.*)|*.*",
+            };
+
+            if (ofd.ShowDialog() == DialogResult.OK)
+            {
+                SetData setData;
+                switch (script.Game)
+                {
+                    case LuaScript.Games.Forces:
+                        setData = new ForcesSetData();
+                        break;
+
+                    case LuaScript.Games.LW:
+                        setData = new LWSetData();
+                        break;
+
+                    case LuaScript.Games.Gens:
+                    case LuaScript.Games.SU:
+                        setData = new GensSetData();
+                        break;
+
+                    // TODO: Add Storybook Support
+                    case LuaScript.Games.Storybook:
+                        throw new NotImplementedException(
+                            "Could not load, Storybook set data is not yet supported!");
+
+                    case LuaScript.Games.Colors:
+                        setData = new ColorsSetData();
+                        break;
+
+                    case LuaScript.Games.S06:
+                        setData = new S06SetData();
+                        break;
+
+                    // TODO: Add Shadow Support
+                    case LuaScript.Games.Shadow:
+                        throw new NotImplementedException(
+                            "Could not load, Shadow set data is not yet supported!");
+
+                    case LuaScript.Games.Heroes:
+                        setData = new HeroesSetData();
+                        break;
+
+                    default:
+                        throw new Exception(
+                            "Could not load, game type has not been set!");
+                }
+
+                setData.Name = Path.GetFileNameWithoutExtension(ofd.FileName);
+                setData.ImportXML(ofd.FileName);
+                script.LoadSetLayerResources(Stage.GameType, setData);
+
+                int setIndex = -1;
+                for (int i = 0; i < Stage.Sets.Count; ++i)
+                {
+                    if (Stage.Sets[i].Name == setData.Name)
+                    {
+                        setIndex = i;
+                        break;
+                    }
+                }
+
+                if (setIndex == -1)
+                {
+                    Stage.Sets.Add(setData);
+                }
+                else
+                {
+                    var layer = Stage.Sets[setIndex];
+                    Viewport.SelectedInstances.Clear();
+
+                    foreach (var obj in layer.Objects)
+                    {
+                        var instance = Viewport.GetObjectInstance(obj);
+                        if (instance == null)
+                            instance = Viewport.GetInstance(Viewport.DefaultCube, obj);
+
+                        Viewport.RemoveObjectInstance(instance);
+                    }
+
+                    Stage.Sets[setIndex] = setData;
+                }
+                
+                RefreshSceneView();
+                RefreshGUI();
+            }
+        }
+
+        private void ExportXMLMenuItem_Click(object sender, EventArgs e)
+        {
+            if (Stage.GameType == null || Stage.Sets.Count < 1)
+                return;
+
+            var fbd = new FolderBrowserDialog()
+            {
+                Description = "Choose a directory to export XML Set Layers to"
+            };
+
+            if (fbd.ShowDialog() == DialogResult.OK)
+            {
+                var objectTemplates = Stage.GameType.ObjectTemplates;
+                foreach (var layer in Stage.Sets)
+                {
+                    layer.ExportXML(Path.Combine(fbd.SelectedPath,
+                        $"{layer.Name}.xml"), objectTemplates);
+                }
+            }
+        }
+
         private void ExitMenuItem_Click(object sender, EventArgs e)
         {
             Close();
@@ -428,7 +548,7 @@ namespace HedgeEdit
 
         private void DeleteMenuItem_Click(object sender, EventArgs e)
         {
-            // TODO
+            RemoveObject(null, null);
         }
 
         private void SelectAllMenuItem_Click(object sender, EventArgs e)
@@ -470,6 +590,36 @@ namespace HedgeEdit
             // TODO
         }
 
+        private void RemoveObject(object sender, EventArgs e)
+        {
+            var instance = Viewport.SelectedInstances[0];
+            var obj = (instance.CustomData as SetObject);
+            var transform = (obj == null) ?
+                (instance.CustomData as SetObjectTransform) :
+                obj.Transform;
+
+            if (transform == null) return;
+
+            foreach (var layer in Stage.Sets)
+            {
+                if (obj != null)
+                {
+                    if (layer.Objects.Remove(obj))
+                    {
+                        Viewport.RemoveObjectInstance(instance);
+                        Viewport.SelectedInstances.Clear();
+                        RefreshSceneView();
+                        RefreshGUI();
+                        return;
+                    }
+                }
+                else
+                {
+                    // TODO: Remove children objects
+                }
+            }
+        }
+
         private void ViewSelected(object sender, EventArgs e)
         {
             if (Viewport.SelectedInstances.Count == 1)
@@ -492,6 +642,19 @@ namespace HedgeEdit
             {
                 // TODO: Show all of the objects currently selected.
             }
+        }
+
+        private void ObjectProperties_DoubleClick(object sender, EventArgs e)
+        {
+            if (objectProperties.SelectedItems.Count <= 0)
+                return;
+
+            var selectedItem = objectProperties.SelectedItems[0];
+            var objParamEditor = new ObjectParamEditor(
+                selectedItem.Tag as SetObjectParam);
+
+            if (objParamEditor.ShowDialog() == DialogResult.OK)
+                RefreshGUI();
         }
 
         private void OpenLuaTerminal(object sender, EventArgs e)

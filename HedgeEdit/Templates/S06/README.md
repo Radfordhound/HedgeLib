@@ -1,0 +1,1 @@
+Put templates for Sonic '06 objects here

@@ -35,6 +35,9 @@
             this.saveSetsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveAllMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.fileSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.importXMLMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.exportXMLMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.fileSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.exitMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.undoMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -115,6 +118,9 @@
             this.saveSetsMenuItem,
             this.saveAllMenuItem,
             this.fileSeparator1,
+            this.importXMLMenuItem,
+            this.exportXMLMenuItem,
+            this.fileSeparator2,
             this.exitMenuItem});
             this.fileMenu.Name = "fileMenu";
             this.fileMenu.Size = new System.Drawing.Size(37, 22);
@@ -159,6 +165,25 @@
             // 
             this.fileSeparator1.Name = "fileSeparator1";
             this.fileSeparator1.Size = new System.Drawing.Size(192, 6);
+            // 
+            // importXMLMenuItem
+            // 
+            this.importXMLMenuItem.Name = "importXMLMenuItem";
+            this.importXMLMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.importXMLMenuItem.Text = "&Import XML...";
+            this.importXMLMenuItem.Click += new System.EventHandler(this.ImportXMLMenuItem_Click);
+            // 
+            // exportXMLMenuItem
+            // 
+            this.exportXMLMenuItem.Name = "exportXMLMenuItem";
+            this.exportXMLMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.exportXMLMenuItem.Text = "&Export XML...";
+            this.exportXMLMenuItem.Click += new System.EventHandler(this.ExportXMLMenuItem_Click);
+            // 
+            // fileSeparator2
+            // 
+            this.fileSeparator2.Name = "fileSeparator2";
+            this.fileSeparator2.Size = new System.Drawing.Size(192, 6);
             // 
             // exitMenuItem
             // 
@@ -401,6 +426,7 @@
             this.removeObjectBtn.TabIndex = 2;
             this.removeObjectBtn.Text = "&Remove Selected Object(s)";
             this.removeObjectBtn.UseVisualStyleBackColor = true;
+            this.removeObjectBtn.Click += RemoveObject;
             // 
             // objectCountLbl
             // 
@@ -578,6 +604,7 @@
             this.objectProperties.TabIndex = 0;
             this.objectProperties.UseCompatibleStateImageBehavior = false;
             this.objectProperties.View = System.Windows.Forms.View.Details;
+            this.objectProperties.DoubleClick += ObjectProperties_DoubleClick;
             // 
             // columnHeader1
             // 
@@ -675,6 +702,9 @@
         private System.Windows.Forms.ToolStripMenuItem saveSetsMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saveAllMenuItem;
         private System.Windows.Forms.ToolStripSeparator fileSeparator1;
+        private System.Windows.Forms.ToolStripMenuItem importXMLMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem exportXMLMenuItem;
+        private System.Windows.Forms.ToolStripSeparator fileSeparator2;
         private System.Windows.Forms.ToolStripMenuItem exitMenuItem;
         private System.Windows.Forms.ToolStripMenuItem editMenu;
         private System.Windows.Forms.ToolStripMenuItem viewMenu;

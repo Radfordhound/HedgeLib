@@ -73,6 +73,12 @@
     <Compile Include="LuaTerminal.Designer.cs">
       <DependentUpon>LuaTerminal.cs</DependentUpon>
     </Compile>
+    <Compile Include="ObjectParamEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ObjectParamEditor.Designer.cs">
+      <DependentUpon>ObjectParamEditor.cs</DependentUpon>
+    </Compile>
     <Compile Include="SceneView.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -103,6 +109,9 @@
     <Compile Include="VPObjectInstance.cs" />
     <EmbeddedResource Include="LuaTerminal.resx">
       <DependentUpon>LuaTerminal.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ObjectParamEditor.resx">
+      <DependentUpon>ObjectParamEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="SceneView.resx">
       <DependentUpon>SceneView.cs</DependentUpon>
@@ -163,6 +172,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Scripts\Games\S06.lua">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Scripts\Games\Unleashed.lua">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Scripts\Games\Generations.lua">

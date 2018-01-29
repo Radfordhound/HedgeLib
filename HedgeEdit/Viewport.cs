@@ -353,6 +353,17 @@ namespace HedgeEdit
             return null;
         }
 
+        public static void RemoveObjectInstance(VPObjectInstance instance)
+        {
+            foreach (var model in Objects)
+            {
+                if (model.Value.Instances.Remove(instance))
+                    return;
+            }
+
+            DefaultCube.Instances.Remove(instance);
+        }
+
         public static VPObjectInstance SelectObject(object obj)
         {
             var instance = GetObjectInstance(obj);

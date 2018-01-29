@@ -16,9 +16,11 @@ namespace HedgeEdit
     public class LuaScript
     {
         // Variables/Constants
+        public Games Game => game;
         protected Script script;
         protected Games game = Games.None;
-        protected enum Games
+
+        public enum Games
         {
             None,
             Heroes,
@@ -202,7 +204,7 @@ namespace HedgeEdit
             });
         }
 
-        protected static Games GetGame(string dataType)
+        public static Games GetGame(string dataType)
         {
             switch (dataType.ToLower())
             {
@@ -242,6 +244,157 @@ namespace HedgeEdit
                 default:
                     throw new NotImplementedException(
                         $"Unknown game type \"{dataType}\"!");
+            }
+        }
+
+        public void LoadSetLayerResources(GameEntry gameType, SetData setData,
+            bool loadModels = true, string[] altModelDirs = null)
+        {
+            string resDir = gameType.ResourcesDir;
+            bool resDirExists = Directory.Exists(resDir);
+
+            foreach (var obj in setData.Objects)
+            {
+                var offsetPos = new Vector3(0, 0, 0);
+                SetObjectType type = null;
+
+                if (gameType.ObjectTemplates.ContainsKey(obj.ObjectType))
+                    type = gameType.ObjectTemplates[obj.ObjectType];
+
+                if (type != null)
+                {
+                    var offsetPosExtra = type.GetExtra("OffsetPosition");
+                    if (offsetPosExtra == null)
+                    {
+                        offsetPos.X = GetFloatExtra("OffsetPositionX", "Offset_Position_X");
+                        offsetPos.Y = GetFloatExtra("OffsetPositionY", "Offset_Position_Y");
+                        offsetPos.Z = GetFloatExtra("OffsetPositionZ", "Offset_Position_Z");
+                    }
+                    else if (!string.IsNullOrEmpty(offsetPosExtra.Value))
+                    {
+                        offsetPos = (Vector3)Helpers.ChangeType(
+                            offsetPosExtra.Value, typeof(Vector3));
+                    }
+
+                    // Sub-Methods
+                    float GetFloatExtra(string name, string altName)
+                    {
+                        var extra = type.GetExtra(name);
+                        if (extra == null)
+                            extra = type.GetExtra(altName);
+
+                        float.TryParse((string.IsNullOrEmpty(extra?.Value)) ?
+                            "0" : extra.Value, out float f);
+                        return f;
+                    }
+                }
+
+                // Load Object Model
+                string mdlName = null;
+                if (loadModels && resDirExists && type != null)
+                {
+                    foreach (var extra in type.Extras)
+                    {
+                        if (extra.Type.ToLower() != "model")
+                            continue;
+
+                        if (string.IsNullOrEmpty(extra.Condition) ||
+                            EvaluateObjectCondition(obj, type, extra.Condition))
+                        {
+                            mdlName = extra.Value;
+                            break;
+                        }
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(mdlName) &&
+                    !Viewport.Objects.ContainsKey(mdlName))
+                {
+                    // If the model name is actually supposed to be the value of
+                    // another parameter (e.g. in Gismos), get the name from that instead.
+                    if (mdlName.IndexOf('.') == -1)
+                    {
+                        int mdlNameParamIndex = type.GetParameterIndex(mdlName);
+                        if (mdlNameParamIndex != -1)
+                        {
+                            mdlName = (obj.Parameters[
+                                mdlNameParamIndex].Data as string);
+                        }
+                    }
+                    else
+                    {
+                        int openIndex = mdlName.IndexOf('{');
+                        int closeIndex = mdlName.IndexOf('}');
+
+                        if (openIndex != -1 && closeIndex > openIndex)
+                        {
+                            ++openIndex;
+                            if (int.TryParse(mdlName.Substring(openIndex,
+                                closeIndex - openIndex), out int index) &&
+                                index >= 0 && index < type.Parameters.Count)
+                            {
+                                mdlName = mdlName.Replace($"{{{index}}}",
+                                    (obj.Parameters[index].Data as string));
+                            }
+                        }
+                    }
+
+                    // Get scale if any
+                    Vector3? scale = null;
+                    var scaleExtra = type.GetExtra("scale");
+
+                    if (scaleExtra != null && !string.IsNullOrEmpty(scaleExtra.Value))
+                    {
+                        if (float.TryParse(scaleExtra.Value, out float s))
+                        {
+                            scale = new Vector3(s, s, s);
+                        }
+
+                        // TODO: Maybe try to parse it as a Vector3 as well?
+
+                        else
+                        {
+                            int scaleParamIndex = type.GetParameterIndex(scaleExtra.Value);
+                            if (scaleParamIndex != -1)
+                            {
+                                var param = obj.Parameters[scaleParamIndex];
+                                if (param != null)
+                                {
+                                    if (param.DataType == typeof(Vector3))
+                                    {
+                                        scale = (Vector3)param.Data;
+                                    }
+                                    else if (param.DataType == typeof(float))
+                                    {
+                                        float f = (float)param.Data;
+                                        scale = new Vector3(f, f, f);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Load the model from the standard resources directory
+                    var mdl = LoadObjectModel(
+                        Path.Combine(resDir, mdlName),
+                        resDir, true, scale);
+
+                    // If the model could not be found, attempt to load from
+                    // any given alternative resources directories.
+                    if (altModelDirs != null && mdl == null)
+                    {
+                        foreach (string dir in altModelDirs)
+                        {
+                            mdl = LoadObjectModel(
+                                Path.Combine(dir, mdlName),
+                                dir, true, scale);
+                        }
+                    }
+                }
+
+                // Spawn Object in World
+                SpawnObject(obj, mdlName,
+                    gameType.UnitMultiplier, offsetPos);
             }
         }
 
@@ -1044,152 +1197,7 @@ namespace HedgeEdit
             setData.Load(path, gameType.ObjectTemplates);
 
             // Spawn Objects in World
-            string resDir = gameType.ResourcesDir;
-            bool resDirExists = Directory.Exists(resDir);
-
-            foreach (var obj in setData.Objects)
-            {
-                var offsetPos = new Vector3(0, 0, 0);
-                SetObjectType type = null;
-
-                if (gameType.ObjectTemplates.ContainsKey(obj.ObjectType))
-                    type = gameType.ObjectTemplates[obj.ObjectType];
-
-                if (type != null)
-                {
-                    var offsetPosExtra = type.GetExtra("OffsetPosition");
-                    if (offsetPosExtra == null)
-                    {
-                        offsetPos.X = GetFloatExtra("OffsetPositionX", "Offset_Position_X");
-                        offsetPos.Y = GetFloatExtra("OffsetPositionY", "Offset_Position_Y");
-                        offsetPos.Z = GetFloatExtra("OffsetPositionZ", "Offset_Position_Z");
-                    }
-                    else if (!string.IsNullOrEmpty(offsetPosExtra.Value))
-                    {
-                        offsetPos = (Vector3)Helpers.ChangeType(
-                            offsetPosExtra.Value, typeof(Vector3));
-                    }
-
-                    // Sub-Methods
-                    float GetFloatExtra(string name, string altName)
-                    {
-                        var extra = type.GetExtra(name);
-                        if (extra == null)
-                            extra = type.GetExtra(altName);
-
-                        float.TryParse((string.IsNullOrEmpty(extra?.Value)) ?
-                            "0" : extra.Value, out float f);
-                        return f;
-                    }
-                }
-
-                // Load Object Model
-                string mdlName = null;
-                if (loadModels && resDirExists && type != null)
-                {
-                    foreach (var extra in type.Extras)
-                    {
-                        if (extra.Type.ToLower() != "model")
-                            continue;
-
-                        if (string.IsNullOrEmpty(extra.Condition) ||
-                            EvaluateObjectCondition(obj, type, extra.Condition))
-                        {
-                            mdlName = extra.Value;
-                            break;
-                        }
-                    }
-                }
-
-                if (!string.IsNullOrEmpty(mdlName) &&
-                    !Viewport.Objects.ContainsKey(mdlName))
-                {
-                    // If the model name is actually supposed to be the value of
-                    // another parameter (e.g. in Gismos), get the name from that instead.
-                    if (mdlName.IndexOf('.') == -1)
-                    {
-                        int mdlNameParamIndex = type.GetParameterIndex(mdlName);
-                        if (mdlNameParamIndex != -1)
-                        {
-                            mdlName = (obj.Parameters[
-                                mdlNameParamIndex].Data as string);
-                        }
-                    }
-                    else
-                    {
-                        int openIndex = mdlName.IndexOf('{');
-                        int closeIndex = mdlName.IndexOf('}');
-
-                        if (openIndex != -1 && closeIndex > openIndex)
-                        {
-                            ++openIndex;
-                            if (int.TryParse(mdlName.Substring(openIndex,
-                                closeIndex - openIndex), out int index) &&
-                                index >= 0 && index < type.Parameters.Count)
-                            {
-                                mdlName = mdlName.Replace($"{{{index}}}",
-                                    (obj.Parameters[index].Data as string));
-                            }
-                        }
-                    }
-
-                    // Get scale if any
-                    Vector3? scale = null;
-                    var scaleExtra = type.GetExtra("scale");
-
-                    if (scaleExtra != null && !string.IsNullOrEmpty(scaleExtra.Value))
-                    {
-                        if (float.TryParse(scaleExtra.Value, out float s))
-                        {
-                            scale = new Vector3(s, s, s);
-                        }
-
-                        // TODO: Maybe try to parse it as a Vector3 as well?
-
-                        else
-                        {
-                            int scaleParamIndex = type.GetParameterIndex(scaleExtra.Value);
-                            if (scaleParamIndex != -1)
-                            {
-                                var param = obj.Parameters[scaleParamIndex];
-                                if (param != null)
-                                {
-                                    if (param.DataType == typeof(Vector3))
-                                    {
-                                        scale = (Vector3)param.Data;
-                                    }
-                                    else if (param.DataType == typeof(float))
-                                    {
-                                        float f = (float)param.Data;
-                                        scale = new Vector3(f, f, f);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Load the model from the standard resources directory
-                    var mdl = LoadObjectModel(
-                        Path.Combine(resDir, mdlName),
-                        resDir, true, scale);
-
-                    // If the model could not be found, attempt to load from
-                    // any given alternative resources directories.
-                    if (altModelDirs != null && mdl == null)
-                    {
-                        foreach (string dir in altModelDirs)
-                        {
-                            mdl = LoadObjectModel(
-                                Path.Combine(dir, mdlName),
-                                dir, true, scale);
-                        }
-                    }
-                }
-
-                // Spawn Object in World
-                SpawnObject(obj, mdlName,
-                    gameType.UnitMultiplier, offsetPos);
-            }
+            LoadSetLayerResources(gameType, setData, loadModels, altModelDirs);
 
             setData.Name = Path.GetFileNameWithoutExtension(path);
             Stage.Sets.Add(setData);
