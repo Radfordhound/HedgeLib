@@ -15,6 +15,7 @@ namespace HedgeLib.Archives
         public const string ListExtension = ".arl", Extension = ".ar",
             PFDExtension = ".pfd", SplitExtension = ".00";
         public const uint Sig1 = 0, Sig2 = 0x10, Sig3 = 0x14;
+        public const uint MinFileEntrySize = 21, PFDPadding = 2048;
 
         public override bool HasSplitArchives => true;
 
@@ -88,9 +89,9 @@ namespace HedgeLib.Archives
             Padding = reader.ReadUInt32();
 
             // Data
-            while (reader.BaseStream.Position < reader.BaseStream.Length)
+            while (fileStream.Position < fileStream.Length)
             {
-                reader.Offset = (uint)reader.BaseStream.Position;
+                reader.Offset = (uint)fileStream.Position;
 
                 uint dataEndOffset = reader.ReadUInt32();
                 uint dataLength = reader.ReadUInt32();
@@ -192,9 +193,10 @@ namespace HedgeLib.Archives
             for (int i = startIndex; i < files.Count; ++i)
             {
                 var file = files[i];
-                writer.Offset = (uint)writer.BaseStream.Position;
-                if (sizeLimit.HasValue && i > startIndex && writer.BaseStream.Position +
-                    21 + file.Data.Length > sizeLimit) // 'Cuz file entries must be >= 21 bytes
+                writer.Offset = (uint)fileStream.Position;
+
+                if (sizeLimit.HasValue && i > startIndex && fileStream.Position +
+                    MinFileEntrySize + file.Data.Length > sizeLimit)
                     return i;
 
                 writer.AddOffset("dataEndOffset");

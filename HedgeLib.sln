@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.15
+VisualStudioVersion = 15.0.27130.2026
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HedgeLib", "HedgeLib\HedgeLib.csproj", "{EEB16FCA-FF9F-40B5-9D43-F2460AA930C8}"
 EndProject
@@ -12,6 +12,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HedgeEdit", "HedgeEdit\HedgeEdit.csproj", "{1E8201CC-233C-484E-A280-B3CBF0583296}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HedgeArcPack", "HedgeTools\HedgeArcPack\HedgeArcPack.csproj", "{2C3E5A42-314C-4A1B-9E71-8A34B286F42E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HedgePFD", "HedgeTools\HedgePFD\HedgePFD.csproj", "{01BC5182-8158-462E-9577-E3BC39605A4B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "HedgeTools", "HedgeTools", "{965BE90A-F869-45E1-8F44-97BEBAA12A06}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,8 +43,21 @@ Global
 		{2C3E5A42-314C-4A1B-9E71-8A34B286F42E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2C3E5A42-314C-4A1B-9E71-8A34B286F42E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2C3E5A42-314C-4A1B-9E71-8A34B286F42E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{01BC5182-8158-462E-9577-E3BC39605A4B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{01BC5182-8158-462E-9577-E3BC39605A4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{01BC5182-8158-462E-9577-E3BC39605A4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{01BC5182-8158-462E-9577-E3BC39605A4B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{5C49913A-A2FF-4A95-9CA9-8A1B1E5B9513} = {965BE90A-F869-45E1-8F44-97BEBAA12A06}
+		{2EB84FE4-C074-4640-B758-E584EA3F0F29} = {965BE90A-F869-45E1-8F44-97BEBAA12A06}
+		{2C3E5A42-314C-4A1B-9E71-8A34B286F42E} = {965BE90A-F869-45E1-8F44-97BEBAA12A06}
+		{01BC5182-8158-462E-9577-E3BC39605A4B} = {965BE90A-F869-45E1-8F44-97BEBAA12A06}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {637995FC-1FB4-45F7-8336-B9C78FAA11F7}
 	EndGlobalSection
 EndGlobal
