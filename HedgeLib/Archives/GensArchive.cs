@@ -53,7 +53,7 @@ namespace HedgeLib.Archives
                 string ext = (fileInfo.Extension == ListExtension) ?
                     ".ar" : fileInfo.Extension;
 
-                if (int.TryParse(ext, out int e))
+                if (int.TryParse(ext.Substring(1), out var e))
                     ext = "";
 
                 // fileInfo.Extension only gets the last extension in the fileName.

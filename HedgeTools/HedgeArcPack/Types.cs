@@ -1,80 +1,73 @@
 ﻿using HedgeLib.Archives;
 using System;
-using System.Collections.Generic;
-using System.IO;
 
 namespace HedgeArcPack
 {
     public static class Types
     {
         // Methods
-        public static ArcType SetType(string typeString)
+        public static ArcType GetArcType(string typeString)
         {
             switch (typeString.ToLower())
             {
+                case "sonic heroes":
                 case "heroes":
                     return ArcType.Heroes;
 
+                case "sonic and the secret rings":
+                case "sonic and the black knight":
+                case "black knight":
+                case "secret rings":
+                case "satbk":
+                case "satsr":
                 case "storybook":
                 case "sb":
                     return ArcType.Storybook;
 
+                case "sonic unleashed":
+                case "sonic generations":
+                case "unleashed":
+                case "generations":
+                case "su":
                 case "gens":
                     return ArcType.Gens;
 
-                case "lostworld":
-                case "lw":
-                    return ArcType.LostWorld;
+                // TODO: LW Support
+
+                case "sonic forces":
+                case "forces":
+                    return ArcType.Forces;
             }
 
             return ArcType.Unknown;
         }
 
-        public static ArcType AutoDetectType(string input)
+        public static ArcType AutoDetectType(string filePath)
         {
-            string ext = Path.GetExtension(input).ToLower();
-
-            // Sets ext to the previous extension if its current extension is a number
-            if (!string.IsNullOrEmpty(ext))
-            {
-                if (int.TryParse(ext.Substring(ext.IndexOf('.')), out int splitIndex))
-                    ext = Path.GetExtension(Path.ChangeExtension(input, null)).ToLower();
-
-                if (ext.Contains(GensArchive.Extension) || ext == GensArchive.PFDExtension ||
-                    ext.Contains(GensArchive.ListExtension))
-                {
-                    return ArcType.Gens;
-                }
-                else if (ext.Contains(LWArchive.Extension))
-                {
-                    return ArcType.LostWorld;
-                }
-                else if (ext.Contains(ONEArchive.Extension))
-                {
-                    return ArcType.Heroes;
-                }
-                else if (ext.Contains(SBArchive.Extension))
-                {
-                    return ArcType.Storybook;
-                }
-            }
-
             var type = ArcType.Unknown;
+            string ext = Archive.GetSplitParentExtension(filePath);
+            if (!string.IsNullOrEmpty(ext))
+                type = GetTypeFromExt(ext);
+
+            if (type != ArcType.Unknown)
+                return type;
 
             // If the type can't be auto-detected, prompt the user to input one instead
+            return PromptForType();
+        }
+
+        public static ArcType PromptForType()
+        {
             Console.WriteLine("Archive type could not be auto-determined.");
             Console.WriteLine("Please enter one manually:");
 
+            var type = ArcType.Unknown;
             while (type == ArcType.Unknown)
             {
                 string userInput = Console.ReadLine();
-
-                type = SetType(userInput);
-
-                // Cancel if nothing is typed
-                if (userInput.Length == 0)
-                    return ArcType.Unknown;
+                type = GetArcType(userInput);
             }
+
             return type;
         }
 
@@ -91,8 +84,11 @@ namespace HedgeArcPack
                 case ArcType.Gens:
                     return GensArchive.Extension;
 
-                case ArcType.LostWorld:
+                case ArcType.LW:
                     return LWArchive.Extension;
+
+                case ArcType.Forces:
+                    return ForcesArchive.Extension;
             }
 
             return ".arc";
@@ -111,17 +107,46 @@ namespace HedgeArcPack
                 case ArcType.Gens:
                     return new GensArchive();
 
-                case ArcType.LostWorld:
-                    return new LWArchive();
+                case ArcType.LW:
+                    // TODO: LW Support
+                    return null;
+
+                case ArcType.Forces:
+                    return new ForcesArchive();
             }
 
             return null;
         }
 
+        private static ArcType GetTypeFromExt(string ext)
+        {
+            switch (ext.ToLower())
+            {
+                case ONEArchive.Extension:
+                    // We don't know, this could be either Heroes, or
+                    // a Storybook series archive.
+
+                    // TODO: Maybe merge SBArchive and ONEArchive classes?
+                    return ArcType.Unknown;
+
+                case GensArchive.Extension:
+                case GensArchive.PFDExtension:
+                case GensArchive.ListExtension:
+                    return ArcType.Gens;
+
+                case ForcesArchive.Extension:
+                    // TODO: LW Support
+                    return ArcType.Forces;
+
+                default:
+                    return ArcType.Unknown;
+            }
+        }
+
         // Other
         public enum ArcType
         {
-            Unknown, Heroes, Storybook, Gens, LostWorld
+            Unknown, Heroes, Storybook, Gens, LW, Forces
         }
     }
 }

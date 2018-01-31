@@ -1,10 +1,6 @@
 ﻿using HedgeLib.Archives;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HedgeArcPack
 {
@@ -17,17 +13,45 @@ namespace HedgeArcPack
             if (!Directory.Exists(Input))
                 return false;
 
+            // Figure out the type of archive to repack if none was specified
             if (Type == Types.ArcType.Unknown)
-                Type = GuessArchiveType();
+            {
+                // If an output was specified, simply figure out the type from that
+                if (!string.IsNullOrWhiteSpace(Output))
+                {
+                    Type = Types.AutoDetectType(Output);
+                }
 
-            if (Type == Types.ArcType.Unknown)
-                Type = Types.AutoDetectType(Input);
+                // Otherwise, try to guess it. If we fail, simply
+                // ask the user what type to use.
+                else
+                {
+                    var dirInfo = new DirectoryInfo(Input);
+                    string parent = dirInfo.Parent?.FullName;
+                    Type = GuessRepackType();
+
+                    // Try to auto-determine the Output path if none was specified
+                    if (string.IsNullOrEmpty(parent))
+                    {
+                        Print("Output path could not be auto-determined.");
+                        Print("Please manually specify an output path and press enter");
+
+                        Output = Console.ReadLine();
+                    }
+                    else
+                    {
+                        Output = Path.Combine(parent,
+                            $"{dirInfo.Name}{Types.GetExtension(Type)}");
+                    }
+                }
+            }
 
             // DEBUG
             PrintDebug("Archive Type: " + Type);
 
             if (Type == Types.ArcType.Unknown)
             {
+                // TODO: Remove this check? This shouldn't be possible anymore.
                 PrintError("Archive Type is Unknown, Please specify a type");
                 return false;
             }
@@ -36,26 +60,6 @@ namespace HedgeArcPack
             var archive = Types.GetArchive(Type);
             if (archive == null)
                 return false;
-
-            // Get the output filePath if none was specified
-            if (string.IsNullOrEmpty(Output))
-            {
-                var dirInfo = new DirectoryInfo(Input);
-                string parent = dirInfo.Parent?.FullName;
-
-                if (string.IsNullOrEmpty(parent))
-                {
-                    Print("Output path could not be auto-detected.");
-                    Print("Please manually specify an output path and press enter");
-
-                    Output = Console.ReadLine();
-                    return RepackArchive(); // Please no Stack Overflows
-                }
-                else
-                {
-                    Output = Path.Combine(parent, $"{dirInfo.Name}{Types.GetExtension(Type)}");
-                }
-            }
 
             // DEBUG
             PrintDebug("Archive: " + archive);
@@ -80,14 +84,25 @@ namespace HedgeArcPack
             archive.AddDirectory(Input); // TODO: Add an option for including sub-dirs
             Print("Repacking... Saving      \r", false);
 
-            if (archive is GensArchive genArchive)
-                genArchive.Save(Output, bool.Parse(Options["createarl"]),
-                    (bool.Parse(Options["split"]) ?
-                    (uint?)uint.Parse(Options["splitsize"]) : null));
-            else
-                archive.Save(Output, true);
+            uint? splitCount = (bool.Parse(Options["split"]) ?
+                (uint?)uint.Parse(Options["splitsize"]) : null);
 
-            Print("\nDone!      ");
+            if (archive is GensArchive gensArchive)
+            {
+                gensArchive.Save(Output, bool.Parse(
+                    Options["createarl"]), splitCount);
+            }
+            else if (archive is ForcesArchive forcesArchive)
+            {
+                forcesArchive.Save(Output, splitCount);
+            }
+            else
+            {
+                archive.Save(Output, true);
+            }
+
+            Print("\nDone!");
+            //Print("\nDone!      ");
 
             return true;
         }
@@ -107,9 +122,13 @@ namespace HedgeArcPack
                 // Create an output path if not specified
                 if (string.IsNullOrEmpty(Output))
                 {
-                    Output = Path.ChangeExtension(Input, null);
-                    if (Path.HasExtension(Output))
-                        Output = Path.ChangeExtension(Output, null);
+                    var dir = Path.GetDirectoryName(Input);
+                    var name = Path.GetFileName(Input);
+                    string ext = Archive.GetSplitParentExtension(Input);
+
+                    name = name.Substring(0, name.IndexOf(ext));
+                    Output = Path.Combine(dir, name);
+                    Console.WriteLine(Output);
                 }
 
                 // DEBUG
@@ -135,9 +154,10 @@ namespace HedgeArcPack
                 // DEBUG
                 PrintDebug("Archive: " + archive);
 
-                // Loads the archive
-                Print("Loading...\r", false);
+                // Load the archive
+                Print("Loading...");
                 archive.Load(Input);
+
                 // Extract the archive
                 Print("Extracting...\r", false);
 
@@ -147,10 +167,10 @@ namespace HedgeArcPack
                     var data = archive.Data[i];
                     data.Extract(Path.Combine(Output, data.Name));
                     int percent = (int)(((float)i / archive.Data.Count) * 100f);
-                    Print($"{percent}%\r", false);
+                    Print($"Extracting...\t{percent}%\r", false);
                 }
 
-                Print("Done!");
+                Print("\nDone!");
                 return true;
             }
             catch (Exception ex)

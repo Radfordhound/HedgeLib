@@ -8,11 +8,10 @@ Arguments surrounded by double-square brackets can appear anywhere in the comman
   HedgeArcPack will attempt to auto-detect this if left blank
   Must be one of the following options:
 
-    Heroes          Sonic Heroes/Shadow the Hedgehog archives (.one)
-    Storybook or SB Storybook Series archvies (.one)
-    Gens            Sonic Unleashed/Generations archives (.ar, .pfd, .arl)
-    LostWorld or LW Sonic Lost World archives (.pac)
-
+    Heroes			Sonic Heroes/Shadow the Hedgehog archives (.one)
+    Storybook or SB		Storybook Series archvies (.one)
+    Gens			Sonic Unleashed/Generations archives (.ar, .pfd, .arl)
+    Forces			Sonic Forces archives (.pac)
 
 - input
   The path to the input file or directory.
@@ -33,4 +32,4 @@ Arguments surrounded by double-square brackets can appear anywhere in the comman
   Must be one (or more) of the following options:
     -Q              Enables Quiet Mode (Prints only Warnings and Errors and input acts as though you typed Y).
     -Padding or -P  Specifies how much padding should be used in the repacked archive.
-
+    -D              Enables Debug Mode (Prints debug information).

@@ -113,7 +113,7 @@ namespace HedgeLib.Archives
             var splitArchivesList = new List<string>();
 
             string ext = fileInfo.Extension;
-            if (int.TryParse(ext, out int e))
+            if (int.TryParse(ext.Substring(1), out var e))
                 ext = "";
 
             // fileInfo.Extension only gets the last extension in the fileName.

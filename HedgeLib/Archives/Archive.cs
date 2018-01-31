@@ -26,6 +26,25 @@ namespace HedgeLib.Archives
             throw new NotImplementedException();
         }
 
+        public static string GetSplitParentExtension(string filePath)
+        {
+            string fileName = Path.GetFileName(filePath);
+            var exts = fileName.Split('.');
+            int extsLen = exts.Length;
+
+            // If there's only one dot in the fileName, just use the text after it
+            // (E.G. #ActD_MykonosAct1.arl -> arl)
+            if (extsLen == 2)
+                return "." + exts[1];
+
+            // Otherwise, use the text between the last dot and the dot before it
+            // (E.G. #ActD_MykonosAct1.ar.00 -> ar)
+            else if (extsLen > 2)
+                return "." + exts[extsLen - 2];
+
+            return null;
+        }
+
         public static List<ArchiveFile> GetFiles(
             List<ArchiveData> files, bool includeSubDirectories = true)
         {

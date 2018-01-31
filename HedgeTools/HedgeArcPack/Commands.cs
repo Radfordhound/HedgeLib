@@ -1,47 +1,78 @@
-﻿using HedgeLib;
-using HedgeLib.Archives;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace HedgeArcPack
 {
     public partial class Commands
     {
-
         // Variables/Constants
-        // If true than don't print anything and ignore the user input
-        // NOTE: Errors and Warnings will not be ignored
-        public static bool Quiet = false;
+        /// <summary>
+        /// List of options and their default values.
+        /// </summary>
+        public static Dictionary<string, string> Options = new Dictionary<string, string>()
+        {
+            { "split", "true" },
+            { "splitsize", "10485760" },
+            { "padding", "64" },
+            { "createarl", "true" },
+            { "magic", "335609855" }
+        };
+
+        /// <summary>
+        /// Aliases for options in the Options dictionary and the original options they trigger.
+        /// </summary>
+        public static Dictionary<string, string> OptionAliases = new Dictionary<string, string>()
+        {
+            { "p", "padding" }
+        };
+
+        /// <summary>
+        /// Current Command (Default: ShowHelp)
+        /// </summary>
+        public static Func<bool> Command = ShowHelp;
+
+        /// <summary>
+        /// Current Input Path
+        /// </summary>
+        public static string Input = "";
+
+        /// <summary>
+        /// Current Output Path
+        /// </summary>
+        public static string Output = "";
+
+        /// <summary>
+        /// Current Archvie Type
+        /// </summary>
         public static Types.ArcType Type = Types.ArcType.Unknown;
 
-        // Input Path
-        public static string Input = "";
-        // Output Path
-        public static string Output = "";
-        // List of options
-        public static Dictionary<string, string> Options = new Dictionary<string, string>();
-        // Option Aliases
-        public static Dictionary<string, string> OptionAliases = new Dictionary<string, string>();
-        // Current Command (Default: ShowHelp)
-        public static Func<bool> Command = ShowHelp;
+        /// <summary>
+        /// If true, don't print anything and ignore user input.
+        /// NOTE: Errors and Warnings will not be ignored
+        /// </summary>
+        public static bool Quiet = false;
+
+        /// <summary>
+        /// Whether or not debug mode is enabled
+        /// </summary>
+        public static bool Debug = false;
 
         // Methods
         public static void ProcessCommand(string[] args)
         {
-            // Checks if there is any arguments
+            // No arguments were given
             if (args.Length == 0)
-            { // No arguments
-                PrintError("Too few Arguments");
+            {
                 ShowHelp();
             }
+
+            // At least one argument was given
             else
-            { // Has atleast one argument
+            {
                 // Processes all the arguments
                 if (!ProcessArguments(args))
                 {
@@ -56,27 +87,26 @@ namespace HedgeArcPack
                 PrintDebug("Command: " + Command.Method.Name);
                 PrintDebug("Executing Command");
 
-                // Invokes the method
+                // Invokes the command
                 Command();
 
                 // DEBUG
                 PrintDebug("Finished Executing");
             }
-            // End of command
-            // Print("Press any key to exit...", false);
-            // if (!Quiet)
-            //    Console.ReadKey(true);
         }
 
         /// <summary>
-        /// Processes the arguments.
+        /// Processes the given arguments.
         /// It also handles the Input and Output paths
         /// </summary>
-        /// <returns></returns>
+        /// <param name="args">The arguments to process</param>
+        /// <returns>Whether or not the arguments were processed successfully.</returns>
         public static bool ProcessArguments(string[] args)
         {
             string argument = string.Empty;
             int argumentIndex = -1;
+
+            // Iterate through and process each argument
             while (argumentIndex != args.Length - 1)
             {
                 switch ((argument = args[++argumentIndex]).ToLower())
@@ -87,42 +117,49 @@ namespace HedgeArcPack
                     case "/?":
                     case "?":
                         return false;
+                    
                     // Quiet
                     case "/q":
                     case "-q":
                         Quiet = true;
                         break;
+
+                    // Debug
+                    case "/d":
+                    case "-d":
+                        Debug = true;
+                        break;
+                    
                     // Extract
                     case "/e":
                     case "-e":
                         Command = ExtractArchive;
                         break;
+                    
                     // Repack
                     case "/r":
                     case "-r":
                         Command = RepackArchive;
                         break;
+                    
                     // Not a command
                     default:
 
-                        // Type
-                        // Checks if its a Type. If not, then it could be an option or a path
-                        if (Types.SetType(argument) != Types.ArcType.Unknown &&
+                        // Checks if it's a Type. If not, then it could be an option or a path
+                        if (Types.GetArcType(argument) != Types.ArcType.Unknown &&
                             string.IsNullOrEmpty(Input))
                         {
-                            Type = Types.SetType(argument);
+                            Type = Types.GetArcType(argument);
                             continue;
                         }
 
-                        // Option
-                        // Checks if its an Option. If not, then it must be a path
+                        // Checks if it's an Option. If not, then it must be a path
                         if (HandleOptions(ref argumentIndex, args))
                             continue;
 
-                        // Path
-                        // Assuming its a path
-                        // if Input is Empty then set it it to the current argument
-                        // if not, then set Output to the current argument
+                        // Assuming it's a path.
+                        // If Input is Empty, set it to the current argument.
+                        // Otherwise, set Output to the current argument.
                         if (string.IsNullOrEmpty(Input))
                             Input = argument;
                         else
@@ -135,20 +172,22 @@ namespace HedgeArcPack
             // to auto-detect what we need to do with the given input.
             if (!string.IsNullOrEmpty(Input) && Command == ShowHelp)
             {
+                // Input is a file
                 if (File.Exists(Input))
-                { // Input is a file
                     Command = ExtractArchive;
-                }
+
+                // Input is a directory
                 else if (Directory.Exists(Input))
-                { // Input is a directory
                     Command = RepackArchive;
-                }
+
+                // Input is invalid
                 else
                 {
                     PrintError("Invalid command or non-existent file/directory!");
                     return false;
                 }
             }
+
             return true;
         }
 
@@ -158,35 +197,50 @@ namespace HedgeArcPack
             string argument = args[argumentIndex];
 
             // Checks if its an Option
-            if (argument.StartsWith("/") ||
-                argument.StartsWith("-"))
+            if (argument[0] == '/' || argument[0] == '-')
             {
                 string optionName = argument.Substring(1).ToLower();
                 string optionValue = GetNextArgument(ref argumentIndex, args);
+
                 if (Options.ContainsKey(optionName))
+                {
                     Options[optionName] = optionValue;
+                }
                 else if (OptionAliases.ContainsKey(optionName))
+                {
                     Options[OptionAliases[optionName]] = optionValue;
+                }
                 else
+                {
                     // DEBUG
                     PrintDebug(string.Format("Got Unknown Option: N:{0}, V:{1}",
                         optionName, optionValue));
+                }
+
                 return true;
             }
+
             return false;
         }
 
-        public static Types.ArcType GuessArchiveType()
+        /// <summary>
+        /// Guesses what type of archive we're trying to repack based
+        /// on the original archive, prompting the user to enter one if
+        /// it cannot automatically be determined.
+        /// </summary>
+        /// <returns>The guessed type</returns>
+        public static Types.ArcType GuessRepackType()
         {
-            string inputPath = new FileInfo(Input).FullName;
-            string parent = Path.GetDirectoryName(inputPath);
-            foreach (var filePath in Directory.GetFiles(parent))
+            var info = new DirectoryInfo(Input);
+            string inputPath = info.FullName;
+
+            foreach (var filePath in Directory.GetFiles(info.Parent.FullName))
             {
-                if (Path.GetFileNameWithoutExtension(filePath) ==
-                    Path.GetFileName(inputPath))
+                if (Path.GetFileNameWithoutExtension(filePath) == info.Name)
                     return Types.AutoDetectType(filePath);
             }
-            return Types.ArcType.Unknown;
+
+            return Types.PromptForType();
         }
 
         // Other Methods
@@ -197,8 +251,8 @@ namespace HedgeArcPack
                 PrintError("Too few Arguments");
                 return "";
             }
-            else
-                return args[++argumentIndex];
+
+            return args[++argumentIndex];
         }
 
         public static void Print(string text, bool newLine = true)
@@ -233,7 +287,9 @@ namespace HedgeArcPack
             [CallerLineNumber] int currentLineNumber = 0,
             [CallerFilePath] string currentFilePath = "")
         {
-            #if DEBUG
+            if (!Debugger.IsAttached && !Debug)
+                return;
+
             var color = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Green;
 
@@ -245,14 +301,13 @@ namespace HedgeArcPack
             Console.WriteLine(codeInfo);
 
             Console.ForegroundColor = color;
-            #endif
         }
 
         /// <summary>
-        /// Asks a Yes/No question to the user
+        /// Asks a Yes/No question to the user and returns what the user answers.
         /// </summary>
-        /// <param name="msg">The Question</param>
-        /// <returns>The Answer</returns>
+        /// <param name="msg">The question to ask the user</param>
+        /// <returns>Whether or not the user typed "Yes"</returns>
         public static bool YesNo(string msg)
         {
             if (Quiet)
@@ -261,28 +316,36 @@ namespace HedgeArcPack
             Console.Write($"{msg} <Y/N>: ");
 
             // Pause until the user enters either Y or N
-            var keyInfo = Console.ReadKey(true);
-            while (keyInfo.Key != ConsoleKey.Y && keyInfo.Key != ConsoleKey.N)
-                keyInfo = Console.ReadKey(true);
+            ConsoleKeyInfo keyInfo;
+            bool yes = false;
 
-            Console.WriteLine(keyInfo.Key == ConsoleKey.Y ? "Yes" : "No");
-            return (keyInfo.Key == ConsoleKey.Y);
+            do
+            {
+                keyInfo = Console.ReadKey(true);
+                yes = (keyInfo.Key == ConsoleKey.Y);
+            }
+            while (!yes && keyInfo.Key != ConsoleKey.N);
+
+            Console.WriteLine(yes ? "Yes" : "No");
+            return yes;
         }
 
         public static bool ShowHelp()
         {
-            // "Help:"
+            // Write "Help:"
             var color = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine("Help:");
             Console.ForegroundColor = color;
 
+            // Write help text
             string helpString = Resources.Help;
             helpString = helpString.Replace("!FILENAME!",
-                Path.GetFileName(Application.ExecutablePath));
+                Path.GetFileNameWithoutExtension(Application.ExecutablePath));
+
             Console.WriteLine(helpString);
+            Console.ReadLine();
             return true;
         }
-
     }
 }
