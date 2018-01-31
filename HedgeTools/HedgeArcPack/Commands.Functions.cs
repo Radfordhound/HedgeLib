@@ -26,23 +26,28 @@ namespace HedgeArcPack
                 // ask the user what type to use.
                 else
                 {
-                    var dirInfo = new DirectoryInfo(Input);
-                    string parent = dirInfo.Parent?.FullName;
                     Type = GuessRepackType();
+                }
+            }
 
-                    // Try to auto-determine the Output path if none was specified
-                    if (string.IsNullOrEmpty(parent))
-                    {
-                        Print("Output path could not be auto-determined.");
-                        Print("Please manually specify an output path and press enter");
+            // Get Output if none was specified
+            if (string.IsNullOrWhiteSpace(Output))
+            {
+                var dirInfo = new DirectoryInfo(Input);
+                string parent = dirInfo.Parent?.FullName;
 
-                        Output = Console.ReadLine();
-                    }
-                    else
-                    {
-                        Output = Path.Combine(parent,
-                            $"{dirInfo.Name}{Types.GetExtension(Type)}");
-                    }
+                // Try to auto-determine the Output path if none was specified
+                if (string.IsNullOrEmpty(parent))
+                {
+                    Print("Output path could not be auto-determined.");
+                    Print("Please manually specify an output path and press enter");
+
+                    Output = Console.ReadLine();
+                }
+                else
+                {
+                    Output = Path.Combine(parent,
+                        $"{dirInfo.Name}{Types.GetExtension(Type)}");
                 }
             }
 
