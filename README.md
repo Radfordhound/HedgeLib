@@ -30,6 +30,7 @@ Right now it supports the following:
 - [Reading Set Data.](HedgeLib/Sets/GensSetData.cs)
 - [Reading/Writing Terrain Groups.](HedgeLib/Terrain/GensTerrainGroup.cs)
 - [Reading/Writing Light Lists.](HedgeLib/Lights/GensLightList.cs)
+- [Reading/Writing PFI Files.](HedgeLib/Misc/GensPFI.cs)
 
 ### Sonic '06
 - [Reading Archives.](HedgeLib/Archives/S06Archive.cs)
@@ -58,6 +59,10 @@ Right now this includes the following:
 
 - [Hedge Archive Editor](HedgeTools/HedgeArchiveEditor)
   * A GUI tool that allows easy editing of archiving formats from all games HedgeLib supports.
+
+- [Hedge PFD](HedgeTools/HedgePFD)
+  * A Command Line tool that allows for quick packing of Generations/Unleashed PFD
+  files and generation of their accompanying PFI files.
 
 - [Hedge GISM Editor](HedgeTools/HedgeGISMEditor)
   * A GUI tool that allows editing of the Lost World GISM format (basically a list of "Gismos" used by a stage).
