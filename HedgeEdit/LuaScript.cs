@@ -41,7 +41,8 @@ namespace HedgeEdit
         public LuaScript()
         {
             // TODO: Maybe set more CoreModules?
-            script = new Script(CoreModules.Basic | CoreModules.String);
+            script = new Script(CoreModules.Basic | CoreModules.String |
+                CoreModules.TableIterators);
 
             // General
             script.Globals["Log"] = (Action<object>)LuaTerminal.Log;
@@ -625,7 +626,8 @@ namespace HedgeEdit
                     string arcHash = Helpers.GetFileHash(file);
                     splitHashes.Add(arcHash);
 
-                    if (splitCacheHashes == null || splitCacheHashes[i] != arcHash)
+                    if (hashesMatch && (splitCacheHashes == null ||
+                        splitCacheHashes[i] != arcHash))
                     {
                         hashesMatch = false;
                     }
@@ -1063,7 +1065,7 @@ namespace HedgeEdit
             Viewport.Materials.Add(name, mat);
 
             // Textures
-            foreach (var tex in mat.Textures)
+            foreach (var tex in mat.Texset.Textures)
             {
                 // TODO: Make extension type-specific
                 LoadTexture(Path.Combine(texDir,

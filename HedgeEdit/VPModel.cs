@@ -134,8 +134,8 @@ namespace HedgeEdit
                         Viewport.DefaultMaterial : Viewport.Materials[matName];
 
                     // Get the texture
-                    string texName = (mat.Textures.Count > 0) ?
-                        mat.Textures[0].TextureName : null;
+                    string texName = (mat.Texset.Textures.Count > 0) ?
+                        mat.Texset.Textures[0].TextureName : null;
 
                     int tex = (string.IsNullOrEmpty(texName) ||
                         !Viewport.Textures.ContainsKey(texName)) ?

@@ -651,7 +651,7 @@ namespace HedgeEdit
 
             var selectedItem = objectProperties.SelectedItems[0];
             var objParamEditor = new ObjectParamEditor(
-                selectedItem.Tag as SetObjectParam);
+                (selectedItem.Tag as SetObjectParam));
 
             if (objParamEditor.ShowDialog() == DialogResult.OK)
                 RefreshGUI();
