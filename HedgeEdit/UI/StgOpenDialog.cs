@@ -3,7 +3,7 @@ using System.Configuration;
 using System.IO;
 using System.Windows.Forms;
 
-namespace HedgeEdit
+namespace HedgeEdit.UI
 {
     public partial class StgOpenDialog : Form
     {

@@ -1,4 +1,4 @@
-﻿namespace HedgeEdit
+﻿namespace HedgeEdit.UI
 {
     partial class ObjectParamEditor
     {
@@ -31,6 +31,7 @@
             this.okBtn = new System.Windows.Forms.Button();
             this.cancelBtn = new System.Windows.Forms.Button();
             this.valueTxtBx = new System.Windows.Forms.TextBox();
+            this.descriptionLbl = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // okBtn
@@ -60,6 +61,17 @@
             this.valueTxtBx.Size = new System.Drawing.Size(353, 26);
             this.valueTxtBx.TabIndex = 2;
             // 
+            // descriptionLbl
+            // 
+            this.descriptionLbl.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.descriptionLbl.Location = new System.Drawing.Point(0, 0);
+            this.descriptionLbl.Name = "descriptionLbl";
+            this.descriptionLbl.Padding = new System.Windows.Forms.Padding(0, 10, 0, 0);
+            this.descriptionLbl.Size = new System.Drawing.Size(378, 144);
+            this.descriptionLbl.TabIndex = 3;
+            this.descriptionLbl.Text = "Description";
+            this.descriptionLbl.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            // 
             // ObjectParamEditor
             // 
             this.AcceptButton = this.okBtn;
@@ -71,6 +83,7 @@
             this.Controls.Add(this.valueTxtBx);
             this.Controls.Add(this.cancelBtn);
             this.Controls.Add(this.okBtn);
+            this.Controls.Add(this.descriptionLbl);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -89,5 +102,6 @@
         private System.Windows.Forms.Button okBtn;
         private System.Windows.Forms.Button cancelBtn;
         private System.Windows.Forms.TextBox valueTxtBx;
+        private System.Windows.Forms.Label descriptionLbl;
     }
 }

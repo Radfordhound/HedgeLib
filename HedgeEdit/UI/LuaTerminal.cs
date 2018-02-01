@@ -1,9 +1,10 @@
-﻿using System;
+﻿using HedgeEdit.Lua;
+using System;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 
-namespace HedgeEdit
+namespace HedgeEdit.UI
 {
     public partial class LuaTerminal : Form
     {

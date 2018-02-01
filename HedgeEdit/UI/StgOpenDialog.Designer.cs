@@ -1,4 +1,4 @@
-﻿namespace HedgeEdit
+﻿namespace HedgeEdit.UI
 {
     partial class StgOpenDialog
     {

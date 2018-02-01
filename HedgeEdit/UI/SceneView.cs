@@ -2,7 +2,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace HedgeEdit
+namespace HedgeEdit.UI
 {
     public partial class SceneView : Form
     {

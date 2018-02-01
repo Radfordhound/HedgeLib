@@ -3,7 +3,7 @@ using HedgeLib.Sets;
 using System;
 using System.Windows.Forms;
 
-namespace HedgeEdit
+namespace HedgeEdit.UI
 {
     public partial class ObjectParamEditor : Form
     {
@@ -11,12 +11,15 @@ namespace HedgeEdit
         protected SetObjectParam objParam;
 
         // Constructors
-        public ObjectParamEditor(SetObjectParam objParam)
+        public ObjectParamEditor(SetObjectParam objParam,
+            SetObjectTypeParam typeParam = null)
         {
             this.objParam = objParam;
             InitializeComponent();
 
             valueTxtBx.Text = objParam.Data.ToString();
+            descriptionLbl.Text = (typeParam == null) ?
+                "" : typeParam.Description;
         }
 
         // GUI Events

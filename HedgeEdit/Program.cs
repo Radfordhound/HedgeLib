@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HedgeEdit.UI;
+using System;
 using System.IO;
 using System.Windows.Forms;
 

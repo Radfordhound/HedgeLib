@@ -1,11 +1,12 @@
-﻿using HedgeLib;
+﻿using HedgeEdit.Lua;
+using HedgeLib;
 using HedgeLib.Sets;
 using System;
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
 
-namespace HedgeEdit
+namespace HedgeEdit.UI
 {
     public partial class MainFrm : Form
     {

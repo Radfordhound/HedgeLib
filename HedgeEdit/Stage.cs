@@ -1,4 +1,6 @@
-﻿using HedgeLib.Sets;
+﻿using HedgeEdit.Lua;
+using HedgeEdit.UI;
+using HedgeLib.Sets;
 using System;
 using System.Collections.Generic;
 using System.IO;

@@ -453,12 +453,6 @@ namespace HedgeEdit
                 h /= 2;
             }
 
-            // TODO: Is this good? :P
-            if (mipmapCount < 2)
-            {
-                GL.GenerateMipmap(TextureTarget.Texture2D);
-            }
-
             return texture;
         }
 

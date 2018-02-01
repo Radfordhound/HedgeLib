@@ -66,57 +66,63 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GameEntry.cs" />
-    <Compile Include="LuaScript.cs" />
-    <Compile Include="LuaTerminal.cs">
+    <Compile Include="Lua\ArchiveCallbacks.cs" />
+    <Compile Include="Lua\IOCallbacks.cs" />
+    <Compile Include="Lua\MaterialCallbacks.cs" />
+    <Compile Include="Lua\LuaScript.cs" />
+    <Compile Include="Lua\SetCallbacks.cs" />
+    <Compile Include="Lua\TerrainCallbacks.cs" />
+    <Compile Include="Lua\UICallbacks.cs" />
+    <Compile Include="UI\LuaTerminal.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="LuaTerminal.Designer.cs">
+    <Compile Include="UI\LuaTerminal.Designer.cs">
       <DependentUpon>LuaTerminal.cs</DependentUpon>
     </Compile>
-    <Compile Include="ObjectParamEditor.cs">
+    <Compile Include="UI\ObjectParamEditor.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ObjectParamEditor.Designer.cs">
+    <Compile Include="UI\ObjectParamEditor.Designer.cs">
       <DependentUpon>ObjectParamEditor.cs</DependentUpon>
     </Compile>
-    <Compile Include="SceneView.cs">
+    <Compile Include="UI\SceneView.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="SceneView.Designer.cs">
+    <Compile Include="UI\SceneView.Designer.cs">
       <DependentUpon>SceneView.cs</DependentUpon>
     </Compile>
     <Compile Include="EditorCache.cs" />
     <Compile Include="GameList.cs" />
     <Compile Include="VPModel.cs" />
-    <Compile Include="MainFrm.cs">
+    <Compile Include="UI\MainFrm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="MainFrm.Designer.cs">
+    <Compile Include="UI\MainFrm.Designer.cs">
       <DependentUpon>MainFrm.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Shaders.cs" />
     <Compile Include="Stage.cs" />
-    <Compile Include="StgOpenDialog.cs">
+    <Compile Include="UI\StgOpenDialog.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="StgOpenDialog.Designer.cs">
+    <Compile Include="UI\StgOpenDialog.Designer.cs">
       <DependentUpon>StgOpenDialog.cs</DependentUpon>
     </Compile>
     <Compile Include="Types.cs" />
     <Compile Include="Viewport.cs" />
     <Compile Include="VPObjectInstance.cs" />
-    <EmbeddedResource Include="LuaTerminal.resx">
+    <EmbeddedResource Include="UI\LuaTerminal.resx">
       <DependentUpon>LuaTerminal.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ObjectParamEditor.resx">
+    <EmbeddedResource Include="UI\ObjectParamEditor.resx">
       <DependentUpon>ObjectParamEditor.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="SceneView.resx">
+    <EmbeddedResource Include="UI\SceneView.resx">
       <DependentUpon>SceneView.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="MainFrm.resx">
+    <EmbeddedResource Include="UI\MainFrm.resx">
       <DependentUpon>MainFrm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -129,7 +135,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <EmbeddedResource Include="StgOpenDialog.resx">
+    <EmbeddedResource Include="UI\StgOpenDialog.resx">
       <DependentUpon>StgOpenDialog.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="app.manifest">
