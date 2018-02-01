@@ -98,6 +98,8 @@
     <Compile Include="Terrain\GensTerrainInstanceInfo.cs" />
     <Compile Include="Terrain\GensTerrainList.cs" />
     <Compile Include="Textures\DDS.cs" />
+    <Compile Include="Textures\GensTexset.cs" />
+    <Compile Include="Textures\GensTexture.cs" />
     <Compile Include="Textures\Texture.cs" />
     <Compile Include="Types.cs" />
     <Compile Include="Vector.cs" />
