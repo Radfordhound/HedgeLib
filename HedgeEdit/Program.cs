@@ -1,5 +1,6 @@
 ﻿using HedgeEdit.UI;
 using System;
+using System.Globalization;
 using System.IO;
 using System.Windows.Forms;
 
@@ -22,6 +23,9 @@ namespace HedgeEdit
         [STAThread]
         public static void Main()
         {
+            CultureInfo.CurrentUICulture = CultureInfo.CurrentCulture =
+                CultureInfo.GetCultureInfo("en-us");
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
