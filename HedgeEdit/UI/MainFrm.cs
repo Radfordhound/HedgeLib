@@ -164,7 +164,7 @@ namespace HedgeEdit.UI
 
                 // Delete Selected Object(s)
                 case Keys.Delete:
-                    deleteMenuItem.PerformClick();
+                    RemoveObject(null, null);
                     return true;
 
                 // Select All
