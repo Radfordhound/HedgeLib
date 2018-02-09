@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <!-- One of these values is the type of egg pawn since there's two egg pawn models -->
-  <Unknown1 type="uint" default="1" description="" />
+  <WeaponType type="enum" default="1" description="The type of weapon the egg pawn has.">
+	  <Enum value="0" description="Laser Machine Gun" />
+	  <Enum value="1" description="Bullets" />
+  </WeaponType>
+  
   <Unknown2 type="uint" default="0" description="" />
   <Unknown3 type="uint" default="0" description="" />
   <Unknown4 type="uint" default="0" description="" />

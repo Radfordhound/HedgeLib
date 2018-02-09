@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <Unknown1 type="uint" default="0" description="Always 0? Maybe GroundOffset or ResetTime?" />
+  <Unknown1 type="uint" default="0" description="Set to 9 for infinite rings?" />
   <Unknown2 type="bool" default="false" description="Always 0? Maybe IsReset?" />
   <Unknown3 type="bool" default="true" description="Always 1? Maybe IsCastShadow or IsLightSpeedDashTarget?" />
   <Unknown4 type="byte" default="0" description="Always 0? Maybe SetPlaceType" />
