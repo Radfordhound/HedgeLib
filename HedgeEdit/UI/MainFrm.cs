@@ -409,9 +409,19 @@ namespace HedgeEdit.UI
             {
                 Title = "Import Set Layer...",
                 Filter = "HedgeLib XML Set Layer (*.xml)|*.xml|All Files (*.*)|*.*",
+                Multiselect = true
             };
 
             if (ofd.ShowDialog() == DialogResult.OK)
+            {
+                foreach (var filePath in ofd.FileNames)
+                {
+                    ImportXML(filePath);
+                }
+            }
+
+            // Sub-Methods
+            void ImportXML(string fp)
             {
                 SetData setData;
                 switch (script.Game)
@@ -456,8 +466,8 @@ namespace HedgeEdit.UI
                             "Could not load, game type has not been set!");
                 }
 
-                setData.Name = Path.GetFileNameWithoutExtension(ofd.FileName);
-                setData.ImportXML(ofd.FileName);
+                setData.Name = Path.GetFileNameWithoutExtension(fp);
+                setData.ImportXML(fp);
                 script.LoadSetLayerResources(Stage.GameType, setData);
 
                 int setIndex = -1;
@@ -490,7 +500,7 @@ namespace HedgeEdit.UI
 
                     Stage.Sets[setIndex] = setData;
                 }
-                
+
                 RefreshSceneView();
                 RefreshGUI();
             }
