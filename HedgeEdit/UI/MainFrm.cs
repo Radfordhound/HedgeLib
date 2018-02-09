@@ -235,10 +235,12 @@ namespace HedgeEdit.UI
                 return;
             }
 
-            // If the pressed key isn't a control key, digit, or
+            // If the pressed key isn't a control key, digit, dash, or
             // the first decimal point, don't accept it.
             if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar) &&
-                ((e.KeyChar != '.') || (txtBx.Text.IndexOf('.') > -1)))
+                (e.KeyChar != '.' || txtBx.Text.IndexOf('.') > -1) &&
+                (e.KeyChar != '-' || txtBx.Text.IndexOf('-') > -1 ||
+                txtBx.SelectionStart != 0 || txtBx.SelectionLength != 0))
             {
                 e.Handled = true;
             }
