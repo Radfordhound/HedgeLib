@@ -219,7 +219,8 @@ namespace HedgeLib.Sets
 
                 // Generate Parameters Element
                 var paramsElem = new XElement("Parameters");
-                var template = objectTemplates?[obj.ObjectType];
+                var template = (objectTemplates.ContainsKey(obj.ObjectType)) ?
+                    objectTemplates[obj.ObjectType] : null;
 
                 for (int i = 0; i < obj.Parameters.Count; ++i)
                 {
