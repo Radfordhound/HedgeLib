@@ -190,7 +190,7 @@ namespace HedgeLib.Sets
         public void ExportXML(string filePath,
             Dictionary<string, SetObjectType> objectTemplates = null)
         {
-            using (var fileStream = File.OpenWrite(filePath))
+            using (var fileStream = File.Create(filePath))
             {
                 ExportXML(fileStream, objectTemplates);
             }
