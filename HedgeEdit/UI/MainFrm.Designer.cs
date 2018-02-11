@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.MouseWheel += MouseScroll;
             this.menuStrip = new System.Windows.Forms.MenuStrip();
             this.fileMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.newMenuItem = new System.Windows.Forms.ToolStripMenuItem();

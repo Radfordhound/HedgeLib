@@ -688,6 +688,12 @@ namespace HedgeEdit.UI
                 RefreshGUI();
         }
 
+        private void MouseScroll(object sender, MouseEventArgs e)
+        {
+            //Zooming
+            Viewport.CameraPos += (e.Delta / 60) * Viewport.CameraForward;
+        }
+
         private void OpenLuaTerminal(object sender, EventArgs e)
         {
             if (LuaTerminal.Instance == null || LuaTerminal.Instance.IsDisposed)
