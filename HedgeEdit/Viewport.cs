@@ -16,7 +16,10 @@ namespace HedgeEdit
     public static class Viewport
     {
         // Variables/Constants
-        public static Dictionary<string, VPModel> Terrain =
+        public static Dictionary<string, Dictionary<string, VPModel>> TerrainGroups =
+            new Dictionary<string, Dictionary<string, VPModel>>();
+
+        public static Dictionary<string, VPModel> DefaultTerrainGroup =
             new Dictionary<string, VPModel>();
 
         public static Dictionary<string, VPModel> Objects =
@@ -299,9 +302,17 @@ namespace HedgeEdit
             // Draw all models in the scene
             DefaultCube.Draw(defaultID);
 
-            foreach (var mdl in Terrain)
+            foreach (var mdl in DefaultTerrainGroup)
             {
                 mdl.Value.Draw(defaultID);
+            }
+
+            foreach (var group in TerrainGroups)
+            {
+                foreach (var mdl in group.Value)
+                {
+                    mdl.Value.Draw(defaultID);
+                }
             }
 
             foreach (var mdl in Objects)
@@ -323,14 +334,6 @@ namespace HedgeEdit
             }
 
             return null;
-        }
-
-        public static VPObjectInstance GetTerrainInstance(string modelName, object obj)
-        {
-            if (!Terrain.ContainsKey(modelName))
-                return null;
-
-            return GetInstance(Terrain[modelName], obj);
         }
 
         public static VPObjectInstance GetObjectInstance(string modelName, object obj)
@@ -461,10 +464,9 @@ namespace HedgeEdit
         {
             var instances = new List<VPObjectInstance>
             {
-                AddInstance(obj.ObjectType,
+                AddObjectInstance(obj.ObjectType,
                     (obj.Transform.Position * unitMultiplier) + posOffset,
-                    obj.Transform.Rotation, obj.Transform.Scale,
-                    true, obj)
+                    obj.Transform.Rotation, obj.Transform.Scale, obj)
             };
 
             if (obj.Children == null) return;
@@ -482,74 +484,126 @@ namespace HedgeEdit
             float unitMultiplier, SetObjectTransform child,
             HedgeLib.Vector3 posOffset)
         {
-            return AddInstance(obj.ObjectType,
+            return AddObjectInstance(obj.ObjectType,
                 (child.Position * unitMultiplier) + posOffset,
-                child.Rotation, child.Scale,
-                true, child);
+                child.Rotation, child.Scale, child);
         }
 
-        public static void AddTerrainModel(Model mdl)
+        public static void AddTerrainInstance(string modelName,
+            VPObjectInstance instance, string group = null)
         {
-            if (!Terrain.ContainsKey(mdl.Name))
+            // Get Group
+            Dictionary<string, VPModel> terrainGroup;
+            if (string.IsNullOrEmpty(group))
             {
-                var trr = new VPModel(mdl);
-                Terrain[mdl.Name] = trr;
+                terrainGroup = DefaultTerrainGroup;
             }
+            else if (TerrainGroups.ContainsKey(group))
+            {
+                terrainGroup = TerrainGroups[group];
+            }
+            else return;
+
+            // Add Instance
+            if (string.IsNullOrEmpty(modelName) || !terrainGroup.ContainsKey(modelName))
+                return;
+
+            terrainGroup[modelName].Instances.Add(instance);
         }
 
-        public static void AddObjectModel(string name, Model mdl)
+        public static void AddTerrainInstance(Model mdl,
+            VPObjectInstance instance, string group = null)
+        {
+            var trr = AddTerrainModel(mdl, group);
+            trr.Instances.Add(instance);
+        }
+
+        public static VPModel AddTerrainModel(Model mdl, string group = null)
+        {
+            // Get Group
+            Dictionary<string, VPModel> terrainGroup;
+            if (string.IsNullOrEmpty(group))
+            {
+                terrainGroup = DefaultTerrainGroup;
+            }
+            else if (!TerrainGroups.ContainsKey(group))
+            {
+                terrainGroup = new Dictionary<string, VPModel>();
+                TerrainGroups.Add(group, terrainGroup);
+            }
+            else
+            {
+                terrainGroup = TerrainGroups[group];
+            }
+
+            // Add/Replace Model
+            var trr = new VPModel(mdl);
+            if (!terrainGroup.ContainsKey(mdl.Name))
+            {
+                terrainGroup.Add(mdl.Name, trr);
+            }
+            else
+            {
+                terrainGroup[mdl.Name] = trr;
+            }
+
+            return trr;
+        }
+
+        public static VPModel AddObjectModel(string name, Model mdl)
         {
             if (!Objects.ContainsKey(name))
             {
                 var obj = new VPModel(mdl, true);
                 Objects.Add(name, obj);
+                return obj;
             }
+
+            return null;
         }
 
-        public static VPObjectInstance AddInstance(string type,
-            VPObjectInstance instance, bool isObject)
+        public static VPObjectInstance AddObjectInstance(string type,
+            VPObjectInstance instance)
         {
-            bool hasModel = (!string.IsNullOrEmpty(type)) &&
-                ((isObject) || (Terrain.ContainsKey(type)));
+            bool hasModel = (!string.IsNullOrEmpty(type) &&
+                Objects.ContainsKey(type));
 
-            if (isObject && !string.IsNullOrEmpty(type))
-                hasModel = Objects.ContainsKey(type);
-
-            var obj = (!hasModel) ? DefaultCube :
-                (isObject) ? Objects[type] : Terrain[type];
+            var obj = (hasModel) ?
+                Objects[type] : DefaultCube;
 
             obj.Instances.Add(instance);
             return instance;
         }
 
-        public static VPObjectInstance AddInstance(string type,
-            bool isObject, object customData = null)
+        public static VPObjectInstance AddObjectInstance(string type,
+            object customData = null)
         {
-            return AddInstance(type, new VPObjectInstance(
-                customData), isObject);
+            return AddObjectInstance(type, new VPObjectInstance(
+                customData));
         }
 
-        public static VPObjectInstance AddInstance(string type,
+        public static VPObjectInstance AddObjectInstance(string type,
             Vector3 pos, Quaternion rot, Vector3 scale,
-            bool isObject, object customData = null)
+            object customData = null)
         {
-            return AddInstance(type, new VPObjectInstance(
-                pos, rot, scale, customData), isObject);
+            return AddObjectInstance(type, new VPObjectInstance(
+                pos, rot, scale, customData));
         }
 
-        public static VPObjectInstance AddInstance(string type,
+        public static VPObjectInstance AddObjectInstance(string type,
             HedgeLib.Vector3 pos, HedgeLib.Quaternion rot,
-            HedgeLib.Vector3 scale, bool isObject, object customData = null)
+            HedgeLib.Vector3 scale, object customData = null)
         {
-            return AddInstance(type, new VPObjectInstance(
+            return AddObjectInstance(type, new VPObjectInstance(
                 Types.ToOpenTK(pos), Types.ToOpenTK(rot),
-                Types.ToOpenTK(scale), customData), isObject);
+                Types.ToOpenTK(scale), customData));
         }
 
         public static void Clear()
         {
             DefaultCube.Instances.Clear();
-            Terrain.Clear();
+            DefaultTerrainGroup.Clear();
+            TerrainGroups.Clear();
             Objects.Clear();
             Materials.Clear();
             Textures.Clear();

@@ -95,6 +95,11 @@ namespace HedgeEdit
             return new Vector4(vector.X, vector.Y, vector.Z, vector.W);
         }
 
+        public static Quaternion ToHedgeLib(OpenTK.Quaternion quat)
+        {
+            return new Quaternion(quat.X, quat.Y, quat.Z, quat.W);
+        }
+
         public static OpenTK.Vector4 ToOpenTK(Vector4 vector)
         {
             return new OpenTK.Vector4(vector.X, vector.Y, vector.Z, vector.W);

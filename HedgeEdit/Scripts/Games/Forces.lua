@@ -60,6 +60,8 @@ function Load(dataDir, cacheDir, stageID)
 		UIHideProgress()
 	end
 
+	--UIToggleSetsSaving(true) TODO
+
 	-- Additional Object Textures
 	LoadTexturesInDir("{0}/{1}/{1}_obj", "Object Textures")
 	LoadTexturesInDir("{0}/{1}/{1}_trr_cmn", "Terrain Common Textures")
@@ -75,6 +77,7 @@ function Load(dataDir, cacheDir, stageID)
 		UIChangeLoadStatus(string.format("Terrain Sector %02d/99", i))
 
 		local pth = string.format("{0}/{1}/{1}_trr_s%02d", i)
+		local group = "Sector #" .. i
 		Extract(pth .. ".pac", pth, "TerrainSector".. i)
 
 		if IODirExists(pth) then
@@ -86,7 +89,7 @@ function Load(dataDir, cacheDir, stageID)
 					-- Skip blocks containing "_noGI"
 					-- TODO: Load these properly instead
 					if not file:find("_noGI") then
-						LoadTerrain(file, "{0}/{1}/{1}_trr_cmn")
+						LoadTerrain(file, "{0}/{1}/{1}_trr_cmn", group)
 					end
 				end
 			end

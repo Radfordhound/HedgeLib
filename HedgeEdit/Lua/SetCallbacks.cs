@@ -205,20 +205,20 @@ namespace HedgeEdit.Lua
         {
             MainUIInvoke(() =>
             {
-                var instance = Viewport.AddInstance(modelName,
+                var instance = Viewport.AddObjectInstance(modelName,
                     (obj.Transform.Position * unitMultiplier) + posOffset,
                     obj.Transform.Rotation, obj.Transform.Scale,
-                    true, obj);
+                    obj);
 
                 if (obj.Children == null) return;
                 foreach (var child in obj.Children)
                 {
                     if (child == null) continue;
 
-                    Viewport.AddInstance(modelName,
+                    Viewport.AddObjectInstance(modelName,
                         (child.Position * unitMultiplier) + posOffset,
                         child.Rotation, child.Scale,
-                        true, child);
+                        child);
                 }
             });
         }

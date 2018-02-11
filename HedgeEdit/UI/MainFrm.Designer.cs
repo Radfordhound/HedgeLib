@@ -32,7 +32,7 @@
             this.fileMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.newMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.saveSetsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.SaveSetsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveAllMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.fileSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.importXMLMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -115,7 +115,7 @@
             this.fileMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.newMenuItem,
             this.openMenuItem,
-            this.saveSetsMenuItem,
+            this.SaveSetsMenuItem,
             this.saveAllMenuItem,
             this.fileSeparator1,
             this.importXMLMenuItem,
@@ -144,12 +144,12 @@
             // 
             // saveSetsMenuItem
             // 
-            this.saveSetsMenuItem.Name = "saveSetsMenuItem";
-            this.saveSetsMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            this.saveSetsMenuItem.Size = new System.Drawing.Size(195, 22);
-            this.saveSetsMenuItem.Text = "&Save Sets";
-            this.saveSetsMenuItem.Enabled = false;
-            this.saveSetsMenuItem.Click += new System.EventHandler(this.SaveSetsMenuItem_Click);
+            this.SaveSetsMenuItem.Name = "saveSetsMenuItem";
+            this.SaveSetsMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
+            this.SaveSetsMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.SaveSetsMenuItem.Text = "&Save Sets";
+            this.SaveSetsMenuItem.Enabled = false;
+            this.SaveSetsMenuItem.Click += new System.EventHandler(this.SaveSetsMenuItem_Click);
             // 
             // saveAllMenuItem
             // 
@@ -699,7 +699,7 @@
         private System.Windows.Forms.ToolStripMenuItem fileMenu;
         private System.Windows.Forms.ToolStripMenuItem newMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem saveSetsMenuItem;
+        public System.Windows.Forms.ToolStripMenuItem SaveSetsMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saveAllMenuItem;
         private System.Windows.Forms.ToolStripSeparator fileSeparator1;
         private System.Windows.Forms.ToolStripMenuItem importXMLMenuItem;

@@ -1,4 +1,6 @@
 ﻿using HedgeLib.Sets;
+using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -30,6 +32,7 @@ namespace HedgeEdit.UI
             treeView.Nodes.Clear();
 
             // Layers
+            var layersNode = new TreeNode("Set Layers");
             for (int i = 0; i < Stage.Sets.Count; ++i)
             {
                 var layer = Stage.Sets[i];
@@ -71,10 +74,50 @@ namespace HedgeEdit.UI
                     layerNode.Nodes.Add(objNode);
                 }
 
-                treeView.Nodes.Add(layerNode);
+                layersNode.Nodes.Add(layerNode);
             }
 
+            treeView.Nodes.Add(layersNode);
+
+            // Terrain
+            var terrainNode = new TreeNode("Terrain Instances");
+            foreach (var mdl in Viewport.DefaultTerrainGroup)
+            {
+                foreach (var instance in mdl.Value.Instances)
+                {
+                    AddTerrainNode(terrainNode, instance);
+                }
+            }
+
+            foreach (var group in Viewport.TerrainGroups)
+            {
+                var groupNode = new TreeNode(group.Key);
+                foreach (var mdl in group.Value)
+                {
+                    foreach (var instance in mdl.Value.Instances)
+                    {
+                        AddTerrainNode(groupNode, instance);
+                    }
+                }
+
+                terrainNode.Nodes.Add(groupNode);
+            }
+
+            treeView.Nodes.Add(terrainNode);
             treeView.EndUpdate();
+
+            // Sub-Methods
+            void AddTerrainNode(TreeNode node, VPObjectInstance instance)
+            {
+                string name = (instance.CustomData as string);
+                if (string.IsNullOrEmpty(name))
+                    return;
+
+                node.Nodes.Add(new TreeNode(name)
+                {
+                    Tag = instance
+                });
+            }
         }
 
         // GUI Events
@@ -89,12 +132,46 @@ namespace HedgeEdit.UI
             {
                 Stage.CurrentSetLayer = layer;
             }
+            else if (tag is VPObjectInstance instance)
+            {
+                Viewport.SelectedInstances.Clear();
+                Viewport.SelectedInstances.Add(instance);
+                mainForm.RefreshGUI();
+            }
             else
             {
                 Viewport.SelectedInstances.Clear();
                 Viewport.SelectObject(tag);
                 mainForm.RefreshGUI();
             }
+        }
+
+        private void SceneViewMenu_Opening(object sender, CancelEventArgs e)
+        {
+            bool layerClicked = (treeView.SelectedNode != null &&
+                treeView.SelectedNode.Tag is SetData);
+
+            exportLayerMenuItem.Enabled = layerClicked;
+        }
+
+        private void ImportLayerMenuItem_Click(object sender, EventArgs e)
+        {
+            // TODO
+        }
+
+        private void ExportLayersMenuItem_Click(object sender, EventArgs e)
+        {
+            // TODO
+        }
+
+        private void ExportLayerMenuItem_Click(object sender, EventArgs e)
+        {
+            if (treeView.SelectedNode == null)
+                return;
+
+            var layer = (treeView.SelectedNode.Tag as SetData);
+            MessageBox.Show(layer.Name);
+            // TODO
         }
     }
 }

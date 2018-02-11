@@ -16,7 +16,7 @@ namespace HedgeEdit.Lua
                 string, GensTerrainList>)LoadTerrainList;
 
             script.Globals["LoadTerrain"] = (Func<string, string,
-                bool, Model>)LoadTerrain;
+                string, bool, Model>)LoadTerrain;
         }
 
         // Lua Callbacks
@@ -93,17 +93,18 @@ namespace HedgeEdit.Lua
                         var info = new GensTerrainInstanceInfo();
                         info.Load(infoPath);
 
-                        var instance = new VPObjectInstance(info.TransformMatrix);
+                        var instance = new VPObjectInstance(info.TransformMatrix,
+                            info.FileName);
 
                         // Terrain Model
-                        if (Viewport.Terrain.ContainsKey(info.ModelFileName))
+                        if (Viewport.TerrainGroups.ContainsKey(info.ModelFileName))
                         {
                             // Don't bother loading the model again if we've
                             // already loaded a model with the same name.
                             MainUIInvoke(new Action(() =>
                             {
-                                Viewport.AddInstance(info.ModelFileName,
-                                    instance, false);
+                                Viewport.AddTerrainInstance(info.ModelFileName,
+                                    instance, groupEntry.FileName);
                             }));
                             continue;
                         }
@@ -136,8 +137,8 @@ namespace HedgeEdit.Lua
 
                         MainUIInvoke(() =>
                         {
-                            Viewport.AddTerrainModel(mdl);
-                            Viewport.AddInstance(mdl.Name, instance, false);
+                            Viewport.AddTerrainInstance(mdl,
+                                instance, groupEntry.FileName);
                         });
                     }
                 }
@@ -147,7 +148,8 @@ namespace HedgeEdit.Lua
             return terrainList;
         }
 
-        public Model LoadTerrain(string path, string resDir, bool loadMats = true)
+        public Model LoadTerrain(string path, string resDir,
+            string group = null, bool loadMats = true)
         {
             // Format path strings, return if file doesn't exist
             path = string.Format(path, Stage.CacheDir, Stage.ID);
@@ -209,27 +211,27 @@ namespace HedgeEdit.Lua
                 {
                     var info = new GensTerrainInstanceInfo();
                     info.Load(instancePath);
-                    instance = new VPObjectInstance(info.TransformMatrix);
+                    instance = new VPObjectInstance(info.TransformMatrix, shortName);
                 }
                 else
                 {
-                    instance = new VPObjectInstance();
+                    instance = new VPObjectInstance(shortName);
                 }
 
                 // Don't bother loading the model again if we've
                 // already loaded a model with the same name.
-                if (Viewport.Terrain.ContainsKey(shortName))
+                if (Viewport.TerrainGroups.ContainsKey(shortName))
                 {
                     MainUIInvoke(() =>
                     {
-                        Viewport.AddInstance(shortName, instance, false);
+                        Viewport.AddTerrainInstance(shortName, instance, group);
                     });
                     return null;
                 }
             }
 
             // Terrain
-            if (Viewport.Terrain.ContainsKey(shortName))
+            if (Viewport.TerrainGroups.ContainsKey(shortName))
             {
                 LuaTerminal.LogWarning(string.Format(
                     "WARNING: Skipped model {0} as a model with that {1}",
@@ -255,8 +257,7 @@ namespace HedgeEdit.Lua
 
             MainUIInvoke(() =>
             {
-                Viewport.AddTerrainModel(mdl);
-                Viewport.AddInstance(mdl.Name, instance, false);
+                Viewport.AddTerrainInstance(mdl, instance, group);
             });
 
             return mdl;

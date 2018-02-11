@@ -41,12 +41,34 @@ namespace HedgeEdit.UI
                 Viewport.SelectedInstances[0] : null;
 
             var obj = (singleObjSelected) ?
-                (instance.CustomData as SetObject) : null;
+                (instance?.CustomData as SetObject) : null;
 
             var transform = (obj != null) ? obj.Transform : ((singleObjSelected) ?
-                (instance.CustomData as SetObjectTransform) : null);
+                (instance?.CustomData as SetObjectTransform) : null);
+
+            if (transform == null && instance != null)
+            {
+                transform = new SetObjectTransform()
+                {
+                    Position = Types.ToHedgeLib(instance.Position) /
+                        Stage.GameType.UnitMultiplier,
+
+                    Rotation = Types.ToHedgeLib(instance.Rotation),
+                    Scale = Types.ToHedgeLib(instance.Scale)
+                };
+            };
 
             // Update Labels
+            int objCount = 0;
+            foreach (var layer in Stage.Sets)
+            {
+                foreach (var setObj in layer.Objects)
+                {
+                    objCount += (setObj.Children.Length + 1);
+                }
+            }
+
+            objectCountLbl.Text = $"{objCount} Objects";
             objectSelectedLbl.Text = $"{selectedObjs} Object(s) Selected";
 
             // Enable/Disable EVERYTHING
@@ -272,34 +294,42 @@ namespace HedgeEdit.UI
                     ((obj == null) ? (instance.CustomData as SetObjectTransform) :
                     obj.Transform) : null;
 
-                if (transform == null)
-                    return;
+                // Get rotation if necessary
+                Quaternion rot = null;
+                bool editedRot = (sender == rotXBox ||
+                    sender == rotYBox || sender == rotZBox);
 
-                // Move any selected objects in the SetData
-                if (sender == posXBox)
-                {
-                    transform.Position.X = f;
-                }
-                else if (sender == posYBox)
-                {
-                    transform.Position.Y = f;
-                }
-                else if (sender == posZBox)
-                {
-                    transform.Position.Z = f;
-                }
-                else if (sender == rotXBox || sender == rotYBox || sender == rotZBox)
+                if (editedRot)
                 {
                     float x = (sender == rotXBox) ? f : float.Parse(rotXBox.Text);
                     float y = (sender == rotYBox) ? f : float.Parse(rotYBox.Text);
                     float z = (sender == rotZBox) ? f : float.Parse(rotZBox.Text);
-                    transform.Rotation = new Quaternion(new Vector3(x, y, z), false);
+                    rot = new Quaternion(new Vector3(x, y, z), false);
+                }
+
+                // Move any selected objects in the SetData
+                if (transform != null)
+                {
+                    if (sender == posXBox)
+                    {
+                        transform.Position.X = f;
+                    }
+                    else if (sender == posYBox)
+                    {
+                        transform.Position.Y = f;
+                    }
+                    else if (sender == posZBox)
+                    {
+                        transform.Position.Z = f;
+                    }
+                    else if (editedRot)
+                    {
+                        transform.Rotation = rot;
+                    }
                 }
 
                 // Move any selected objects in the Viewport
                 var pos = instance.Position;
-                var rot = instance.Rotation;
-
                 if (sender == posXBox)
                 {
                     pos.X = (f * Stage.GameType.UnitMultiplier);
@@ -312,16 +342,11 @@ namespace HedgeEdit.UI
                 {
                     pos.Z = (f * Stage.GameType.UnitMultiplier);
                 }
-                else if (sender == rotXBox || sender == rotYBox || sender == rotZBox)
-                {
-                    float x = (sender == rotXBox) ? f : float.Parse(rotXBox.Text);
-                    float y = (sender == rotYBox) ? f : float.Parse(rotYBox.Text);
-                    float z = (sender == rotZBox) ? f : float.Parse(rotZBox.Text);
-                    rot = Types.ToOpenTK(transform.Rotation);
-                }
 
                 instance.Position = pos;
-                instance.Rotation = rot;
+
+                if (editedRot)
+                    instance.Rotation = Types.ToOpenTK(rot);
             }
             else
             {
@@ -365,11 +390,12 @@ namespace HedgeEdit.UI
                     {
                         statusBarLbl.Text = "Done Loading";
                         statusBarProgressBar.Visible = false;
-                        openMenuItem.Enabled = saveSetsMenuItem.Enabled = true;
+                        openMenuItem.Enabled = SaveSetsMenuItem.Enabled = true;
+                        RefreshSceneView();
                     }));
                 }));
 
-                openMenuItem.Enabled = saveSetsMenuItem.Enabled = false;
+                openMenuItem.Enabled = SaveSetsMenuItem.Enabled = false;
                 loadSaveThread.Start();
             }
         }
@@ -386,11 +412,11 @@ namespace HedgeEdit.UI
                 {
                     statusBarLbl.Text = "Done Saving";
                     statusBarProgressBar.Visible = false;
-                    openMenuItem.Enabled = saveSetsMenuItem.Enabled = true;
+                    openMenuItem.Enabled = SaveSetsMenuItem.Enabled = true;
                 }));
             }));
 
-            openMenuItem.Enabled = saveSetsMenuItem.Enabled = false;
+            openMenuItem.Enabled = SaveSetsMenuItem.Enabled = false;
             loadSaveThread.Start();
         }
 
@@ -638,16 +664,8 @@ namespace HedgeEdit.UI
             if (Viewport.SelectedInstances.Count == 1)
             {
                 var instance = Viewport.SelectedInstances[0];
-                var obj = (instance.CustomData as SetObject);
-                var transform = (obj == null) ?
-                    (instance.CustomData as SetObjectTransform) :
-                    obj.Transform;
 
-                if (transform == null) return;
-
-                Viewport.CameraPos =
-                    Types.ToOpenTK(transform.Position * 
-                    ((Stage.GameType == null) ? 1 : Stage.GameType.UnitMultiplier));
+                Viewport.CameraPos = instance.Position;
 
                 // TODO: Set camera rotation
             }
