@@ -189,6 +189,11 @@ namespace HedgeEdit.UI
                     RemoveObject(null, null);
                     return true;
 
+                // View Selected Object(s)
+                case Keys.Control | Keys.F:
+                    ViewSelected(null, null);
+                    return true;
+
                 // Select All
                 case Keys.Control | Keys.A:
                     selectAllMenuItem.PerformClick();
@@ -682,7 +687,7 @@ namespace HedgeEdit.UI
             {
                 var instance = Viewport.SelectedInstances[0];
 
-                Viewport.CameraPos = instance.Position;
+                Viewport.CameraPos = instance.Position - (Viewport.CameraForward * 10);
 
                 // TODO: Set camera rotation
             }
