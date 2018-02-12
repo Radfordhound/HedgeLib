@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Length type="float" default="50" description="How far the part you can grab of the up reel extends downwards." />
+  <MaxSpeed type="float" default="300" description="The maximum amount of speed you can get from the up reel." />
+  <Speed type="float" default="250" description="The speed at which you launch away from the up reel." />
+  <OutOfControl type="float" default="0.5" description="How long the game locks your control after grabbing onto the up reel." />
+  
+  <Padding1 type="ulong" default="0" description="Padding?" />
+  <Padding2 type="ulong" default="0" description="Padding?" />
+  <Padding3 type="ulong" default="0" description="Padding?" />
+  <Padding4 type="ulong" default="0" description="Padding?" />
+  <Padding5 type="ulong" default="0" description="Padding?" />
+  <Padding6 type="ulong" default="0" description="Padding?" />
+  <Padding7 type="ulong" default="0" description="Padding?" />
+  <Padding8 type="ulong" default="0" description="Padding?" />
+  <Padding9 type="ulong" default="0" description="Padding?" />
+  <Padding10 type="ulong" default="0" description="Padding?" />
+  <Padding11 type="ulong" default="0" description="Padding?" />
+  <Padding12 type="ulong" default="0" description="Padding?" />
+  <Padding13 type="ulong" default="0" description="Padding?" />
+  <Padding14 type="ulong" default="0" description="Padding?" />
+  
+  <Extra type="description" value="Pulleys you grab onto to go up." />
+  <Extra type="RawByteLength" length="48" />
+</Template>

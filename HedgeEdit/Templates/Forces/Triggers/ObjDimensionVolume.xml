@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Size type="vector3" description="The size of the volume." />
+  <Unknown1 type="ulong" default="0" description="" />
+  <Unknown2 type="uint" default="1" description="" />
+  <Unknown3 type="uint" default="0" description="Camera ID?" />
+  <Unknown4 type="float" default="1.5" description="" />
+  <Unknown5 type="float" default="1.5" description="" />
+  <Unknown6 type="bool" default="false" description="" />
+  <Unknown7 type="bool" default="false" description="" />
+  <Unknown8 type="bool" default="true" description="" />
+  <Unknown9 type="bool" default="false" description="" />
+  <Unknown10 type="uint" default="0" description="Always 0?" />
+  
+  <Extra type="description" value="Big invisible boxes (volumes) that trigger dimension shifting." />
+  <Extra type="RawByteLength" length="48" />
+</Template>
