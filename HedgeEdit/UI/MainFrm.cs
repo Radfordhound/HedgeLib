@@ -487,9 +487,12 @@ namespace HedgeEdit.UI
                         setData = new HeroesSetData();
                         break;
 
+                    // TODO: Add SA2 Support
                     case LuaScript.Games.SA2:
-                        setData = new SA2SetData();
-                        break;
+                        throw new NotImplementedException(
+                            "Could not load, SA2 set data is not yet supported!");
+                    //setData = new SA2SetData();
+                    //break;
 
                     default:
                         throw new Exception(
