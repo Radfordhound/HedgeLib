@@ -39,6 +39,8 @@ namespace HedgeEdit.Lua
             string filter, bool includeSubDirs)
         {
             path = string.Format(path, Stage.CacheDir, Stage.ID);
+            if (!Directory.Exists(path))
+                return new string[0];
 
             if (string.IsNullOrEmpty(filter))
                 return Directory.GetFiles(path);

@@ -95,7 +95,7 @@ namespace HedgeEdit
             }
             catch (Exception ex)
             {
-                LuaTerminal.LogError($"ERROR: {ex.Message}");
+                LuaTerminal.LogError($"ERROR: {ex.Message}, {ex.StackTrace}");
             }
 
             unpackStopWatch.Stop();
