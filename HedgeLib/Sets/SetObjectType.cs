@@ -11,7 +11,7 @@ namespace HedgeLib.Sets
         // Variables/Constants
         public List<SetObjectTypeParam> Parameters = new List<SetObjectTypeParam>();
         public List<SetObjectTypeParamExtra> Extras = new List<SetObjectTypeParamExtra>();
-        public string Name;
+        public string Name, Category;
         public const string Extension = ".xml";
 
         // Methods
@@ -57,10 +57,10 @@ namespace HedgeLib.Sets
             var objectTemplates = new Dictionary<string, SetObjectType>();
             foreach (string dir in Directory.GetDirectories(directory))
             {
-                // TODO: Categories.
+                string category = new DirectoryInfo(dir).Name;
                 foreach (string file in Directory.GetFiles(dir, $"*{Extension}"))
                 {
-                    var template = new SetObjectType();
+                    var template = new SetObjectType() { Category = category };
                     string objTypeName = Path.GetFileNameWithoutExtension(file);
                     template.Load(file);
 

@@ -190,6 +190,11 @@ namespace HedgeEdit.Lua
                     throw new NotImplementedException(
                         "Could not load, Heroes/Shadow terrain is not yet supported!");
 
+                // TODO: Add SA2 Support
+                case Games.SA2:
+                    throw new NotImplementedException(
+                        "Could not load, SA2 terrain is not yet supported!");
+
                 default:
                     throw new Exception(
                         "Could not load, game type has not been set!");

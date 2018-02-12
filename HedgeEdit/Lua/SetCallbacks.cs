@@ -16,6 +16,8 @@ namespace HedgeEdit.Lua
         {
             script.Globals["GetSetLayer"] = (Func<int, SetData>)GetSetLayer;
             script.Globals["GetSetLayerCount"] = (Func<int>)GetSetLayerCount;
+            script.Globals["ChangeCurrentSetLayer"] = (Action<SetData>)ChangeCurrentSetLayer;
+            script.Globals["GetCurrentSetLayer"] = (Func<SetData>)GetCurrentSetLayer;
 
             script.Globals["LoadObjectModel"] = (Func<string,
                 string, bool, Vector3?, Model>)LoadObjectModel;
@@ -49,6 +51,17 @@ namespace HedgeEdit.Lua
             }
         }
 
+        public void ChangeCurrentSetLayer(SetData layer)
+        {
+            Stage.CurrentSetLayer = layer;
+            // TODO: Show current layer on UI
+        }
+
+        public SetData GetCurrentSetLayer()
+        {
+            return Stage.CurrentSetLayer;
+        }
+
         public void LoadSetLayerResources(GameEntry gameType, SetData setData,
             bool loadModels = true, string[] altModelDirs = null)
         {
@@ -57,147 +70,164 @@ namespace HedgeEdit.Lua
 
             foreach (var obj in setData.Objects)
             {
-                var offsetPos = new Vector3(0, 0, 0);
-                SetObjectType type = null;
+                LoadObjectResources(gameType, obj, resDir,
+                    resDirExists, loadModels, altModelDirs);
+            }
+        }
 
-                if (gameType.ObjectTemplates.ContainsKey(obj.ObjectType))
-                    type = gameType.ObjectTemplates[obj.ObjectType];
+        public void LoadSetObjectResources(GameEntry gameType, SetObject obj,
+            bool loadModels = true, string[] altModelDirs = null)
+        {
+            string resDir = gameType.ResourcesDir;
+            bool resDirExists = Directory.Exists(resDir);
 
-                if (type != null)
+            LoadObjectResources(gameType, obj, resDir,
+                resDirExists, loadModels, altModelDirs);
+        }
+
+        protected void LoadObjectResources(GameEntry gameType, SetObject obj,
+            string resDir, bool resDirExists, bool loadModels, string[] altModelDirs)
+        {
+            var offsetPos = new Vector3(0, 0, 0);
+            SetObjectType type = null;
+
+            if (gameType.ObjectTemplates.ContainsKey(obj.ObjectType))
+                type = gameType.ObjectTemplates[obj.ObjectType];
+
+            if (type != null)
+            {
+                var offsetPosExtra = type.GetExtra("OffsetPosition");
+                if (offsetPosExtra == null)
                 {
-                    var offsetPosExtra = type.GetExtra("OffsetPosition");
-                    if (offsetPosExtra == null)
-                    {
-                        offsetPos.X = GetFloatExtra("OffsetPositionX", "Offset_Position_X");
-                        offsetPos.Y = GetFloatExtra("OffsetPositionY", "Offset_Position_Y");
-                        offsetPos.Z = GetFloatExtra("OffsetPositionZ", "Offset_Position_Z");
-                    }
-                    else if (!string.IsNullOrEmpty(offsetPosExtra.Value))
-                    {
-                        offsetPos = (Vector3)Helpers.ChangeType(
-                            offsetPosExtra.Value, typeof(Vector3));
-                    }
-
-                    // Sub-Methods
-                    float GetFloatExtra(string name, string altName)
-                    {
-                        var extra = type.GetExtra(name);
-                        if (extra == null)
-                            extra = type.GetExtra(altName);
-
-                        float.TryParse((string.IsNullOrEmpty(extra?.Value)) ?
-                            "0" : extra.Value, out float f);
-                        return f;
-                    }
+                    offsetPos.X = GetFloatExtra("OffsetPositionX", "Offset_Position_X");
+                    offsetPos.Y = GetFloatExtra("OffsetPositionY", "Offset_Position_Y");
+                    offsetPos.Z = GetFloatExtra("OffsetPositionZ", "Offset_Position_Z");
+                }
+                else if (!string.IsNullOrEmpty(offsetPosExtra.Value))
+                {
+                    offsetPos = (Vector3)Helpers.ChangeType(
+                        offsetPosExtra.Value, typeof(Vector3));
                 }
 
-                // Load Object Model
-                string mdlName = null;
-                if (loadModels && resDirExists && type != null)
+                // Sub-Methods
+                float GetFloatExtra(string name, string altName)
                 {
-                    foreach (var extra in type.Extras)
-                    {
-                        if (extra.Type.ToLower() != "model")
-                            continue;
+                    var extra = type.GetExtra(name);
+                    if (extra == null)
+                        extra = type.GetExtra(altName);
 
-                        if (string.IsNullOrEmpty(extra.Condition) ||
-                            EvaluateObjectCondition(obj, type, extra.Condition))
+                    float.TryParse((string.IsNullOrEmpty(extra?.Value)) ?
+                        "0" : extra.Value, out float f);
+                    return f;
+                }
+            }
+
+            // Load Object Model
+            string mdlName = null;
+            if (loadModels && resDirExists && type != null)
+            {
+                foreach (var extra in type.Extras)
+                {
+                    if (extra.Type.ToLower() != "model")
+                        continue;
+
+                    if (string.IsNullOrEmpty(extra.Condition) ||
+                        EvaluateObjectCondition(obj, type, extra.Condition))
+                    {
+                        mdlName = extra.Value;
+                        break;
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(mdlName) &&
+                !Viewport.Objects.ContainsKey(mdlName))
+            {
+                // If the model name is actually supposed to be the value of
+                // another parameter (e.g. in Gismos), get the name from that instead.
+                if (mdlName.IndexOf('.') == -1)
+                {
+                    int mdlNameParamIndex = type.GetParameterIndex(mdlName);
+                    if (mdlNameParamIndex != -1)
+                    {
+                        mdlName = (obj.Parameters[
+                            mdlNameParamIndex].Data as string);
+                    }
+                }
+                else
+                {
+                    int openIndex = mdlName.IndexOf('{');
+                    int closeIndex = mdlName.IndexOf('}');
+
+                    if (openIndex != -1 && closeIndex > openIndex)
+                    {
+                        ++openIndex;
+                        if (int.TryParse(mdlName.Substring(openIndex,
+                            closeIndex - openIndex), out int index) &&
+                            index >= 0 && index < type.Parameters.Count)
                         {
-                            mdlName = extra.Value;
-                            break;
+                            mdlName = mdlName.Replace($"{{{index}}}",
+                                (obj.Parameters[index].Data as string));
                         }
                     }
                 }
 
-                if (!string.IsNullOrEmpty(mdlName) &&
-                    !Viewport.Objects.ContainsKey(mdlName))
+                // Get scale if any
+                Vector3? scale = null;
+                var scaleExtra = type.GetExtra("scale");
+
+                if (scaleExtra != null && !string.IsNullOrEmpty(scaleExtra.Value))
                 {
-                    // If the model name is actually supposed to be the value of
-                    // another parameter (e.g. in Gismos), get the name from that instead.
-                    if (mdlName.IndexOf('.') == -1)
+                    if (float.TryParse(scaleExtra.Value, out float s))
                     {
-                        int mdlNameParamIndex = type.GetParameterIndex(mdlName);
-                        if (mdlNameParamIndex != -1)
-                        {
-                            mdlName = (obj.Parameters[
-                                mdlNameParamIndex].Data as string);
-                        }
+                        scale = new Vector3(s, s, s);
                     }
+
+                    // TODO: Maybe try to parse it as a Vector3 as well?
+
                     else
                     {
-                        int openIndex = mdlName.IndexOf('{');
-                        int closeIndex = mdlName.IndexOf('}');
-
-                        if (openIndex != -1 && closeIndex > openIndex)
+                        int scaleParamIndex = type.GetParameterIndex(scaleExtra.Value);
+                        if (scaleParamIndex != -1)
                         {
-                            ++openIndex;
-                            if (int.TryParse(mdlName.Substring(openIndex,
-                                closeIndex - openIndex), out int index) &&
-                                index >= 0 && index < type.Parameters.Count)
+                            var param = obj.Parameters[scaleParamIndex];
+                            if (param != null)
                             {
-                                mdlName = mdlName.Replace($"{{{index}}}",
-                                    (obj.Parameters[index].Data as string));
-                            }
-                        }
-                    }
-
-                    // Get scale if any
-                    Vector3? scale = null;
-                    var scaleExtra = type.GetExtra("scale");
-
-                    if (scaleExtra != null && !string.IsNullOrEmpty(scaleExtra.Value))
-                    {
-                        if (float.TryParse(scaleExtra.Value, out float s))
-                        {
-                            scale = new Vector3(s, s, s);
-                        }
-
-                        // TODO: Maybe try to parse it as a Vector3 as well?
-
-                        else
-                        {
-                            int scaleParamIndex = type.GetParameterIndex(scaleExtra.Value);
-                            if (scaleParamIndex != -1)
-                            {
-                                var param = obj.Parameters[scaleParamIndex];
-                                if (param != null)
+                                if (param.DataType == typeof(Vector3))
                                 {
-                                    if (param.DataType == typeof(Vector3))
-                                    {
-                                        scale = (Vector3)param.Data;
-                                    }
-                                    else if (param.DataType == typeof(float))
-                                    {
-                                        float f = (float)param.Data;
-                                        scale = new Vector3(f, f, f);
-                                    }
+                                    scale = (Vector3)param.Data;
+                                }
+                                else if (param.DataType == typeof(float))
+                                {
+                                    float f = (float)param.Data;
+                                    scale = new Vector3(f, f, f);
                                 }
                             }
                         }
                     }
-
-                    // Load the model from the standard resources directory
-                    var mdl = LoadObjectModel(
-                        Path.Combine(resDir, mdlName),
-                        resDir, true, scale);
-
-                    // If the model could not be found, attempt to load from
-                    // any given alternative resources directories.
-                    if (altModelDirs != null && mdl == null)
-                    {
-                        foreach (string dir in altModelDirs)
-                        {
-                            mdl = LoadObjectModel(
-                                Path.Combine(dir, mdlName),
-                                dir, true, scale);
-                        }
-                    }
                 }
 
-                // Spawn Object in World
-                SpawnObject(obj, mdlName,
-                    gameType.UnitMultiplier, offsetPos);
+                // Load the model from the standard resources directory
+                var mdl = LoadObjectModel(
+                    Path.Combine(resDir, mdlName),
+                    resDir, true, scale);
+
+                // If the model could not be found, attempt to load from
+                // any given alternative resources directories.
+                if (altModelDirs != null && mdl == null)
+                {
+                    foreach (string dir in altModelDirs)
+                    {
+                        mdl = LoadObjectModel(
+                            Path.Combine(dir, mdlName),
+                            dir, true, scale);
+                    }
+                }
             }
+
+            // Spawn Object in World
+            SpawnObject(obj, mdlName,
+                gameType.UnitMultiplier, offsetPos);
         }
 
         private static void SpawnObject(SetObject obj, string modelName,
@@ -264,23 +294,28 @@ namespace HedgeEdit.Lua
                 // TODO: Add Storybook Support
                 case Games.Storybook:
                     throw new NotImplementedException(
-                        "Could not load, Storybook terrain is not yet supported!");
+                        "Could not load, Storybook models are not yet supported!");
 
                 // TODO: Add Colors Support
                 case Games.Colors:
                     throw new NotImplementedException(
-                        "Could not load, Colors terrain is not yet supported!");
+                        "Could not load, Colors models are not yet supported!");
 
                 // TODO: Add 06 Support
                 case Games.S06:
                     throw new NotImplementedException(
-                        "Could not load, '06 terrain is not yet supported!");
+                        "Could not load, '06 models are not yet supported!");
 
                 // TODO: Add Heroes/Shadow Support
                 case Games.Shadow:
                 case Games.Heroes:
                     throw new NotImplementedException(
-                        "Could not load, Heroes/Shadow terrain is not yet supported!");
+                        "Could not load, Heroes/Shadow models are not yet supported!");
+                
+                // TODO: Add SA2 Support
+                case Games.SA2:
+                    throw new NotImplementedException(
+                        "Could not load, SA2 models are not yet supported!");
 
                 default:
                     throw new Exception(
@@ -377,6 +412,13 @@ namespace HedgeEdit.Lua
                 case Games.Heroes:
                     setData = new HeroesSetData();
                     break;
+
+                // TODO: Add SA2 Support
+                case Games.SA2:
+                    throw new NotImplementedException(
+                        "Could not load, SA2 set data is not yet supported!");
+                //setData = new SA2SetData();
+                //break;
 
                 default:
                     throw new Exception(

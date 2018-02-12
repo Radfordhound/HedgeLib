@@ -487,6 +487,10 @@ namespace HedgeEdit.UI
                         setData = new HeroesSetData();
                         break;
 
+                    case LuaScript.Games.SA2:
+                        setData = new SA2SetData();
+                        break;
+
                     default:
                         throw new Exception(
                             "Could not load, game type has not been set!");
@@ -621,6 +625,13 @@ namespace HedgeEdit.UI
 
                 sceneView = null;
             }
+        }
+
+        private void AssetsDialogMenuItem_Click(object sender, EventArgs e)
+        {
+            // TODO: Check it and stuff siojsodigj
+            var assetsDialog = new AssetsDialog();
+            assetsDialog.Show();
         }
         #endregion
 

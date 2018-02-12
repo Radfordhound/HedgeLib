@@ -68,6 +68,11 @@ namespace HedgeEdit.Lua
                     throw new NotImplementedException(
                         "Could not load, Heroes/Shadow materials are not yet supported!");
 
+                // TODO: Add SA2 Support
+                case Games.SA2:
+                    throw new NotImplementedException(
+                        "Could not load, SA2 materials are not yet supported!");
+
                 default:
                     throw new Exception(
                         "Could not load, game type has not been set!");
@@ -130,6 +135,11 @@ namespace HedgeEdit.Lua
                 case Games.Heroes:
                     throw new NotImplementedException(
                         "Could not load, Heroes/Shadow textures are not yet supported!");
+
+                // TODO: Add SA2 Support
+                case Games.SA2:
+                    throw new NotImplementedException(
+                        "Could not load, SA2 textures are not yet supported!");
 
                 default:
                     throw new Exception(

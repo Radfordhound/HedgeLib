@@ -63,6 +63,11 @@ namespace HedgeEdit.Lua
                     arc = new ONEArchive();
                     break;
 
+                // TODO: Add SA2 Support
+                case Games.SA2:
+                    throw new NotImplementedException(
+                        "Could not unpack, SA2 archives are not yet supported!");
+
                 default:
                     throw new Exception(
                         "Could not unpack, game type has not been set!");
@@ -173,7 +178,7 @@ namespace HedgeEdit.Lua
                 // TODO: Add LW Support
                 case Games.LW:
                     throw new NotImplementedException(
-                        "Could not unpack, LW archives are not yet supported!");
+                        "Could not repack, LW archives are not yet supported!");
 
                 case Games.Gens:
                 case Games.SU:
@@ -187,21 +192,26 @@ namespace HedgeEdit.Lua
                 // TODO: Add Colors Support
                 case Games.Colors:
                     throw new NotImplementedException(
-                        "Could not unpack, Colors archives are not yet supported!");
+                        "Could not repack, Colors archives are not yet supported!");
 
                 // TODO: Add 06 Support
                 case Games.S06:
                     throw new NotImplementedException(
-                        "Could not unpack, '06 archives are not yet supported!");
+                        "Could not repack, '06 archives are not yet supported!");
 
                 case Games.Shadow:
                 case Games.Heroes:
                     arc = new ONEArchive();
                     break;
 
+                // TODO: Add SA2 Support
+                case Games.SA2:
+                    throw new NotImplementedException(
+                        "Could not repack, SA2 archives are not yet supported!");
+
                 default:
                     throw new Exception(
-                        "Could not unpack, game type has not been set!");
+                        "Could not repack, game type has not been set!");
             }
 
             // Generate the archive

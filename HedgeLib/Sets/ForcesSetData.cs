@@ -211,17 +211,20 @@ namespace HedgeLib.Sets
                     }
 
                     var arr = new uint[arrLength];
-                    reader.JumpTo(arrOffset, false);
-
-                    for (uint i = 0; i < arrLength; ++i)
+                    if (arrLength > 0)
                     {
-                        arr[i] = reader.ReadUInt32();
+                        reader.JumpTo(arrOffset, false);
+
+                        for (uint i = 0; i < arrLength; ++i)
+                        {
+                            arr[i] = reader.ReadUInt32();
+                        }
+
+                        reader.JumpTo(curPos);
                     }
 
                     obj.Parameters.Add(new SetObjectParam(
                         typeof(uint[]), arr));
-
-                    reader.JumpTo(curPos);
                     continue;
                 }
                 else if (param.DataType == typeof(string))
@@ -430,7 +433,7 @@ namespace HedgeLib.Sets
                     var arr = (param.Data as uint[]);
                     writer.FixPadding(4);
 
-                    if (arr == null)
+                    if (arr == null || arr.Length < 1)
                     {
                         writer.WriteNulls(24);
                         continue;
@@ -489,7 +492,7 @@ namespace HedgeLib.Sets
                 if (param.DataType == typeof(uint[]))
                 {
                     var arr = (param.Data as uint[]);
-                    if (arr == null) continue;
+                    if (arr == null || arr.Length < 1) continue;
 
                     writer.FillInOffsetLong($"obj{objID}ArrOffset{arrIndex}", false, false);
                     for (uint i = 0; i < arr.Length; ++i)

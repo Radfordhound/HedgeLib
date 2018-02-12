@@ -1,37 +1,43 @@
 ﻿function ExtractResources(sourceDir, destDir)
-	SetDataType("Heroes")
+	SetDataType("SA2")
 	-- TODO: Finish this
 end
 
 function Load(dataDir, cacheDir, stageID)
-	SetDataType("Heroes")
+	SetDataType("SA2")
 
-	-- Set Data (E.G. s01_P1.bin)
-	local files = IOGetFilesInDir(dataDir, stageID .. "_P*.bin", false)
-	Log("About to load sets")
+	-- Set Data (E.G. gd_PC/set0003_s.bin)
+	local files = IOGetFilesInDir(dataDir,
+		"set" .. stageID .. "*.bin", false)
+
+	print("set" .. stageID .. "*.bin")
+	print(#files)
 	
 	if files ~= nil and #files > 0 then
 		UIShowProgress()
 
 		for i = 1, #files do
+			print(files[i]) -- TODO
 			UIChangeProgress(((i - 1) / #files) * 100)
 			UIChangeLoadStatus(string.format(
 				"Set Data %02d/%02d", i, #files))
 
-			LoadSetLayer(files[i])
+			LoadSetLayer(files[i]) -- TODO: Load Object Models
 		end
 
 		UIHideProgress()
 	end
 
 	UIToggleSetsSaving(true)
+	-- TODO: Finish This
 end
 
 function SaveSets(dataDir, cacheDir, stageID)
-	-- Set Data (E.G. s01_P1.bin)
-	SetDataType("Heroes")
-	SaveSetLayers(dataDir, "", ".bin", true)
+	-- Set Data (E.G. gd_PC/set0003_s.bin)
+	SetDataType("SA2")
 
+	-- TODO: Save Sets
+	
 	-- TODO: Repack
 end
 
