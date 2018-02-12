@@ -7,6 +7,7 @@ using HedgeLib.Terrain;
 using HedgeLib.Textures;
 using MoonSharp.Interpreter;
 using System;
+using System.Collections;
 
 namespace HedgeEdit.Lua
 {
@@ -61,6 +62,7 @@ namespace HedgeEdit.Lua
         public static void Initialize()
         {
             Script.DefaultOptions.DebugPrint = LuaTerminal.Log;
+            UserData.RegisterType<IDictionary>();
             UserData.RegisterType<Vector3>();
             UserData.RegisterType<Quaternion>();
 

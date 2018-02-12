@@ -18,6 +18,8 @@ namespace HedgeEdit.Lua
             script.Globals["GetSetLayerCount"] = (Func<int>)GetSetLayerCount;
             script.Globals["ChangeCurrentSetLayer"] = (Action<SetData>)ChangeCurrentSetLayer;
             script.Globals["GetCurrentSetLayer"] = (Func<SetData>)GetCurrentSetLayer;
+            script.Globals["GenSetObjectParam"] = (Func<string,
+                object, SetObjectParam>)GenSetObjectParam;
 
             script.Globals["LoadObjectModel"] = (Func<string,
                 string, bool, Vector3?, Model>)LoadObjectModel;
@@ -60,6 +62,12 @@ namespace HedgeEdit.Lua
         public SetData GetCurrentSetLayer()
         {
             return Stage.CurrentSetLayer;
+        }
+        
+        public SetObjectParam GenSetObjectParam(string type, object data)
+        {
+            var t = HedgeLib.Types.GetTypeFromString(type);
+            return new SetObjectParam(t, Helpers.ChangeType(data, t));
         }
 
         public void LoadSetLayerResources(GameEntry gameType, SetData setData,

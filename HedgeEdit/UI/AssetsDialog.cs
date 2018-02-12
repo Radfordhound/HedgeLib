@@ -1,5 +1,5 @@
-﻿using HedgeLib;
-using HedgeLib.Sets;
+﻿using HedgeLib.Sets;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
@@ -180,16 +180,25 @@ namespace HedgeEdit.UI
                         (uint)Stage.CurrentSetLayer.Objects.Count);
                     Stage.CurrentSetLayer.Objects.Add(obj);
 
+                    var script = Stage.Script;
+                    if (script == null)
+                        return; // TODO: idk maybe throw an error??
+
+                    try
+                    {
+                        script.Call("InitSetObject", obj);
+                    }
+                    catch (Exception ex)
+                    {
+                        LuaTerminal.LogError($"ERROR: {ex.Message}");
+                    }
+
                     // Set Object Position
                     var pos = Viewport.CameraPos + (Viewport.CameraForward * 10);
                     pos /= Stage.GameType.UnitMultiplier;
                     obj.Transform.Position = Types.ToHedgeLib(pos);
 
                     // Load Object Resources (models, etc.) and Spawn Object
-                    var script = Stage.Script;
-                    if (script == null)
-                        return; // TODO: idk maybe throw an error??
-
                     script.LoadSetObjectResources(Stage.GameType, obj);
                     Viewport.SelectedInstances.Clear();
                     Viewport.SelectObject(obj);

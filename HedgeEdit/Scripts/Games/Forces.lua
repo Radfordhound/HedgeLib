@@ -113,3 +113,13 @@ end
 function SaveAll(dataDir, cacheDir, stageID)
 	-- TODO
 end
+
+function InitSetObject(obj)
+	obj.CustomData["ParentID"] = GenSetObjectParam("ushort", 0)
+	obj.CustomData["ParentUnknown1"] = GenSetObjectParam("ushort", 0)
+	obj.CustomData["Unknown1"] = GenSetObjectParam("ushort", 0)
+	obj.CustomData["RangeIn"] = GenSetObjectParam("float", 1000)
+	obj.CustomData["RangeOut"] = GenSetObjectParam("float", 1200)
+	obj.CustomData["Name"] = GenSetObjectParam("string",
+		obj.ObjectType .. tostring(obj.ObjectID))
+end
