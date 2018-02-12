@@ -631,6 +631,9 @@ namespace HedgeEdit.UI
 
         private void RemoveObject(object sender, EventArgs e)
         {
+            if (Viewport.SelectedInstances.Count < 1)
+                return;
+
             var instance = Viewport.SelectedInstances[0];
             var obj = (instance.CustomData as SetObject);
             var transform = (obj == null) ?
