@@ -39,13 +39,29 @@ function Load(dataDir, cacheDir, stageID)
 
 		UIHideProgress()
 	end
+
+	UIToggleSetsSaving(true)
 	-- TODO: Finish This
 end
 
 function SaveSets(dataDir, cacheDir, stageID)
 	-- Set Data (E.G. xenon/archives/scripts.arc)
 	SetDataType("S06")
-	--SaveSetLayers("{0}/gedit/{1}_gedit", "", ".gedit", true)
+
+	local dir, type = cacheDir .. "/scripts", "xenon"
+	if IODirExists(dir .. "/xenon") then
+		type = "xenon"
+	elseif IODirExists(dir .. "/ps3") then
+		type = "ps3"
+	else
+		LogError("ERROR: Invalid Data Directory")
+		return
+	end
+
+	dir = dir .. "/" .. type
+
+	local setDir = "{0}/scripts/" .. type .. "/placement/{1}"
+	SaveSetLayers(setDir, "", ".set", true)
 	
 	-- TODO: Repack
 end

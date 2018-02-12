@@ -74,6 +74,8 @@ function Load(dataDir, cacheDir, stageID)
 		UIHideProgress()
 	end
 
+	UIToggleSetsSaving(true)
+
 	-- AR (E.G. ActD_MykonosAct1)
 	UIChangeStatus("Extracting " .. stageID .. "...")
 	Extract("{0}/{1}.arl", "{0}/{1}", "AR")

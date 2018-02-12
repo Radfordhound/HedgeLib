@@ -73,6 +73,12 @@
     <Compile Include="Lua\SetCallbacks.cs" />
     <Compile Include="Lua\TerrainCallbacks.cs" />
     <Compile Include="Lua\UICallbacks.cs" />
+    <Compile Include="UI\AssetsDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\AssetsDialog.Designer.cs">
+      <DependentUpon>AssetsDialog.cs</DependentUpon>
+    </Compile>
     <Compile Include="UI\LuaTerminal.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -113,6 +119,9 @@
     <Compile Include="Types.cs" />
     <Compile Include="Viewport.cs" />
     <Compile Include="VPObjectInstance.cs" />
+    <EmbeddedResource Include="UI\AssetsDialog.resx">
+      <DependentUpon>AssetsDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="UI\LuaTerminal.resx">
       <DependentUpon>LuaTerminal.cs</DependentUpon>
     </EmbeddedResource>
@@ -175,6 +184,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Scripts\Games\Forces.lua">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Scripts\Games\SA2.lua">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Scripts\Games\S06.lua">

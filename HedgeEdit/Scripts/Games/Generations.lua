@@ -21,6 +21,8 @@
 		UIHideProgress()
 	end
 
+	UIToggleSetsSaving(true)
+
 	-- AR (E.G. ghz200)
 	UIChangeStatus("Extracting " .. stageID .. "...")
 	Extract("{0}/{1}.arl", "{0}/{1}", "AR")

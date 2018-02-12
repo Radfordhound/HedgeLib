@@ -53,14 +53,19 @@ function Load(dataDir, cacheDir, stageID)
 			UIChangeLoadStatus(string.format(
 				"Set Data %02d/%02d", i, #files))
 
-			LoadSetLayer(files[i], true,
+			local layer = LoadSetLayer(files[i], true,
 				{ "{0}/{1}/{1}_obj", "{0}/{1}/{1}_trr_cmn" })
+
+			-- Change Default Set Layer
+			if layer.Name == stageID .. "_obj_area01" then
+				ChangeCurrentSetLayer(layer)
+			end
 		end
 
 		UIHideProgress()
 	end
 
-	--UIToggleSetsSaving(true) TODO
+	UIToggleSetsSaving(true)
 
 	-- Additional Object Textures
 	LoadTexturesInDir("{0}/{1}/{1}_obj", "Object Textures")

@@ -53,6 +53,7 @@
             this.selectNoneMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.selectSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.sceneViewMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.assetsDialogMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.viewSelectedMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.luaMenu = new System.Windows.Forms.ToolStripMenuItem();
@@ -208,7 +209,8 @@
             this.selectAllMenuItem,
             this.selectNoneMenuItem,
             this.selectSeparator3,
-            this.sceneViewMenuItem});
+            this.sceneViewMenuItem,
+            this.assetsDialogMenuItem});
             this.editMenu.Name = "editMenu";
             this.editMenu.Size = new System.Drawing.Size(39, 22);
             this.editMenu.Text = "&Edit";
@@ -308,6 +310,14 @@
             this.sceneViewMenuItem.Text = "Scene &View";
             this.sceneViewMenuItem.Click += new System.EventHandler(this.SceneViewMenuItem_Click);
             this.sceneViewMenuItem.CheckOnClick = true;
+            // 
+            // assetsDialogMenuItem
+            // 
+            this.assetsDialogMenuItem.Name = "assetsDialogMenuItem";
+            this.assetsDialogMenuItem.Size = new System.Drawing.Size(179, 22);
+            this.assetsDialogMenuItem.Text = "A&ssets Dialog";
+            this.assetsDialogMenuItem.Click += new System.EventHandler(this.AssetsDialogMenuItem_Click);
+            this.assetsDialogMenuItem.CheckOnClick = true;
             // 
             // viewMenu
             // 
@@ -743,6 +753,7 @@
         private System.Windows.Forms.ColumnHeader columnHeader2;
         private System.Windows.Forms.ToolStripSeparator selectSeparator3;
         private System.Windows.Forms.ToolStripMenuItem sceneViewMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem assetsDialogMenuItem;
         private System.Windows.Forms.StatusStrip statusStrip;
         private System.Windows.Forms.ToolStripStatusLabel statusBarLbl;
         private System.Windows.Forms.ToolStripProgressBar statusBarProgressBar;

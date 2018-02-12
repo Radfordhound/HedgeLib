@@ -20,6 +20,7 @@ namespace HedgeEdit.Lua
         public enum Games
         {
             None,
+            SA2,
             Heroes,
             Shadow,
             S06,
@@ -140,6 +141,9 @@ namespace HedgeEdit.Lua
 
                 case "heroes":
                     return Games.Heroes;
+
+                case "sa2":
+                    return Games.SA2;
 
                 default:
                     throw new NotImplementedException(

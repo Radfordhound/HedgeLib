@@ -18,6 +18,7 @@ namespace HedgeEdit.Lua
             script.Globals["UIMessageBox"] = (Func<string, string, int, int, int>)UIMessageBox;
             script.Globals["UIErrorBox"] = (Func<string, string, int, int>)UIErrorBox;
             script.Globals["UIWarningBox"] = (Func<string, string, int, int>)UIWarningBox;
+            script.Globals["UIToggleSetsSaving"] = (Action<bool>)UIToggleSetsSaving;
         }
 
         protected static void MainUIInvoke(Action action)
@@ -91,6 +92,15 @@ namespace HedgeEdit.Lua
         {
             return (int)MessageBox.Show(txt, caption,
                 (MessageBoxButtons)buttons, MessageBoxIcon.Warning);
+        }
+
+        public static void UIToggleSetsSaving(bool value)
+        {
+            MainUIInvoke(() =>
+            {
+                // TODO: Make this not break loading lol
+                //Program.MainForm.SaveSetsMenuItem.Enabled = value;
+            });
         }
     }
 }

@@ -40,6 +40,7 @@ function Load(dataDir, cacheDir, stageID)
 	end
 
 	UIHideProgress()
+	UIToggleSetsSaving(true)
 
 	-- TODO
 end
