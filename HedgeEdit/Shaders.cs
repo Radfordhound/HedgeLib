@@ -20,7 +20,8 @@ namespace HedgeEdit
             string pth1, pth2, name;
 
             // Load the shader list
-            pth1 = Path.Combine(ShadersDirectory, ShaderList);
+            var shaderDir = Path.Combine(Program.StartupPath, ShadersDirectory);
+            pth1 = Path.Combine(shaderDir, ShaderList);
             if (!File.Exists(pth1))
             {
                 throw new FileNotFoundException(
@@ -34,8 +35,8 @@ namespace HedgeEdit
             {
                 // Make sure both shaders exist first
                 name = shaderNames[i];
-                pth1 = Path.Combine(ShadersDirectory, $"{name}{VertExtension}");
-                pth2 = Path.Combine(ShadersDirectory, $"{name}{FragExtension}");
+                pth1 = Path.Combine(shaderDir, $"{name}{VertExtension}");
+                pth2 = Path.Combine(shaderDir, $"{name}{FragExtension}");
 
                 if (!File.Exists(pth1) || !File.Exists(pth2))
                     continue;
