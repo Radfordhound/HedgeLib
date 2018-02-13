@@ -749,8 +749,7 @@ namespace HedgeEdit.UI
                     var foundParam = obj.Parameters.Find(new Predicate<SetObjectParam>(x => {
                         return x.DataType == param.DataType;
                     }));
-                    if (foundParam != null && foundParam != param)
-                        foundParam.Data = param.Data;
+                    foundParam.Data = param.Data;
                 }
                 RefreshGUI();
             }
