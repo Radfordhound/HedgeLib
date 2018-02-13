@@ -256,11 +256,15 @@ namespace HedgeEdit
                     var instance = mdl.InstanceIntersects(near, direction);
                     if (instance != null && instance.CustomData != null)
                     {
-                        SelectedInstances.Clear(); // TODO: Only do this if ctrl is not held
+                        if(!Keyboard.GetState().IsKeyDown(Key.LControl))
+                        SelectedInstances.Clear();
+
                         SelectedInstances.Add(instance);
                         Program.MainForm.RefreshGUI();
                         return true;
                     }
+                    if (Program.MainForm.Focused)
+                    SelectedInstances.Clear();
 
                     return false;
                 }
