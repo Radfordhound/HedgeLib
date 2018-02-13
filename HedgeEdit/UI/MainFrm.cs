@@ -19,7 +19,7 @@ namespace HedgeEdit.UI
         private static SceneView sceneView = null;
         private Thread loadSaveThread;
         private Control activeTxtBx = null;
-
+        private AssetsDialog assetsDialog;
         // Constructors
         public MainFrm()
         {
@@ -40,11 +40,14 @@ namespace HedgeEdit.UI
             var instance = (singleObjSelected) ?
                 Viewport.SelectedInstances[0] : null;
 
-            var obj = (singleObjSelected) ?
-                (instance?.CustomData as SetObject) : null;
+            var obj = (Viewport.SelectedInstances.Count > 0) ? 
+                (SetObject)Viewport.SelectedInstances
+                [Viewport.SelectedInstances.Count - 1].CustomData : null;
 
             var transform = (obj != null) ? obj.Transform : ((singleObjSelected) ?
                 (instance?.CustomData as SetObjectTransform) : null);
+
+            SetObjectType objTemplate = null;
 
             if (transform == null && instance != null)
             {
@@ -97,13 +100,32 @@ namespace HedgeEdit.UI
             objectProperties.BeginUpdate();
             objectProperties.Items.Clear();
 
+
             if (obj == null)
             {
                 objectProperties.EndUpdate();
                 return;
             }
 
-            var objTemplate = (Stage.GameType == null ||
+            if (Viewport.SelectedInstances.Count > 1)
+            {
+                bool allSameType = Viewport.SelectedInstances.TrueForAll(new Predicate<VPObjectInstance>(
+                    x => {
+                    if (x.CustomData is SetObject data)
+                    {
+                        return data.ObjectType == ((SetObject)Viewport.
+                        SelectedInstances[0].CustomData).ObjectType;
+                    }
+                    return false;
+                }));
+                if (!allSameType)
+                {
+                    objectProperties.EndUpdate();
+                    return;
+                }
+            }
+
+            objTemplate = (Stage.GameType == null ||
                 !Stage.GameType.ObjectTemplates.ContainsKey(obj.ObjectType)) ?
                 null : Stage.GameType.ObjectTemplates[obj.ObjectType];
 
@@ -637,9 +659,18 @@ namespace HedgeEdit.UI
 
         private void AssetsDialogMenuItem_Click(object sender, EventArgs e)
         {
-            // TODO: Check it and stuff siojsodigj
-            var assetsDialog = new AssetsDialog();
-            assetsDialog.Show();
+            if (assetsDialog == null)
+            {
+                assetsDialog = new AssetsDialog();
+                assetsDialog.Show();
+            }else
+            {
+                if (assetsDialog.Visible)
+                    assetsDialog.Hide();
+                else
+                    assetsDialog.Show();
+            }
+            
         }
         #endregion
 
@@ -653,32 +684,33 @@ namespace HedgeEdit.UI
             if (Viewport.SelectedInstances.Count < 1)
                 return;
 
-            var instance = Viewport.SelectedInstances[0];
-            var obj = (instance.CustomData as SetObject);
-            var transform = (obj == null) ?
-                (instance.CustomData as SetObjectTransform) :
-                obj.Transform;
-
-            if (transform == null) return;
-
-            foreach (var layer in Stage.Sets)
+            foreach(var instance in Viewport.SelectedInstances)
             {
-                if (obj != null)
+                var obj = (instance.CustomData as SetObject);
+                var transform = (obj == null) ?
+                    (instance.CustomData as SetObjectTransform) :
+                    obj.Transform;
+
+                if (transform == null) return;
+
+                foreach (var layer in Stage.Sets)
                 {
-                    if (layer.Objects.Remove(obj))
+                    if (obj != null)
                     {
-                        Viewport.RemoveObjectInstance(instance);
-                        Viewport.SelectedInstances.Clear();
-                        RefreshSceneView();
-                        RefreshGUI();
-                        return;
+                        if (layer.Objects.Remove(obj))
+                        {
+                            Viewport.RemoveObjectInstance(instance);
+                        }
+                    }
+                    else
+                    {
+                        // TODO: Remove children objects
                     }
                 }
-                else
-                {
-                    // TODO: Remove children objects
-                }
             }
+            Viewport.SelectedInstances.Clear();
+            RefreshSceneView();
+            RefreshGUI();
         }
 
         private void ViewSelected(object sender, EventArgs e)
@@ -699,7 +731,9 @@ namespace HedgeEdit.UI
 
         private void ObjectProperties_DoubleClick(object sender, EventArgs e)
         {
-            if (objectProperties.SelectedItems.Count <= 0)
+            //TODO: Property editing for multiple selected objects
+
+            if (objectProperties.SelectedItems.Count < 1)
                 return;
 
             var selectedItem = objectProperties.SelectedItems[0];
@@ -707,7 +741,18 @@ namespace HedgeEdit.UI
                 (selectedItem.Tag as SetObjectParam));
 
             if (objParamEditor.ShowDialog() == DialogResult.OK)
+            {
+                SetObjectParam param = (SetObjectParam)selectedItem.Tag;
+                foreach (var instance in Viewport.SelectedInstances)
+                {
+                    SetObject obj = (SetObject)instance.CustomData;
+                    var foundParam = obj.Parameters.Find(new Predicate<SetObjectParam>(x => {
+                        return x.DataType == param.DataType;
+                    }));
+                    foundParam.Data = param.Data;
+                }
                 RefreshGUI();
+            }
         }
 
         private void MouseScroll(object sender, MouseEventArgs e)
