@@ -731,7 +731,6 @@ namespace HedgeEdit.UI
 
         private void ObjectProperties_DoubleClick(object sender, EventArgs e)
         {
-            //TODO: Property editing for multiple selected objects
 
             if (objectProperties.SelectedItems.Count < 1)
                 return;
@@ -742,14 +741,14 @@ namespace HedgeEdit.UI
 
             if (objParamEditor.ShowDialog() == DialogResult.OK)
             {
-                SetObjectParam param = (SetObjectParam)selectedItem.Tag;
-                foreach (var instance in Viewport.SelectedInstances)
+                if (Viewport.SelectedInstances.Count > 1)
                 {
-                    SetObject obj = (SetObject)instance.CustomData;
-                    var foundParam = obj.Parameters.Find(new Predicate<SetObjectParam>(x => {
-                        return x.DataType == param.DataType;
-                    }));
-                    foundParam.Data = param.Data;
+                    SetObjectParam param = (SetObjectParam)selectedItem.Tag;
+                    foreach (var instance in Viewport.SelectedInstances)
+                    {
+                        SetObject obj = (SetObject)instance.CustomData;
+                        obj.Parameters[objectProperties.SelectedIndices[0]].Data = ((SetObjectParam)selectedItem.Tag).Data;
+                    }
                 }
                 RefreshGUI();
             }
