@@ -53,7 +53,7 @@ namespace HedgeLib.Sets
                                     var countElem = paramElement.Element("Count");
                                     if (countElem == null) continue;
 
-                                    if (!int.TryParse(countElem.Value, out int childCount)) continue;
+                                    if (!int.TryParse(countElem.Value, out var childCount)) continue;
                                     children = new SetObjectTransform[childCount-1];
 
                                     foreach (var specialElem in paramElement.Elements())
@@ -66,15 +66,15 @@ namespace HedgeLib.Sets
                                                     var posElem = specialElem.Element("Position");
                                                     var rotElem = specialElem.Element("Rotation");
 
-                                                    if (indexElem == null ||
-                                                     !int.TryParse(indexElem.Value, out int index))
+                                                    if (indexElem == null || !int.TryParse(
+                                                        indexElem.Value, out int index))
                                                         continue;
 
                                                     var pos = (posElem == null) ?
                                                         new Vector3() :
                                                         Helpers.XMLReadVector3(posElem);
                                                     var rot = (rotElem == null) ?
-                                                        new Quaternion() :
+                                                        new Quaternion(0, 0, 0, 1) :
                                                         Helpers.XMLReadQuat(rotElem);
 
                                                     var childTransform = new SetObjectTransform()
@@ -123,8 +123,9 @@ namespace HedgeLib.Sets
                     // Ensure Object has ID
                     if (!objID.HasValue)
                     {
-                        Console.WriteLine("WARNING: Object of type \"" + elemName +
-                            "\" is missing it's object ID! Skipping this object...");
+                        Console.WriteLine("WARNING: {0} \"{1}\" {2}",
+                            "Object of type", elemName,
+                            "is missing its object ID! Skipping this object...");
                         continue;
                     }
 
@@ -134,7 +135,7 @@ namespace HedgeLib.Sets
                         ObjectType = elemName,
                         Parameters = parameters,
                         Transform = transform,
-                        Children = children,
+                        Children = (children == null) ? new SetObjectTransform[0] : children,
                         ObjectID = objID.Value
                     };
                     Objects.Add(obj);
