@@ -20,6 +20,7 @@ namespace HedgeEdit.UI
         private Thread loadSaveThread;
         private Control activeTxtBx = null;
         private AssetsDialog assetsDialog;
+        private VPObjectInstance CopiedObject;
         // Constructors
         public MainFrm()
         {
@@ -41,8 +42,8 @@ namespace HedgeEdit.UI
                 Viewport.SelectedInstances[0] : null;
 
             var obj = (Viewport.SelectedInstances.Count > 0) ? 
-                (SetObject)Viewport.SelectedInstances
-                [Viewport.SelectedInstances.Count - 1].CustomData : null;
+                (Viewport.SelectedInstances
+                [Viewport.SelectedInstances.Count - 1].CustomData as SetObject) : null;
 
             var transform = (obj != null) ? obj.Transform : ((singleObjSelected) ?
                 (instance?.CustomData as SetObjectTransform) : null);
@@ -198,12 +199,12 @@ namespace HedgeEdit.UI
 
                 // Copy Selected Object(s)
                 case Keys.Control | Keys.C:
-                    copyMenuItem.PerformClick();
+                    CopyMenuItem_Click(null,null);
                     return true;
 
                 // Paste Selected Object(s)
                 case Keys.Control | Keys.V:
-                    pasteMenuItem.PerformClick();
+                    PasteMenuItem_Click(null, null);
                     return true;
 
                 // Delete Selected Object(s)
@@ -611,12 +612,35 @@ namespace HedgeEdit.UI
 
         private void CopyMenuItem_Click(object sender, EventArgs e)
         {
-            // TODO
+            CopiedObject = Viewport.SelectedInstances[0];
         }
 
         private void PasteMenuItem_Click(object sender, EventArgs e)
         {
-            // TODO
+            if(CopiedObject != null && CopiedObject.CustomData is SetObject)
+            {
+                var script = Stage.Script;
+                var data = (SetObject)CopiedObject.CustomData;
+                var newObj = new SetObject() {
+                    Children = data.Children,
+                    ObjectID = (uint)Stage.CurrentSetLayer.Objects.Count,
+                    Parameters = data.Parameters,
+                    CustomData = data.CustomData,
+                    ObjectType = data.ObjectType,
+                };
+                Stage.CurrentSetLayer.Objects.Add(newObj);
+                script.Call("InitSetObject", newObj);
+                
+                newObj.Transform.Position = data.Transform.Position;
+                newObj.Transform.Rotation = data.Transform.Rotation;
+                newObj.Transform.Scale = data.Transform.Scale;
+
+                script.LoadSetObjectResources(Stage.GameType, newObj);
+                Viewport.SelectedInstances.Clear();
+                Viewport.SelectObject(newObj);
+                RefreshSceneView();
+                RefreshGUI();
+            }
         }
 
         private void DeleteMenuItem_Click(object sender, EventArgs e)
@@ -659,7 +683,7 @@ namespace HedgeEdit.UI
 
         private void AssetsDialogMenuItem_Click(object sender, EventArgs e)
         {
-            if (assetsDialog == null)
+            if (assetsDialog == null || assetsDialog.IsDisposed)
             {
                 assetsDialog = new AssetsDialog();
                 assetsDialog.Show();
