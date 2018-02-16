@@ -20,7 +20,8 @@ namespace HedgeEdit.UI
         private Thread loadSaveThread;
         private Control activeTxtBx = null;
         private AssetsDialog assetsDialog;
-        private VPObjectInstance CopiedObject;
+        private VPObjectInstance copiedObject;
+
         // Constructors
         public MainFrm()
         {
@@ -41,14 +42,12 @@ namespace HedgeEdit.UI
             var instance = (singleObjSelected) ?
                 Viewport.SelectedInstances[0] : null;
 
-            var obj = (Viewport.SelectedInstances.Count > 0) ? 
-                (Viewport.SelectedInstances
-                [Viewport.SelectedInstances.Count - 1].CustomData as SetObject) : null;
+            var obj = (Viewport.SelectedInstances.Count > 0) ?
+                (Viewport.SelectedInstances[
+                    selectedObjs - 1].CustomData as SetObject) : null;
 
             var transform = (obj != null) ? obj.Transform : ((singleObjSelected) ?
                 (instance?.CustomData as SetObjectTransform) : null);
-
-            SetObjectType objTemplate = null;
 
             if (transform == null && instance != null)
             {
@@ -97,10 +96,10 @@ namespace HedgeEdit.UI
             rotZBox.Text = eulerAngles.Z.ToString();
 
             // Update Parameters
-            objectTypeLbl.Text = (obj != null) ? obj.ObjectType : "";
+            string objType = (obj != null) ? obj.ObjectType : "";
+            objectTypeLbl.Text = objType;
             objectProperties.BeginUpdate();
             objectProperties.Items.Clear();
-
 
             if (obj == null)
             {
@@ -108,17 +107,18 @@ namespace HedgeEdit.UI
                 return;
             }
 
-            if (Viewport.SelectedInstances.Count > 1)
+            if (selectedObjs > 1)
             {
-                bool allSameType = Viewport.SelectedInstances.TrueForAll(new Predicate<VPObjectInstance>(
-                    x => {
-                    if (x.CustomData is SetObject data)
+                bool allSameType = Viewport.SelectedInstances.TrueForAll(
+                    new Predicate<VPObjectInstance>(x =>
                     {
-                        return data.ObjectType == ((SetObject)Viewport.
-                        SelectedInstances[0].CustomData).ObjectType;
-                    }
-                    return false;
-                }));
+                        if (x.CustomData is SetObject data)
+                        {
+                            return (data.ObjectType == objType);
+                        }
+                        return false;
+                    }));
+
                 if (!allSameType)
                 {
                     objectProperties.EndUpdate();
@@ -126,7 +126,7 @@ namespace HedgeEdit.UI
                 }
             }
 
-            objTemplate = (Stage.GameType == null ||
+            var objTemplate = (Stage.GameType == null ||
                 !Stage.GameType.ObjectTemplates.ContainsKey(obj.ObjectType)) ?
                 null : Stage.GameType.ObjectTemplates[obj.ObjectType];
 
@@ -142,7 +142,24 @@ namespace HedgeEdit.UI
                     Tag = param
                 };
 
-                lvi.SubItems.Add(param.Data.ToString());
+                // Multiple Objects
+                string data = param.Data.ToString();
+                if (selectedObjs > 1)
+                {
+                    foreach (var selectedInstance in Viewport.SelectedInstances)
+                    {
+                        if (selectedInstance.CustomData is SetObject selectedObj)
+                        {
+                            if (selectedObj.Parameters[i].Data.ToString() != data)
+                            {
+                                data = "-";
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                lvi.SubItems.Add(data);
                 objectProperties.Items.Add(lvi);
             }
 
@@ -612,15 +629,15 @@ namespace HedgeEdit.UI
 
         private void CopyMenuItem_Click(object sender, EventArgs e)
         {
-            CopiedObject = Viewport.SelectedInstances[0];
+            copiedObject = Viewport.SelectedInstances[0];
         }
 
         private void PasteMenuItem_Click(object sender, EventArgs e)
         {
-            if(CopiedObject != null && CopiedObject.CustomData is SetObject)
+            if(copiedObject != null && copiedObject.CustomData is SetObject)
             {
                 var script = Stage.Script;
-                var data = (SetObject)CopiedObject.CustomData;
+                var data = (SetObject)copiedObject.CustomData;
                 var newObj = new SetObject() {
                     Children = data.Children,
                     ObjectID = (uint)Stage.CurrentSetLayer.Objects.Count,
@@ -715,16 +732,14 @@ namespace HedgeEdit.UI
                     (instance.CustomData as SetObjectTransform) :
                     obj.Transform;
 
-                if (transform == null) return;
+                if (transform == null) continue;
 
                 foreach (var layer in Stage.Sets)
                 {
                     if (obj != null)
                     {
                         if (layer.Objects.Remove(obj))
-                        {
                             Viewport.RemoveObjectInstance(instance);
-                        }
                     }
                     else
                     {
@@ -732,6 +747,7 @@ namespace HedgeEdit.UI
                     }
                 }
             }
+
             Viewport.SelectedInstances.Clear();
             RefreshSceneView();
             RefreshGUI();
@@ -755,32 +771,35 @@ namespace HedgeEdit.UI
 
         private void ObjectProperties_DoubleClick(object sender, EventArgs e)
         {
-
             if (objectProperties.SelectedItems.Count < 1)
                 return;
 
             var selectedItem = objectProperties.SelectedItems[0];
-            var objParamEditor = new ObjectParamEditor(
-                (selectedItem.Tag as SetObjectParam));
+            var param = (selectedItem.Tag as SetObjectParam);
+            var objParamEditor = new ObjectParamEditor(param);
 
             if (objParamEditor.ShowDialog() == DialogResult.OK)
             {
+                // Edit the parameters of every selected object
                 if (Viewport.SelectedInstances.Count > 1)
                 {
-                    SetObjectParam param = (SetObjectParam)selectedItem.Tag;
+                    int selectedParamIndex = objectProperties.SelectedIndices[0];
                     foreach (var instance in Viewport.SelectedInstances)
                     {
-                        SetObject obj = (SetObject)instance.CustomData;
-                        obj.Parameters[objectProperties.SelectedIndices[0]].Data = ((SetObjectParam)selectedItem.Tag).Data;
+                        if (instance.CustomData is SetObject obj)
+                        {
+                            obj.Parameters[selectedParamIndex].Data = param.Data;
+                        }
                     }
                 }
+
                 RefreshGUI();
             }
         }
 
         private void MouseScroll(object sender, MouseEventArgs e)
         {
-            //Zooming
+            // Zooming
             Viewport.CameraPos += (e.Delta / 60) * Viewport.CameraForward;
         }
 
