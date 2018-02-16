@@ -331,7 +331,7 @@
             // 
             this.viewSelectedMenuItem.Enabled = false;
             this.viewSelectedMenuItem.Name = "viewSelectedMenuItem";
-            this.viewSelectedMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.W)));
+            this.viewSelectedMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.F)));
             this.viewSelectedMenuItem.Size = new System.Drawing.Size(146, 22);
             this.viewSelectedMenuItem.Text = "View &Selected";
             this.viewSelectedMenuItem.Click += new System.EventHandler(this.ViewSelected);

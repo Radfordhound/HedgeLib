@@ -22,8 +22,6 @@ namespace HedgeEdit.UI
         private Control activeTxtBx = null;
         private AssetsDialog assetsDialog;
 
-        public const string ClipboardObjsFmt = "List<VPObjectInstance>";
-
         // Constructors
         public MainFrm()
         {
@@ -238,7 +236,7 @@ namespace HedgeEdit.UI
 
                 // Select All
                 case Keys.Control | Keys.A:
-                    selectAllMenuItem.PerformClick();
+                    SelectAllMenuItem_Click(null, null);
                     return true;
             }
 
@@ -687,12 +685,31 @@ namespace HedgeEdit.UI
 
         private void SelectAllMenuItem_Click(object sender, EventArgs e)
         {
-            // TODO
+            Viewport.SelectedInstances.Clear();
+            foreach (var layer in Stage.Sets)
+            {
+                foreach (var obj in layer.Objects)
+                {
+                    Viewport.SelectObject(obj);
+
+                    if (obj.Children == null) continue;
+                    foreach (var child in obj.Children)
+                    {
+                        if (child == null) continue;
+                        Viewport.SelectObject(child);
+                    }
+                }
+            }
+
+            RefreshSceneView();
+            RefreshGUI();
         }
 
         private void SelectNoneMenuItem_Click(object sender, EventArgs e)
         {
-            // TODO
+            Viewport.SelectedInstances.Clear();
+            RefreshSceneView();
+            RefreshGUI();
         }
 
         private void SceneViewMenuItem_Click(object sender, EventArgs e)
@@ -745,8 +762,9 @@ namespace HedgeEdit.UI
             if (Viewport.SelectedInstances.Count < 1)
                 return;
 
-            foreach(var instance in Viewport.SelectedInstances)
+            foreach (var instance in Viewport.SelectedInstances)
             {
+                if (instance == null) continue;
                 var obj = (instance.CustomData as SetObject);
                 var transform = (obj == null) ?
                     (instance.CustomData as SetObjectTransform) :
@@ -759,18 +777,42 @@ namespace HedgeEdit.UI
                     if (obj != null)
                     {
                         if (layer.Objects.Remove(obj))
+                        {
+                            // Remove all children of this object (if any)
+                            if (obj.Children != null)
+                            {
+                                foreach (var child in obj.Children)
+                                {
+                                    var inst = Viewport.GetObjectInstance(child);
+                                    if (inst == null)
+                                        inst = Viewport.GetInstance(Viewport.DefaultCube, child);
+
+                                    if (inst != null)
+                                        Viewport.RemoveObjectInstance(inst);
+                                }
+                            }
+
+                            // Remove the actual object itself
                             Viewport.RemoveObjectInstance(instance);
+                            Refresh();
+                            break;
+                        }
                     }
                     else
                     {
-                        // TODO: Remove children objects
+                        // TODO: Make SetObject.Children a list and add support for deleting
                     }
                 }
             }
 
             Viewport.SelectedInstances.Clear();
-            RefreshSceneView();
-            RefreshGUI();
+
+            // Sub-Methods
+            void Refresh()
+            {
+                RefreshSceneView();
+                RefreshGUI();
+            }
         }
 
         private void ViewSelected(object sender, EventArgs e)
