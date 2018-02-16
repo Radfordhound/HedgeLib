@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace HedgeLib.Sets
 {
+    [Serializable]
     public class SetObject
     {
         // Variables/Constants
@@ -38,6 +39,7 @@ namespace HedgeLib.Sets
 		}
     }
 
+    [Serializable]
     public class SetObjectParam
     {
         // Variables/Constants
@@ -53,6 +55,7 @@ namespace HedgeLib.Sets
         }
     }
 
+    [Serializable]
     public class SetObjectTransform
     {
         // Variables/Constants

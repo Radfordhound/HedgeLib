@@ -1,7 +1,9 @@
 ﻿using OpenTK;
+using System;
 
 namespace HedgeEdit
 {
+    [Serializable]
     public class VPObjectInstance
     {
         // Variables/Constants

@@ -15,7 +15,13 @@
 			UIChangeLoadStatus(string.format(
 				"Set Data %02d/%02d", i, #files))
 
-			LoadSetLayer(files[i])
+			local layer = LoadSetLayer(files[i])
+			-- TODO: Remove .set from end of layer name
+
+			-- Change Default Set Layer
+			if layer.Name == "setdata_base.set" then
+				ChangeCurrentSetLayer(layer)
+			end
 		end
 
 		UIHideProgress()

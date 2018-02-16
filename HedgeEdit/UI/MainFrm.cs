@@ -2,6 +2,7 @@
 using HedgeLib;
 using HedgeLib.Sets;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
@@ -20,7 +21,8 @@ namespace HedgeEdit.UI
         private Thread loadSaveThread;
         private Control activeTxtBx = null;
         private AssetsDialog assetsDialog;
-        private VPObjectInstance copiedObject;
+
+        public const string ClipboardObjsFmt = "List<VPObjectInstance>";
 
         // Constructors
         public MainFrm()
@@ -629,35 +631,53 @@ namespace HedgeEdit.UI
 
         private void CopyMenuItem_Click(object sender, EventArgs e)
         {
-            copiedObject = Viewport.SelectedInstances[0];
+            Clipboard.SetDataObject(Viewport.SelectedInstances, true);
         }
 
         private void PasteMenuItem_Click(object sender, EventArgs e)
         {
-            if(copiedObject != null && copiedObject.CustomData is SetObject)
+            // Get Data from Clipboard (if any)
+            var dataObject = Clipboard.GetDataObject();
+            if (dataObject == null)
+                return;
+
+            var type = typeof(List<VPObjectInstance>);
+            if (!dataObject.GetDataPresent(type))
+                return;
+
+            var list = (dataObject.GetData(type) as List<VPObjectInstance>);
+            if (list == null) return;
+
+            // Spawn copies of objects
+            var script = Stage.Script;
+            Viewport.SelectedInstances.Clear();
+
+            foreach (var instance in list)
             {
-                var script = Stage.Script;
-                var data = (SetObject)copiedObject.CustomData;
-                var newObj = new SetObject() {
-                    Children = data.Children,
+                // TODO: Allow copying Transforms and Terrain
+                var obj = (instance.CustomData as SetObject);
+                if (obj == null) continue;
+
+                var newObj = new SetObject()
+                {
+                    Children = obj.Children,
                     ObjectID = (uint)Stage.CurrentSetLayer.Objects.Count,
-                    Parameters = data.Parameters,
-                    CustomData = data.CustomData,
-                    ObjectType = data.ObjectType,
+                    Parameters = obj.Parameters,
+                    CustomData = obj.CustomData,
+                    ObjectType = obj.ObjectType,
+                    Transform = obj.Transform
                 };
+
                 Stage.CurrentSetLayer.Objects.Add(newObj);
+                // TODO: Fix crashing if this is called while loading
                 script.Call("InitSetObject", newObj);
-                
-                newObj.Transform.Position = data.Transform.Position;
-                newObj.Transform.Rotation = data.Transform.Rotation;
-                newObj.Transform.Scale = data.Transform.Scale;
 
                 script.LoadSetObjectResources(Stage.GameType, newObj);
-                Viewport.SelectedInstances.Clear();
                 Viewport.SelectObject(newObj);
-                RefreshSceneView();
-                RefreshGUI();
             }
+
+            RefreshSceneView();
+            RefreshGUI();
         }
 
         private void DeleteMenuItem_Click(object sender, EventArgs e)

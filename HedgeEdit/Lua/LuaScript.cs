@@ -104,7 +104,8 @@ namespace HedgeEdit.Lua
 
         public void Call(string funcName, params object[] args)
         {
-            script.Call(script.Globals[funcName], args);
+            if (script.Globals[funcName] != null)
+                script.Call(script.Globals[funcName], args);
         }
 
         public static Games GetGame(string dataType)

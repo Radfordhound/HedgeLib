@@ -31,7 +31,7 @@ namespace HedgeEdit
         public static Dictionary<string, int> Textures =
             new Dictionary<string, int>();
 
-        public static List<VPObjectInstance> SelectedInstances =
+        public static List<VPObjectInstance> SelectedInstances = 
             new List<VPObjectInstance>();
 
         public static VPModel DefaultCube;
@@ -134,6 +134,7 @@ namespace HedgeEdit
             GL.UseProgram(defaultID);
 
             // Update camera transform
+            var keyState = Keyboard.GetState();
             var mouseState = Mouse.GetState();
             var mousePos = Cursor.Position;
             var vpMousePos = vp.PointToClient(mousePos);
@@ -152,7 +153,6 @@ namespace HedgeEdit
                 CameraRot.Y -= mouseDifference.Y * 0.1f;
 
                 // Set Camera Movement Speed
-                var keyState = Keyboard.GetState();
                 if (keyState.IsKeyDown(Key.ShiftLeft) ||
                     keyState.IsKeyDown(Key.ShiftRight))
                 {
@@ -256,15 +256,16 @@ namespace HedgeEdit
                     var instance = mdl.InstanceIntersects(near, direction);
                     if (instance != null && instance.CustomData != null)
                     {
-                        if(!Keyboard.GetState().IsKeyDown(Key.LControl))
-                        SelectedInstances.Clear();
+                        if (!keyState.IsKeyDown(Key.LControl))
+                            SelectedInstances.Clear();
 
                         SelectedInstances.Add(instance);
                         Program.MainForm.RefreshGUI();
                         return true;
                     }
+
                     if (Program.MainForm.Focused)
-                    SelectedInstances.Clear();
+                        SelectedInstances.Clear();
 
                     return false;
                 }

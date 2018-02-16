@@ -1,5 +1,8 @@
-﻿namespace HedgeLib
+﻿using System;
+
+namespace HedgeLib
 {
+    [Serializable]
     public class Quaternion : Vector4
     {
         // Constructors
