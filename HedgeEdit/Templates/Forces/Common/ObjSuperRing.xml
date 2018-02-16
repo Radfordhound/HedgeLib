@@ -5,9 +5,9 @@
   <Unknown3 type="bool" default="true" description="Always 1? Maybe IsCastShadow or IsLightSpeedDashTarget?" />
   <Unknown4 type="byte" default="0" description="Always 0? Maybe SetPlaceType" />
   <Unknown5 type="byte" default="0" description="Always 0? Maybe EventType" />
-  
-  <Extra type="model" value="cmn_obj_ring.model" />
-  <Extra type="description" value="Anti-gravitational gold-colored collectable machine, perpetually spinning 360 degrees. Disappears on contact." />
+
+  <Extra type="model" value="cmn_obj_superring.model" />
+  <Extra type="description" value="10 rings for the price of one!" />
   <Extra type="RawByteLength" length="16" />
   <Extra type="OffsetPositionY" value="0.6" />
 </Template>
