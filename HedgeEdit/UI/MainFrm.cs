@@ -17,6 +17,8 @@ namespace HedgeEdit.UI
             get => sceneView;
         }
 
+        public bool Active => active;
+        protected bool active = true;
         private static SceneView sceneView = null;
         private Thread loadSaveThread;
         private Control activeTxtBx = null;
@@ -249,6 +251,17 @@ namespace HedgeEdit.UI
             LuaTerminal.InitLog();
             GameList.Load(Program.StartupPath);
             Viewport.Init(viewport);
+        }
+
+        private void MainFrm_Activate(object sender, EventArgs e)
+        {
+            active = true;
+        }
+
+        private void MainFrm_Deactivate(object sender, EventArgs e)
+        {
+            active = Viewport.IsMovingCamera = false;
+            Cursor.Show();
         }
 
         private void Application_Idle(object sender, EventArgs e)

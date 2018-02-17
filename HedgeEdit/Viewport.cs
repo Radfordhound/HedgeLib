@@ -228,7 +228,7 @@ namespace HedgeEdit
             if (mouseState.LeftButton == OpenTK.Input.ButtonState.Pressed &&
                 prevMouseState.LeftButton == OpenTK.Input.ButtonState.Released &&
                 vpMousePos.X >= 0 && vpMousePos.Y >= 0 && vpMousePos.X <= vp.Width &&
-                vpMousePos.Y <= vp.Height)
+                vpMousePos.Y <= vp.Height && Program.MainForm.Active)
             {
                 // Get mouse world coordinates/direction
                 view.Invert();

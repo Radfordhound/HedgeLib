@@ -682,6 +682,8 @@
             this.Name = "MainFrm";
             this.Text = "HedgeEdit";
             this.Load += new System.EventHandler(this.MainFrm_Load);
+            this.Activated += new System.EventHandler(this.MainFrm_Activate);
+            this.Deactivate += new System.EventHandler(this.MainFrm_Deactivate);
             this.menuStrip.ResumeLayout(false);
             this.menuStrip.PerformLayout();
             this.mainSplitContainer.Panel1.ResumeLayout(false);
