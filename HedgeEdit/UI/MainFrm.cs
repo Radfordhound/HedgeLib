@@ -18,9 +18,33 @@ namespace HedgeEdit.UI
             get => sceneView;
         }
 
+        // Apparently, for every call to Cursor.Hide, there must be a call to
+        // Cursor.Show, otherwise the Cursor.Show and Cursor.Hide functions will
+        // stop working for some idiotic reason lol.
+        public static bool CursorVisible
+        {
+            get => cursorVisible;
+
+            set
+            {
+                // This ensures we never have two Cursor.Shows or Cursor.Hides in a row.
+                if (value == cursorVisible)
+                    return;
+
+                if (value)
+                    Cursor.Show();
+                else
+                    Cursor.Hide();
+
+                cursorVisible = value;
+            }
+        }
+
         public bool Active => active;
         protected bool active = true;
+
         private static SceneView sceneView = null;
+        private static bool cursorVisible = true;
         private Thread loadSaveThread;
         private Control activeTxtBx = null;
         private AssetsDialog assetsDialog;
@@ -274,7 +298,7 @@ namespace HedgeEdit.UI
         private void MainFrm_Deactivate(object sender, EventArgs e)
         {
             active = Viewport.IsMovingCamera = false;
-            Cursor.Show();
+            CursorVisible = true;
         }
 
         private void Application_Idle(object sender, EventArgs e)
@@ -300,7 +324,7 @@ namespace HedgeEdit.UI
             if (e.Button == MouseButtons.Right)
             {
                 Viewport.IsMovingCamera = true;
-                Cursor.Hide();
+                CursorVisible = false;
             }
         }
 
@@ -309,7 +333,7 @@ namespace HedgeEdit.UI
             if (e.Button == MouseButtons.Right)
             {
                 Viewport.IsMovingCamera = false;
-                Cursor.Show();
+                CursorVisible = true;
             }
         }
         #endregion
