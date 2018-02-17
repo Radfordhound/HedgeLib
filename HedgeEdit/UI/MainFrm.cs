@@ -1,6 +1,7 @@
 ﻿using HedgeEdit.Lua;
 using HedgeLib;
 using HedgeLib.Sets;
+using PropertyGridEx;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -31,6 +32,10 @@ namespace HedgeEdit.UI
             UpdateTitle();
             Application.Idle += Application_Idle;
             statusBarLbl.Text = "";
+
+            objectProperties.ToolStrip.Items[0].Click += CategorizeButton_Click;
+            objectProperties.ToolStrip.Items.RemoveAt(3);
+            objectProperties.ToolStrip.Items.RemoveAt(3);
         }
 
         // Methods
@@ -98,74 +103,82 @@ namespace HedgeEdit.UI
             rotZBox.Text = eulerAngles.Z.ToString();
 
             // Update Parameters
-            string objType = (obj != null) ? obj.ObjectType : "";
+            string objType = (obj != null) ? obj.ObjectType : string.Empty;
             objectTypeLbl.Text = objType;
-            objectProperties.BeginUpdate();
-            objectProperties.Items.Clear();
+            objectProperties.ItemSet.Clear();
 
             if (obj == null)
             {
-                objectProperties.EndUpdate();
+                objectProperties.Refresh();
                 return;
-            }
-
-            if (selectedObjs > 1)
-            {
-                bool allSameType = Viewport.SelectedInstances.TrueForAll(
-                    new Predicate<VPObjectInstance>(x =>
-                    {
-                        if (x.CustomData is SetObject data)
-                        {
-                            return (data.ObjectType == objType);
-                        }
-                        return false;
-                    }));
-
-                if (!allSameType)
-                {
-                    objectProperties.EndUpdate();
-                    return;
-                }
             }
 
             var objTemplate = (Stage.GameType == null ||
                 !Stage.GameType.ObjectTemplates.ContainsKey(obj.ObjectType)) ?
                 null : Stage.GameType.ObjectTemplates[obj.ObjectType];
 
-            for (int i = 0; i < obj.Parameters.Count; ++i)
+            foreach (var inst in Viewport.SelectedInstances)
             {
-                var param = obj.Parameters[i];
-                var templateParam = objTemplate?.Parameters[i];
-
-                var lvi = new ListViewItem((templateParam == null) ?
-                    $"Parameter {i}" : templateParam.Name)
+                if (inst.CustomData is SetObject setObj)
                 {
-                    ToolTipText = templateParam?.Description,
-                    Tag = param
-                };
-
-                // Multiple Objects
-                string data = param.Data.ToString();
-                if (selectedObjs > 1)
-                {
-                    foreach (var selectedInstance in Viewport.SelectedInstances)
+                    if (setObj.ObjectType != objType)
                     {
-                        if (selectedInstance.CustomData is SetObject selectedObj)
-                        {
-                            if (selectedObj.Parameters[i].Data.ToString() != data)
-                            {
-                                data = "-";
-                                break;
-                            }
-                        }
+                        objectTypeLbl.Text = string.Empty;
+                        objectProperties.ItemSet.Clear();
+                        break;
                     }
-                }
 
-                lvi.SubItems.Add(data);
-                objectProperties.Items.Add(lvi);
+                    // Custom Data
+                    var itemSet = new CustomPropertyCollection();
+                    foreach (var customData in setObj.CustomData)
+                    {
+                        object data = customData.Value;
+                        itemSet.Add($"_{customData.Key}", ref data, "Data", false,
+                            "Custom Data", string.Empty, true);
+                    }
+
+                    // Parameters
+                    for (int i = 0; i < setObj.Parameters.Count; ++i)
+                    {
+                        var templateParam = objTemplate?.Parameters[i];
+                        object param = setObj.Parameters[i];
+
+                        string name = (templateParam == null) ?
+                            $"Parameter {i}" : templateParam.Name;
+
+                        var item = new CustomProperty(name, ref param, "Data", false,
+                            "Parameters", templateParam?.Description, true);
+
+                        int enumsCount = templateParam.Enums.Count;
+                        if (enumsCount >= 1)
+                        {
+                            var choices = new object[enumsCount];
+                            var objParam = (SetObjectParam)param;
+
+                            for (int i2 = 0; i2 < enumsCount; ++i2)
+                            {
+                                // TODO: Use description but still set value
+                                choices[i2] = Helpers.ChangeType(
+                                    templateParam.Enums[i2].Value, objParam.DataType);
+                            }
+
+                            item.Choices = new CustomChoices(choices, false);
+                            // TODO: Fix multi enum param editing
+                        }
+
+                        itemSet.Add(item);
+                    }
+
+                    objectProperties.ItemSet.Add(itemSet);
+                }
+                else
+                {
+                    objectProperties.ItemSet.Clear();
+                    break;
+                }
             }
 
-            objectProperties.EndUpdate();
+            objectProperties.Refresh();
         }
 
         public void UpdateTitle(string stgID = null)
@@ -807,7 +820,6 @@ namespace HedgeEdit.UI
 
                             // Remove the actual object itself
                             Viewport.RemoveObjectInstance(instance);
-                            Refresh();
                             break;
                         }
                     }
@@ -819,13 +831,8 @@ namespace HedgeEdit.UI
             }
 
             Viewport.SelectedInstances.Clear();
-
-            // Sub-Methods
-            void Refresh()
-            {
-                RefreshSceneView();
-                RefreshGUI();
-            }
+            RefreshSceneView();
+            RefreshGUI();
         }
 
         private void ViewSelected(object sender, EventArgs e)
@@ -841,34 +848,6 @@ namespace HedgeEdit.UI
             else if (Viewport.SelectedInstances.Count > 0)
             {
                 // TODO: Show all of the objects currently selected.
-            }
-        }
-
-        private void ObjectProperties_DoubleClick(object sender, EventArgs e)
-        {
-            if (objectProperties.SelectedItems.Count < 1)
-                return;
-
-            var selectedItem = objectProperties.SelectedItems[0];
-            var param = (selectedItem.Tag as SetObjectParam);
-            var objParamEditor = new ObjectParamEditor(param);
-
-            if (objParamEditor.ShowDialog() == DialogResult.OK)
-            {
-                // Edit the parameters of every selected object
-                if (Viewport.SelectedInstances.Count > 1)
-                {
-                    int selectedParamIndex = objectProperties.SelectedIndices[0];
-                    foreach (var instance in Viewport.SelectedInstances)
-                    {
-                        if (instance.CustomData is SetObject obj)
-                        {
-                            obj.Parameters[selectedParamIndex].Data = param.Data;
-                        }
-                    }
-                }
-
-                RefreshGUI();
             }
         }
 
@@ -889,6 +868,12 @@ namespace HedgeEdit.UI
             {
                 LuaTerminal.Instance.Focus();
             }
+        }
+
+        private void CategorizeButton_Click(object sender, EventArgs e)
+        {
+            objectProperties.PropertySort = PropertySort.Categorized;
+            objectProperties.Refresh();
         }
     }
 }

@@ -51,6 +51,9 @@
     <Reference Include="OpenTK.GLControl, Version=3.0.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
       <HintPath>..\packages\OpenTK.GLControl.3.0.0-pre\lib\net20\OpenTK.GLControl.dll</HintPath>
     </Reference>
+    <Reference Include="PropertyGridEx">
+      <HintPath>.\PropertyGridEx.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -86,12 +89,6 @@
     <Compile Include="UI\LuaTerminal.Designer.cs">
       <DependentUpon>LuaTerminal.cs</DependentUpon>
     </Compile>
-    <Compile Include="UI\ObjectParamEditor.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="UI\ObjectParamEditor.Designer.cs">
-      <DependentUpon>ObjectParamEditor.cs</DependentUpon>
-    </Compile>
     <Compile Include="UI\SceneView.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -126,9 +123,6 @@
     <EmbeddedResource Include="UI\LuaTerminal.resx">
       <DependentUpon>LuaTerminal.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="UI\ObjectParamEditor.resx">
-      <DependentUpon>ObjectParamEditor.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="UI\SceneView.resx">
       <DependentUpon>SceneView.cs</DependentUpon>
     </EmbeddedResource>
@@ -154,7 +148,9 @@
     <None Include="Cache\README.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <Content Include="License.txt" />
+    <None Include="License.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="OpenTK.dll.config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">

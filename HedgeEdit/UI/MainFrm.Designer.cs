@@ -73,7 +73,7 @@
             this.posXBox = new System.Windows.Forms.TextBox();
             this.viewSelectedBtn = new System.Windows.Forms.Button();
             this.objectSelectedLbl = new System.Windows.Forms.Label();
-            this.objectProperties = new System.Windows.Forms.ListView();
+            this.objectProperties = new PropertyGridEx.PropertyGridEx();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.objectTypeLbl = new System.Windows.Forms.Label();
@@ -601,21 +601,17 @@
             // 
             // objectProperties
             // 
-            this.objectProperties.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.columnHeader1,
-            this.columnHeader2});
             this.objectProperties.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.objectProperties.FullRowSelect = true;
             this.objectProperties.Location = new System.Drawing.Point(0, 23);
             this.objectProperties.Margin = new System.Windows.Forms.Padding(2);
-            this.objectProperties.MultiSelect = false;
             this.objectProperties.Name = "objectProperties";
-            this.objectProperties.ShowItemToolTips = true;
             this.objectProperties.Size = new System.Drawing.Size(180, 170);
             this.objectProperties.TabIndex = 0;
-            this.objectProperties.UseCompatibleStateImageBehavior = false;
-            this.objectProperties.View = System.Windows.Forms.View.Details;
-            this.objectProperties.DoubleClick += ObjectProperties_DoubleClick;
+            this.objectProperties.AutoSizeProperties = true;
+            this.objectProperties.ShowCustomPropertiesSet = true;
+            this.objectProperties.DrawFlatToolbar = true;
+            this.objectProperties.PropertySort = System.Windows.Forms.PropertySort.Categorized;
+            this.objectProperties.ToolStrip.BackColor = System.Drawing.Color.White;
             // 
             // columnHeader1
             // 
@@ -749,7 +745,7 @@
         private System.Windows.Forms.TextBox rotZBox;
         private System.Windows.Forms.TextBox rotYBox;
         private System.Windows.Forms.TextBox rotXBox;
-        private System.Windows.Forms.ListView objectProperties;
+        private PropertyGridEx.PropertyGridEx objectProperties;
         private System.Windows.Forms.Label objectTypeLbl;
         private System.Windows.Forms.ColumnHeader columnHeader1;
         private System.Windows.Forms.ColumnHeader columnHeader2;
