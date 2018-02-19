@@ -143,7 +143,7 @@ namespace HedgeLib.Sets
                         descAttr = enumElement.Attribute("description");
                         var enumType = new SetObjectTypeParamEnum()
                         {
-                            Value = valueAttr.Value,
+                            Value = Helpers.ChangeType(valueAttr.Value, dataType),
                             Description = descAttr?.Value
                         };
 
@@ -227,11 +227,12 @@ namespace HedgeLib.Sets
         }
     }
 
+    [Serializable]
     public class SetObjectTypeParamEnum
     {
         // Variables/Constants
-        public string Description;
-        public object Value;
+        public string Description { get; set; }
+        public object Value { get; set; }
 
         // Methods
         public override string ToString()

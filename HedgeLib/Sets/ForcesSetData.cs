@@ -188,13 +188,14 @@ namespace HedgeLib.Sets
             //Console.WriteLine("Params at: {0:X}",
             //    objParamsOffset + reader.Offset);
             var template = objectTemplates[objType];
-
+            
             // Object Parameters
             reader.JumpTo(objParamsOffset, false);
             foreach (var param in template.Parameters)
             {
                 // Special Param Types
-                if (param.DataType == typeof(uint[]))
+                if (param.DataType == typeof(uint[]) ||
+                    param.DataType == typeof(ObjectReference[]))
                 {
                     // TODO: Make sure all of this is right
                     reader.FixPadding(4);
@@ -210,21 +211,45 @@ namespace HedgeLib.Sets
                             arrLength, arrLength2);
                     }
 
-                    var arr = new uint[arrLength];
+                    object arrObj;
                     if (arrLength > 0)
                     {
                         reader.JumpTo(arrOffset, false);
-
-                        for (uint i = 0; i < arrLength; ++i)
+                        if (param.DataType == typeof(uint[]))
                         {
-                            arr[i] = reader.ReadUInt32();
+                            var arr = new uint[arrLength];
+                            for (uint i = 0; i < arrLength; ++i)
+                            {
+                                arr[i] = reader.ReadUInt32();
+                            }
+
+                            arrObj = arr;
+                        }
+                        else
+                        {
+                            var arr = new ObjectReference[arrLength];
+                            for (uint i = 0; i < arrLength; ++i)
+                            {
+                                arr[i] = new ObjectReference()
+                                {
+                                    ID = reader.ReadUInt16(),
+                                    Unknown1 = reader.ReadUInt16()
+                                };
+                            }
+
+                            arrObj = arr;
                         }
 
                         reader.JumpTo(curPos);
                     }
+                    else
+                    {
+                        arrObj = (param.DataType == typeof(uint[])) ?
+                            (object)new uint[arrLength] : new ObjectReference[arrLength];
+                    }
 
                     obj.Parameters.Add(new SetObjectParam(
-                        typeof(uint[]), arr));
+                        param.DataType, arrObj));
                     continue;
                 }
                 else if (param.DataType == typeof(string))
@@ -335,33 +360,21 @@ namespace HedgeLib.Sets
 
             // Object Entry
             writer.Write((ushort)obj.ObjectID);
-            writer.Write((obj.CustomData.ContainsKey("Unknown1")) ?
-                (ushort)obj.CustomData["Unknown1"].Data : (ushort)0);
-
-            writer.Write((obj.CustomData.ContainsKey("ParentID")) ?
-                (ushort)obj.CustomData["ParentID"].Data : (ushort)0);
-
-            writer.Write((obj.CustomData.ContainsKey("ParentUnknown1")) ?
-                (ushort)obj.CustomData["ParentUnknown1"].Data : (ushort)0);
+            writer.Write(obj.GetCustomDataValue<ushort>("Unknown1"));
+            writer.Write(obj.GetCustomDataValue<ushort>("ParentID"));
+            writer.Write(obj.GetCustomDataValue<ushort>("ParentUnknown1"));
 
             writer.Write(obj.Transform.Position);
             writer.Write(obj.Transform.Rotation.ToEulerAngles(true));
             writer.Write(obj.Transform.Position);
             writer.Write(obj.Transform.Rotation.ToEulerAngles(true));
-
-            writer.AddOffset($"extraParamsOffset{objID}", 8);
-            writer.Write(1UL); // TODO
-            writer.Write(1UL); // TODO
-            writer.Write(0UL);
-            writer.AddOffset($"objParamsOffset{objID}", 8);
-            writer.FixPadding(16);
 
             // Extra Parameter Entries
             uint extraParamCounts = (uint)obj.CustomData.Count;
             if (obj.CustomData.ContainsKey("Name"))
                 extraParamCounts -= 1;
 
-            if (obj.CustomData.ContainsKey("RangeIn"))
+            if (obj.CustomData.ContainsKey("RangeOut"))
                 extraParamCounts -= 1;
 
             if (obj.CustomData.ContainsKey("Unknown1"))
@@ -372,6 +385,13 @@ namespace HedgeLib.Sets
 
             if (obj.CustomData.ContainsKey("ParentUnknown1"))
                 extraParamCounts -= 1;
+
+            writer.AddOffset($"extraParamsOffset{objID}", 8);
+            writer.Write((ulong)extraParamCounts); // TODO
+            writer.Write((ulong)extraParamCounts); // TODO
+            writer.Write(0UL);
+            writer.AddOffset($"objParamsOffset{objID}", 8);
+            writer.FixPadding(16);
 
             writer.FillInOffsetLong($"extraParamsOffset{objID}", false, false);
             writer.AddOffsetTable($"extraParamOffset{objID}", extraParamCounts, 8);
@@ -428,20 +448,29 @@ namespace HedgeLib.Sets
             foreach (var param in obj.Parameters)
             {
                 // Special Param Types
-                if (param.DataType == typeof(uint[]))
+                if (param.DataType == typeof(uint[]) ||
+                    param.DataType == typeof(ObjectReference[]))
                 {
-                    var arr = (param.Data as uint[]);
+                    ulong arrLength = 0;
                     writer.FixPadding(4);
 
-                    if (arr == null || arr.Length < 1)
+                    if (param.DataType == typeof(uint[]))
+                    {
+                        if (param.Data is uint[] arr)
+                            arrLength = (ulong)arr.LongLength;
+                    }
+                    else if (param.Data is ObjectReference[] arr)
+                        arrLength = (ulong)arr.LongLength;
+
+                    if (arrLength < 1)
                     {
                         writer.WriteNulls(24);
                         continue;
                     }
 
                     writer.AddOffset($"obj{objID}ArrOffset{arrIndex}", 8);
-                    writer.Write((ulong)arr.Length);
-                    writer.Write((ulong)arr.Length);
+                    writer.Write(arrLength);
+                    writer.Write(arrLength);
                     ++arrIndex;
                     continue;
                 }
@@ -502,6 +531,20 @@ namespace HedgeLib.Sets
 
                     ++arrIndex;
                 }
+                else if (param.DataType == typeof(ObjectReference[]))
+                {
+                    var arr = (param.Data as ObjectReference[]);
+                    if (arr == null || arr.Length < 1) continue;
+
+                    writer.FillInOffsetLong($"obj{objID}ArrOffset{arrIndex}", false, false);
+                    for (uint i = 0; i < arr.Length; ++i)
+                    {
+                        writer.Write(arr[i].ID);
+                        writer.Write(arr[i].Unknown1);
+                    }
+
+                    ++arrIndex;
+                }
             }
         }
 
@@ -527,11 +570,37 @@ namespace HedgeLib.Sets
             {
                 case "RangeIn":
                     writer.Write((float)param.Data);
-                    writer.Write((float)obj.CustomData["RangeOut"].Data);
+                    writer.Write(obj.GetCustomDataValue<float>("RangeOut"));
                     return true;
             }
 
             return false;
+        }
+
+        // Other
+        [Serializable]
+        public class ObjectReference
+        {
+            // Variables/Constants
+            public ushort ID
+            {
+                get => id;
+                set => id = value;
+            }
+
+            public ushort Unknown1
+            {
+                get => unknown1;
+                set => unknown1 = value;
+            }
+
+            protected ushort id, unknown1;
+
+            // Methods
+            public override string ToString()
+            {
+                return $"ID: {id}, UK1: {unknown1}";
+            }
         }
     }
 }

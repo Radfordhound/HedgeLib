@@ -50,7 +50,7 @@ namespace HedgeEdit.UI
                     // If the object has a custom name, use it.
                     // Otherwise, use object type + ID.
                     string name = (obj.CustomData.ContainsKey("Name")) ?
-                        (obj.CustomData["Name"].Data as string) :
+                        $"{(obj.CustomData["Name"].Data as string)} ({obj.ObjectID})" :
                         $"{obj.ObjectType} ({obj.ObjectID})";
 
                     var objNode = new TreeNode(name)

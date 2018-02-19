@@ -7,7 +7,7 @@
   <ChangeCameraWhenPathChange type="bool" default="false" description="To switch the camera at the time of path switching?" />
   <IsVisible type="bool" default="true" description="To be in 3D?" />
   <Targeting type="bool" default="false" description="Unused??" />
-  <Targets type="uint[]" description="Target points" />
+  <Targets type="forcesObjectList" description="Target points" />
   <IsMoveCylinderFloor type="bool" default="false" description="Move the hierarchy of multi-cylinder" />
   <MoveCylinderTime type="float" default="0" description="Time during cylinder hierarchy move" />
   <IsEventOn type="bool" default="false" description="Or event-triggered" />

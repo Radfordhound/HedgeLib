@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HedgeLib.Sets;
+using System;
 using System.Linq;
 
 namespace HedgeLib
@@ -24,8 +25,6 @@ namespace HedgeLib
 				"unsigned integer", "uint32", "uint", "target"),
             new DataType(typeof(float), 0f, "single", "float"),
 
-            new DataType(typeof(uint[]), new uint[0], "uint32array", "uint32[]", "uint[]"),
-
             // 8-Byte Values
             new DataType(typeof(long), 0L, "signed long", "sint64", "long"),
             new DataType(typeof(ulong), 0UL, "unsigned long", "uint64", "ulong"),
@@ -40,7 +39,10 @@ namespace HedgeLib
             new DataType(typeof(Quaternion), new Quaternion(), "quat", "quaternion"),
 
             // Other Values
-            new DataType(typeof(string), string.Empty, "string")
+            new DataType(typeof(string), string.Empty, "string"),
+            new DataType(typeof(uint[]), new uint[0], "uint32array", "uint32[]", "uint[]"),
+            new DataType(typeof(ForcesSetData.ObjectReference[]),
+                new ForcesSetData.ObjectReference[0], "forcesobjectlist")
 
             // TODO: Add other data types if necessary.
         };

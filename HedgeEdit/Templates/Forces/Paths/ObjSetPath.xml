@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <UnknownOffset type="ulong" default="0" description="Path UUID?" />
-  <Nodes type="uint32array" description="Array of object IDs" />
+  <PathUUID type="ulong" default="0" description="A number used to identify this path. Set it to whatever you want!" />
+  <Nodes type="forcesObjectList" description="Array of object IDs" />
   <Unknown1 type="bool" default="false" description="ObjPath?" />
   <IsSideView type="bool" default="false" description="Whether or not the path is a 2D spline" />
   <Unknown3 type="bool" default="false" description="GRPath?" />

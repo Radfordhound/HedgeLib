@@ -164,6 +164,42 @@ namespace HedgeLib.Sets
 
                     data = arr;
                 }
+                else if (dataType == typeof(ForcesSetData.ObjectReference[]))
+                {
+                    var countAttr = paramElem.Attribute("count");
+                    uint arrLength = 0;
+
+                    if (countAttr != null)
+                    {
+                        uint.TryParse(countAttr.Value, out arrLength);
+                    }
+
+                    uint i = 0;
+                    var arr = new ForcesSetData.ObjectReference[arrLength];
+
+                    foreach (var refElem in paramElem.Elements("ForcesObjectReference"))
+                    {
+                        var idAttr = refElem.Attribute("id");
+                        var uk1Attr = refElem.Attribute("unknown1");
+
+                        ushort id = 0, uk1 = 0;
+                        if (idAttr != null)
+                            ushort.TryParse(idAttr.Value, out id);
+
+                        if (uk1Attr != null)
+                            ushort.TryParse(uk1Attr.Value, out uk1);
+
+                        arr[i] = new ForcesSetData.ObjectReference()
+                        {
+                            ID = id,
+                            Unknown1 = uk1
+                        };
+
+                        ++i;
+                    }
+
+                    data = arr;
+                }
                 else
                 {
                     data = Convert.ChangeType(paramElem.Value, dataType);
@@ -272,6 +308,22 @@ namespace HedgeLib.Sets
                         return elem;
 
                     elem.Value = string.Join(",", arr);
+                }
+                else if (dataType == typeof(ForcesSetData.ObjectReference[]))
+                {
+                    var arr = (param.Data as ForcesSetData.ObjectReference[]);
+                    dataTypeAttr.Value = "ForcesObjectList";
+                    elem.Add(new XAttribute("count", (arr == null) ? 0 : arr.Length));
+
+                    if (arr == null)
+                        return elem;
+
+                    foreach (var v in arr)
+                    {
+                        elem.Add(new XElement("ForcesObjectReference",
+                            new XAttribute("id", v.ID),
+                            new XAttribute("unknown1", v.Unknown1)));
+                    }
                 }
                 else
                 {

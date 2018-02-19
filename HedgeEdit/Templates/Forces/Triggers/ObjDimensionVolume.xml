@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
   <Size type="vector3" description="The size of the volume." />
-  <Unknown1 type="ulong" default="0" description="" />
+  <PathUUID type="uint" default="0" description="The PathUUID parameter of the ObjSetPath used for this 2D section." />
+  <Unknown1 type="uint" default="0" description="" />
   <Unknown2 type="uint" default="1" description="" />
   <Unknown3 type="uint" default="0" description="Camera ID?" />
   <Unknown4 type="float" default="1.5" description="" />
