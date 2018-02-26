@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Size type="vector3" default="0,0,0" description="The size of the trigger." />
+  <Speed type="vector3" default="0,-1,0" description="The speed/direction you'll fall. Seems to only work for Y and has to be 0 or less (rip)." />
+  
+  <Extra type="description" value="If you touch these you die. It's like the feeling you get when playing this game. c:" />
+  <Extra type="RawByteLength" length="32" />
+</Template>

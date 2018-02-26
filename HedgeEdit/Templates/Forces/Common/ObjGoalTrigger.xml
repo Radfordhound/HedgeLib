@@ -14,10 +14,10 @@
   <Unknown7 type="ulong" default="1120" description="" />
   <Unknown8 type="ulong" default="0" description="" />
   <Unknown9 type="ulong" default="0" description="" />
-  <Unknown10 type="uint" default="0" description="X Position Offset?" />
+  <XPositionOffset type="float" default="0" description="" />
   <YPositionOffset type="float" default="17" description="" />
   <ZPositionOffset type="float" default="10" description="" />
-  <Unknown13 type="uint" default="0" description="" />
+  <Unknown13 type="uint" default="0" description="Always 0? I think this is just the padding for the Position Offset vector3" />
   <Unknown14 type="uint" default="0" description="" />
   <Unknown15 type="float" default="180" description="" />
   <Unknown16 type="ulong" default="0" description="" />
@@ -29,5 +29,6 @@
   <Unknown22 type="ulong" default="0" description="" />
   <Unknown23 type="uint" default="0" description="" />
   
+  <Extra type="description" value="The goal trigger objects used at the end of the stage." />
   <Extra type="RawByteLength" length="112" />
 </Template>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <CueID type="string" description="The ID of the cue for the song to switch to. If empty, the music will fade out." />
+  <Unknown3 type="float" default="0.5" description="" />
+  <Unknown4 type="float" default="0.5" description="" />
+  <Unknown5 type="float" default="0.5" description="" />
+  <Unknown6 type="float" default="350" description="" />
+  <Unknown7 type="float" default="350" description="" />
+  <Unknown8 type="ulong" default="0" description="" />
+  <Unknown9 type="uint" default="0" description="" />
+  
+  <Extra type="description" value="Changes the background music when you come in contact with it." />
+  <Extra type="RawByteLength" length="48" />
+</Template>

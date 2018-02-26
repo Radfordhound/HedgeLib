@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Distance type="float" default="60" description="" />
+  <AnimationSpeed1 type="float" default="700" description="How fast the animation of you swinging on the target is. Does not affect the speed you're launched with." />
+  <Unknown3 type="float" default="300" description="" />
+  <AnimationSpeed2 type="float" default="1000" description="How fast the animation of you swinging on the target is. Does not affect the speed you're launched with." />
+  <Unknown5 type="float" default="140" description="" />
+  <OutOfControl type="float" default="0.5" description="How long the game locks your control for after swinging on the grapple point." />
+  
+  <Unknown6 type="bool" default="true" description="" />
+  <Unknown7 type="bool" default="false" description="" />
+  <Unknown8 type="bool" default="true" description="" />
+  <Unknown9 type="bool" default="true" description="" />
+  <Unknown10 type="uint" default="0" description="Always 0?" />
+  
+  <Targets type="forcesObjectList" description="" />
+  <Unknown11 type="ulong" default="0" description="Always 0?" />
+  <Unknown12 type="ulong" default="0" description="Always 0?" />
+  <Unknown13 type="ulong" default="0" description="Always 0?" />
+  <Unknown14 type="ulong" default="0" description="Always 0?" />
+  <Unknown15 type="ulong" default="0" description="Always 0?" />
+  <Unknown16 type="ulong" default="0" description="Always 0?" />
+  <Unknown17 type="ulong" default="0" description="Always 0?" />
+  <Unknown18 type="ulong" default="0" description="Always 0?" />
+  <Unknown19 type="ulong" default="0" description="Always 0?" />
+
+  <Extra type="description" value="Red grapple points." />
+  <Extra type="RawByteLength" length="144" />
+</Template>

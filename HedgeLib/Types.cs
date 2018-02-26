@@ -22,8 +22,10 @@ namespace HedgeLib
             // 4-Byte Values
             new DataType(typeof(int), 0, "signed int", "integer", "sint32", "int", "int32"),
             new DataType(typeof(uint), 0u, "unsigned int",
-				"unsigned integer", "uint32", "uint", "target"),
+                "unsigned integer", "uint32", "uint", "target"),
             new DataType(typeof(float), 0f, "single", "float"),
+            new DataType(typeof(ForcesSetData.ObjectReference),
+                new ForcesSetData.ObjectReference(), "forcesobjectreference"),
 
             // 8-Byte Values
             new DataType(typeof(long), 0L, "signed long", "sint64", "long"),

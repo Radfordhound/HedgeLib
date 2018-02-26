@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Unknown1 type="ulong" default="4" description="" />
+  <Unknown2 type="float" default="10" description="" />
+  <Unknown3 type="uint" default="1" description="" />
+  <Unknown4 type="float" default="2" description="" />
+  <Unknown5 type="ulong" default="0" description="" />
+  <Unknown6 type="float" default="10" description="" />
+  <Unknown7 type="uint" default="0" description="" />
+  <Unknown8 type="float" default="50" description="" />
+  <Unknown9 type="ulong" default="0" description="" />
+  <Unknown10 type="vector3" description="" />
+  <TargetPosition type="vector3" description="" />
+  <Unknown11 type="float" default="-40" description="" />
+  <Unknown12 type="float" default="2" description="" />
+  <Unknown13 type="ulong" default="0" description="Always 0?" />
+  
+  <Targets type="forcesObjectList" description="Cameras?" />
+  <Padding1 type="ulong" default="0" description="Always 0?" />
+  <Padding2 type="ulong" default="0" description="Always 0?" />
+  <Padding3 type="ulong" default="0" description="Always 0?" />
+  <Padding4 type="ulong" default="0" description="Always 0?" />
+  <Padding5 type="ulong" default="0" description="Always 0?" />
+  <Padding6 type="ulong" default="0" description="Always 0?" />
+  <Padding7 type="ulong" default="0" description="Always 0?" />
+  <Padding8 type="ulong" default="0" description="Always 0?" />
+  <Padding9 type="ulong" default="0" description="Always 0?" />
+  
+  <Extra type="model" value="cmn_obj_spring.model" />
+  <Extra type="description" value="bootleg fricken springs" />
+  <Extra type="RawByteLength" length="208" />
+</Template>

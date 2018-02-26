@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Unknown1 type="float" default="1000" description="Red?" />
+  <Unknown2 type="float" default="1000" description="Green?" />
+  <Unknown3 type="float" default="500" description="Blue?" />
+  <Unknown4 type="float" default="20" description="" />
+  <Unknown5 type="float" default="24" description="" />
+  <Unknown6 type="float" default="80" description="" />
+  <Unknown7 type="float" default="0" description="" />
+  <Unknown8 type="float" default="100" description="" />
+  <Unknown9 type="float" default="5" description="" />
+  
+  <Padding1 type="uint" default="0" description="Always 0?" />
+  <Padding2 type="uint" default="0" description="Always 0?" />
+  <Padding3 type="uint" default="0" description="Always 0?" />
+  
+  <Extra type="description" value="'Let there be light' - Takashi Iizuka" />
+  <Extra type="RawByteLength" length="48" />
+</Template>

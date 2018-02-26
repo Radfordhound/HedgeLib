@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Width type="float" default="50" description="How wide the space is between the point markers." />
+  <Height type="float" default="50" description="How tall the invisible checkpoint trigger is." />
+  <Type type="enum" default="0" description="What type of checkpoint this is.">
+	<Enum value="0" description="3D" />
+	<Enum value="1" description="2D" />
+  </Type>
+  
+  <PlacementType type="enum" default="0" description="TODO" />
+  <CheckPointIndex type="uint" default="0" description="Used to determine the checkpoint order. Starts at 0." />
+  
+  <Extra type="model" value="cmn_obj_pointmarkerR.model" condition="Type == 0" />
+  <Extra type="model" value="cmn_obj_pointmarkerSV.model" condition="Type == 1" />
+  <Extra type="description" value="Checkpoints" />
+  <Extra type="RawByteLength" length="16" />
+</Template>

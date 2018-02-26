@@ -185,8 +185,8 @@ namespace HedgeLib.Sets
                 return null;
             }
 
-            //Console.WriteLine("Params at: {0:X}",
-            //    objParamsOffset + reader.Offset);
+            //Console.WriteLine("\"{1}\" Params at: {0:X}",
+            //    objParamsOffset + reader.Offset, objName);
             var template = objectTemplates[objType];
             
             // Object Parameters
@@ -230,11 +230,7 @@ namespace HedgeLib.Sets
                             var arr = new ObjectReference[arrLength];
                             for (uint i = 0; i < arrLength; ++i)
                             {
-                                arr[i] = new ObjectReference()
-                                {
-                                    ID = reader.ReadUInt16(),
-                                    Unknown1 = reader.ReadUInt16()
-                                };
+                                arr[i] = new ObjectReference(reader);
                             }
 
                             arrObj = arr;
@@ -250,6 +246,12 @@ namespace HedgeLib.Sets
 
                     obj.Parameters.Add(new SetObjectParam(
                         param.DataType, arrObj));
+                    continue;
+                }
+                else if (param.DataType == typeof(ObjectReference))
+                {
+                    obj.Parameters.Add(new SetObjectParam(
+                        typeof(ObjectReference), new ObjectReference(reader)));
                     continue;
                 }
                 else if (param.DataType == typeof(string))
@@ -275,7 +277,7 @@ namespace HedgeLib.Sets
                 else if (param.DataType == typeof(double) ||
                     param.DataType == typeof(ulong) || param.DataType == typeof(long))
                 {
-                    reader.FixPadding(8);
+                    reader.FixPadding(4);
                 }
 
                 // Data
@@ -474,12 +476,25 @@ namespace HedgeLib.Sets
                     ++arrIndex;
                     continue;
                 }
+                else if (param.DataType == typeof(ObjectReference))
+                {
+                    var reference = (param.Data as ObjectReference);
+                    if (reference == null)
+                    {
+                        writer.Write(0U);
+                        continue;
+                    }
+
+                    reference.Write(writer);
+                    continue;
+                }
                 else if (param.DataType == typeof(string))
                 {
                     string str = (param.Data as string);
                     if (string.IsNullOrEmpty(str))
                     {
                         writer.Write(0UL);
+                        writer.FixPadding(16); // TODO: Is this correct?
                         continue;
                     }
 
@@ -498,7 +513,7 @@ namespace HedgeLib.Sets
                 else if (param.DataType == typeof(double) ||
                     param.DataType == typeof(ulong) || param.DataType == typeof(long))
                 {
-                    writer.FixPadding(8);
+                    writer.FixPadding(4);
                 }
 
                 // Data
@@ -539,8 +554,7 @@ namespace HedgeLib.Sets
                     writer.FillInOffsetLong($"obj{objID}ArrOffset{arrIndex}", false, false);
                     for (uint i = 0; i < arr.Length; ++i)
                     {
-                        writer.Write(arr[i].ID);
-                        writer.Write(arr[i].Unknown1);
+                        arr[i].Write(writer);
                     }
 
                     ++arrIndex;
@@ -596,7 +610,26 @@ namespace HedgeLib.Sets
 
             protected ushort id, unknown1;
 
+            // Constructor
+            public ObjectReference() { }
+            public ObjectReference(BinaryReader reader)
+            {
+                Read(reader);
+            }
+
             // Methods
+            public void Read(BinaryReader reader)
+            {
+                id = reader.ReadUInt16();
+                unknown1 = reader.ReadUInt16();
+            }
+
+            public void Write(BinaryWriter writer)
+            {
+                writer.Write(id);
+                writer.Write(unknown1);
+            }
+
             public override string ToString()
             {
                 return $"ID: {id}, UK1: {unknown1}";
