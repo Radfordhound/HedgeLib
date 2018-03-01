@@ -1,23 +1,4 @@
-﻿function LoadTexturesInDir(dir, loadingTxt)
-	local files = IOGetFilesInDir(
-		dir, "*.dds", false)
-
-	if files ~= nil and #files > 0 then
-		UIShowProgress()
-
-		for i = 1, #files do
-			UIChangeProgress(((i - 1) / #files) * 100)
-			UIChangeLoadStatus(string.format(
-				loadingTxt .. " %02d/%02d", i, #files))
-
-			LoadTexture(files[i], IOGetNameWithoutExtension(files[i]))
-		end
-
-		UIHideProgress()
-	end
-end
-
-function ExtractResources(sourceDir, destDir)
+﻿function ExtractResources(sourceDir, destDir)
 	SetDataType("Forces")
 	Extract("{0}/CommonObject.pac", "{0}")
 	-- TODO: Finish this
@@ -25,6 +6,13 @@ end
 
 function Load(dataDir, cacheDir, stageID)
 	SetDataType("Forces")
+
+	AddResourceDirectory("{0}/{1}/{1}_obj")
+	AddResourceDirectory("{0}/{1}/{1}_trr_cmn")
+
+	for i = 0, 99 do
+		AddResourceDirectory(string.format("{0}/{1}/{1}_trr_s%02d", i))
+	end
 
 	-- Miscellaneous (E.G. w5a01/w5a01_misc.pac)
 	UIChangeStatus("Extracting Miscellaneous PAC...")
@@ -44,7 +32,7 @@ function Load(dataDir, cacheDir, stageID)
 
 	local files = IOGetFilesInDir("{0}/gedit/{1}_gedit",
 		"*.gedit", false)
-	
+
 	if files ~= nil and #files > 0 then
 		UIShowProgress()
 
@@ -53,8 +41,7 @@ function Load(dataDir, cacheDir, stageID)
 			UIChangeLoadStatus(string.format(
 				"Set Data %02d/%02d", i, #files))
 
-			local layer = LoadSetLayer(files[i], true,
-				{ "{0}/{1}/{1}_obj", "{0}/{1}/{1}_trr_cmn" })
+			local layer = LoadSetLayer(files[i], true)
 
 			-- Change Default Set Layer
 			if layer.Name == stageID .. "_obj_area01" then
@@ -66,10 +53,6 @@ function Load(dataDir, cacheDir, stageID)
 	end
 
 	UIToggleSetsSaving(true)
-
-	-- Additional Object Textures
-	LoadTexturesInDir("{0}/{1}/{1}_obj", "Object Textures")
-	LoadTexturesInDir("{0}/{1}/{1}_trr_cmn", "Terrain Common Textures")
 
 	-- Sky (E.G. w5a01/w5a01_sky.pac)
 	UIChangeStatus("Extracting Sky PAC...")
@@ -105,7 +88,7 @@ end
 function SaveSets(dataDir, cacheDir, stageID)
 	-- Set Data (E.G. gedit/w5a01_gedit.pac)
 	SetDataType("Forces")
-	SaveSetLayers("{0}/gedit/{1}_gedit", "", ".gedit", true)
+	SaveSetLayers("{0}/gedit/{1}_gedit", "", ".gedit")
 	
 	-- TODO: Repack
 end
@@ -115,11 +98,12 @@ function SaveAll(dataDir, cacheDir, stageID)
 end
 
 function InitSetObject(obj)
-	obj.CustomData["ParentID"] = GenSetObjectParam("ushort", 0)
-	obj.CustomData["ParentUnknown1"] = GenSetObjectParam("ushort", 0)
-	obj.CustomData["Unknown1"] = GenSetObjectParam("ushort", 0)
-	obj.CustomData["RangeIn"] = GenSetObjectParam("float", 1000)
-	obj.CustomData["RangeOut"] = GenSetObjectParam("float", 1200)
+	AddCustomData(obj, "ParentID", "ushort", 0)
+	AddCustomData(obj, "ParentUnknown1", "ushort", 0)
+	AddCustomData(obj, "Unknown1", "ushort", 0)
+	AddCustomData(obj, "RangeIn", "float", 1000)
+	AddCustomData(obj, "RangeOut", "float", 1200)
+
 	obj.CustomData["Name"] = GenSetObjectParam("string",
 		obj.ObjectType .. tostring(obj.ObjectID))
 end

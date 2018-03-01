@@ -36,6 +36,14 @@ namespace HedgeLib.IO
                 BINAHeader.Ver2Length : BINAHeader.Ver1Length;
         }
 
+        public BINAReader(Stream input, Encoding encoding, BINA.BINATypes type =
+            BINA.BINATypes.Version1) : base(input, encoding, true)
+        {
+            version = type;
+            Offset = (version == BINA.BINATypes.Version2) ?
+                BINAHeader.Ver2Length : BINAHeader.Ver1Length;
+        }
+
         // Methods
         public BINAHeader ReadHeader(bool ignoreSignature = false)
         {
@@ -186,6 +194,19 @@ namespace HedgeLib.IO
         public BINAWriter(Stream output, BINA.BINATypes type = BINA.BINATypes.Version1,
             bool isBigEndian = true, bool writeHeader = true) :
             base(output, Encoding.ASCII, isBigEndian)
+        {
+            version = type;
+            Offset = (version == BINA.BINATypes.Version2) ?
+                BINAHeader.Ver2Length : BINAHeader.Ver1Length;
+
+            if (writeHeader)
+                WriteNulls(Offset);
+        }
+
+        public BINAWriter(Stream output, Encoding encoding,
+            BINA.BINATypes type = BINA.BINATypes.Version1,
+            bool isBigEndian = true, bool writeHeader = true) :
+            base(output, encoding, isBigEndian)
         {
             version = type;
             Offset = (version == BINA.BINATypes.Version2) ?

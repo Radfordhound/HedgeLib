@@ -57,7 +57,7 @@ namespace HedgeLib.Models
 
             // Next-Gen Header
             byte nextGenMarker = (byte)(fileSize >> 24);
-            if (nextGenMarker == 0x80 && rootNodeType == NextGenSignature)
+            if ((nextGenMarker & 0x80) != 0 && rootNodeType == NextGenSignature)
             {
                 uint finalTableOffset = reader.ReadUInt32();
                 uint finalTableLength = reader.ReadUInt32();

@@ -50,8 +50,6 @@
 	-- Terrain
 	LoadTerrainList("{0}/Packed/{1}/terrain.terrain",
 		"{0}/Packed/Stage", "{0}/Packed/{1}")
-
-	-- TODO
 end
 
 function SaveSets(dataDir, cacheDir, stageID)

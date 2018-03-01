@@ -69,6 +69,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Data\Archives.cs" />
+    <Compile Include="Data\Materials.cs" />
+    <Compile Include="UI\GUI.cs" />
+    <Compile Include="Data\Objects.cs" />
     <Compile Include="GameEntry.cs" />
     <Compile Include="Lua\ArchiveCallbacks.cs" />
     <Compile Include="Lua\IOCallbacks.cs" />
@@ -77,6 +81,8 @@
     <Compile Include="Lua\SetCallbacks.cs" />
     <Compile Include="Lua\TerrainCallbacks.cs" />
     <Compile Include="Lua\UICallbacks.cs" />
+    <Compile Include="Data\Models.cs" />
+    <Compile Include="Data\Data.cs" />
     <Compile Include="UI\AssetsDialog.cs">
       <SubType>Form</SubType>
     </Compile>

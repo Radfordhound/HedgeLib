@@ -23,7 +23,7 @@ namespace HedgeEdit
         // Methods
         public static void Load(string dataDir, string stageID, GameEntry game)
         {
-            Viewport.Clear();
+            Data.Clear();
 
             // Throw exceptions if necessary
             if (!Directory.Exists(dataDir))
@@ -41,6 +41,10 @@ namespace HedgeEdit
             GameType = game;
             ID = stageID;
             DataDir = dataDir;
+
+            var resDir = game.ResourcesDir;
+            Data.ModelDirectories.Add(resDir);
+            Data.ResourceDirectories.Add(resDir);
 
             // Make cache directory
             CacheDir = Path.Combine(Program.StartupPath,

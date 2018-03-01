@@ -54,7 +54,7 @@ namespace HedgeLib.Sets
                                     if (countElem == null) continue;
 
                                     if (!int.TryParse(countElem.Value, out var childCount)) continue;
-                                    children = new SetObjectTransform[childCount-1];
+                                    var childObjs = new List<SetObjectTransform>();
 
                                     foreach (var specialElem in paramElement.Elements())
                                     {
@@ -67,7 +67,7 @@ namespace HedgeLib.Sets
                                                     var rotElem = specialElem.Element("Rotation");
 
                                                     if (indexElem == null || !int.TryParse(
-                                                        indexElem.Value, out int index))
+                                                        indexElem.Value, out var index))
                                                         continue;
 
                                                     var pos = (posElem == null) ?
@@ -82,13 +82,15 @@ namespace HedgeLib.Sets
                                                         Position = pos,
                                                         Rotation = rot
                                                     };
-                                                    children[index-1] = childTransform;
+                                                    childObjs.Add(childTransform);
                                                     break;
                                                 }
 
                                             // TODO: Parse other elements.
                                         }
                                     }
+
+                                    children = childObjs.ToArray();
                                     continue;
                                 }
                         }
@@ -130,15 +132,14 @@ namespace HedgeLib.Sets
                     }
 
                     // Add Object to List
-                    var obj = new SetObject()
+                    Objects.Add(new SetObject()
                     {
                         ObjectType = elemName,
                         Parameters = parameters,
                         Transform = transform,
-                        Children = (children == null) ? new SetObjectTransform[0] : children,
+                        Children = children ?? (new SetObjectTransform[0]),
                         ObjectID = objID.Value
-                    };
-                    Objects.Add(obj);
+                    });
                 }
             }
         }

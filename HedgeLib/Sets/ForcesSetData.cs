@@ -3,6 +3,7 @@ using HedgeLib.IO;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace HedgeLib.Sets
 {
@@ -18,7 +19,8 @@ namespace HedgeLib.Sets
             Dictionary<string, SetObjectType> objectTemplates)
         {
             // BINA Header
-            var reader = new BINAReader(fileStream, BINA.BINATypes.Version2);
+            var enc = Encoding.GetEncoding("shift-jis");
+            var reader = new BINAReader(fileStream, enc, BINA.BINATypes.Version2);
             Header = reader.ReadHeader();
 
             // Set Data Header
@@ -305,7 +307,8 @@ namespace HedgeLib.Sets
         public override void Save(Stream fileStream)
         {
             // BINA Header
-            var writer = new BINAWriter(fileStream,
+            var enc = Encoding.GetEncoding("shift-jis");
+            var writer = new BINAWriter(fileStream, enc,
                 BINA.BINATypes.Version2, false);
 
             Header.Version = 210;

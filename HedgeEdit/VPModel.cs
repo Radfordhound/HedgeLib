@@ -130,16 +130,16 @@ namespace HedgeEdit
                     // Get the material
                     string matName = matNames[i];
                     var mat = (string.IsNullOrEmpty(matName) ||
-                        !Viewport.Materials.ContainsKey(matName)) ?
-                        Viewport.DefaultMaterial : Viewport.Materials[matName];
+                        !Data.Materials.ContainsKey(matName)) ?
+                        Data.DefaultMaterial : Data.Materials[matName];
 
                     // Get the texture
                     string texName = (mat.Texset.Textures.Count > 0) ?
                         mat.Texset.Textures[0].TextureName : null;
 
                     int tex = (string.IsNullOrEmpty(texName) ||
-                        !Viewport.Textures.ContainsKey(texName)) ?
-                        Viewport.DefaultTexture : Viewport.Textures[texName];
+                        !Data.Textures.ContainsKey(texName)) ?
+                        Data.DefaultTexture : Data.Textures[texName];
 
                     // Bind the texture and the mesh's VAO
                     GL.BindTexture(TextureTarget.Texture2D, tex);

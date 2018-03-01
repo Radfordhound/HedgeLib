@@ -81,7 +81,7 @@ namespace HedgeEdit.UI
 
             // Terrain
             var terrainNode = new TreeNode("Terrain Instances");
-            foreach (var mdl in Viewport.DefaultTerrainGroup)
+            foreach (var mdl in Data.DefaultTerrainGroup)
             {
                 foreach (var instance in mdl.Value.Instances)
                 {
@@ -89,7 +89,7 @@ namespace HedgeEdit.UI
                 }
             }
 
-            foreach (var group in Viewport.TerrainGroups)
+            foreach (var group in Data.TerrainGroups)
             {
                 var groupNode = new TreeNode(group.Key);
                 foreach (var mdl in group.Value)
@@ -154,6 +154,11 @@ namespace HedgeEdit.UI
             exportLayerMenuItem.Enabled = layerClicked;
         }
 
+        private void AddLayerMenuItem_Click(object sender, EventArgs e)
+        {
+            // TODO
+        }
+
         private void ImportLayerMenuItem_Click(object sender, EventArgs e)
         {
             // TODO
@@ -166,12 +171,69 @@ namespace HedgeEdit.UI
 
         private void ExportLayerMenuItem_Click(object sender, EventArgs e)
         {
-            if (treeView.SelectedNode == null)
+            if (treeView.SelectedNode == null || Stage.GameType == null)
                 return;
 
-            var layer = (treeView.SelectedNode.Tag as SetData);
-            MessageBox.Show(layer.Name);
-            // TODO
+            if (treeView.SelectedNode.Tag is SetData layer)
+            {
+                var sfd = new SaveFileDialog()
+                {
+                    Title = "Export Set Layer...",
+                    Filter = "HedgeLib XML Set Layer (*.xml)|*.xml|All Files (*.*)|*.*",
+                    FileName = $"{layer.Name}.xml"
+                };
+
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    layer.ExportXML(sfd.FileName, Stage.GameType.ObjectTemplates);
+                }
+            }
+        }
+
+        private void DeleteLayerMenuItem_Click(object sender, EventArgs e)
+        {
+            if (treeView.SelectedNode == null || Stage.GameType == null)
+                return;
+
+            if (treeView.SelectedNode.Tag is SetData layer && MessageBox.Show(
+                $"Are you sure you wish to delete {layer.Name} and all of its objects?",
+                Program.Name, MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+            {
+                for (int i = layer.Objects.Count - 1; i >= 0; --i)
+                {
+                    var obj = layer.Objects[i];
+                    layer.Objects.RemoveAt(i);
+
+                    // Remove all children of this object (if any)
+                    if (obj.Children != null)
+                    {
+                        foreach (var child in obj.Children)
+                        {
+                            Data.GetObject(obj, out VPModel mdl,
+                                out VPObjectInstance inst);
+
+                            if (mdl != null && inst != null)
+                            {
+                                mdl.Instances.Remove(inst);
+                                Viewport.SelectedInstances.Remove(inst);
+                            }
+                        }
+                    }
+
+                    // Remove the actual object itself
+                    Data.GetObject(obj, out VPModel model,
+                        out VPObjectInstance instance);
+
+                    if (model != null && instance != null)
+                    {
+                        model.Instances.Remove(instance);
+                        Viewport.SelectedInstances.Remove(instance);
+                    }
+                }
+
+                RefreshView();
+                mainForm.RefreshGUI();
+            }
         }
     }
 }

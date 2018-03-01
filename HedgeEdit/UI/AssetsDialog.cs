@@ -66,8 +66,8 @@ namespace HedgeEdit.UI
             // Models
             else if (currentFolder == ModelsDir)
             {
-                AddModels(Viewport.DefaultTerrainGroup);
-                foreach (var group in Viewport.TerrainGroups)
+                AddModels(Data.DefaultTerrainGroup);
+                foreach (var group in Data.TerrainGroups)
                 {
                     AddModels(group.Value);
                 }
@@ -89,7 +89,7 @@ namespace HedgeEdit.UI
             // Materials
             else if (currentFolder == MatsDir)
             {
-                foreach (var mat in Viewport.Materials)
+                foreach (var mat in Data.Materials)
                 {
                     assetsList.Items.Add(new ListViewItem(
                         mat.Key, FileImageIndex)
@@ -102,7 +102,7 @@ namespace HedgeEdit.UI
             // Textures
             else if (currentFolder == TexturesDir)
             {
-                foreach (var tex in Viewport.Textures)
+                foreach (var tex in Data.Textures)
                 {
                     assetsList.Items.Add(new ListViewItem(
                         tex.Key, FileImageIndex)
@@ -199,7 +199,7 @@ namespace HedgeEdit.UI
                     obj.Transform.Position = Types.ToHedgeLib(pos);
 
                     // Load Object Resources (models, etc.) and Spawn Object
-                    script.LoadSetObjectResources(Stage.GameType, obj);
+                    Data.LoadObjectResources(Stage.GameType, obj);
                     Viewport.SelectedInstances.Clear();
                     Viewport.SelectObject(obj);
 

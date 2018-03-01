@@ -32,5 +32,14 @@ namespace HedgeEdit
             MainForm = new MainFrm();
             Application.Run(MainForm);
         }
+
+        public static void MainUIInvoke(Action action)
+        {
+            if (MainForm == null || MainForm.Disposing ||
+                MainForm.IsDisposed)
+                return;
+
+            MainForm.Invoke(action);
+        }
     }
 }

@@ -60,6 +60,65 @@ namespace HedgeEdit.UI
             objectProperties.ToolStrip.Items[0].Click += CategorizeButton_Click;
             objectProperties.ToolStrip.Items.RemoveAt(3);
             objectProperties.ToolStrip.Items.RemoveAt(3);
+            objectProperties.PropertyValueChanged += ObjectProperties_ValueChanged;
+        }
+
+        private void ObjectProperties_ValueChanged(
+            object s, PropertyValueChangedEventArgs e)
+        {
+            SetObjectType objTemplate = null;
+            var firstInstance = Viewport.SelectedInstances[0];
+            var firstObj = (firstInstance.CustomData as SetObject);
+            if (firstObj == null)
+                return;
+
+            // Get Object Template
+            if (objTemplate == null)
+            {
+                var objTemplates = Stage.GameType.ObjectTemplates;
+                if (objTemplates.ContainsKey(firstObj.ObjectType))
+                    objTemplate = objTemplates[firstObj.ObjectType];
+                else return;
+            }
+
+            // Update Object Models
+            foreach (var instance in Viewport.SelectedInstances)
+            {
+                // Get Object
+                var obj = (instance.CustomData as SetObject);
+                if (obj == null)
+                    continue;
+
+                // Get Model
+                var mdlName = Data.GetObjModelExtra(obj, objTemplate);
+                mdlName = Path.GetFileNameWithoutExtension(mdlName);
+
+                var mdl = Data.GetObjectModel(mdlName);
+
+                // Update Modes if necessary
+                if (mdl.Instances.Contains(instance))
+                    continue;
+
+                // Remove from DefaultCube
+                if (mdl != Data.DefaultCube &&
+                    Data.DefaultCube.Instances.Remove(instance))
+                {
+                    mdl.Instances.Add(instance);
+                    continue;
+                }
+
+                // Remove from Objects
+                foreach (var objMdl in Data.Objects)
+                {
+                    if (mdl != objMdl.Value &&
+                        objMdl.Value.Instances.Remove(instance))
+                    {
+                        break;
+                    }
+                }
+
+                mdl.Instances.Add(instance);
+            }
         }
 
         // Methods
@@ -126,21 +185,36 @@ namespace HedgeEdit.UI
             rotYBox.Text = eulerAngles.Y.ToString();
             rotZBox.Text = eulerAngles.Z.ToString();
 
-            // Update Parameters
-            string objType = (obj != null) ? obj.ObjectType : string.Empty;
-            objectTypeLbl.Text = objType;
+            // Clear Parameters
             objectProperties.ItemSet.Clear();
 
             if (obj == null)
             {
+                objectTypeLbl.Text = string.Empty;
                 objectProperties.Refresh();
                 return;
             }
 
+            // Update Object Type Label
             var objTemplate = (Stage.GameType == null ||
                 !Stage.GameType.ObjectTemplates.ContainsKey(obj.ObjectType)) ?
                 null : Stage.GameType.ObjectTemplates[obj.ObjectType];
 
+            string objType = obj.ObjectType;
+            if (singleObjSelected)
+            {
+                string objName = obj.GetCustomDataValue<string>("Name");
+                if (string.IsNullOrEmpty(objName))
+                    objName = objType;
+
+                objectTypeLbl.Text = $"{objName} ({obj.ObjectID})";
+            }
+            else
+            {
+                objectTypeLbl.Text = objType;
+            }
+
+            // Update Parameters
             foreach (var inst in Viewport.SelectedInstances)
             {
                 if (inst.CustomData is SetObject setObj)
@@ -173,20 +247,17 @@ namespace HedgeEdit.UI
                         var item = new CustomProperty(name, ref param, "Data", false,
                             "Parameters", templateParam?.Description, true);
 
-                        int enumsCount = templateParam.Enums.Count;
+                        // Enums
+                        int enumsCount = (templateParam != null) ?
+                            templateParam.Enums.Count : 0;
+
                         if (enumsCount >= 1)
                         {
-                            var choices = new object[enumsCount];
-                            var objParam = (SetObjectParam)param;
+                            item.ValueMember = "Value";
+                            item.DefaultType = templateParam.DataType;
+                            item.DisplayMember = "Description";
+                            item.Datasource = templateParam.Enums;
 
-                            for (int i2 = 0; i2 < enumsCount; ++i2)
-                            {
-                                // TODO: Use description but still set value
-                                choices[i2] = Helpers.ChangeType(
-                                    templateParam.Enums[i2].Value, objParam.DataType);
-                            }
-
-                            item.Choices = new CustomChoices(choices, false);
                             // TODO: Fix multi enum param editing
                         }
 
@@ -197,6 +268,7 @@ namespace HedgeEdit.UI
                 }
                 else
                 {
+                    objectTypeLbl.Text = string.Empty;
                     objectProperties.ItemSet.Clear();
                     break;
                 }
@@ -265,6 +337,9 @@ namespace HedgeEdit.UI
 
                 // Delete Selected Object(s)
                 case Keys.Delete:
+                    if (objectProperties.ContainsFocus)
+                        break;
+
                     RemoveObject(null, null);
                     return true;
 
@@ -288,6 +363,7 @@ namespace HedgeEdit.UI
             LuaTerminal.InitLog();
             GameList.Load(Program.StartupPath);
             Viewport.Init(viewport);
+            Data.LoadDefaults();
         }
 
         private void MainFrm_Activate(object sender, EventArgs e)
@@ -352,12 +428,13 @@ namespace HedgeEdit.UI
                 return;
             }
 
-            // If the pressed key isn't a control key, digit, dash, or
-            // the first decimal point, don't accept it.
+            // If the pressed key isn't a control key or digit, or
+            // the first decimal point or dash, don't accept it.
             if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar) &&
                 (e.KeyChar != '.' || txtBx.Text.IndexOf('.') > -1) &&
-                (e.KeyChar != '-' || txtBx.Text.IndexOf('-') > -1 ||
-                txtBx.SelectionStart != 0 || txtBx.SelectionLength != 0))
+                (e.KeyChar != '-' || (txtBx.Text.IndexOf('-') > -1 &&
+                (txtBx.SelectionStart != 0 || txtBx.SelectionLength == 0)) ||
+                txtBx.SelectionStart != 0))
             {
                 e.Handled = true;
             }
@@ -382,12 +459,13 @@ namespace HedgeEdit.UI
                 var instance = (Viewport.SelectedInstances.Count == 1) ?
                     Viewport.SelectedInstances[0] : null;
 
-                var obj = (instance != null) ?
-                    (instance.CustomData as SetObject) : null;
+                if (instance == null)
+                    return;
 
-                var transform = (instance != null) ?
-                    ((obj == null) ? (instance.CustomData as SetObjectTransform) :
-                    obj.Transform) : null;
+                var obj = (instance.CustomData as SetObject);
+                var transform = (obj == null) ?
+                    (instance.CustomData as SetObjectTransform) :
+                    obj.Transform;
 
                 // Get rotation if necessary
                 Quaternion rot = null;
@@ -425,17 +503,22 @@ namespace HedgeEdit.UI
 
                 // Move any selected objects in the Viewport
                 var pos = instance.Position;
+                var templates = Stage.GameType.ObjectTemplates;
+                var template = (obj != null && templates.ContainsKey(obj.ObjectType)) ?
+                    templates[obj.ObjectType] : null;
+
+                var offsetPos = Data.GetObjOffsetPos(template);
                 if (sender == posXBox)
                 {
-                    pos.X = (f * Stage.GameType.UnitMultiplier);
+                    pos.X = (f * Stage.GameType.UnitMultiplier) + offsetPos.X;
                 }
                 else if (sender == posYBox)
                 {
-                    pos.Y = (f * Stage.GameType.UnitMultiplier);
+                    pos.Y = (f * Stage.GameType.UnitMultiplier) + offsetPos.Y;
                 }
                 else if (sender == posZBox)
                 {
-                    pos.Z = (f * Stage.GameType.UnitMultiplier);
+                    pos.Z = (f * Stage.GameType.UnitMultiplier) + offsetPos.Z;
                 }
 
                 instance.Position = pos;
@@ -458,7 +541,7 @@ namespace HedgeEdit.UI
             UpdateTitle();
             statusBarLbl.Text = "";
 
-            Viewport.Clear();
+            Data.Clear();
             RefreshSceneView();
 
             // TODO: Ask for GameType
@@ -528,7 +611,7 @@ namespace HedgeEdit.UI
 
             var ofd = new OpenFileDialog()
             {
-                Title = "Import Set Layer...",
+                Title = "Import Set Layer(s)...",
                 Filter = "HedgeLib XML Set Layer (*.xml)|*.xml|All Files (*.*)|*.*",
                 Multiselect = true
             };
@@ -537,100 +620,8 @@ namespace HedgeEdit.UI
             {
                 foreach (var filePath in ofd.FileNames)
                 {
-                    ImportXML(filePath);
+                    Data.ImportSetLayerXML(filePath);
                 }
-            }
-
-            // Sub-Methods
-            void ImportXML(string fp)
-            {
-                SetData setData;
-                switch (script.Game)
-                {
-                    case LuaScript.Games.Forces:
-                        setData = new ForcesSetData();
-                        break;
-
-                    case LuaScript.Games.LW:
-                        setData = new LWSetData();
-                        break;
-
-                    case LuaScript.Games.Gens:
-                    case LuaScript.Games.SU:
-                        setData = new GensSetData();
-                        break;
-
-                    // TODO: Add Storybook Support
-                    case LuaScript.Games.Storybook:
-                        throw new NotImplementedException(
-                            "Could not load, Storybook set data is not yet supported!");
-
-                    case LuaScript.Games.Colors:
-                        setData = new ColorsSetData();
-                        break;
-
-                    case LuaScript.Games.S06:
-                        setData = new S06SetData();
-                        break;
-
-                    // TODO: Add Shadow Support
-                    case LuaScript.Games.Shadow:
-                        throw new NotImplementedException(
-                            "Could not load, Shadow set data is not yet supported!");
-
-                    case LuaScript.Games.Heroes:
-                        setData = new HeroesSetData();
-                        break;
-
-                    // TODO: Add SA2 Support
-                    case LuaScript.Games.SA2:
-                        throw new NotImplementedException(
-                            "Could not load, SA2 set data is not yet supported!");
-                    //setData = new SA2SetData();
-                    //break;
-
-                    default:
-                        throw new Exception(
-                            "Could not load, game type has not been set!");
-                }
-
-                setData.Name = Path.GetFileNameWithoutExtension(fp);
-                setData.ImportXML(fp);
-                script.LoadSetLayerResources(Stage.GameType, setData);
-
-                int setIndex = -1;
-                for (int i = 0; i < Stage.Sets.Count; ++i)
-                {
-                    if (Stage.Sets[i].Name == setData.Name)
-                    {
-                        setIndex = i;
-                        break;
-                    }
-                }
-
-                if (setIndex == -1)
-                {
-                    Stage.Sets.Add(setData);
-                }
-                else
-                {
-                    var layer = Stage.Sets[setIndex];
-                    Viewport.SelectedInstances.Clear();
-
-                    foreach (var obj in layer.Objects)
-                    {
-                        var instance = Viewport.GetObjectInstance(obj);
-                        if (instance == null)
-                            instance = Viewport.GetInstance(Viewport.DefaultCube, obj);
-
-                        Viewport.RemoveObjectInstance(instance);
-                    }
-
-                    Stage.Sets[setIndex] = setData;
-                }
-
-                RefreshSceneView();
-                RefreshGUI();
             }
         }
 
@@ -720,7 +711,7 @@ namespace HedgeEdit.UI
                 // TODO: Fix crashing if this is called while loading
                 script.Call("InitSetObject", newObj);
 
-                script.LoadSetObjectResources(Stage.GameType, newObj);
+                Data.LoadObjectResources(Stage.GameType, newObj);
                 Viewport.SelectObject(newObj);
             }
 
@@ -833,23 +824,23 @@ namespace HedgeEdit.UI
                             {
                                 foreach (var child in obj.Children)
                                 {
-                                    var inst = Viewport.GetObjectInstance(child);
-                                    if (inst == null)
-                                        inst = Viewport.GetInstance(Viewport.DefaultCube, child);
+                                    Data.GetObject(child, out VPModel mdl,
+                                        out VPObjectInstance inst);
 
-                                    if (inst != null)
-                                        Viewport.RemoveObjectInstance(inst);
+                                    if (mdl != null && inst != null)
+                                        mdl.Instances.Remove(inst);
                                 }
                             }
 
                             // Remove the actual object itself
-                            Viewport.RemoveObjectInstance(instance);
+                            Data.RemoveObjectInstance(instance);
                             break;
                         }
                     }
                     else
                     {
                         // TODO: Make SetObject.Children a list and add support for deleting
+                        return;
                     }
                 }
             }

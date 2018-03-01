@@ -1,5 +1,5 @@
-﻿using System;
-using System.Windows.Forms;
+﻿using HedgeEdit.UI;
+using System;
 
 namespace HedgeEdit.Lua
 {
@@ -8,99 +8,20 @@ namespace HedgeEdit.Lua
         // Methods
         protected void InitUICallbacks()
         {
-            script.Globals["UIChangeLoadStatus"] = (Action<string>)UIChangeLoadStatus;
-            script.Globals["UIChangeSaveStatus"] = (Action<string>)UIChangeSaveStatus;
-            script.Globals["UIChangeStatus"] = (Action<string>)UIChangeStatus;
-            script.Globals["UIChangeProgress"] = (Action<int>)UIChangeProgress;
-            script.Globals["UIChangeProgressVisible"] = (Action<bool>)UIChangeProgressVisible;
-            script.Globals["UIShowProgress"] = (Action)UIShowProgress;
-            script.Globals["UIHideProgress"] = (Action)UIHideProgress;
-            script.Globals["UIMessageBox"] = (Func<string, string, int, int, int>)UIMessageBox;
-            script.Globals["UIErrorBox"] = (Func<string, string, int, int>)UIErrorBox;
-            script.Globals["UIWarningBox"] = (Func<string, string, int, int>)UIWarningBox;
-            script.Globals["UIToggleSetsSaving"] = (Action<bool>)UIToggleSetsSaving;
-        }
+            script.Globals["UIChangeLoadStatus"] = (Action<string>)GUI.ChangeLoadStatus;
+            script.Globals["UIChangeSaveStatus"] = (Action<string>)GUI.ChangeSaveStatus;
+            script.Globals["UIChangeStatus"] = (Action<string>)GUI.ChangeStatus;
+            script.Globals["UIChangeProgress"] = (Action<int>)GUI.ChangeProgress;
+            script.Globals["UIChangeProgressVisible"] = (Action<bool>)GUI.ChangeProgressVisible;
+            script.Globals["UIShowProgress"] = (Action)GUI.ShowProgress;
+            script.Globals["UIHideProgress"] = (Action)GUI.HideProgress;
 
-        protected static void MainUIInvoke(Action action)
-        {
-            if (Program.MainForm == null || Program.MainForm.Disposing ||
-                Program.MainForm.IsDisposed)
-                return;
+            script.Globals["UIMessageBox"] = (Func<string,
+                string, int, int, int>)GUI.ShowMessageBox;
 
-            Program.MainForm.Invoke(action);
-        }
-
-        // Lua Callbacks
-        public static void UIChangeLoadStatus(string status)
-        {
-            UIChangeStatus($"Loading {status}...");
-        }
-
-        public static void UIChangeSaveStatus(string status)
-        {
-            UIChangeStatus($"Saving {status}...");
-        }
-
-        public static void UIChangeStatus(string status)
-        {
-            MainUIInvoke(() =>
-            {
-                Program.MainForm.UpdateStatus(status);
-            });
-        }
-
-        public static void UIChangeProgress(int progress)
-        {
-            MainUIInvoke(() =>
-            {
-                Program.MainForm.UpdateProgress(progress);
-            });
-        }
-
-        public static void UIChangeProgressVisible(bool visible)
-        {
-            MainUIInvoke(() =>
-            {
-                Program.MainForm.UpdateProgressVisible(visible);
-            });
-        }
-
-        public static void UIShowProgress()
-        {
-            UIChangeProgressVisible(true);
-        }
-
-        public static void UIHideProgress()
-        {
-            UIChangeProgressVisible(false);
-        }
-
-        public static int UIMessageBox(string txt, string caption = "",
-            int buttons = 0, int icon = 0)
-        {
-            return (int)MessageBox.Show(txt, caption,
-                (MessageBoxButtons)buttons, (MessageBoxIcon)icon);
-        }
-
-        public static int UIErrorBox(string txt, string caption = "", int buttons = 0)
-        {
-            return (int)MessageBox.Show(txt, caption,
-                (MessageBoxButtons)buttons, MessageBoxIcon.Error);
-        }
-
-        public static int UIWarningBox(string txt, string caption = "", int buttons = 0)
-        {
-            return (int)MessageBox.Show(txt, caption,
-                (MessageBoxButtons)buttons, MessageBoxIcon.Warning);
-        }
-
-        public static void UIToggleSetsSaving(bool value)
-        {
-            MainUIInvoke(() =>
-            {
-                // TODO: Make this not break loading lol
-                //Program.MainForm.SaveSetsMenuItem.Enabled = value;
-            });
+            script.Globals["UIErrorBox"] = (Func<string, string, int, int>)GUI.ShowErrorBox;
+            script.Globals["UIWarningBox"] = (Func<string, string, int, int>)GUI.ShowWarningBox;
+            script.Globals["UIToggleSetsSaving"] = (Action<bool>)GUI.ToggleSetsSaving;
         }
     }
 }

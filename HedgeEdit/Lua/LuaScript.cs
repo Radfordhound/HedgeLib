@@ -14,24 +14,7 @@ namespace HedgeEdit.Lua
     public partial class LuaScript
     {
         // Variables/Constants
-        public Games Game => game;
         protected Script script;
-        protected Games game = Games.None;
-
-        public enum Games
-        {
-            None,
-            SA2,
-            Heroes,
-            Shadow,
-            S06,
-            Storybook,
-            SU,
-            Colors,
-            Gens,
-            LW,
-            Forces
-        }
 
         public const string GamesDir = "Games",
             PluginsDir = "Plugins", Extension = ".lua";
@@ -71,9 +54,8 @@ namespace HedgeEdit.Lua
             UserData.RegisterType<SetObject>();
             UserData.RegisterType<SetData>();
 
-            UserData.RegisterType<Texture>();
             UserData.RegisterType<GensMaterial>();
-            UserData.RegisterType<Model>();
+            UserData.RegisterType<VPModel>();
             UserData.RegisterType<GensTerrainList>();
         }
 
@@ -108,56 +90,20 @@ namespace HedgeEdit.Lua
                 script.Call(script.Globals[funcName], args);
         }
 
-        public static Games GetGame(string dataType)
+        public string FormatCacheDir(string path)
         {
-            switch (dataType.ToLower())
-            {
-                case "forces":
-                    return Games.Forces;
+            return string.Format(path, Stage.CacheDir, Stage.ID);
+        }
 
-                case "lost world":
-                case "lw":
-                    return Games.LW;
-
-                case "generations":
-                case "gens":
-                    return Games.Gens;
-
-                case "colors":
-                    return Games.Colors;
-
-                case "unleashed":
-                case "su":
-                    return Games.SU;
-
-                case "black knight":
-                case "secret rings":
-                case "storybook":
-                    return Games.Storybook;
-
-                case "s06":
-                case "06":
-                    return Games.S06;
-
-                case "shadow":
-                    return Games.Shadow;
-
-                case "heroes":
-                    return Games.Heroes;
-
-                case "sa2":
-                    return Games.SA2;
-
-                default:
-                    throw new NotImplementedException(
-                        $"Unknown game type \"{dataType}\"!");
-            }
+        public string FormatDataDir(string path)
+        {
+            return string.Format(path, Stage.DataDir, Stage.ID);
         }
 
         // Lua Callbacks
         public void SetDataType(string dataType)
         {
-            game = GetGame(dataType);
+            Types.CurrentDataType = Types.GetDataType(dataType);
         }
     }
 }

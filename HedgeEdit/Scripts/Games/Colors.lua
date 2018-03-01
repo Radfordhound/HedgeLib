@@ -102,13 +102,13 @@ function SaveAll(dataDir, cacheDir, stageID)
 end
 
 function InitSetObject(obj)
-	obj.CustomData["Unknown1"] = GenSetObjectParam("ushort", 0)
-	obj.CustomData["Unknown2"] = GenSetObjectParam("uint", 0)
-	obj.CustomData["Unknown3"] = GenSetObjectParam("uint", 0)
-	obj.CustomData["Unknown4"] = GenSetObjectParam("float", 0)
-	obj.CustomData["RangeIn"] = GenSetObjectParam("float", 1000)
-	obj.CustomData["RangeOut"] = GenSetObjectParam("float", 1200)
+	AddCustomData(obj, "Unknown1", "ushort", 0)
+	AddCustomData(obj, "Unknown2", "uint", 0)
+	AddCustomData(obj, "Unknown3", "uint", 0)
+	AddCustomData(obj, "Unknown4", "float", 0)
+	AddCustomData(obj, "RangeIn", "float", 1000)
+	AddCustomData(obj, "RangeOut", "float", 1200)
 
 	-- TODO: In LW version of this function un-comment this line:
-	--obj.CustomData["Parent"] = GenSetObjectParam("uint", 0)
+	--AddCustomData(obj, "Parent", "uint", 0)
 end

@@ -364,6 +364,7 @@ namespace HedgeLib.Textures
                 DX10 = 0x30315844,
                 BC4U = 0x55344342,
                 BC4S = 0x53344342,
+                ATI1 = 0x31495441,
                 ATI2 = 0x32495441,
                 BC5S = 0x53354342
             }

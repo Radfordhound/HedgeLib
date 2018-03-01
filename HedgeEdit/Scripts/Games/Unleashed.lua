@@ -1,27 +1,4 @@
-﻿function LoadTexturesInDir(dir, loadingTxt)
-	if not IODirExists(dir) then
-		return
-	end
-
-	local files = IOGetFilesInDir(
-		dir, "*.dds", false)
-
-	if files ~= nil and #files > 0 then
-		UIShowProgress()
-
-		for i = 1, #files do
-			UIChangeProgress(((i - 1) / #files) * 100)
-			UIChangeLoadStatus(string.format(
-				loadingTxt .. " %02d/%02d", i, #files))
-
-			LoadTexture(files[i], IOGetNameWithoutExtension(files[i]))
-		end
-
-		UIHideProgress()
-	end
-end
-
-function Load(dataDir, cacheDir, stageID)
+﻿function Load(dataDir, cacheDir, stageID)
 	SetDataType("Unleashed")
 
 	-- Get Day/Night Flag
@@ -58,6 +35,28 @@ function Load(dataDir, cacheDir, stageID)
 	UIChangeStatus("Extracting #" .. stageID .. "...")
 	Extract("{0}/#{1}.arl", "{0}/#{1}", "#AR")
 
+	-- AR (E.G. ActD_MykonosAct1)
+	UIChangeStatus("Extracting " .. stageID .. "...")
+	AddResourceDirectory("{0}/{1}")
+	Extract("{0}/{1}.arl", "{0}/{1}", "AR")
+
+	-- Common
+	if country ~= nil then
+		UIChangeStatus("Extracting Common AR...")
+		local cmnName = ("{0}/Cmn" .. country)
+		AddResourceDirectory(cmnName)
+
+		Extract(cmnName .. ".arl", cmnName, "Cmn")
+
+		-- Common Terrain AR
+		UIChangeStatus("Extracting Common Terrain AR...")
+		local cmnTerrainName = ("{0}/CmnAct" .. dayNightFlag ..
+			"_Terrain_" .. country)
+
+		AddResourceDirectory(cmnTerrainName)
+		Extract(cmnTerrainName .. ".arl", cmnTerrainName, "CmnTerrain")
+	end
+
 	-- Set Data
 	local files = IOGetFilesInDir("{0}/#{1}", "*.set.xml", false)
 	if files ~= nil and #files > 0 then
@@ -76,10 +75,6 @@ function Load(dataDir, cacheDir, stageID)
 
 	UIToggleSetsSaving(true)
 
-	-- AR (E.G. ActD_MykonosAct1)
-	UIChangeStatus("Extracting " .. stageID .. "...")
-	Extract("{0}/{1}.arl", "{0}/{1}", "AR")
-
 	-- Stage PFD (E.G. Packed/Stage)
 	UIChangeStatus("Extracting Stage PFD...")
 	Extract("{0}/Packed/{1}/Stage.pfd", "{0}/Packed/Stage", "StagePFD")
@@ -90,31 +85,9 @@ function Load(dataDir, cacheDir, stageID)
 
 	-- TODO: Decompress AR files within PFD
 
-	if country ~= nil then
-		-- Common
-		UIChangeStatus("Extracting Common AR...")
-		local cmnName = ("{0}/Cmn" .. country)
-
-		Extract(cmnName .. ".arl", cmnName, "Cmn")
-
-		-- Common Textures
-		LoadTexturesInDir(cmnName, "Common Textures")
-
-		-- Common Terrain AR
-		UIChangeStatus("Extracting Common Terrain AR...")
-		local cmnTerrainName = ("{0}/CmnAct" .. dayNightFlag ..
-			"_Terrain_" .. country)
-
-		Extract(cmnTerrainName .. ".arl", cmnTerrainName, "CmnTerrain")
-
-		-- Common Terrain Textures
-		LoadTexturesInDir(cmnTerrainName, "Common Terrain Textures")
-	end
-
 	-- Terrain
 	LoadTerrainList("{0}/#{1}/terrain.terrain",
 		"{0}/Packed/Stage", "{0}/{1}")
-	-- TODO
 end
 
 function SaveSets(dataDir, cacheDir, stageID)
