@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Comment type="string" default="" description="A comment - literally just any string of text you want to describe something in this area!" />
+  <Unknown1 type="ulong" default="4" description="Always 4?" />
+  <Padding1 type="ulong" default="0" description="Always 0?" />
+  
+  <Extra type="description" value="They're literally like comments - except as objects in the set data!! These are so cool to me." />
+  <Extra type="RawByteLength" length="32" />
+</Template>

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
   <OutOfControl type="float" default="0.5" description="How long the game locks your control for after coming in contact with this object." />
-  <Speed type="float" default="500" description="How much speed the DashPanel will send you off with." />
+  <Speed type="float" default="500" description="How much speed the GrindBooster will send you off with." />
   <IsVisibleModel type="bool" default="true" description="Setting it to true the model will be visible in-game" />
-  <IsSideView type="bool" default="false" description="For side-view" />
-  <IsDirectionPath type="bool" default="false" description="Correct to move in the path direction" />
-  <UnknownFlag1 type="bool" default="true" description="" />
+  <IsSideView type="bool" default="false" description="For side-view. Probably unused on grind boosters?" />
+  <IsDirectionPath type="bool" default="false" description="Correct to move in the path direction. Probably unused on grind boosters?" />
+  <UnknownFlag1 type="bool" default="false" description="" />
   
   <Unknown1 type="uint" default="0" description="Always 0?" />
   <Unknown2 type="ulong" default="0" description="Always 0?" />
@@ -21,8 +21,7 @@
   <Unknown12 type="ulong" default="0" description="Always 0?" />
   <Unknown13 type="ulong" default="0" description="Always 0?" />
   
-  <Extra type="model" value="cmn_obj_dashroller.model" condition="not IsSideView" />
-  <Extra type="model" value="cmn_obj_dashroller_SV.model" condition="IsSideView" />
-  <Extra type="description" value="Gotta go fast" />
+  <Extra type="model" value="cmn_obj_grindbooster.model" />
+  <Extra type="description" value="Like DashPanels, except on rails" />
   <Extra type="RawByteLength" length="112" />
 </Template>

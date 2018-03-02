@@ -5,5 +5,7 @@
   <Unknown3 type="bool" default="false" description="Always 0?" />
   <Unknown4 type="byte" default="0" description="Always 0? Maybe SetPlaceType" />
   <Unknown5 type="byte" default="0" description="Always 0? Maybe EventType" />
+  
+  <Extra type="description" value="Nodes (pretty much just vertices) for ObjSetPaths." />
   <Extra type="RawByteLength" length="16" />
 </Template>

@@ -20,6 +20,7 @@
   <Padding13 type="ulong" default="0" description="Padding?" />
   <Padding14 type="ulong" default="0" description="Padding?" />
   
+  <Extra type="model" value="cmn_obj_upreel_stand.model" />
   <Extra type="description" value="Pulleys you grab onto to go up." />
   <Extra type="RawByteLength" length="48" />
 </Template>

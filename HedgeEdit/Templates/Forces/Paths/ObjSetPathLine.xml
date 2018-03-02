@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Unknown1 type="uint" default="0" description="Always 0? There has to be Path UUID somewhere though..?" /> 
+  <Unknown2 type="bool" default="false" description="IsLoopPath? ObjPath?" /> 
+  <IsSideView type="bool" default="false" description="Whether or not the path is a 2D spline" /> 
+  <Unknown3 type="bool" default="false" description="GRPath?" /> 
+  <Unknown4 type="bool" default="false" description="" /> 
+  <Unknown5 type="float" default="10" description="InRadius?" />
+  <Padding1 type="uint" default="0" description="Always 0?" /> 
+  
+  <Extra type="description" value="Splines that point in a straight line." />
+  <Extra type="RawByteLength" length="16" />
+</Template>

@@ -2,6 +2,12 @@
 <Template>
   <Name type="string" default="" description="The name of the Gismo's model, skeleton, and animation." />
   <Scale type="float" description="Scale of the Gismo's model." />
+  <Padding1 type="ulong" default="0" description="Always 0?" />
+  <Padding2 type="ulong" default="0" description="Always 0?" />
+  <Padding3 type="ulong" default="0" description="Always 0?" />
+  <Padding4 type="ulong" default="0" description="Always 0?" />
+  <Padding5 type="ulong" default="0" description="Always 0?" />
+  <Padding6 type="uint" default="0" description="Always 0?" />
   
   <Extra type="model" value="{0}.model" />
   <Extra type="skeleton" value="{0}.skl.hkx" />

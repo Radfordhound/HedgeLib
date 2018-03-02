@@ -7,4 +7,6 @@
   <Unknown3 type="bool" default="false" description="GRPath?" /> 
   <Unknown4 type="bool" default="false" description="" /> 
   <Unknown5 type="float" default="10" description="InRadius?" />
+  
+  <Extra type="description" value="Splines represented fully within the set data, rather than in .path files!" />
 </Template>

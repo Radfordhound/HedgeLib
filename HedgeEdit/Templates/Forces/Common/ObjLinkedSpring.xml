@@ -5,7 +5,7 @@
   <Unknown3 type="uint" default="1" description="" />
   <Unknown4 type="float" default="2" description="" />
   <Unknown5 type="ulong" default="0" description="" />
-  <Unknown6 type="float" default="10" description="" />
+  <Unknown6 type="float" default="10" description="Speed?" />
   <Unknown7 type="uint" default="0" description="" />
   <Unknown8 type="float" default="50" description="" />
   <Unknown9 type="ulong" default="0" description="" />
