@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Width type="float" default="0" description="X Size of the volume." />
+  <Height type="float" default="0" description="Y Size of the volume." />
+  <Length type="float" default="0" description="Z Size of the volume." />
+  <PathUID type="uint" default="0" description="The UID of the path used for this loop." />
+  
+  <Extra type="description" value="Volumes that can be used to lock the player onto a loop spline." />
+  <Extra type="RawByteLength" length="16" />
+</Template>
