@@ -33,9 +33,9 @@ namespace HedgeEdit.UI
 
             // Layers
             var layersNode = new TreeNode("Set Layers");
-            for (int i = 0; i < Stage.Sets.Count; ++i)
+            for (int i = 0; i < Data.SetLayers.Count; ++i)
             {
-                var layer = Stage.Sets[i];
+                var layer = Data.SetLayers[i];
                 string layerName = (string.IsNullOrEmpty(layer.Name)) ?
                     $"Layer #{i + 1}" : layer.Name;
 
@@ -130,7 +130,7 @@ namespace HedgeEdit.UI
             var layer = (tag as SetData);
             if (layer != null)
             {
-                Stage.CurrentSetLayer = layer;
+                Data.CurrentSetLayer = layer;
             }
             else if (tag is VPObjectInstance instance)
             {

@@ -1,4 +1,5 @@
-﻿using OpenTK;
+﻿using HedgeLib.Models;
+using OpenTK;
 using OpenTK.Graphics.ES30;
 using OpenTK.Input;
 using System;
@@ -49,6 +50,11 @@ namespace HedgeEdit
 
             GL.TexParameter(TextureTarget.Texture2D,
                 TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+
+            // Enable Blending
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactorSrc.SrcAlpha,
+                BlendingFactorDest.OneMinusSrcAlpha);
         }
 
         public static void Resize(int width, int height)
@@ -241,24 +247,28 @@ namespace HedgeEdit
             // TODO
 
             // Draw all models in the scene
-            Data.DefaultCube.Draw(defaultID);
-
-            foreach (var mdl in Data.DefaultTerrainGroup)
+            for (int i = 0; i < 4; ++i)
             {
-                mdl.Value.Draw(defaultID);
-            }
+                var slot = (Mesh.Slots)i;
+                Data.DefaultCube.Draw(defaultID, slot);
 
-            foreach (var group in Data.TerrainGroups)
-            {
-                foreach (var mdl in group.Value)
+                foreach (var mdl in Data.DefaultTerrainGroup)
                 {
-                    mdl.Value.Draw(defaultID);
+                    mdl.Value.Draw(defaultID, slot);
                 }
-            }
 
-            foreach (var mdl in Data.Objects)
-            {
-                mdl.Value.Draw(defaultID);
+                foreach (var group in Data.TerrainGroups)
+                {
+                    foreach (var mdl in group.Value)
+                    {
+                        mdl.Value.Draw(defaultID, slot);
+                    }
+                }
+
+                foreach (var mdl in Data.Objects)
+                {
+                    mdl.Value.Draw(defaultID, slot);
+                }
             }
 
             // Swap our buffers

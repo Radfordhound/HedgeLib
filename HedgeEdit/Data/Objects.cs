@@ -15,6 +15,9 @@ namespace HedgeEdit
         public static Dictionary<string, VPModel> Objects =
             new Dictionary<string, VPModel>();
 
+        public static List<SetData> SetLayers = new List<SetData>();
+        public static SetData CurrentSetLayer = null;
+
         // Methods
         public static void SpawnObject(SetObject obj, VPModel mdl,
             Vector3 posOffset, float unitMultiplier = 1)
@@ -266,6 +269,24 @@ namespace HedgeEdit
             return mdlName;
         }
 
+        public static VPModel GetObjectModelInfo(SetObject obj,
+            SetObjectType type, out Vector3 offsetPos, bool loadModels = true)
+        {
+            // Get offset position/scale (if any)
+            offsetPos = GetObjOffsetPos(type);
+            obj.Transform.Scale = GetObjScale(type, obj);
+
+            // Load Object Model
+            string mdlName = null;
+            if (loadModels && type != null)
+            {
+                mdlName = GetObjModelExtra(obj, type);
+                mdlName = Path.GetFileNameWithoutExtension(mdlName);
+            }
+
+            return GetObjectModel(mdlName);
+        }
+
         public static void LoadSetLayerResources(GameEntry gameType,
             SetData setData, bool loadModels = true)
         {
@@ -283,19 +304,9 @@ namespace HedgeEdit
             if (gameType.ObjectTemplates.ContainsKey(obj.ObjectType))
                 type = gameType.ObjectTemplates[obj.ObjectType];
 
-            // Get offset position/scale (if any)
-            var offsetPos = GetObjOffsetPos(type);
-            obj.Transform.Scale = GetObjScale(type, obj);
-
-            // Load Object Model
-            string mdlName = null;
-            if (loadModels && type != null)
-            {
-                mdlName = GetObjModelExtra(obj, type, mdlName);
-                mdlName = Path.GetFileNameWithoutExtension(mdlName);
-            }
-
-            var mdl = GetObjectModel(mdlName);
+            // Update Object Info
+            var mdl = GetObjectModelInfo(obj, type,
+                out Vector3 offsetPos, loadModels);
 
             // Spawn Object in World
             SpawnObject(obj, mdl, offsetPos,
@@ -365,7 +376,7 @@ namespace HedgeEdit
 
             // Add Set Layer to list
             setData.Name = Path.GetFileNameWithoutExtension(path);
-            Stage.Sets.Add(setData);
+            SetLayers.Add(setData);
 
             // Refresh UI Scene View
             GUI.RefreshSceneView();
@@ -431,9 +442,9 @@ namespace HedgeEdit
 
             // If a layer of the same name already exists, replace it.
             int setIndex = -1;
-            for (int i = 0; i < Stage.Sets.Count; ++i)
+            for (int i = 0; i < SetLayers.Count; ++i)
             {
-                if (Stage.Sets[i].Name == setData.Name)
+                if (SetLayers[i].Name == setData.Name)
                 {
                     setIndex = i;
                     break;
@@ -442,11 +453,11 @@ namespace HedgeEdit
 
             if (setIndex == -1)
             {
-                Stage.Sets.Add(setData);
+                SetLayers.Add(setData);
             }
             else
             {
-                var layer = Stage.Sets[setIndex];
+                var layer = SetLayers[setIndex];
                 Viewport.SelectedInstances.Clear();
 
                 foreach (var obj in layer.Objects)
@@ -456,7 +467,10 @@ namespace HedgeEdit
                     mdl.Instances.Remove(instance);
                 }
 
-                Stage.Sets[setIndex] = setData;
+                if (CurrentSetLayer == layer)
+                    CurrentSetLayer = setData;
+                
+                SetLayers[setIndex] = setData;
             }
 
             // Refresh the UI

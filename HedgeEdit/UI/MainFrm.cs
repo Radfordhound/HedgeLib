@@ -82,6 +82,7 @@ namespace HedgeEdit.UI
             }
 
             // Update Object Models
+            float unitMultiplier = Stage.GameType.UnitMultiplier;
             foreach (var instance in Viewport.SelectedInstances)
             {
                 // Get Object
@@ -90,10 +91,13 @@ namespace HedgeEdit.UI
                     continue;
 
                 // Get Model
-                var mdlName = Data.GetObjModelExtra(obj, objTemplate);
-                mdlName = Path.GetFileNameWithoutExtension(mdlName);
+                var mdl = Data.GetObjectModelInfo(obj,
+                    objTemplate, out Vector3 offsetPos);
 
-                var mdl = Data.GetObjectModel(mdlName);
+                // Update Position/Scale
+                instance.Scale = Types.ToOpenTK(obj.Transform.Scale);
+                instance.Position = Types.ToOpenTK((obj.Transform.Position *
+                    unitMultiplier) + offsetPos);
 
                 // Update Modes if necessary
                 if (mdl.Instances.Contains(instance))
@@ -153,7 +157,7 @@ namespace HedgeEdit.UI
 
             // Update Labels
             int objCount = 0;
-            foreach (var layer in Stage.Sets)
+            foreach (var layer in Data.SetLayers)
             {
                 foreach (var setObj in layer.Objects)
                 {
@@ -568,12 +572,12 @@ namespace HedgeEdit.UI
                     {
                         statusBarLbl.Text = "Done Loading";
                         statusBarProgressBar.Visible = false;
-                        openMenuItem.Enabled = SaveSetsMenuItem.Enabled = true;
+                        LoadSaveEnable(true);
                         RefreshSceneView();
                     }));
                 }));
 
-                openMenuItem.Enabled = SaveSetsMenuItem.Enabled = false;
+                LoadSaveEnable(false);
                 loadSaveThread.Start();
             }
         }
@@ -590,17 +594,32 @@ namespace HedgeEdit.UI
                 {
                     statusBarLbl.Text = "Done Saving";
                     statusBarProgressBar.Visible = false;
-                    openMenuItem.Enabled = SaveSetsMenuItem.Enabled = true;
+                    LoadSaveEnable(true);
                 }));
             }));
 
-            openMenuItem.Enabled = SaveSetsMenuItem.Enabled = false;
+            LoadSaveEnable(false);
             loadSaveThread.Start();
         }
 
         private void SaveAllMenuItem_Click(object sender, EventArgs e)
         {
-            // TODO
+            loadSaveThread = new Thread(new ThreadStart(() =>
+            {
+                // Save all
+                Stage.SaveAll();
+
+                // Update GUI
+                Invoke(new Action(() =>
+                {
+                    statusBarLbl.Text = "Done Saving";
+                    statusBarProgressBar.Visible = false;
+                    LoadSaveEnable(true);
+                }));
+            }));
+
+            LoadSaveEnable(false);
+            loadSaveThread.Start();
         }
 
         private void ImportXMLMenuItem_Click(object sender, EventArgs e)
@@ -627,7 +646,7 @@ namespace HedgeEdit.UI
 
         private void ExportXMLMenuItem_Click(object sender, EventArgs e)
         {
-            if (Stage.GameType == null || Stage.Sets.Count < 1)
+            if (Stage.GameType == null || Data.SetLayers.Count < 1)
                 return;
 
             var fbd = new FolderBrowserDialog()
@@ -638,7 +657,7 @@ namespace HedgeEdit.UI
             if (fbd.ShowDialog() == DialogResult.OK)
             {
                 var objectTemplates = Stage.GameType.ObjectTemplates;
-                foreach (var layer in Stage.Sets)
+                foreach (var layer in Data.SetLayers)
                 {
                     layer.ExportXML(Path.Combine(fbd.SelectedPath,
                         $"{layer.Name}.xml"), objectTemplates);
@@ -700,14 +719,14 @@ namespace HedgeEdit.UI
                 var newObj = new SetObject()
                 {
                     Children = obj.Children,
-                    ObjectID = (uint)Stage.CurrentSetLayer.Objects.Count,
+                    ObjectID = (uint)Data.CurrentSetLayer.Objects.Count,
                     Parameters = obj.Parameters,
                     CustomData = obj.CustomData,
                     ObjectType = obj.ObjectType,
                     Transform = obj.Transform
                 };
 
-                Stage.CurrentSetLayer.Objects.Add(newObj);
+                Data.CurrentSetLayer.Objects.Add(newObj);
                 // TODO: Fix crashing if this is called while loading
                 script.Call("InitSetObject", newObj);
 
@@ -727,7 +746,7 @@ namespace HedgeEdit.UI
         private void SelectAllMenuItem_Click(object sender, EventArgs e)
         {
             Viewport.SelectedInstances.Clear();
-            foreach (var layer in Stage.Sets)
+            foreach (var layer in Data.SetLayers)
             {
                 foreach (var obj in layer.Objects)
                 {
@@ -813,7 +832,7 @@ namespace HedgeEdit.UI
 
                 if (transform == null) continue;
 
-                foreach (var layer in Stage.Sets)
+                foreach (var layer in Data.SetLayers)
                 {
                     if (obj != null)
                     {
@@ -889,6 +908,12 @@ namespace HedgeEdit.UI
         {
             objectProperties.PropertySort = PropertySort.Categorized;
             objectProperties.Refresh();
+        }
+
+        private void LoadSaveEnable(bool enable)
+        {
+            openMenuItem.Enabled = SaveSetsMenuItem.Enabled =
+                saveAllMenuItem.Enabled = enable;
         }
     }
 }

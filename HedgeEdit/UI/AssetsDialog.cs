@@ -1,4 +1,4 @@
-﻿using HedgeLib.Sets;
+using HedgeLib.Sets;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -148,7 +148,7 @@ namespace HedgeEdit.UI
 
             var item = assetsList.SelectedItems[0];
 
-            // Folder
+            // Folders
             if (item.ImageIndex == FolderImageIndex)
             {
                 if (!string.IsNullOrEmpty(currentFolder) && item.Text == BackDir)
@@ -166,50 +166,47 @@ namespace HedgeEdit.UI
                 RefreshGUI();
             }
 
-            // File
-            else
+            // Templates
+            else if (item.Tag is SetObjectType template)
             {
-                // Templates
-                if (item.Tag is SetObjectType template)
+                // Generate Object
+                if (Data.CurrentSetLayer == null)
+                    return;
+
+                var obj = new SetObject(template, template.Name,
+                    (uint)Data.CurrentSetLayer.Objects.Count);
+                Data.CurrentSetLayer.Objects.Add(obj);
+
+                var script = Stage.Script;
+                if (script == null)
+                    return; // TODO: idk maybe throw an error??
+
+                try
                 {
-                    // Generate Object
-                    if (Stage.CurrentSetLayer == null)
-                        return;
-
-                    var obj = new SetObject(template, template.Name,
-                        (uint)Stage.CurrentSetLayer.Objects.Count);
-                    Stage.CurrentSetLayer.Objects.Add(obj);
-
-                    var script = Stage.Script;
-                    if (script == null)
-                        return; // TODO: idk maybe throw an error??
-
-                    try
-                    {
-                        script.Call("InitSetObject", obj);
-                    }
-                    catch (Exception ex)
-                    {
-                        LuaTerminal.LogError($"ERROR: {ex.Message}");
-                    }
-
-                    // Set Object Position
-                    var pos = Viewport.CameraPos + (Viewport.CameraForward * 10);
-                    pos /= Stage.GameType.UnitMultiplier;
-                    obj.Transform.Position = Types.ToHedgeLib(pos);
-
-                    // Load Object Resources (models, etc.) and Spawn Object
-                    Data.LoadObjectResources(Stage.GameType, obj);
-                    Viewport.SelectedInstances.Clear();
-                    Viewport.SelectObject(obj);
-
-                    // Refresh UI
-                    Program.MainForm.RefreshGUI();
-                    Program.MainForm.RefreshSceneView();
+                    script.Call("InitSetObject", obj);
+                }
+                catch (Exception ex)
+                {
+                    LuaTerminal.LogError($"ERROR: {ex.Message}");
                 }
 
-                // TODO: Open other types of files
+                // Set Object Position
+                var pos = Viewport.CameraPos + (Viewport.CameraForward * 10);
+                pos /= Stage.GameType.UnitMultiplier;
+                obj.Transform.Position = Types.ToHedgeLib(pos);
+
+                // Load Object Resources (models, etc.) and Spawn Object
+                Data.LoadObjectResources(Stage.GameType, obj);
+                Viewport.SelectedInstances.Clear();
+                Viewport.SelectObject(obj);
+
+                // Refresh UI
+                Program.MainForm.RefreshGUI();
+                Program.MainForm.RefreshSceneView();
+
             }
+
+            // TODO: Open other types of files
         }
     }
 }

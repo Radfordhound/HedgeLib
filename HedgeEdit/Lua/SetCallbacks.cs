@@ -14,8 +14,9 @@ namespace HedgeEdit.Lua
         {
             script.Globals["GetSetLayer"] = (Func<int, SetData>)GetSetLayer;
             script.Globals["GetSetLayerCount"] = (Func<int>)GetSetLayerCount;
-            script.Globals["ChangeCurrentSetLayer"] = (Action<SetData>)ChangeCurrentSetLayer;
             script.Globals["GetCurrentSetLayer"] = (Func<SetData>)GetCurrentSetLayer;
+            script.Globals["ChangeCurrentSetLayer"] = (Action<SetData>)ChangeCurrentSetLayer;
+            
             script.Globals["GenSetObjectParam"] = (Func<string,
                 object, SetObjectParam>)GenSetObjectParam;
 
@@ -52,24 +53,32 @@ namespace HedgeEdit.Lua
             }
         }
 
-        public void ChangeCurrentSetLayer(SetData layer)
+        // Lua Callbacks
+        public SetData GetSetLayer(int index)
         {
-            Stage.CurrentSetLayer = layer;
-            // TODO: Show current layer on UI
+            if (Data.SetLayers == null || index >= Data.SetLayers.Count)
+                return null;
+
+            return Data.SetLayers[index];
         }
 
-        // Lua Callbacks
         public int GetSetLayerCount()
         {
-            if (Stage.Sets == null)
+            if (Data.SetLayers == null)
                 return -1;
 
-            return Stage.Sets.Count;
+            return Data.SetLayers.Count;
         }
 
         public SetData GetCurrentSetLayer()
         {
-            return Stage.CurrentSetLayer;
+            return Data.CurrentSetLayer;
+        }
+
+        public void ChangeCurrentSetLayer(SetData layer)
+        {
+            Data.CurrentSetLayer = layer;
+            // TODO: Show current layer on UI
         }
 
         public SetObjectParam GenSetObjectParam(string type, object data)
@@ -86,14 +95,6 @@ namespace HedgeEdit.Lua
 
             var objParam = GenSetObjectParam(type, data);
             obj.CustomData.Add(name, objParam);
-        }
-
-        public SetData GetSetLayer(int index)
-        {
-            if (Stage.Sets == null || index >= Stage.Sets.Count)
-                return null;
-
-            return Stage.Sets[index];
         }
 
         public VPModel LoadObjectModel(string path, string resDir = null,
@@ -137,7 +138,7 @@ namespace HedgeEdit.Lua
             if (showProgress)
                 GUI.ShowProgress();
 
-            int layerCount = Stage.Sets.Count;
+            int layerCount = Data.SetLayers.Count;
             for (int i = 0; i < layerCount; ++i)
             {
                 if (showProgress)
@@ -147,7 +148,7 @@ namespace HedgeEdit.Lua
                         "Set Data {0:D2}/{1:D2}", i + 1, layerCount));
                 }
 
-                var layer = Stage.Sets[i];
+                var layer = Data.SetLayers[i];
                 layer.Save(Path.Combine(dir,
                     $"{prefix}{layer.Name}{suffix}"), true);
             }

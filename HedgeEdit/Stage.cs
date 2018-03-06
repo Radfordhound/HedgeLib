@@ -1,8 +1,6 @@
 ﻿using HedgeEdit.Lua;
 using HedgeEdit.UI;
-using HedgeLib.Sets;
 using System;
-using System.Collections.Generic;
 using System.IO;
 
 namespace HedgeEdit
@@ -10,8 +8,6 @@ namespace HedgeEdit
     public class Stage
     {
         // Variables/Constants
-        public static List<SetData> Sets = new List<SetData>();
-        public static SetData CurrentSetLayer = null;
         public static GameEntry GameType;
         public static EditorCache EditorCache;
         public static LuaScript Script => script;
@@ -118,15 +114,17 @@ namespace HedgeEdit
 
         public static void SaveSets()
         {
-            SaveSets(Sets, DataDir, CacheDir);
+            Save("SaveSets", DataDir, CacheDir);
         }
 
-        public static void SaveSets(List<SetData> sets, string dataDir, string cacheDir)
+        public static void SaveAll()
+        {
+            Save("SaveAll", DataDir, CacheDir);
+        }
+
+        public static void Save(string funcName, string dataDir, string cacheDir)
         {
             // Argument Checks
-            if (sets == null)
-                throw new ArgumentNullException("sets");
-
             if (string.IsNullOrEmpty(dataDir))
                 throw new ArgumentNullException("dataDir");
 
@@ -136,7 +134,7 @@ namespace HedgeEdit
             // Save Sets
             try
             {
-                script.Call("SaveSets", dataDir, CacheDir, ID);
+                script.Call(funcName, dataDir, CacheDir, ID);
             }
             catch (Exception ex)
             {
