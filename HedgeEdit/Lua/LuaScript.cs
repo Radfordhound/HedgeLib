@@ -1,5 +1,6 @@
 ﻿using HedgeEdit.UI;
 using HedgeLib;
+using HedgeLib.IO;
 using HedgeLib.Materials;
 using HedgeLib.Models;
 using HedgeLib.Sets;
@@ -8,6 +9,7 @@ using HedgeLib.Textures;
 using MoonSharp.Interpreter;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace HedgeEdit.Lua
 {
@@ -24,7 +26,7 @@ namespace HedgeEdit.Lua
         {
             // TODO: Maybe set more CoreModules?
             script = new Script(CoreModules.Basic | CoreModules.String |
-                CoreModules.TableIterators);
+                CoreModules.TableIterators | CoreModules.LoadMethods);
 
             // General Callbacks
             script.Globals["Log"] = (Action<object>)LuaTerminal.Log;
@@ -49,11 +51,13 @@ namespace HedgeEdit.Lua
             UserData.RegisterType<Vector3>();
             UserData.RegisterType<Quaternion>();
 
+            UserData.RegisterType<FileBase>();
             UserData.RegisterType<SetObjectParam>();
             UserData.RegisterType<SetObjectTransform>();
             UserData.RegisterType<SetObject>();
             UserData.RegisterType<SetData>();
 
+            UserData.RegisterType<KeyValuePair<string, GensMaterial>>();
             UserData.RegisterType<GensMaterial>();
             UserData.RegisterType<VPModel>();
             UserData.RegisterType<GensTerrainList>();

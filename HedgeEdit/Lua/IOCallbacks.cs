@@ -8,6 +8,8 @@ namespace HedgeEdit.Lua
         // Methods
         protected void InitIOCallbacks()
         {
+            script.Globals["IOPathCombine"] = (Func<string, string, string>)IOPathCombine;
+            script.Globals["IOPathCombine"] = (Func<string[], string>)IOPathCombine;
             script.Globals["IOFileExists"] = (Func<string, bool>)IOFileExists;
             script.Globals["IODirExists"] = (Func<string, bool>)IODirExists;
             script.Globals["IOGetFilesInDir"] = (Func<string,
@@ -23,22 +25,39 @@ namespace HedgeEdit.Lua
         }
 
         // Lua Callbacks
+        public string IOPathCombine(string path1, string path2)
+        {
+            path1 = FormatCacheDir(path1);
+            path2 = FormatCacheDir(path2);
+            return Path.Combine(path1, path2);
+        }
+
+        public string IOPathCombine(params string[] paths)
+        {
+            for (int i = 0; i < paths.Length; ++i)
+            {
+                paths[i] = FormatCacheDir(paths[i]);
+            }
+
+            return Path.Combine(paths);
+        }
+
         public bool IOFileExists(string path)
         {
-            path = string.Format(path, Stage.CacheDir, Stage.ID);
+            path = FormatCacheDir(path);
             return File.Exists(path);
         }
 
         public bool IODirExists(string path)
         {
-            path = string.Format(path, Stage.CacheDir, Stage.ID);
+            path = FormatCacheDir(path);
             return Directory.Exists(path);
         }
 
         public string[] IOGetFilesInDir(string path,
             string filter, bool includeSubDirs)
         {
-            path = string.Format(path, Stage.CacheDir, Stage.ID);
+            path = FormatCacheDir(path);
             if (!Directory.Exists(path))
                 return new string[0];
 
@@ -52,27 +71,27 @@ namespace HedgeEdit.Lua
 
         public string IOGetExtension(string path)
         {
-            path = string.Format(path, Stage.CacheDir, Stage.ID);
+            path = FormatCacheDir(path);
             return Path.GetExtension(path);
         }
 
         public string IOGetName(string path)
         {
-            path = string.Format(path, Stage.CacheDir, Stage.ID);
+            path = FormatCacheDir(path);
             return Path.GetFileName(path);
         }
 
         public string IOGetNameWithoutExtension(string path)
         {
-            path = string.Format(path, Stage.CacheDir, Stage.ID);
+            path = FormatCacheDir(path);
             return Path.GetFileNameWithoutExtension(path);
         }
 
         public void IOCopyFile(string source,
             string dest, bool overwrite = true)
         {
-            source = string.Format(source, Stage.CacheDir, Stage.ID);
-            dest = string.Format(dest, Stage.CacheDir, Stage.ID);
+            source = FormatCacheDir(source);
+            dest = FormatCacheDir(dest);
             File.Copy(source, dest, overwrite);
         }
     }
