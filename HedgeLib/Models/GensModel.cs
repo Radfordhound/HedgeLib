@@ -1,4 +1,5 @@
-﻿using HedgeLib.IO;
+﻿using HedgeLib.Headers;
+using HedgeLib.IO;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,6 +9,7 @@ namespace HedgeLib.Models
     public class GensModel : Model
     {
         // Variables/Constants
+        public HedgehogEngineHeader Header = new GensHeader();
         public const string Extension = ".model", TerrainExtension = ".terrain-model";
         public const int SubMeshSlotCount = 4;
         public const uint NextGenSignature = 0x133054A, PS3RootType = 0x3ED;
@@ -52,43 +54,7 @@ namespace HedgeLib.Models
         {
             // Header
             var reader = new GensReader(fileStream);
-            uint fileSize = reader.ReadUInt32();
-            uint rootNodeType = reader.ReadUInt32();
-
-            // Next-Gen Header
-            byte nextGenMarker = (byte)(fileSize >> 24);
-            if ((nextGenMarker & 0x80) != 0 && rootNodeType == NextGenSignature)
-            {
-                uint finalTableOffset = reader.ReadUInt32();
-                uint finalTableLength = reader.ReadUInt32();
-                reader.Offset = 0x10;
-
-                // Sections
-                // TODO: Do something with these
-                fileSize >>= 8;
-                while (fileStream.Position < fileSize)
-                {
-                    uint sectionOffset = reader.ReadUInt32();
-                    byte sectionType = (byte)(sectionOffset & 0xFF);
-                    sectionOffset >>= 8;
-
-                    uint sectionValue = reader.ReadUInt32();
-                    string sectionName = new string(reader.ReadChars(8));
-
-                    if (sectionName == "Contexts")
-                        break;
-                }
-            }
-
-            // Generations Header
-            else
-            {
-                uint finalTableOffset = reader.ReadUInt32();
-                uint rootNodeOffset = reader.ReadUInt32();
-                uint finalTableAbsOffset = reader.ReadUInt32();
-                uint fileEndOffset = reader.ReadUInt32();
-                reader.Offset = rootNodeOffset;
-            }
+            Header = reader.ReadHeader();
 
             // Data
             uint meshCount = reader.ReadUInt32();
@@ -117,12 +83,11 @@ namespace HedgeLib.Models
             for (uint i = 0; i < meshCount; ++i)
             {
                 reader.JumpTo(meshOffsets[i], false);
-                ReadMesh(reader, rootNodeType, scale);
+                ReadMesh(reader, scale);
             }
         }
 
-        protected void ReadMesh(GensReader reader,
-            uint rootNodeType, float scale = 1)
+        protected void ReadMesh(GensReader reader, float scale = 1)
         {
             // SubMesh Slots
             uint curPos = (uint)reader.BaseStream.Position;
@@ -147,15 +112,15 @@ namespace HedgeLib.Models
                 for (uint i2 = 0; i2 < subMeshCount; ++i2)
                 {
                     reader.JumpTo(subMeshOffsets[i2], false);
-                    ReadSubMesh(reader, rootNodeType, scale);
+                    var m = ReadSubMesh(reader, scale);
+                    m.Slot = (Mesh.Slots)i;
                 }
 
                 reader.JumpTo(curPos + (++i * 8));
             }
         }
 
-        protected void ReadSubMesh(GensReader reader,
-            uint rootNodeType, float scale = 1)
+        protected Mesh ReadSubMesh(GensReader reader, float scale = 1)
         {
             uint offset; // Generic uint reused for different data
 
@@ -164,7 +129,7 @@ namespace HedgeLib.Models
                 vertexSize, vertexOffset, vertexFormatOffset, boneCount,
                 boneOffset, textureUnitCount, textureUnitOffsetsOffset;
 
-            if (rootNodeType == PS3RootType)
+            if (Header.RootNodeType == PS3RootType)
             {
                 uint unknownOffset1 = reader.ReadUInt32(); // VertexFormat?
                 materialNameOffset = reader.ReadUInt32();
@@ -423,6 +388,7 @@ namespace HedgeLib.Models
             };
 
             Meshes.Add(mesh);
+            return mesh;
         }
 
         // TODO: Make a Save method

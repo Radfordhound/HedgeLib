@@ -17,7 +17,7 @@ namespace HedgeLib.Lights
         {
             // Header
             var reader = new GensReader(fileStream, true);
-            Header = reader.ReadHeader();
+            Header = new GensHeader(reader);
 
             // Root Node
             uint lightTotal = reader.ReadUInt32();
@@ -34,7 +34,7 @@ namespace HedgeLib.Lights
         public override void Save(Stream fileStream)
         {
             // Header
-            var writer = new GensWriter(fileStream, Header, true);
+            var writer = new GensWriter(fileStream, Header);
 
             // Root Node
             writer.Write((uint)LightNames.Count);

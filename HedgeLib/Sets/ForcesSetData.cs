@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Xml.Linq;
 
 namespace HedgeLib.Sets
 {
@@ -631,6 +632,28 @@ namespace HedgeLib.Sets
             {
                 writer.Write(id);
                 writer.Write(unknown1);
+            }
+
+            public void ImportXML(XElement elem)
+            {
+                var idAttr = elem.Attribute("id");
+                var uk1Attr = elem.Attribute("unknown1");
+
+                ushort id = 0, uk1 = 0;
+                if (idAttr != null)
+                    ushort.TryParse(idAttr.Value, out id);
+
+                if (uk1Attr != null)
+                    ushort.TryParse(uk1Attr.Value, out uk1);
+
+                ID = id;
+                Unknown1 = uk1;
+            }
+
+            public void ExportXML(XElement elem)
+            {
+                elem.Add(new XAttribute("id", ID));
+                elem.Add(new XAttribute("unknown1", Unknown1));
             }
 
             public override string ToString()

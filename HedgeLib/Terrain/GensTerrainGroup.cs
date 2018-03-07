@@ -19,7 +19,7 @@ namespace HedgeLib.Terrain
         {
             // Header
             var reader = new GensReader(fileStream, true);
-            Header = reader.ReadHeader();
+            Header = new GensHeader(reader);
 
             // Root Node
             uint instanceInfoCount = reader.ReadUInt32();
@@ -73,7 +73,7 @@ namespace HedgeLib.Terrain
         public override void Save(Stream fileStream)
         {
             // Header
-            var writer = new GensWriter(fileStream, Header, true);
+            var writer = new GensWriter(fileStream, Header);
 
             // Root Node
             writer.Write(InstanceInfos.Length);

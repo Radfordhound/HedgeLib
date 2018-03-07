@@ -20,7 +20,7 @@ namespace HedgeLib.Terrain
         {
             // Header
             var reader = new GensReader(fileStream);
-            Header = reader.ReadHeader();
+            Header = new GensHeader(reader);
 
             // Root Node
             uint modelFileNameOffset = reader.ReadUInt32();

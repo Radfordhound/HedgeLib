@@ -12,6 +12,12 @@ namespace HedgeLib.Models
         public float[] VertexData;
         public uint[] Triangles;
         public string MaterialName;
+        public Slots Slot = Slots.Default;
+
+        public enum Slots
+        {
+            Default, Transparent, Punch, Special
+        }
 
         public const int StructureLength = 12, StructureByteLength = 48;
         public const int VertPos = 0, NormPos = 3, ColorPos = 6, UVPos = 10;

@@ -9,9 +9,9 @@ namespace HedgeLib.Lights
     {
         // Variables/Constants
         public GensHeader Header = new GensHeader();
-        public Vector3 Position, Color;
+        public Vector3 Position = new Vector3(), Color = new Vector3();
         public float UnknownTotal1, UnknownTotal2, UnknownTotal3,
-            UnknownFloat1, UnknownFloat2;
+            OmniInnerRange, OmniOuterRange;
 
         public LightTypes LightType;
         public const string Extension = ".light";
@@ -21,7 +21,7 @@ namespace HedgeLib.Lights
         {
             // Header
             var reader = new GensReader(fileStream, true);
-            Header = reader.ReadHeader();
+            Header = new GensHeader(reader);
 
             // Root Node
             uint lightType = reader.ReadUInt32();
@@ -43,15 +43,15 @@ namespace HedgeLib.Lights
                 UnknownTotal2 = reader.ReadUInt32();
                 UnknownTotal3 = reader.ReadUInt32();
 
-                UnknownFloat1 = reader.ReadSingle();
-                UnknownFloat2 = reader.ReadSingle();
+                OmniInnerRange = reader.ReadSingle();
+                OmniOuterRange = reader.ReadSingle();
             }
         }
 
         public override void Save(Stream fileStream)
         {
             // Header
-            var writer = new GensWriter(fileStream, true);
+            var writer = new GensWriter(fileStream, Header);
 
             // Root Node
             writer.Write((uint)LightType);
@@ -66,8 +66,8 @@ namespace HedgeLib.Lights
                 writer.Write(UnknownTotal2);
                 writer.Write(UnknownTotal3);
 
-                writer.Write(UnknownFloat1);
-                writer.Write(UnknownFloat2);
+                writer.Write(OmniInnerRange);
+                writer.Write(OmniOuterRange);
             }
 
             writer.FinishWrite(Header);

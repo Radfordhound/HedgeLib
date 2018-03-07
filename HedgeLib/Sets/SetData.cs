@@ -179,26 +179,19 @@ namespace HedgeLib.Sets
 
                     foreach (var refElem in paramElem.Elements("ForcesObjectReference"))
                     {
-                        var idAttr = refElem.Attribute("id");
-                        var uk1Attr = refElem.Attribute("unknown1");
-
-                        ushort id = 0, uk1 = 0;
-                        if (idAttr != null)
-                            ushort.TryParse(idAttr.Value, out id);
-
-                        if (uk1Attr != null)
-                            ushort.TryParse(uk1Attr.Value, out uk1);
-
-                        arr[i] = new ForcesSetData.ObjectReference()
-                        {
-                            ID = id,
-                            Unknown1 = uk1
-                        };
-
+                        var objRef = new ForcesSetData.ObjectReference();
+                        objRef.ImportXML(refElem);
+                        arr[i] = objRef;
                         ++i;
                     }
 
                     data = arr;
+                }
+                else if (dataType  == typeof(ForcesSetData.ObjectReference))
+                {
+                    var objRef = new ForcesSetData.ObjectReference();
+                    objRef.ImportXML(paramElem);
+                    data = objRef;
                 }
                 else
                 {
@@ -288,6 +281,9 @@ namespace HedgeLib.Sets
             {
                 var dataType = param.DataType;
                 var dataTypeAttr = new XAttribute("type", dataType.Name);
+                if (dataType == typeof(ForcesSetData.ObjectReference))
+                    dataTypeAttr.Value = "ForcesObjectReference";
+
                 var elem = new XElement((string.IsNullOrEmpty(name)) ?
                     "Parameter" : name, dataTypeAttr);
 
@@ -320,10 +316,15 @@ namespace HedgeLib.Sets
 
                     foreach (var v in arr)
                     {
-                        elem.Add(new XElement("ForcesObjectReference",
-                            new XAttribute("id", v.ID),
-                            new XAttribute("unknown1", v.Unknown1)));
+                        var objRefElem = new XElement("ForcesObjectReference");
+                        v.ExportXML(objRefElem);
+                        elem.Add(objRefElem);
                     }
+                }
+                else if (dataType == typeof(ForcesSetData.ObjectReference))
+                {
+                    var objRef = (param.Data as ForcesSetData.ObjectReference);
+                    objRef.ExportXML(elem);
                 }
                 else
                 {

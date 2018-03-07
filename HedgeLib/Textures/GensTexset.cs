@@ -35,7 +35,7 @@ namespace HedgeLib.Textures
         public override void Load(Stream fileStream)
         {
             var reader = new GensReader(fileStream);
-            Header = reader.ReadHeader();
+            Header = new GensHeader(reader);
 
             uint textureCount = reader.ReadUInt32();
             uint texturesOffset = reader.ReadUInt32();
@@ -46,7 +46,7 @@ namespace HedgeLib.Textures
 
         public override void Save(Stream fileStream)
         {
-            var writer = new GensWriter(fileStream);
+            var writer = new GensWriter(fileStream, Header);
             writer.Write(Textures.Count);
             writer.AddOffset("texturesOffset");
 

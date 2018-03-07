@@ -80,7 +80,7 @@ namespace HedgeLib.Misc
         public override void Load(Stream fileStream)
         {
             var reader = new GensReader(fileStream);
-            Header = reader.ReadHeader();
+            Header = new GensHeader(reader);
 
             // Root Node
             uint entryCount = reader.ReadUInt32();
@@ -116,7 +116,7 @@ namespace HedgeLib.Misc
 
         public override void Save(Stream fileStream)
         {
-            var writer = new GensWriter(fileStream);
+            var writer = new GensWriter(fileStream, Header);
 
             // Root Node
             writer.Write(Entries.Count);

@@ -3,7 +3,6 @@ using HedgeLib.IO;
 using System;
 using System.Collections.Generic;
 using HedgeLib.Headers;
-using System.Text;
 using HedgeLib.Textures;
 
 namespace HedgeLib.Materials
@@ -14,7 +13,7 @@ namespace HedgeLib.Materials
         // Variables/Constants
         public List<Parameter> Parameters = new List<Parameter>();
         public GensTexset Texset = new GensTexset();
-        public GensHeader Header = new GensHeader(); // TODO
+        public HedgehogEngineHeader Header = new GensHeader();
         public string ShaderName = "Common_d", SubShaderName = "Common_d";
         public string TexsetName => texsetName;
 
@@ -23,7 +22,7 @@ namespace HedgeLib.Materials
             AdditiveBlending = false, UnknownFlag1 = false;
 
         protected string texsetName;
-        public const string Extension = ".material";
+        public const string Extension = ".material", MaterialMirageType = "Material";
         public const uint NextGenSignature = 0x133054A;
 
         // Methods
@@ -51,49 +50,7 @@ namespace HedgeLib.Materials
         {
             // Header
             var reader = new GensReader(fileStream);
-            uint fileSize = reader.ReadUInt32();
-            uint rootNodeType = reader.ReadUInt32();
-
-            // Next-Gen Header
-            byte nextGenMarker = (byte)(fileSize >> 24);
-            if (nextGenMarker == 0x80 && rootNodeType == NextGenSignature)
-            {
-                uint finalTableOffset = reader.ReadUInt32();
-                uint finalTableLength = reader.ReadUInt32();
-                reader.Offset = 0x10;
-
-                // Sections
-                // TODO: Do something with these
-                fileSize >>= 8;
-                while (fileStream.Position < fileSize)
-                {
-                    uint sectionOffset = reader.ReadUInt32();
-                    byte sectionType = (byte)(sectionOffset & 0xFF);
-                    sectionOffset >>= 8;
-
-                    uint sectionValue = reader.ReadUInt32();
-                    string sectionName = new string(reader.ReadChars(8));
-
-                    if (sectionName == "Contexts")
-                        break;
-                }
-            }
-
-            // Generations Header
-            else
-            {
-                Header = new GensHeader()
-                {
-                    FileSize = fileSize,
-                    RootNodeType = rootNodeType,
-                    OffsetFinalTable = reader.ReadUInt32(),
-                    RootNodeOffset = reader.ReadUInt32(),
-                    OffsetFinalTableAbs = reader.ReadUInt32(),
-                    FileEndOffset = reader.ReadUInt32()
-                };
-
-                reader.Offset = Header.RootNodeOffset;
-            }
+            Header = reader.ReadHeader();
 
             // Root Node
             uint shaderOffset = reader.ReadUInt32();
@@ -196,29 +153,7 @@ namespace HedgeLib.Materials
             }
         }
 
-        // TODO: Do header stuff better
-        public void SaveNewHeader(string filePath, bool overwrite = false)
-        {
-            // Throw exceptions if necessary
-            if (string.IsNullOrEmpty(filePath))
-                throw new ArgumentNullException("filePath");
-
-            if (!overwrite && File.Exists(filePath))
-                throw new Exception("Cannot save the given file - it already exists!");
-
-            // Save the file
-            using (var fileStream = File.Create(filePath))
-            {
-                Save(fileStream, true);
-            }
-        }
-
         public override void Save(Stream fileStream)
-        {
-            Save(fileStream, false);
-        }
-
-        public void Save(Stream fileStream, bool useNewHeader)
         {
             if (Texset.Textures.Count > 255)
             {
@@ -227,10 +162,7 @@ namespace HedgeLib.Materials
             }
 
             // Header
-            var writer = (!useNewHeader) ?
-                new GensWriter(fileStream) :
-                new ExtendedBinaryWriter(fileStream,
-                    Encoding.ASCII, true);
+            var writer = new GensWriter(fileStream, Header);
 
             // Root Node
             writer.AddOffset("shaderOffset");
@@ -303,17 +235,7 @@ namespace HedgeLib.Materials
             }
 
             // Footer
-            if (useNewHeader)
-            {
-                // TODO: Write new header
-                throw new NotImplementedException(
-                    "Cannot yet write next-gen header");
-            }
-            else
-            {
-                var gensWriter = (GensWriter)writer;
-                gensWriter.FinishWrite(Header);
-            }
+            writer.FinishWrite(Header, MaterialMirageType);
         }
 
         // Other
