@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Unknown1 type="uint" default="0" description="" />
+  <ShootingRate type="float" default="3" description="How high the shooting rate is" />
+  <Unknown3 type="uint" default="0" description="" />
+  <AttackRange type="float" default="300" description="How far the pod shoots" />
+  
+  <Unknown5 type="float" default="90" description="" />
+  <Unknown6 type="float" default="90" description="" />
+  <ShootingHeight type="float" default="240" description="How high the rocket launches" />
+  <Unknown8 type="float" default="0.6" description="" />
+  
+  <RocketSpeed type="float" default="100" description="The speed of the rocket" />
+  <RocketSpeed2 type="float" default="0.5" description="The higher the slower?" />
+  <RotationSpeed type="float" default="1" description="The speed of the rocket when it starts spinning in the air after launch." />
+  <Unknown12 type="uint" default="5" description="" />
+  
+  <Unknown13 type="ulong" default="0" description="" />
+  <Unknown14 type="ulong" default="0" description="" />
+
+  <Extra type="model" value="w7_obj_researchmissile.model" />
+  <Extra type="description" value="Ready.... LAUNCH!!" />
+  <Extra type="RawByteLength" length="48" />
+</Template>
