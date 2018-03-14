@@ -39,10 +39,12 @@ namespace ForcesGISMEditor
 
         private void SaveGISM(string fileName)
         {
+            FileName = fileName;
             SavePresets(PresetCmbBx.SelectedIndex);
             SaveValues();
 
             Gism.Save(fileName, overwrite: true);
+            UpdateTitle();
         }
 
         // GUI Events
@@ -73,7 +75,10 @@ namespace ForcesGISMEditor
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
-            SaveGISM(FileName);
+            if (string.IsNullOrEmpty(FileName))
+                SaveAs_Click(sender, e);
+            else
+                SaveGISM(FileName);
         }
 
         private void SaveAs_Click(object sender, RoutedEventArgs e)
