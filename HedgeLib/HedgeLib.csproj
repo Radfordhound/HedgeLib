@@ -59,6 +59,7 @@
     <Compile Include="Headers\MirageHeader.cs" />
     <Compile Include="Materials\GensMaterial.cs" />
     <Compile Include="Math\AABB.cs" />
+    <Compile Include="Misc\ForcesGISM.cs" />
     <Compile Include="RFL\ForcesDLCParam.cs" />
     <Compile Include="RFL\ForcesRFL.cs" />
     <Compile Include="Misc\GensPFI.cs" />

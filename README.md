@@ -17,6 +17,7 @@ Right now it supports the following:
 - [Reading/Writing Materials.](HedgeLib/Materials/GensMaterial.cs)
 
 ### Sonic Forces
+- [Reading/Writing Gismos.](HedgeLib/Misc/ForcesGISM.cs)
 - [Reading Archives.](HedgeLib/Archives/ForcesArchive.cs)
 - [Reading/Writing Set Data.](HedgeLib/Sets/ForcesSetData.cs)
 
@@ -63,6 +64,9 @@ Right now this includes the following:
 - [Hedge PFD](HedgeTools/HedgePFD)
   * A Command Line tool that allows for quick packing of Generations/Unleashed PFD
   files and generation of their accompanying PFI files.
+
+- [Forces GISM Editor](HedgeTools/ForcesGISMEditor)
+  * A GUI tool that allows editing of the Forces GISM format (basically a "Gismo" used by a stage).
 
 - [Hedge GISM Editor](HedgeTools/HedgeGISMEditor)
   * A GUI tool that allows editing of the Lost World GISM format (basically a list of "Gismos" used by a stage).
