@@ -48,60 +48,7 @@ namespace HedgeLib.RFL
         {
             foreach (var elem in xml.Root.Elements("StageEntry"))
             {
-                // Stage ID and Index
-                var stageIndexAttr = elem.Attribute("StageIndex");
-                var stageIDAttr = elem.Attribute("StageID");
-
-                byte.TryParse(stageIndexAttr?.Value, out var stageIndex);
-
-                // Time
-                var timeBasisElem = elem.Element("TimeBasis");
-                var timeDownElem = elem.Element("TimeDown");
-
-                uint.TryParse(timeBasisElem?.Value, out var timeBasis);
-                uint.TryParse(timeDownElem?.Value, out var timeDown);
-
-                // Miss Bonuses
-                var noMissBonusElem = elem.Element("NoMissBonus");
-                var oneMissBonusElem = elem.Element("OneMissBonus");
-                var twoMissBonusElem = elem.Element("TwoMissBonus");
-                var threeMissBonusElem = elem.Element("ThreeMissBonus");
-                var fourMissBonusElem = elem.Element("FourMissBonus");
-                var fivePlusMissBonusElem = elem.Element("FivePlusMissBonus");
-
-                uint.TryParse(noMissBonusElem?.Value, out var noMissBonus);
-                uint.TryParse(oneMissBonusElem?.Value, out var oneMissBonus);
-                uint.TryParse(twoMissBonusElem?.Value, out var twoMissBonus);
-                uint.TryParse(threeMissBonusElem?.Value, out var threeMissBonus);
-                uint.TryParse(fourMissBonusElem?.Value, out var fourMissBonus);
-                uint.TryParse(fivePlusMissBonusElem?.Value, out var fivePlusMissBonus);
-
-                // Rank Scores
-                var SRankScoreElem = elem.Element("SRankScore");
-                var ARankScoreElem = elem.Element("ARankScore");
-                var BRankScoreElem = elem.Element("BRankScore");
-
-                uint.TryParse(SRankScoreElem?.Value, out var SRankScore);
-                uint.TryParse(ARankScoreElem?.Value, out var ARankScore);
-                uint.TryParse(BRankScoreElem?.Value, out var BRankScore);
-
-                // Stage Entry
-                StageEntries.Add(new StageEntry()
-                {
-                    StageID = stageIDAttr?.Value,
-                    StageIndex = stageIndex,
-                    TimeBasis = timeBasis,
-                    TimeDown = timeDown,
-                    NoMissBonus = noMissBonus,
-                    OneMissBonus = oneMissBonus,
-                    TwoMissBonus = twoMissBonus,
-                    ThreeMissBonus = threeMissBonus,
-                    FourMissBonus = fourMissBonus,
-                    FivePlusMissBonus = fivePlusMissBonus,
-                    SRankScore = SRankScore,
-                    ARankScore = ARankScore,
-                    BRankScore = BRankScore
-                });
+                StageEntries.Add(new StageEntry(elem));
             }
         }
 
@@ -114,31 +61,7 @@ namespace HedgeLib.RFL
 
             foreach (var entry in StageEntries)
             {
-                var elem = new XElement("StageEntry",
-                    new XAttribute("StageIndex", entry.StageIndex),
-                    new XAttribute("StageID", entry.StageID));
-
-                // Time
-                elem.Add(new XComment("Time"));
-                elem.Add(new XElement("TimeBasis", entry.TimeBasis));
-                elem.Add(new XElement("TimeDown", entry.TimeDown));
-
-                // Miss Bonuses
-                elem.Add(new XComment("Miss Bonuses"));
-                elem.Add(new XElement("NoMissBonus", entry.NoMissBonus));
-                elem.Add(new XElement("OneMissBonus", entry.OneMissBonus));
-                elem.Add(new XElement("TwoMissBonus", entry.TwoMissBonus));
-                elem.Add(new XElement("ThreeMissBonus", entry.ThreeMissBonus));
-                elem.Add(new XElement("FourMissBonus", entry.FourMissBonus));
-                elem.Add(new XElement("FivePlusMissBonus", entry.FivePlusMissBonus));
-
-                // Rank Scores
-                elem.Add(new XComment("Rank Scores"));
-                elem.Add(new XElement("SRankScore", entry.SRankScore));
-                elem.Add(new XElement("ARankScore", entry.ARankScore));
-                elem.Add(new XElement("BRankScore", entry.BRankScore));
-
-                root.Add(elem);
+                root.Add(entry.GenerateXElement());
             }
 
             ExportXML(fileStream, root);
@@ -162,6 +85,11 @@ namespace HedgeLib.RFL
             public StageEntry(BINAReader reader)
             {
                 Read(reader);
+            }
+
+            public StageEntry(XElement elem)
+            {
+                ImportXElement(elem);
             }
 
             // Methods
@@ -246,6 +174,76 @@ namespace HedgeLib.RFL
                     writer.Write(0UL);
 
                 writer.Write(0UL);
+            }
+
+            public void ImportXElement(XElement elem)
+            {
+                // Stage ID and Index
+                var stageIndexAttr = elem.Attribute("StageIndex");
+                var stageIDAttr = elem.Attribute("StageID");
+
+                StageID = stageIDAttr?.Value;
+                byte.TryParse(stageIndexAttr?.Value, out StageIndex);
+
+                // Time
+                var timeBasisElem = elem.Element("TimeBasis");
+                var timeDownElem = elem.Element("TimeDown");
+
+                uint.TryParse(timeBasisElem?.Value, out TimeBasis);
+                uint.TryParse(timeDownElem?.Value, out TimeDown);
+
+                // Miss Bonuses
+                var noMissBonusElem = elem.Element("NoMissBonus");
+                var oneMissBonusElem = elem.Element("OneMissBonus");
+                var twoMissBonusElem = elem.Element("TwoMissBonus");
+                var threeMissBonusElem = elem.Element("ThreeMissBonus");
+                var fourMissBonusElem = elem.Element("FourMissBonus");
+                var fivePlusMissBonusElem = elem.Element("FivePlusMissBonus");
+
+                uint.TryParse(noMissBonusElem?.Value, out NoMissBonus);
+                uint.TryParse(oneMissBonusElem?.Value, out OneMissBonus);
+                uint.TryParse(twoMissBonusElem?.Value, out TwoMissBonus);
+                uint.TryParse(threeMissBonusElem?.Value, out ThreeMissBonus);
+                uint.TryParse(fourMissBonusElem?.Value, out FourMissBonus);
+                uint.TryParse(fivePlusMissBonusElem?.Value, out FivePlusMissBonus);
+
+                // Rank Scores
+                var SRankScoreElem = elem.Element("SRankScore");
+                var ARankScoreElem = elem.Element("ARankScore");
+                var BRankScoreElem = elem.Element("BRankScore");
+
+                uint.TryParse(SRankScoreElem?.Value, out SRankScore);
+                uint.TryParse(ARankScoreElem?.Value, out ARankScore);
+                uint.TryParse(BRankScoreElem?.Value, out BRankScore);
+            }
+
+            public XElement GenerateXElement()
+            {
+                var elem = new XElement("StageEntry",
+                    new XAttribute("StageIndex", StageIndex),
+                    new XAttribute("StageID", StageID));
+
+                // Time
+                elem.Add(new XComment("Time"));
+                elem.Add(new XElement("TimeBasis", TimeBasis));
+                elem.Add(new XElement("TimeDown", TimeDown));
+
+                // Miss Bonuses
+                elem.Add(new XComment("Miss Bonuses"));
+                elem.Add(new XElement("NoMissBonus", NoMissBonus));
+                elem.Add(new XElement("OneMissBonus", OneMissBonus));
+                elem.Add(new XElement("TwoMissBonus", TwoMissBonus));
+                elem.Add(new XElement("ThreeMissBonus", ThreeMissBonus));
+                elem.Add(new XElement("FourMissBonus", FourMissBonus));
+                elem.Add(new XElement("FivePlusMissBonus", FivePlusMissBonus));
+
+                // Rank Scores
+                elem.Add(new XComment("Rank Scores"));
+                elem.Add(new XElement("SRankScore", SRankScore));
+                elem.Add(new XElement("ARankScore", ARankScore));
+                elem.Add(new XElement("BRankScore", BRankScore));
+
+                return elem;
             }
         }
     }
