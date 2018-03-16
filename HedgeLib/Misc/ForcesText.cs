@@ -89,6 +89,9 @@ namespace HedgeLib.Misc
                             if (isReadingButton)
                             {
                                 isReadingButton = false;
+                                chars.Add(0x57); // NullReplaceChar byte1
+                                chars.Add(0x2B); // NullReplaceChar byte2
+                                continue;
                             }
                             else break;
                         }
