@@ -114,20 +114,7 @@ namespace ForcesGISMEditor
 
         private void SetGUIEnabled(bool enable)
         {
-            // SORRY FOR THIS LOL
-            BoundingBoxTypeCmbbx.IsEnabled = SpeedToBrkTxtbx.IsEnabled = StaticCOLChkbx.IsEnabled =
-                BoundingBoxXTxtBx.IsEnabled = BoundingBoxYTxtBx.IsEnabled =
-                BoundingBoxZTxtBx.IsEnabled = AnimationNameTxtbx.IsEnabled =
-                SkeletonNameTxtbx.IsEnabled = UnkByteTxtbx.IsEnabled = UnkShortTxtbx.IsEnabled =
-                UnkFloat1Txtbx.IsEnabled = UnkFloat2Txtbx.IsEnabled = UnkFloat3Txtbx.IsEnabled =
-                UnkFloat5Txtbx.IsEnabled = UnkFloat6Txtbx.IsEnabled = UnkFloat7Txtbx.IsEnabled =
-                UnkFloat8Txtbx.IsEnabled = UnkFloat9Txtbx.IsEnabled = PresetCmbBx.IsEnabled =
-                PresetUnkOffset.IsEnabled = PresetUnkByte1.IsEnabled = PresetUnkByte2.IsEnabled =
-                IsBreakable.IsEnabled = PresetUnkFloat1.IsEnabled = PresetUnkFloat2.IsEnabled =
-                FlowerRotation.IsEnabled = EffectNameTxtBx.IsEnabled = CueNameTxtBx.IsEnabled =
-                UnusedOffsetTxtBx.IsEnabled = PresetEndFloat1.IsEnabled =
-                PresetEndFloat2.IsEnabled = PresetEndFloat3.IsEnabled = PresetEndFloat4.IsEnabled =
-                PresetEndFloat5.IsEnabled = enable;
+            WorkspaceGrid.IsEnabled = enable;
         }
         
         public void UpdateValues()
@@ -185,7 +172,6 @@ namespace ForcesGISMEditor
 
             EffectNameTxtBx.Text = preset.EffectName;
             CueNameTxtBx.Text = preset.CueName;
-            UnusedOffsetTxtBx.Text = preset.UnusedOffset;
 
             PresetEndFloat1.Text = preset.EndFloat1.ToString();
             PresetEndFloat2.Text = preset.EndFloat2.ToString();
@@ -194,6 +180,16 @@ namespace ForcesGISMEditor
             PresetEndFloat5.Text = preset.EndFloat5.ToString();
 
             prevSelectedPreset = presetValue;
+
+            if (PresetCmbBx.SelectedIndex == 5)
+                PresetByte3Txt.Text = "Is Breakable";
+            else
+                PresetByte3Txt.Text = "UnknownByte3";
+
+            if (PresetCmbBx.SelectedIndex == 1)
+                PresetFloat3Txt.Text = "FlowerRotation";
+            else
+                PresetFloat3Txt.Text = "UnknownFloat3";
         }
 
         private void SaveValues()
@@ -239,7 +235,6 @@ namespace ForcesGISMEditor
 
             prop.EffectName = EffectNameTxtBx.Text;
             prop.CueName = CueNameTxtBx.Text;
-            prop.UnusedOffset = UnusedOffsetTxtBx.Text;
 
             float.TryParse(PresetEndFloat1.Text, out prop.EndFloat1);
             float.TryParse(PresetEndFloat2.Text, out prop.EndFloat2);
