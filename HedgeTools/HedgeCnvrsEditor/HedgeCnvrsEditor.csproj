@@ -34,7 +34,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="HedgeLib">
-      <HintPath>..\HedgeLib\bin\Debug\HedgeLib.dll</HintPath>
+      <HintPath>..\..\HedgeLib\bin\Debug\HedgeLib.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27130.2036
+VisualStudioVersion = 15.0.27130.2020
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HedgeLib", "HedgeLib\HedgeLib.csproj", "{EEB16FCA-FF9F-40B5-9D43-F2460AA930C8}"
 EndProject
@@ -18,6 +18,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "HedgeTools", "HedgeTools", "{965BE90A-F869-45E1-8F44-97BEBAA12A06}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ForcesGISMEditor", "HedgeTools\ForcesGISMEditor\ForcesGISMEditor.csproj", "{07D4587C-AE7C-4E98-A3C8-2F08B72600E4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HedgeCnvrsEditor", "HedgeTools\HedgeCnvrsEditor\HedgeCnvrsEditor.csproj", "{1B424F08-998B-4575-B2CE-AFE58F79B42D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -53,6 +55,10 @@ Global
 		{07D4587C-AE7C-4E98-A3C8-2F08B72600E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{07D4587C-AE7C-4E98-A3C8-2F08B72600E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{07D4587C-AE7C-4E98-A3C8-2F08B72600E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1B424F08-998B-4575-B2CE-AFE58F79B42D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1B424F08-998B-4575-B2CE-AFE58F79B42D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1B424F08-998B-4575-B2CE-AFE58F79B42D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1B424F08-998B-4575-B2CE-AFE58F79B42D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -63,6 +69,7 @@ Global
 		{2C3E5A42-314C-4A1B-9E71-8A34B286F42E} = {965BE90A-F869-45E1-8F44-97BEBAA12A06}
 		{01BC5182-8158-462E-9577-E3BC39605A4B} = {965BE90A-F869-45E1-8F44-97BEBAA12A06}
 		{07D4587C-AE7C-4E98-A3C8-2F08B72600E4} = {965BE90A-F869-45E1-8F44-97BEBAA12A06}
+		{1B424F08-998B-4575-B2CE-AFE58F79B42D} = {965BE90A-F869-45E1-8F44-97BEBAA12A06}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {637995FC-1FB4-45F7-8336-B9C78FAA11F7}
