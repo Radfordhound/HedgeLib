@@ -583,7 +583,7 @@ namespace HedgeLib.IO
             var chArr = value.ToCharArray();
             var bytes = Encoding.Unicode.GetBytes(chArr);
             Write(bytes);
-            WriteNulls(2);
+            Write((ushort)0);
         }
 
         public void FixPadding(uint amount = 4)

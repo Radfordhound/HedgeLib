@@ -20,8 +20,7 @@ namespace HedgeLib.Sets
             Dictionary<string, SetObjectType> objectTemplates)
         {
             // BINA Header
-            var enc = Encoding.GetEncoding("shift-jis");
-            var reader = new BINAReader(fileStream, enc, BINA.BINATypes.Version2);
+            var reader = new BINAReader(fileStream, BINA.BINATypes.Version2);
             Header = reader.ReadHeader();
 
             // Set Data Header
@@ -308,8 +307,7 @@ namespace HedgeLib.Sets
         public override void Save(Stream fileStream)
         {
             // BINA Header
-            var enc = Encoding.GetEncoding("shift-jis");
-            var writer = new BINAWriter(fileStream, enc,
+            var writer = new BINAWriter(fileStream,
                 BINA.BINATypes.Version2, false);
 
             Header.Version = 210;
