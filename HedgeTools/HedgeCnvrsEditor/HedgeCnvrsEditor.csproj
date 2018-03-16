@@ -33,9 +33,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="HedgeLib">
-      <HintPath>..\..\HedgeLib\bin\Debug\HedgeLib.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -90,6 +87,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+    <ItemGroup>
+    <ProjectReference Include="..\..\HedgeLib\HedgeLib.csproj">
+      <Project>{eeb16fca-ff9f-40b5-9d43-f2460aa930c8}</Project>
+      <Name>HedgeLib</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
