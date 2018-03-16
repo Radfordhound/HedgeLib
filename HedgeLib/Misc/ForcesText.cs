@@ -425,8 +425,11 @@ namespace HedgeLib.Misc
                     var entry = node.Entries[i2];
                     writer.FillInOffsetLong($"dataOffset{i}{i2}", false, false);
 
-                    var chArr = entry.Data.ToCharArray();
-                    var bytes = Encoding.Unicode.GetBytes(chArr);
+                    //var chArr = entry.Data.ToCharArray();
+                    var sb = new StringBuilder(entry.Data);
+                    sb.Replace(NullReplaceChar, '\0');
+                    sb.Replace("\r\n", "\n");
+                    var bytes = Encoding.Unicode.GetBytes(sb.ToString());
 
                     writer.Write(bytes);
                     writer.Write((ushort)0);
