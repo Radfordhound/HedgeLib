@@ -214,7 +214,7 @@ namespace HedgeCnvrsEditor
                     case 1:
                         {
                             layout.UnknownData2 = float.TryParse(dataBx.Text, out tempFloat) ?
-                                tempInt : (dataBx.Text.ToLower() == "null") ? (float?)null : 0;
+                                tempFloat : ((dataBx.Text.ToLower() == "null") ? (float?)null : 0);
                             break;
                         }
                     case 2:
