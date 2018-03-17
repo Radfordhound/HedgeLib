@@ -208,43 +208,43 @@ namespace HedgeCnvrsEditor
                     case 0:
                         {
                             layout.UnknownData1 = int.TryParse(dataBx.Text, out tempInt) ?
-                                tempInt : 0;
+                                tempInt : (dataBx.Text.ToLower() == "null") ? (int?)null : 0;
                             break;
                         }
                     case 1:
                         {
-                            layout.UnknownData2 = int.TryParse(dataBx.Text, out tempInt) ?
-                                tempInt : 0;
+                            layout.UnknownData2 = float.TryParse(dataBx.Text, out tempFloat) ?
+                                tempInt : (dataBx.Text.ToLower() == "null") ? (float?)null : 0;
                             break;
                         }
                     case 2:
                         {
                             layout.UnknownData3 = float.TryParse(dataBx.Text, out tempFloat) ?
-                                tempFloat : 0;
+                                tempFloat : (dataBx.Text.ToLower() == "null") ? (float?)null : 0;
                             break;
                         }
                     case 3:
                         {
                             layout.UnknownData4 = int.TryParse(dataBx.Text, out tempInt) ?
-                                tempInt : 0;
+                                tempInt : (dataBx.Text.ToLower() == "null") ? (int?)null : 0;
                             break;
                         }
                     case 4:
                         {
                             layout.UnknownData5 = int.TryParse(dataBx.Text, out tempInt) ?
-                                tempInt : 0;
+                                tempInt : (dataBx.Text.ToLower() == "null") ? (int?)null : 0;
                             break;
                         }
                     case 5:
                         {
                             layout.UnknownData6 = int.TryParse(dataBx.Text, out tempInt) ?
-                                tempInt : 0;
+                                tempInt : (dataBx.Text.ToLower() == "null") ? (int?)null : 0;
                             break;
                         }
                     case 6:
                         {
                             layout.UnknownData7 = int.TryParse(dataBx.Text, out tempInt) ?
-                                tempInt : 0;
+                                tempInt : (dataBx.Text.ToLower() == "null") ? (int?)null : 0;
                             break;
                         }
                     case 7:
@@ -269,43 +269,43 @@ namespace HedgeCnvrsEditor
                     case 1:
                         {
                             entryType.UnknownFloat1 = float.TryParse(dataBx.Text, out tempFloat) ?
-                                tempFloat : 0;
+                                tempFloat : (dataBx.Text.ToLower() == "null") ? (float?)null : 0;
                             break;
                         }
                     case 2:
                         {
                             entryType.UnknownFloat2 = float.TryParse(dataBx.Text, out tempFloat) ?
-                                tempFloat : 0;
+                                tempFloat : (dataBx.Text.ToLower() == "null") ? (float?)null : 0;
                             break;
                         }
                     case 3:
                         {
                             entryType.UnknownFloat3 = float.TryParse(dataBx.Text, out tempFloat) ?
-                                tempFloat : 0;
+                                tempFloat : (dataBx.Text.ToLower() == "null") ? (float?)null : 0;
                             break;
                         }
                     case 4:
                         {
                             entryType.UnknownInt1 = int.TryParse(dataBx.Text, out tempInt) ?
-                                tempInt : 0;
+                                tempInt : (dataBx.Text.ToLower() == "null") ? (int?)null : 0;
                             break;
                         }
                     case 5:
                         {
                             entryType.UnknownInt2 = int.TryParse(dataBx.Text, out tempInt) ?
-                                tempInt : 0;
+                                tempInt : (dataBx.Text.ToLower() == "null") ? (int?)null : 0;
                             break;
                         }
                     case 6:
                         {
                             entryType.UnknownULong1 = ulong.TryParse(dataBx.Text, out tempULong) ?
-                                tempULong : 0;
+                                tempULong : (dataBx.Text.ToLower() == "null") ? (ulong?)null : 0;
                             break;
                         }
                     case 7:
                         {
                             entryType.UnknownULong2 = ulong.TryParse(dataBx.Text, out tempULong) ?
-                                tempULong : 0;
+                                tempULong : (dataBx.Text.ToLower() == "null") ? (ulong?)null : 0;
                             break;
                         }
                     default:
