@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Distance type="float" default="20" description="How far away you are from the point." />
+  <SwingSpeed type="float" default="270" description="How fast you spin around the point." />
+  <MaxLaunchSpeed type="float" default="300" description="How much speed you'll fly off with if you time your jump correctly." />
+  <MinLaunchSpeed type="float" default="200" description="How much speed you'll fly off with if you time your jump incorrectly." />
+  
+  <Unknown5 type="uint" default="0" description="" />
+  <IsFixedCamera type="bool" default="true" description="Whether the camera is fixed or follows the players." />
+  <Unknown7 type="byte" default="0" description="" />
+  <Unknown8 type="byte" default="0" description="" />
+  <Unknown9 type="byte" default="0" description="" />
+  <Unknown10 type="uint" default="0" description="" />
+  <Unknown11 type="uint" default="0" description="" />
+  
+  <CameraDistance type="float" default="-70" description="" />
+  <Unknown13 type="uint" default="0" description="" />
+  <Unknown14 type="uint" default="0" description="" />
+  <Unknown15 type="uint" default="0" description="" />
+  
+  <Unknown16 type="uint" default="0" description="" />
+  <Unknown17 type="uint" default="0" description="" />
+  <Unknown18 type="uint" default="0" description="" />
+  <Unknown19 type="uint" default="0" description="" />
+  
+  <IsVisible type="bool" default="true" description="Whether the object is visible." />
+  <Unknown21 type="byte" default="0" description="" />
+  <Unknown22 type="byte" default="0" description="" />
+  <Unknown23 type="byte" default="0" description="" />
+  <Unknown24 type="uint" default="0" description="" />
+  <Unknown25 type="uint" default="0" description="" />
+  <Unknown26 type="uint" default="0" description="" />
+  
+  <Unknown27 type="ulong" default="0" description="Always 0?" />
+  <Unknown28 type="ulong" default="0" description="Always 0?" />
+  <Unknown29 type="ulong" default="0" description="Always 0?" />
+  <Unknown30 type="ulong" default="0" description="Always 0?" />
+  <Unknown31 type="ulong" default="0" description="Always 0?" />
+  <Unknown32 type="ulong" default="0" description="Always 0?" />
+  <Unknown33 type="ulong" default="0" description="Always 0?" />
+  <Unknown34 type="ulong" default="0" description="Always 0?" />
+  <Unknown35 type="ulong" default="0" description="Always 0?" />
+  <Unknown36 type="ulong" default="0" description="Always 0?" />
+  <Unknown37 type="ulong" default="0" description="Always 0?" />
+  <Unknown38 type="ulong" default="0" description="Always 0?" />
+
+  <Extra type="description" value="" />
+</Template>

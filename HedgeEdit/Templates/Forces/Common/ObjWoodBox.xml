@@ -5,7 +5,7 @@
   <BoxNumZ type="uint" default="1" description="Number of boxes (Z-axis)" />
   <HasShadow type="bool" default="true" description="Whether or not the box has a shadow." />
   
-  <Extra type="model" value="cmn_obj_ironbox_HD.model" />
-  <Extra type="description" value="Iron Boxes." />
+  <Extra type="model" value="cmn_obj_woodbox_HD.model" />
+  <Extra type="description" value="Wooden Boxes." />
   <Extra type="RawByteLength" length="16" />
 </Template>

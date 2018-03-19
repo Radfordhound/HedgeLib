@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Item type="uint" default="0" description="The type of item in the box.">
+	<Enum value="0" description="10 Rings" />
+	<Enum value="1" description="Speed Shoes" />
+	<Enum value="2" description="Invincibility" />
+	<Enum value="3" description="Shield" />
+  </Item>
+  
+  <Extra type="model" value="cmn_obj_itemboxC.model"/>
+  <Extra type="description" value="Boxes shaped like computer monitors which contain items rather then what you normally have on your monitor. :) Part of a nutritious breakfast" />™
+  <Extra type="RawByteLength" length="4" />
+</Template>

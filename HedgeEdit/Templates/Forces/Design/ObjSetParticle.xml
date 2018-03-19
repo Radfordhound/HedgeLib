@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <ParticleName type="string" default="" description="The name of the CEMT file this particle uses (without the .cemt extension)." />
+  <Range type="float" default="1" description="The range at which particles will randomly spawn." />
+  <Unknown2 type="int" default="-1" description="" />
+  <Unknown3 type="ulong" default="0" description="" />
+  
+  <Unknown4 type="ulong" default="0" description="" />
+  <Unknown5 type="uint" default="0" description="" />
+  <Unknown6 type="float" default="1" description="" />
+  
+  <Unknown7 type="ulong" default="0" description="" />
+  <Unknown8 type="ulong" default="0" description="" />
+  <Unknown9 type="ulong" default="0" description="" />
+  
+  <Extra type="description" value="They're particles." />
+  <Extra type="RawByteLength" length="80" />
+</Template>

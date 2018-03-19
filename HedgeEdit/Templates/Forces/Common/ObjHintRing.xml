@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <NodeName type="string" description="The name of the node in the text_hint cnvrs-text file. (Usually stage ID, E.G. w5a01)" />
+  <EntryName type="string" description="The name of the entry in the text_hint cnvrs-text file. (E.G. hint_msg12)" />
+  
+  <Extra type="OffsetPositionY" value="1" />
+  <Extra type="model" value="cmn_obj_hintring.model" />
+  <Extra type="description" value="HINT: These are floating question marks that display hints when you touch them." />
+  <Extra type="RawByteLength" length="32" />
+</Template>

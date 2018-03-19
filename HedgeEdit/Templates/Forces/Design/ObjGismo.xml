@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
   <Name type="string" default="" description="The name of the Gismo's model, skeleton, and animation." />
-  <Scale type="float" description="Scale of the Gismo's model." />
+  <Scale type="float" default="1" description="Scale of the Gismo's model." />
   <Padding1 type="ulong" default="0" description="Always 0?" />
   <Padding2 type="ulong" default="0" description="Always 0?" />
   <Padding3 type="ulong" default="0" description="Always 0?" />

@@ -10,7 +10,7 @@
   <Extra type="model" value="cmn_obj_numberring_3.model" condition="NumberRingID == 2" />
   <Extra type="model" value="cmn_obj_numberring_4.model" condition="NumberRingID == 3" />
   <Extra type="model" value="cmn_obj_numberring_5.model" condition="NumberRingID == 4" />
-  <Extra type="description" value="" />
+  <Extra type="description" value="COUNT WITH ME ELMO 123 HAHAHAH" />
   <Extra type="RawByteLength" length="16" />
   <Extra type="OffsetPositionY" value="0.6" />
 </Template>
