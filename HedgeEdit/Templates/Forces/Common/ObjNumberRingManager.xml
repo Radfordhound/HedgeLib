@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Nodes type="forcesObjectList" description="Array of object IDs" />
+
+  <Unknown1 type="ulong" default="0" description="Padding?" />
+  <Unknown2 type="ulong" default="0" description="Padding?" />
+  <Unknown3 type="ulong" default="0" description="Padding?" />
+  <Unknown4 type="ulong" default="0" description="Padding?" />
+  <Unknown5 type="ulong" default="0" description="Padding?" />
+  <Unknown6 type="ulong" default="0" description="Padding?" />
+  <Unknown7 type="ulong" default="0" description="Padding?" />
+  <Unknown8 type="ulong" default="0" description="Padding?" />
+  <Unknown9 type="ulong" default="0" description="Padding?" />
+  <Unknown10 type="ulong" default="0" description="Padding?" />
+  <Unknown11 type="ulong" default="0" description="Padding?" />
+  <Unknown12 type="ulong" default="0" description="Padding?" />
+  
+  <Extra type="description" value="Object that controls the Number Rings?" />
+  <Extra type="RawByteLength" length="36" />
+</Template>
