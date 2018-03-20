@@ -28,10 +28,10 @@
                     <TextBlock HorizontalAlignment="Left" Margin="38,44,0,0" TextWrapping="Wrap" Text="Width" VerticalAlignment="Top"/>
                     <TextBox x:Name="BoundingBoxXTxtBx" HorizontalAlignment="Left" Height="20" Margin="14,60,0,0" Text="0" VerticalAlignment="Top" Width="80"/>
 
-                    <TextBlock HorizontalAlignment="Left" Margin="135.7,44,0,0" TextWrapping="Wrap" Text="Length" VerticalAlignment="Top"/>
+                    <TextBlock HorizontalAlignment="Left" Margin="135.7,44,0,0" TextWrapping="Wrap" Text="Height" VerticalAlignment="Top"/>
                     <TextBox x:Name="BoundingBoxYTxtBx" Margin="114,60,114,8" Text="0" RenderTransformOrigin="0.5,0.5"/>
 
-                    <TextBlock HorizontalAlignment="Left" Margin="236.2,44,0,0" TextWrapping="Wrap" Text="Height" VerticalAlignment="Top"/>
+                    <TextBlock HorizontalAlignment="Left" Margin="236.2,44,0,0" TextWrapping="Wrap" Text="Length" VerticalAlignment="Top"/>
                     <TextBox x:Name="BoundingBoxZTxtBx" HorizontalAlignment="Left" Height="20" Margin="214,60,0,0" Text="0" VerticalAlignment="Top" Width="80"/>
 
                     <TextBlock HorizontalAlignment="Left" Margin="37.7,8,0,0" TextWrapping="Wrap" Text="Shape" VerticalAlignment="Top"/>
