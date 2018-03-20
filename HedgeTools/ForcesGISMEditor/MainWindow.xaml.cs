@@ -16,7 +16,7 @@ namespace ForcesGISMEditor
         public ForcesGISM Gism = null;
         public List<ForcesGISM.Property> GISMProperties = new List<ForcesGISM.Property>();
         public string FileName = null;
-        private int prevSelectedPreset = 0;
+        private int prevSelectedPreset = -1;
 
         // Constructors
         public MainWindow()
