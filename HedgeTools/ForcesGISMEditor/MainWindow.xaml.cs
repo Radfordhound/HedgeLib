@@ -151,7 +151,7 @@ namespace ForcesGISMEditor
         private void PresetCmbBx_SelectionChanged(
             object sender, SelectionChangedEventArgs e)
         {
-            if (prevSelectedPreset = 1)
+            if (prevSelectedPreset == 1)
                 UpdatePresets();
             
             SavePresets(prevSelectedPreset);
