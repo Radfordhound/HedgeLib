@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Unknown1 type="uint" default="0" description="" />
+  <Unknown2 type="uint" default="0" description="" />
+  <Unknown3 type="uint" default="0" description="" />
+  <Unknown4 type="uint" default="0" description="" />
+  
+  <Extra type="model" value="cmn_obj_thorncylinder.model" />
+  <Extra type="description" value="Spikes in the form of a cylinder" />
+  <Extra type="RawByteLength" length="16" />
+</Template>
