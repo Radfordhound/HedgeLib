@@ -71,6 +71,9 @@ Right now this includes the following:
 - [Hedge GISM Editor](HedgeTools/HedgeGISMEditor)
   * A GUI tool that allows editing of the Lost World GISM format (basically a list of "Gismos" used by a stage).
 
+- [Hedge Cnvrs Editor](HedgeTools/HedgeCnvrsEditor)
+  * A GUI tool that allows editing of the Forces CNVRS-TEXT format (basically a list of text used in different areas in the game e.g.: Loading Screen).
+
 # Building
 This repository uses [AppVeyor](https://www.appveyor.com/) to automatically build every commit!
 As such, you don't have to manually build any of the tools/libraries in this repository if you simply want to try out the latest versions.
