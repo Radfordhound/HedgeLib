@@ -19,7 +19,8 @@
   <Unknown11 type="uint" default="0" description="Always 0?" />
   <Unknown12 type="uint" default="0" description="Always 0?" />
   
-  <Extra type="model" value="enm_eggpawn01.model" />
+  <Extra type="model" value="enm_eggpawn01.model" condition="WeaponType == 0"/>
+  <Extra type="model" value="enm_eggpawn02.model" condition="WeaponType == 1"/>
   <Extra type="description" value="Egg pawns could not be a better name to describe how generic these guys are in Forces." />
   <Extra type="RawByteLength" length="48" />
 </Template>

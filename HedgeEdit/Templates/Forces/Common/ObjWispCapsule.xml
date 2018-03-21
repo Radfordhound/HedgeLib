@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <Unknown1 type="uint" default="1" description="Capsule type?" />
+  <Boost type="uint" default="1" description="" />
   <Unknown2 type="uint" default="0" description="Always 0?" />
   <Unknown3 type="byte" default="0" description="Always 0?" />
-  <Unknown4 type="byte" default="1" description="" />
-  <Unknown5 type="byte" default="1" description="" />
-  <Unknown6 type="byte" default="1" description="" />
-  <Unknown7 type="byte" default="1" description="" />
-  <Unknown8 type="byte" default="1" description="" />
-  <Unknown9 type="byte" default="1" description="" />
-  <Unknown10 type="byte" default="1" description="" />
+  <Asteroid type="byte" default="1" description="" />
+  <Lighting type="byte" default="1" description="" />
+  <Cube type="byte" default="1" description="" />
+  <Drill type="byte" default="1" description="" />
+  <Burst type="byte" default="1" description="" />
+  <Void type="byte" default="1" description="" />
+  <Hover type="byte" default="1" description="" />
   
   <Unknown11 type="uint" default="0" description="Always 0?" />
   <Unknown12 type="uint" default="0" description="Always 0?" />

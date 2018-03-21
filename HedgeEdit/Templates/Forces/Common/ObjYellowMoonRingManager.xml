@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <NormalFlashTime type="float" default="0" description="How long the Rings flash, before turning into QuickFlashTime." />
+  <QuickFlashTime type="float" default="0" description="How long the Rings flash quickly before disappearing." />
+  <Unknown3 type="float" default="0" description="" />
+  <Unknown4 type="float" default="0" description="" />
+  
+  <Nodes type="forcesObjectList" description="Array of object IDs" />
+  
+  <Unknown5 type="ulong" default="0" description="Padding?" />
+  <Unknown6 type="ulong" default="0" description="Padding?" />
+  <Unknown7 type="ulong" default="0" description="Padding?" />
+  <Unknown8 type="ulong" default="0" description="Padding?" />
+  <Unknown9 type="ulong" default="0" description="Padding?" />
+  <Unknown10 type="ulong" default="0" description="Padding?" />
+  <Unknown11 type="ulong" default="0" description="Padding?" />
+  <Unknown12 type="ulong" default="0" description="Padding?" />
+  <Unknown13 type="ulong" default="0" description="Padding?" />
+  <Unknown14 type="ulong" default="0" description="Padding?" />
+  <Unknown15 type="ulong" default="0" description="Padding?" />
+  <Unknown16 type="ulong" default="0" description="Padding?" />
+  
+  <Extra type="description" value="Object that controls the Silver Moon Rings" />
+  <Extra type="RawByteLength" length="136" />
+</Template>
