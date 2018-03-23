@@ -8,31 +8,44 @@ namespace HedgeLib.Misc
     {
         // Variables/Constants
         public BINAHeader Header = new BINAHeader();
-        public Property[] Properties = new Property[PropertyCount];
+        public ReactionData[] _ReactionData = new ReactionData[ReactionDataCount];
+        public PhysicsParam _PhysicsParam;
 
-        public string AnimationName, SkeletonName;
-        public Vector3 BoundingSize;
-        public float RangeIn, RangeOut, UnknownFloat1, UnknownFloat2,
-            UnknownFloat3, UnknownFloat4, UnknownFloat5, UnknownFloat6,
-            UnknownFloat7, UnknownFloat8, UnknownFloat9;
 
-        public ushort SpeedRequiredToBreak, UnknownShort;
+        public string ModelName, SkeletonName, MeshName;
+        public Vector3 BoundingSize, ShapeOffset;
+        public float RangeIn, RangeDistance, ShapeSizeOffset;
+        public bool RideOnDamage, AerialBounce;
+
         public BoundingShapes BoundingShape;
-        public byte StaticCollision, UnknownByte;
+        public RigidBodyTypes RigidBodyType;
+        public RigidBodyMaterials RigidBodyMaterial;
+        public ContactDamageTypes ContactDamageType;
 
         public enum BoundingShapes
         {
-            Box, Sphere, Cylinder, None
+            Box, Sphere, Cylinder, Mesh, None
         }
 
-        public bool IsBigEndian
+        public enum RigidBodyTypes
         {
-            get;
-            protected set;
+            None, Static, Dynamic
         }
+
+        public enum RigidBodyMaterials
+        {
+            None, Wood, Iron
+        }
+
+        public enum ContactDamageTypes
+        {
+            None, LowSpeed, MiddleSpeed, HighSpeed
+        }
+
+        protected bool IsBigEndian;
 
         public const string Extension = ".gism";
-        public const uint PropertyCount = 6;
+        public const uint ReactionDataCount = 6;
 
         // Methods
         public override void Load(Stream fileStream)
@@ -41,48 +54,43 @@ namespace HedgeLib.Misc
             Header = reader.ReadHeader();
             IsBigEndian = reader.IsBigEndian;
 
+            System.Console.WriteLine(reader.BaseStream.Position);
             RangeIn = reader.ReadSingle(); // Unused
-            RangeOut = reader.ReadSingle(); // Unused
+            RangeDistance = reader.ReadSingle(); // Unused
 
-            AnimationName = reader.GetString();
+            ModelName = reader.GetString();
             reader.JumpAhead(12);
 
             SkeletonName = reader.GetString();
             reader.JumpAhead(12);
 
-            BoundingShape = (BoundingShapes)reader.ReadByte();
-            reader.JumpAhead(3);
+            BoundingShape = (BoundingShapes)reader.ReadUInt32();
 
             BoundingSize = reader.ReadVector3();
-            reader.JumpAhead(28);
 
-            UnknownFloat1 = reader.ReadSingle();
-            reader.JumpAhead(8);
+            MeshName = reader.GetString();
+            reader.JumpAhead(20);
 
-            UnknownFloat2 = reader.ReadSingle();
+            ShapeOffset = reader.ReadVector3();
+            reader.JumpAhead(4);
+            ShapeSizeOffset = reader.ReadSingle();
 
-            StaticCollision = reader.ReadByte(); // 00 - OFF, 01 - ON. Maybe a boolean?
-
-            UnknownByte = reader.ReadByte();
+            RigidBodyType = (RigidBodyTypes)reader.ReadByte();
+            RigidBodyMaterial = (RigidBodyMaterials)reader.ReadByte();
             reader.JumpAhead(2);
 
-            UnknownFloat3 = reader.ReadSingle();
-            UnknownFloat4 = reader.ReadSingle();
-            UnknownFloat5 = reader.ReadSingle();
-            UnknownFloat6 = reader.ReadSingle();
-            UnknownFloat7 = reader.ReadSingle();
-            UnknownFloat8 = reader.ReadSingle();
-            UnknownFloat9 = reader.ReadSingle();
+            _PhysicsParam = new PhysicsParam(reader);
 
-            SpeedRequiredToBreak = reader.ReadUInt16();
+            ContactDamageType = (ContactDamageTypes)reader.ReadByte();
+            RideOnDamage = reader.ReadBoolean();
+            AerialBounce = reader.ReadBoolean();
 
-            UnknownShort = reader.ReadUInt16();
-            reader.JumpAhead(8);
+            reader.JumpAhead(9);
 
-            // Properties
-            for (uint i = 0; i < PropertyCount; i++)
+            // ReactionData
+            for (uint i = 0; i < ReactionDataCount; i++)
             {
-                Properties[i] = new Property(reader);
+                _ReactionData[i] = new ReactionData(reader);
             }
         }
 
@@ -98,71 +106,73 @@ namespace HedgeLib.Misc
 
             Header.Version = 210;
             writer.Write(RangeIn);
-            writer.Write(RangeOut);
+            writer.Write(RangeDistance);
 
-            if (string.IsNullOrEmpty(AnimationName))
+            if (string.IsNullOrEmpty(ModelName))
                 writer.Write(0UL);
             else
-                writer.AddString("animationName", AnimationName, 8);
-
+                writer.AddString("modelName", ModelName, 8);
             writer.WriteNulls(8);
 
             if (string.IsNullOrEmpty(SkeletonName))
                 writer.Write(0UL);
             else
-                writer.AddString("skeletonName", SkeletonName, 8);
-
+                writer.AddString("modelName", SkeletonName, 8);
             writer.WriteNulls(8);
 
-            writer.Write((uint)BoundingShape); // Is this correct? Or is it just a single byte?
+            writer.Write((uint)BoundingShape);
             writer.Write(BoundingSize);
-            writer.WriteNulls(28);
 
-            writer.Write(UnknownFloat1);
-            writer.WriteNulls(8);
+            if (string.IsNullOrEmpty(MeshName))
+                writer.Write(0UL);
+            else
+                writer.AddString("meshName", MeshName, 8);
+            writer.WriteNulls(16);
 
-            writer.Write(UnknownFloat2);
-            writer.Write(StaticCollision);
-            writer.Write(UnknownByte);
+            writer.Write(ShapeOffset);
+            writer.WriteNulls(4);
+            writer.Write(ShapeSizeOffset);
+
+            writer.Write((byte)RigidBodyType);
+            writer.Write((byte)RigidBodyMaterial);
             writer.WriteNulls(2);
 
-            writer.Write(UnknownFloat3);
-            writer.Write(UnknownFloat4);
-            writer.Write(UnknownFloat5);
-            writer.Write(UnknownFloat6);
-            writer.Write(UnknownFloat7);
-            writer.Write(UnknownFloat8);
-            writer.Write(UnknownFloat9);
+            writer.Write(_PhysicsParam.Mass);
+            writer.Write(_PhysicsParam.Friction);
+            writer.Write(_PhysicsParam.GravityFactor);
+            writer.Write(_PhysicsParam.Restitution);
+            writer.Write(_PhysicsParam.LinearDamping);
+            writer.Write(_PhysicsParam.AngularDamping);
+            writer.Write(_PhysicsParam.MaxLinearVelocity);
 
-            writer.Write(SpeedRequiredToBreak);
-            writer.Write(UnknownShort);
-            writer.WriteNulls(8);
+            writer.Write((byte)ContactDamageType);
+            writer.Write(RideOnDamage);
+            writer.Write(AerialBounce);
+            writer.WriteNulls(9);
 
-            // Properties
-            for (int i = 0; i < PropertyCount; i++)
+            // ReactionData
+            for (int i = 0; i < ReactionDataCount; i++)
             {
-                Properties[i].Write(writer, i);
+                _ReactionData[i].Write(writer, i);
             }
 
             writer.FinishWrite(Header);
         }
 
-        // Other
-        public class Property
+        // ReactionData
+        public class ReactionData
         {
             // Variables/Constants
-            public string UnknownOffset, EffectName, CueName, UnusedOffset;
-            public byte UnknownByte1, UnknownByte2, IsBreakable; /*6th preset*/
-
-            public float UnknownFloat1, UnknownFloat2, FlowerRotation; /*2nd preset*/
-
-            public uint UnknownInt;
-
-            public float EndFloat1, EndFloat2, EndFloat3, EndFloat4, EndFloat5;
+            public MotionData _MotionData;
+            public MirageAnimData _MirageAnimData;
+            public ProgramMotionData _ProgramMotionData;
+            public EffectData _EffectData;
+            public SoundData _SoundData;
+            public KillData _KillData;
 
             // Constructors
-            public Property() { }
-            public Property(BINAReader reader)
+            public ReactionData() { }
+            public ReactionData(BINAReader reader)
             {
                 Read(reader);
             }
@@ -170,85 +180,303 @@ namespace HedgeLib.Misc
             // Methods
             public void Read(BINAReader reader)
             {
-                UnknownOffset = reader.GetString();
-                reader.JumpAhead(12);
+                _MotionData = new MotionData(reader);
+                _MirageAnimData = new MirageAnimData(reader);
+                reader.JumpAhead(8);
+                _ProgramMotionData = new ProgramMotionData(reader);
+                _EffectData = new EffectData(reader);
+                _SoundData = new SoundData(reader);
+                _KillData = new KillData(reader);
 
-                UnknownByte1 = reader.ReadByte();
-                UnknownByte2 = reader.ReadByte();
-
-                reader.JumpAhead(190);
-
-                UnknownFloat1 = reader.ReadSingle();
-                UnknownFloat2 = reader.ReadSingle();
-
-                FlowerRotation = reader.ReadSingle();
-                reader.JumpAhead(4);
-
-                EffectName = reader.GetString();
-                reader.JumpAhead(20);
-
-                CueName = reader.GetString();
-                reader.JumpAhead(12);
-
-                IsBreakable = reader.ReadByte();
-                reader.JumpAhead(7);
-
-                UnusedOffset = reader.GetString();
-                reader.JumpAhead(12);
-
-                EndFloat1 = reader.ReadSingle();
-                EndFloat2 = reader.ReadSingle();
-                EndFloat3 = reader.ReadSingle();
-                EndFloat4 = reader.ReadSingle();
-                EndFloat5 = reader.ReadSingle();
-                reader.JumpAhead(12);
+                reader.JumpAhead(8);
             }
 
             public void Write(BINAWriter writer, int index)
             {
-                if (string.IsNullOrEmpty(UnknownOffset))
+                // MotionData
+                if (string.IsNullOrEmpty(_MotionData.MotionName))
                     writer.Write(0UL);
                 else
-                    writer.AddString($"unknownOffset{index}", UnknownOffset, 8);
-
+                    writer.AddString($"_MotionData.MotionName{index}", _MotionData.MotionName, 8);
                 writer.WriteNulls(8);
-                writer.Write(UnknownByte1);
-                writer.Write(UnknownByte2);
 
-                writer.WriteNulls(190); // wth sonic team
-                writer.Write(UnknownFloat1);
-                writer.Write(UnknownFloat2);
+                writer.Write(_MotionData.SyncFrame);
+                writer.Write(_MotionData.StopEndFrame);
+                writer.WriteNulls(6);
 
-                writer.Write(FlowerRotation);
-                writer.WriteNulls(4);
-
-                if (string.IsNullOrEmpty(EffectName))
+                // MirageAnimationData
+                if (string.IsNullOrEmpty(_MirageAnimData.TextureSrtAnimName0))
                     writer.Write(0UL);
                 else
-                    writer.AddString($"EffectName{index}", EffectName, 8);
+                    writer.AddString($"_MirageAnimData.TextureSrtAnimName0{index}", _MirageAnimData.TextureSrtAnimName0, 8);
+                writer.WriteNulls(8);
+
+                if (string.IsNullOrEmpty(_MirageAnimData.TextureSrtAnimName0))
+                    writer.Write(0UL);
+                else
+                    writer.AddString($"_MirageAnimData.TextureSrtAnimName0{index}", _MirageAnimData.TextureSrtAnimName1, 8);
+                writer.WriteNulls(8);
+
+                if (string.IsNullOrEmpty(_MirageAnimData.TextureSrtAnimName0))
+                    writer.Write(0UL);
+                else
+                    writer.AddString($"_MirageAnimData.TextureSrtAnimName0{index}", _MirageAnimData.TextureSrtAnimName2, 8);
+                writer.WriteNulls(8);
+
+                if (string.IsNullOrEmpty(_MirageAnimData.TexturePatAnimName0))
+                    writer.Write(0UL);
+                else
+                    writer.AddString($"_MirageAnimData.TexturePatAnimName0{index}", _MirageAnimData.TexturePatAnimName0, 8);
+                writer.WriteNulls(8);
+
+                if (string.IsNullOrEmpty(_MirageAnimData.TexturePatAnimName1))
+                    writer.Write(0UL);
+                else
+                    writer.AddString($"_MirageAnimData.TexturePatAnimName1{index}", _MirageAnimData.TexturePatAnimName1, 8);
+                writer.WriteNulls(8);
+
+                if (string.IsNullOrEmpty(_MirageAnimData.TexturePatAnimName2))
+                    writer.Write(0UL);
+                else
+                    writer.AddString($"_MirageAnimData.TexturePatAnimName2{index}", _MirageAnimData.TexturePatAnimName2, 8);
+                writer.WriteNulls(8);
+
+                if (string.IsNullOrEmpty(_MirageAnimData.MaterialAnimName0))
+                    writer.Write(0UL);
+                else
+                    writer.AddString($"_MirageAnimData.MaterialAnimName0{index}", _MirageAnimData.MaterialAnimName0, 8);
+                writer.WriteNulls(8);
+
+                if (string.IsNullOrEmpty(_MirageAnimData.MaterialAnimName1))
+                    writer.Write(0UL);
+                else
+                    writer.AddString($"_MirageAnimData.MaterialAnimName1{index}", _MirageAnimData.MaterialAnimName1, 8);
+                writer.WriteNulls(8);
+
+                if (string.IsNullOrEmpty(_MirageAnimData.MaterialAnimName2))
+                    writer.Write(0UL);
+                else
+                    writer.AddString($"_MirageAnimData.MaterialAnimName2{index}", _MirageAnimData.MaterialAnimName2, 8);
                 writer.WriteNulls(16);
 
-                if (string.IsNullOrEmpty(CueName))
+                // ProgramMotionData
+                writer.Write((uint)_ProgramMotionData.MotionType);
+                writer.WriteNulls(12);
+
+                writer.Write(_ProgramMotionData.Axis);
+                writer.WriteNulls(4);
+
+                writer.Write(_ProgramMotionData.Power);
+                writer.Write(_ProgramMotionData.SpeedScale);
+                writer.Write(_ProgramMotionData.Time);
+                writer.WriteNulls(4);
+
+                // EffectData
+                if (string.IsNullOrEmpty(_EffectData.EffectName))
                     writer.Write(0UL);
                 else
-                    writer.AddString($"CueName{index}", CueName, 8);
+                    writer.AddString($"_EffectData.EffectName{index}", _EffectData.EffectName, 8);
                 writer.WriteNulls(8);
 
-                writer.Write(IsBreakable);
+                writer.Write(_EffectData.LinkMotionStop);
                 writer.WriteNulls(7);
 
-                if (string.IsNullOrEmpty(UnusedOffset))
+                // SoundData
+                if (string.IsNullOrEmpty(_SoundData.CueName))
                     writer.Write(0UL);
                 else
-                    writer.AddString($"UnusedOffset{index}", UnusedOffset, 8);
+                    writer.AddString($"_SoundData.CueName{index}", _SoundData.CueName, 8);
                 writer.WriteNulls(8);
 
-                writer.Write(EndFloat1);
-                writer.Write(EndFloat2);
-                writer.Write(EndFloat3);
-                writer.Write(EndFloat4);
-                writer.Write(EndFloat5);
+                // KillData
+                writer.Write((uint)_KillData.KillType);
+                writer.Write(_KillData.KillTime);
+                if (string.IsNullOrEmpty(_KillData.BreakMotionName))
+                    writer.Write(0UL);
+                else
+                    writer.AddString($"_KillData.BreakMotionName{index}", _KillData.BreakMotionName, 8);
+                writer.WriteNulls(8);
+
+                writer.Write(_KillData._DebrisData.Gravity);
+                writer.Write(_KillData._DebrisData.LifeTime);
+                writer.Write(_KillData._DebrisData.Mass);
+                writer.Write(_KillData._DebrisData.ExplosionScale);
+                writer.Write(_KillData._DebrisData.ImpulseScale);
                 writer.WriteNulls(12);
+            }
+
+            // Structs
+            public struct MotionData
+            {
+                // Variables/Constants
+                public string MotionName;
+                public bool SyncFrame, StopEndFrame;
+
+                // Constructors
+                public MotionData(BINAReader reader)
+                {
+                    MotionName = reader.GetString();
+                    reader.JumpAhead(12);
+
+                    SyncFrame = reader.ReadBoolean();
+                    StopEndFrame = reader.ReadBoolean();
+                    reader.JumpAhead(6);
+                }
+            }
+
+            public struct MirageAnimData
+            {
+                // Variables/Constants
+                public string TextureSrtAnimName0, TextureSrtAnimName1, TextureSrtAnimName2,
+                    TexturePatAnimName0, TexturePatAnimName1, TexturePatAnimName2,
+                    MaterialAnimName0, MaterialAnimName1, MaterialAnimName2;
+
+                // Constructors
+                public MirageAnimData(BINAReader reader)
+                {
+                    TextureSrtAnimName0 = reader.GetString();
+                    reader.JumpAhead(12);
+                    TextureSrtAnimName1 = reader.GetString();
+                    reader.JumpAhead(12);
+                    TextureSrtAnimName2 = reader.GetString();
+                    reader.JumpAhead(12);
+
+                    TexturePatAnimName0 = reader.GetString();
+                    reader.JumpAhead(12);
+                    TexturePatAnimName1 = reader.GetString();
+                    reader.JumpAhead(12);
+                    TexturePatAnimName2 = reader.GetString();
+                    reader.JumpAhead(12);
+
+                    MaterialAnimName0 = reader.GetString();
+                    reader.JumpAhead(12);
+                    MaterialAnimName1 = reader.GetString();
+                    reader.JumpAhead(12);
+                    MaterialAnimName2 = reader.GetString();
+                    reader.JumpAhead(12);
+                }
+            }
+
+            public struct ProgramMotionData
+            {
+                // Variables/Constants
+                public enum MotionTypes
+                {
+                    Swing, Rotate, LinearSwing
+                }
+
+                public MotionTypes MotionType;
+                public Vector3 Axis;
+
+                public float Power, SpeedScale, Time;
+
+                // Constructors
+                public ProgramMotionData(BINAReader reader)
+                {
+                    MotionType = (MotionTypes)reader.ReadUInt32();
+                    reader.JumpAhead(12);
+
+                    Axis = reader.ReadVector3();
+                    reader.JumpAhead(4);
+
+                    Power = reader.ReadSingle();
+                    SpeedScale = reader.ReadSingle();
+                    Time = reader.ReadSingle();
+                    reader.JumpAhead(4);
+                }
+            }
+
+            public struct EffectData
+            {
+                // Variables/Constants
+                public string EffectName;
+                public bool LinkMotionStop;
+
+                // Constructors
+                public EffectData(BINAReader reader)
+                {
+                    EffectName = reader.GetString();
+                    reader.JumpAhead(12);
+                    LinkMotionStop = reader.ReadBoolean();
+                    reader.JumpAhead(7);
+                }
+            }
+
+            public struct SoundData
+            {
+                // Variables/Constants
+                public string CueName;
+
+                // Constructors
+                public SoundData(BINAReader reader)
+                {
+                    CueName = reader.GetString();
+                    reader.JumpAhead(12);
+                }
+            }
+
+            public struct KillData
+            {
+                // Variables/Constants
+                public DebrisData _DebrisData;
+                public enum KillTypes
+                {
+                    NotKill, Kill, Break, Motion
+                }
+
+                public KillTypes KillType;
+                public float KillTime;
+                public string BreakMotionName;
+
+                // Constructors
+                public KillData(BINAReader reader)
+                {
+                    KillType = (KillTypes)reader.ReadUInt32();
+
+                    KillTime = reader.ReadSingle();
+                    BreakMotionName = reader.GetString();
+                    reader.JumpAhead(12);
+
+                    _DebrisData = new DebrisData(reader);
+                    reader.JumpAhead(4);
+                }
+
+                // Structs
+                public struct DebrisData
+                {
+                    // Variables/Constants
+                    public float Gravity, LifeTime, Mass, ExplosionScale, ImpulseScale;
+
+                    // Constructors
+                    public DebrisData(BINAReader reader)
+                    {
+                        System.Console.WriteLine(reader.BaseStream.Position);
+                        Gravity = reader.ReadSingle();
+                        LifeTime = reader.ReadSingle();
+                        Mass = reader.ReadSingle();
+                        ExplosionScale = reader.ReadSingle();
+                        ImpulseScale = reader.ReadSingle();
+                    }
+                }
+            }
+        }
+        // Structs
+        public struct PhysicsParam
+        {
+            // Variables/Constants
+            public float Mass, Friction, GravityFactor, Restitution,
+               LinearDamping, AngularDamping, MaxLinearVelocity;
+
+            // Constructors
+            public PhysicsParam(BINAReader reader)
+            {
+                Mass = reader.ReadSingle();
+                Friction = reader.ReadSingle();
+                GravityFactor = reader.ReadSingle();
+                Restitution = reader.ReadSingle();
+                LinearDamping = reader.ReadSingle();
+                AngularDamping = reader.ReadSingle();
+                MaxLinearVelocity = reader.ReadSingle();
             }
         }
     }

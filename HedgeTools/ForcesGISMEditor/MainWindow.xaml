@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:ForcesGISMEditor"
         xmlns:Custom="http://schemas.microsoft.com/winfx/2006/xaml/presentation/ribbon" x:Name="MainWnd" x:Class="ForcesGISMEditor.MainWindow"
         mc:Ignorable="d"
-        Title="Sonic Forces GISM Editor" Height="403.5" Width="795.812" ResizeMode="CanMinimize">
+        Title="Sonic Forces GISM Editor" Height="710.833" Width="837.906" ResizeMode="CanMinimize" >
     <Window.CommandBindings>
         <CommandBinding Command="New" Executed="New_Click"/>
         <CommandBinding Command="Open" Executed="Open_Click"/>
@@ -16,127 +16,308 @@
 
     <Window.InputBindings>
         <KeyBinding Gesture="Ctrl+N" Command="New"/>
-        <KeyBinding Gesture="Ctrl+O" Command="Open"/>
+        <KeyBinding Gesture="Ctrl+O" Command="Open" />
         <KeyBinding Gesture="Ctrl+S" Command="Save"/>
         <KeyBinding Gesture="Ctrl+Shift+S" Command="SaveAs"/>
     </Window.InputBindings>
 
     <Grid >
-        <Grid x:Name="WorkspaceGrid" Margin="0,20,0,0" IsEnabled="False">
-            <GroupBox Header="Bounding Box" HorizontalAlignment="Left" Height="110" Margin="5,5,0,0" VerticalAlignment="Top" Width="320">
-                <Grid>
-                    <TextBlock HorizontalAlignment="Left" Margin="38,44,0,0" TextWrapping="Wrap" Text="Width" VerticalAlignment="Top"/>
-                    <TextBox x:Name="BoundingBoxXTxtBx" HorizontalAlignment="Left" Height="20" Margin="14,60,0,0" Text="0" VerticalAlignment="Top" Width="80"/>
-
-                    <TextBlock HorizontalAlignment="Left" Margin="135.7,44,0,0" TextWrapping="Wrap" Text="Height" VerticalAlignment="Top"/>
-                    <TextBox x:Name="BoundingBoxYTxtBx" Margin="114,60,114,8" Text="0" RenderTransformOrigin="0.5,0.5"/>
-
-                    <TextBlock HorizontalAlignment="Left" Margin="236.2,44,0,0" TextWrapping="Wrap" Text="Length" VerticalAlignment="Top"/>
-                    <TextBox x:Name="BoundingBoxZTxtBx" HorizontalAlignment="Left" Height="20" Margin="214,60,0,0" Text="0" VerticalAlignment="Top" Width="80"/>
-
-                    <TextBlock HorizontalAlignment="Left" Margin="37.7,8,0,0" TextWrapping="Wrap" Text="Shape" VerticalAlignment="Top"/>
-                    <ComboBox x:Name="BoundingBoxTypeCmbbx" HorizontalAlignment="Left" Margin="14,24,0,0" VerticalAlignment="Top" Width="80" Height="20" SelectedIndex="0" Padding="0,-2,0,0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center">
-                        <ListBoxItem Content="Box"/>
-                        <ListBoxItem Content="Sphere"/>
-                        <ListBoxItem Content="Cylinder"/>
-                        <ListBoxItem Content="None"/>
-                    </ComboBox>
-
-                    <TextBlock HorizontalAlignment="Left" Margin="114,8,0,0" TextWrapping="Wrap" Text="Speed To Break" VerticalAlignment="Top"/>
-                    <TextBox x:Name="SpeedToBrkTxtbx" HorizontalAlignment="Left" Height="20" Margin="114,24,0,0" Text="0" VerticalAlignment="Top" Width="80"/>
-
-                    <CheckBox x:Name="StaticCOLChkbx" Content="Static Collision" HorizontalAlignment="Left" Margin="203,26,0,0" VerticalAlignment="Top"/>
-                </Grid>
-            </GroupBox>
-
-            <GroupBox Header="Havok Offsets" HorizontalAlignment="Left" Height="70" Margin="5,120,0,0" VerticalAlignment="Top" Width="320" Padding="0">
-                <Grid>
-                    <TextBlock HorizontalAlignment="Left" Margin="37.2,2,0,0" TextWrapping="Wrap" Text="Animation Name" VerticalAlignment="Top"/>
-                    <TextBox x:Name="AnimationNameTxtbx" HorizontalAlignment="Left" Height="20" Margin="22,18,0,0" Text="" VerticalAlignment="Top" Width="120"/>
-
-                    <TextBlock HorizontalAlignment="Left" Margin="181.7,2,0,0" TextWrapping="Wrap" Text="Skeleton Name" VerticalAlignment="Top"/>
-                    <TextBox x:Name="SkeletonNameTxtbx" HorizontalAlignment="Left" Height="20" Margin="162,18,0,0" Text="" VerticalAlignment="Top" Width="120"/>
-                </Grid>
-            </GroupBox>
-
-            <TextBlock HorizontalAlignment="Left" Margin="193,195,0,0" TextWrapping="Wrap" Text="UnknownShort" VerticalAlignment="Top"/>
-            <TextBox x:Name="UnkShortTxtbx" HorizontalAlignment="Left" Height="20" Margin="33,211,0,0" Text="0" VerticalAlignment="Top" Width="120"/>
-
-            <TextBlock HorizontalAlignment="Left" Margin="55,196,0,0" TextWrapping="Wrap" Text="UnknownByte" VerticalAlignment="Top"/>
-            <TextBox x:Name="UnkByteTxtbx" HorizontalAlignment="Left" Height="20" Margin="173,211,0,0" Text="0" VerticalAlignment="Top" Width="120"/>
-
-            <GroupBox x:Name="UnknownFloatsGroupBx" Header="UnknownFloats" HorizontalAlignment="Left" Height="104" Margin="5,236,0,0" VerticalAlignment="Top" Width="320">
-                <Grid>
-                    <TextBox x:Name="UnkFloat1Txtbx" HorizontalAlignment="Left" Height="20" Margin="14,8,0,0" Text="0" VerticalAlignment="Top" Width="80"/>
-                    <TextBox x:Name="UnkFloat2Txtbx" HorizontalAlignment="Left" Height="20" Margin="114,8,0,0" Text="0" VerticalAlignment="Top" Width="80"/>
-                    <TextBox x:Name="UnkFloat3Txtbx" HorizontalAlignment="Left" Height="20" Margin="214,8,0,0" Text="0" VerticalAlignment="Top" Width="80"/>
-                    <TextBox x:Name="UnkFloat4Txtbx" HorizontalAlignment="Left" Height="20" Margin="14,33,0,0" Text="0" VerticalAlignment="Top" Width="80"/>
-                    <TextBox x:Name="UnkFloat5Txtbx" HorizontalAlignment="Left" Height="20" Margin="114,33,0,0" Text="0" VerticalAlignment="Top" Width="80"/>
-                    <TextBox x:Name="UnkFloat6Txtbx" HorizontalAlignment="Left" Height="20" Margin="214,33,0,0" Text="0" VerticalAlignment="Top" Width="80"/>
-                    <TextBox x:Name="UnkFloat7Txtbx" HorizontalAlignment="Left" Height="20" Margin="14,58,0,0" Text="0" VerticalAlignment="Top" Width="80"/>
-                    <TextBox x:Name="UnkFloat8Txtbx" HorizontalAlignment="Left" Height="20" Margin="114,58,0,0" Text="0" VerticalAlignment="Top" Width="80"/>
-                    <TextBox x:Name="UnkFloat9Txtbx" HorizontalAlignment="Left" Height="20" Margin="214,58,0,0" Text="0" VerticalAlignment="Top" Width="80"/>
-                </Grid>
-            </GroupBox>
-
-            <ComboBox x:Name="PresetCmbBx" HorizontalAlignment="Left" Margin="355,13,0,0" VerticalAlignment="Top" Width="400" SelectionChanged="PresetCmbBx_SelectionChanged">
-                <ListBoxItem Content="Preset 1"/>
-                <ListBoxItem Content="Preset 2"/>
-                <ListBoxItem Content="Preset 3"/>
-                <ListBoxItem Content="Preset 4"/>
-                <ListBoxItem Content="Preset 5"/>
-                <ListBoxItem Content="Preset 6"/>
-            </ComboBox>
-
-            <GroupBox Header="Preset Values" HorizontalAlignment="Left" Height="298" Margin="330,42,0,0" VerticalAlignment="Top" Width="446">
-                <Grid>
-					<TextBlock HorizontalAlignment="Left" Margin="176,22,0,0" TextWrapping="Wrap" Text="UnknownString" VerticalAlignment="Top"/>
-                    <TextBox x:Name="PresetUnkOffset" HorizontalAlignment="Left" Height="20" Margin="157,38,0,0" Text="" VerticalAlignment="Top" Width="120"/>
-					
-					<TextBlock HorizontalAlignment="Left" Margin="37,62,0,0" TextWrapping="Wrap" Text="UnknownByte1" VerticalAlignment="Top"/>
-                    <TextBox x:Name="PresetUnkByte1" HorizontalAlignment="Left" Height="20" Margin="17,78,0,0" Text="0" VerticalAlignment="Top" Width="120"/>
-					<TextBlock HorizontalAlignment="Left" Margin="177,62,0,0" TextWrapping="Wrap" Text="UnknownByte2" VerticalAlignment="Top"/>
-                    <TextBox x:Name="PresetUnkByte2" HorizontalAlignment="Left" Height="20" Margin="157,78,0,0" Text="0" VerticalAlignment="Top" Width="120"/>
-                    
-					<TextBlock x:Name="PresetByte3Txt" HorizontalAlignment="Left" Margin="317,62,0,0" TextWrapping="Wrap" Text="UnknownByte3" VerticalAlignment="Top"/>
-					<TextBox x:Name="IsBreakable" HorizontalAlignment="Left" Height="20" Margin="297,78,0,0" Text="0" VerticalAlignment="Top" Width="120"/>
-					
-					<TextBlock HorizontalAlignment="Left" Margin="36,102,0,0" TextWrapping="Wrap" Text="UnknownFloat1" VerticalAlignment="Top"/>
-					<TextBox x:Name="PresetUnkFloat1" HorizontalAlignment="Left" Height="20" Margin="17,118,0,0" Text="0" VerticalAlignment="Top" Width="120"/>
-                    <TextBlock HorizontalAlignment="Left" Margin="176,102,0,0" TextWrapping="Wrap" Text="UnknownFloat2" VerticalAlignment="Top"/>
-					<TextBox x:Name="PresetUnkFloat2" HorizontalAlignment="Left" Height="20" Margin="157,118,0,0" Text="0" VerticalAlignment="Top" Width="120"/>
-                    
-					<TextBlock x:Name="PresetFloat3Txt" HorizontalAlignment="Left" Margin="316,102,0,0" TextWrapping="Wrap" Text="UnknownFloat3" VerticalAlignment="Top"/>
-					<TextBox x:Name="FlowerRotation" HorizontalAlignment="Left" Height="20" Margin="297,118,0,0" Text="0" VerticalAlignment="Top" Width="120"/>
-                    
-					<TextBlock HorizontalAlignment="Left" Margin="115,142,0,0" TextWrapping="Wrap" Text="Effect Name" VerticalAlignment="Top"/>
-					<TextBox x:Name="EffectNameTxtBx" HorizontalAlignment="Left" Height="20" Margin="87,158,0,0" Text="" VerticalAlignment="Top" Width="120"/>
-                    
-					<TextBlock HorizontalAlignment="Left" Margin="259,141,0,0" TextWrapping="Wrap" Text="Cue Name" VerticalAlignment="Top"/>
-					<TextBox x:Name="CueNameTxtBx" HorizontalAlignment="Left" Height="20" Margin="227,157,0,0" Text="" VerticalAlignment="Top" Width="120"/>
-                    
-					<TextBlock HorizontalAlignment="Left" Margin="35,182,0,0" TextWrapping="Wrap" Text="PresetEndFloat1" VerticalAlignment="Top"/>
-                    <TextBox x:Name="PresetEndFloat1" HorizontalAlignment="Left" Height="20" Margin="17,198,0,0" Text="0" VerticalAlignment="Top" Width="120"/>
-                    <TextBlock HorizontalAlignment="Left" Margin="175,182,0,0" TextWrapping="Wrap" Text="PresetEndFloat2" VerticalAlignment="Top"/>
-					<TextBox x:Name="PresetEndFloat2" HorizontalAlignment="Left" Height="20" Margin="157,198,0,0" Text="0" VerticalAlignment="Top" Width="120"/>
-                    <TextBlock HorizontalAlignment="Left" Margin="315,182,0,0" TextWrapping="Wrap" Text="PresetEndFloat3" VerticalAlignment="Top"/>
-					<TextBox x:Name="PresetEndFloat3" HorizontalAlignment="Left" Height="20" Margin="297,198,0,0" Text="0" VerticalAlignment="Top" Width="120"/>
-                    <TextBlock HorizontalAlignment="Left" Margin="105,222,0,0" TextWrapping="Wrap" Text="PresetEndFloat4" VerticalAlignment="Top"/>
-					<TextBox x:Name="PresetEndFloat4" HorizontalAlignment="Left" Height="20" Margin="87,238,0,0" Text="0" VerticalAlignment="Top" Width="120"/>
-                    <TextBlock HorizontalAlignment="Left" Margin="245,222,0,0" TextWrapping="Wrap" Text="PresetEndFloat5" VerticalAlignment="Top"/>
-					<TextBox x:Name="PresetEndFloat5" HorizontalAlignment="Left" Height="20" Margin="227,238,0,0" Text="0" VerticalAlignment="Top" Width="120"/>
-                </Grid>
-            </GroupBox>
-        </Grid>
         <Grid Height="20" Margin="0" VerticalAlignment="Top">
             <Menu Height="20" VerticalAlignment="Top">
-                <MenuItem VerticalContentAlignment="Center" Header="File" Height="20">
+                <MenuItem VerticalContentAlignment="Center" Header="File" Height="20" Margin="0">
                     <MenuItem x:Name="New" Header="New" Command="New" InputGestureText="Ctrl + N"/>
                     <MenuItem x:Name="Open" Header="Open" Command="Open" InputGestureText="Ctrl + O"/>
                     <MenuItem x:Name="Save" Header="Save" Command="Save" InputGestureText="Ctrl + S" IsEnabled="False"/>
                     <MenuItem x:Name="SaveAs" Header="Save As" Command="SaveAs" InputGestureText="Ctrl + Shift + S" IsEnabled="False"/>
                 </MenuItem>
             </Menu>
+        </Grid>
+
+        <Grid x:Name="WorkspaceGrid" Margin="0,20,0,0" IsEnabled="False">
+            <!-- Ride on Damage -->
+            <CheckBox x:Name="RideOnDamageChkBx" Content="RideOnDamage" HorizontalAlignment="Left" Margin="243,29,0,0" VerticalAlignment="Top"/>
+
+            <!-- Aerial Bounce -->
+            <CheckBox x:Name="AerialBounceChkBx" Content="AerialBounce" HorizontalAlignment="Left" Margin="243,55,0,0" VerticalAlignment="Top"/>
+
+            <!-- Range -->
+            <GroupBox Header="Range [UNUSED]" HorizontalAlignment="Left" Height="73" Margin="10,10,0,0" VerticalAlignment="Top" Width="230">
+                <Grid>
+                    <!-- RangeIn -->
+                    <TextBlock HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="RangeIn" VerticalAlignment="Top"/>
+                    <TextBox x:Name="RangeInBx" HorizontalAlignment="Left" Height="20" Margin="10,26,0,0" VerticalAlignment="Top" Width="83" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+
+                    <!-- RangeDistance -->
+                    <TextBlock HorizontalAlignment="Left" Margin="125,10,0,0" TextWrapping="Wrap" Text="RangeDistance" VerticalAlignment="Top"/>
+                    <TextBox x:Name="RangeDistanceBx" HorizontalAlignment="Left" Height="20" Margin="125,26,0,0" VerticalAlignment="Top" Width="83" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+                </Grid>
+            </GroupBox>
+            <!-- Names -->
+            <GroupBox Header="Names" HorizontalAlignment="Left" Height="73" Margin="10,88,0,0" VerticalAlignment="Top" Width="354">
+                <Grid>
+                    <!-- Model Name -->
+                    <TextBlock HorizontalAlignment="Left" Margin="50,10,0,0" TextWrapping="Wrap" Text="Model Name" VerticalAlignment="Top"/>
+                    <TextBox x:Name="ModelNameBx" HorizontalAlignment="Left" Height="20" Margin="10,26,0,0" VerticalAlignment="Top" Width="153" Padding="0"/>
+
+                    <!-- Skeleton Name -->
+                    <TextBlock HorizontalAlignment="Left" Margin="214,10,0,0" TextWrapping="Wrap" Text="Skeleton Name" VerticalAlignment="Top"/>
+                    <TextBox x:Name="SkeletonNameBx" HorizontalAlignment="Left" Height="20" Margin="179,26,0,0" VerticalAlignment="Top" Width="153" Padding="0"/>
+                </Grid>
+            </GroupBox>
+            <!-- Colliders -->
+            <GroupBox Header="Colliders" HorizontalAlignment="Left" Height="211" Margin="10,166,0,0" VerticalAlignment="Top" Width="354">
+                <Grid>
+                    <!-- Collider Shape -->
+                    <TextBlock HorizontalAlignment="Left" Margin="9,8,0,0" TextWrapping="Wrap" Text="Collider Shape" VerticalAlignment="Top"/>
+                    <ComboBox x:Name="ColliderShapeBx" HorizontalAlignment="Left" Margin="10,24,0,0" VerticalAlignment="Top" Width="76">
+                        <ComboBoxItem Content="Box"/>
+                        <ComboBoxItem Content="Sphere"/>
+                        <ComboBoxItem Content="Cylinder"/>
+                        <ComboBoxItem Content="Mesh"/>
+                        <ComboBoxItem Content="None"/>
+                    </ComboBox>
+
+                    <!-- Mesh Name -->
+                    <TextBlock HorizontalAlignment="Left" Margin="140,10,0,0" TextWrapping="Wrap" Text="Mesh Name" VerticalAlignment="Top"/>
+                    <TextBox x:Name="MeshNameBx" HorizontalAlignment="Left" Height="20" Margin="93,26,0,0" VerticalAlignment="Top" Width="154" Padding="0"/>
+
+                    <!-- Shape Offset -->
+                    <TextBox x:Name="ShapeOffsetBx" HorizontalAlignment="Left" Height="20" Margin="252,26,0,0" VerticalAlignment="Top" Width="82" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+                    <TextBlock HorizontalAlignment="Left" Margin="260,10,0,0" TextWrapping="Wrap" Text="Shape Offset" VerticalAlignment="Top"/>
+
+                    <!-- Bounding Box -->
+                    <TextBlock HorizontalAlignment="Left" Margin="48,50,0,0" TextWrapping="Wrap" Text="Width" VerticalAlignment="Top"/>
+                    <TextBox x:Name="BoundingBxWidthBx" HorizontalAlignment="Left" Height="20" Margin="10,66,0,0" VerticalAlignment="Top" Width="103" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+                    <TextBlock HorizontalAlignment="Left" Margin="154,50,0,0" TextWrapping="Wrap" Text="Height" VerticalAlignment="Top"/>
+                    <TextBox x:Name="BoundingBxHeightBx" HorizontalAlignment="Left" Height="20" Margin="118,66,0,0" VerticalAlignment="Top" Width="107" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+                    <TextBlock HorizontalAlignment="Left" Margin="266,50,0,0" TextWrapping="Wrap" Text="Depth" VerticalAlignment="Top"/>
+                    <TextBox x:Name="BoundingBxDepthBx" HorizontalAlignment="Left" Height="20" Margin="230,66,0,0" VerticalAlignment="Top" Width="104" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+
+                    <!-- Shape Offset Size -->
+                    <TextBlock HorizontalAlignment="Left" Margin="10,94,0,0" TextWrapping="Wrap" Text="Shape Offset Width" VerticalAlignment="Top"/>
+                    <TextBox x:Name="ShapeOffsetWidthBx" HorizontalAlignment="Left" Height="20" Margin="10,110,0,0" VerticalAlignment="Top" Width="103" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+                    <TextBlock HorizontalAlignment="Left" Margin="118,94,0,0" TextWrapping="Wrap" Text="Shape Offset Height" VerticalAlignment="Top"/>
+                    <TextBox x:Name="ShapeOffsetHeightBx" HorizontalAlignment="Left" Height="20" Margin="118,110,0,0" VerticalAlignment="Top" Width="107" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+                    <TextBlock HorizontalAlignment="Left" Margin="230,94,0,0" TextWrapping="Wrap" Text="Shape Offset Depth" VerticalAlignment="Top"/>
+                    <TextBox x:Name="ShapeOffsetDepthBx" HorizontalAlignment="Left" Height="20" Margin="230,110,0,0" VerticalAlignment="Top" Width="104" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+
+                    <!-- Rigid Body Type -->
+                    <TextBlock HorizontalAlignment="Left" Margin="21,144,0,0" TextWrapping="Wrap" Text="Rigid Body Type" VerticalAlignment="Top"/>
+                    <ComboBox x:Name="RigidBodyTypeCmbBx" HorizontalAlignment="Left" Margin="24,160,0,0" VerticalAlignment="Top" Width="80">
+                        <ComboBoxItem Content="None"/>
+                        <ComboBoxItem Content="Static"/>
+                        <ComboBoxItem Content="Dynamic"/>
+                    </ComboBox>
+
+                    <!-- Rigid Body Material -->
+                    <TextBlock HorizontalAlignment="Left" Margin="121,144,0,0" TextWrapping="Wrap" Text="Rigid Body Material" VerticalAlignment="Top"/>
+                    <ComboBox x:Name="RigidBodyMaterialCmbBx" HorizontalAlignment="Left" Margin="133,160,0,0" VerticalAlignment="Top" Width="80">
+                        <ComboBoxItem Content="None"/>
+                        <ComboBoxItem Content="Wood"/>
+                        <ComboBoxItem Content="Iron"/>
+                    </ComboBox>
+
+                    <!-- Contact Damage Type -->
+                    <TextBlock HorizontalAlignment="Left" Margin="240,144,0,0" TextWrapping="Wrap" Text="Contact Damage" VerticalAlignment="Top"/>
+                    <ComboBox x:Name="ContactDamageTypeCmbBx" HorizontalAlignment="Left" Margin="244,160,0,0" VerticalAlignment="Top" Width="80" Height="25">
+                        <ComboBoxItem Content="None"/>
+                        <ComboBoxItem Content="Low-Speed"/>
+                        <ComboBoxItem Content="Middle-Speed"/>
+                        <ComboBoxItem Content="High-Speed"/>
+                    </ComboBox>
+                </Grid>
+            </GroupBox>
+            <!-- Physics Parameters -->
+            <GroupBox Header="Physics Parameters" HorizontalAlignment="Left" Height="260" Margin="10,382,0,0" VerticalAlignment="Top" Width="354">
+                <Grid>
+                    <!-- Mass -->
+                    <TextBlock HorizontalAlignment="Left" Margin="51,13,0,0" TextWrapping="Wrap" Text="Mass" VerticalAlignment="Top"/>
+                    <TextBox x:Name="PhysicsParam_MassBx" HorizontalAlignment="Left" Height="20" Margin="10,29,0,0" VerticalAlignment="Top" Width="103" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+
+                    <!-- Friction -->
+                    <TextBlock HorizontalAlignment="Left" Margin="152,13,0,0" TextWrapping="Wrap" Text="Friction" VerticalAlignment="Top"/>
+                    <TextBox x:Name="PhysicsParam_FrictionBx" HorizontalAlignment="Left" Height="20" Margin="118,29,0,0" VerticalAlignment="Top" Width="107" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+
+                    <!-- Gravity Factor -->
+                    <TextBlock HorizontalAlignment="Left" Margin="247,13,0,0" TextWrapping="Wrap" Text="Gravity Factor" VerticalAlignment="Top"/>
+                    <TextBox x:Name="PhysicsParam_GravityFactorBx" HorizontalAlignment="Left" Height="20" Margin="230,29,0,0" VerticalAlignment="Top" Width="104" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+
+                    <!-- Restitution -->
+                    <TextBlock HorizontalAlignment="Left" Margin="36,57,0,0" TextWrapping="Wrap" Text="Restitution" VerticalAlignment="Top"/>
+                    <TextBox x:Name="PhysicsParam_RestitutionBx" HorizontalAlignment="Left" Height="20" Margin="10,73,0,0" VerticalAlignment="Top" Width="103" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+
+                    <!-- Linear Damping -->
+                    <TextBlock HorizontalAlignment="Left" Margin="130,57,0,0" TextWrapping="Wrap" Text="Linear Damping" VerticalAlignment="Top"/>
+                    <TextBox x:Name="PhysicsParam_LinearDampingBx" HorizontalAlignment="Left" Height="20" Margin="118,73,0,0" VerticalAlignment="Top" Width="107" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+
+                    <!-- Angular Damping -->
+                    <TextBlock HorizontalAlignment="Left" Margin="237,57,0,0" TextWrapping="Wrap" Text="Angular Damping" VerticalAlignment="Top"/>
+                    <TextBox x:Name="PhysicsParam_AngularDampingBx" HorizontalAlignment="Left" Height="20" Margin="230,73,0,0" VerticalAlignment="Top" Width="104" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+
+                    <!-- MaxLinearVelocity-->
+                    <TextBlock HorizontalAlignment="Left" Margin="121,101,0,0" TextWrapping="Wrap" Text="Max Linear Velocity" VerticalAlignment="Top"/>
+                    <TextBox x:Name="PhysicsParam_MaxLinearVelocityBx" HorizontalAlignment="Left" Height="20" Margin="118,117,0,0" VerticalAlignment="Top" Width="107" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+                </Grid>
+            </GroupBox>
+
+            <!-- Reaction Data -->
+            <GroupBox Header="ReactionData" HorizontalAlignment="Left" Height="632" Margin="369,10,0,0" VerticalAlignment="Top" Width="443">
+                <Grid>
+                    <!-- Reaction State -->
+                    <ComboBox x:Name="ReactionStateCmbBx" HorizontalAlignment="Left" Margin="10,8,0,0" VerticalAlignment="Top" Width="411" SelectionChanged="ReactionStateCmbBx_SelectionChanged">
+                        <ComboBoxItem Content="Idle"/>
+                        <ComboBoxItem Content="Enter"/>
+                        <ComboBoxItem Content="Leave"/>
+                        <ComboBoxItem Content="Stay"/>
+                        <ComboBoxItem Content="StayMove"/>
+                        <ComboBoxItem Content="Damage"/>
+                    </ComboBox>
+
+                    <!-- Motion Data -->
+                    <GroupBox Header="MotionData" HorizontalAlignment="Left" Height="86" Margin="10,37,0,0" VerticalAlignment="Top" Width="203">
+                        <Grid>
+                            <!-- Motion Name -->
+                            <TextBlock HorizontalAlignment="Left" Margin="58,5,0,0" TextWrapping="Wrap" Text="Motion Name" VerticalAlignment="Top"/>
+                            <TextBox x:Name="MotionData_MotionNameBx" HorizontalAlignment="Left" Height="20" Margin="10,21,0,0" VerticalAlignment="Top" Width="172" Padding="0"/>
+
+                            <!-- Sync Frame -->
+                            <CheckBox x:Name="MotionData_SyncFrameChkBx" Content="SyncFrame" HorizontalAlignment="Left" Margin="10,45,0,0" VerticalAlignment="Top"/>
+
+                            <!-- Stop End Frame-->
+                            <CheckBox x:Name="MotionData_StopEndFrameChkBx" Content="StopEndFrame" HorizontalAlignment="Left" Margin="90,45,0,0" VerticalAlignment="Top"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Mirage Animation Data-->
+                    <GroupBox Header="MirageAnimData" HorizontalAlignment="Left" Height="405" Margin="218,37,0,0" VerticalAlignment="Top" Width="203">
+                        <Grid>
+                            <!-- Texture SRT Animation Name-->
+                            <TextBox x:Name="MirageAnimData_TexSrtAnimName0Bx" HorizontalAlignment="Left" Height="20" Margin="10,26,0,0" VerticalAlignment="Top" Width="172" Padding="0"/>
+                            <TextBlock HorizontalAlignment="Left" Margin="14,10,0,0" TextWrapping="Wrap" Text="Texture SRT Animation Name 0" VerticalAlignment="Top"/>
+                            <TextBox x:Name="MirageAnimData_TexSrtAnimName1Bx" HorizontalAlignment="Left" Height="20" Margin="10,66,0,0" VerticalAlignment="Top" Width="172" Padding="0"/>
+                            <TextBlock HorizontalAlignment="Left" Margin="14,50,0,0" TextWrapping="Wrap" Text="Texture SRT Animation Name 1" VerticalAlignment="Top"/>
+                            <TextBox x:Name="MirageAnimData_TexSrtAnimName2Bx" HorizontalAlignment="Left" Height="20" Margin="10,106,0,0" VerticalAlignment="Top" Width="172" Padding="0"/>
+                            <TextBlock HorizontalAlignment="Left" Margin="14,90,0,0" TextWrapping="Wrap" Text="Texture SRT Animation Name 2" VerticalAlignment="Top"/>
+
+                            <!-- Texture PAT Animation Name-->
+                            <TextBox x:Name="MirageAnimData_TexPATAnimName0Bx" HorizontalAlignment="Left" Height="20" Margin="10,146,0,0" VerticalAlignment="Top" Width="172" Padding="0"/>
+                            <TextBlock HorizontalAlignment="Left" Margin="14,130,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Text="Texture PAT Animation Name 0"/>
+                            <TextBox x:Name="MirageAnimData_TexPATAnimName1Bx" HorizontalAlignment="Left" Height="20" Margin="10,186,0,0" VerticalAlignment="Top" Width="172" Padding="0"/>
+                            <TextBlock HorizontalAlignment="Left" Margin="14,170,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Text="Texture PAT Animation Name 1"/>
+                            <TextBox x:Name="MirageAnimData_TexPATAnimName2Bx" HorizontalAlignment="Left" Height="20" Margin="10,226,0,0" VerticalAlignment="Top" Width="172" Padding="0"/>
+                            <TextBlock HorizontalAlignment="Left" Margin="14,210,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Text="Texture PAT Animation Name 2"/>
+
+                            <!-- Material Animation Name -->
+                            <TextBox x:Name="MirageAnimData_MatAnimName0Bx" HorizontalAlignment="Left" Height="20" Margin="10,266,0,0" VerticalAlignment="Top" Width="172" Padding="0"/>
+                            <TextBlock HorizontalAlignment="Left" Margin="22,250,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Text="Material Animation Name 0"/>
+                            <TextBox x:Name="MirageAnimData_MatAnimName1Bx" HorizontalAlignment="Left" Height="20" Margin="10,306,0,0" VerticalAlignment="Top" Width="172" Padding="0"/>
+                            <TextBlock HorizontalAlignment="Left" Margin="22,290,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Text="Material Animation Name 1"/>
+                            <TextBox x:Name="MirageAnimData_MatAnimName2Bx" HorizontalAlignment="Left" Height="20" Margin="10,346,0,0" VerticalAlignment="Top" Width="172" Padding="0"/>
+                            <TextBlock HorizontalAlignment="Left" Margin="22,330,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Text="Material Animation Name 2"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Program Motion Data -->
+                    <GroupBox Header="ProgramMotionData" HorizontalAlignment="Left" Height="148" Margin="10,128,0,0" VerticalAlignment="Top" Width="203">
+                        <Grid>
+                            <!-- Axis -->
+                            <TextBlock HorizontalAlignment="Left" Margin="18,5,0,0" TextWrapping="Wrap" Text="Axis X" VerticalAlignment="Top"/>
+                            <TextBox x:Name="ProgramMotionData_AxisXBx" HorizontalAlignment="Left" Height="20" Margin="10,21,0,0" VerticalAlignment="Top" Width="48" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+                            <TextBlock HorizontalAlignment="Left" Margin="78,5,0,0" TextWrapping="Wrap" Text="Axis Y" VerticalAlignment="Top"/>
+                            <TextBox x:Name="ProgramMotionData_AxisYBx" HorizontalAlignment="Left" Height="20" Margin="70,21,0,0" VerticalAlignment="Top" Width="48" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+                            <TextBlock HorizontalAlignment="Left" Margin="138,5,0,0" TextWrapping="Wrap" Text="Axis Z" VerticalAlignment="Top"/>
+                            <TextBox x:Name="ProgramMotionData_AxisZBx" HorizontalAlignment="Left" Height="20" Margin="130,21,0,0" VerticalAlignment="Top" Width="48" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+
+                            <!-- Motion Type -->
+                            <TextBlock HorizontalAlignment="Left" Margin="8,43,0,0" TextWrapping="Wrap" Text="MotionType" VerticalAlignment="Top"/>
+                            <ComboBox x:Name="ProgramMotionData_MotionTypeCmbBx" HorizontalAlignment="Left" Margin="10,59,0,0" VerticalAlignment="Top" Width="60">
+                                <ComboBoxItem Content="Swing"/>
+                                <ComboBoxItem Content="Rotate"/>
+                                <ComboBoxItem Content="None"/>
+                            </ComboBox>
+
+                            <!-- Power -->
+                            <TextBlock HorizontalAlignment="Left" Margin="108,45,0,0" TextWrapping="Wrap" Text="Power" VerticalAlignment="Top"/>
+                            <TextBox x:Name="ProgramMotionData_PowerBx" HorizontalAlignment="Left" Height="20" Margin="76,61,0,0" VerticalAlignment="Top" Width="102" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+
+                            <!-- Speed Scale-->
+                            <TextBlock x:Name="SpeedScaleBx" HorizontalAlignment="Left" Margin="17,85,0,0" TextWrapping="Wrap" Text="SpeedScale" VerticalAlignment="Top"/>
+                            <TextBox x:Name="ProgramMotionData_SpeedScaleBx" HorizontalAlignment="Left" Height="20" Margin="10,101,0,0" VerticalAlignment="Top" Width="74" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+
+                            <!-- Time -->
+                            <TextBlock x:Name="TimeBx" HorizontalAlignment="Left" Margin="128,85,0,0" TextWrapping="Wrap" Text="Time" VerticalAlignment="Top"/>
+                            <TextBox x:Name="ProgramMotionData_TimeBx" HorizontalAlignment="Left" Height="20" Margin="104,101,0,0" VerticalAlignment="Top" Width="74" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Effect Data -->
+                    <GroupBox Header="EffectData" HorizontalAlignment="Left" Height="85" Margin="10,281,0,0" VerticalAlignment="Top" Width="203">
+                        <Grid>
+                            <!-- Effect Name -->
+                            <TextBlock HorizontalAlignment="Left" Margin="64,5,0,0" TextWrapping="Wrap" Text="Effect Name" VerticalAlignment="Top"/>
+                            <TextBox x:Name="EffectData_EffectNameBx" HorizontalAlignment="Left" Height="20" Margin="10,21,0,0" VerticalAlignment="Top" Width="172" Padding="0"/>
+
+                            <!-- Link Motion Stop-->
+                            <CheckBox x:Name="EffectData_LinkMotionStopChkBx" Content="LinkMotionStop" HorizontalAlignment="Left" Margin="46,46,0,0" VerticalAlignment="Top"/>
+                        </Grid>
+                    </GroupBox>
+                    <!-- Sound Data -->
+                    <GroupBox Header="SoundData" HorizontalAlignment="Left" Height="71" Margin="10,371,0,0" VerticalAlignment="Top" Width="203">
+                        <Grid>
+                            <!-- Cue Name -->
+                            <TextBlock HorizontalAlignment="Left" Margin="68,5,0,0" TextWrapping="Wrap" Text="Cue Name" VerticalAlignment="Top"/>
+                            <TextBox x:Name="SoundData_CueNameBx" HorizontalAlignment="Left" Height="20" Margin="10,21,0,0" VerticalAlignment="Top" Width="172" Padding="0"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Kill Data -->
+                    <GroupBox Header="KillData" HorizontalAlignment="Left" Height="159" Margin="10,447,0,0" VerticalAlignment="Top" Width="203">
+                        <Grid>
+                            <!-- Brake Motion Name -->
+                            <TextBlock HorizontalAlignment="Left" Margin="41,5,0,0" TextWrapping="Wrap" Text="Break Motion Name" VerticalAlignment="Top"/>
+                            <TextBox x:Name="KillData_BrkMotionNameBx" HorizontalAlignment="Left" Height="20" Margin="10,21,0,0" VerticalAlignment="Top" Width="172" Padding="0"/>
+
+                            <!-- Kill Type -->
+                            <TextBlock HorizontalAlignment="Left" Margin="20,43,0,0" TextWrapping="Wrap" Text="KillType" VerticalAlignment="Top"/>
+                            <ComboBox x:Name="KillData_KillTypeCmbBx" HorizontalAlignment="Left" Margin="10,59,0,0" VerticalAlignment="Top" Width="60">
+                                <ComboBoxItem Content="Not kill"/>
+                                <ComboBoxItem Content="Kill"/>
+                                <ComboBoxItem Content="Break"/>
+                                <ComboBoxItem Content="Motion"/>
+                            </ComboBox>
+
+                            <!-- Kill Time -->
+                            <TextBlock HorizontalAlignment="Left" Margin="107,45,0,0" TextWrapping="Wrap" Text="KillTime" VerticalAlignment="Top"/>
+                            <TextBox x:Name="KillData_KillTimeBx" HorizontalAlignment="Left" Height="20" Margin="76,61,0,0" VerticalAlignment="Top" Width="102" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Debris Data -->
+                    <GroupBox Header="DebrisData" HorizontalAlignment="Left" Height="159" Margin="218,447,0,0" VerticalAlignment="Top" Width="203">
+                        <Grid>
+                            <!-- Gravity -->
+                            <TextBlock HorizontalAlignment="Left" Margin="28,5,0,0" TextWrapping="Wrap" Text="Gravity" VerticalAlignment="Top"/>
+                            <TextBox x:Name="DebrisData_GravityBx" HorizontalAlignment="Left" Height="20" Margin="3,21,0,0" VerticalAlignment="Top" Width="84" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+
+                            <!-- LifeTime -->
+                            <TextBlock HorizontalAlignment="Left" Margin="121,5,0,0" TextWrapping="Wrap" Text="LifeTime" VerticalAlignment="Top"/>
+                            <TextBox x:Name="DebrisData_LifeTimeBx" HorizontalAlignment="Left" Height="20" Margin="101,21,0,0" VerticalAlignment="Top" Width="84" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+
+                            <!-- Mass -->
+                            <TextBlock HorizontalAlignment="Left" Margin="33,45,0,0" TextWrapping="Wrap" Text="Mass" VerticalAlignment="Top"/>
+                            <TextBox x:Name="DebrisData_MassBx" HorizontalAlignment="Left" Height="20" Margin="3,61,0,0" VerticalAlignment="Top" Width="84" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+
+                            <!-- Explosion Scale -->
+                            <TextBlock HorizontalAlignment="Left" Margin="104,45,0,0" TextWrapping="Wrap" Text="ExplosionScale" VerticalAlignment="Top"/>
+                            <TextBox x:Name="DebrisData_ExplosionScaleBx" HorizontalAlignment="Left" Height="20" Margin="101,61,0,0" VerticalAlignment="Top" Width="84" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+
+                            <!-- Impulse Scale -->
+                            <TextBlock HorizontalAlignment="Left" Margin="59,85,0,0" TextWrapping="Wrap" Text="ImpulseScale" VerticalAlignment="Top"/>
+                            <TextBox x:Name="DebrisData_ImpulseScaleBx" HorizontalAlignment="Left" Height="20" Margin="51,101,0,0" VerticalAlignment="Top" Width="84" Padding="0" PreviewTextInput="NumbersOnlyTextBox"/>
+                        </Grid>
+                    </GroupBox>
+                </Grid>
+            </GroupBox>
         </Grid>
     </Grid>
 </Window>

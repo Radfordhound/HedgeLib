@@ -5,25 +5,27 @@ using Microsoft.Win32;
 using System.IO;
 using System.Collections.Generic;
 using System.Windows.Controls;
-
+using System.Text.RegularExpressions;
+using System.Windows.Input;
 namespace ForcesGISMEditor
 {
     public partial class MainWindow : Window
-    {
+    { 
         // Variables/Constants
-        public const string OriginalName = "Sonic Forces GISM Editor";
+        private const string OriginalName = "Sonic Forces GISM Editor";
 
         public ForcesGISM Gism = null;
-        public List<ForcesGISM.Property> GISMProperties = new List<ForcesGISM.Property>();
+        public List<ForcesGISM.ReactionData> GISMReactionData = new List<ForcesGISM.ReactionData>();
         public string FileName = null;
-        private int prevSelectedPreset = -1;
+
+        int prevSelectedReaction = -1;
 
         // Constructors
         public MainWindow()
         {
             InitializeComponent();
         }
-
+        
         // Methods
         private void OpenGISM(string filePath)
         {
@@ -31,16 +33,15 @@ namespace ForcesGISMEditor
             Gism = new ForcesGISM();
 
             Gism.Load(FileName);
-            GISMProperties = new List<ForcesGISM.Property>(Gism.Properties);
+            GISMReactionData = new List<ForcesGISM.ReactionData>(Gism._ReactionData);
 
-            PresetCmbBx.SelectedIndex = 0;
             UpdateGUI();
         }
 
         private void SaveGISM(string fileName)
         {
             FileName = fileName;
-            SavePresets(PresetCmbBx.SelectedIndex);
+            SaveReactionData(ReactionStateCmbBx.SelectedIndex);
             SaveValues();
 
             Gism.Save(fileName, overwrite: true);
@@ -51,13 +52,13 @@ namespace ForcesGISMEditor
         private void New_Click(object sender, RoutedEventArgs e)
         {
             Gism = new ForcesGISM();
-            for (uint i = 0; i < ForcesGISM.PropertyCount; ++i)
+            for (uint i = 0; i < ForcesGISM.ReactionDataCount; ++i)
             {
-                Gism.Properties[i] = new ForcesGISM.Property();
+                Gism._ReactionData[i] = new ForcesGISM.ReactionData();
             }
 
-            GISMProperties = new List<ForcesGISM.Property>(Gism.Properties);
-            PresetCmbBx.SelectedIndex = 0;
+            GISMReactionData = new List<ForcesGISM.ReactionData>(Gism._ReactionData);
+            ReactionStateCmbBx.SelectedIndex = 0;
             UpdateGUI();
         }
 
@@ -108,142 +109,199 @@ namespace ForcesGISMEditor
             Save.IsEnabled = SaveAs.IsEnabled = true;
             SetGUIEnabled(true);
 
+            ReactionStateCmbBx.SelectedIndex = 0;
             UpdateTitle();
             UpdateValues();
+        }
+
+        private void NumbersOnlyTextBox(object sender, TextCompositionEventArgs e)
+        {
+            Regex regex = new Regex(@"^[-]?\d*[.]?\d*$");
+            e.Handled = !regex.IsMatch((sender as TextBox).Text.Insert((sender as TextBox).SelectionStart, e.Text));
         }
 
         private void SetGUIEnabled(bool enable)
         {
             WorkspaceGrid.IsEnabled = enable;
         }
-        
+
         public void UpdateValues()
         {
-            BoundingBoxXTxtBx.Text = Gism.BoundingSize.X.ToString();
-            BoundingBoxYTxtBx.Text = Gism.BoundingSize.Y.ToString();
-            BoundingBoxZTxtBx.Text = Gism.BoundingSize.Z.ToString();
+            RangeInBx.Text = Gism.RangeIn.ToString();
+            RangeDistanceBx.Text = Gism.RangeDistance.ToString();
 
-            SpeedToBrkTxtbx.Text = Gism.SpeedRequiredToBreak.ToString();
+            ModelNameBx.Text = Gism.ModelName;
+            SkeletonNameBx.Text = Gism.SkeletonName;
 
-            AnimationNameTxtbx.Text = Gism.AnimationName;
-            SkeletonNameTxtbx.Text = Gism.SkeletonName;
+            ColliderShapeBx.SelectedIndex = (int)Gism.BoundingShape;
 
-            if ((int)Gism.BoundingShape <= 3)
-                BoundingBoxTypeCmbbx.SelectedIndex = (int)Gism.BoundingShape;
-            else
-                BoundingBoxTypeCmbbx.SelectedIndex = 3;
+            BoundingBxWidthBx.Text = Gism.BoundingSize.X.ToString();
+            BoundingBxHeightBx.Text = Gism.BoundingSize.Y.ToString();
+            BoundingBxDepthBx.Text = Gism.BoundingSize.Z.ToString();
 
-            StaticCOLChkbx.IsChecked = Convert.ToBoolean(Gism.StaticCollision);
-            UnkByteTxtbx.Text = Gism.UnknownByte.ToString();
-            UnkShortTxtbx.Text = Gism.UnknownShort.ToString();
+            MeshNameBx.Text = Gism.MeshName;
 
-            UnkFloat1Txtbx.Text = Gism.UnknownFloat1.ToString();
-            UnkFloat2Txtbx.Text = Gism.UnknownFloat2.ToString();
-            UnkFloat3Txtbx.Text = Gism.UnknownFloat3.ToString();
-            UnkFloat4Txtbx.Text = Gism.UnknownFloat4.ToString();
-            UnkFloat5Txtbx.Text = Gism.UnknownFloat5.ToString();
-            UnkFloat6Txtbx.Text = Gism.UnknownFloat6.ToString();
-            UnkFloat7Txtbx.Text = Gism.UnknownFloat7.ToString();
-            UnkFloat8Txtbx.Text = Gism.UnknownFloat8.ToString();
-            UnkFloat9Txtbx.Text = Gism.UnknownFloat9.ToString();
+            ShapeOffsetWidthBx.Text = Gism.ShapeOffset.X.ToString();
+            ShapeOffsetHeightBx.Text = Gism.ShapeOffset.Y.ToString();
+            ShapeOffsetDepthBx.Text = Gism.ShapeOffset.Z.ToString();
+            ShapeOffsetBx.Text = Gism.ShapeSizeOffset.ToString();
+
+            RigidBodyTypeCmbBx.SelectedIndex = (int)Gism.RigidBodyType;
+            RigidBodyMaterialCmbBx.SelectedIndex = (int)Gism.RigidBodyMaterial;
+
+            PhysicsParam_MassBx.Text = Gism._PhysicsParam.Mass.ToString();
+            PhysicsParam_FrictionBx.Text = Gism._PhysicsParam.Friction.ToString();
+            PhysicsParam_GravityFactorBx.Text = Gism._PhysicsParam.GravityFactor.ToString();
+            PhysicsParam_RestitutionBx.Text = Gism._PhysicsParam.Restitution.ToString();
+            PhysicsParam_LinearDampingBx.Text = Gism._PhysicsParam.LinearDamping.ToString();
+            PhysicsParam_AngularDampingBx.Text = Gism._PhysicsParam.AngularDamping.ToString();
+            PhysicsParam_MaxLinearVelocityBx.Text = Gism._PhysicsParam.MaxLinearVelocity.ToString();
+
+            ContactDamageTypeCmbBx.SelectedIndex = (int)Gism.ContactDamageType;
+
+            RideOnDamageChkBx.IsChecked = Gism.RideOnDamage;
+            AerialBounceChkBx.IsChecked = Gism.AerialBounce;
         }
-        
-        private void PresetCmbBx_SelectionChanged(
+
+        private void ReactionStateCmbBx_SelectionChanged(
             object sender, SelectionChangedEventArgs e)
         {
-            if (prevSelectedPreset == -1)
-                UpdatePresets();
-            
-            SavePresets(prevSelectedPreset);
-            UpdatePresets();
+            if (prevSelectedReaction == -1)
+                UpdateReactionData();
+
+            SaveReactionData(prevSelectedReaction);
+            UpdateReactionData();
         }
 
-        private void UpdatePresets()
+        public void UpdateReactionData()
         {
-            int presetValue = PresetCmbBx.SelectedIndex;
-            var preset = GISMProperties[presetValue];
+            int reactionValue = ReactionStateCmbBx.SelectedIndex;
+            var reaction = GISMReactionData[reactionValue];
 
-            PresetUnkOffset.Text = preset.UnknownOffset;
+            MotionData_MotionNameBx.Text = reaction._MotionData.MotionName;
+            MotionData_SyncFrameChkBx.IsChecked = reaction._MotionData.SyncFrame;
+            MotionData_StopEndFrameChkBx.IsChecked = reaction._MotionData.StopEndFrame;
 
-            PresetUnkByte1.Text = preset.UnknownByte1.ToString();
-            PresetUnkByte2.Text = preset.UnknownByte2.ToString();
-            IsBreakable.Text = preset.IsBreakable.ToString();
+            MirageAnimData_TexSrtAnimName0Bx.Text = reaction._MirageAnimData.TextureSrtAnimName0;
+            MirageAnimData_TexSrtAnimName1Bx.Text = reaction._MirageAnimData.TextureSrtAnimName1;
+            MirageAnimData_TexSrtAnimName2Bx.Text = reaction._MirageAnimData.TextureSrtAnimName2;
+            MirageAnimData_TexPATAnimName0Bx.Text = reaction._MirageAnimData.TextureSrtAnimName0;
+            MirageAnimData_TexPATAnimName1Bx.Text = reaction._MirageAnimData.TextureSrtAnimName1;
+            MirageAnimData_TexPATAnimName2Bx.Text = reaction._MirageAnimData.TextureSrtAnimName2;
+            MirageAnimData_MatAnimName0Bx.Text = reaction._MirageAnimData.MaterialAnimName0;
+            MirageAnimData_MatAnimName1Bx.Text = reaction._MirageAnimData.MaterialAnimName1;
+            MirageAnimData_MatAnimName2Bx.Text = reaction._MirageAnimData.MaterialAnimName2;
 
-            PresetUnkFloat1.Text = preset.UnknownFloat1.ToString();
-            PresetUnkFloat2.Text = preset.UnknownFloat2.ToString();
-            FlowerRotation.Text = preset.FlowerRotation.ToString();
+            ProgramMotionData_AxisXBx.Text = reaction._ProgramMotionData.Axis.X.ToString();
+            ProgramMotionData_AxisYBx.Text = reaction._ProgramMotionData.Axis.Y.ToString();
+            ProgramMotionData_AxisZBx.Text = reaction._ProgramMotionData.Axis.Z.ToString();
+            ProgramMotionData_MotionTypeCmbBx.SelectedIndex = (int)reaction._ProgramMotionData.MotionType;
+            ProgramMotionData_PowerBx.Text = reaction._ProgramMotionData.Power.ToString();
+            ProgramMotionData_SpeedScaleBx.Text = reaction._ProgramMotionData.SpeedScale.ToString();
+            ProgramMotionData_TimeBx.Text = reaction._ProgramMotionData.Time.ToString();
 
-            EffectNameTxtBx.Text = preset.EffectName;
-            CueNameTxtBx.Text = preset.CueName;
+            EffectData_EffectNameBx.Text = reaction._EffectData.EffectName;
+            EffectData_LinkMotionStopChkBx.IsChecked = reaction._EffectData.LinkMotionStop;
 
-            PresetEndFloat1.Text = preset.EndFloat1.ToString();
-            PresetEndFloat2.Text = preset.EndFloat2.ToString();
-            PresetEndFloat3.Text = preset.EndFloat3.ToString();
-            PresetEndFloat4.Text = preset.EndFloat4.ToString();
-            PresetEndFloat5.Text = preset.EndFloat5.ToString();
+            SoundData_CueNameBx.Text = reaction._SoundData.CueName;
 
-            prevSelectedPreset = presetValue;
+            KillData_BrkMotionNameBx.Text = reaction._KillData.BreakMotionName;
+            KillData_KillTypeCmbBx.SelectedIndex = (int)reaction._KillData.KillType;
+            KillData_KillTimeBx.Text = reaction._KillData.KillTime.ToString();
 
-            if (PresetCmbBx.SelectedIndex == 5)
-                PresetByte3Txt.Text = "Is Breakable";
-            else
-                PresetByte3Txt.Text = "UnknownByte3";
+            DebrisData_GravityBx.Text = reaction._KillData._DebrisData.Gravity.ToString();
+            DebrisData_LifeTimeBx.Text = reaction._KillData._DebrisData.LifeTime.ToString();
+            DebrisData_MassBx.Text = reaction._KillData._DebrisData.Mass.ToString();
+            DebrisData_ExplosionScaleBx.Text = reaction._KillData._DebrisData.ExplosionScale.ToString();
+            DebrisData_ImpulseScaleBx.Text = reaction._KillData._DebrisData.ImpulseScale.ToString();
 
-            if (PresetCmbBx.SelectedIndex == 1)
-                PresetFloat3Txt.Text = "FlowerRotation";
-            else
-                PresetFloat3Txt.Text = "UnknownFloat3";
+            prevSelectedReaction = reactionValue;
         }
 
         private void SaveValues()
         {
-            float.TryParse(BoundingBoxXTxtBx.Text, out Gism.BoundingSize.X);
-            float.TryParse(BoundingBoxYTxtBx.Text, out Gism.BoundingSize.Y);
-            float.TryParse(BoundingBoxZTxtBx.Text, out Gism.BoundingSize.Z);
+            float.TryParse(RangeInBx.Text, out Gism.RangeIn);
+            float.TryParse(RangeDistanceBx.Text, out Gism.RangeDistance);
 
-            ushort.TryParse(SpeedToBrkTxtbx.Text, out Gism.SpeedRequiredToBreak);
-            Gism.AnimationName = AnimationNameTxtbx.Text;
-            Gism.SkeletonName = SkeletonNameTxtbx.Text;
+            Gism.ModelName = ModelNameBx.Text;
+            Gism.SkeletonName = SkeletonNameBx.Text;
 
             Gism.BoundingShape = (ForcesGISM.BoundingShapes)
-                BoundingBoxTypeCmbbx.SelectedIndex;
+                ColliderShapeBx.SelectedIndex;
 
-            Gism.StaticCollision = Convert.ToByte(StaticCOLChkbx.IsChecked.Value);
-            byte.TryParse(UnkByteTxtbx.Text, out Gism.UnknownByte);
-            ushort.TryParse(UnkShortTxtbx.Text, out Gism.UnknownShort);
+            float.TryParse(BoundingBxWidthBx.Text, out Gism.BoundingSize.X);
+            float.TryParse(BoundingBxHeightBx.Text, out Gism.BoundingSize.Y);
+            float.TryParse(BoundingBxDepthBx.Text, out Gism.BoundingSize.Z);
 
-            float.TryParse(UnkFloat1Txtbx.Text, out Gism.UnknownFloat1);
-            float.TryParse(UnkFloat2Txtbx.Text, out Gism.UnknownFloat2);
-            float.TryParse(UnkFloat3Txtbx.Text, out Gism.UnknownFloat3);
-            float.TryParse(UnkFloat4Txtbx.Text, out Gism.UnknownFloat4);
-            float.TryParse(UnkFloat5Txtbx.Text, out Gism.UnknownFloat5);
-            float.TryParse(UnkFloat6Txtbx.Text, out Gism.UnknownFloat6);
-            float.TryParse(UnkFloat7Txtbx.Text, out Gism.UnknownFloat7);
-            float.TryParse(UnkFloat8Txtbx.Text, out Gism.UnknownFloat8);
-            float.TryParse(UnkFloat9Txtbx.Text, out Gism.UnknownFloat9);
+            Gism.MeshName = MeshNameBx.Text;
+
+            float.TryParse(ShapeOffsetWidthBx.Text, out Gism.ShapeOffset.X);
+            float.TryParse(ShapeOffsetHeightBx.Text, out Gism.ShapeOffset.Y);
+            float.TryParse(ShapeOffsetDepthBx.Text, out Gism.ShapeOffset.Z);
+            float.TryParse(ShapeOffsetBx.Text, out Gism.ShapeSizeOffset);
+
+            Gism.RigidBodyType = (ForcesGISM.RigidBodyTypes)
+                RigidBodyTypeCmbBx.SelectedIndex;
+            Gism.RigidBodyMaterial = (ForcesGISM.RigidBodyMaterials)
+                RigidBodyMaterialCmbBx.SelectedIndex;
+
+            float.TryParse(PhysicsParam_MassBx.Text, out Gism._PhysicsParam.Mass);
+            float.TryParse(PhysicsParam_FrictionBx.Text, out Gism._PhysicsParam.Friction);
+            float.TryParse(PhysicsParam_GravityFactorBx.Text, out Gism._PhysicsParam.GravityFactor);
+            float.TryParse(PhysicsParam_RestitutionBx.Text, out Gism._PhysicsParam.Restitution);
+            float.TryParse(PhysicsParam_LinearDampingBx.Text, out Gism._PhysicsParam.LinearDamping);
+            float.TryParse(PhysicsParam_AngularDampingBx.Text, out Gism._PhysicsParam.AngularDamping);
+            float.TryParse(PhysicsParam_MaxLinearVelocityBx.Text, out Gism._PhysicsParam.MaxLinearVelocity);
+
+            Gism.ContactDamageType = (ForcesGISM.ContactDamageTypes)
+                ContactDamageTypeCmbBx.SelectedIndex;
+
+            Gism.RideOnDamage = RideOnDamageChkBx.IsChecked.Value;
+            Gism.AerialBounce = AerialBounceChkBx.IsChecked.Value;
         }
 
-        private void SavePresets(int index)
+        private void SaveReactionData(int index)
         {
-            var prop = GISMProperties[index];
-            prop.UnknownOffset = PresetUnkOffset.Text;
+            var reaction = GISMReactionData[index];
+            reaction._MotionData.MotionName = MotionData_MotionNameBx.Text;
+            reaction._MotionData.SyncFrame = MotionData_SyncFrameChkBx.IsChecked.Value;
+            reaction._MotionData.StopEndFrame = MotionData_StopEndFrameChkBx.IsChecked.Value;
 
-            byte.TryParse(PresetUnkByte1.Text, out prop.UnknownByte1);
-            byte.TryParse(PresetUnkByte2.Text, out prop.UnknownByte2);
-            byte.TryParse(IsBreakable.Text, out prop.IsBreakable);
+            reaction._MirageAnimData.TextureSrtAnimName0 = MirageAnimData_TexSrtAnimName0Bx.Text;
+            reaction._MirageAnimData.TextureSrtAnimName1 = MirageAnimData_TexSrtAnimName1Bx.Text;
+            reaction._MirageAnimData.TextureSrtAnimName2 = MirageAnimData_TexSrtAnimName2Bx.Text;
+            reaction._MirageAnimData.TexturePatAnimName0 = MirageAnimData_TexPATAnimName0Bx.Text;
+            reaction._MirageAnimData.TexturePatAnimName1 = MirageAnimData_TexPATAnimName0Bx.Text;
+            reaction._MirageAnimData.TexturePatAnimName2 = MirageAnimData_TexPATAnimName0Bx.Text;
+            reaction._MirageAnimData.MaterialAnimName0 = MirageAnimData_MatAnimName0Bx.Text;
+            reaction._MirageAnimData.MaterialAnimName1 = MirageAnimData_MatAnimName1Bx.Text;
+            reaction._MirageAnimData.MaterialAnimName2 = MirageAnimData_MatAnimName2Bx.Text;
 
-            float.TryParse(PresetUnkFloat1.Text, out prop.UnknownFloat1);
-            float.TryParse(PresetUnkFloat2.Text, out prop.UnknownFloat2);
-            float.TryParse(FlowerRotation.Text, out prop.FlowerRotation);
+            float.TryParse(ProgramMotionData_AxisXBx.Text, out reaction._ProgramMotionData.Axis.X);
+            float.TryParse(ProgramMotionData_AxisYBx.Text, out reaction._ProgramMotionData.Axis.Y);
+            float.TryParse(ProgramMotionData_AxisZBx.Text, out reaction._ProgramMotionData.Axis.Z);
 
-            prop.EffectName = EffectNameTxtBx.Text;
-            prop.CueName = CueNameTxtBx.Text;
+            reaction._ProgramMotionData.MotionType = (ForcesGISM.ReactionData.ProgramMotionData.MotionTypes)
+                ProgramMotionData_MotionTypeCmbBx.SelectedIndex;
+            float.TryParse(ProgramMotionData_PowerBx.Text, out reaction._ProgramMotionData.Power);
+            float.TryParse(ProgramMotionData_SpeedScaleBx.Text, out reaction._ProgramMotionData.SpeedScale);
+            float.TryParse(ProgramMotionData_TimeBx.Text, out reaction._ProgramMotionData.Time);
 
-            float.TryParse(PresetEndFloat1.Text, out prop.EndFloat1);
-            float.TryParse(PresetEndFloat2.Text, out prop.EndFloat2);
-            float.TryParse(PresetEndFloat3.Text, out prop.EndFloat3);
-            float.TryParse(PresetEndFloat4.Text, out prop.EndFloat4);
-            float.TryParse(PresetEndFloat5.Text, out prop.EndFloat5);
+            reaction._EffectData.EffectName = EffectData_EffectNameBx.Text;
+            reaction._EffectData.LinkMotionStop = EffectData_LinkMotionStopChkBx.IsChecked.Value;
+
+            reaction._SoundData.CueName = SoundData_CueNameBx.Text;
+
+            reaction._KillData.BreakMotionName = KillData_BrkMotionNameBx.Text;
+            reaction._KillData.KillType = (ForcesGISM.ReactionData.KillData.KillTypes)
+                KillData_KillTypeCmbBx.SelectedIndex;
+            float.TryParse(KillData_KillTimeBx.Text, out reaction._KillData.KillTime);
+
+            float.TryParse(DebrisData_GravityBx.Text, out reaction._KillData._DebrisData.Gravity);
+            float.TryParse(DebrisData_LifeTimeBx.Text, out reaction._KillData._DebrisData.LifeTime);
+            float.TryParse(DebrisData_MassBx.Text, out reaction._KillData._DebrisData.Mass);
+            float.TryParse(DebrisData_ExplosionScaleBx.Text, out reaction._KillData._DebrisData.ExplosionScale);
+            float.TryParse(DebrisData_ImpulseScaleBx.Text, out reaction._KillData._DebrisData.ImpulseScale);
         }
     }
 }
