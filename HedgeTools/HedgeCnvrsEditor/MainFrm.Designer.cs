@@ -40,6 +40,7 @@
             this.importXMLToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exportXMLToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
+            this.filterTxtBx = new System.Windows.Forms.TextBox();
             this.treeView = new System.Windows.Forms.TreeView();
             this.listView = new System.Windows.Forms.ListView();
             this.name = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -155,6 +156,7 @@
             // 
             // splitContainer.Panel1
             // 
+            this.splitContainer.Panel1.Controls.Add(this.filterTxtBx);
             this.splitContainer.Panel1.Controls.Add(this.treeView);
             // 
             // splitContainer.Panel2
@@ -163,6 +165,16 @@
             this.splitContainer.Size = new System.Drawing.Size(1022, 541);
             this.splitContainer.SplitterDistance = 224;
             this.splitContainer.TabIndex = 4;
+            // 
+            // filterTxtBx
+            // 
+            this.filterTxtBx.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.filterTxtBx.Enabled = false;
+            this.filterTxtBx.Location = new System.Drawing.Point(0, 521);
+            this.filterTxtBx.Name = "filterTxtBx";
+            this.filterTxtBx.Size = new System.Drawing.Size(224, 20);
+            this.filterTxtBx.TabIndex = 1;
+            this.filterTxtBx.Visible = false;
             // 
             // treeView
             // 
@@ -211,26 +223,26 @@
             this.renameTsm,
             this.deleteTsm});
             this.TVMenu.Name = "TVMenu";
-            this.TVMenu.Size = new System.Drawing.Size(153, 92);
+            this.TVMenu.Size = new System.Drawing.Size(127, 70);
             // 
             // addEntry
             // 
             this.addEntry.Name = "addEntry";
-            this.addEntry.Size = new System.Drawing.Size(152, 22);
+            this.addEntry.Size = new System.Drawing.Size(126, 22);
             this.addEntry.Text = "Add Entry";
             this.addEntry.Click += new System.EventHandler(this.addEntry_Click);
             // 
             // renameTsm
             // 
             this.renameTsm.Name = "renameTsm";
-            this.renameTsm.Size = new System.Drawing.Size(152, 22);
+            this.renameTsm.Size = new System.Drawing.Size(126, 22);
             this.renameTsm.Text = "Rename";
             this.renameTsm.Click += new System.EventHandler(this.renameTsm_Click);
             // 
             // deleteTsm
             // 
             this.deleteTsm.Name = "deleteTsm";
-            this.deleteTsm.Size = new System.Drawing.Size(152, 22);
+            this.deleteTsm.Size = new System.Drawing.Size(126, 22);
             this.deleteTsm.Text = "Delete";
             this.deleteTsm.Click += new System.EventHandler(this.deleteTsm_Click);
             // 
@@ -247,6 +259,7 @@
             this.menuStrip.ResumeLayout(false);
             this.menuStrip.PerformLayout();
             this.splitContainer.Panel1.ResumeLayout(false);
+            this.splitContainer.Panel1.PerformLayout();
             this.splitContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).EndInit();
             this.splitContainer.ResumeLayout(false);
@@ -277,6 +290,7 @@
         private System.Windows.Forms.ToolStripMenuItem exportXMLToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem renameTsm;
         private System.Windows.Forms.ToolStripMenuItem deleteTsm;
+        private System.Windows.Forms.TextBox filterTxtBx;
     }
 }
 

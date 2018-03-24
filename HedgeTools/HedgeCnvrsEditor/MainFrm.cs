@@ -27,7 +27,7 @@ namespace HedgeCnvrsEditor
             treeView.MouseClick += TreeView_Click;
             treeView.AfterLabelEdit += TreeView_LabelEdit;
             listView.DoubleClick += ListView_DoubleClick;
-            treeView.KeyDown += TreeView_keyPress;
+            filterTxtBx.TextChanged += FilterTxtBx_TextChanged;
         }
 
         //Methods
@@ -175,8 +175,69 @@ namespace HedgeCnvrsEditor
 
         void UpdateGUI()
         {
-            UpdateTreeView();
+            FilterTreeView(filterTxtBx.Text);
             UpdateListView();
+        }
+
+        void FilterTreeView(string filter)
+        {
+            if (ForcesText == null)
+                return;
+
+            if(string.IsNullOrEmpty(filter))
+            {
+                UpdateTreeView();
+                return;
+            }
+
+            treeView.BeginUpdate();
+            //Update Nodes
+            treeView.Nodes.Clear();
+            var rootNode = treeView.Nodes.Add("nodes", "Nodes");
+            foreach (var node in ForcesText.Nodes)
+            {
+                var entryNode = rootNode.Nodes.Add(node.Name);
+                entryNode.Tag = node;
+                foreach (var entry in node.Entries)
+                {
+                    if(entry.Name.Contains(filter))
+                    {
+                        entryNode.Nodes.Add(new TreeNode()
+                        {
+                            Text = entry.Name,
+                            Tag = entry,
+                            Name = entry.Name
+                        });
+                    }
+                }
+            }
+            var layoutsNode = treeView.Nodes.Add("layouts", "Layouts");
+            foreach (var layout in ForcesText.Layouts)
+            {
+                if (layout.Name.Contains(filter))
+                {
+                    layoutsNode.Nodes.Add(new TreeNode()
+                    {
+                        Text = layout.Name,
+                        Tag = layout,
+                        Name = layout.Name
+                    });
+                }
+            }
+            var typesNode = treeView.Nodes.Add("types", "Value Types");
+            foreach (var type in ForcesText.Types)
+            {
+                if (type.Key.Contains(filter))
+                {
+                    typesNode.Nodes.Add(new TreeNode()
+                    {
+                        Name = type.Key,
+                        Text = type.Key,
+                        Tag = type.Value
+                    });
+                }
+            }
+            treeView.EndUpdate();
         }
 
         #region GUI Events
@@ -291,7 +352,7 @@ namespace HedgeCnvrsEditor
                     Name = $"newNode{ForcesText.Nodes.Count}"
                 });
             }
-            UpdateGUI();
+            FilterTreeView(filterTxtBx.Text);
         }
 
         private void TreeView_LabelEdit(object sender, NodeLabelEditEventArgs e)
@@ -344,18 +405,24 @@ namespace HedgeCnvrsEditor
                 UpdateGUI();
             }
         }
-
-        void TreeView_keyPress(object sender, KeyEventArgs args)
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            switch(args.KeyCode)
+            switch(keyData)
             {
                 case Keys.Delete:
                     {
                         DeleteItem();
-                        break;
+                        return true;
+                    }
+                case Keys.Control | Keys.F:
+                    {
+                        filterTxtBx.Visible = filterTxtBx.Enabled = !filterTxtBx.Enabled;
+                        filterTxtBx.Text = string.Empty;
+                        filterTxtBx.Select();
+                        return true;
                     }
                 default:
-                    break;
+                    return base.ProcessCmdKey(ref msg, keyData);
             }
         }
 
@@ -368,6 +435,11 @@ namespace HedgeCnvrsEditor
         private void deleteTsm_Click(object sender, EventArgs e)
         {
             DeleteItem();
+        }
+
+        private void FilterTxtBx_TextChanged(object sender, EventArgs e)
+        {
+            FilterTreeView(filterTxtBx.Text);
         }
     }
     #endregion
