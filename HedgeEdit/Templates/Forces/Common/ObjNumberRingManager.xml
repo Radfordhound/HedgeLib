@@ -1,20 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <Nodes type="forcesObjectList" description="Array of object IDs" />
-
-  <Unknown1 type="ulong" default="0" description="Padding?" />
-  <Unknown2 type="ulong" default="0" description="Padding?" />
-  <Unknown3 type="ulong" default="0" description="Padding?" />
-  <Unknown4 type="ulong" default="0" description="Padding?" />
-  <Unknown5 type="ulong" default="0" description="Padding?" />
-  <Unknown6 type="ulong" default="0" description="Padding?" />
-  <Unknown7 type="ulong" default="0" description="Padding?" />
-  <Unknown8 type="ulong" default="0" description="Padding?" />
-  <Unknown9 type="ulong" default="0" description="Padding?" />
-  <Unknown10 type="ulong" default="0" description="Padding?" />
-  <Unknown11 type="ulong" default="0" description="Padding?" />
-  <Unknown12 type="ulong" default="0" description="Padding?" />
+  <Rings type="forcesObjectList" description="Number Rings controlled by this manager." />
+  <Event0Targets type="forcesObjectList" description="" />
+  <Event0Type type="byte" description="">
+    <Enum description="EVENT_ON" value="0" />
+    <Enum description="EVENT_OFF" value="1" />
+  </Event0Type>
+  <Event0Timer type="float" description="" />
   
-  <Extra type="description" value="Object that controls the Number Rings?" />
-  <Extra type="RawByteLength" length="36" />
+  <Event1Targets type="forcesObjectList" description="" />
+  <Event1Type type="byte" description="">
+    <Enum description="EVENT_ON" value="0" />
+    <Enum description="EVENT_OFF" value="1" />
+  </Event1Type>
+  <Event1Timer type="float" description="" />
+  
+  <Event2Targets type="forcesObjectList" description="" />
+  <Event2Type type="byte" description="">
+    <Enum description="EVENT_ON" value="0" />
+    <Enum description="EVENT_OFF" value="1" />
+  </Event2Type>
+  <Event2Timer type="float" description="" />
+  
+  <Extra type="description" value="Object that controls all number rings in the stage." />
+  <Extra type="RawByteLength" length="120" />
 </Template>

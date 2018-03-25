@@ -1,29 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <Distance type="float" default="60" description="" />
-  <AnimationSpeed1 type="float" default="700" description="How fast the animation of you swinging on the target is. Does not affect the speed you're launched with." />
-  <Unknown3 type="float" default="300" description="" />
-  <AnimationSpeed2 type="float" default="1000" description="How fast the animation of you swinging on the target is. Does not affect the speed you're launched with." />
-  <Unknown5 type="float" default="140" description="" />
+  <Distance type="float" default="60" description="How far the player is from the target when swinging on it." />
+  <AnimationMaxSpeed type="float" default="700" description="How fast the animation of you swinging on the target is. Does not affect the speed you're launched with(?)." />
+  <LaunchMaxSpeed type="float" default="300" description="" />
+  <Acceleration type="float" default="1000" description="" />
+  <EndAngle type="float" default="140" description="" />
   <OutOfControl type="float" default="0.5" description="How long the game locks your control for after swinging on the grapple point." />
   
-  <Unknown6 type="bool" default="true" description="" />
-  <Unknown7 type="bool" default="false" description="" />
-  <Unknown8 type="bool" default="true" description="" />
-  <Unknown9 type="bool" default="true" description="" />
-  <Unknown10 type="uint" default="0" description="Always 0?" />
+  <ForceAxis type="bool" default="true" description="" />
+  <EnableSideSwing type="bool" default="false" description="" />
+  <IsVisible type="bool" default="true" description="Whether this object is visible or not." />
   
-  <Targets type="forcesObjectList" description="" />
-  <Unknown11 type="ulong" default="0" description="Always 0?" />
-  <Unknown12 type="ulong" default="0" description="Always 0?" />
-  <Unknown13 type="ulong" default="0" description="Always 0?" />
-  <Unknown14 type="ulong" default="0" description="Always 0?" />
-  <Unknown15 type="ulong" default="0" description="Always 0?" />
-  <Unknown16 type="ulong" default="0" description="Always 0?" />
-  <Unknown17 type="ulong" default="0" description="Always 0?" />
-  <Unknown18 type="ulong" default="0" description="Always 0?" />
-  <Unknown19 type="ulong" default="0" description="Always 0?" />
+  <Event0Targets type="forcesObjectList" description="" />
+  <Event0Type type="byte" description="">
+    <Enum description="EVENT_ON" value="0" />
+    <Enum description="EVENT_OFF" value="1" />
+  </Event0Type>
+  <Event0Timer type="float" description="" />
+  
+  <Event1Targets type="forcesObjectList" description="" />
+  <Event1Type type="byte" description="">
+    <Enum description="EVENT_ON" value="0" />
+    <Enum description="EVENT_OFF" value="1" />
+  </Event1Type>
+  <Event1Timer type="float" description="" />
+  
+  <Event2Targets type="forcesObjectList" description="" />
+  <Event2Type type="byte" description="">
+    <Enum description="EVENT_ON" value="0" />
+    <Enum description="EVENT_OFF" value="1" />
+  </Event2Type>
+  <Event2Timer type="float" description="" />
 
   <Extra type="description" value="Red grapple points." />
-  <Extra type="RawByteLength" length="144" />
+  <Extra type="RawByteLength" length="128" />
 </Template>

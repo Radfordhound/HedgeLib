@@ -2,6 +2,44 @@
 
 namespace HedgeLib
 {
+    [Serializable]
+    public struct Vector2
+    {
+        // Variables/Constants
+        public float X, Y;
+
+        // Constructors
+        public Vector2(float x, float y)
+        {
+            X = x;
+            Y = y;
+        }
+
+        // Methods
+        public override string ToString()
+        {
+            return $"({X}, {Y})";
+        }
+
+        public static Vector2 operator +(Vector2 v1, Vector2 v2) =>
+            new Vector2(v1.X + v2.X, v1.Y + v2.Y);
+
+        public static Vector2 operator -(Vector2 v1, Vector2 v2) =>
+            new Vector2(v1.X - v2.X, v1.Y - v2.Y);
+
+        public static Vector2 operator *(Vector2 v1, Vector2 v2) =>
+            new Vector2(v1.X * v2.X, v1.Y * v2.Y);
+
+        public static Vector2 operator *(Vector2 v1, float m) =>
+            new Vector2(v1.X * m, v1.Y * m);
+
+        public static Vector2 operator /(Vector2 v1, Vector2 v2) =>
+            new Vector2(v1.X / v2.X, v1.Y / v2.Y);
+
+        public static Vector2 operator /(Vector2 v1, float m) =>
+            new Vector2(v1.X / m, v1.Y / m);
+    }
+
     // All Vector3s in HedgeLib should use these axes:
     // X-left, Y-up, Z-forward
     // This follows the axes used in Sonic Generations.

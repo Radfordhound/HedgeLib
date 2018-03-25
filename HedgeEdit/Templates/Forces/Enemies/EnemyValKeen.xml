@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <PathUID type="int" description="The UID of the path used by this object." />
+  <AttackDelay type="float" default="0" description="How long this object waits before attacking the player." />
+  <MoveSpeed type="float" default="1000" description="How fast this object can move." />
+  <EscapeMoveSpeed type="float" default="1500" description="" />
+  
+  <PopSpeed type="float" default="200" description="" />
+  <PassingAddSpeed type="float" default="0" description="" />
+  <DropTime type="float" default="3" description="" />
+  <CaptureDistance type="float" default="1000" description="" />
+  
+  <CaptureDistancePassing type="float" default="1000" description="" />
+  <TurnRoll type="float" default="0" description="" />
+  <PopPosition type="vector3" description="" />
+  <PathOffsetPosition type="vector3" description="" />
+  
+  <AttackType type="byte" description="">
+	<Enum description="Normal" value="0" />
+    <Enum description="Passing" value="1" />
+    <Enum description="Reversal" value="2" />
+  </AttackType>
+  
+  <CaptureType type="byte" description="">
+	<Enum description="Normal" value="0" />
+    <Enum description="Passing" value="1" />
+  </CaptureType>
+  
+  <HasGravity type="bool" default="false" description="Whether this object is affected by gravity." />
+  <In3D type="bool" default="true" description="Whether this object is in a 3D section, or a 2D section." />
+  <DoesRespawn type="bool" default="false" description="Whether this object respawns after being destroyed." />
+  <DoesAttack type="bool" default="true" description="Whether this object attempts to attack the player." />
+  <MoveTime type="float" default="1" description="How long this object moves." />
+  
+  <Extra type="model" value="enm_valkeen02.model" />
+  <Extra type="description" value="Robotic falcons (Sonic Team can't spell) that bomb the shit out of you!" />
+  <Extra type="RawByteLength" length="96" />
+</Template>

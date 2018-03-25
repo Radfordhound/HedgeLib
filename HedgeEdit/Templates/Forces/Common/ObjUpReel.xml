@@ -5,22 +5,31 @@
   <Speed type="float" default="250" description="The speed at which you launch away from the up reel." />
   <OutOfControl type="float" default="0.5" description="How long the game locks your control after grabbing onto the up reel." />
   
-  <Padding1 type="ulong" default="0" description="Padding?" />
-  <Padding2 type="ulong" default="0" description="Padding?" />
-  <Padding3 type="ulong" default="0" description="Padding?" />
-  <Padding4 type="ulong" default="0" description="Padding?" />
-  <Padding5 type="ulong" default="0" description="Padding?" />
-  <Padding6 type="ulong" default="0" description="Padding?" />
-  <Padding7 type="ulong" default="0" description="Padding?" />
-  <Padding8 type="ulong" default="0" description="Padding?" />
-  <Padding9 type="ulong" default="0" description="Padding?" />
-  <Padding10 type="ulong" default="0" description="Padding?" />
-  <Padding11 type="ulong" default="0" description="Padding?" />
-  <Padding12 type="ulong" default="0" description="Padding?" />
-  <Padding13 type="ulong" default="0" description="Padding?" />
-  <Padding14 type="ulong" default="0" description="Padding?" />
+  <IsOneTimeUp type="bool" description="Whether this UpReel only works once, or will allow you to grab it infinitely." />
+  <IsEventDriven type="bool" description="" />
+  
+  <Event0Targets type="forcesObjectList" description="" />
+  <Event0Type type="byte" description="">
+    <Enum description="EVENT_ON" value="0" />
+    <Enum description="EVENT_OFF" value="1" />
+  </Event0Type>
+  <Event0Timer type="float" description="" />
+  
+  <Event1Targets type="forcesObjectList" description="" />
+  <Event1Type type="byte" description="">
+    <Enum description="EVENT_ON" value="0" />
+    <Enum description="EVENT_OFF" value="1" />
+  </Event1Type>
+  <Event1Timer type="float" description="" />
+  
+  <Event2Targets type="forcesObjectList" description="" />
+  <Event2Type type="byte" description="">
+    <Enum description="EVENT_ON" value="0" />
+    <Enum description="EVENT_OFF" value="1" />
+  </Event2Type>
+  <Event2Timer type="float" description="" />
   
   <Extra type="model" value="cmn_obj_upreel_stand.model" />
   <Extra type="description" value="Pulleys you grab onto to go up." />
-  <Extra type="RawByteLength" length="48" />
+  <Extra type="RawByteLength" length="120" />
 </Template>

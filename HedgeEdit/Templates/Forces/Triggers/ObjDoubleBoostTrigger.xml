@@ -2,12 +2,15 @@
 <Template>
   <PathUID type="uint" default="0" description="The UID of the path used for this double boost section." />
   <Unknown2 type="float" default="600" description="Maybe speed?" />
-  <Unknown3 type="uint" default="0" description="Trigger type? 0 = Start, 2 = Stop??" />
-  <Unknown4 type="float" default="200" description="" />
-  <Unknown5 type="float" default="1000" description="" />
-  <Padding1 type="ulong" default="0" description="Always 0?" />
-  <Padding2 type="uint" default="0" description="Always 0?" />
+  <Type type="byte" default="0" description="">
+	<Enum description="Start" value="0" />
+    <Enum description="End" value="1" />
+    <Enum description="End Auto-Run" value="2" />
+  </Type>
+  
+  <Width type="float" default="200" description="The width of this trigger." />
+  <Height type="float" default="1000" description="The height of this trigger." />
   
   <Extra type="description" value="TOGETHER WE CAN SHOW THE WORLD WHAT WE CAN DO YOU ARE NESdotiNMSDPOgnsdOPGINDPG{ODBGOGH jpdrh SOP{Dh" />
-  <Extra type="RawByteLength" length="32" />
+  <Extra type="RawByteLength" length="20" />
 </Template>

@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <Unknown1 type="uint" default="0" description="" />
-  <Unknown2 type="uint" default="0" description="" />
-  <Unknown3 type="uint" default="0" description="" />
-  <Unknown4 type="uint" default="0" description="" />
+  <Length type="byte" description="How long these thorns are.">
+	<Enum description="Short" value="0" />
+    <Enum description="Long" value="1" />
+  </Length>
+  
+  <Rigidbody type="bool" description="Whether the game uses a rigidbody for thorn collision?" />
   
   <Extra type="model" value="cmn_obj_thorncylinder.model" />
   <Extra type="description" value="Spikes in the form of a cylinder" />
-  <Extra type="RawByteLength" length="16" />
+  <Extra type="RawByteLength" length="2" />
 </Template>

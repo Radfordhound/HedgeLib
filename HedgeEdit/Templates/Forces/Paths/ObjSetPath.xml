@@ -1,12 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <PathUID type="ulong" default="0" description="The Unique IDentifier used to identify this path. Set it to whatever you want!" />
-  <Nodes type="forcesObjectList" description="Array of object IDs" />
-  <Unknown1 type="bool" default="false" description="IsLoopPath? ObjPath?" /> 
-  <IsSideView type="bool" default="false" description="Whether or not the path is a 2D spline" /> 
-  <Unknown3 type="bool" default="false" description="GRPath?" /> 
-  <Unknown4 type="bool" default="false" description="" /> 
-  <Unknown5 type="float" default="10" description="InRadius?" />
+  <PathUID type="int" description="The Unique IDentifier used to identify this path. Set it to whatever you want!" />
+  <PathType type="byte" description="What type of spline this is.">
+	<Enum value="0" description="Object Path"/>
+	<Enum value="1" description="2D Path"/>
+	<Enum value="2" description="Grind Rail"/>
+  </PathType>
   
+  <Nodes type="forcesObjectList" description="Array of ObjSetPathNode IDs." />
+  <IsLoopPath type="bool" default="false" description="Whether or not this path is the spline for a loop-de-loop." /> 
+  <StartLineType type="byte" description="">
+	<Enum description="LINETYPE_SNS" value="0" />
+    <Enum description="LINETYPE_STRAIGHT" value="1" />
+  </StartLineType>
+  
+  <DivideLength type="float" default="10" description="" />
   <Extra type="description" value="Splines represented fully within the set data, rather than in .path files!" />
+  <Extra type="RawByteLength" length="40" />
 </Template>

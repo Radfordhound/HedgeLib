@@ -1,19 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <BranchType type="uint" default="1" description="What kind of branch to use." />
-  <Unknown2 type="float" default="1" description="" />
-  <Unknown3 type="uint" default="1" description="Probably leaf type" />
-  <Unknown4 type="float" default="90" description="" />
+  <BranchType type="byte" default="1" description="What kind of branch to use.">
+	<Enum description="TREE_A01" value="0" />
+    <Enum description="TREE_A02" value="1" />
+    <Enum description="TREE_A03" value="2" />
+    <Enum description="TREE_B01" value="3" />
+    <Enum description="TREE_B02" value="4" />
+    <Enum description="TREE_B03" value="5" />
+  </BranchType>
   
-  <Unknown5 type="float" default="50" description="" />
-  <Unknown6 type="float" default="2" description="" />
-  <Unknown7 type="float" default="10" description="" />
-  <Unknown8 type="float" default="10" description="" />
+  <Scale type="float" default="1" description="The scale of the object." />
+  <TimeType type="byte" description="">
+    <Enum description="Local" value="0" />
+    <Enum description="Global" value="1" />
+  </TimeType>
   
-  <Unknown9 type="float" default="1" description="" />
-  <BranchType0 type="float" default="100" description="" />
-  <BranchType1 type="float" default="1400" description="" />
-  <BranchType2 type="float" default="3" description="" />
+  <WindHorzAngle type="float" default="90" description="" />
+  <WindHorzAngleWidth type="float" default="50" description="" />
+  <WindHorzAngleCycle type="float" default="2" description="" />
+  <WindVertAngle type="float" default="10" description="" />
+  <WindVertAngleWidth type="float" default="10" description="" />
+  <WindVertAngleCycle type="float" default="1" description="" />
+  
+  <WindSpeedMin type="float" default="100" description="" />
+  <WindSpeedMax type="float" default="1400" description="" />
+  <WindSpeedCycle type="float" default="3" description="" />
   
   <Extra type="model" value="w5_obj_palmtreeA01.model" condition="BranchType == 0" />
   <Extra type="model" value="w5_obj_palmtreeA02.model" condition="BranchType == 1" />

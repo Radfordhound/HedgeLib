@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <Unknown1 type="uint" default="0" description="An ID of some type?" />
-  <Unknown2 type="bool" default="false" description="No idea" />
-  <Unknown3 type="bool" default="false" description="Always 0?" />
-  <Unknown4 type="byte" default="0" description="Always 0? Maybe SetPlaceType" />
-  <Unknown5 type="byte" default="0" description="Always 0? Maybe EventType" />
+  <NodeID type="int" description="The ID of this Node." />
+  <LineType type="byte" description="">
+	<Enum description="LINETYPE_SNS" value="0" />
+    <Enum description="LINETYPE_STRAIGHT" value="1" />
+  </LineType>
   
   <Extra type="description" value="Nodes (pretty much just vertices) for ObjSetPaths." />
-  <Extra type="RawByteLength" length="16" />
+  <Extra type="RawByteLength" length="8" />
 </Template>

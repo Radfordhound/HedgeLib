@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <BoxNumX type="uint" default="1" description="Number of boxes (X-axis)" />
-  <BoxNumY type="uint" default="1" description="Number of boxes (Y-axis)" />
-  <BoxNumZ type="uint" default="1" description="Number of boxes (Z-axis)" />
-  <HasShadow type="bool" default="true" description="Whether or not the box has a shadow." />
+  <Dummy type="int" description="?" />
   
   <Extra type="model" value="cmn_obj_woodbox_HD.model" />
   <Extra type="description" value="Wooden Boxes." />
-  <Extra type="RawByteLength" length="16" />
+  <Extra type="RawByteLength" length="4" />
 </Template>

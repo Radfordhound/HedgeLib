@@ -130,7 +130,11 @@ namespace HedgeLib.Sets
                 var dataType = Types.GetTypeFromString(dataTypeAttr.Value);
                 object data = null;
 
-                if (dataType == typeof(Vector3))
+                if (dataType == typeof(Vector2))
+                {
+                    data = Helpers.XMLReadVector2(paramElem);
+                }
+                else if (dataType == typeof(Vector3))
                 {
                     data = Helpers.XMLReadVector3(paramElem);
                 }
@@ -287,7 +291,11 @@ namespace HedgeLib.Sets
                 var elem = new XElement((string.IsNullOrEmpty(name)) ?
                     "Parameter" : name, dataTypeAttr);
 
-                if (dataType == typeof(Vector3))
+                if (dataType == typeof(Vector2))
+                {
+                    Helpers.XMLWriteVector2(elem, (Vector2)param.Data);
+                }
+                else if (dataType == typeof(Vector3))
                 {
                     Helpers.XMLWriteVector3(elem, (Vector3)param.Data);
                 }

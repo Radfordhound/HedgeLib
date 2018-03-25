@@ -3,17 +3,19 @@
   <Red type="float" default="1000" description="The amount of red color in the light. Forces uses PBR, so you should take a color value within a 0-1 range and multiply it by 1000." />
   <Green type="float" default="1000" description="The amount of green color in the light. Forces uses PBR, so you should take a color value within a 0-1 range and multiply it by 1000." />
   <Blue type="float" default="500" description="The amount of blue color in the light. Forces uses PBR, so you should take a color value within a 0-1 range and multiply it by 1000." />
-  <Unknown4 type="float" default="20" description="" />
-  <Unknown5 type="float" default="24" description="" />
-  <Unknown6 type="float" default="80" description="" />
-  <Unknown7 type="float" default="0" description="" />
-  <Unknown8 type="float" default="100" description="" />
-  <Unknown9 type="float" default="5" description="" />
+  <SourceRadius type="float" default="20" description="" />
+  <HalfLength type="float" default="24" description="" />
+  <AttenuationRadius type="float" default="80" description="" />
   
-  <Padding1 type="uint" default="0" description="Always 0?" />
-  <Padding2 type="uint" default="0" description="Always 0?" />
-  <Padding3 type="uint" default="0" description="Always 0?" />
+  <MoveType type="byte" description="How this light moves.">
+	<Enum description="None" value="0" />
+    <Enum description="Constant" value="1" />
+    <Enum description="Rotate" value="2" />
+  </MoveType>
+  
+  <MoveDistance type="float" default="100" description="How far this light moves." />
+  <MoveCycle type="float" default="5" description="" />
   
   <Extra type="description" value="'Let there be light' - Takashi Iizuka" />
-  <Extra type="RawByteLength" length="48" />
+  <Extra type="RawByteLength" length="36" />
 </Template>

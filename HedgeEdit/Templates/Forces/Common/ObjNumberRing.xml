@@ -1,16 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <NumberRingID type="uint" default="0" description="Which number ring this is. Must be 0-4." />
-  <Padding1 type="uint" default="0" description="Padding?" />
-  <Padding2 type="uint" default="0" description="Padding?" />
-  <Padding3 type="uint" default="0" description="Padding?" />
+  <Type type="byte" default="0" description="Which number ring this is.">
+	<Enum description="Number Ring #5" value="0" />
+    <Enum description="Number Ring #4" value="1" />
+    <Enum description="Number Ring #3" value="2" />
+    <Enum description="Number Ring #2" value="3" />
+    <Enum description="Number Ring #1" value="4" />
+  </Type>
+  
+  <SeparateTranslucent type="bool" description="" />
   
   <Extra type="model" value="cmn_obj_numberring_1.model" condition="NumberRingID == 0" />
   <Extra type="model" value="cmn_obj_numberring_2.model" condition="NumberRingID == 1" />
   <Extra type="model" value="cmn_obj_numberring_3.model" condition="NumberRingID == 2" />
   <Extra type="model" value="cmn_obj_numberring_4.model" condition="NumberRingID == 3" />
   <Extra type="model" value="cmn_obj_numberring_5.model" condition="NumberRingID == 4" />
-  <Extra type="description" value="COUNT WITH ME ELMO 123 HAHAHAH" />
-  <Extra type="RawByteLength" length="16" />
+  <Extra type="description" value="Number Rings. They're as easy as 1-2-3!" />
   <Extra type="OffsetPositionY" value="0.6" />
+  <Extra type="RawByteLength" length="2" />
 </Template>

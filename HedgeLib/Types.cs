@@ -31,6 +31,7 @@ namespace HedgeLib
             new DataType(typeof(long), 0L, "signed long", "sint64", "long"),
             new DataType(typeof(ulong), 0UL, "unsigned long", "uint64", "ulong"),
             new DataType(typeof(double), 0D, "double"),
+            new DataType(typeof(Vector2), new Vector2(), "vector2"),
 
             // 12-Byte Values
             new DataType(typeof(Vector3), new Vector3(), "vect", "vector", "vector3", "position"),

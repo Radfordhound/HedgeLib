@@ -1,25 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <InactiveDelay type="float" default="2.5" description="How long the object waits before becoming active and spewing fire again." />
-  <ActiveTime type="float" default="0.7" description="How long the object spews fire before becoming inactive." />
-  <FlameLength type="uint" default="2" description="How long the flame gets spewed.">
-	<Enum value="0" description="Really fricken tiny" />
-    <Enum value="1" description="Small" />
-    <Enum value="2" description="Medium" />
-	<Enum value="3" description="Large" />
-	<Enum value="4" description="Why would you ever need it this big" />
+  <OffTime type="float" default="2.5" description="How long the object stays inactive before becoming active and spewing fire again." />
+  <OnTime type="float" default="0.7" description="How long the object spews fire before becoming inactive." />
+  <FlameLength type="byte" default="2" description="How long the flame gets spewed.">
+	<Enum value="0" description="Really fricken tiny (2M)" />
+    <Enum value="1" description="Small (4M)" />
+    <Enum value="2" description="Medium (6M)" />
+	<Enum value="3" description="Large (8M)" />
+	<Enum value="4" description="Why would you ever need it this big (10M)" />
 	<Enum value="5" description="Invisible flames?" />
   </FlameLength>
   
+  <TimeType type="byte" description="">
+    <Enum description="Local" value="0" />
+    <Enum description="Global" value="1" />
+  </TimeType>
+  
   <InitialDelay type="float" default="0.5" description="How long the object waits before starting the normal active/inactive cycle." />
-  <AlwaysActive type="bool" default="false" description="Whether this object always spews fire or turns on/off on a timer." />
-  <MustBeTriggered type="bool" default="false" description="Whether this object is active by default or must be triggered by something first." />
-  <Unknown7 type="bool" default="false" description="" />
-  <Unknown8 type="bool" default="false" description="" />
-  <Padding1 type="ulong" default="0" description="Always 0?" />
-  <Padding2 type="uint" default="0" description="Always 0?" />
+  <Type type="byte" description="The way this object spews flames.">
+    <Enum description="On/Off" value="0" />
+    <Enum description="Always On" value="1" />
+    <Enum description="Always Off" value="2" />
+  </Type>
+  
+  <IsEventDriven type="bool" default="false" description="Whether this object is active by default or must be triggered by something first." />
+  <PitchRotation type="float" description="" />
   
   <Extra type="model" value="ex_obj_flame.model" />
   <Extra type="description" value="Thing that emit fire" />
-  <Extra type="RawByteLength" length="32" />
+  <Extra type="RawByteLength" length="24" />
 </Template>

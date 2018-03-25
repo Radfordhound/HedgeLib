@@ -1,26 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
   <WeaponType type="enum" default="1" description="The type of weapon the egg pawn has.">
-	  <Enum value="0" description="Laser Machine Gun" />
-	  <Enum value="1" description="Bullets" />
+	  <Enum description="Laser Machine Gun" value="0" />
+	  <Enum description="Bullets" value="1" />
   </WeaponType>
   
-  <Unknown2 type="float" default="0" description="" />
-  <SearchRange type="float" default="0" description="Range of how far the egg pawn sees." />
-  <Unknown4 type="float" default="0" description="" />
+  <ApproachLimit type="float" default="0" description="" />
+  <SearchDistance type="float" default="400" description="How far this object can see when searching for a player to attack." />
+  <SearchAngle type="float" default="0" description="The angle at which the egg pawn searches for players to attack." />
   
-  <MoveRange type="float" default="0" description="Range of how far the egg pawn moves." />
-  <Unknown6 type="uint" default="1" description="Always 1" />
-  <Unknown7 type="uint" default="0" description="Always 0?" />
-  <ShouldFireUsingRotation type="bool" default="true" description="If true, bullets will be fired in the direction the enemy is facing. Otherwise, they'll simply be shot forward no matter what." />
+  <MoveDistance type="float" default="100" description="How far this object can move." />
+  <ShotCoolDown type="bool" default="true" description="Whether or not the egg pawn waits in-between shooting." />
+  <AttackConst type="bool" default="false" description="Whether this egg pawn will attack the player constantly?" />
+  <AttackConstAngle type="float" default="0" description="" />
+  <In3D type="bool" default="true" description="Whether this object is in a 3D section, or a 2D section." />
+  <IsEventDriven type="bool" default="false" description="Whether this object is active by default or must be triggered by something first." />
+  <HasGravity type="bool" default="false" description="Whether this object is affected by gravity." />
+  <IsFallStart type="bool" default="false" description="Whether this object spawns in its falling state." />
   
-  <Unknown9 type="uint" default="0" description="Always 0?" />
-  <Unknown10 type="uint" default="0" description="Always 0?" />
-  <Unknown11 type="uint" default="0" description="Always 0?" />
-  <Unknown12 type="uint" default="0" description="Always 0?" />
+  <IsTreadGrass type="bool" description="" />
+  <UpdateMaterial type="bool" description="" />
+  <IsStatic type="bool" description="Whether this egg pawn never moves?" />
+  <BehaviorType type="byte" description="">
+    <Enum description="Normal" value="0" />
+    <Enum description="Infinite" value="1" />
+    <Enum description="Infinite Violet" value="2" />
+  </BehaviorType>
   
+  <ToSVPathDistance type="float" description="How far away this egg pawn is from a 2D section?" />
   <Extra type="model" value="enm_eggpawn01.model" condition="WeaponType == 0"/>
   <Extra type="model" value="enm_eggpawn02.model" condition="WeaponType == 1"/>
   <Extra type="description" value="Egg pawns could not be a better name to describe how generic these guys are in Forces." />
-  <Extra type="RawByteLength" length="48" />
+  <Extra type="RawByteLength" length="40" />
 </Template>

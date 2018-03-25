@@ -1,24 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <Unknown1 type="uint" default="0" description="" />
-  <ShootingRate type="float" default="3" description="How high the shooting rate is" />
-  <Unknown3 type="uint" default="0" description="" />
-  <AttackRange type="float" default="300" description="How far the pod shoots" />
+  <TimeType type="byte" description="">
+    <Enum description="Local" value="0" />
+    <Enum description="Global" value="1" />
+  </TimeType>
   
-  <Unknown5 type="float" default="90" description="" />
-  <Unknown6 type="float" default="90" description="" />
-  <ShootingHeight type="float" default="240" description="How high the rocket launches" />
-  <Unknown8 type="float" default="0.6" description="" />
+  <ShootingDelay type="float" default="3" description="How long this object waits before shooting again." />
+  <InitialDelay type="float" default="0" description="How long the object waits before starting the normal active/inactive cycle." />
+  <AttackDistance type="float" default="300" description="How far this object shoots." />
   
-  <RocketSpeed type="float" default="100" description="The speed of the rocket" />
-  <RocketSpeed2 type="float" default="0.5" description="The higher the slower?" />
-  <RotationSpeed type="float" default="1" description="The speed of the rocket when it starts spinning in the air after launch." />
-  <Unknown12 type="uint" default="5" description="" />
+  <ShotAngleMin type="float" default="90" description="The minimum angle this object can shoot at." />
+  <ShotAngleMax type="float" default="90" description="The maximum angle this object can shoot at." />
+  <ShotSpeed type="float" default="240" description="How fast the shot missiles travel." />
+  <ShotTime type="float" default="0.6" description="" />
   
-  <Unknown13 type="ulong" default="0" description="" />
-  <Unknown14 type="ulong" default="0" description="" />
+  <MissileSpeed type="float" default="100" description="The speed of the missiles." />
+  <MissileAccelTime type="float" default="0.5" description="How long the shot missiles take to reach their maximum speed." />
+  <MissileHomingWait type="float" default="1" description="How long the missiles wait before homing in on their target." />
+  <MissileHomingRotation type="int" default="5" description="The speed of the missiles when they start spinning in the air after launch." />
+  
+  <IsEventDriven type="bool" default="false" description="Whether this object is active by default or must be triggered by something first." />
 
   <Extra type="model" value="w7_obj_researchmissile.model" />
   <Extra type="description" value="Ready.... LAUNCH!!" />
-  <Extra type="RawByteLength" length="48" />
+  <Extra type="RawByteLength" length="52" />
 </Template>

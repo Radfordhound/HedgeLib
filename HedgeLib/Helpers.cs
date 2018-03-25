@@ -41,7 +41,17 @@ namespace HedgeLib
 
         public static object ChangeType(object value, Type conversionType)
         {
-            if (conversionType == typeof(Vector3))
+            if (conversionType == typeof(Vector2))
+            {
+                if (value.GetType() == typeof(string))
+                {
+                    var singles = ((string)value).Split(',');
+                    return new Vector2(Convert.ToSingle(singles[0]),
+                        Convert.ToSingle(singles[1]));
+                }
+                else throw new NotImplementedException();
+            }
+            else if (conversionType == typeof(Vector3))
             {
                 if (value.GetType() == typeof(string))
                 {
@@ -79,7 +89,22 @@ namespace HedgeLib
 			}
         }
 
-		public static Vector3 XMLReadVector3(XElement element)
+        public static Vector2 XMLReadVector2(XElement element)
+        {
+            var x = element.Element("x");
+            var y = element.Element("y");
+
+            if (x == null)
+                x = element.Element("X");
+            if (y == null)
+                y = element.Element("Y");
+
+            return new Vector2(
+                (x == null) ? 0 : Convert.ToSingle(x.Value),
+                (y == null) ? 0 : Convert.ToSingle(y.Value));
+        }
+
+        public static Vector3 XMLReadVector3(XElement element)
 		{
 			var x = element.Element("x");
 			var y = element.Element("y");
@@ -126,7 +151,15 @@ namespace HedgeLib
 			return new Quaternion(XMLReadVector4(element));
 		}
 
-		public static void XMLWriteVector3(XElement element, Vector3 vect)
+        public static void XMLWriteVector2(XElement element, Vector2 vect)
+        {
+            var x = new XElement("x", vect.X);
+            var y = new XElement("y", vect.Y);
+
+            element.Add(x, y);
+        }
+
+        public static void XMLWriteVector3(XElement element, Vector3 vect)
 		{
 			var x = new XElement("x", vect.X);
 			var y = new XElement("y", vect.Y);

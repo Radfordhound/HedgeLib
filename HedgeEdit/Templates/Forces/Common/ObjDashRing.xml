@@ -3,52 +3,41 @@
   <RingType type="uint" default="0" description="The type of hoop.">
 	<Enum value="0" description="Dash Hoop" />
 	<Enum value="1" description="Rainbow Rings" />
+	<Enum value="2" description="Number Type(?)" />
   </RingType>
   
   <OutOfControl type="float" default="0.5" description="How long the game locks your control for after coming in contact with this object." />
-  <KeepVelocityDistance type="float" default="0.25" description="This distance is a constant speed" />
+  <KeepVelocityDistance type="float" default="0.25" description="How long you keep your velocity gained from this object before gravity takes effect." />
   <Speed type="float" default="500" description="How much speed the Dash Hoop will send you off with." />
   
-  <Unknown2 type="bool" default="true" description="" />
-  <Unknown3 type="bool" default="true" description="" />
-  <Unknown4 type="bool" default="true" description="" />
-  <Unknown5 type="bool" default="false" description="" />
-  <Unknown6 type="uint" default="0" description="Always 0?" />
-  <Unknown7 type="uint" default="0" description="Always 0?" />
-  <Unknown8 type="uint" default="0" description="Always 0?" />
+  <IsVisible type="bool" default="true" description="Whether the DashRing is visible or not." />
+  <IsPositionConstant type="bool" default="true" description="" />
+  <IsVelocityConstant type="bool" default="true" description="" />
+  <DoesCauseSpin type="bool" default="false" description="Whether the DashRing causes you to play your spinning animation or not." />
   
-  <Unknown9 type="uint" default="0" description="Always 0?" />
-  <Unknown10 type="uint" default="0" description="Always 0?" />
-  <Unknown11 type="uint" default="0" description="Always 0?" />
-  <Unknown12 type="uint" default="0" description="Always 0?" />
+  <Event0Targets type="forcesObjectList" description="" />
+  <Event0Type type="byte" description="">
+    <Enum description="EVENT_ON" value="0" />
+    <Enum description="EVENT_OFF" value="1" />
+  </Event0Type>
+  <Event0Timer type="float" description="" />
   
-  <Unknown13 type="uint" default="0" description="Always 0?" />
-  <Unknown14 type="uint" default="0" description="Always 0?" />
-  <Unknown15 type="uint" default="0" description="Always 0?" />
-  <Unknown16 type="uint" default="0" description="Always 0?" />
+  <Event1Targets type="forcesObjectList" description="" />
+  <Event1Type type="byte" description="">
+    <Enum description="EVENT_ON" value="0" />
+    <Enum description="EVENT_OFF" value="1" />
+  </Event1Type>
+  <Event1Timer type="float" description="" />
   
-  <Unknown17 type="uint" default="0" description="Always 0?" />
-  <Unknown18 type="uint" default="0" description="Always 0?" />
-  <Unknown19 type="uint" default="0" description="Always 0?" />
-  <Unknown20 type="uint" default="0" description="Always 0?" />
-  
-  <Unknown21 type="uint" default="0" description="Always 0?" />
-  <Unknown22 type="uint" default="0" description="Always 0?" />
-  <Unknown23 type="uint" default="0" description="Always 0?" />
-  <Unknown24 type="uint" default="0" description="Always 0?" />
-  
-  <Unknown25 type="uint" default="0" description="Always 0?" />
-  <Unknown26 type="uint" default="0" description="Always 0?" />
-  <Unknown27 type="uint" default="0" description="Always 0?" />
-  <Unknown28 type="uint" default="0" description="Always 0?" />
-  
-  <Unknown29 type="uint" default="0" description="Always 0?" />
-  <Unknown30 type="uint" default="0" description="Always 0?" />
-  <Unknown31 type="uint" default="0" description="Always 0?" />
-  <Unknown32 type="uint" default="0" description="Always 0?" />
+  <Event2Targets type="forcesObjectList" description="" />
+  <Event2Type type="byte" description="">
+    <Enum description="EVENT_ON" value="0" />
+    <Enum description="EVENT_OFF" value="1" />
+  </Event2Type>
+  <Event2Timer type="float" description="" />
   
   <Extra type="model" value="cmn_obj_rainbowring.model" condition="RingType == 1" />
   <Extra type="model" value="cmn_obj_dashring.model" condition="RingType == 0" />
   <Extra type="description" value="Floating hoops" />
-  <Extra type="RawByteLength" length="128" />
+  <Extra type="RawByteLength" length="120" />
 </Template>

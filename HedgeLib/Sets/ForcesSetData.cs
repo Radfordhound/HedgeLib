@@ -3,7 +3,6 @@ using HedgeLib.IO;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Xml.Linq;
 
 namespace HedgeLib.Sets
@@ -92,8 +91,14 @@ namespace HedgeLib.Sets
 
             var pos = reader.ReadVector3();
             var rot = reader.ReadVector3();
-            var pos2 = reader.ReadVector3(); // Unused. I think this is the origin of the object?
-            var rot2 = reader.ReadVector3(); // TODO: Find out if the game uses this
+            var childPosOffset = reader.ReadVector3();
+            var childRotOffset = reader.ReadVector3();
+
+            obj.CustomData.Add("ChildPosOffset", new SetObjectParam(
+                typeof(Vector3), childPosOffset));
+
+            obj.CustomData.Add("ChildRotOffset", new SetObjectParam(
+                typeof(Vector3), childRotOffset));
 
             obj.Transform.Position = pos;
             obj.Transform.Rotation = new Quaternion(rot, true);
@@ -152,14 +157,14 @@ namespace HedgeLib.Sets
                 switch (name)
                 {
                     case "RangeSpawning":
-                    {
-                        obj.CustomData.Add("RangeIn", new SetObjectParam(
-                            typeof(float), BitConverter.ToSingle(data, 0)));
+                        {
+                            obj.CustomData.Add("RangeIn", new SetObjectParam(
+                                typeof(float), BitConverter.ToSingle(data, 0)));
 
-                        obj.CustomData.Add("RangeOut", new SetObjectParam(
-                            typeof(float), BitConverter.ToSingle(data, 4)));
-                        continue;
-                    }
+                            obj.CustomData.Add("RangeOut", new SetObjectParam(
+                                typeof(float), BitConverter.ToSingle(data, 4)));
+                            continue;
+                        }
                 }
 
                 Console.WriteLine($"WARNING: Unknown extra parameter type {name}");
@@ -187,10 +192,10 @@ namespace HedgeLib.Sets
                 return null;
             }
 
-            //Console.WriteLine("\"{1}\" Params at: {0:X}",
-            //    objParamsOffset + reader.Offset, objName);
+            Console.WriteLine("\"{1}\" Params at: {0:X}",
+                objParamsOffset + reader.Offset, objName);
             var template = objectTemplates[objType];
-            
+
             // Object Parameters
             reader.JumpTo(objParamsOffset, false);
             foreach (var param in template.Parameters)
@@ -200,7 +205,7 @@ namespace HedgeLib.Sets
                     param.DataType == typeof(ObjectReference[]))
                 {
                     // TODO: Make sure all of this is right
-                    reader.FixPadding(4);
+                    reader.FixPadding(8);
                     long arrOffset = reader.ReadInt64();
                     ulong arrLength = reader.ReadUInt64();
                     ulong arrLength2 = reader.ReadUInt64();
@@ -214,7 +219,7 @@ namespace HedgeLib.Sets
                     }
 
                     object arrObj;
-                    if (arrLength > 0)
+                    if (arrLength > 0 && arrOffset > 0)
                     {
                         reader.JumpTo(arrOffset, false);
                         if (param.DataType == typeof(uint[]))
@@ -252,21 +257,28 @@ namespace HedgeLib.Sets
                 }
                 else if (param.DataType == typeof(ObjectReference))
                 {
+                    reader.FixPadding(4);
                     obj.Parameters.Add(new SetObjectParam(
                         typeof(ObjectReference), new ObjectReference(reader)));
                     continue;
                 }
                 else if (param.DataType == typeof(string))
                 {
+                    reader.FixPadding(8);
+
                     long offset = reader.ReadInt64();
-                    long curPos = reader.BaseStream.Position;
+                    var stringParam = new SetObjectParam(typeof(string), string.Empty);
 
-                    reader.JumpTo(offset, false);
-                    obj.Parameters.Add(new SetObjectParam(
-                        typeof(string), reader.ReadNullTerminatedString()));
+                    if (offset > 0)
+                    {
+                        long curPos = reader.BaseStream.Position;
+                        reader.JumpTo(offset, false);
+                        stringParam.Data = reader.ReadNullTerminatedString();
+                        reader.JumpTo(curPos);
+                    }
 
-                    reader.JumpTo(curPos);
-                    reader.FixPadding(16); // TODO: Is this correct?
+                    obj.Parameters.Add(stringParam);
+                    reader.FixPadding(16);
                     continue;
                 }
 
@@ -281,6 +293,18 @@ namespace HedgeLib.Sets
                 {
                     reader.FixPadding(4);
                 }
+                else if (param.DataType == typeof(ushort) || param.DataType == typeof(short))
+                {
+                    reader.FixPadding(2);
+                }
+                else if (param.DataType == typeof(Vector2))
+                {
+                    reader.FixPadding(8);
+                }
+                else if (param.DataType == typeof(Vector3))
+                {
+                    reader.FixPadding(16); // TODO: Is this correct?
+                }
 
                 // Data
                 var objParam = new SetObjectParam(param.DataType,
@@ -288,7 +312,11 @@ namespace HedgeLib.Sets
                 obj.Parameters.Add(objParam);
 
                 // Post-Param Padding
-                if (param.DataType == typeof(Vector3))
+                if (param.DataType == typeof(Vector2))
+                {
+                    reader.FixPadding(8);
+                }
+                else if (param.DataType == typeof(Vector3))
                 {
                     reader.FixPadding(16); // TODO: Is this correct?
                 }
@@ -324,6 +352,7 @@ namespace HedgeLib.Sets
             // Objects
             writer.FillInOffsetLong("objectTableOffset", false, false);
             writer.AddOffsetTable("objectOffset", (uint)Objects.Count, 8);
+            writer.FixPadding(16);
 
             for (int i = 0; i < Objects.Count; ++i)
             {
@@ -341,7 +370,8 @@ namespace HedgeLib.Sets
                 WriteObjectParameters(writer, Objects[i], i);
             }
 
-            writer.FixPadding(4);
+            //writer.FixPadding(4);
+            writer.FixPadding(16); // TODO: This actually needs to be 8 in the end
             writer.FinishWrite(Header);
         }
 
@@ -370,8 +400,14 @@ namespace HedgeLib.Sets
 
             writer.Write(obj.Transform.Position);
             writer.Write(obj.Transform.Rotation.ToEulerAngles(true));
-            writer.Write(obj.Transform.Position);
-            writer.Write(obj.Transform.Rotation.ToEulerAngles(true));
+
+            writer.Write((obj.CustomData.ContainsKey("ChildPosOffset")) ?
+                (Vector3)obj.CustomData["ChildPosOffset"].Data :
+                obj.Transform.Position);
+
+            writer.Write((obj.CustomData.ContainsKey("ChildRotOffset")) ?
+                (Vector3)obj.CustomData["ChildRotOffset"].Data :
+                obj.Transform.Rotation.ToEulerAngles(true));
 
             // Extra Parameter Entries
             uint extraParamCounts = (uint)obj.CustomData.Count;
@@ -390,6 +426,12 @@ namespace HedgeLib.Sets
             if (obj.CustomData.ContainsKey("ParentUnknown1"))
                 extraParamCounts -= 1;
 
+            if (obj.CustomData.ContainsKey("ChildPosOffset"))
+                extraParamCounts -= 1;
+
+            if (obj.CustomData.ContainsKey("ChildRotOffset"))
+                extraParamCounts -= 1;
+
             writer.AddOffset($"extraParamsOffset{objID}", 8);
             writer.Write((ulong)extraParamCounts); // TODO
             writer.Write((ulong)extraParamCounts); // TODO
@@ -406,7 +448,8 @@ namespace HedgeLib.Sets
             {
                 if (customData.Key == "Name" || customData.Key == "Unknown1" ||
                     customData.Key == "ParentID" || customData.Key == "ParentUnknown1" ||
-                    customData.Key == "RangeOut")
+                    customData.Key == "RangeOut" || customData.Key == "ChildPosOffset" ||
+                    customData.Key == "ChildRotOffset")
                     continue;
 
                 writer.FillInOffsetLong(
@@ -422,7 +465,7 @@ namespace HedgeLib.Sets
                     Console.WriteLine(
                         $"WARNING: CustomData {customData.Key} skipped; Unknown Type!");
                 }
-                
+
                 writer.AddOffset($"extraParamDataOffset{objID}{i}", 8);
             }
 
@@ -431,7 +474,8 @@ namespace HedgeLib.Sets
             {
                 if (customData.Key == "Name" || customData.Key == "Unknown1" ||
                     customData.Key == "ParentID" || customData.Key == "ParentUnknown1" ||
-                    customData.Key == "RangeOut")
+                    customData.Key == "RangeOut" || customData.Key == "ChildPosOffset" ||
+                    customData.Key == "ChildRotOffset")
                     continue;
 
                 writer.FillInOffsetLong(
@@ -446,6 +490,7 @@ namespace HedgeLib.Sets
             SetObject obj, int objID)
         {
             uint arrIndex = 0, strIndex = 0;
+            uint paramStartPos = (uint)writer.BaseStream.Position;
             writer.FillInOffsetLong($"objParamsOffset{objID}", false, false);
 
             // Write Normal Parameters
@@ -456,7 +501,7 @@ namespace HedgeLib.Sets
                     param.DataType == typeof(ObjectReference[]))
                 {
                     ulong arrLength = 0;
-                    writer.FixPadding(4);
+                    writer.FixPadding(8);
 
                     if (param.DataType == typeof(uint[]))
                     {
@@ -480,6 +525,7 @@ namespace HedgeLib.Sets
                 }
                 else if (param.DataType == typeof(ObjectReference))
                 {
+                    writer.FixPadding(4);
                     var reference = (param.Data as ObjectReference);
                     if (reference == null)
                     {
@@ -492,16 +538,17 @@ namespace HedgeLib.Sets
                 }
                 else if (param.DataType == typeof(string))
                 {
+                    writer.FixPadding(8);
                     string str = (param.Data as string);
                     if (string.IsNullOrEmpty(str))
                     {
                         writer.Write(0UL);
-                        writer.FixPadding(16); // TODO: Is this correct?
+                        writer.Write(0UL);
                         continue;
                     }
 
                     writer.AddString($"obj{objID}StrOffset{strIndex}", str, 8);
-                    writer.FixPadding(16); // TODO: Is this correct?
+                    writer.Write(0UL);
                     ++strIndex;
                     continue;
                 }
@@ -517,12 +564,28 @@ namespace HedgeLib.Sets
                 {
                     writer.FixPadding(4);
                 }
+                else if (param.DataType == typeof(ushort) || param.DataType == typeof(short))
+                {
+                    writer.FixPadding(2);
+                }
+                else if (param.DataType == typeof(Vector2))
+                {
+                    writer.FixPadding(8);
+                }
+                else if (param.DataType == typeof(Vector3))
+                {
+                    writer.FixPadding(16); // TODO: Is this correct?
+                }
 
                 // Data
                 writer.WriteByType(param.DataType, param.Data);
 
                 // Post-Param Padding
-                if (param.DataType == typeof(Vector3))
+                if (param.DataType == typeof(Vector2))
+                {
+                    writer.FixPadding(8);
+                }
+                else if (param.DataType == typeof(Vector3))
                 {
                     writer.FixPadding(16); // TODO: Is this correct?
                 }
@@ -532,6 +595,7 @@ namespace HedgeLib.Sets
             if (arrIndex < 1)
                 return; // Don't bother if there's not even any arrays
 
+            writer.FixPadding(8);
             arrIndex = 0;
             foreach (var param in obj.Parameters)
             {
@@ -556,7 +620,10 @@ namespace HedgeLib.Sets
                     writer.FillInOffsetLong($"obj{objID}ArrOffset{arrIndex}", false, false);
                     for (uint i = 0; i < arr.Length; ++i)
                     {
-                        arr[i].Write(writer);
+                        if (arr[i] == null)
+                            writer.Write(0U);
+                        else
+                            arr[i].Write(writer);
                     }
 
                     ++arrIndex;

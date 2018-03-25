@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <CueName type="string" default="" description="The name of the cue to play." />
+  <Unknown1 type="byte" default="1" description="A boolean?" />
+  <Unknown2 type="byte" default="0" description="" />
+  <Unknown3 type="byte" default="0" description="" />
+  <Unknown4 type="byte" default="0" description="" />
+  
+  <Unknown5 type="uint" description="Always 0?" />
+  <Unknown6 type="float" default="3" description="" />
+  <Unknown7 type="float" default="1" description="" />
+  
+  <Unknown8 type="float" default="5000" description="" />
+  <Unknown9 type="float" default="5000" description="" />
+  
+  <Extra type="description" value="Plays a sound effect." />
+  <Extra length="40" name="RawByteLength" />
+</Template>

@@ -118,9 +118,12 @@ namespace HedgeLib.IO
                 {
                     header.FileSize = ReadUInt32();
 
-                    // TODO: Figure out what these values are.
-                    ushort unknown1 = ReadUInt16();
-                    ushort unknown2 = ReadUInt16();
+                    ushort nodeCount = ReadUInt16();
+                    ushort unknown1 = ReadUInt16(); // Always 0?
+
+                    // TODO: Read Nodes Properly
+                    if (nodeCount < 1)
+                        return header;
 
                     // DATA Header
                     string dataSig = ReadSignature();

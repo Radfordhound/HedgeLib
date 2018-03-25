@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <IBLNumber type="int" default="2" description="" />
+  <Priority type="int" default="0" description="The priority of this volume. Higher-priority volumes take precedence." />
+  <Shape type="byte" description="The shape of this volume.">
+	<Enum description="Box" value="0" />
+    <Enum description="Sphere" value="1" />
+    <Enum description="Cylinder" value="2" />
+  </Shape>
+  
+  <Width type="float" description="The width of the volume." />
+  <Height type="float" description="The height of the volume." />
+  <Depth type="float" description="The depth of the volume." />
+  
+  <Extra type="description" value="Changes which IBL is currently being used." />
+  <Extra type="RawByteLength" length="24" />
+</Template>

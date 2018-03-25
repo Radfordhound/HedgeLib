@@ -178,6 +178,8 @@ namespace HedgeLib.IO
                 return ReadUInt64();
             else if (type == typeof(double))
                 return ReadDouble();
+            else if (type == typeof(Vector2))
+                return ReadVector2();
             else if (type == typeof(Vector3))
                 return ReadVector3();
             else if (type == typeof(Quaternion))
@@ -337,6 +339,40 @@ namespace HedgeLib.IO
             }
 
             return doubleUnion.Double;
+        }
+
+        public Vector2 ReadVector2()
+        {
+            float x, y;
+            var buffer = ReadBytes(8);
+            var floatUnion = new ExtendedBinary.FloatUnion();
+
+            if (IsBigEndian)
+            {
+                floatUnion.UInt = (
+                    (uint)buffer[0] << 24 | (uint)buffer[1] << 16 |
+                    (uint)buffer[2] << 8 | buffer[3]);
+                x = floatUnion.Float;
+
+                floatUnion.UInt = (
+                    (uint)buffer[4] << 24 | (uint)buffer[5] << 16 |
+                    (uint)buffer[6] << 8 | buffer[7]);
+                y = floatUnion.Float;
+            }
+            else
+            {
+                floatUnion.UInt = (
+                    (uint)buffer[3] << 24 | (uint)buffer[2] << 16 |
+                    (uint)buffer[1] << 8 | buffer[0]);
+                x = floatUnion.Float;
+
+                floatUnion.UInt = (
+                    (uint)buffer[7] << 24 | (uint)buffer[6] << 16 |
+                    (uint)buffer[5] << 8 | buffer[4]);
+                y = floatUnion.Float;
+            }
+
+            return new Vector2(x, y);
         }
 
         // 12-Byte Types
@@ -631,6 +667,8 @@ namespace HedgeLib.IO
                 Write((ulong)data);
             else if (type == typeof(double))
                 Write((double)data);
+            else if (type == typeof(Vector2))
+                Write((Vector2)data);
             else if (type == typeof(Vector3))
                 Write((Vector3)data);
             else if (type == typeof(Vector4) || type == typeof(Quaternion))
@@ -831,6 +869,41 @@ namespace HedgeLib.IO
                 dataBuffer[5] = (byte)(doubleUnion.ULong >> 40);
                 dataBuffer[6] = (byte)(doubleUnion.ULong >> 48);
                 dataBuffer[7] = (byte)(doubleUnion.ULong >> 56);
+            }
+
+            Write(dataBuffer, 0, 8);
+        }
+
+        public void Write(Vector2 vect)
+        {
+            var floatUnion = new ExtendedBinary.FloatUnion();
+            if (IsBigEndian)
+            {
+                floatUnion.Float = vect.X;
+                dataBuffer[0] = (byte)(floatUnion.UInt >> 24);
+                dataBuffer[1] = (byte)(floatUnion.UInt >> 16);
+                dataBuffer[2] = (byte)(floatUnion.UInt >> 8);
+                dataBuffer[3] = (byte)(floatUnion.UInt);
+
+                floatUnion.Float = vect.Y;
+                dataBuffer[4] = (byte)(floatUnion.UInt >> 24);
+                dataBuffer[5] = (byte)(floatUnion.UInt >> 16);
+                dataBuffer[6] = (byte)(floatUnion.UInt >> 8);
+                dataBuffer[7] = (byte)(floatUnion.UInt);
+            }
+            else
+            {
+                floatUnion.Float = vect.X;
+                dataBuffer[0] = (byte)(floatUnion.UInt);
+                dataBuffer[1] = (byte)(floatUnion.UInt >> 8);
+                dataBuffer[2] = (byte)(floatUnion.UInt >> 16);
+                dataBuffer[3] = (byte)(floatUnion.UInt >> 24);
+
+                floatUnion.Float = vect.Y;
+                dataBuffer[4] = (byte)(floatUnion.UInt);
+                dataBuffer[5] = (byte)(floatUnion.UInt >> 8);
+                dataBuffer[6] = (byte)(floatUnion.UInt >> 16);
+                dataBuffer[7] = (byte)(floatUnion.UInt >> 24);
             }
 
             Write(dataBuffer, 0, 8);

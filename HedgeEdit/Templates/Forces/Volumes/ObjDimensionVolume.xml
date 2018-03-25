@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Width type="float" description="The width of this volume." />
+  <Height type="float" description="The height of this volume." />
+  <Depth type="float" description="The depth of this volume." />
+  <Dimension type="byte" description="The dimension this volume puts you in.">
+    <Enum description="2D" value="0" />
+    <Enum description="3D" value="1" />
+    <Enum description="2D Back" value="2" />
+  </Dimension>
+  
+  <PathUID type="int" description="The UID of the path used by this object." />
+  <Priority type="int" description="The priority of this volume. Higher-priority volumes take precedence." />
+  <BasePoint type="byte" description="">
+    <Enum description="BASE_CENTER" value="0" />
+    <Enum description="BASE_Z_PLANE" value="1" />
+  </BasePoint>
+  
+  <Camera type="forcesObjectReference" description="A reference to the camera object used during the 2D section." />
+  <EaseTimeEnter type="float" default="1.5" description="How long it takes (in seconds) for this volume's properties to take effect upon entering the volume." />
+  <EaseTimeLeave type="float" default="1.5" description="How long it takes (in seconds) for this volume's properties to stop taking effect upon exiting the volume." />
+  
+  <InterpolateTypeEnter type="byte" description="">
+    <Enum description="INTERPOLATE_RELATIVE" value="0" />
+    <Enum description="INTERPOLATE_ABSOLUTE" value="1" />
+  </InterpolateTypeEnter>
+  
+  <InterpolateTypeLeave type="byte" description="">
+    <Enum description="INTERPOLATE_RELATIVE" value="0" />
+    <Enum description="INTERPOLATE_ABSOLUTE" value="1" />
+  </InterpolateTypeLeave>
+  
+  <Active type="bool" default="true" description="Whether or not this volume is active." />
+  
+  <Extra type="description" value="Used for 2D Sections. Apparently the RangeIn/RangeOut values actually matter, so MAKE SURE to set them high enough so this object doesn't de-spawn!" />
+  <Extra type="RawByteLength" length="44" />
+</Template>

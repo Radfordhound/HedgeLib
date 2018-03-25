@@ -1,27 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <Unknown1 type="uint" default="0" description="" />
-  <Unknown2 type="float" default="30" description="" />
+  <StartType type="byte" default="0" description="">
+	<Enum description="Search In Box" value="0" />
+    <Enum description="Event On" value="1" />
+  </StartType>
   
-  <Unknown3 type="uint" default="0" description="" />
-  <Unknown4 type="uint" default="0" description="" />
-  <Unknown5 type="uint" default="0" description="" />
-  <Unknown6 type="uint" default="0" description="" />
-  <Unknown7 type="uint" default="0" description="" />
-  <Unknown8 type="uint" default="0" description="" />
+  <MoveSpeed type="float" default="30" description="How fast this object can move." />
+  <LocateList type="forcesObjectList" description="" />
   
-  <Unknown9 type="float" default="0" description="" />
-  <Unknown10 type="vector3" description="" />
-  <Unknown11 type="uint" default="0" description="" />
-  <Unknown12 type="bool" default="true" description="" />
-  <Unknown13 type="bool" default="false" description="" />
-  <Unknown14 type="bool" default="false" description="" />
-  <Unknown15 type="bool" default="false" description="" />
-  
-  <Unknown16 type="uint" default="0" description="" />
-  <Unknown17 type="uint" default="0" description="" />
+  <AttackInterval type="float" default="0" description="" />
+  <SearchBoxWidth type="float" default="0" description="" />
+  <SearchBoxHeight type="float" default="0" description="" />
+  <SearchBoxDepth type="float" default="0" description="" />
+  <RespawnTime type="float" description="How long before this object respawns." />
+  <In3D type="bool" default="true" description="Whether this object is in a 3D section, or a 2D section." />
   
   <Extra type="model" value="enm_potos01.model" />
   <Extra type="description" value="Generic green circular badniks floating via a propeller that can shoot generic bullets." />
-  <Extra type="RawByteLength" length="64" />
+  <Extra type="RawByteLength" length="56" />
 </Template>

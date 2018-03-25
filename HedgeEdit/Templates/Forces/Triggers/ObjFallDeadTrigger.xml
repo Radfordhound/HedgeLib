@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <Size type="vector3" default="0,0,0" description="The size of the trigger." />
-  <Speed type="vector3" default="0,-1,0" description="The speed/direction you'll fall. Seems to only work for Y and has to be 0 or less (rip)." />
+  <Size type="vector3" description="The size of this trigger." />
+  <Drive type="byte" description="">
+	<Enum description="Range" value="0" />
+    <Enum description="Event" value="1" />
+  </Drive>
+  
+  <Distance type="float" default="-1" description="The distance you'll fall." />
   
   <Extra type="description" value="If you touch these you die. It's like the feeling you get when playing this game. c:" />
   <Extra type="RawByteLength" length="32" />

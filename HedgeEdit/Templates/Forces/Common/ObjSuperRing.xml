@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <Unknown1 type="uint" default="0" description="Set to 9 for infinite rings?" />
-  <Unknown2 type="bool" default="false" description="Always 0? Maybe IsReset?" />
-  <Unknown3 type="bool" default="true" description="Always 1? Maybe IsCastShadow or IsLightSpeedDashTarget?" />
-  <Unknown4 type="byte" default="0" description="Always 0? Maybe SetPlaceType" />
-  <Unknown5 type="byte" default="0" description="Always 0? Maybe EventType" />
+  <EventType type="byte" description="">
+	<Enum description="None" value="0" />
+    <Enum description="Visible" value="1" />
+    <Enum description="Invisible" value="2" />
+  </EventType>
+  
+  <RotateType type="byte" default="1" description="">
+	<Enum description="Object Y-Up" value="0" />
+    <Enum description="World Y-Up" value="1" />
+  </RotateType>
 
   <Extra type="model" value="cmn_obj_superring.model" />
   <Extra type="description" value="10 rings for the price of one!" />
-  <Extra type="RawByteLength" length="16" />
   <Extra type="OffsetPositionY" value="0.6" />
+  <Extra type="RawByteLength" length="2" />
 </Template>

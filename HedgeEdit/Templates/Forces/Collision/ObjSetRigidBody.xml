@@ -1,15 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <Size type="vector3" description="Size of the RigidBody. I think it goes Height, Width, then Length?" />
+  <Size type="vector3" description="Size of the RigidBody." />
+  <IsEventDriven type="bool" default="true" description="Whether this object is active by default or must be triggered by something first." />
   
-  <DefaultON type="bool" default="false" description="initial state is ON" />
-  <IsEffect type="bool" default="false" description="issuing a reflection effect (※ now is not supported)" />
-  <IsPlayerTerrain type="bool" default="false" description="either a player dedicated collision" />
-  <m_IsSearchInsulateOnly type="bool" default="false" description="and only interfere with the search (lock-on, etc.)" />
-  <PhysicsType type="enum" default="0" description="type of collision" />
+  <Action type="byte" default="0" description="How this rigidbody behaves.">
+	<Enum description="Terrain" value="0" />
+    <Enum description="Ray Block" value="1" />
+  </Action>
   
-  <Unknown1 type="uint" default="0" description="" />
-  <Unknown2 type="uint" default="0" description="" />
-  
+  <Extra type="description" value="A cube-shaped rigidbody object, used for collision (I.E. invisible walls) or ray-blocking." />
   <Extra type="RawByteLength" length="32" />
 </Template>

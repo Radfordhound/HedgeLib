@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Event0Targets type="forcesObjectList" description="" />
+  <Event0Type type="byte" description="">
+    <Enum description="EVENT_ON" value="0" />
+    <Enum description="EVENT_OFF" value="1" />
+  </Event0Type>
+  <Event0Timer type="float" description="" />
+  
+  <Event1Targets type="forcesObjectList" description="" />
+  <Event1Type type="byte" description="">
+    <Enum description="EVENT_ON" value="0" />
+    <Enum description="EVENT_OFF" value="1" />
+  </Event1Type>
+  <Event1Timer type="float" description="" />
+  
+  <Event2Targets type="forcesObjectList" description="" />
+  <Event2Type type="byte" description="">
+    <Enum description="EVENT_ON" value="0" />
+    <Enum description="EVENT_OFF" value="1" />
+  </Event2Type>
+  <Event2Timer type="float" description="" />
+  
+  <Shape type="byte" default="0" description="The shape of this volume.">
+	<Enum description="Box" value="0" />
+    <Enum description="Sphere" value="1" />
+    <Enum description="Cylinder" value="2" />
+  </Shape>
+  
+  <BasePoint type="byte" default="0" description="">
+	<Enum description="Center" value="0" />
+    <Enum description="Z-Plane" value="1" />
+  </BasePoint>
+  
+  <Size type="vector3" description="The size of this volume." />
+  <Condition type="byte" default="0" description="">
+	<Enum description="COND_ON_TRIGGER" value="0" />
+    <Enum description="COND_PULSE" value="1" />
+    <Enum description="COND_TIMER_ONCE" value="2" />
+    <Enum description="COND_TIMER" value="3" />
+    <Enum description="COND_ON_STAY" value="4" />
+  </Condition>
+  
+  <Lifetime type="float" description="" />
+  <Filter type="byte" default="0" description="">
+	<Enum description="FILTER_PLAYER" value="0" />
+  </Filter>
+  
+  <IsEventDriven type="bool" default="false" description="Whether this object is active by default or must be triggered by something first." />
+  
+  <Extra type="description" value="Big invisible boxes (volumes) that trigger some sort of action or event." />
+  <Extra type="RawByteLength" length="144" />
+</Template>

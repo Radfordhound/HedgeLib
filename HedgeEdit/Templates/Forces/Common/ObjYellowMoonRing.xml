@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <Padding1 type="uint" default="0" description="Padding?" />
-  <Padding2 type="uint" default="0" description="Padding?" />
-  <Padding3 type="uint" default="0" description="Padding?" />
-  <Padding4 type="uint" default="0" description="Padding?" />
+  <SeparateTranslucent type="bool" description="" />
   
   <Extra type="model" value="cmn_obj_yellowmoonring.model" />
-  <Extra type="description" value="" />
+  <Extra type="description" value="Moon Rings. No idea why they're called YELLOW Moon Rings. I guess Sonic Team is color-blind?" />
   <Extra type="OffsetPositionY" value="0.6" />
-  <Extra type="RawByteLength" length="16" />
+  <Extra type="RawByteLength" length="1" />
 </Template>

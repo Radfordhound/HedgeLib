@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Dimension type="byte" default="1" description="What dimension this balloon appears in.">
+    <Enum description="2D" value="0" />
+    <Enum description="3D" value="1" />
+  </Dimension>
+  
+  <UpSpeed type="float" default="200" description="How far you'll go upwards after popping the balloon." />
+  <MinSpeed type="float" default="150" description="The minimum amount of speed you'll get from popping the balloon." />
+  <MaxSpeed type="float" default="200" description="The maximum amount of speed you can get from popping the balloon." />
+  
+  <ResetTime type="float" default="5" description="How long it takes the balloon to re-spawn after it's been popped." />
+  <DoesInstantAppear type="bool" default="true" description="Whether the balloon instantly re-appears when re-spawning, or floats in from the top of the screen."/>
+  
+  <Extra type="model" value="ex_obj_balloon02.model" />
+  <Extra type="description" value="'Do you want a balloon?' Pennywise, 2018" />
+  <Extra type="RawByteLength" length="24" />
+</Template>

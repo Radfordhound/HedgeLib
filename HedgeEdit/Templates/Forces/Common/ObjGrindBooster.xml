@@ -2,24 +2,29 @@
 <Template>
   <OutOfControl type="float" default="0.5" description="How long the game locks your control for after coming in contact with this object." />
   <Speed type="float" default="500" description="How much speed the GrindBooster will send you off with." />
-  <IsVisibleModel type="bool" default="true" description="Setting it to true the model will be visible in-game" />
-  <IsSideView type="bool" default="false" description="For side-view. Probably unused on grind boosters?" />
-  <IsDirectionPath type="bool" default="false" description="Correct to move in the path direction. Probably unused on grind boosters?" />
-  <UnknownFlag1 type="bool" default="false" description="" />
+  <IsVisible type="bool" default="true" description="Whether the GrindBooster is visible or not." />
+  <IsReversed type="bool" default="false" description="Whether the GrindBooster is reversed or not." />
   
-  <Unknown1 type="uint" default="0" description="Always 0?" />
-  <Unknown2 type="ulong" default="0" description="Always 0?" />
-  <Unknown3 type="ulong" default="0" description="Always 0?" />
-  <Unknown4 type="ulong" default="0" description="Always 0?" />
-  <Unknown5 type="ulong" default="0" description="Always 0?" />
-  <Unknown6 type="ulong" default="0" description="Always 0?" />
-  <Unknown7 type="ulong" default="0" description="Always 0?" />
-  <Unknown8 type="ulong" default="0" description="Always 0?" />
-  <Unknown9 type="ulong" default="0" description="Always 0?" />
-  <Unknown10 type="ulong" default="0" description="Always 0?" />
-  <Unknown11 type="ulong" default="0" description="Always 0?" />
-  <Unknown12 type="ulong" default="0" description="Always 0?" />
-  <Unknown13 type="ulong" default="0" description="Always 0?" />
+  <Event0Targets type="forcesObjectList" description="" />
+  <Event0Type type="byte" description="">
+    <Enum description="EVENT_ON" value="0" />
+    <Enum description="EVENT_OFF" value="1" />
+  </Event0Type>
+  <Event0Timer type="float" description="" />
+  
+  <Event1Targets type="forcesObjectList" description="" />
+  <Event1Type type="byte" description="">
+    <Enum description="EVENT_ON" value="0" />
+    <Enum description="EVENT_OFF" value="1" />
+  </Event1Type>
+  <Event1Timer type="float" description="" />
+  
+  <Event2Targets type="forcesObjectList" description="" />
+  <Event2Type type="byte" description="">
+    <Enum description="EVENT_ON" value="0" />
+    <Enum description="EVENT_OFF" value="1" />
+  </Event2Type>
+  <Event2Timer type="float" description="" />
   
   <Extra type="model" value="cmn_obj_grindbooster.model" />
   <Extra type="description" value="Like DashPanels, except on rails" />

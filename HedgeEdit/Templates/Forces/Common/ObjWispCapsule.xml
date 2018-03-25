@@ -1,48 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <Boost type="uint" default="1" description="" />
-  <Unknown2 type="uint" default="0" description="Always 0?" />
-  <Unknown3 type="byte" default="0" description="Always 0?" />
-  <Asteroid type="byte" default="1" description="" />
-  <Lighting type="byte" default="1" description="" />
-  <Cube type="byte" default="1" description="" />
-  <Drill type="byte" default="1" description="" />
-  <Burst type="byte" default="1" description="" />
-  <Void type="byte" default="1" description="" />
-  <Hover type="byte" default="1" description="" />
+  <Type type="byte" default="1" description="What type of wisp is contained within the capsule.">
+	<Enum description="Wispon Power" value="0" />
+    <Enum description="Boost Wisp" value="1" />
+  </Type>
   
-  <Unknown11 type="uint" default="0" description="Always 0?" />
-  <Unknown12 type="uint" default="0" description="Always 0?" />
-  <Unknown13 type="uint" default="0" description="Always 0?" />
-  <Unknown14 type="uint" default="0" description="Always 0?" />
+  <ResetTime type="float" default="0" description="How long before this object respawns." />
+  <IsEventDriven type="bool" description="" />
+  <Asteroid type="bool" description="Whether this capsule contains an Asteroid wisp." />
+  <Lightning type="bool" description="Whether this capsule contains a Lightning wisp." />
+  <Cube type="bool" description="Whether this capsule contains a Cube wisp." />
+  <Drill type="bool" description="Whether this capsule contains a Drill wisp." />
+  <Burst type="bool" description="Whether this capsule contains a Burst wisp." />
+  <Void type="bool" description="Whether this capsule contains a Void wisp." />
+  <Hover type="bool" description="Whether this capsule contains a Hover wisp." />
   
-  <Unknown15 type="uint" default="0" description="Always 0?" />
-  <Unknown16 type="uint" default="0" description="Always 0?" />
-  <Unknown17 type="uint" default="0" description="Always 0?" />
-  <Unknown18 type="uint" default="0" description="Always 0?" />
+  <Event0Targets type="forcesObjectList" description="" />
+  <Event0Type type="byte" description="">
+    <Enum description="EVENT_ON" value="0" />
+    <Enum description="EVENT_OFF" value="1" />
+  </Event0Type>
+  <Event0Timer type="float" description="" />
   
-  <Unknown19 type="uint" default="0" description="Always 0?" />
-  <Unknown20 type="uint" default="0" description="Always 0?" />
-  <Unknown21 type="uint" default="0" description="Always 0?" />
-  <Unknown22 type="uint" default="0" description="Always 0?" />
+  <Event1Targets type="forcesObjectList" description="" />
+  <Event1Type type="byte" description="">
+    <Enum description="EVENT_ON" value="0" />
+    <Enum description="EVENT_OFF" value="1" />
+  </Event1Type>
+  <Event1Timer type="float" description="" />
   
-  <Unknown23 type="uint" default="0" description="Always 0?" />
-  <Unknown24 type="uint" default="0" description="Always 0?" />
-  <Unknown25 type="uint" default="0" description="Always 0?" />
-  <Unknown26 type="uint" default="0" description="Always 0?" />
-  
-  <Unknown27 type="uint" default="0" description="Always 0?" />
-  <Unknown28 type="uint" default="0" description="Always 0?" />
-  <Unknown29 type="uint" default="0" description="Always 0?" />
-  <Unknown30 type="uint" default="0" description="Always 0?" />
-  
-  <Unknown31 type="uint" default="0" description="Always 0?" />
-  <Unknown32 type="uint" default="0" description="Always 0?" />
-  <Unknown33 type="uint" default="0" description="Always 0?" />
-  <Unknown34 type="uint" default="0" description="Always 0?" />
+  <Event2Targets type="forcesObjectList" description="" />
+  <Event2Type type="byte" description="">
+    <Enum description="EVENT_ON" value="0" />
+    <Enum description="EVENT_OFF" value="1" />
+  </Event2Type>
+  <Event2Timer type="float" description="" />
   
   <Extra type="model" value="cmn_obj_wispcapsule.model" />
   <Extra type="OffsetPositionY" value="0.7" />
-  <Extra type="description" value="Red capsules containing those cute little aliens that absolutely everyone in the fanbase completely adores" />
+  <Extra type="description" value="Red capsules containing those cute little aliens that everyone in the fanbase completely adores" />
   <Extra type="RawByteLength" length="112" />
 </Template>

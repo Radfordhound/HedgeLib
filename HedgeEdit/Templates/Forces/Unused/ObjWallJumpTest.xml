@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Size type="vector3" default="30,150,1" description="The size of this object." />
+  <Extra type="description" value="Through my advanced logical deduction skills, I've gathered that this object was used to test wall jumping." />
+  <Extra type="RawByteLength" length="16" />
+</Template>
