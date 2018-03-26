@@ -9,5 +9,8 @@
   <Speed type="float" description="How fast the player will run if StartType == Running." />
   <Time type="float" description="How long the player will run or fall if StartType ~= Stand." />
   <OutOfControl type="float" description="How long the game locks your control at stage start." />
+  
+  <Extra type="model" value="chr_sonic.model" />
+  <Extra type="description" value="The starting position of the player." />
   <Extra type="RawByteLength" length="16" />
 </Template>
