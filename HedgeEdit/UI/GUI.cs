@@ -49,23 +49,46 @@ namespace HedgeEdit.UI
             ChangeProgressVisible(false);
         }
 
-        public static int ShowMessageBox(string txt, string caption = "",
+        public static int ShowMessageBox(string txt,
+            string caption = Program.Name,
             int buttons = 0, int icon = 0)
         {
             return (int)MessageBox.Show(txt, caption,
                 (MessageBoxButtons)buttons, (MessageBoxIcon)icon);
         }
 
-        public static int ShowErrorBox(string txt, string caption = "", int buttons = 0)
+        public static int ShowErrorBox(string txt,
+            string caption = Program.Name, int buttons = 0)
         {
             return (int)MessageBox.Show(txt, caption,
                 (MessageBoxButtons)buttons, MessageBoxIcon.Error);
         }
 
-        public static int ShowWarningBox(string txt, string caption = "", int buttons = 0)
+        public static int ShowWarningBox(string txt,
+            string caption = Program.Name, int buttons = 0)
         {
             return (int)MessageBox.Show(txt, caption,
                 (MessageBoxButtons)buttons, MessageBoxIcon.Warning);
+        }
+
+        public static string ShowTextBox(string lbl, string title = Program.Name,
+            string text = null, bool allowEmpty = false)
+        {
+            var textBoxDialog = new TxtBxDialog(lbl, title, text, allowEmpty);
+            if (textBoxDialog.ShowDialog() == DialogResult.OK)
+                text = textBoxDialog.Result;
+
+            return text;
+        }
+
+        public static string ShowComboBox(string lbl,
+            string[] choices, string title = Program.Name)
+        {
+            var textBoxDialog = new TxtBxDialog(lbl, choices, title);
+            if (textBoxDialog.ShowDialog() == DialogResult.OK)
+                return textBoxDialog.Result;
+
+            return null;
         }
 
         public static void ToggleSetsSaving(bool value)

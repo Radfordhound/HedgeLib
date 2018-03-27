@@ -103,6 +103,12 @@
     </Compile>
     <Compile Include="EditorCache.cs" />
     <Compile Include="GameList.cs" />
+    <Compile Include="UI\TxtBxDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\TxtBxDialog.Designer.cs">
+      <DependentUpon>TxtBxDialog.cs</DependentUpon>
+    </Compile>
     <Compile Include="VPModel.cs" />
     <Compile Include="UI\MainFrm.cs">
       <SubType>Form</SubType>
@@ -147,6 +153,9 @@
     </Compile>
     <EmbeddedResource Include="UI\StgOpenDialog.resx">
       <DependentUpon>StgOpenDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\TxtBxDialog.resx">
+      <DependentUpon>TxtBxDialog.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="app.manifest">
       <SubType>Designer</SubType>

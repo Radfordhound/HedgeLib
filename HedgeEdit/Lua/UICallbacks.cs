@@ -21,6 +21,12 @@ namespace HedgeEdit.Lua
 
             script.Globals["UIErrorBox"] = (Func<string, string, int, int>)GUI.ShowErrorBox;
             script.Globals["UIWarningBox"] = (Func<string, string, int, int>)GUI.ShowWarningBox;
+            script.Globals["UITextBox"] = (Func<string, string,
+                string, bool, string>)GUI.ShowTextBox;
+
+            script.Globals["UIComboBox"] = (Func<string, string[],
+                string, string>)GUI.ShowComboBox;
+
             script.Globals["UIToggleSetsSaving"] = (Action<bool>)GUI.ToggleSetsSaving;
         }
     }
