@@ -68,6 +68,7 @@ namespace HedgeEdit
                 throw new Exception("Cannot render viewport - viewport not yet initialized!");
 
             // Clear the background color
+            vp.MakeCurrent();
             GL.ClearColor(0, 0, 0, 1);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
@@ -201,9 +202,12 @@ namespace HedgeEdit
                         if (!keyState.IsKeyDown(Key.LControl))
                             SelectedInstances.Clear();
 
-                        SelectedInstances.Add(instance);
-                        Program.MainForm.RefreshGUI();
-                        return true;
+                        if (!SelectedInstances.Contains(instance))
+                        {
+                            SelectedInstances.Add(instance);
+                            Program.MainForm.RefreshGUI();
+                            return true;
+                        }
                     }
 
                     if (Program.MainForm.Focused)
@@ -272,6 +276,7 @@ namespace HedgeEdit
             }
 
             // Swap our buffers
+            //GL.Flush();
             vp.SwapBuffers();
             prevMouseState = mouseState;
         }
