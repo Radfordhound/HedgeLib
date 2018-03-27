@@ -117,7 +117,7 @@ namespace HedgeLib.Misc
             if (string.IsNullOrEmpty(SkeletonName))
                 writer.Write(0UL);
             else
-                writer.AddString("modelName", SkeletonName, 8);
+                writer.AddString("skeletonName", SkeletonName, 8);
             writer.WriteNulls(8);
 
             writer.Write((uint)BoundingShape);
