@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <MinHeight type="float" default="-100" description="How much height you'll get from the pole normally. Lower values mean more height for some reason." />
-  <MaxHeight type="float" default="-70" description="How much height you'll get from the pole if you hit it from the side with the red sphere. Lower values mean more height for some reason." />
+  <MinSpeed type="float" default="-100" description="How much height you'll get from the pole normally. Lower values mean more height for some reason. TODO: Is this true?" />
+  <MaxSpeed type="float" default="-70" description="How much height you'll get from the pole if you hit it from the side with the red sphere. Lower values mean more height for some reason. TODO: Is this true?" />
   
   <Extra type="model" value="cmn_obj_springpole.model" />
   <Extra type="description" value="Pole that sticks out from a wall that you can bounce on." />

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Height type="float" description="The height of this volume." />
+  <Width type="float" description="The width of this volume?" />
+  <Depth type="float" description="The depth of this volume?" />
+  <Unknown1 type="byte" default="1" description="TODO" />
+  <Unknown2 type="byte" default="1" description="TODO" />
+  <Unknown3 type="byte" default="0" description="TODO" />
+  <Unknown4 type="byte" default="0" description="TODO" />
+  
+  <Unknown5 type="float" default="1" description="TODO" />
+  <Unknown6 type="float" default="0.5" description="TODO Out of control?" />
+
+  <Extra type="RawByteLength" length="24" />
+</Template>

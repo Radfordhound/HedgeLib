@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <IsCameraView type="bool" description="Whether the positioning of this object is used as camera position(?)" />
+  <FOV type="float" default="45" description="The Field-Of-View of this camera." />
+  <Distance type="float" default="140" description="The distance this camera stays away from the player." />
+  <PathUID type="uint" description="The UID of the path used by this object." />
+  
+  <Elevation type="float" description="The elevation of this camera." />
+  <Azimuth type="float" description="I'm really tired and this one's hard to explain, please just google azimuth thx." />
+  <LimitLeftRatio type="float" description="TODO" />
+  <LimitRightRatio type="float" description="TODO" />
+  
+  <UpScrollRatio type="float" description="TODO" />
+  <LimitUpScrollDistance type="float" description="How far this camera is allowed to scroll upwards." />
+  <DownScrollRatio type="float" description="TODO" />
+  <LimitDownScrollDistance type="float" description="How far this camera is allowed to scroll downwards." />
+  
+  <IsLimitPathDistance type="bool" description="Whether there should be a limit on the distance this camera is allowed to travel from the path." />
+  <LimitPathDistanceMin type="float" description="The minimum distance this camera can travel from the path." />
+  <LimitPathDistanceMax type="float" description="The maximum distance this camera can travel from the path." />
+  <OrientationMode type="enum" description="How this camera is oriented. Gravity orientation means the camera will always face upwards. Path Normal orientation makes the camera rotate based on the normals of each vertex on the path.">
+    <Enum description="Gravity" value="0" />
+    <Enum description="Path Normal" value="1" />
+  </OrientationMode>
+  
+  <IsEnableAzimuthOffset type="bool" description="Whether the Azimuth value above should apply." />
+  <IsSmoothPath type="bool" default="true" description="Whether to smooth how this camera travels along the path." />
+  
+  <Extra type="description" value="A 2D Camera set to follow the player along a path." />
+  <Extra type="RawByteLength" length="64" />
+</Template>

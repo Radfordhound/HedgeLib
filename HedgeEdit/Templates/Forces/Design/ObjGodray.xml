@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Color type="vector3" default="12,12,12" description="The color of the godray." />
+  <Size type="vector3" default="300,2000,250" description="The size of the godray." />
+  <FadeStart type="float" default="600" description="The point at which the color starts to fade." />
+  <FadeEnd type="float" default="1200" description="The point at which the color has fully faded away." />
+  
+  <Extra type="description" value="Iizuka used the power of GRAPHICS to forge the most legendary object ever created (not really)." />
+  <Extra type="RawByteLength" length="48" />
+</Template>

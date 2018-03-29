@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <FlexAmount type="float" default="5" description="How much the bridge should bend when standing on it." />
+  <FlexAmount type="float" default="5" description="How much this bridge bends when standing on it." />
   <NumWood type="uint" default="17" description="How many pieces make up the bridge." />
-  <SizeType type="byte" default="1" description="">
+  <SizeType type="byte" default="1" description="The size of each individual piece that makes up the bridge.">
 	<Enum description="Small" value="0" />
     <Enum description="Large" value="1" />
   </SizeType>
   
   <DoesBreak type="bool" description="Whether this object breaks." />
-  <DoesBreakEvent type="bool" description="" />
+  <DoesBreakEvent type="bool" description="Whether this object breaks simply by being stood on normally, or only breaks when triggered by an event?" />
   
-  <BreakToSignTime type="float" default="2" description="" />
-  <BreakSignTime type="float" default="2" description="" />
-  <BreakResetTime type="float" default="0" description="" />
+  <BreakToSignTime type="float" default="2" description="How long this object shakes before crumbling into pieces?" />
+  <BreakSignTime type="float" default="2" description="How long the crumbled pieces are active/falling before despawning?" />
+  <BreakResetTime type="float" description="How long before this object resets after breaking." />
   
   <!-- TODO: Make this object type properly render -->
   <Extra type="model" value="w5_obj_woodbridge_long.model" />

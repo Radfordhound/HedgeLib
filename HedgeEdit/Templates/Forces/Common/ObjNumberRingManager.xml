@@ -1,26 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <Rings type="forcesObjectList" description="Number Rings controlled by this manager." />
-  <Event0Targets type="forcesObjectList" description="" />
-  <Event0Type type="byte" description="">
-    <Enum description="EVENT_ON" value="0" />
-    <Enum description="EVENT_OFF" value="1" />
-  </Event0Type>
-  <Event0Timer type="float" description="" />
+  <Rings type="forcesObjectList" description="The Number Rings which are controlled by this manager." />
   
-  <Event1Targets type="forcesObjectList" description="" />
-  <Event1Type type="byte" description="">
-    <Enum description="EVENT_ON" value="0" />
-    <Enum description="EVENT_OFF" value="1" />
-  </Event1Type>
-  <Event1Timer type="float" description="" />
-  
-  <Event2Targets type="forcesObjectList" description="" />
-  <Event2Type type="byte" description="">
-    <Enum description="EVENT_ON" value="0" />
-    <Enum description="EVENT_OFF" value="1" />
-  </Event2Type>
-  <Event2Timer type="float" description="" />
+  <Event0 padding="0">
+	<Targets type="forcesObjectList" description="The objects affected by this event." />
+	<Type type="byte" description="What type of signal to send to each affected object.">
+	  <Enum description="Turn On" value="0" />
+	  <Enum description="Turn Off" value="1" />
+	</Type>
+	<Timer type="float" description="How long to wait after this event is triggered before sending a signal to all affected objects." />
+  </Event0>
+
+  <Event1 padding="0">
+	<Targets type="forcesObjectList" description="The objects affected by this event." />
+	<Type type="byte" description="What type of signal to send to each affected object.">
+	  <Enum description="Turn On" value="0" />
+	  <Enum description="Turn Off" value="1" />
+	</Type>
+	<Timer type="float" description="How long to wait after this event is triggered before sending a signal to all affected objects." />
+  </Event1>
+
+  <Event2 padding="0">
+	<Targets type="forcesObjectList" description="The objects affected by this event." />
+	<Type type="byte" description="What type of signal to send to each affected object.">
+	  <Enum description="Turn On" value="0" />
+	  <Enum description="Turn Off" value="1" />
+	</Type>
+	<Timer type="float" description="How long to wait after this event is triggered before sending a signal to all affected objects." />
+  </Event2>
   
   <Extra type="description" value="Object that controls all number rings in the stage." />
   <Extra type="RawByteLength" length="120" />

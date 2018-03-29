@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
   <Size type="vector3" description="The size of this trigger." />
-  <Drive type="byte" description="">
+  <Trigger type="byte" description="What activates this object. Range means the object is activated simply by the player coming within its range. Event means this object needs to be triggered by another object.">
 	<Enum description="Range" value="0" />
     <Enum description="Event" value="1" />
-  </Drive>
+  </Trigger>
   
-  <Distance type="float" default="-1" description="The distance you'll fall." />
+  <Distance type="float" default="-1" description="The maximum distance you can fall. Set to -1 for no limit." />
   
   <Extra type="description" value="If you touch these you die. It's like the feeling you get when playing this game. c:" />
   <Extra type="RawByteLength" length="32" />

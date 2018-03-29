@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Shape type="sint8" description="The shape of this trigger.">
+    <Enum description="Box" value="0" />
+    <Enum description="Sphere" value="1" />
+    <Enum description="Cylinder" value="2" />
+    <Enum description="Capsule" value="3" />
+  </Shape>
+  
+  <BasePoint type="sint8" description="TODO">
+    <Enum description="BASE_CENTER" value="0" />
+    <Enum description="BASE_Z_PLANE" value="1" />
+    <Enum description="BASE_X_PLANE" value="2" />
+    <Enum description="BASE_Y_PLANE" value="3" />
+  </BasePoint>
+  
+  <CollisionFilter type="sint8" description="The types of objects that can activate this trigger.">
+    <Enum description="Default" value="0" />
+    <Enum description="Hit Enemy" value="1" />
+    <Enum description="All" value="2" />
+  </CollisionFilter>
+  
+  <Width type="float" description="The width of this trigger." />
+  <Height type="float" description="The height of this trigger." />
+  <Depth type="float" description="The depth of this trigger." />
+  <LayerName type="string" description="The name of the .gedit file you want to toggle on/off (without the .gedit extension)." />
+  <Enabled type="bool" default="true" description="Whether this object should turn the referenced layer on, or off." />
+  
+  <Extra type="description" value="Triggers which let you toggle object layers on/off!" />
+  <Extra type="RawByteLength" length="40" />
+</Template>

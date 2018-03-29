@@ -12,7 +12,8 @@
     <Enum description="Floating" value="1" />
   </BoxType>
   
-  <Extra type="model" value="cmn_obj_itemboxC.model"/>
+  <Extra type="model" value="cmn_obj_itemboxC.model" condition="BoxType == 0"/>
+  <Extra type="model" value="cmn_obj_itemboxC_fly.model" condition="BoxType == 1"/>
   <Extra type="description" value="Boxes shaped like computer monitors which contain items, rather then what you normally have on your monitor."/>
   <Extra type="RawByteLength" length="2" />
 </Template>

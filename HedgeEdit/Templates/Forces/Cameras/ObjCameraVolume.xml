@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Camera type="forcesObjectReference" description="The camera object that this volume activates." />
+  <Priority type="uint" default="0" description="The priority of this volume. Higher-priority volumes take precedence." />
+  <UseHighPriority type="bool" description="Whether or not to let the game change the camera angle to something else despite standing in this volume if the game feels it's important." />
+  <EaseTimeEnter type="float" default="0.5" description="How smooth the transition should be when changing to this volume's camera." />
+  
+  <EaseTimeLeave type="float" default="0.5" description="How smooth the transition should be when changing away from this volume's camera." />
+  <InterpolateTypeEnter type="byte" description="How the game should interpolate the movement during the transition when changing to this volume's camera.">
+	<Enum description="Relative" value="0" />
+    <Enum description="Absolute" value="1" />
+    <Enum description="Absolute Coord" value="2" />
+  </InterpolateTypeEnter>
+  
+  <InterpolateTypeLeave type="byte" description="How the game should interpolate the movement during the transition when changing away from this volume's camera.">
+	<Enum description="Relative" value="0" />
+    <Enum description="Absolute" value="1" />
+    <Enum description="Absolute Coord" value="2" />
+  </InterpolateTypeLeave>
+  
+  <DefaultState type="byte" description="The state this volume should be in by default.">
+	<Enum description="On" value="0" />
+    <Enum description="Off" value="1" />
+  </DefaultState>
+  
+  <Action type="byte" description="How many times this volume should be able to take effect.">
+	<Enum description="Each Time" value="0" />
+    <Enum description="Once" value="1" />
+  </Action>
+  
+  <Shape type="byte" default="0" description="The shape of this volume.">
+	<Enum description="Box" value="0" />
+    <Enum description="Sphere" value="1" />
+    <Enum description="Cylinder" value="2" />
+  </Shape>
+  
+  <BasePoint type="byte" description="">
+	<Enum description="BASE_CENTER" value="0" />
+    <Enum description="BASE_Z_PLANE" value="1" />
+  </BasePoint>
+  
+  <Width type="float" description="The width of this volume." />
+  <Height type="float" description="The height of this volume." />
+  <Depth type="float" description="The depth of this volume." />
+  
+  <Extra type="description" value="A volume that changes the current camera." />
+  <Extra type="RawByteLength" length="40" />
+</Template>

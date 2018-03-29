@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <PathUID type="uint" description="The UID of the path used by this object." />
+  <Speed type="float" default="500" description="The speed this object sends you off with." />
+  <KeepVelocityDistance type="float" default="0.25" description="How long you keep your velocity gained from this object before gravity takes effect." />
+  
+  <Extra type="description" value="Giant BOUNCE PADS like the springs in Windy Hill from Lost World." />
+  <Extra type="RawByteLength" length="12" />
+</Template>

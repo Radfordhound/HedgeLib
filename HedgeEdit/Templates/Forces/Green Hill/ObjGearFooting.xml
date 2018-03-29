@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <TimeType type="sint8" description="TODO">
+    <Enum description="TIME_LOCAL" value="0" />
+    <Enum description="TIME_GLOBAL" value="1" />
+  </TimeType>
+  
+  <GearType type="sint8" description="What type of gear this is.">
+    <Enum description="Standing 8M" value="0" />
+    <Enum description="Standing 12M" value="1" />
+    <Enum description="Lie Down 8M" value="2" />
+    <Enum description="Lie Down 10M" value="3" />
+    <Enum description="Lie Down 16M" value="4" />
+    <Enum description="Lie Down 10M5" value="5" />
+    <Enum description="Max" value="6" />
+  </GearType>
+  
+  <NumGears type="sint8" description="How many gears there are." />
+  <RotateType type="sint8" description="Which direction this gear rotates.">
+    <Enum description="Rotate Left" value="0" />
+    <Enum description="Rotate Right" value="1" />
+  </RotateType>
+  
+  <AxisType type="sint8" description="TODO">
+    <Enum description="Axis On" value="0" />
+    <Enum description="Axis Off" value="1" />
+  </AxisType>
+  
+  <IsEventDriven type="bool" default="false" description="Whether this object is active by default or must be triggered by something first." />
+  <Speed type="float" default="30" description="How quickly this object moves." />
+  <MoveTime type="float" default="1" description="How long this object moves before idling." />
+  <IdleTime type="float" description="How long this object does nothing before beginning to move again." />
+  <InitialDelay type="float" default="0" description="How long the object waits before starting the normal active/inactive cycle." />
+  <MoveDistance type="float" description="How far this object should move." />
+  
+  <EasingType type="sint8" description="What type of easing to use on the gear's rotation.">
+    <Enum description="Linear" value="0" />
+    <Enum description="Quadratic" value="1" />
+    <Enum description="Cubic" value="2" />
+    <Enum description="Quartic" value="3" />
+    <Enum description="Quintic" value="4" />
+    <Enum description="Sine" value="5" />
+    <Enum description="Exponential" value="6" />
+    <Enum description="Circular" value="7" />
+    <Enum description="Back" value="8" />
+    <Enum description="Bounce" value="9" />
+    <Enum description="Elastic" value="10" />
+  </EasingType>
+  
+  <NumRepeats type="sint32" description="TODO" />
+  
+  <!-- TODO: Make this actually display correct models. -->
+  <Extra type="model" value="w5_obj_gearV1.model" condition="GearType == 0" />
+  <Extra type="model" value="w5_obj_gearV2.model" condition="GearType == 1" />
+  <Extra type="model" value="w5_obj_gearS1.model" condition="GearType == 2" />
+  <Extra type="model" value="w5_obj_gearS2x5.model" condition="GearType == 3" />
+  <Extra type="model" value="w5_obj_gearS3.model" condition="GearType == 4" />
+  <Extra type="model" value="w5_obj_gearS2.model" condition="GearType == 5" />
+  <Extra type="model" value="w5_obj_gearS1_bar.model" condition="GearType == 6" />
+  <Extra type="description" value="Gears from Arsenal Pyramid's Inside Section." />
+  <Extra type="RawByteLength" length="36" />
+</Template>

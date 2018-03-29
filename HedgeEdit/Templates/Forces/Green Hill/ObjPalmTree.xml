@@ -9,22 +9,22 @@
     <Enum description="TREE_B03" value="5" />
   </BranchType>
   
-  <Scale type="float" default="1" description="The scale of the object." />
-  <TimeType type="byte" description="">
+  <Scale type="float" default="1" description="This object's scaling." />
+  <TimeType type="byte" description="TODO">
     <Enum description="Local" value="0" />
     <Enum description="Global" value="1" />
   </TimeType>
   
-  <WindHorzAngle type="float" default="90" description="" />
-  <WindHorzAngleWidth type="float" default="50" description="" />
-  <WindHorzAngleCycle type="float" default="2" description="" />
-  <WindVertAngle type="float" default="10" description="" />
-  <WindVertAngleWidth type="float" default="10" description="" />
-  <WindVertAngleCycle type="float" default="1" description="" />
+  <WindHorzAngle type="float" default="90" description="The angle of the wind that blows against this tree's leaves while the wind is blowing horizontally." />
+  <WindHorzAngleWidth type="float" default="50" description="TODO" />
+  <WindHorzAngleCycle type="float" default="2" description="How long the wind blows horizontally, before blowing vertically instead." />
+  <WindVertAngle type="float" default="10" description="The angle of the wind that blows against this tree's leaves while the wind is blowing vertically." />
+  <WindVertAngleWidth type="float" default="10" description="TODO" />
+  <WindVertAngleCycle type="float" default="1" description="How long the wind blows vertically, before blowing horizontally instead." />
   
-  <WindSpeedMin type="float" default="100" description="" />
-  <WindSpeedMax type="float" default="1400" description="" />
-  <WindSpeedCycle type="float" default="3" description="" />
+  <WindSpeedMin type="float" default="100" description="The minimum speed of the wind which blows against this tree's leaves." />
+  <WindSpeedMax type="float" default="1400" description="The maximum speed of the wind which blows against this tree's leaves." />
+  <WindSpeedCycle type="float" default="3" description="How long the wind blows at one speed before picking another random speed in-between WindSpeedMin and WindSpeedMax." />
   
   <Extra type="model" value="w5_obj_palmtreeA01.model" condition="BranchType == 0" />
   <Extra type="model" value="w5_obj_palmtreeA02.model" condition="BranchType == 1" />

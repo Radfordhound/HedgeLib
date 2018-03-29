@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <Comment type="string" default="" description="A comment - literally just any string of text you want to describe something in this area!" />
+  <Comment type="string" default="" description="A comment; literally just any string of text you want to describe something in this area!" />
   <Color type="byte" description="The color this comment should be drawn with in the editor.">
     <Enum description="White" value="0" />
     <Enum description="Black" value="1" />

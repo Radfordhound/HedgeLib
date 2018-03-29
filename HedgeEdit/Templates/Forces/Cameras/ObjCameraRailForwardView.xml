@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <IsCameraView type="bool" description="Whether the positioning of this object is used as camera position(?)" />
+  <FOV type="float" default="45" description="The Field-Of-View of this camera." />
+  <ZRotation type="float" default="40" description="The amount this camera is rotated on the Z axis." />
+  <Distance type="float" default="140" description="The distance this camera stays away from the player." />
+  
+  <PathUID type="uint" description="The UID of the path used by this object." />
+  <PathOffset type="float" default="1" description="How much this camera's position should be offset from the path." />
+  <ReversePathFront type="bool" default="false" description="Whether to use the back of the path as the front, and vice-versa." />
+  <UsePathVerticalComponent type="bool" default="true" description="Whether the path should affect the camera's vertical movement." />
+  <AngleSensitivity type="float" default="0.05" description="How much this camera is allowed to rotate?" />
+  
+  <AngleSensitivityBoost type="float" default="0.5" description="How much this camera is allowed to rotate while boosting?" />
+  <Azimuth type="float" description="I'm really tired and this one's hard to explain, please just google azimuth thx." />
+  <Elevation type="float" description="The elevation of this camera." />
+  <GravityOffset type="float" default="0" description="How much to offset this camera's position in the direction of the player's gravity?" />
+  
+  <PlayerOffset type="vector3" description="How much to offset this camera's position from the player's position." />
+  <PlayerOffsetType type="byte" description="How to offset this camera's position from the player's position.">
+	<Enum description="Normal" value="0" />
+    <Enum description="Absolute" value="1" />
+  </PlayerOffsetType>
+  
+  <FollowType type="byte" description="How this camera should follow the player.">
+	<Enum description="Intelligent" value="0" />
+    <Enum description="Simple" value="1" />
+  </FollowType>
+  
+  <Extra type="RawByteLength" length="80" />
+</Template>

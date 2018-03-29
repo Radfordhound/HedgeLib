@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <Mode type="byte" description="Whether you can jump or just run.">
+  <Mode type="byte" description="Whether the player is allowed to jump, or is only allowed to run.">
     <Enum description="Normal" value="0" />
     <Enum description="Only Run" value="1" />
   </Mode>
@@ -12,11 +12,11 @@
     <Enum description="5" value="3" />
   </Lines>
   
-  <PathUID type="int" description="The UID of the path used by this object." />
-  <Speed type="float" default="700" description="How fast the player will run while in this quick-stepping section." />
-  <StepWidth type="float" default="20" description="The space in-between each spot the player can quick-step to." />
+  <PathUID type="uint" description="The UID of the path used by this object. This path is duplicated for each spot, based on the value of Lines." />
+  <Speed type="float" default="700" description="How fast the player will run while contained within this volume." />
+  <StepWidth type="float" default="20" description="The space in-between each spot the player can quickstep to." />
   
-  <BasePoint type="byte" description="">
+  <BasePoint type="byte" description="TODO">
     <Enum description="Center" value="0" />
     <Enum description="Z-Plane" value="1" />
   </BasePoint>

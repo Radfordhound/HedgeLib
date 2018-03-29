@@ -18,7 +18,7 @@
   
   <ResetTime type="float" default="5" description="How long it takes the balloon to re-spawn after it's been popped." />
   <DoesInstantAppear type="bool" default="true" description="Whether the balloon instantly re-appears when re-spawning, or floats in from the top of the screen."/>
-  <IsGroupSet type="bool" description="" />
+  <IsGroupSet type="bool" description="Whether this object is part of a group?" />
   
   <Extra type="model" value="ex_obj_balloon02.model" />
   <Extra type="description" value="'Do you want a balloon?' Pennywise, 2018" />

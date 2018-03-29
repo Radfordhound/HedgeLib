@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Dummy type="int" description="A dummy value. Has no in-game effect." />
+  <Extra type="description" value="An object used solely for the purpose of being targetted/referenced by another object." />
+  <Extra type="RawByteLength" length="4" />
+</Template>

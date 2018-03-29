@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <NodeName type="string" description="The name of the node in the text_hint cnvrs-text file. (Usually stage ID, E.G. w5a01)" />
-  <EntryName type="string" description="The name of the entry in the text_hint cnvrs-text file. (E.G. hint_msg12)" />
+  <SheetID type="string" default="w5a01" description="The name of the sheet to use from the text_hint cnvrs-text file. (Usually stage ID, E.G. w5a01)" />
+  <CellID type="string" default="hint_msg12" description="The name of the cell to use from the text_hint cnvrs-text file. (E.G. hint_msg12)" />
   
   <Extra type="OffsetPositionY" value="1" />
   <Extra type="model" value="cmn_obj_hintring.model" />

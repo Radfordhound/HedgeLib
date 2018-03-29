@@ -3,7 +3,7 @@
   <Size type="vector3" description="Size of the RigidBody." />
   <IsEventDriven type="bool" default="true" description="Whether this object is active by default or must be triggered by something first." />
   
-  <Action type="byte" default="0" description="How this rigidbody behaves.">
+  <Action type="byte" default="0" description="How this rigidbody behaves. Terrain means this rigidbody will act like, well, terrain, I.E. it will block player movement. Whereas ray-block will only block invisible player rays used to, for example, detect homing-attackable objects.">
 	<Enum description="Terrain" value="0" />
     <Enum description="Ray Block" value="1" />
   </Action>

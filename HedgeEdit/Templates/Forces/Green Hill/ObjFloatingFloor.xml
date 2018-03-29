@@ -13,7 +13,7 @@
     <Enum description="Point" value="1" />
   </MoveType>
   
-  <TimeType type="byte" default="1" description="">
+  <TimeType type="byte" default="1" description="TODO">
 	<Enum description="Local" value="0" />
     <Enum description="Global" value="1" />
   </TimeType>

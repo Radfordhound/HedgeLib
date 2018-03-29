@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Direction type="sint8" description="Which direction this object will face.">
+    <Enum description="Front" value="0" />
+    <Enum description="Left" value="1" />
+    <Enum description="Right" value="2" />
+  </Direction>
+  
+  <ID type="sint32" description="The ID of this object." />
+  <Extra type="model" value="mis_obj_releasebox.model" />
+  <Extra type="description" value="TODO" />
+  <Extra type="RawByteLength" length="8" />
+</Template>

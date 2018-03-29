@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <DollPoints type="forcesObjectList" description="Each EnemyEggpawnDollPoint object controlled by this object." />
+  <Extra type="description" value="A list of EnemyEggpawnDollPoints." />
+  <Extra type="RawByteLength" length="24" />
+</Template>

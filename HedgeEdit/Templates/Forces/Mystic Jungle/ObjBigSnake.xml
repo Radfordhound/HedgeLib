@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <PlayerPositionOnSuccess type="vector3" description="Where the player ends up upon succeeding the QTE." />
+  <PlayerPositionOnFail type="vector3" description="Where the player ends up upon failing the QTE." />
+  
+  <Extra type="description" value="Snakes... why'd it have to be snakes..." />
+  <Extra type="RawByteLength" length="32" />
+</Template>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <IsCameraView type="bool" description="Whether the positioning of this object is used as camera position(?)" />
+  <FOV type="float" default="45" description="The Field-Of-View of this camera." />
+  <ZRotation type="float" default="40" description="The amount this camera is rotated on the Z axis." />
+  
+  <TargetType type="sint8" description="Whether to use TargetPosition as this camera's target, or the position of the object referenced by TargetID.">
+    <Enum description="TargetPosition" value="0" />
+    <Enum description="TargetID" value="1" />
+  </TargetType>
+  
+  <TargetPosition type="vector3" description="The position the camera will look at if TargetType == TargetPosition." />
+  <TargetID type="forcesObjectReference" description="The object the camera will look at if TargetType == TargetID." />
+  <IsRotateUpDir type="bool" description="Whether to also rotate the camera's up direction to face the given target?" />
+  
+  <Extra type="description" value="A camera which is fixed on a given object or position." />
+  <Extra type="RawByteLength" length="48" />
+</Template>

@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
   <CueName type="string" default="" description="The name of the cue to play." />
-  <Unknown1 type="byte" default="1" description="A boolean?" />
-  <Unknown2 type="byte" default="0" description="" />
-  <Unknown3 type="byte" default="0" description="" />
-  <Unknown4 type="byte" default="0" description="" />
+  <PlayMode type="byte" default="1" description="How the sound effect should be played. Loop means the sound will be played infinitely, on-loop. One Shot means the sound will only play once. Periodic means the sound will play periodically (not sure how often).">
+	<Enum description="Loop" value="0" />
+    <Enum description="One Shot" value="1" />
+    <Enum description="Periodic" value="2" />
+  </PlayMode>
   
-  <Unknown5 type="uint" description="Always 0?" />
-  <Unknown6 type="float" default="3" description="" />
-  <Unknown7 type="float" default="1" description="" />
+  <TimeOffset type="float" description="Where the sound should start playing from. TODO: Is this in seconds, or samples?" />
+  <PlayInterval type="float" default="3" description="How long the delay is in-between each time the sound is repeated." />
+  <Volume type="float" default="1" description="The volume of the sound effect." />
   
-  <Unknown8 type="float" default="5000" description="" />
-  <Unknown9 type="float" default="5000" description="" />
+  <HearingRange type="float" default="5000" description="The range at which you can still hear the sound effect." />
+  <UndampedRange type="float" default="5000" description="The range at which the sound effect plays normally, without any damping." />
   
-  <Extra type="description" value="Plays a sound effect." />
+  <Extra type="description" value="A source which plays a sound effect." />
   <Extra length="40" name="RawByteLength" />
 </Template>

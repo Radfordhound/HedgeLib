@@ -5,7 +5,7 @@
   <Type type="enum" default="0" description="What type of checkpoint this is.">
 	<Enum description="3D" value="0" />
 	<Enum description="2D" value="1" />
-	<Enum description="2D Back" value="2" />
+	<Enum description="2D Reversed" value="2" />
   </Type>
   
   <Extra type="model" value="cmn_obj_pointmarkerR.model" condition="Type == 0" />

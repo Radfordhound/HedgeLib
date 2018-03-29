@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Dummy type="int" description="A dummy value. Has no in-game effect." />
+  
+  <Extra type="model" value="enm_beeton01.model" />
+  <Extra type="description" value="Part of an EnemyBeetonDoll, this is a Beeton model which solely exists to be double-boosted through. It does nothing else in-game." />
+  <Extra type="RawByteLength" length="4" />
+</Template>

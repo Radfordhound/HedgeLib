@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Time type="float" description="The amount of time this effect lasts for." />
+  <SlowMotion type="sint8" description="What will be affected by this, er, effect.">
+    <Enum description="Slow All" value="0" />
+    <Enum description="Slow Objects" value="1" />
+    <Enum description="None" value="2" />
+  </SlowMotion>
+  <IsEventDriven type="bool" default="false" description="Whether this object is active by default or must be triggered by something first." />
+  
+  <Extra type="description" value="TODO" />
+  <Extra type="RawByteLength" length="8" />
+</Template>

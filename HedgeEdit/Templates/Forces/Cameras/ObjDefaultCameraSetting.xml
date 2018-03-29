@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Camera type="forcesObjectReference" description="The default camera to use in the stage." />
+  <Extra type="description" value="Specifies the default camera to be used in the stage. Praise Iizuka" />
+  <Extra type="RawByteLength" length="4" />
+</Template>

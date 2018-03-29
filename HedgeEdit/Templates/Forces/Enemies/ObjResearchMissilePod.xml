@@ -12,7 +12,7 @@
   <ShotAngleMin type="float" default="90" description="The minimum angle this object can shoot at." />
   <ShotAngleMax type="float" default="90" description="The maximum angle this object can shoot at." />
   <ShotSpeed type="float" default="240" description="How fast the shot missiles travel." />
-  <ShotTime type="float" default="0.6" description="" />
+  <ShotTime type="float" default="0.6" description="How long this object takes to shoot a missile." />
   
   <MissileSpeed type="float" default="100" description="The speed of the missiles." />
   <MissileAccelTime type="float" default="0.5" description="How long the shot missiles take to reach their maximum speed." />

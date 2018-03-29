@@ -6,6 +6,6 @@
   <Unknown4 type="float" default="0" description="" />
   
   <Extra type="model" value="chr_shadow.model" />
-  <Extra type="description" value="Shadow from the end of Sunset Heights." />
+  <Extra type="description" value="Shadow from the end of City Heights." />
   <Extra type="RawByteLength" length="16" />
 </Template>

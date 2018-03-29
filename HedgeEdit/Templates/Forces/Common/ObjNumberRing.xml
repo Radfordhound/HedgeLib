@@ -8,7 +8,7 @@
     <Enum description="Number Ring #1" value="4" />
   </Type>
   
-  <SeparateTranslucent type="bool" description="" />
+  <SeparateTranslucent type="bool" description="TODO" />
   
   <Extra type="model" value="cmn_obj_numberring_1.model" condition="NumberRingID == 0" />
   <Extra type="model" value="cmn_obj_numberring_2.model" condition="NumberRingID == 1" />

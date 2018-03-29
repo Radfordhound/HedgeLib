@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <IBLNumber type="int" default="2" description="" />
-  <Priority type="int" default="0" description="The priority of this volume. Higher-priority volumes take precedence." />
+  <IBLNumber type="uint" default="2" description="Which IBL to switch to. For example, if IBLNumber is set to 2, the game will switch to defaultibl2_wXaXX.dds. TODO: Is this defined by the RFL?" />
+  <Priority type="uint" default="0" description="The priority of this volume. Higher-priority volumes take precedence." />
   <Shape type="byte" description="The shape of this volume.">
 	<Enum description="Box" value="0" />
     <Enum description="Sphere" value="1" />

@@ -10,7 +10,7 @@
   <Width type="float" description="The width of this volume." />
   <Height type="float" description="The height of this volume." />
   <Depth type="float" description="The depth of this volume." />
-  <WaitTime type="float" description="How long to wait before playing the assigned caption." />
+  <WaitTime type="float" description="How long to wait after the player comes within this volume before playing the assigned caption." />
   
   <Extra type="RawByteLength" length="24" />
 </Template>

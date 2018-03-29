@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <NodeID type="int" description="The ID of this Node." />
-  <LineType type="byte" description="">
+  <NodeID type="uint" description="The ID of this Node." />
+  <LineType type="byte" description="TODO">
 	<Enum description="LINETYPE_SNS" value="0" />
     <Enum description="LINETYPE_STRAIGHT" value="1" />
   </LineType>
   
-  <Extra type="description" value="Nodes (pretty much just vertices) for ObjSetPaths." />
+  <Extra type="description" value="Nodes (aka vertices) for ObjSetPaths." />
   <Extra type="RawByteLength" length="8" />
 </Template>

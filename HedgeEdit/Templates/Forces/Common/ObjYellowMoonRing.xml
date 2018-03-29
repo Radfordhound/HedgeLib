@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <SeparateTranslucent type="bool" description="" />
+  <SeparateTranslucent type="bool" description="TODO" />
   
   <Extra type="model" value="cmn_obj_yellowmoonring.model" />
   <Extra type="description" value="Moon Rings. No idea why they're called YELLOW Moon Rings. I guess Sonic Team is color-blind?" />

@@ -8,7 +8,7 @@
     <Enum value="2" description="Medium (6M)" />
 	<Enum value="3" description="Large (8M)" />
 	<Enum value="4" description="Why would you ever need it this big (10M)" />
-	<Enum value="5" description="Invisible flames?" />
+	<Enum value="5" description="Invisible flames (You're welcome)" />
   </FlameLength>
   
   <TimeType type="byte" description="">
@@ -24,7 +24,7 @@
   </Type>
   
   <IsEventDriven type="bool" default="false" description="Whether this object is active by default or must be triggered by something first." />
-  <PitchRotation type="float" description="" />
+  <PitchRotation type="float" description="The pitch of the flames." />
   
   <Extra type="model" value="ex_obj_flame.model" />
   <Extra type="description" value="Thing that emit fire" />

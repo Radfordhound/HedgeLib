@@ -3,9 +3,9 @@
   <Red type="float" default="1000" description="The amount of red color in the light. Forces uses PBR, so you should take a color value within a 0-1 range and multiply it by 1000." />
   <Green type="float" default="1000" description="The amount of green color in the light. Forces uses PBR, so you should take a color value within a 0-1 range and multiply it by 1000." />
   <Blue type="float" default="500" description="The amount of blue color in the light. Forces uses PBR, so you should take a color value within a 0-1 range and multiply it by 1000." />
-  <SourceRadius type="float" default="20" description="" />
-  <HalfLength type="float" default="24" description="" />
-  <AttenuationRadius type="float" default="80" description="" />
+  <SourceRadius type="float" default="20" description="The radius of this light's source." />
+  <HalfLength type="float" default="24" description="TODO" />
+  <AttenuationRadius type="float" default="80" description="The radius this light travels at reduced intensity beyond the source." />
   
   <MoveType type="byte" description="How this light moves.">
 	<Enum description="None" value="0" />
@@ -14,7 +14,7 @@
   </MoveType>
   
   <MoveDistance type="float" default="100" description="How far this light moves." />
-  <MoveCycle type="float" default="5" description="" />
+  <MoveCycle type="float" default="5" description="How long the light takes to get to its destination?" />
   
   <Extra type="description" value="'Let there be light' - Takashi Iizuka" />
   <Extra type="RawByteLength" length="36" />

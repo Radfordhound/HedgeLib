@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <NumCliff type="int" default="4" description="" />
+  <NumCliff type="int" default="4" description="Number of pieces to crumble into? TODO" />
   <FrontDir type="byte" default="0" description="Which direction this object should face.">
 	<Enum description="Left" value="0" />
     <Enum description="Right" value="1" />
   </FrontDir>
   
-  <ToSignTime type="float" default="0" description="" />
-  <SignTime type="float" default="1" description="" />
-  <ResetTime type="float" description="How long before this object resets." />
+  <BreakToSignTime type="float" default="0" description="How long this object shakes after the player stands on it before crumbling into pieces?" />
+  <BreakSignTime type="float" default="1" description="How long the crumbled pieces are active/falling before despawning?" />
+  <BreakResetTime type="float" description="How long before this object resets after breaking." />
   
   <!-- TODO: Figure out how models work for this object type -->
   <Extra type="model" value="w5_obj_breakfloor01SV.model" />

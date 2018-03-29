@@ -7,31 +7,38 @@
   
   <LaunchAngle type="float" default="0" description="The angle you'll fly off at." />
   <UseFixedCamera type="bool" default="true" description="Whether the camera is set to focus on the target, or not changed at all." />
-  <EyeOffset type="vector3" default="0,0,-70" description="" />
-  <LookAtOffset type="vector3" default="0,0,0" description="" />
+  <EyeOffset type="vector3" default="0,0,-70" description="TODO" />
+  <LookAtOffset type="vector3" default="0,0,0" description="TODO" />
   <IsVisible type="bool" default="true" description="Whether this object is visible or not." />
   
-  <Event0Targets type="forcesObjectList" description="" />
-  <Event0Type type="byte" description="">
-    <Enum description="EVENT_ON" value="0" />
-    <Enum description="EVENT_OFF" value="1" />
-  </Event0Type>
-  <Event0Timer type="float" description="" />
-  
-  <Event1Targets type="forcesObjectList" description="" />
-  <Event1Type type="byte" description="">
-    <Enum description="EVENT_ON" value="0" />
-    <Enum description="EVENT_OFF" value="1" />
-  </Event1Type>
-  <Event1Timer type="float" description="" />
-  
-  <Event2Targets type="forcesObjectList" description="" />
-  <Event2Type type="byte" description="">
-    <Enum description="EVENT_ON" value="0" />
-    <Enum description="EVENT_OFF" value="1" />
-  </Event2Type>
-  <Event2Timer type="float" description="" />
+  <Event0>
+	<Targets type="forcesObjectList" description="The objects affected by this event." />
+	<Type type="byte" description="What type of signal to send to each affected object.">
+	  <Enum description="Turn On" value="0" />
+	  <Enum description="Turn Off" value="1" />
+	</Type>
+	<Timer type="float" description="How long to wait after this event is triggered before sending a signal to all affected objects." />
+  </Event0>
 
-  <Extra type="description" value="Really awesome unused objects that function perfectly. They act like swing poles from past games, except they're WireTargets." />
+  <Event1>
+	<Targets type="forcesObjectList" description="The objects affected by this event." />
+	<Type type="byte" description="What type of signal to send to each affected object.">
+	  <Enum description="Turn On" value="0" />
+	  <Enum description="Turn Off" value="1" />
+	</Type>
+	<Timer type="float" description="How long to wait after this event is triggered before sending a signal to all affected objects." />
+  </Event1>
+
+  <Event2>
+	<Targets type="forcesObjectList" description="The objects affected by this event." />
+	<Type type="byte" description="What type of signal to send to each affected object.">
+	  <Enum description="Turn On" value="0" />
+	  <Enum description="Turn Off" value="1" />
+	</Type>
+	<Timer type="float" description="How long to wait after this event is triggered before sending a signal to all affected objects." />
+  </Event2>
+
+  <Extra type="model" value="cmn_obj_wiretarget.model" />
+  <Extra type="description" value="Really awesome unused objects that function perfectly. They act like swing poles from past games, except they're WireTargets!" />
   <Extra type="RawByteLength" length="176" />
 </Template>

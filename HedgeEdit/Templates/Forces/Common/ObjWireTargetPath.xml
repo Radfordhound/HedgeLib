@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Motion type="sint8" description="The way the player interacts with this target.">
+    <Enum description="Trapeze" value="0" />
+    <Enum description="Launch" value="1" />
+    <Enum description="Continuous Trapeze" value="2" />
+    <Enum description="Continuous Launch" value="3" />
+  </Motion>
+  
+  <PathUID type="uint" description="The UID of the path used by this object." />
+  <InitialSpeed type="float" description="How much speed you have upon first grappling onto this object." />
+  <Speed type="float" default="350" description="How much speed you have while swinging on this object." />
+  <LaunchSpeed type="float" default="500" description="The speed you launch away from this object with." />
+  <ShiftRatio1 type="float" default="0.1" description="TODO" />
+  <ShiftRatio2 type="float" default="0.9" description="TODO" />
+  <Camera type="forcesObjectReference" description="The camera to switch to while swinging on this target." />
+  <EaseInTime type="float" description="The amount to smooth the transition to this object's camera angle." />
+  <EaseOutTime type="float" description="The amount to smooth the transition away from this object's camera angle." />
+  
+  <StartPos type="sint8" default="1" description="TODO">
+    <Enum description="Beginning Point" value="0" />
+    <Enum description="Near Point" value="1" />
+  </StartPos>
+  
+  <FinishDistance type="float" default="-1" description="How far the player will be once finished swinging on this target?" />
+  
+  <IntpType type="sint8" description="The type of interpolation to use.">
+    <Enum description="Linear" value="0" />
+    <Enum description="Square Root" value="1" />
+  </IntpType>
+  
+  <IntpFinishDist type="float" default="-1" description="How much to interpolate the player's position towards the FinishDistance?" />
+  <OutOfControl type="float" default="0.5" description="How long the game locks your control for after swinging on the grapple point." />
+  <IsVisible type="bool" default="true" description="Whether this object is visible or not." />
+  
+  <Event0>
+	<EventTargets type="forcesObjectList" description="The objects affected by this event." />
+	<EventType type="byte" description="What type of signal to send to each affected object.">
+	  <Enum description="Turn On" value="0" />
+	  <Enum description="Turn Off" value="1" />
+	</EventType>
+	<EventTimer type="float" description="How long to wait after this event is triggered before sending a signal to all affected objects." />
+  </Event0>
+
+  <Event1>
+	<EventTargets type="forcesObjectList" description="The objects affected by this event." />
+	<EventType type="byte" description="What type of signal to send to each affected object.">
+	  <Enum description="Turn On" value="0" />
+	  <Enum description="Turn Off" value="1" />
+	</EventType>
+	<EventTimer type="float" description="How long to wait after this event is triggered before sending a signal to all affected objects." />
+  </Event1>
+
+  <Event2>
+	<EventTargets type="forcesObjectList" description="The objects affected by this event." />
+	<EventType type="byte" description="What type of signal to send to each affected object.">
+	  <Enum description="Turn On" value="0" />
+	  <Enum description="Turn Off" value="1" />
+	</EventType>
+	<EventTimer type="float" description="How long to wait after this event is triggered before sending a signal to all affected objects." />
+  </Event2>
+  
+  <Extra type="model" value="cmn_obj_wiretarget.model" />
+  <Extra type="description" value="Red grapple points that carry you along a path." />
+  <Extra type="RawByteLength" length="160" />
+</Template>

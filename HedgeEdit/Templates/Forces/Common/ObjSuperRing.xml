@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <EventType type="byte" description="">
+  <Type type="byte" description="What this object does when triggered by an event. Visible means the object will start off visible, and become invisible when triggered. Invisible means the object will start off invisible, and become visible when triggered.">
 	<Enum description="None" value="0" />
     <Enum description="Visible" value="1" />
     <Enum description="Invisible" value="2" />
-  </EventType>
+  </Type>
   
-  <RotateType type="byte" default="1" description="">
+  <RotateType type="byte" default="1" description="Which up vector this object rotates around.">
 	<Enum description="Object Y-Up" value="0" />
     <Enum description="World Y-Up" value="1" />
   </RotateType>

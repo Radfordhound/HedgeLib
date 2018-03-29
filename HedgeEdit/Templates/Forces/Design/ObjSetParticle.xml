@@ -1,18 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <ParticleName type="string" default="" description="The name of the CEMT file this particle uses (without the .cemt extension)." />
-  <Range type="float" default="1" description="The range at which particles will randomly spawn." />
-  <Unknown2 type="int" default="-1" description="" />
-  <Unknown3 type="ulong" default="0" description="" />
+  <ParticleName type="string" description="The name of the .cemt file this object uses (without the .cemt extension)." />
+  <Scale type="float" default="1" description="The scaling of this particle." />
+  <ColorR type="byte" default="255" description="The amount of red color in this particle." />
+  <ColorG type="byte" default="255" description="The amount of green color in this particle." />
+  <ColorB type="byte" default="255" description="The amount of blue color in this particle." />
+  <ColorA type="byte" default="255" description="The amount of alpha in this particle." />
   
-  <Unknown4 type="ulong" default="0" description="" />
-  <Unknown5 type="uint" default="0" description="" />
-  <Unknown6 type="float" default="1" description="" />
+  <SoundName type="string" description="The name of the cue played by this object." />
+  <SoundIs3D type="bool" default="true" description="Whether the sound played by this object is three-dimensional." />
+  <SoundVolume type="float" default="1" description="The volume of the sound played by this object." />
   
-  <Unknown7 type="ulong" default="0" description="" />
-  <Unknown8 type="ulong" default="0" description="" />
-  <Unknown9 type="ulong" default="0" description="" />
+  <RumbleName type="string" description="TODO" />
+  <Trigger type="byte" description="What activates this object. Range means the object is activated simply by the player coming within its range. Message means this object needs to be triggered by another object.">
+	<Enum description="Range" value="0" />
+    <Enum description="Message" value="1" />
+  </Trigger>
   
-  <Extra type="description" value="They're particles." />
-  <Extra type="RawByteLength" length="80" />
+  <SectorID type="int" default="0" description="The ID of the terrain sector this particle gets loaded-in with?" />
+  
+  <Extra type="description" value="Particles." />
+  <Extra type="RawByteLength" length="72" />
 </Template>

@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <StartType type="byte" default="0" description="">
-	<Enum description="Search In Box" value="0" />
+  <StartType type="byte" default="0" description="How this object behaves when it first spawns. Event On means this object will wait until it's triggered by an event to begin searching for players to bomb.">
+	<Enum description="Active" value="0" />
     <Enum description="Event On" value="1" />
   </StartType>
   
-  <MoveSpeed type="float" default="30" description="How fast this object can move." />
-  <LocateList type="forcesObjectList" description="" />
+  <MoveSpeed type="float" default="30" description="How fast this object moves." />
+  <LocateList type="forcesObjectList" description="TODO" />
   
-  <AttackInterval type="float" default="0" description="" />
-  <SearchBoxWidth type="float" default="0" description="" />
-  <SearchBoxHeight type="float" default="0" description="" />
-  <SearchBoxDepth type="float" default="0" description="" />
+  <AttackInterval type="float" default="0" description="The time in-between attempts to attack the player." />
+  <SearchBoxWidth type="float" default="0" description="The width of the invisible box this object uses to search for players to bomb." />
+  <SearchBoxHeight type="float" default="0" description="The height of the invisible box this object uses to search for players to bomb." />
+  <SearchBoxDepth type="float" default="0" description="The depth of the invisible box this object uses to search for players to bomb." />
   <RespawnTime type="float" description="How long before this object respawns." />
   <In3D type="bool" default="true" description="Whether this object is in a 3D section, or a 2D section." />
   

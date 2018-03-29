@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <BoxNumX type="int" default="1" description="Number of boxes (X-axis)" />
+  <BoxNumY type="int" default="1" description="Number of boxes (Y-axis)" />
+  <BoxNumZ type="int" default="1" description="Number of boxes (Z-axis)" />
+  <HasShadow type="bool" default="true" description="Whether or not this box has a drop-shadow." />
+  
+  <Extra type="model" value="cmn_obj_ironbox_HD.model" />
+  <Extra type="description" value="Mystic Jungle Iron Boxes (No different from normal Iron Boxes??)." />
+  <Extra type="RawByteLength" length="16" />
+</Template>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <Dummy type="int" description="?" />
+  <Dummy type="int" description="A dummy value. Has no in-game effect." />
   
   <Extra type="model" value="cmn_obj_woodbox_HD.model" />
   <Extra type="description" value="Wooden Boxes." />

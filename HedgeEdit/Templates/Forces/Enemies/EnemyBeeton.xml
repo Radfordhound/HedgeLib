@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <SearchDistance type="float" default="400" description="How far this object can move when searching for a player to attack." />
+  <SearchMoveSpeed type="float" default="0" description="How fast this object can move while searching for a player to attack." />
+  <ViewBoxHalfLengthX type="float" default="0" description="The width of the area this object uses to search for players to attack." />
+  <ViewBoxHalfLengthY type="float" default="0" description="The height of the area this object uses to search for players to attack." />
+ 
+  <ViewBoxHalfLengthZ type="float" default="0" description="The depth of the area this object uses to search for players to attack." />
+  <ViewBoxOffset type="vector3" description="How far away this object's view box is from its current position." />
+  
+  <AttackRangeRatio type="float" default="0" description="TODO" />
+  <AttackRangeHeightRatio type="float" default="0" description="TODO" />
+  <AttackRangeOffset type="float" default="0" description="TODO" />
+  <DoesMove type="bool" default="true" description="Whether this object can move." />
+  <CheckShielding type="bool" description="TODO" />
+  <AttackConst type="bool" default="false" description="Whether this enemy will attack the player constantly?" />
+  
+  <AttackConstAngle type="float" default="0" description="TODO" />
+  <StraightDistance type="float" default="0" description="How long this enemy charges straight ahead before properly chasing after the player?" />
+  <RespawnTime type="float" description="How long before this object respawns." />
+  
+  <RespawnOffsetPos type="vector3" description="The offset that should be applied to this enemy's position when first respawned, before it flies back to its normal position?" />
+  
+  <RespawnPathUID type="uint" description="The UID of the path this enemy should follow upon respawning, if any." />
+  <In3D type="bool" default="true" description="Whether this object is in a 3D section, or a 2D section." />
+  <IsEscape type="bool" default="false" description="Whether this enemy tries to escape from the player?" />
+  <IsEventDriven type="bool" default="false" description="Whether this object is active by default or must be triggered by something first." />
+  
+  <Extra type="model" value="enm_beeton01.model" />
+  <Extra type="description" value="buzz my bomber" />
+  <Extra type="RawByteLength" length="112" />
+</Template>

@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
-  <PathUID type="int" description="The Unique IDentifier used to identify this path. Set it to whatever you want!" />
-  <PathType type="byte" description="What type of spline this is.">
+  <PathUID type="uint" description="The Unique IDentifier used to identify this path. Set it to whatever you want!" />
+  <PathType type="byte" description="What type of path this is.">
 	<Enum value="0" description="Object Path"/>
 	<Enum value="1" description="2D Path"/>
 	<Enum value="2" description="Grind Rail"/>
   </PathType>
   
-  <Nodes type="forcesObjectList" description="Array of ObjSetPathNode IDs." />
-  <IsLoopPath type="bool" default="false" description="Whether or not this path is the spline for a loop-de-loop." /> 
-  <StartLineType type="byte" description="">
+  <Nodes type="forcesObjectList" description="The ObjSetPathNodes which make up this path." />
+  <IsLoopPath type="bool" default="false" description="Whether or not this path is intended to be used on a loop-de-loop." /> 
+  <StartLineType type="byte" description="TODO">
 	<Enum description="LINETYPE_SNS" value="0" />
     <Enum description="LINETYPE_STRAIGHT" value="1" />
   </StartLineType>
   
-  <DivideLength type="float" default="10" description="" />
-  <Extra type="description" value="Splines represented fully within the set data, rather than in .path files!" />
+  <DivideLength type="float" default="10" description="TODO" />
+  <Extra type="description" value="Paths (aka splines) represented fully within the set data, rather than in .path files!" />
   <Extra type="RawByteLength" length="40" />
 </Template>

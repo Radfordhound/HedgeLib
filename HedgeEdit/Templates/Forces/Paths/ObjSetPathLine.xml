@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Template>
   <PathUID type="int" description="The Unique IDentifier used to identify this path. Set it to whatever you want!"/>
-  <PathType type="byte" description="What type of spline this is.">
+  <PathType type="byte" description="What type of path this is.">
 	<Enum value="0" description="Object Path"/>
 	<Enum value="1" description="2D Path"/>
 	<Enum value="2" description="Grind Rail"/>
   </PathType>
   
-  <Distance type="float" default="100" description="How long this spline is." />
-  <Extra type="description" value="Splines in the shape of a straight line." />
+  <Distance type="float" default="100" description="How long this path is." />
+  <Extra type="description" value="Paths in the shape of a straight line." />
   <Extra name="RawByteLength" length="12" />
 </Template>

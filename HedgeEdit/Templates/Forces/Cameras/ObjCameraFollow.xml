@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <IsCameraView type="bool" description="Whether the positioning of this object is used as camera position(?)" />
+  <FOV type="float" default="45" description="The Field-Of-View of this camera." />
+  <ZRotation type="float" default="40" description="The amount this camera is rotated on the Z axis." />
+  <Distance type="float" default="140" description="The distance this camera stays away from the player." />
+  
+  <Yaw type="float" description="The yaw of this camera's rotation." />
+  <Pitch type="float" description="The pitch of this camera's rotation." />
+  
+  <TargetOffset type="vector3" description="The amount this camera's position is offset from the target's position." />
+  <GravityOffset type="float" default="0" description="How much to offset this camera's position in the direction of the player's gravity?" />
+  
+  <PlayerOffset type="vector3" description="How much to offset this camera's position from the player's position." />
+  <FollowType type="byte" description="How this camera should follow the player.">
+	<Enum description="Intelligent" value="0" />
+    <Enum description="Simple" value="1" />
+  </FollowType>
+  
+  <Extra type="RawByteLength" length="96" />
+</Template>
