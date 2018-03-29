@@ -93,65 +93,89 @@ namespace HedgeLib.Sets
 
             foreach (var element in xml.Root.Elements())
             {
-                string elemName = element.Name.LocalName;
-                var typeAttr = element.Attribute("type");
-                if (typeAttr == null) continue;
+                ReadParam(element, Parameters);
+            }
+        }
 
-                if (elemName.ToLower() == "extra")
+        protected void ReadParam(XElement element, List<SetObjectTypeParam> group)
+        {
+            string elemName = element.Name.LocalName;
+            var typeAttr = element.Attribute("type");
+            var descAttr = element.Attribute("description");
+
+            if (typeAttr == null)
+            {
+                var paddingAttr = element.Attribute("padding");
+                uint? padding = null;
+
+                if (uint.TryParse(paddingAttr?.Value, out var p))
+                    padding = p;
+
+                var g = new SetObjectTypeParamGroup(elemName, padding, descAttr?.Value);
+                foreach (var elem in element.Elements())
                 {
-                    var valueAttr = element.Attribute("value");
-                    var condAttr = element.Attribute("condition");
-
-                    if (valueAttr == null)
-                        valueAttr = element.Attribute("name");
-
-                    if (valueAttr == null)
-                        valueAttr = element.Attribute("length");
-
-                    string v = valueAttr?.Value;
-                    string condition = condAttr?.Value;
-
-                    AddExtra(typeAttr.Value, v, condition);
+                    ReadParam(elem, g.Parameters);
                 }
-                else
+
+                if (g.Parameters.Count > 0)
+                    group.Add(g);
+
+                return;
+            }
+
+            if (elemName.ToLower() == "extra")
+            {
+                var valueAttr = element.Attribute("value");
+                var condAttr = element.Attribute("condition");
+
+                if (valueAttr == null)
+                    valueAttr = element.Attribute("name");
+
+                if (valueAttr == null)
+                    valueAttr = element.Attribute("length");
+
+                string v = valueAttr?.Value;
+                string condition = condAttr?.Value;
+
+                AddExtra(typeAttr.Value, v, condition);
+            }
+            else
+            {
+                var defaultAttr = element.Attribute("default");
+                var dataType = Types.GetTypeFromString(typeAttr.Value);
+
+                var param = new SetObjectTypeParam()
                 {
-                    var defaultAttr = element.Attribute("default");
-                    var descAttr = element.Attribute("description");
-                    var dataType = Types.GetTypeFromString(typeAttr.Value);
+                    Name = elemName,
+                    DataType = dataType,
+                    Description = descAttr?.Value,
 
-                    var param = new SetObjectTypeParam()
+                    DefaultValue = (defaultAttr == null) ?
+                        Types.GetDefaultFromType(dataType) :
+                        Helpers.ChangeType(defaultAttr.Value, dataType)
+                };
+
+                // Enumerator Values
+                foreach (var enumElement in element.Elements())
+                {
+                    elemName = enumElement.Name.LocalName;
+                    if (elemName.ToLower() != "enum")
+                        continue;
+
+                    var valueAttr = enumElement.Attribute("value");
+                    if (valueAttr == null) continue;
+
+                    descAttr = enumElement.Attribute("description");
+                    var enumType = new SetObjectTypeParamEnum()
                     {
-                        Name = elemName,
-                        DataType = dataType,
-                        Description = descAttr?.Value,
-
-                        DefaultValue = (defaultAttr == null) ?
-                            Types.GetDefaultFromType(dataType) :
-                            Helpers.ChangeType(defaultAttr.Value, dataType)
+                        Value = Helpers.ChangeType(valueAttr.Value, dataType),
+                        Description = descAttr?.Value
                     };
 
-                    // Enumerator Values
-                    foreach (var enumElement in element.Elements())
-                    {
-                        elemName = enumElement.Name.LocalName;
-                        if (elemName.ToLower() != "enum")
-                            continue;
-
-                        var valueAttr = enumElement.Attribute("value");
-                        if (valueAttr == null) continue;
-
-                        descAttr = enumElement.Attribute("description");
-                        var enumType = new SetObjectTypeParamEnum()
-                        {
-                            Value = Helpers.ChangeType(valueAttr.Value, dataType),
-                            Description = descAttr?.Value
-                        };
-
-                        param.Enums.Add(enumType);
-                    }
-
-                    Parameters.Add(param);
+                    param.Enums.Add(enumType);
                 }
+
+                group.Add(param);
             }
         }
 
@@ -164,19 +188,35 @@ namespace HedgeLib.Sets
 
             foreach (var param in Parameters)
             {
-                var paramElement = new XElement(param.Name);
+                root.Add(GenerateParam(param));
+            }
+
+            xml.Add(root);
+            xml.Save(fileStream);
+        }
+
+        protected XElement GenerateParam(SetObjectTypeParam param)
+        {
+            var paramElement = new XElement(param.Name);
+            if (param is SetObjectTypeParamGroup group)
+            {
+                foreach (var p in group.Parameters)
+                {
+                    paramElement.Add(GenerateParam(p));
+                }
+            }
+            else
+            {
                 // TODO
                 string typeName = new Microsoft.CSharp.CSharpCodeProvider()
                     .GetTypeOutput(new System.CodeDom.CodeTypeReference(param.DataType));
 
                 paramElement.Add(new XAttribute("type", typeName));
                 paramElement.Add(new XAttribute("default", param.DefaultValue));
-                paramElement.Add(new XAttribute("description", param.Description));
-                root.Add(paramElement);
             }
 
-            xml.Add(root);
-            xml.Save(fileStream);
+            paramElement.Add(new XAttribute("description", param.Description));
+            return paramElement;
         }
 
         public SetObjectTypeParam GetParameter(string name)
@@ -205,8 +245,7 @@ namespace HedgeLib.Sets
         {
             var param = new SetObjectTypeParam(name, dataType);
             Parameters.Add(param);
-
-            return Parameters[Parameters.Count - 1];
+            return param;
         }
     }
 
@@ -224,6 +263,23 @@ namespace HedgeLib.Sets
         {
             Name = name;
             DataType = dataType;
+        }
+    }
+
+    public class SetObjectTypeParamGroup : SetObjectTypeParam
+    {
+        // Variables/Constants
+        public List<SetObjectTypeParam> Parameters = new List<SetObjectTypeParam>();
+        public uint? Padding;
+
+        // Constructors
+        public SetObjectTypeParamGroup(string name,
+            uint? padding = null, string description = null)
+        {
+            Name = name;
+            Padding = padding;
+            Description = description;
+            DataType = typeof(SetObjectTypeParamGroup);
         }
     }
 

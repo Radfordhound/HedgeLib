@@ -84,6 +84,8 @@ namespace HedgeLib.IO
 
         public void FixPadding(uint amount = 4)
         {
+            if (amount < 1) return;
+
             long jumpAmount = 0;
             while ((BaseStream.Position + jumpAmount) % amount != 0) ++jumpAmount;
             JumpAhead(jumpAmount);
@@ -624,6 +626,8 @@ namespace HedgeLib.IO
 
         public void FixPadding(uint amount = 4)
         {
+            if (amount < 1) return;
+
             uint padAmount = 0;
             while ((BaseStream.Position + padAmount) % amount != 0) ++padAmount;
             WriteNulls(padAmount);

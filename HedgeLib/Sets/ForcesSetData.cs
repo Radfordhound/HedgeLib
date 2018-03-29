@@ -76,10 +76,11 @@ namespace HedgeLib.Sets
             long objTypeOffset = reader.ReadInt64();
             long objNameOffset = reader.ReadInt64();
 
-            ushort id = reader.ReadUInt16(); // ?
+            ushort id = reader.ReadUInt16();
             ushort unknown1 = reader.ReadUInt16();
             ushort parentID = reader.ReadUInt16();
             ushort parentUnknown1 = reader.ReadUInt16();
+
             obj.CustomData.Add("ParentID", new SetObjectParam(
                 typeof(ushort), parentID));
             obj.CustomData.Add("ParentUnknown1", new SetObjectParam(
@@ -200,125 +201,20 @@ namespace HedgeLib.Sets
             reader.JumpTo(objParamsOffset, false);
             foreach (var param in template.Parameters)
             {
-                // Special Param Types
-                if (param.DataType == typeof(uint[]) ||
-                    param.DataType == typeof(ObjectReference[]))
+                obj.Parameters.Add(ReadParameter(reader, param));
+            }
+
+            // Additional Padding
+            var rawDataLenExtra = template.GetExtra("RawByteLength");
+            if (uint.TryParse(rawDataLenExtra?.Value, out var rawLength))
+            {
+                uint paramLen = (uint)(reader.BaseStream.Position -
+                    objParamsOffset - reader.Offset);
+
+                if (paramLen != rawLength)
                 {
-                    // TODO: Make sure all of this is right
-                    reader.FixPadding(8);
-                    long arrOffset = reader.ReadInt64();
-                    ulong arrLength = reader.ReadUInt64();
-                    ulong arrLength2 = reader.ReadUInt64();
-                    long curPos = reader.BaseStream.Position;
-
-                    if (arrLength != arrLength2)
-                    {
-                        Console.WriteLine(
-                            "WARNING: ArrLength ({0}) != ArrLength2 ({1})",
-                            arrLength, arrLength2);
-                    }
-
-                    object arrObj;
-                    if (arrLength > 0 && arrOffset > 0)
-                    {
-                        reader.JumpTo(arrOffset, false);
-                        if (param.DataType == typeof(uint[]))
-                        {
-                            var arr = new uint[arrLength];
-                            for (uint i = 0; i < arrLength; ++i)
-                            {
-                                arr[i] = reader.ReadUInt32();
-                            }
-
-                            arrObj = arr;
-                        }
-                        else
-                        {
-                            var arr = new ObjectReference[arrLength];
-                            for (uint i = 0; i < arrLength; ++i)
-                            {
-                                arr[i] = new ObjectReference(reader);
-                            }
-
-                            arrObj = arr;
-                        }
-
-                        reader.JumpTo(curPos);
-                    }
-                    else
-                    {
-                        arrObj = (param.DataType == typeof(uint[])) ?
-                            (object)new uint[arrLength] : new ObjectReference[arrLength];
-                    }
-
-                    obj.Parameters.Add(new SetObjectParam(
-                        param.DataType, arrObj));
-                    continue;
-                }
-                else if (param.DataType == typeof(ObjectReference))
-                {
-                    reader.FixPadding(4);
-                    obj.Parameters.Add(new SetObjectParam(
-                        typeof(ObjectReference), new ObjectReference(reader)));
-                    continue;
-                }
-                else if (param.DataType == typeof(string))
-                {
-                    reader.FixPadding(8);
-
-                    long offset = reader.ReadInt64();
-                    var stringParam = new SetObjectParam(typeof(string), string.Empty);
-
-                    if (offset > 0)
-                    {
-                        long curPos = reader.BaseStream.Position;
-                        reader.JumpTo(offset, false);
-                        stringParam.Data = reader.ReadNullTerminatedString();
-                        reader.JumpTo(curPos);
-                    }
-
-                    obj.Parameters.Add(stringParam);
-                    reader.FixPadding(16);
-                    continue;
-                }
-
-                // Pre-Param Padding
-                if (param.DataType == typeof(float) ||
-                    param.DataType == typeof(uint) || param.DataType == typeof(int))
-                {
-                    reader.FixPadding(4);
-                }
-                else if (param.DataType == typeof(double) ||
-                    param.DataType == typeof(ulong) || param.DataType == typeof(long))
-                {
-                    reader.FixPadding(4);
-                }
-                else if (param.DataType == typeof(ushort) || param.DataType == typeof(short))
-                {
-                    reader.FixPadding(2);
-                }
-                else if (param.DataType == typeof(Vector2))
-                {
-                    reader.FixPadding(8);
-                }
-                else if (param.DataType == typeof(Vector3))
-                {
-                    reader.FixPadding(16); // TODO: Is this correct?
-                }
-
-                // Data
-                var objParam = new SetObjectParam(param.DataType,
-                    reader.ReadByType(param.DataType));
-                obj.Parameters.Add(objParam);
-
-                // Post-Param Padding
-                if (param.DataType == typeof(Vector2))
-                {
-                    reader.FixPadding(8);
-                }
-                else if (param.DataType == typeof(Vector3))
-                {
-                    reader.FixPadding(16); // TODO: Is this correct?
+                    obj.CustomData.Add("RawByteLength", new SetObjectParam(
+                        typeof(uint), rawLength));
                 }
             }
 
@@ -330,6 +226,93 @@ namespace HedgeLib.Sets
                 Console.WriteLine($"WARNING: Obj Padding3 != 0 ({padding3})");
 
             return obj;
+        }
+
+        protected SetObjectParam ReadParameter(BINAReader reader, SetObjectTypeParam param)
+        {
+            FixPadding(reader, param.DataType);
+
+            // Special Param Types
+            if (param is SetObjectTypeParamGroup group)
+            {
+                var g = new SetObjectParamGroup(group.Padding);
+                var groupParams = g.Parameters;
+
+                foreach (var p in group.Parameters)
+                {
+                    groupParams.Add(ReadParameter(reader, p));
+                }
+
+                reader.FixPadding(group.Padding ?? 16);
+                return g;
+            }
+            else if (param.DataType == typeof(ObjectReference[]))
+            {
+                long arrOffset = reader.ReadInt64();
+                ulong arrLength = reader.ReadUInt64();
+                ulong arrLength2 = reader.ReadUInt64();
+                long curPos = reader.BaseStream.Position;
+
+                if (arrLength != arrLength2)
+                {
+                    Console.WriteLine(
+                        "WARNING: ArrLength ({0}) != ArrLength2 ({1})",
+                        arrLength, arrLength2);
+                }
+
+                var arr = new ObjectReference[arrLength];
+                if (arrLength > 0 && arrOffset > 0)
+                {
+                    reader.JumpTo(arrOffset, false);
+                    for (uint i = 0; i < arrLength; ++i)
+                    {
+                        arr[i] = new ObjectReference(reader);
+                    }
+
+                    reader.JumpTo(curPos);
+                }
+
+                return new SetObjectParam(param.DataType, arr);
+            }
+            else if (param.DataType == typeof(ObjectReference))
+            {
+                return new SetObjectParam(typeof(ObjectReference),
+                    new ObjectReference(reader));
+            }
+            else if (param.DataType == typeof(string))
+            {
+                var stringParam = new SetObjectParam(typeof(string), string.Empty);
+                long offset = reader.ReadInt64();
+                long stringPadding = reader.ReadInt64();
+
+                if (offset > 0)
+                {
+                    long curPos = reader.BaseStream.Position;
+                    reader.JumpTo(offset, false);
+                    stringParam.Data = reader.ReadNullTerminatedString();
+                    reader.JumpTo(curPos);
+                }
+
+                if (stringPadding != 0)
+                    Console.WriteLine("WARNING: String Padding != 0 ({0:X})!!", stringPadding);
+
+                //reader.FixPadding(16);
+                return stringParam;
+            }
+
+            // Data
+            var objParam = new SetObjectParam(param.DataType,
+                reader.ReadByType(param.DataType));
+
+            // Post-Param Padding
+            if (param.DataType == typeof(Vector3))
+            {
+                uint vecPadding = reader.ReadUInt32();
+                if (vecPadding != 0)
+                    Console.WriteLine("WARNING: Vector Padding != 0 ({0:X})!!", vecPadding);
+            }
+
+            return objParam;
         }
 
         public override void Save(Stream fileStream)
@@ -370,8 +353,7 @@ namespace HedgeLib.Sets
                 WriteObjectParameters(writer, Objects[i], i);
             }
 
-            //writer.FixPadding(4);
-            writer.FixPadding(16); // TODO: This actually needs to be 8 in the end
+            writer.FixPadding(4);
             writer.FinishWrite(Header);
         }
 
@@ -432,6 +414,9 @@ namespace HedgeLib.Sets
             if (obj.CustomData.ContainsKey("ChildRotOffset"))
                 extraParamCounts -= 1;
 
+            if (obj.CustomData.ContainsKey("RawByteLength"))
+                extraParamCounts -= 1;
+
             writer.AddOffset($"extraParamsOffset{objID}", 8);
             writer.Write((ulong)extraParamCounts); // TODO
             writer.Write((ulong)extraParamCounts); // TODO
@@ -449,7 +434,7 @@ namespace HedgeLib.Sets
                 if (customData.Key == "Name" || customData.Key == "Unknown1" ||
                     customData.Key == "ParentID" || customData.Key == "ParentUnknown1" ||
                     customData.Key == "RangeOut" || customData.Key == "ChildPosOffset" ||
-                    customData.Key == "ChildRotOffset")
+                    customData.Key == "ChildRotOffset" || customData.Key == "RawByteLength")
                     continue;
 
                 writer.FillInOffsetLong(
@@ -475,7 +460,7 @@ namespace HedgeLib.Sets
                 if (customData.Key == "Name" || customData.Key == "Unknown1" ||
                     customData.Key == "ParentID" || customData.Key == "ParentUnknown1" ||
                     customData.Key == "RangeOut" || customData.Key == "ChildPosOffset" ||
-                    customData.Key == "ChildRotOffset")
+                    customData.Key == "ChildRotOffset" || customData.Key == "RawByteLength")
                     continue;
 
                 writer.FillInOffsetLong(
@@ -496,100 +481,15 @@ namespace HedgeLib.Sets
             // Write Normal Parameters
             foreach (var param in obj.Parameters)
             {
-                // Special Param Types
-                if (param.DataType == typeof(uint[]) ||
-                    param.DataType == typeof(ObjectReference[]))
-                {
-                    ulong arrLength = 0;
-                    writer.FixPadding(8);
-
-                    if (param.DataType == typeof(uint[]))
-                    {
-                        if (param.Data is uint[] arr)
-                            arrLength = (ulong)arr.LongLength;
-                    }
-                    else if (param.Data is ObjectReference[] arr)
-                        arrLength = (ulong)arr.LongLength;
-
-                    if (arrLength < 1)
-                    {
-                        writer.WriteNulls(24);
-                        continue;
-                    }
-
-                    writer.AddOffset($"obj{objID}ArrOffset{arrIndex}", 8);
-                    writer.Write(arrLength);
-                    writer.Write(arrLength);
-                    ++arrIndex;
-                    continue;
-                }
-                else if (param.DataType == typeof(ObjectReference))
-                {
-                    writer.FixPadding(4);
-                    var reference = (param.Data as ObjectReference);
-                    if (reference == null)
-                    {
-                        writer.Write(0U);
-                        continue;
-                    }
-
-                    reference.Write(writer);
-                    continue;
-                }
-                else if (param.DataType == typeof(string))
-                {
-                    writer.FixPadding(8);
-                    string str = (param.Data as string);
-                    if (string.IsNullOrEmpty(str))
-                    {
-                        writer.Write(0UL);
-                        writer.Write(0UL);
-                        continue;
-                    }
-
-                    writer.AddString($"obj{objID}StrOffset{strIndex}", str, 8);
-                    writer.Write(0UL);
-                    ++strIndex;
-                    continue;
-                }
-
-                // Pre-Param Padding
-                if (param.DataType == typeof(float) ||
-                    param.DataType == typeof(uint) || param.DataType == typeof(int))
-                {
-                    writer.FixPadding(4);
-                }
-                else if (param.DataType == typeof(double) ||
-                    param.DataType == typeof(ulong) || param.DataType == typeof(long))
-                {
-                    writer.FixPadding(4);
-                }
-                else if (param.DataType == typeof(ushort) || param.DataType == typeof(short))
-                {
-                    writer.FixPadding(2);
-                }
-                else if (param.DataType == typeof(Vector2))
-                {
-                    writer.FixPadding(8);
-                }
-                else if (param.DataType == typeof(Vector3))
-                {
-                    writer.FixPadding(16); // TODO: Is this correct?
-                }
-
-                // Data
-                writer.WriteByType(param.DataType, param.Data);
-
-                // Post-Param Padding
-                if (param.DataType == typeof(Vector2))
-                {
-                    writer.FixPadding(8);
-                }
-                else if (param.DataType == typeof(Vector3))
-                {
-                    writer.FixPadding(16); // TODO: Is this correct?
-                }
+                WriteParameter(param);
             }
+
+            // Padding
+            uint rawLength = obj.GetCustomDataValue<uint>("RawByteLength");
+            uint len = (uint)(writer.BaseStream.Position - paramStartPos);
+
+            if (rawLength > len)
+                writer.WriteNulls(rawLength - len);
 
             // Write Arrays
             if (arrIndex < 1)
@@ -599,23 +499,96 @@ namespace HedgeLib.Sets
             arrIndex = 0;
             foreach (var param in obj.Parameters)
             {
-                if (param.DataType == typeof(uint[]))
-                {
-                    var arr = (param.Data as uint[]);
-                    if (arr == null || arr.Length < 1) continue;
+                WriteArray(param);
+            }
 
-                    writer.FillInOffsetLong($"obj{objID}ArrOffset{arrIndex}", false, false);
-                    for (uint i = 0; i < arr.Length; ++i)
+            // Sub-Methods
+            void WriteParameter(SetObjectParam param)
+            {
+                FixPadding(writer, param.DataType);
+
+                // Special Param Types
+                if (param is SetObjectParamGroup group)
+                {
+                    foreach (var p in group.Parameters)
                     {
-                        writer.Write(arr[i]);
+                        WriteParameter(p);
                     }
 
-                    ++arrIndex;
+                    writer.FixPadding(group.Padding ?? 16);
+                    return;
                 }
                 else if (param.DataType == typeof(ObjectReference[]))
                 {
                     var arr = (param.Data as ObjectReference[]);
-                    if (arr == null || arr.Length < 1) continue;
+                    ulong arrLength = (ulong)arr.LongLength;
+
+                    if (arrLength < 1)
+                    {
+                        writer.WriteNulls(24);
+                        return;
+                    }
+
+                    writer.AddOffset($"obj{objID}ArrOffset{arrIndex}", 8);
+                    writer.Write(arrLength);
+                    writer.Write(arrLength);
+                    ++arrIndex;
+                    return;
+                }
+                else if (param.DataType == typeof(ObjectReference))
+                {
+                    var reference = (param.Data as ObjectReference);
+                    if (reference == null)
+                    {
+                        writer.Write(0U);
+                        return;
+                    }
+
+                    reference.Write(writer);
+                    return;
+                }
+                else if (param.DataType == typeof(string))
+                {
+                    string str = (param.Data as string);
+                    if (string.IsNullOrEmpty(str))
+                    {
+                        writer.Write(0UL);
+                        writer.Write(0UL);
+                        return;
+                    }
+
+                    writer.AddString($"obj{objID}StrOffset{strIndex}", str, 8);
+                    writer.Write(0UL);
+                    ++strIndex;
+                    return;
+                }
+
+                // Data
+                writer.WriteByType(param.DataType, param.Data);
+
+                // Post-Param Padding
+                if (param.DataType == typeof(Vector3))
+                    writer.Write(0U);
+            }
+
+            void WriteArray(SetObjectParam param)
+            {
+                // Groups
+                if (param is SetObjectParamGroup group)
+                {
+                    foreach (var p in group.Parameters)
+                    {
+                        WriteArray(p);
+                    }
+
+                    return;
+                }
+
+                // Array Values
+                if (param.DataType == typeof(ObjectReference[]))
+                {
+                    var arr = (param.Data as ObjectReference[]);
+                    if (arr == null || arr.Length < 1) return;
 
                     writer.FillInOffsetLong($"obj{objID}ArrOffset{arrIndex}", false, false);
                     for (uint i = 0; i < arr.Length; ++i)
@@ -658,6 +631,42 @@ namespace HedgeLib.Sets
             }
 
             return false;
+        }
+
+        protected void FixPadding(ExtendedBinaryReader reader, Type t)
+        {
+            uint padding = GetPadding(t);
+            if (padding < 2)
+                return;
+
+            reader.FixPadding(padding);
+        }
+
+        protected void FixPadding(ExtendedBinaryWriter writer, Type t)
+        {
+            uint padding = GetPadding(t);
+            if (padding < 2)
+                return;
+
+            writer.FixPadding(padding);
+        }
+
+        protected uint GetPadding(Type t)
+        {
+            // Based on Skyth's list of how the game pads everything
+            // ありがとう、スキス先生！
+            if (t == typeof(short) || t == typeof(ushort))
+                return 2;
+            else if (t == typeof(int) || t == typeof(uint) || t == typeof(float) ||
+                t == typeof(Vector2) || t == typeof(ObjectReference))
+                return 4;
+            else if (t == typeof(long) || t == typeof(ulong) ||
+                t == typeof(string) || t == typeof(ObjectReference[]))
+                return 8;
+            else if (t == typeof(Vector3) || t == typeof(Vector4) || t == typeof(Quaternion))
+                return 16;
+
+            return 1;
         }
 
         // Other

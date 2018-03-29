@@ -55,6 +55,21 @@ namespace HedgeLib.Sets
         }
     }
 
+    public class SetObjectParamGroup : SetObjectParam
+    {
+        // Variables/Constants
+        public List<SetObjectParam> Parameters => (Data as List<SetObjectParam>);
+        public uint? Padding;
+
+        // Constructors
+        public SetObjectParamGroup(uint? padding = null)
+        {
+            Padding = padding;
+            Data = new List<SetObjectParam>();
+            DataType = typeof(SetObjectParamGroup);
+        }
+    }
+
     [Serializable]
     public class SetObjectTransform
     {
