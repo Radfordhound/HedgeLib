@@ -35,6 +35,7 @@
             this.importLayerMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exportLayersMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.renameLayerMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.deleteLayerMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exportLayerMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.sceneViewMenu.SuspendLayout();
@@ -45,11 +46,14 @@
             this.treeView.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.treeView.ContextMenuStrip = this.sceneViewMenu;
             this.treeView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treeView.LabelEdit = true;
             this.treeView.Location = new System.Drawing.Point(0, 0);
             this.treeView.Name = "treeView";
             this.treeView.Size = new System.Drawing.Size(328, 444);
             this.treeView.TabIndex = 0;
+            this.treeView.AfterLabelEdit += new System.Windows.Forms.NodeLabelEditEventHandler(this.TreeView_AfterLabelEdit);
             this.treeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.TreeView_AfterSelect);
+            this.treeView.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.TreeView_NodeMouseClick);
             // 
             // sceneViewMenu
             // 
@@ -60,50 +64,62 @@
             this.importLayerMenuItem,
             this.exportLayersMenuItem,
             this.toolStripSeparator1,
+            this.renameLayerMenuItem,
             this.deleteLayerMenuItem,
             this.exportLayerMenuItem});
             this.sceneViewMenu.Name = "sceneViewMenu";
             this.sceneViewMenu.RenderMode = System.Windows.Forms.ToolStripRenderMode.Professional;
-            this.sceneViewMenu.Size = new System.Drawing.Size(227, 193);
+            this.sceneViewMenu.Size = new System.Drawing.Size(288, 190);
             this.sceneViewMenu.Opening += new System.ComponentModel.CancelEventHandler(this.SceneViewMenu_Opening);
             // 
             // addLayerMenuItem
             // 
             this.addLayerMenuItem.Name = "addLayerMenuItem";
-            this.addLayerMenuItem.Size = new System.Drawing.Size(226, 30);
+            this.addLayerMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift) 
+            | System.Windows.Forms.Keys.A)));
+            this.addLayerMenuItem.Size = new System.Drawing.Size(287, 30);
             this.addLayerMenuItem.Text = "&Add Layer...";
             this.addLayerMenuItem.Click += new System.EventHandler(this.AddLayerMenuItem_Click);
             // 
             // importLayerMenuItem
             // 
             this.importLayerMenuItem.Name = "importLayerMenuItem";
-            this.importLayerMenuItem.Size = new System.Drawing.Size(226, 30);
+            this.importLayerMenuItem.Size = new System.Drawing.Size(287, 30);
             this.importLayerMenuItem.Text = "&Import Layer(s)...";
             this.importLayerMenuItem.Click += new System.EventHandler(this.ImportLayerMenuItem_Click);
             // 
             // exportLayersMenuItem
             // 
             this.exportLayersMenuItem.Name = "exportLayersMenuItem";
-            this.exportLayersMenuItem.Size = new System.Drawing.Size(226, 30);
+            this.exportLayersMenuItem.Size = new System.Drawing.Size(287, 30);
             this.exportLayersMenuItem.Text = "E&xport All Layers...";
             this.exportLayersMenuItem.Click += new System.EventHandler(this.ExportLayersMenuItem_Click);
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(223, 6);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(284, 6);
+            // 
+            // renameLayerMenuItem
+            // 
+            this.renameLayerMenuItem.Name = "renameLayerMenuItem";
+            this.renameLayerMenuItem.ShortcutKeys = System.Windows.Forms.Keys.F2;
+            this.renameLayerMenuItem.Size = new System.Drawing.Size(287, 30);
+            this.renameLayerMenuItem.Text = "&Rename Layer";
+            this.renameLayerMenuItem.Click += new System.EventHandler(this.RenameLayerMenuItem_Click);
             // 
             // deleteLayerMenuItem
             // 
             this.deleteLayerMenuItem.Name = "deleteLayerMenuItem";
-            this.deleteLayerMenuItem.Size = new System.Drawing.Size(226, 30);
+            this.deleteLayerMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Delete;
+            this.deleteLayerMenuItem.Size = new System.Drawing.Size(287, 30);
             this.deleteLayerMenuItem.Text = "&Delete Layer";
             this.deleteLayerMenuItem.Click += new System.EventHandler(this.DeleteLayerMenuItem_Click);
             // 
             // exportLayerMenuItem
             // 
             this.exportLayerMenuItem.Name = "exportLayerMenuItem";
-            this.exportLayerMenuItem.Size = new System.Drawing.Size(226, 30);
+            this.exportLayerMenuItem.Size = new System.Drawing.Size(287, 30);
             this.exportLayerMenuItem.Text = "&Export Layer...";
             this.exportLayerMenuItem.Click += new System.EventHandler(this.ExportLayerMenuItem_Click);
             // 
@@ -134,5 +150,6 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripMenuItem addLayerMenuItem;
         private System.Windows.Forms.ToolStripMenuItem deleteLayerMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem renameLayerMenuItem;
     }
 }

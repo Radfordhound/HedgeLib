@@ -240,16 +240,39 @@ namespace HedgeEdit.UI
                     }
 
                     // Parameters
-                    for (int i = 0; i < setObj.Parameters.Count; ++i)
+                    for (int i = 0; i < setObj.Parameters.Count;)
                     {
-                        var templateParam = objTemplate?.Parameters[i];
-                        object param = setObj.Parameters[i];
+                        AddParam(objTemplate?.Parameters[i], setObj.Parameters[i], ++i);
+                    }
 
-                        string name = (templateParam == null) ?
-                            $"Parameter {i}" : templateParam.Name;
+                    objectProperties.ItemSet.Add(itemSet);
 
-                        var item = new CustomProperty(name, ref param, "Data", false,
-                            "Parameters", templateParam?.Description, true);
+                    // Sub-Methods
+                    void AddParam(SetObjectTypeParam templateParam, object param,
+                        int i, string prefix = null)
+                    {
+                        // Groups
+                        if (templateParam is SetObjectTypeParamGroup group)
+                        {
+                            var objGroup = (param as SetObjectParamGroup);
+                            var parameters = objGroup.Parameters;
+
+                            for (int i2 = 0; i2 < group.Parameters.Count;)
+                            {
+                                AddParam(group.Parameters[i2], objGroup.Parameters[i2],
+                                    ++i2, templateParam.Name);
+                            }
+
+                            return;
+                        }
+
+                        // Parameters
+                        string name = string.Format("{0}{1}",
+                            (prefix == null) ? string.Empty : $"{prefix}_",
+                            (templateParam == null) ? $"Parameter {i}" : templateParam.Name);
+
+                        var item = new CustomProperty(name, ref param, "Data",
+                            false, "Parameters", templateParam?.Description, true);
 
                         // Enums
                         int enumsCount = (templateParam != null) ?
@@ -267,8 +290,6 @@ namespace HedgeEdit.UI
 
                         itemSet.Add(item);
                     }
-
-                    objectProperties.ItemSet.Add(itemSet);
                 }
                 else
                 {
@@ -283,9 +304,13 @@ namespace HedgeEdit.UI
 
         public void UpdateTitle(string stgID = null)
         {
-            Text = string.Format("{0} - {1}",
+            string currentLayer = (Data.CurrentSetLayer == null ||
+                string.IsNullOrWhiteSpace(Data.CurrentSetLayer.Name)) ?
+                string.Empty : $" [{Data.CurrentSetLayer.Name}]";
+
+            Text = string.Format("{0} - {1}{2}",
                 (string.IsNullOrEmpty(stgID)) ? "Untitled" : stgID,
-                Program.Name);
+                Program.Name, currentLayer);
         }
 
         public void UpdateStatus(string status)

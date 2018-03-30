@@ -88,10 +88,17 @@ namespace HedgeEdit.Lua
             script.DoString(str);
         }
 
-        public void Call(string funcName, params object[] args)
+        public DynValue Call(string funcName, params object[] args)
         {
             if (script.Globals[funcName] != null)
-                script.Call(script.Globals[funcName], args);
+                return script.Call(script.Globals[funcName], args);
+
+            return null;
+        }
+
+        public object GetValue(string name)
+        {
+            return script.Globals[name];
         }
 
         public string FormatCacheDir(string path)

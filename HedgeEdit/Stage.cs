@@ -79,6 +79,11 @@ namespace HedgeEdit
                 try
                 {
                     script.DoScript(scriptPath);
+                    var canAddSetLayer = script.GetValue("CanAddSetLayer");
+
+                    SceneView.CanAddLayer = (canAddSetLayer != null &&
+                        canAddSetLayer.GetType() == typeof(bool)) ?
+                        (bool)canAddSetLayer : false;
                 }
                 catch (Exception ex)
                 {
@@ -119,6 +124,7 @@ namespace HedgeEdit
 
         public static void SaveAll()
         {
+            SaveSets();
             Save("SaveAll", DataDir, CacheDir);
         }
 

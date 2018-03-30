@@ -1,4 +1,6 @@
-﻿function ExtractResources(sourceDir, destDir)
+﻿CanAddSetLayer = true
+
+function ExtractResources(sourceDir, destDir)
 	SetDataType("Forces")
 	Extract("{0}/CommonObject.pac", "{0}")
 	-- TODO: Finish this
@@ -21,8 +23,6 @@ function Load(dataDir, cacheDir, stageID)
 					if m.dir ~= nil then
 						dirName = m.dir
 						stageDir = "{0}/" .. m.dir .. "/"
-						print(dirName)
-						print(stageDir)
 					end
 
 					break
@@ -118,12 +118,23 @@ end
 function SaveSets(dataDir, cacheDir, stageID)
 	-- Set Data (E.G. gedit/w5a01_gedit.pac)
 	SetDataType("Forces")
+	IODeleteFilesInDir("{0}/gedit/{1}_gedit", ".gedit")
 	SaveSetLayers("{0}/gedit/{1}_gedit", "", ".gedit")
 	
 	-- TODO: Repack
 end
 
 function SaveAll(dataDir, cacheDir, stageID)
+	-- Materials
+	--[[SetDataType("Forces")
+	for k in GetMaterials() do
+		if string.find(k.Value.Directory.Name, stageID) then
+			local pth = k.Value.Directory.FullPath .. "/" .. k.Key .. ".material"
+			print(pth)
+			SaveMaterial(pth, k.Value.Data)
+		end
+	end--]]
+
 	-- TODO
 end
 
@@ -131,6 +142,8 @@ function InitSetObject(obj)
 	AddCustomData(obj, "ParentID", "ushort", 0)
 	AddCustomData(obj, "ParentUnknown1", "ushort", 0)
 	AddCustomData(obj, "Unknown1", "ushort", 0)
+	AddCustomData(obj, "ChildPosOffset", "vector3", "0,0,0")
+	AddCustomData(obj, "ChildRotOffset", "vector3", "0,0,0")
 	AddCustomData(obj, "RangeIn", "float", 1000)
 	AddCustomData(obj, "RangeOut", "float", 1200)
 

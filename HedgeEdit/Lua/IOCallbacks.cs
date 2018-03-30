@@ -22,6 +22,8 @@ namespace HedgeEdit.Lua
                 (Func<string, string>)IOGetNameWithoutExtension;
 
             script.Globals["IOCopyFile"] = (Action<string, string, bool>)IOCopyFile;
+            script.Globals["IODeleteDir"] = (Action<string, bool>)IODeleteDir;
+            script.Globals["IODeleteFilesInDir"] = (Action<string, string>)IODeleteFilesInDir;
         }
 
         // Lua Callbacks
@@ -93,6 +95,21 @@ namespace HedgeEdit.Lua
             source = FormatCacheDir(source);
             dest = FormatCacheDir(dest);
             File.Copy(source, dest, overwrite);
+        }
+
+        public void IODeleteDir(string dir, bool recursive = true)
+        {
+            dir = FormatCacheDir(dir);
+            Directory.Delete(dir, recursive);
+        }
+
+        public void IODeleteFilesInDir(string dir, string filter)
+        {
+            dir = FormatCacheDir(dir);
+            foreach (var file in Directory.GetFiles(dir, filter))
+            {
+                File.Delete(file);
+            }
         }
     }
 }

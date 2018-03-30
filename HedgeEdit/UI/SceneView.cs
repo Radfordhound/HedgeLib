@@ -1,4 +1,5 @@
 ﻿using HedgeLib.Sets;
+using MoonSharp.Interpreter;
 using System;
 using System.ComponentModel;
 using System.Drawing;
@@ -9,6 +10,7 @@ namespace HedgeEdit.UI
     public partial class SceneView : Form
     {
         // Variables/Constants
+        public static bool CanAddLayer = false;
         private MainFrm mainForm = null;
 
         // Constructors
@@ -28,6 +30,7 @@ namespace HedgeEdit.UI
         // Methods
         public void RefreshView()
         {
+            addLayerMenuItem.Enabled = CanAddLayer;
             treeView.BeginUpdate();
             treeView.Nodes.Clear();
 
@@ -131,6 +134,7 @@ namespace HedgeEdit.UI
             if (layer != null)
             {
                 Data.CurrentSetLayer = layer;
+                Program.MainForm.UpdateTitle(Stage.ID);
             }
             else if (tag is VPObjectInstance instance)
             {
@@ -146,17 +150,63 @@ namespace HedgeEdit.UI
             }
         }
 
+        private void TreeView_AfterLabelEdit(object sender, NodeLabelEditEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(e.Label))
+            {
+                e.CancelEdit = true;
+                return;
+            }
+
+            if (e.Node.Tag is SetData layer)
+            {
+                var result = Stage.Script.Call("RenameLayer", e.Label);
+                if (result == null || result.Type != DataType.Boolean || result.Boolean)
+                    layer.Name = e.Label;
+                else
+                    e.CancelEdit = true;
+
+                return;
+            }
+        }
+
+        private void TreeView_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
+        {
+            treeView.SelectedNode = e.Node;
+        }
+
         private void SceneViewMenu_Opening(object sender, CancelEventArgs e)
         {
             bool layerClicked = (treeView.SelectedNode != null &&
                 treeView.SelectedNode.Tag is SetData);
 
             exportLayerMenuItem.Enabled = layerClicked;
+            addLayerMenuItem.Enabled = CanAddLayer;
         }
 
         private void AddLayerMenuItem_Click(object sender, EventArgs e)
         {
-            // TODO
+            if (Stage.GameType == null)
+                return;
+
+            var layer = Types.SetDataType;
+            var result = Stage.Script.Call("AddLayer", layer);
+            if (result != null && result.Type == DataType.Boolean)
+            {
+                if (!result.Boolean)
+                    return;
+            }
+            else
+            {
+                string name = GUI.ShowTextBox("What would you like to call this layer?");
+                if (string.IsNullOrEmpty(name))
+                    return;
+
+                layer.Name = name;
+            }
+
+            Data.SetLayers.Add(layer);
+            RefreshView();
         }
 
         private void ImportLayerMenuItem_Click(object sender, EventArgs e)
@@ -169,25 +219,13 @@ namespace HedgeEdit.UI
             // TODO
         }
 
-        private void ExportLayerMenuItem_Click(object sender, EventArgs e)
+        private void RenameLayerMenuItem_Click(object sender, EventArgs e)
         {
             if (treeView.SelectedNode == null || Stage.GameType == null)
                 return;
 
             if (treeView.SelectedNode.Tag is SetData layer)
-            {
-                var sfd = new SaveFileDialog()
-                {
-                    Title = "Export Set Layer...",
-                    Filter = "HedgeLib XML Set Layer (*.xml)|*.xml|All Files (*.*)|*.*",
-                    FileName = $"{layer.Name}.xml"
-                };
-
-                if (sfd.ShowDialog() == DialogResult.OK)
-                {
-                    layer.ExportXML(sfd.FileName, Stage.GameType.ObjectTemplates);
-                }
-            }
+                treeView.SelectedNode.BeginEdit();
         }
 
         private void DeleteLayerMenuItem_Click(object sender, EventArgs e)
@@ -231,8 +269,36 @@ namespace HedgeEdit.UI
                     }
                 }
 
+                if (Data.CurrentSetLayer == layer)
+                {
+                    Data.CurrentSetLayer = null;
+                    Program.MainForm.UpdateTitle(Stage.ID);
+                }
+
+                Data.SetLayers.Remove(layer);
                 RefreshView();
                 mainForm.RefreshGUI();
+            }
+        }
+
+        private void ExportLayerMenuItem_Click(object sender, EventArgs e)
+        {
+            if (treeView.SelectedNode == null || Stage.GameType == null)
+                return;
+
+            if (treeView.SelectedNode.Tag is SetData layer)
+            {
+                var sfd = new SaveFileDialog()
+                {
+                    Title = "Export Set Layer...",
+                    Filter = "HedgeLib XML Set Layer (*.xml)|*.xml|All Files (*.*)|*.*",
+                    FileName = $"{layer.Name}.xml"
+                };
+
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    layer.ExportXML(sfd.FileName, Stage.GameType.ObjectTemplates);
+                }
             }
         }
     }

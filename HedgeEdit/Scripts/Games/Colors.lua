@@ -1,4 +1,14 @@
-﻿function ExtractResources(sourceDir, destDir)
+﻿local layerNames = { "Base", "Custom 1", "Custom 2", "Custom 3",
+	"Gismo", "Design", "Sound", "Navigator" }
+
+local layerIDs = {}
+for i, v in ipairs(layerNames) do
+	layerIDs[v] = i - 1
+	print("Layer: " .. v .. " = " .. tostring(i - 1))
+end
+
+-- Callbacks
+function ExtractResources(sourceDir, destDir)
 	SetDataType("Colors")
 	-- TODO: Finish this
 end
@@ -9,6 +19,7 @@ function Load(dataDir, cacheDir, stageID)
 	-- Set Data (E.G. set/stg110_obj_00.orc)
 	UIShowProgress()
 
+	local currentLayer = nil
 	for i = 0, 7 do
 		UIChangeProgress((i / 7) * 100)
 		UIChangeLoadStatus(string.format(
@@ -19,25 +30,17 @@ function Load(dataDir, cacheDir, stageID)
 		
 		-- Change Layer Name
 		if setLayer ~= nil then
-			if i == 0 then
-				setLayer.Name = "Base"
-			elseif i == 1 then
-				setLayer.Name = "Custom 1"
-			elseif i == 2 then
-				setLayer.Name = "Custom 2"
-			elseif i == 3 then
-				setLayer.Name = "Custom 3"
-			elseif i == 4 then
-				setLayer.Name = "Gismo"
-			elseif i == 5 then
-				setLayer.Name = "Design"
-			elseif i == 6 then
-				setLayer.Name = "Sound"
-			elseif i == 7 then
-				setLayer.Name = "Navigator"
-			end
+			setLayer.Name = layerNames[i + 1]
+		else
+			setLayer = AddSetLayer(layerNames[i + 1])
+		end
+
+		if currentLayer == nil then
+			currentLayer = setLayer
 		end
 	end
+
+	ChangeCurrentSetLayer(currentLayer)
 
 	UIHideProgress()
 	UIToggleSetsSaving(true)
@@ -60,35 +63,18 @@ function SaveSets(dataDir, cacheDir, stageID)
 		local setLayer = GetSetLayer(i - 1)
 
 		-- Get Layer ID based on name
-		if setLayer ~= nil then
-			local id = nil
-
-			if setLayer.Name == "Base" then
-				id = 0
-			elseif setLayer.Name == "Custom 1" then
-				id = 1
-			elseif setLayer.Name == "Custom 2" then
-				id = 2
-			elseif setLayer.Name == "Custom 3" then
-				id = 3
-			elseif setLayer.Name == "Gismo" then
-				id = 4
-			elseif setLayer.Name == "Design" then
-				id = 5
-			elseif setLayer.Name == "Sound" then
-				id = 6
-			elseif setLayer.Name == "Navigator" then
-				id = 7
-			end
-
+		if setLayer ~= nil and #setLayer.Objects > 0 then
 			-- Save Layer
-			if id ~= nil then
+			if layerIDs[setLayer.Name] ~= nil then
 				SaveSetLayer(string.format("%s/set/%s_obj_%02d.orc",
-					dataDir, stageID, id), setLayer)
+					dataDir, stageID, layerIDs[setLayer.Name]), setLayer)
 			else
 				LogWarning("WARNING: Skipped Set Layer " .. setLayer.Name ..
 					" because its type could not be determined.")
 			end
+		else
+			LogWarning("WARNING: Skipped Set Layer " .. setLayer.Name ..
+				" because it was null or contained no objects.")
 		end
 	end
 

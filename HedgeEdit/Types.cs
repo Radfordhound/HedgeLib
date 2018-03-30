@@ -1,6 +1,7 @@
 ﻿using HedgeLib;
 using HedgeLib.Materials;
 using HedgeLib.Models;
+using HedgeLib.Sets;
 using HedgeLib.Textures;
 using System;
 
@@ -160,6 +161,8 @@ namespace HedgeEdit
             }
         }
 
+        public static SetData SetDataType => GetSetDataType(CurrentDataType);
+
         // Methods
         public static DataTypes GetDataType(string dataType)
         {
@@ -204,6 +207,50 @@ namespace HedgeEdit
                 default:
                     throw new NotImplementedException(
                         $"Unknown data type \"{dataType}\"!");
+            }
+        }
+
+        public static SetData GetSetDataType(DataTypes type)
+        {
+            switch (type)
+            {
+                case DataTypes.Forces:
+                    return new ForcesSetData();
+
+                case DataTypes.LW:
+                    return new LWSetData();
+
+                case DataTypes.Gens:
+                case DataTypes.SU:
+                    return new GensSetData();
+
+                // TODO: Add Storybook Support
+                case DataTypes.Storybook:
+                    throw new NotImplementedException(
+                        "Storybook set data is not yet supported!");
+
+                case DataTypes.Colors:
+                    return new ColorsSetData();
+
+                case DataTypes.S06:
+                    return new S06SetData();
+
+                // TODO: Add Shadow Support
+                case DataTypes.Shadow:
+                    throw new NotImplementedException(
+                        "Shadow set data is not yet supported!");
+
+                case DataTypes.Heroes:
+                    return new HeroesSetData();
+
+                // TODO: Add SA2 Support
+                case DataTypes.SA2:
+                    throw new NotImplementedException(
+                        "SA2 set data is not yet supported!");
+                //return new SA2SetData();
+
+                default:
+                    throw new Exception("Game type unsupported!");
             }
         }
 

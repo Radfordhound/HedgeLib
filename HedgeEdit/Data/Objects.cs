@@ -3,7 +3,6 @@ using HedgeEdit.UI;
 using HedgeLib;
 using HedgeLib.Models;
 using HedgeLib.Sets;
-using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -315,59 +314,9 @@ namespace HedgeEdit
 
         public static SetData LoadSetLayer(string path, bool loadModels = true)
         {
-            // Figure out what type of set data to use
-            SetData setData;
-            switch (Types.CurrentDataType)
-            {
-                case Types.DataTypes.Forces:
-                    setData = new ForcesSetData();
-                    break;
-
-                case Types.DataTypes.LW:
-                    setData = new LWSetData();
-                    break;
-
-                case Types.DataTypes.Gens:
-                case Types.DataTypes.SU:
-                    setData = new GensSetData();
-                    break;
-
-                // TODO: Add Storybook Support
-                case Types.DataTypes.Storybook:
-                    throw new NotImplementedException(
-                        "Could not load, Storybook set data is not yet supported!");
-
-                case Types.DataTypes.Colors:
-                    setData = new ColorsSetData();
-                    break;
-
-                case Types.DataTypes.S06:
-                    setData = new S06SetData();
-                    break;
-
-                // TODO: Add Shadow Support
-                case Types.DataTypes.Shadow:
-                    throw new NotImplementedException(
-                        "Could not load, Shadow set data is not yet supported!");
-
-                case Types.DataTypes.Heroes:
-                    setData = new HeroesSetData();
-                    break;
-
-                // TODO: Add SA2 Support
-                case Types.DataTypes.SA2:
-                    throw new NotImplementedException(
-                        "Could not load, SA2 set data is not yet supported!");
-                //setData = new SA2SetData();
-                //break;
-
-                default:
-                    throw new Exception(
-                        "Could not load, game type has not been set!");
-            }
-
             // Load the sets
             // TODO: Handle the object templates cleaner here
+            var setData = Types.SetDataType;
             var gameType = Stage.GameType;
             setData.Load(path, gameType.ObjectTemplates);
 
@@ -386,56 +335,7 @@ namespace HedgeEdit
         public static void ImportSetLayerXML(string path)
         {
             // Import Set Layer from XML file
-            SetData setData;
-            switch (Types.CurrentDataType)
-            {
-                case Types.DataTypes.Forces:
-                    setData = new ForcesSetData();
-                    break;
-
-                case Types.DataTypes.LW:
-                    setData = new LWSetData();
-                    break;
-
-                case Types.DataTypes.Gens:
-                case Types.DataTypes.SU:
-                    setData = new GensSetData();
-                    break;
-
-                // TODO: Add Storybook Support
-                case Types.DataTypes.Storybook:
-                    throw new NotImplementedException(
-                        "Could not load, Storybook set data is not yet supported!");
-
-                case Types.DataTypes.Colors:
-                    setData = new ColorsSetData();
-                    break;
-
-                case Types.DataTypes.S06:
-                    setData = new S06SetData();
-                    break;
-
-                // TODO: Add Shadow Support
-                case Types.DataTypes.Shadow:
-                    throw new NotImplementedException(
-                        "Could not load, Shadow set data is not yet supported!");
-
-                case Types.DataTypes.Heroes:
-                    setData = new HeroesSetData();
-                    break;
-
-                // TODO: Add SA2 Support
-                case Types.DataTypes.SA2:
-                    throw new NotImplementedException(
-                        "Could not load, SA2 set data is not yet supported!");
-                //setData = new SA2SetData();
-                //break;
-
-                default:
-                    throw new Exception(
-                        "Could not load, game type has not been set!");
-            }
-
+            var setData = Types.SetDataType;
             setData.Name = Path.GetFileNameWithoutExtension(path);
             setData.ImportXML(path);
             LoadSetLayerResources(Stage.GameType, setData);
