@@ -96,7 +96,7 @@
             this.saveToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
             this.saveToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
             this.saveToolStripMenuItem.Text = "Save";
-            this.saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
+            this.saveToolStripMenuItem.Click += new System.EventHandler(this.SaveToolStripMenuItem_Click);
             // 
             // saveAsToolStripMenuItem
             // 
@@ -138,7 +138,7 @@
             this.importXMLToolStripMenuItem.Name = "importXMLToolStripMenuItem";
             this.importXMLToolStripMenuItem.Size = new System.Drawing.Size(137, 22);
             this.importXMLToolStripMenuItem.Text = "Import XML";
-            this.importXMLToolStripMenuItem.Click += new System.EventHandler(this.importXMLToolStripMenuItem_Click);
+            this.importXMLToolStripMenuItem.Click += new System.EventHandler(this.ImportXMLToolStripMenuItem_Click);
             // 
             // exportXMLToolStripMenuItem
             // 
@@ -146,7 +146,7 @@
             this.exportXMLToolStripMenuItem.Name = "exportXMLToolStripMenuItem";
             this.exportXMLToolStripMenuItem.Size = new System.Drawing.Size(137, 22);
             this.exportXMLToolStripMenuItem.Text = "Export XML";
-            this.exportXMLToolStripMenuItem.Click += new System.EventHandler(this.exportXMLToolStripMenuItem_Click);
+            this.exportXMLToolStripMenuItem.Click += new System.EventHandler(this.ExportXMLToolStripMenuItem_Click);
             // 
             // splitContainer
             // 
@@ -230,21 +230,21 @@
             this.addEntry.Name = "addEntry";
             this.addEntry.Size = new System.Drawing.Size(126, 22);
             this.addEntry.Text = "Add Entry";
-            this.addEntry.Click += new System.EventHandler(this.addEntry_Click);
+            this.addEntry.Click += new System.EventHandler(this.AddEntry_Click);
             // 
             // renameTsm
             // 
             this.renameTsm.Name = "renameTsm";
             this.renameTsm.Size = new System.Drawing.Size(126, 22);
             this.renameTsm.Text = "Rename";
-            this.renameTsm.Click += new System.EventHandler(this.renameTsm_Click);
+            this.renameTsm.Click += new System.EventHandler(this.RenameTsm_Click);
             // 
             // deleteTsm
             // 
             this.deleteTsm.Name = "deleteTsm";
             this.deleteTsm.Size = new System.Drawing.Size(126, 22);
             this.deleteTsm.Text = "Delete";
-            this.deleteTsm.Click += new System.EventHandler(this.deleteTsm_Click);
+            this.deleteTsm.Click += new System.EventHandler(this.DeleteTsm_Click);
             // 
             // MainFrm
             // 

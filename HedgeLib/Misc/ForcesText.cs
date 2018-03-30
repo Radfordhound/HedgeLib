@@ -11,9 +11,9 @@ namespace HedgeLib.Misc
     public class ForcesText : FileBase
     {
         // Variables/Constants
-        public Dictionary<string, EntryType> Types = new Dictionary<string, EntryType>();
+        public Dictionary<string, CellType> Types = new Dictionary<string, CellType>();
         public List<Layout> Layouts = new List<Layout>();
-        public List<Node> Nodes = new List<Node>();
+        public List<Sheet> Sheets = new List<Sheet>();
         public BINAHeader Header = new BINAHeader() { Version = 210 };
 
         public const string Extension = ".cnvrs-text";
@@ -28,33 +28,33 @@ namespace HedgeLib.Misc
 
             // Header
             byte unknown1 = reader.ReadByte(); // Always 3?
-            byte nodeCount = reader.ReadByte(); // ?
+            byte sheetCount = reader.ReadByte(); // ?
             byte unknown2 = reader.ReadByte(); // Always 0?
             byte unknown3 = reader.ReadByte(); // Always 0?
             uint unknown4 = reader.ReadUInt32();
-            long nodesOffset = reader.ReadInt64();
+            long sheetsOffset = reader.ReadInt64();
 
-            // Nodes
-            reader.JumpTo(nodesOffset, false);
-            for (uint i = 0; i < nodeCount; ++i)
+            // Sheets
+            reader.JumpTo(sheetsOffset, false);
+            for (uint i = 0; i < sheetCount; ++i)
             {
-                Nodes.Add(new Node()
+                Sheets.Add(new Sheet()
                 {
                     NameOffset = reader.ReadInt64(),
-                    EntriesCount = reader.ReadUInt64(),
-                    EntriesOffset = reader.ReadInt64()
+                    CellCount = reader.ReadUInt64(),
+                    CellsOffset = reader.ReadInt64()
                 });
             }
 
-            // Entries
-            for (int i = 0; i < nodeCount; ++i)
+            // Cells
+            for (int i = 0; i < sheetCount; ++i)
             {
-                var node = Nodes[i];
-                reader.JumpTo(node.EntriesOffset, false);
+                var sheet = Sheets[i];
+                reader.JumpTo(sheet.CellsOffset, false);
 
-                for (uint i2 = 0; i2 < node.EntriesCount; ++i2)
+                for (uint i2 = 0; i2 < sheet.CellCount; ++i2)
                 {
-                    node.Entries.Add(new Entry()
+                    sheet.Cells.Add(new Cell()
                     {
                         UUID = reader.ReadUInt64(),
                         NameOffset = reader.ReadInt64(),
@@ -65,12 +65,12 @@ namespace HedgeLib.Misc
             }
 
             // Data
-            foreach (var node in Nodes)
+            foreach (var sheet in Sheets)
             {
-                for (int i = 0; i < node.Entries.Count; ++i)
+                for (int i = 0; i < sheet.Cells.Count; ++i)
                 {
-                    var entry = node.Entries[i];
-                    reader.JumpTo(entry.DataOffset.Value, false);
+                    var cell = sheet.Cells[i];
+                    reader.JumpTo(cell.DataOffset.Value, false);
 
                     var chars = new List<byte>();
                     bool isReadingButton = false;
@@ -100,38 +100,38 @@ namespace HedgeLib.Misc
                         chars.Add(b2);
                     }
                     while (fileStream.Position < fileStream.Length);
-                    entry.Data = Encoding.Unicode.GetString(chars.ToArray());
+                    cell.Data = Encoding.Unicode.GetString(chars.ToArray());
                 }
             }
 
             // Second Entries
             var typeOffsets = new Dictionary<long, string>();
-            foreach (var node in Nodes)
+            foreach (var sheet in Sheets)
             {
-                for (int i = 0; i < node.Entries.Count; ++i)
+                for (int i = 0; i < sheet.Cells.Count; ++i)
                 {
-                    var entry = node.Entries[i];
-                    reader.JumpTo(entry.SecondEntryOffset.Value, false);
+                    var cell = sheet.Cells[i];
+                    reader.JumpTo(cell.SecondEntryOffset.Value, false);
 
                     long nameOffset = reader.ReadInt64();
                     long typeOffset = reader.ReadInt64();
-                    entry.LayoutOffset = reader.ReadInt64();
+                    cell.LayoutOffset = reader.ReadInt64();
 
-                    if (nameOffset != entry.NameOffset)
+                    if (nameOffset != cell.NameOffset)
                     {
                         Console.WriteLine(
                             "WARNING: Second name offset ({0:X}) != first ({1:X})!",
-                            nameOffset, entry.NameOffset);
+                            nameOffset, cell.NameOffset);
                     }
 
                     // Caption Type
                     if (typeOffsets.ContainsKey(typeOffset))
                     {
-                        entry.TypeName = typeOffsets[typeOffset];
+                        cell.TypeName = typeOffsets[typeOffset];
                         continue;
                     }
 
-                    var type = new EntryType();
+                    var type = new CellType();
                     reader.JumpTo(typeOffset, false);
 
                     long typeNameOffset = reader.ReadInt64();
@@ -240,7 +240,7 @@ namespace HedgeLib.Misc
                     reader.JumpTo(typeNamespaceOffset, false);
                     type.Namespace = reader.ReadNullTerminatedString();
 
-                    entry.TypeName = typeName;
+                    cell.TypeName = typeName;
                     typeOffsets.Add(typeOffset, typeName);
                     Types.Add(typeName, type);
                 }
@@ -248,14 +248,14 @@ namespace HedgeLib.Misc
 
             // Layouts
             var layoutOffsets = new List<long>();
-            foreach (var node in Nodes)
+            foreach (var sheet in Sheets)
             {
-                foreach (var entry in node.Entries)
+                foreach (var cell in sheet.Cells)
                 {
-                    if (!layoutOffsets.Contains(entry.LayoutOffset.Value))
+                    if (!layoutOffsets.Contains(cell.LayoutOffset.Value))
                     {
                         var layout = new Layout();
-                        reader.JumpTo(entry.LayoutOffset.Value, false);
+                        reader.JumpTo(cell.LayoutOffset.Value, false);
 
                         long layoutNameOffset = reader.ReadInt64();
                         long unknownData1Offset = reader.ReadInt64();
@@ -343,30 +343,30 @@ namespace HedgeLib.Misc
                         reader.JumpTo(layoutNameOffset, false);
                         layout.Name = reader.ReadNullTerminatedString();
 
-                        layout.Offset = entry.LayoutOffset;
-                        entry.LayoutIndex = layoutOffsets.Count;
-                        layoutOffsets.Add(entry.LayoutOffset.Value);
+                        layout.Offset = cell.LayoutOffset;
+                        cell.LayoutIndex = layoutOffsets.Count;
+                        layoutOffsets.Add(cell.LayoutOffset.Value);
                         Layouts.Add(layout);
                     }
                     else
                     {
-                        entry.LayoutIndex = layoutOffsets.IndexOf(
-                            entry.LayoutOffset.Value);
+                        cell.LayoutIndex = layoutOffsets.IndexOf(
+                            cell.LayoutOffset.Value);
                     }
                 }
             }
 
             // Names
-            foreach (var node in Nodes)
+            foreach (var sheet in Sheets)
             {
-                reader.JumpTo(node.NameOffset, false);
-                node.Name = reader.ReadNullTerminatedString();
+                reader.JumpTo(sheet.NameOffset, false);
+                sheet.Name = reader.ReadNullTerminatedString();
 
-                for (int i = 0; i < node.Entries.Count; ++i)
+                for (int i = 0; i < sheet.Cells.Count; ++i)
                 {
-                    var entry = node.Entries[i];
-                    reader.JumpTo(entry.NameOffset.Value, false);
-                    entry.Name = reader.ReadNullTerminatedString();
+                    var cell = sheet.Cells[i];
+                    reader.JumpTo(cell.NameOffset.Value, false);
+                    cell.Name = reader.ReadNullTerminatedString();
                 }
             }
         }
@@ -380,53 +380,52 @@ namespace HedgeLib.Misc
 
             // Header
             writer.Write((byte)3); // TODO: Figure out what this is lol
-            writer.Write((byte)Nodes.Count);
+            writer.Write((byte)Sheets.Count);
             writer.Write((byte)0);
             writer.Write((byte)0);
 
             writer.Write(0);
-            writer.AddOffset("nodesOffset", 8);
+            writer.AddOffset("sheetsOffset", 8);
 
-            // Nodes
-            writer.FillInOffsetLong("nodesOffset", false, false);
-            for (int i = 0; i < Nodes.Count; ++i)
+            // Sheets
+            writer.FillInOffsetLong("sheetsOffset", false, false);
+            for (int i = 0; i < Sheets.Count; ++i)
             {
-                var node = Nodes[i];
-                writer.AddString($"nodeNameOffset{i}", node.Name, 8);
-                writer.Write((ulong)node.Entries.Count);
-                writer.AddOffset($"nodeEntriesOffset{i}", 8);
+                var sheet = Sheets[i];
+                writer.AddString($"sheetNameOffset{i}", sheet.Name, 8);
+                writer.Write((ulong)sheet.Cells.Count);
+                writer.AddOffset($"cellsOffset{i}", 8);
             }
 
-            // Entries
-            for (int i = 0; i < Nodes.Count; ++i)
+            // Cells
+            for (int i = 0; i < Sheets.Count; ++i)
             {
-                var node = Nodes[i];
-                writer.FillInOffsetLong($"nodeEntriesOffset{i}", false, false);
+                var sheet = Sheets[i];
+                writer.FillInOffsetLong($"cellsOffset{i}", false, false);
 
-                for (int i2 = 0; i2 < node.Entries.Count; ++i2)
+                for (int i2 = 0; i2 < sheet.Cells.Count; ++i2)
                 {
-                    var entry = node.Entries[i2];
-                    if (!entry.UUID.HasValue)
-                        entry.UUID = (ulong)rand.Next();
+                    var cell = sheet.Cells[i2];
+                    if (!cell.UUID.HasValue)
+                        cell.UUID = (ulong)rand.Next();
 
-                    writer.Write(entry.UUID.Value);
-                    writer.AddString($"entryNameOffset{i}{i2}", entry.Name, 8);
+                    writer.Write(cell.UUID.Value);
+                    writer.AddString($"cellNameOffset{i}{i2}", cell.Name, 8);
                     writer.AddOffset($"secondEntryOffset{i}{i2}", 8);
                     writer.AddOffset($"dataOffset{i}{i2}", 8);
                 }
             }
 
             // Data
-            for (int i = 0; i < Nodes.Count; ++i)
+            for (int i = 0; i < Sheets.Count; ++i)
             {
-                var node = Nodes[i];
-                for (int i2 = 0; i2 < node.Entries.Count; ++i2)
+                var sheet = Sheets[i];
+                for (int i2 = 0; i2 < sheet.Cells.Count; ++i2)
                 {
-                    var entry = node.Entries[i2];
+                    var cell = sheet.Cells[i2];
                     writer.FillInOffsetLong($"dataOffset{i}{i2}", false, false);
 
-                    //var chArr = entry.Data.ToCharArray();
-                    var sb = new StringBuilder(entry.Data);
+                    var sb = new StringBuilder(cell.Data);
                     sb.Replace(NullReplaceChar, '\0');
                     sb.Replace("\r\n", "\n");
                     var bytes = Encoding.Unicode.GetBytes(sb.ToString());
@@ -439,16 +438,16 @@ namespace HedgeLib.Misc
             }
 
             // Second Entries
-            for (int i = 0; i < Nodes.Count; ++i)
+            for (int i = 0; i < Sheets.Count; ++i)
             {
-                var node = Nodes[i];
-                for (int i2 = 0; i2 < node.Entries.Count; ++i2)
+                var sheet = Sheets[i];
+                for (int i2 = 0; i2 < sheet.Cells.Count; ++i2)
                 {
-                    var entry = node.Entries[i2];
+                    var cell = sheet.Cells[i2];
                     writer.FillInOffsetLong($"secondEntryOffset{i}{i2}", false, false);
-                    writer.AddString($"secondEntryNameOffset{i}{i2}", entry.Name, 8);
+                    writer.AddString($"secondEntryNameOffset{i}{i2}", cell.Name, 8);
 
-                    if (!string.IsNullOrEmpty(entry.TypeName))
+                    if (!string.IsNullOrEmpty(cell.TypeName))
                         writer.AddOffset($"typeOffset{i}{i2}", 8);
                     else
                         writer.Write(0UL);
@@ -457,18 +456,18 @@ namespace HedgeLib.Misc
                 }
             }
 
-            // Types
+            // Cell Types
             foreach (var type in Types)
             {
                 // Fill-in Second Entry Type Offset
                 var t = type.Value;
-                for (int i = 0; i < Nodes.Count; ++i)
+                for (int i = 0; i < Sheets.Count; ++i)
                 {
-                    var node = Nodes[i];
-                    for (int i2 = 0; i2 < node.Entries.Count; ++i2)
+                    var sheet = Sheets[i];
+                    for (int i2 = 0; i2 < sheet.Cells.Count; ++i2)
                     {
-                        var entry = node.Entries[i2];
-                        if (string.IsNullOrEmpty(entry.TypeName) || entry.TypeName != type.Key)
+                        var cell = sheet.Cells[i2];
+                        if (string.IsNullOrEmpty(cell.TypeName) || cell.TypeName != type.Key)
                             continue;
 
                         writer.FillInOffsetLong($"typeOffset{i}{i2}", false, false);
@@ -561,18 +560,18 @@ namespace HedgeLib.Misc
             {
                 writer.FixPadding(8);
 
-                // Fill-In Entry Offsets
+                // Fill-In Cell Offsets
                 var cat = Layouts[i];
-                for (int nodeIndex = 0; nodeIndex < Nodes.Count; ++nodeIndex)
+                for (int sheetIndex = 0; sheetIndex < Sheets.Count; ++sheetIndex)
                 {
-                    var node = Nodes[nodeIndex];
-                    for (int i2 = 0; i2 < node.Entries.Count; ++i2)
+                    var sheet = Sheets[sheetIndex];
+                    for (int i2 = 0; i2 < sheet.Cells.Count; ++i2)
                     {
-                        var entry = node.Entries[i2];
-                        if (entry.LayoutIndex != i)
+                        var cell = sheet.Cells[i2];
+                        if (cell.LayoutIndex != i)
                             continue;
 
-                        writer.FillInOffsetLong($"layoutOffset{nodeIndex}{i2}", false, false);
+                        writer.FillInOffsetLong($"layoutOffset{sheetIndex}{i2}", false, false);
                     }
                 }
 
@@ -710,7 +709,7 @@ namespace HedgeLib.Misc
             foreach (var elem in typeElems.Elements())
             {
                 var nmSpace = elem.Attribute("namespace");
-                Types.Add(elem.Name.LocalName, new EntryType()
+                Types.Add(elem.Name.LocalName, new CellType()
                 {
                     Namespace = nmSpace?.Value,
                     UnknownFloat1 = GetOptValue<float>(elem, "UnknownFloat1"),
@@ -723,16 +722,22 @@ namespace HedgeLib.Misc
                 });
             }
 
-            // Nodes
-            var nodeElems = xml.Root.Elements("Nodes");
-            foreach (var nodeElem in nodeElems.Elements())
+            // Sheets
+            var sheetElems = xml.Root.Elements("Sheets");
+            if (sheetElems == null)
+                sheetElems = xml.Root.Elements("Nodes");
+
+            if (sheetElems == null)
+                return;
+
+            foreach (var sheetElem in sheetElems.Elements())
             {
-                var node = new Node()
+                var sheet = new Sheet()
                 {
-                    Name = nodeElem.Name.LocalName,
+                    Name = sheetElem.Name.LocalName,
                 };
 
-                foreach (var elem in nodeElem.Elements())
+                foreach (var elem in sheetElem.Elements())
                 {
                     var uuidAttr = elem.Attribute("uuid");
                     var typeAttr = elem.Attribute("type");
@@ -741,7 +746,7 @@ namespace HedgeLib.Misc
                     if (typeAttr == null || layoutAttr == null)
                     {
                         Console.WriteLine(
-                            "WARNING: Skipped Node Entry because it has no type/layout!");
+                            "WARNING: Skipped Cell because it has no type/layout!");
 
                         continue;
                     }
@@ -759,8 +764,8 @@ namespace HedgeLib.Misc
                         sb.Append('\n');
                     }
 
-                    // Generate Entry
-                    node.Entries.Add(new Entry()
+                    // Generate Cell
+                    sheet.Cells.Add(new Cell()
                     {
                         Name = elem.Name.LocalName,
                         Data = sb.ToString(),
@@ -770,7 +775,7 @@ namespace HedgeLib.Misc
                     });
                 }
 
-                Nodes.Add(node);
+                Sheets.Add(sheet);
             }
 
             // Sub-Methods
@@ -825,16 +830,16 @@ namespace HedgeLib.Misc
                 typeElems.Add(typeElem);
             }
 
-            // Nodes
-            var nodeElems = new XElement("Nodes");
-            foreach (var node in Nodes)
+            // Sheets
+            var sheetElems = new XElement("Sheets");
+            foreach (var sheet in Sheets)
             {
-                var nodeElem = new XElement(node.Name);
-                foreach (var entry in node.Entries)
+                var sheetElem = new XElement(sheet.Name);
+                foreach (var cell in sheet.Cells)
                 {
                     // Separate the data into different elements per-line.
-                    var elem = new XElement(entry.Name);
-                    string data = entry.Data.Replace('\0', NullReplaceChar);
+                    var elem = new XElement(cell.Name);
+                    string data = cell.Data.Replace('\0', NullReplaceChar);
                     using (var reader = new StringReader(data))
                     {
                         string line = string.Empty;
@@ -850,20 +855,20 @@ namespace HedgeLib.Misc
                     }
 
                     // Write Element
-                    elem.Add(new XAttribute("uuid", entry.UUID));
-                    elem.Add(new XAttribute("type", entry.TypeName));
+                    elem.Add(new XAttribute("uuid", cell.UUID));
+                    elem.Add(new XAttribute("type", cell.TypeName));
                     elem.Add(new XAttribute("layout",
-                        layoutNames[entry.LayoutIndex]));
+                        layoutNames[cell.LayoutIndex]));
 
-                    nodeElem.Add(elem);
+                    sheetElem.Add(elem);
                 }
 
-                nodeElems.Add(nodeElem);
+                sheetElems.Add(sheetElem);
             }
 
             root.Add(layoutElems);
             root.Add(typeElems);
-            root.Add(nodeElems);
+            root.Add(sheetElems);
 
             // Write the generated XML File
             var xml = new XDocument(root);
@@ -879,16 +884,16 @@ namespace HedgeLib.Misc
         }
 
         // Other
-        public class Node
+        public class Sheet
         {
-            public List<Entry> Entries = new List<Entry>();
+            public List<Cell> Cells = new List<Cell>();
             public string Name;
 
-            public long NameOffset, EntriesOffset;
-            public ulong EntriesCount;
+            public long NameOffset, CellsOffset;
+            public ulong CellCount;
         }
 
-        public class Entry
+        public class Cell
         {
             public string Name, Data, TypeName;
             public ulong? UUID;
@@ -897,7 +902,7 @@ namespace HedgeLib.Misc
             public int LayoutIndex;
         }
 
-        public class EntryType
+        public class CellType
         {
             public string Namespace;
             public ulong? UnknownULong1, UnknownULong2;
