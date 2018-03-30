@@ -16,7 +16,7 @@ namespace HedgeLib
             new DataType(typeof(char), '\0', "char"),
 
             // 2-Byte Values
-            new DataType(typeof(short), (short)0, "signed short", "sint16", "short"),
+            new DataType(typeof(short), (short)0, "signed short", "sint16", "int16", "short"),
             new DataType(typeof(ushort), (ushort)0, "unsigned short", "uint16", "ushort"),
 
             // 4-Byte Values
@@ -28,7 +28,7 @@ namespace HedgeLib
                 new ForcesSetData.ObjectReference(), "forcesobjectreference"),
 
             // 8-Byte Values
-            new DataType(typeof(long), 0L, "signed long", "sint64", "long"),
+            new DataType(typeof(long), 0L, "signed long", "sint64", "long", "int64"),
             new DataType(typeof(ulong), 0UL, "unsigned long", "uint64", "ulong"),
             new DataType(typeof(double), 0D, "double"),
             new DataType(typeof(Vector2), new Vector2(), "vector2"),
