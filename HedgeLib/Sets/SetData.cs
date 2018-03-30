@@ -124,9 +124,28 @@ namespace HedgeLib.Sets
             // Sub-Methods
             SetObjectParam LoadParam(XElement paramElem)
             {
+                // Groups
                 var dataTypeAttr = paramElem.Attribute("type");
-                if (dataTypeAttr == null) return null;
+                if (dataTypeAttr == null)
+                {
+                    var padAttr = paramElem.Attribute("padding");
+                    uint? padding = null;
 
+                    if (uint.TryParse(padAttr?.Value, out var pad))
+                        padding = pad;
+
+                    var group = new SetObjectParamGroup(padding);
+                    var parameters = group.Parameters;
+
+                    foreach (var param in paramElem.Elements())
+                    {
+                        parameters.Add(LoadParam(param));
+                    }
+
+                    return group;
+                }
+
+                // Parameters
                 var dataType = Types.GetTypeFromString(dataTypeAttr.Value);
                 object data = null;
 
@@ -251,14 +270,16 @@ namespace HedgeLib.Sets
                 }
 
                 // Generate Parameters Element
+                SetObjectTypeParam p;
                 var paramsElem = new XElement("Parameters");
                 var template = (objectTemplates.ContainsKey(obj.ObjectType)) ?
                     objectTemplates[obj.ObjectType] : null;
 
                 for (int i = 0; i < obj.Parameters.Count; ++i)
                 {
-                    paramsElem.Add(GenerateParamElement(obj.Parameters[i],
-                        template?.Parameters[i].Name));
+                    p = template?.Parameters[i];
+                    paramsElem.Add(GenerateParamElement(
+                        obj.Parameters[i], p?.Name, p));
                 }
 
                 // Generate Transforms Element
@@ -280,9 +301,32 @@ namespace HedgeLib.Sets
             xml.Save(fileStream);
 
             // Sub-Methods
-            XElement GenerateParamElement(
-                SetObjectParam param, string name = "Parameter")
+            XElement GenerateParamElement(SetObjectParam param,
+                string name = "Parameter", SetObjectTypeParam paramTemp = null)
             {
+                // Groups
+                if (param is SetObjectParamGroup group)
+                {
+                    var e = new XElement((string.IsNullOrEmpty(name)) ?
+                        "Group" : name);
+
+                    if (group.Padding.HasValue)
+                        e.Add(new XAttribute("padding", group.Padding.Value));
+
+                    SetObjectTypeParam p;
+                    var templateGroup = (paramTemp as SetObjectTypeParamGroup);
+                    var parameters = group.Parameters;
+
+                    for (int i = 0; i < parameters.Count; ++i)
+                    {
+                        p = templateGroup?.Parameters[i];
+                        e.Add(GenerateParamElement(parameters[i], p?.Name, p));
+                    }
+
+                    return e;
+                }
+
+                // Parameters
                 var dataType = param.DataType;
                 var dataTypeAttr = new XAttribute("type", dataType.Name);
                 if (dataType == typeof(ForcesSetData.ObjectReference))
@@ -290,7 +334,7 @@ namespace HedgeLib.Sets
 
                 var elem = new XElement((string.IsNullOrEmpty(name)) ?
                     "Parameter" : name, dataTypeAttr);
-
+                
                 if (dataType == typeof(Vector2))
                 {
                     Helpers.XMLWriteVector2(elem, (Vector2)param.Data);
