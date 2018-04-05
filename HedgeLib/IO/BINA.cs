@@ -102,46 +102,31 @@ namespace HedgeLib.IO
                 }
 
                 IsBigEndian = (ReadChar() == 'B');
+                header.FileSize = ReadUInt32();
 
-                // Version 3.00
-                if (header.Version >= 300)
-                {
-                    header.ID = ReadUInt32();
-                    header.FileSize = ReadUInt32();
+                ushort nodeCount = ReadUInt16();
+                ushort unknown1 = ReadUInt16(); // Always 0?
 
-                    // The rest is PAC specific
-                    Offset = 0;
-                }
+                // TODO: Read Nodes Properly
+                if (nodeCount < 1)
+                    return header;
 
-                // Version 2.00
-                else
-                {
-                    header.FileSize = ReadUInt32();
+                // DATA Header
+                string dataSig = ReadSignature();
+                if (dataSig != BINAHeader.DataSignature)
+                    throw new InvalidSignatureException(BINAHeader.DataSignature, dataSig);
 
-                    ushort nodeCount = ReadUInt16();
-                    ushort unknown1 = ReadUInt16(); // Always 0?
+                header.DataLength = ReadUInt32();
+                header.StringTableOffset = ReadUInt32();
+                header.StringTableLength = ReadUInt32();
+                header.FinalTableLength = ReadUInt32();
 
-                    // TODO: Read Nodes Properly
-                    if (nodeCount < 1)
-                        return header;
+                // Additional data
+                ushort additionalDataLength = ReadUInt16();
+                ushort unknown3 = ReadUInt16();
 
-                    // DATA Header
-                    string dataSig = ReadSignature();
-                    if (dataSig != BINAHeader.DataSignature)
-                        throw new InvalidSignatureException(BINAHeader.DataSignature, dataSig);
-
-                    header.DataLength = ReadUInt32();
-                    header.StringTableOffset = ReadUInt32();
-                    header.StringTableLength = ReadUInt32();
-                    header.FinalTableLength = ReadUInt32();
-
-                    // Additional data
-                    ushort additionalDataLength = ReadUInt16();
-                    ushort unknown3 = ReadUInt16();
-
-                    JumpAhead(additionalDataLength);
-                    Offset = (uint)BaseStream.Position;
-                }
+                JumpAhead(additionalDataLength);
+                Offset = (uint)BaseStream.Position;
             }
 
             return header;
@@ -231,6 +216,15 @@ namespace HedgeLib.IO
 
         public void WriteStringTable(BINAHeader header)
         {
+            uint stringTablePos = WriteStringTable();
+
+            // Update header values
+            header.StringTableOffset = stringTablePos - Offset;
+            header.StringTableLength = (uint)BaseStream.Position - stringTablePos;
+        }
+
+        public uint WriteStringTable()
+        {
             uint stringTablePos = (uint)BaseStream.Position;
             foreach (var tableEntry in strings)
             {
@@ -246,20 +240,36 @@ namespace HedgeLib.IO
             }
 
             FixPadding();
-
-            // Update header values
-            header.StringTableOffset = stringTablePos - Offset;
-            header.StringTableLength = (uint)BaseStream.Position - stringTablePos;
+            return stringTablePos;
         }
 
         public void WriteFooter(BINAHeader header)
         {
-            // Write offset table
+            uint footerStartPos = WriteFooter();
+
+            // Update header values and write footer magic
+            header.FinalTableOffset = footerStartPos - Offset;
+            header.FinalTableLength = (uint)BaseStream.Position - footerStartPos;
+            header.DataLength = (uint)BaseStream.Position - 0x10;
+
+            if (header.IsFooterMagicPresent)
+            {
+                Write(BINAHeader.FooterMagic2);
+                WriteNulls(4);
+                WriteNullTerminatedString(BINAHeader.FooterMagic);
+            }
+
+            header.FileSize = (uint)BaseStream.Position;
+        }
+
+        public uint WriteFooter()
+        {
             bool isBigEndian = IsBigEndian;
             uint footerStartPos = (uint)BaseStream.Position;
             uint lastOffsetPos = Offset;
             IsBigEndian = true;
 
+            // Write Offset Table
             foreach (var offset in offsets)
             {
                 uint d = (offset.Value - lastOffsetPos) >> 2;
@@ -281,20 +291,7 @@ namespace HedgeLib.IO
 
             FixPadding(4);
             IsBigEndian = isBigEndian;
-
-            // Update header values and write footer magic
-            header.FinalTableOffset = footerStartPos - Offset;
-            header.FinalTableLength = (uint)BaseStream.Position - footerStartPos;
-            header.DataLength = (uint)BaseStream.Position - 0x10;
-
-            if (header.IsFooterMagicPresent)
-            {
-                Write(BINAHeader.FooterMagic2);
-                WriteNulls(4);
-                WriteNullTerminatedString(BINAHeader.FooterMagic);
-            }
-
-            header.FileSize = (uint)BaseStream.Position;
+            return footerStartPos;
         }
 
         public void FillInHeader(BINAHeader header, string sig = BINAHeader.Signature)
@@ -321,38 +318,31 @@ namespace HedgeLib.IO
                 WriteSignature(sig);
                 WriteSignature(header.Version.ToString());
                 Write((IsBigEndian) ? 'B' : 'L');
+                Write(header.FileSize);
 
-                // Version 3.00
-                if (header.Version >= 300)
-                {
-                    Write(header.ID);
-                    Write(header.FileSize);
-                }
+                // TODO: Write Nodes Properly
+                Write((ushort)1); // NodeCount
+                Write((ushort)0); // Possibly IsFooterMagicPresent?
 
-                // Version 2.00
-                else
-                {
-                    Write(header.FileSize);
+                // DATA Header
+                WriteSignature(BINAHeader.DataSignature);
+                Write(header.DataLength);
+                Write(header.StringTableOffset);
+                Write(header.StringTableLength);
 
-                    // TODO: Figure out what these values are.
-                    Write((ushort)1);
-                    Write((ushort)0); // Possibly IsFooterMagicPresent?
-
-                    // DATA Header
-                    WriteSignature(BINAHeader.DataSignature);
-                    Write(header.DataLength);
-                    Write(header.StringTableOffset);
-                    Write(header.StringTableLength);
-
-                    Write(header.FinalTableLength);
-                    Write((ushort)(Offset - (BaseStream.Position + 4)));
-                }
+                Write(header.FinalTableLength);
+                Write((ushort)(Offset - (BaseStream.Position + 4)));
             }
         }
 
         public void AddString(string offsetName, string str, uint offsetLength = 4)
         {
             if (string.IsNullOrEmpty(offsetName)) return;
+            if (string.IsNullOrEmpty(str))
+            {
+                WriteNulls(offsetLength);
+                return;
+            }
 
             var tableEntry = new StringTableEntry(str);
             bool newEntry = true;

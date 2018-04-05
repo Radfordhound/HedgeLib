@@ -1,9 +1,9 @@
-﻿using HedgeLib.Headers;
-using HedgeLib.IO;
+﻿using HedgeLib.IO;
 using System.IO;
 using System.Collections.Generic;
 using System;
 using System.Linq;
+using HedgeLib.Exceptions;
 
 namespace HedgeLib.Archives
 {
@@ -11,7 +11,7 @@ namespace HedgeLib.Archives
     public class ForcesArchive : Archive
     {
         // Variables/Constants
-        public BINAHeader Header = new BINAHeader() { Version = 301 };
+        public uint? ID;
         public const string Extension = ".pac", Signature = "PACx";
 
         // Huge thanks to Skyth for these lists as well!
@@ -149,7 +149,23 @@ namespace HedgeLib.Archives
         {
             // BINA Header
             var reader = new BINAReader(fileStream, BINA.BINATypes.Version2);
-            Header = reader.ReadHeader(true);
+            string sig = reader.ReadSignature(4);
+            if (sig != Signature)
+                throw new InvalidSignatureException(Signature, sig);
+
+            // Version String
+            string verString = reader.ReadSignature(3);
+            if (!ushort.TryParse(verString, out var version))
+            {
+                Console.WriteLine(
+                    "WARNING: PACx header version was invalid {0}",
+                    verString);
+            }
+
+            reader.Offset = 0;
+            reader.IsBigEndian = (reader.ReadChar() == 'B');
+            ID = reader.ReadUInt32();
+            uint arcSize = reader.ReadUInt32();
 
             // PAC Header
             uint nodesSize = reader.ReadUInt32();
@@ -157,7 +173,7 @@ namespace HedgeLib.Archives
             uint entriesSize = reader.ReadUInt32();
             uint stringsSize = reader.ReadUInt32();
             uint dataSize = reader.ReadUInt32();
-            Header.FinalTableLength = reader.ReadUInt32();
+            uint finalTableLength = reader.ReadUInt32();
 
             // 1 = HasNoSplits, 2 = IsSplit, 5 = HasSplits
             ushort pacSplitType = reader.ReadUInt16(); 
@@ -247,7 +263,7 @@ namespace HedgeLib.Archives
                     // File Entries
                     reader.JumpTo(file.DataOffset);
                     uint pacID = reader.ReadUInt32();
-                    if (pacID != Header.ID)
+                    if (pacID != ID)
                     {
                         Console.WriteLine(
                             $"WARNING: Skipped file {name} as its pac ID was missing");
@@ -381,8 +397,11 @@ namespace HedgeLib.Archives
             writer.WriteNulls(0x30);
             writer.Offset = 0;
 
-            var rand = new Random();
-            Header.ID = (uint)rand.Next(1, int.MaxValue);
+            if (!ID.HasValue)
+            {
+                var rand = new Random();
+                ID = (uint)rand.Next(1, int.MaxValue);
+            }
 
             // Generate Node Trees
             var typeTree = new NodeTree();
@@ -587,7 +606,7 @@ namespace HedgeLib.Archives
                         $"{Types[fileTree.Key]}nodeDataOffset{i}", true, false);
 
                     var file = Data[node.ArchiveFileIndex] as ArchiveFile;
-                    writer.Write(Header.ID);
+                    writer.Write(ID.Value);
                     writer.Write((ulong)file.Data.Length);
                     writer.Write(0U);
 
@@ -608,8 +627,7 @@ namespace HedgeLib.Archives
             }
 
             // Write String Table
-            long stringTableOffset = fileStream.Position;
-            writer.WriteStringTable(Header);
+            uint stringTablePos = writer.WriteStringTable();
             writer.FixPadding(8);
 
             // Write File Data
@@ -634,18 +652,24 @@ namespace HedgeLib.Archives
 
             // Write Offset Table
             writer.FixPadding(8);
-            writer.WriteFooter(Header);
+            uint footerPos = writer.WriteFooter();
             writer.FixPadding(8);
-            Header.FileSize = (uint)fileStream.Position;
 
             // Fill-In Header
-            writer.FillInHeader(Header, Signature);
+            uint fileSize = (uint)fileStream.Position;
+            writer.BaseStream.Position = 0;
+
+            writer.WriteSignature(Signature);
+            writer.WriteSignature("301");
+            writer.Write((writer.IsBigEndian) ? 'B' : 'L');
+            writer.Write(fileSize);
+
             writer.Write((uint)(fileEntriesOffset - 0x30) - pacsSize);
             writer.Write(pacsSize);
-            writer.Write((uint)stringTableOffset - (uint)fileEntriesOffset);
-            writer.Write((uint)(fileDataOffset - stringTableOffset));
-            writer.Write(Header.FinalTableOffset - (uint)fileDataOffset);
-            writer.Write((uint)writer.BaseStream.Length - Header.FinalTableOffset);
+            writer.Write(stringTablePos - (uint)fileEntriesOffset);
+            writer.Write((uint)fileDataOffset - stringTablePos);
+            writer.Write(footerPos - (uint)fileDataOffset);
+            writer.Write(fileSize - footerPos);
 
             // 5 if there are splits but this is the root, 2 if this is a split, 1 if no splits
             writer.Write((sizeLimit.HasValue) ? (ushort)2 :

@@ -4,7 +4,7 @@
     {
         // Variables/Constants
         public uint FileSize, FinalTableOffset, FinalTableLength,
-            DataLength, StringTableOffset, StringTableLength, ID;
+            DataLength, StringTableOffset, StringTableLength;
         public ushort Version = 200;
         public bool IsFooterMagicPresent = false;
 
