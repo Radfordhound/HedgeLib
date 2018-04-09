@@ -18,6 +18,10 @@ namespace HedgeLib.Sets
         public override void Load(Stream fileStream,
             Dictionary<string, SetObjectType> objectTemplates)
         {
+            if (objectTemplates == null)
+                throw new ArgumentNullException("objectTemplates",
+                    "Cannot load Forces set data without object templates.");
+
             // BINA Header
             var reader = new BINAReader(fileStream, BINA.BINATypes.Version2);
             Header = reader.ReadHeader();
@@ -193,8 +197,8 @@ namespace HedgeLib.Sets
                 return null;
             }
 
-            Console.WriteLine("\"{1}\" Params at: {0:X}",
-                objParamsOffset + reader.Offset, objName);
+            //Console.WriteLine("\"{1}\" Params at: {0:X}",
+            //    objParamsOffset + reader.Offset, objName);
             var template = objectTemplates[objType];
 
             // Object Parameters
