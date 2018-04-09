@@ -126,22 +126,18 @@ end
 
 function SaveAll(dataDir, cacheDir, stageID)
 	-- Materials
-	--[[SetDataType("Forces")
-	for k in GetMaterials() do
-		if string.find(k.Value.Directory.Name, stageID) then
-			local pth = k.Value.Directory.FullPath .. "/" .. k.Key .. ".material"
-			print(pth)
-			SaveMaterial(pth, k.Value.Data)
-		end
-	end--]]
+	SetDataType("Forces")
+	--SaveMaterials("{0}/{1}/", "", ".material")
+	-- TODO: Allow editing materials in obj pacs
 
-	-- TODO
+	-- TODO: Save Models/Instances
+	-- TODO: Repack
 end
 
 function InitSetObject(obj)
 	AddCustomData(obj, "ParentID", "ushort", 0)
-	AddCustomData(obj, "ParentUnknown1", "ushort", 0)
-	AddCustomData(obj, "Unknown1", "ushort", 0)
+	AddCustomData(obj, "ParentGroupID", "ushort", 0)
+	AddCustomData(obj, "GroupID", "ushort", 0)
 	AddCustomData(obj, "ChildPosOffset", "vector3", "0,0,0")
 	AddCustomData(obj, "ChildRotOffset", "vector3", "0,0,0")
 	AddCustomData(obj, "RangeIn", "float", 1000)
