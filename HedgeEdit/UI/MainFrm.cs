@@ -271,21 +271,48 @@ namespace HedgeEdit.UI
                             (prefix == null) ? string.Empty : $"{prefix}_",
                             (templateParam == null) ? $"Parameter {i}" : templateParam.Name);
 
-                        var item = new CustomProperty(name, ref param, "Data",
-                            false, "Parameters", templateParam?.Description, true);
+                        CustomProperty item;
+                        var type = (templateParam == null) ?
+                            (param as SetObjectParam).DataType : templateParam.DataType;
 
-                        // Enums
-                        int enumsCount = (templateParam != null) ?
-                            templateParam.Enums.Count : 0;
-
-                        if (enumsCount >= 1)
+                        if (type == typeof(Vector3))
                         {
-                            item.ValueMember = "Value";
-                            item.DefaultType = templateParam.DataType;
-                            item.DisplayMember = "Description";
-                            item.Datasource = templateParam.Enums;
+                            var p = new SerializableVector3Param((SetObjectParam)param);
+                            item = new CustomProperty(name, p, false,
+                                "Parameters", templateParam?.Description, true)
+                            {
+                                IsBrowsable = true,
+                                //BrowsableLabelStyle = BrowsableTypeConverter.LabelStyle.
+                            };
+                        }
+                        else if (type == typeof(ForcesSetData.ObjectReference))
+                        {
+                            var p = new SerializableForcesObjectRefParam((SetObjectParam)param);
+                            item = new CustomProperty(name, p, false,
+                                "Parameters", templateParam?.Description, true)
+                            {
+                                IsBrowsable = true,
+                                //BrowsableLabelStyle = BrowsableTypeConverter.LabelStyle.
+                            };
+                        }
+                        else
+                        {
+                            item = new CustomProperty(name, ref param, "Data",
+                                false, "Parameters", templateParam?.Description, true);
 
-                            // TODO: Fix multi enum param editing
+                            // Enums
+                            int enumsCount = (templateParam != null) ?
+                                templateParam.Enums.Count : 0;
+
+                            if (enumsCount >= 1)
+                            {
+                                item.ValueMember = "Value";
+                                item.DefaultType = templateParam.DataType;
+                                item.DisplayMember = "Description";
+                                item.Datasource = templateParam.Enums;
+
+                                // TODO: Fix multi enum param editing
+                            }
                         }
 
                         itemSet.Add(item);
@@ -939,6 +966,105 @@ namespace HedgeEdit.UI
         {
             openMenuItem.Enabled = SaveSetsMenuItem.Enabled =
                 saveAllMenuItem.Enabled = enable;
+        }
+
+        // Other
+        [Serializable]
+        public class SerializableParam
+        {
+            // Variables/Constants
+            protected SetObjectParam param;
+
+            // Constructors
+            public SerializableParam(SetObjectParam param)
+            {
+                this.param = param;
+            }
+        }
+
+        [Serializable]
+        public class SerializableVector3Param : SerializableParam
+        {
+            // Variables/Constants
+            public float X
+            {
+                get => ((Vector3)param.Data).X;
+                set
+                {
+                    var v = GetValue();
+                    param.Data = new Vector3(value, v.Y, v.Z);
+                }
+            }
+
+            public float Y
+            {
+                get => ((Vector3)param.Data).Y;
+                set
+                {
+                    var v = GetValue();
+                    param.Data = new Vector3(v.X, value, v.Z);
+                }
+            }
+
+            public float Z
+            {
+                get => ((Vector3)param.Data).Z;
+                set
+                {
+                    var v = GetValue();
+                    param.Data = new Vector3(v.X, v.Y, value);
+                }
+            }
+
+            // Constructors
+            public SerializableVector3Param(SetObjectParam param) : base(param)
+            {
+                if (param.DataType != typeof(Vector3))
+                    throw new NotSupportedException("Cannot cast param to a Vector3!");
+            }
+
+            // Methods
+            protected Vector3 GetValue()
+            {
+                return (Vector3)param.Data;
+            }
+        }
+
+        public class SerializableForcesObjectRefParam : SerializableParam
+        {
+            // Variables/Constants
+            public ushort ID
+            {
+                get => ((ForcesSetData.ObjectReference)param.Data).ID;
+                set
+                {
+                    var v = GetValue();
+                    param.Data = new ForcesSetData.ObjectReference(value, v.Unknown1);
+                }
+            }
+
+            public ushort Unknown1
+            {
+                get => ((ForcesSetData.ObjectReference)param.Data).Unknown1;
+                set
+                {
+                    var v = GetValue();
+                    param.Data = new ForcesSetData.ObjectReference(v.ID, value);
+                }
+            }
+
+            // Constructors
+            public SerializableForcesObjectRefParam(SetObjectParam param) : base(param)
+            {
+                if (param.DataType != typeof(ForcesSetData.ObjectReference))
+                    throw new NotSupportedException("Cannot cast param to an ObjectReference!");
+            }
+
+            // Methods
+            protected ForcesSetData.ObjectReference GetValue()
+            {
+                return (ForcesSetData.ObjectReference)param.Data;
+            }
         }
     }
 }

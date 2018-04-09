@@ -699,6 +699,12 @@ namespace HedgeLib.Sets
                 Read(reader);
             }
 
+            public ObjectReference(ushort id, ushort unknown1)
+            {
+                this.id = id;
+                this.unknown1 = unknown1;
+            }
+
             // Methods
             public void Read(BinaryReader reader)
             {
