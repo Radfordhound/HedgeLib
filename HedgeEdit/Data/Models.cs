@@ -175,7 +175,8 @@ namespace HedgeEdit
         }
 
         public static VPModel LoadModel(string path, string resDir = null,
-            bool isTerrain = false, bool loadMats = false, string group = null)
+            bool isTerrain = false, bool loadMats = false, string group = null,
+            bool nonEditable = true, GensTerrainInstanceInfo instInfo = null)
         {
             // Figure out what type of model to use
             Model mdl;
@@ -236,19 +237,28 @@ namespace HedgeEdit
                         dict = GetTerrainGroup(group, true);
                     });
 
-                    string instancePath = Path.Combine(dir,
-                        string.Format("{0}{1}",
-                        shortName, GensTerrainInstanceInfo.Extension));
-
-                    if (File.Exists(instancePath))
+                    if (instInfo == null)
                     {
-                        var info = new GensTerrainInstanceInfo();
-                        info.Load(instancePath);
-                        instance = new VPObjectInstance(info.TransformMatrix, shortName);
+                        string instancePath = Path.Combine(dir,
+                            string.Format("{0}{1}",
+                            shortName, GensTerrainInstanceInfo.Extension));
+
+                        if (File.Exists(instancePath))
+                        {
+                            var info = new GensTerrainInstanceInfo();
+                            info.Load(instancePath);
+                            instance = new VPObjectInstance(
+                                info.TransformMatrix, shortName);
+                        }
+                        else
+                        {
+                            instance = new VPObjectInstance(shortName);
+                        }
                     }
                     else
                     {
-                        instance = new VPObjectInstance(shortName);
+                        instance = new VPObjectInstance(
+                            instInfo.TransformMatrix, shortName);
                     }
 
                     // Don't bother loading the model again if we've
