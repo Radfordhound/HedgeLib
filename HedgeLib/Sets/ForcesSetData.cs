@@ -81,18 +81,18 @@ namespace HedgeLib.Sets
             long objNameOffset = reader.ReadInt64();
 
             ushort id = reader.ReadUInt16();
-            ushort unknown1 = reader.ReadUInt16();
+            ushort groupID = reader.ReadUInt16();
             ushort parentID = reader.ReadUInt16();
-            ushort parentUnknown1 = reader.ReadUInt16();
+            ushort parentGroupID = reader.ReadUInt16();
 
             obj.CustomData.Add("ParentID", new SetObjectParam(
                 typeof(ushort), parentID));
-            obj.CustomData.Add("ParentUnknown1", new SetObjectParam(
-                typeof(ushort), parentUnknown1));
+            obj.CustomData.Add("ParentGroupID", new SetObjectParam(
+                typeof(ushort), parentGroupID));
 
             obj.ObjectID = id;
-            obj.CustomData.Add("Unknown1", new SetObjectParam(
-                typeof(ushort), unknown1));
+            obj.CustomData.Add("GroupID", new SetObjectParam(
+                typeof(ushort), groupID));
 
             var pos = reader.ReadVector3();
             var rot = reader.ReadVector3();
@@ -380,9 +380,14 @@ namespace HedgeLib.Sets
 
             // Object Entry
             writer.Write((ushort)obj.ObjectID);
-            writer.Write(obj.GetCustomDataValue<ushort>("Unknown1"));
+            writer.Write((obj.CustomData.ContainsKey("GroupID")) ?
+                (ushort)obj.CustomData["GroupID"].Data :
+                obj.GetCustomDataValue<ushort>("Unknown1"));
+
             writer.Write(obj.GetCustomDataValue<ushort>("ParentID"));
-            writer.Write(obj.GetCustomDataValue<ushort>("ParentUnknown1"));
+            writer.Write((obj.CustomData.ContainsKey("ParentGroupID")) ?
+                (ushort)obj.CustomData["ParentGroupID"].Data :
+                obj.GetCustomDataValue<ushort>("ParentUnknown1"));
 
             writer.Write(obj.Transform.Position);
             writer.Write(obj.Transform.Rotation.ToEulerAngles(true));
@@ -403,13 +408,15 @@ namespace HedgeLib.Sets
             if (obj.CustomData.ContainsKey("RangeOut"))
                 extraParamCounts -= 1;
 
-            if (obj.CustomData.ContainsKey("Unknown1"))
+            if (obj.CustomData.ContainsKey("GroupID") ||
+                obj.CustomData.ContainsKey("Unknown1"))
                 extraParamCounts -= 1;
 
             if (obj.CustomData.ContainsKey("ParentID"))
                 extraParamCounts -= 1;
 
-            if (obj.CustomData.ContainsKey("ParentUnknown1"))
+            if (obj.CustomData.ContainsKey("ParentGroupID") ||
+                obj.CustomData.ContainsKey("ParentUnknown1"))
                 extraParamCounts -= 1;
 
             if (obj.CustomData.ContainsKey("ChildPosOffset"))
@@ -435,8 +442,9 @@ namespace HedgeLib.Sets
             int i = -1;
             foreach (var customData in obj.CustomData)
             {
-                if (customData.Key == "Name" || customData.Key == "Unknown1" ||
-                    customData.Key == "ParentID" || customData.Key == "ParentUnknown1" ||
+                if (customData.Key == "Name" || customData.Key == "GroupID" ||
+                    customData.Key == "Unknown1" || customData.Key == "ParentID" ||
+                    customData.Key == "ParentGroupID" || customData.Key == "ParentUnknown1" ||
                     customData.Key == "RangeOut" || customData.Key == "ChildPosOffset" ||
                     customData.Key == "ChildRotOffset" || customData.Key == "RawByteLength")
                     continue;
@@ -461,8 +469,9 @@ namespace HedgeLib.Sets
             // Extra Parameter Data
             foreach (var customData in obj.CustomData)
             {
-                if (customData.Key == "Name" || customData.Key == "Unknown1" ||
-                    customData.Key == "ParentID" || customData.Key == "ParentUnknown1" ||
+                if (customData.Key == "Name" || customData.Key == "GroupID" ||
+                    customData.Key == "Unknown1" || customData.Key == "ParentID" ||
+                    customData.Key == "ParentGroupID" || customData.Key == "ParentUnknown1" ||
                     customData.Key == "RangeOut" || customData.Key == "ChildPosOffset" ||
                     customData.Key == "ChildRotOffset" || customData.Key == "RawByteLength")
                     continue;
@@ -684,13 +693,13 @@ namespace HedgeLib.Sets
                 set => id = value;
             }
 
-            public ushort Unknown1
+            public ushort GroupID
             {
-                get => unknown1;
-                set => unknown1 = value;
+                get => groupID;
+                set => groupID = value;
             }
 
-            protected ushort id, unknown1;
+            protected ushort id, groupID;
 
             // Constructor
             public ObjectReference() { }
@@ -699,50 +708,53 @@ namespace HedgeLib.Sets
                 Read(reader);
             }
 
-            public ObjectReference(ushort id, ushort unknown1)
+            public ObjectReference(ushort id, ushort groupID)
             {
                 this.id = id;
-                this.unknown1 = unknown1;
+                this.groupID = groupID;
             }
 
             // Methods
             public void Read(BinaryReader reader)
             {
                 id = reader.ReadUInt16();
-                unknown1 = reader.ReadUInt16();
+                groupID = reader.ReadUInt16();
             }
 
             public void Write(BinaryWriter writer)
             {
                 writer.Write(id);
-                writer.Write(unknown1);
+                writer.Write(groupID);
             }
 
             public void ImportXML(XElement elem)
             {
                 var idAttr = elem.Attribute("id");
-                var uk1Attr = elem.Attribute("unknown1");
+                var groupIDAttr = elem.Attribute("groupID");
 
-                ushort id = 0, uk1 = 0;
+                if (groupIDAttr == null)
+                    groupIDAttr = elem.Attribute("unknown1");
+
+                ushort id = 0, groupID = 0;
                 if (idAttr != null)
                     ushort.TryParse(idAttr.Value, out id);
 
-                if (uk1Attr != null)
-                    ushort.TryParse(uk1Attr.Value, out uk1);
+                if (groupIDAttr != null)
+                    ushort.TryParse(groupIDAttr.Value, out groupID);
 
                 ID = id;
-                Unknown1 = uk1;
+                GroupID = groupID;
             }
 
             public void ExportXML(XElement elem)
             {
                 elem.Add(new XAttribute("id", ID));
-                elem.Add(new XAttribute("unknown1", Unknown1));
+                elem.Add(new XAttribute("groupID", GroupID));
             }
 
             public override string ToString()
             {
-                return $"ID: {id}, UK1: {unknown1}";
+                return $"ID: {id}, GroupID: {groupID}";
             }
         }
     }

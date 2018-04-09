@@ -1039,13 +1039,13 @@ namespace HedgeEdit.UI
                 set
                 {
                     var v = GetValue();
-                    param.Data = new ForcesSetData.ObjectReference(value, v.Unknown1);
+                    param.Data = new ForcesSetData.ObjectReference(value, v.GroupID);
                 }
             }
 
-            public ushort Unknown1
+            public ushort GroupID
             {
-                get => ((ForcesSetData.ObjectReference)param.Data).Unknown1;
+                get => ((ForcesSetData.ObjectReference)param.Data).GroupID;
                 set
                 {
                     var v = GetValue();
