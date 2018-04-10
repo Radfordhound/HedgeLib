@@ -71,6 +71,51 @@ namespace HedgeEdit
             }
         }
 
+        public static string TerrainModelExtension
+        {
+            get
+            {
+                switch (CurrentDataType)
+                {
+                    case DataTypes.Forces:
+                    case DataTypes.LW:
+                    case DataTypes.Gens:
+                    case DataTypes.SU:
+                        return GensModel.TerrainExtension;
+
+                    // TODO: Add Storybook Support
+                    case DataTypes.Storybook:
+                        throw new NotImplementedException(
+                            "Storybook models are not yet supported!");
+
+                    // TODO: Add Colors Support
+                    case DataTypes.Colors:
+                        throw new NotImplementedException(
+                            "Colors models are not yet supported!");
+
+                    // TODO: Add 06 Support
+                    case DataTypes.S06:
+                        throw new NotImplementedException(
+                            "'06 models are not yet supported!");
+
+                    // TODO: Add Heroes/Shadow Support
+                    case DataTypes.Shadow:
+                    case DataTypes.Heroes:
+                        throw new NotImplementedException(
+                            "Heroes/Shadow models are not yet supported!");
+
+                    // TODO: Add SA2 Support
+                    case DataTypes.SA2:
+                        throw new NotImplementedException(
+                            "SA2 models are not yet supported!");
+
+                    default:
+                        throw new Exception(
+                            "Game Type has not been set!");
+                }
+            }
+        }
+
         public static string MaterialExtension
         {
             get
