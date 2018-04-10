@@ -17,7 +17,7 @@ namespace HedgeEdit
             new Dictionary<string, VPModel>();
 
         public static VPModel DefaultCube;
-        public static List<string> ModelDirectories = new List<string>();
+        public static AssetDirectories ModelDirectories = new AssetDirectories();
 
         // Methods
         public static VPObjectInstance GetInstance(VPModel model, object obj)
@@ -63,9 +63,9 @@ namespace HedgeEdit
                 var mdlExt = (isTerrain) ? Types.TerrainModelExtension : Types.ModelExtension;
                 foreach (var dir in ResourceDirectories)
                 {
-                    if (Directory.Exists(dir.FullPath))
+                    if (Directory.Exists(dir))
                     {
-                        string path = Path.Combine(dir.FullPath, $"{name}{mdlExt}");
+                        string path = Path.Combine(dir, $"{name}{mdlExt}");
                         if (File.Exists(path))
                         {
                             var mdl = LoadModel(path, resDir, isTerrain,
@@ -85,6 +85,7 @@ namespace HedgeEdit
             }
             else
             {
+                Console.WriteLine("Skipped {0}!", name);
                 return g[name];
             }
         }
@@ -199,7 +200,7 @@ namespace HedgeEdit
                         {
                             LoadMaterial(Path.Combine(resDir,
                                 $"{mesh.MaterialName}{matExt}"),
-                                mesh.MaterialName);
+                                mesh.MaterialName, nonEditable);
                         }
 
                         Program.MainUIInvoke(() =>
@@ -325,7 +326,7 @@ namespace HedgeEdit
 
                     if (!useResDirs && File.Exists(pth))
                     {
-                        var mat = LoadMaterial(pth, mesh.MaterialName);
+                        var mat = LoadMaterial(pth, mesh.MaterialName, nonEditable);
                         if (mat != null)
                             continue;
                     }
@@ -350,15 +351,14 @@ namespace HedgeEdit
             return vpMdl;
         }
 
-        public static void AddModelDirectoryFromPath(string path)
+        public static AssetDirectory AddModelDirectoryFromPath(string path)
         {
-            AddModelDirectory(Path.GetDirectoryName(path));
+            return AddModelDirectory(Path.GetDirectoryName(path));
         }
 
-        public static void AddModelDirectory(string dir)
+        public static AssetDirectory AddModelDirectory(string dir)
         {
-            if (!ModelDirectories.Contains(dir))
-                ModelDirectories.Add(dir);
+            return ModelDirectories.AddDirectory(dir);
         }
 
         public static bool AddTerrainInstance(string modelName,
