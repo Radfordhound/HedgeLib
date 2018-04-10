@@ -113,6 +113,7 @@
     <Compile Include="Textures\Texture.cs" />
     <Compile Include="Types.cs" />
     <Compile Include="Vector.cs" />
+    <Compile Include="XMLHelpers.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

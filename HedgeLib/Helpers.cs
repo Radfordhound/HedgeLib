@@ -89,93 +89,46 @@ namespace HedgeLib
 			}
         }
 
+        [Obsolete("Please use the extension method elem.GetVector2() from XMLHelpers instead.")]
         public static Vector2 XMLReadVector2(XElement element)
         {
-            var x = element.Element("x");
-            var y = element.Element("y");
-
-            if (x == null)
-                x = element.Element("X");
-            if (y == null)
-                y = element.Element("Y");
-
-            return new Vector2(
-                (x == null) ? 0 : Convert.ToSingle(x.Value),
-                (y == null) ? 0 : Convert.ToSingle(y.Value));
+            return element.GetVector2();
         }
 
+        [Obsolete("Please use the extension method elem.GetVector3() from XMLHelpers instead.")]
         public static Vector3 XMLReadVector3(XElement element)
-		{
-			var x = element.Element("x");
-			var y = element.Element("y");
-			var z = element.Element("z");
+        {
+            return element.GetVector3();
+        }
 
-			if (x == null)
-				x = element.Element("X");
-			if (y == null)
-				y = element.Element("Y");
-			if (z == null)
-				z = element.Element("Z");
+        [Obsolete("Please use the extension method elem.GetVector4() from XMLHelpers instead.")]
+        public static Vector4 XMLReadVector4(XElement element)
+        {
+            return element.GetVector4();
+        }
 
-			return new Vector3(
-				(x == null) ? 0 : Convert.ToSingle(x.Value),
-				(y == null) ? 0 : Convert.ToSingle(y.Value),
-				(z == null) ? 0 : Convert.ToSingle(z.Value));
-		}
+        [Obsolete("Please use the extension method elem.GetQuaternion() from XMLHelpers instead.")]
+        public static Quaternion XMLReadQuat(XElement element)
+        {
+            return element.GetQuaternion();
+        }
 
-		public static Vector4 XMLReadVector4(XElement element)
-		{
-			var x = element.Element("x");
-			var y = element.Element("y");
-			var z = element.Element("z");
-			var w = element.Element("w");
-
-			if (x == null)
-				x = element.Element("X");
-			if (y == null)
-				y = element.Element("Y");
-			if (z == null)
-				z = element.Element("Z");
-			if (w == null)
-				w = element.Element("W");
-
-			return new Vector4(
-				(x == null) ? 0 : Convert.ToSingle(x.Value),
-				(y == null) ? 0 : Convert.ToSingle(y.Value),
-				(z == null) ? 0 : Convert.ToSingle(z.Value),
-				(w == null) ? 0 : Convert.ToSingle(w.Value));
-		}
-
-		public static Quaternion XMLReadQuat(XElement element)
-		{
-			return new Quaternion(XMLReadVector4(element));
-		}
-
+        [Obsolete("Please use the extension method elem.AddElem(vect) from XMLHelpers instead.")]
         public static void XMLWriteVector2(XElement element, Vector2 vect)
         {
-            var x = new XElement("x", vect.X);
-            var y = new XElement("y", vect.Y);
-
-            element.Add(x, y);
+            element.AddElem(vect);
         }
 
+        [Obsolete("Please use the extension method elem.AddElem(vect) from XMLHelpers instead.")]
         public static void XMLWriteVector3(XElement element, Vector3 vect)
-		{
-			var x = new XElement("x", vect.X);
-			var y = new XElement("y", vect.Y);
-			var z = new XElement("z", vect.Z);
+        {
+            element.AddElem(vect);
+        }
 
-			element.Add(x, y, z);
-		}
-
-		public static void XMLWriteVector4(XElement element, Vector4 vect)
-		{
-			var x = new XElement("x", vect.X);
-			var y = new XElement("y", vect.Y);
-			var z = new XElement("z", vect.Z);
-			var w = new XElement("w", vect.W);
-
-			element.Add(x, y, z, w);
-		}
-	}
+        [Obsolete("Please use the extension method elem.AddElem(vect) from XMLHelpers instead.")]
+        public static void XMLWriteVector4(XElement element, Vector4 vect)
+        {
+            element.AddElem(vect);
+        }
+    }
 }
