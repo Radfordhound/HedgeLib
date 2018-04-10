@@ -99,6 +99,9 @@ function Load(dataDir, cacheDir, stageID)
 		Extract(pth .. ".pac", pth, "TerrainSector".. i)
 
 		if IODirExists(pth) then
+			local resDir = stageDir .. dirName .. "_trr_cmn"
+
+			-- Terrain Instance Infos
 			local files = IOGetFilesInDir(pth, "*.terrain-instanceinfo", false)
 			if files ~= nil and #files > 0 then
 				for i2 = 1, #files do
@@ -107,7 +110,21 @@ function Load(dataDir, cacheDir, stageID)
 					-- Skip blocks containing "_noGI"
 					-- TODO: Load these properly instead
 					if not file:find("_noGI") then
-						LoadTerrainInstance(file, stageDir .. dirName .. "_trr_cmn", pth, group)
+						LoadTerrainInstance(file, resDir, pth, group)
+					end
+				end
+			end
+
+			-- Terrain Models
+			local files = IOGetFilesInDir(pth, "*.terrain-model", false)
+			if files ~= nil and #files > 0 then
+				for i2 = 1, #files do
+					local file = files[i2]
+
+					-- Skip blocks containing "_noGI"
+					-- TODO: Load these properly instead
+					if not file:find("_noGI") then
+						GetModel(file, resDir, group, true)
 					end
 				end
 			end
