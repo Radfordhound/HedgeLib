@@ -357,7 +357,8 @@ namespace HedgeEdit
 
         public static void AddModelDirectory(string dir)
         {
-            ModelDirectories.AddDirectory(dir);
+            if (!ModelDirectories.Contains(dir))
+                ModelDirectories.Add(dir);
         }
 
         public static bool AddTerrainInstance(string modelName,
