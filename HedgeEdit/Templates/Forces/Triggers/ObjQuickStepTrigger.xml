@@ -16,7 +16,7 @@
   <Speed type="float" default="700" description="How fast the player will run while contained within this volume." />
   <StepWidth type="float" default="20" description="The space in-between each spot the player can quickstep to." />
   
-  <<Type type="sint8" default="0" description="What this trigger does. Start means this trigger starts a quick step section. End means this trigger will stop a quick step section.">
+  <Type type="sint8" default="0" description="What this trigger does. Start means this trigger starts a quick step section. End means this trigger will stop a quick step section.">
 	<Enum description="Start" value="0" />
     <Enum description="End" value="1" />
   </Type>
