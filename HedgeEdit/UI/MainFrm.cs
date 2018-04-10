@@ -275,7 +275,17 @@ namespace HedgeEdit.UI
                         var type = (templateParam == null) ?
                             (param as SetObjectParam).DataType : templateParam.DataType;
 
-                        if (type == typeof(Vector3))
+                        if (type == typeof(Vector2))
+                        {
+                            var p = new SerializableVector2Param((SetObjectParam)param);
+                            item = new CustomProperty(name, p, false,
+                                "Parameters", templateParam?.Description, true)
+                            {
+                                IsBrowsable = true,
+                                //BrowsableLabelStyle = BrowsableTypeConverter.LabelStyle.
+                            };
+                        }
+                        else if (type == typeof(Vector3))
                         {
                             var p = new SerializableVector3Param((SetObjectParam)param);
                             item = new CustomProperty(name, p, false,
@@ -979,6 +989,44 @@ namespace HedgeEdit.UI
             public SerializableParam(SetObjectParam param)
             {
                 this.param = param;
+            }
+        }
+
+        [Serializable]
+        public class SerializableVector2Param : SerializableParam
+        {
+            // Variables/Constants
+            public float X
+            {
+                get => ((Vector2)param.Data).X;
+                set
+                {
+                    var v = GetValue();
+                    param.Data = new Vector2(value, v.Y);
+                }
+            }
+
+            public float Y
+            {
+                get => ((Vector2)param.Data).Y;
+                set
+                {
+                    var v = GetValue();
+                    param.Data = new Vector2(v.X, value);
+                }
+            }
+
+            // Constructors
+            public SerializableVector2Param(SetObjectParam param) : base(param)
+            {
+                if (param.DataType != typeof(Vector2))
+                    throw new NotSupportedException("Cannot cast param to a Vector2!");
+            }
+
+            // Methods
+            protected Vector2 GetValue()
+            {
+                return (Vector2)param.Data;
             }
         }
 
