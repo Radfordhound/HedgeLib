@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Speed type="float" default="500" description="How much speed this object will send you off with." />
+  <OutOfControl type="float" default="0.5" description="How long the game locks your control for after coming in contact with this object." />
+  <MotionTime type="float" default="2.5" description="How long the player's spring animation will last." />
+  <MotionType type="sint8" description="How the player will move upon hitting the spring. Vertical means this spring will simply send Sonic straight up, whereas Angle means it will send him in the direction the spring is facing.">
+    <Enum description="Vertical" value="0" />
+    <Enum description="Angle" value="1" />
+  </MotionType>
+  <Color type="sint8" description="The color of this object.">
+    <Enum description="Yellow" value="0" />
+    <Enum description="Red" value="1" />
+  </Color>
+  <IsHorizon type="bool" default="false" description="TODO" />
+  
+  <Extra type="model" value="cmn_obj_springC_yellow.model" condition="Color == 0" />
+  <Extra type="model" value="cmn_obj_springC_red.model" condition="Color == 1" />
+  <Extra type="description" value="Classic variants of ObjSprings." />
+  <Extra type="RawByteLength" length="16" />
+</Template>

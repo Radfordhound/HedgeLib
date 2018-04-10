@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <OutOfControl type="float" default="0.5" description="How long the game locks your control for after coming in contact with this object." />
+  <Speed type="float" default="500" description="How much speed this object will send you off with." />
+  <IsVisible type="bool" default="true" description="Whether this object is visible or not." />
+  <IsDirectionPath type="bool" default="false" description="Whether this object corrects your movement to match the current path." />
+  <IsForceLanding type="bool" default="true" description="Whether this object forces (ha) you to land on the ground upon coming in contact with it." />
+  
+  <Event0>
+	<Targets type="forcesObjectList" description="The objects affected by this event." />
+	<Type type="byte" description="What type of signal to send to each affected object.">
+	  <Enum description="Turn On" value="0" />
+	  <Enum description="Turn Off" value="1" />
+	</Type>
+	<Timer type="float" description="How long to wait after this event is triggered before sending a signal to all affected objects." />
+  </Event0>
+
+  <Event1>
+	<Targets type="forcesObjectList" description="The objects affected by this event." />
+	<Type type="byte" description="What type of signal to send to each affected object.">
+	  <Enum description="Turn On" value="0" />
+	  <Enum description="Turn Off" value="1" />
+	</Type>
+	<Timer type="float" description="How long to wait after this event is triggered before sending a signal to all affected objects." />
+  </Event1>
+
+  <Event2>
+	<Targets type="forcesObjectList" description="The objects affected by this event." />
+	<Type type="byte" description="What type of signal to send to each affected object.">
+	  <Enum description="Turn On" value="0" />
+	  <Enum description="Turn Off" value="1" />
+	</Type>
+	<Timer type="float" description="How long to wait after this event is triggered before sending a signal to all affected objects." />
+  </Event2>
+  
+  <Extra type="model" value="cmn_obj_dashroller_SV.model" />
+  <Extra type="description" value="Classic variants of ObjDashPanels" />
+  <Extra type="RawByteLength" length="112" />
+</Template>

@@ -10,11 +10,11 @@
   
   <SeparateTranslucent type="bool" description="TODO" />
   
-  <Extra type="model" value="cmn_obj_numberring_1.model" condition="NumberRingID == 0" />
-  <Extra type="model" value="cmn_obj_numberring_2.model" condition="NumberRingID == 1" />
+  <Extra type="model" value="cmn_obj_numberring_1.model" condition="NumberRingID == 4" />
+  <Extra type="model" value="cmn_obj_numberring_2.model" condition="NumberRingID == 3" />
   <Extra type="model" value="cmn_obj_numberring_3.model" condition="NumberRingID == 2" />
-  <Extra type="model" value="cmn_obj_numberring_4.model" condition="NumberRingID == 3" />
-  <Extra type="model" value="cmn_obj_numberring_5.model" condition="NumberRingID == 4" />
+  <Extra type="model" value="cmn_obj_numberring_4.model" condition="NumberRingID == 1" />
+  <Extra type="model" value="cmn_obj_numberring_5.model" condition="NumberRingID == 0" />
   <Extra type="description" value="Number Rings. They're as easy as 1-2-3!" />
   <Extra type="OffsetPositionY" value="0.6" />
   <Extra type="RawByteLength" length="2" />

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <SpringType type="sint8" description="The type of spring to use">
+    <Enum description="Yellow" value="0" />
+    <Enum description="Red" value="1" />
+    <Enum description="Modern" value="2" />
+  </SpringType>
+  <Speed type="float" default="500" description="How much speed this object will send you off with." />
+  <OutOfControl type="float" default="0.5" description="How long the game locks your control for after coming in contact with this object." />
+  
+  <Extra type="model" value="cmn_obj_springC_yellow.model" condition="SpringType == 0" />
+  <Extra type="model" value="cmn_obj_springC_red.model" condition="SpringType == 1" />
+  <Extra type="model" value="cmn_obj_spring.model" condition="SpringType == 2" />
+  <Extra type="description" value="The end of a tube in Chemical Plant." />
+  <Extra type="RawByteLength" length="12" />
+</Template>

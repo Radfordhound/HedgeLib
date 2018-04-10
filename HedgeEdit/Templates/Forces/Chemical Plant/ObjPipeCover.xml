@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Dummy type="float" description="A dummy value. Has no in-game effect." />
+  
+  <Extra type="model" value="w2_brk_pipecap.model" />
+  <Extra type="description" value="The cover of a tube in Chemical Plant." />
+  <Extra type="RawByteLength" length="4" />
+</Template>

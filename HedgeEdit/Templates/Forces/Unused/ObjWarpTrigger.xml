@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Size type="vector2" default="200,1000" description="The size of this trigger." />
+  <WarpPoint type="forcesObjectReference" description="The object this trigger will teleport you to." />
+  <Status type="sint8" default="1" description="Whether the stage should be reset (act as though you just died and respawned) or not. Reset unfortunately doesn't seem to be functional.">
+    <Enum description="Reset" value="0" />
+    <Enum description="Continuance" value="1" />
+  </Status>
+  
+  <Extra type="description" value="Triggers that teleport you to the location of a given object!" />
+  <Extra type="RawByteLength" length="16" />
+</Template>
