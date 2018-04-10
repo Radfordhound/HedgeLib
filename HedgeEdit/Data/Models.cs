@@ -17,7 +17,7 @@ namespace HedgeEdit
             new Dictionary<string, VPModel>();
 
         public static VPModel DefaultCube;
-        public static AssetDirectories ModelDirectories = new AssetDirectories();
+        public static List<string> ModelDirectories = new List<string>();
 
         // Methods
         public static VPObjectInstance GetInstance(VPModel model, object obj)
@@ -85,7 +85,6 @@ namespace HedgeEdit
             }
             else
             {
-                Console.WriteLine("Skipped {0}!", name);
                 return g[name];
             }
         }
@@ -200,7 +199,7 @@ namespace HedgeEdit
                         {
                             LoadMaterial(Path.Combine(resDir,
                                 $"{mesh.MaterialName}{matExt}"),
-                                mesh.MaterialName, nonEditable);
+                                mesh.MaterialName);
                         }
 
                         Program.MainUIInvoke(() =>
@@ -326,7 +325,7 @@ namespace HedgeEdit
 
                     if (!useResDirs && File.Exists(pth))
                     {
-                        var mat = LoadMaterial(pth, mesh.MaterialName, nonEditable);
+                        var mat = LoadMaterial(pth, mesh.MaterialName);
                         if (mat != null)
                             continue;
                     }
@@ -351,14 +350,14 @@ namespace HedgeEdit
             return vpMdl;
         }
 
-        public static AssetDirectory AddModelDirectoryFromPath(string path)
+        public static void AddModelDirectoryFromPath(string path)
         {
-            return AddModelDirectory(Path.GetDirectoryName(path));
+            AddModelDirectory(Path.GetDirectoryName(path));
         }
 
-        public static AssetDirectory AddModelDirectory(string dir)
+        public static void AddModelDirectory(string dir)
         {
-            return ModelDirectories.AddDirectory(dir);
+            ModelDirectories.AddDirectory(dir);
         }
 
         public static bool AddTerrainInstance(string modelName,
