@@ -54,9 +54,7 @@ end
 
 function SaveSets(dataDir, cacheDir, stageID)
 	-- Set Data
-	-- TODO: Finish GensSetData Save method then uncomment this line:
-	--SaveSetLayers("{0}/#{1}", "", ".xml", true)
-
+	SaveSetLayers("{0}/#{1}", "", ".xml", true)
 	UIChangeStatus("Repacking #" .. stageID .. "...")
 	SetDataType("Gens")
 	Repack("{0}/#{1}.ar", "{0}/#{1}", "#AR", false, true)
