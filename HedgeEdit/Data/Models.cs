@@ -49,8 +49,48 @@ namespace HedgeEdit
             return TerrainGroups[name];
         }
 
+        public static VPModel GetModel(string name, string resDir = null,
+            bool isTerrain = false, bool loadMats = false, string group = null,
+            bool nonEditable = true, GensTerrainInstanceInfo instInfo = null)
+        {
+            if (string.IsNullOrEmpty(name))
+                return DefaultCube;
+
+            var g = GetTerrainGroup(group);
+            if (!g.ContainsKey(name))
+            {
+                // Attempt to load the model
+                var mdlExt = (isTerrain) ? Types.TerrainModelExtension : Types.ModelExtension;
+                foreach (var dir in ResourceDirectories)
+                {
+                    if (Directory.Exists(dir.FullPath))
+                    {
+                        string path = Path.Combine(dir.FullPath, $"{name}{mdlExt}");
+                        if (File.Exists(path))
+                        {
+                            var mdl = LoadModel(path, resDir, isTerrain,
+                                loadMats, group, nonEditable, instInfo);
+
+                            if (mdl != null)
+                                return mdl;
+
+                            // TODO: Maybe remove this line so it keeps trying other dirs?
+                            return DefaultCube;
+                        }
+                    }
+                }
+
+                // Return the default cube if that failed
+                return DefaultCube;
+            }
+            else
+            {
+                return g[name];
+            }
+        }
+
         public static GensTerrainList LoadTerrainList(string path,
-            string groupsDir, string resDir)
+            string groupsDir, string resDir, bool nonEditable = true)
         {
             // Terrain List
             GUI.ChangeLoadStatus("Terrain List");
@@ -237,29 +277,8 @@ namespace HedgeEdit
                         dict = GetTerrainGroup(group, true);
                     });
 
-                    if (instInfo == null)
-                    {
-                        string instancePath = Path.Combine(dir,
-                            string.Format("{0}{1}",
-                            shortName, GensTerrainInstanceInfo.Extension));
-
-                        if (File.Exists(instancePath))
-                        {
-                            var info = new GensTerrainInstanceInfo();
-                            info.Load(instancePath);
-                            instance = new VPObjectInstance(
-                                info.TransformMatrix, shortName);
-                        }
-                        else
-                        {
-                            instance = new VPObjectInstance(shortName);
-                        }
-                    }
-                    else
-                    {
-                        instance = new VPObjectInstance(
-                            instInfo.TransformMatrix, shortName);
-                    }
+                    instance = (instInfo == null) ? new VPObjectInstance(shortName) :
+                        new VPObjectInstance(instInfo.TransformMatrix, shortName);
 
                     // Don't bother loading the model again if we've
                     // already loaded a model with the same name.

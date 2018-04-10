@@ -10,6 +10,9 @@ namespace HedgeEdit.Lua
         // Methods
         protected void InitTerrainCallbacks()
         {
+            script.Globals["GetModel"] = (Func<string, string,
+                string, bool, bool, VPModel>)GetModel;
+
             script.Globals["LoadTerrainList"] = (Func<string, string,
                 string, GensTerrainList>)LoadTerrainList;
 
@@ -21,6 +24,21 @@ namespace HedgeEdit.Lua
         }
 
         // Lua Callbacks
+        public VPModel GetModel(string path, string resDir,
+            string group = null, bool isTerrain = false, bool loadMats = true)
+        {
+            // Format path strings, return if the given files/directories don't exist
+            path = FormatCacheDir(path);
+            resDir = FormatCacheDir(resDir);
+
+            if (!File.Exists(path) || !Directory.Exists(resDir))
+                return null;
+
+            string name = Path.GetFileNameWithoutExtension(path);
+            return Data.GetModel(name, resDir,
+                isTerrain, loadMats, group, false);
+        }
+
         public GensTerrainList LoadTerrainList(string path, string groupsDir, string resDir)
         {
             // Format path strings, return if the given files/directories don't exist
@@ -32,7 +50,7 @@ namespace HedgeEdit.Lua
                 !Directory.Exists(resDir))
                 return null;
 
-            return Data.LoadTerrainList(path, groupsDir, resDir);
+            return Data.LoadTerrainList(path, groupsDir, resDir, false);
         }
 
         public VPModel LoadTerrain(string path, string resDir,
@@ -65,11 +83,8 @@ namespace HedgeEdit.Lua
             var instInfo = new GensTerrainInstanceInfo();
             instInfo.Load(path);
 
-            string name = string.Format("{0}{1}", instInfo.ModelFileName,
-                GensModel.TerrainExtension);
-
-            return Data.LoadModel(Path.Combine(dir, name), resDir,
-                true, loadMats, group, false, instInfo);
+            return Data.GetModel(instInfo.ModelFileName, resDir, true,
+                loadMats, group, false, instInfo);
         }
     }
 }
