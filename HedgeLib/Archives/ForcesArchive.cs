@@ -61,6 +61,7 @@ namespace HedgeLib.Archives
 
         protected string[] RootExclusiveTypes = new string[]
         {
+            ".asm",
             ".anm.hkx",
             ".cemt",
             ".phy.hkx",
@@ -333,10 +334,10 @@ namespace HedgeLib.Archives
 
         public override void Save(string filePath, bool overwrite = false)
         {
-            Save(filePath, 0xA00000);
+            Save(filePath, 0x1E00000);
         }
 
-        public void Save(string filePath, uint? splitCount = 0xA00000)
+        public void Save(string filePath, uint? splitCount = 0x1E00000)
         {
             var fileInfo = new FileInfo(filePath);
             string shortName = fileInfo.Name.Substring(0,
@@ -583,14 +584,14 @@ namespace HedgeLib.Archives
             if (isRootPAC)
             {
                 writer.Write((ulong)splitList.Count);
-                pacsSize += 8;
+                writer.AddOffset("splitPACsOffset", 8);
+                pacsSize += 16;
 
+                writer.FillInOffsetLong("splitPACsOffset", true, false);
                 for (int i = 0; i < splitList.Count; ++i)
                 {
-                    writer.AddOffset($"splitPACOffset{i}", 8);
-                    writer.FillInOffsetLong($"splitPACOffset{i}", true, false);
                     writer.AddString($"splitPACName{i}", splitList[i], 8);
-                    pacsSize += 16;
+                    pacsSize += 8;
                 }
             }
 
@@ -662,6 +663,7 @@ namespace HedgeLib.Archives
             writer.WriteSignature(Signature);
             writer.WriteSignature("301");
             writer.Write((writer.IsBigEndian) ? 'B' : 'L');
+            writer.Write(ID.Value);
             writer.Write(fileSize);
 
             writer.Write((uint)(fileEntriesOffset - 0x30) - pacsSize);
@@ -742,7 +744,6 @@ namespace HedgeLib.Archives
 
                 // Other
                 writer.Write(node.ChildCount);
-                writer.Write((byte)0);
                 writer.Write(node.HasData);
                 writer.Write(node.FullPathSize);
             }
@@ -778,7 +779,8 @@ namespace HedgeLib.Archives
             public ulong DataType = 0;
             public long NameOffset = 0, DataOffset = 0, ChildIDTableOffset = 0;
             public int ParentIndex = -1, GlobalIndex, DataIndex = -1, ArchiveFileIndex = -1;
-            public byte ChildCount = 0, FullPathSize = 0;
+            public ushort ChildCount = 0;
+            public byte FullPathSize = 0;
             public bool HasData = false;
 
             // Constructors
@@ -799,14 +801,9 @@ namespace HedgeLib.Archives
                 GlobalIndex = reader.ReadInt32();
                 DataIndex = reader.ReadInt32();
 
-                ChildCount = reader.ReadByte();
-                byte padding1 = reader.ReadByte();
+                ChildCount = reader.ReadUInt16();
                 HasData = reader.ReadBoolean();
                 FullPathSize = reader.ReadByte();  // Not counting this node in.
-
-                // Padding Checks
-                if (padding1 != 0)
-                    Console.WriteLine($"WARNING: Padding1 != 0 ({padding1})");
             }
         }
     }
