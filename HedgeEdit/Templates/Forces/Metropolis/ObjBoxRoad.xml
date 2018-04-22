@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <PathUID type="uint" description="The UID of the path used by this object." />
+  <Extra type="description" value="The awesome floating purple roads made of cubes in Null Space." />
+  <Extra type="model" value="w6_obj_boxroad.model" />
+  <Extra length="64" name="RawByteLength" />
+</Template>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <BehaviorType type="sbyte" default="1" description="How it will act">
+    <Enum description="Idle, They don't work" value="0" />
+    <Enum description="Attack" value="1" />
+    <Enum description="Idle, They don't work" value="2" />
+  </BehaviorType>
+  
+  <IsEventDriven type="bool" default="false" description="Whether this object is active by default or must be triggered by something first." />
+  <Extra type="model" value="w6_obj_golemtail.model" />
+  <Extra type="description" value="LongBoi's hand." />
+  <Extra length="32" name="RawByteLength" />
+</Template>

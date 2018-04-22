@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Type type="sbyte" description="How the fan will function.">
+    <Enum description="Always On" value="0" />
+    <Enum description="Cycle" value="1" />
+  </Type>
+  
+  <Length type="float" default="100" description="How far the wind extends from the fan." />
+  <Velocity type="float" default="130" description="How much speed this object will send you off with." />
+  <OnTime type="float" default="2" description="How long the fan stays on before turning off again." />
+  <OffTime type="float" default="2" description="How long the fan stays off before turning on again." />
+  <InitialDelay type="float" default="0.5" description="How long the object waits before starting the normal active/inactive cycle." />
+  <IsEventDriven type="bool" default="false" description="Whether this object is active by default or must be triggered by something first." />
+  
+  <Extra type="description" value="Underwater variants of the unused ObjFan." />
+  <Extra type="model" value="cmn_obj_fan_ground.model" />
+  <Extra length="48" name="RawByteLength" />
+</Template>

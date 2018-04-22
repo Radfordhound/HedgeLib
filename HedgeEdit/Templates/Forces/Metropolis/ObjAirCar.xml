@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <PathUID type="uint" description="The UID of the path used by this object." />
+  <Speed type="float" description="How quickly this object moves." />
+  <Number type="uint" description="How many cars to place." />
+  <Distance type="float" description="How far the cars can go." />
+  
+  <Extra type="description" value="Flying Cars! I wish we had those but all we got was sonic forces. :c" />
+  <Extra type="model" value="w6_obj_aircar.model" />
+  <Extra length="32" name="RawByteLength" />
+</Template>

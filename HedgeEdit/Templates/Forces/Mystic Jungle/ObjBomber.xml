@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Count type="int" description="The amount of planes to spawn." />
+  <Interval type="float" description="The time between bombs." />
+  <LineOffset type="float" description="Distance from the line" />
+  <MoveType type="sbyte" description="How it moves.">
+    <Enum description="Once" value="0" />
+    <Enum description="Loop" value="1" />
+  </MoveType>
+  
+  <Distance type="float" description="How far this object will move." />
+  <Speed type="float" description="How fast this object moves." />
+  <DropBomb type="bool" default="true" description="Does it drop bombs?" />
+  
+  <Extra type="description" value="The bombing planes from Mystic Jungle." />
+  <Extra type="model" value="w4_obj_bomber.model" />
+  <Extra length="68" name="RawByteLength" />
+</Template>

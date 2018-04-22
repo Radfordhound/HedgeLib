@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <type type="sbyte" description="What it looks like">
+    <Enum description="Small pillar" value="0" />
+    <Enum description="Big pillar" value="1" />
+    <Enum description="Lying on its back" value="2" />
+    <Enum description="Tree" value="3" />
+    <Enum description="Tree w/ water splash" value="4" />
+  </type>
+  
+  <Extra type="model" value="w4_obj_bramblethornA.model" condition="type == 0" />
+  <Extra type="model" value="w4_obj_bramblethornB.model" condition="type == 1" />
+  <Extra type="model" value="w4_obj_bramblethornC.model" condition="type == 2" />
+  <Extra type="model" value="w4_obj_bramblethornD.model" condition="type == 3" />
+  <Extra type="description" value="Fancy thorns from Mystic Jungle." />
+  <Extra length="104" name="RawByteLength" />
+</Template>

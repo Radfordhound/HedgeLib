@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Radius description="The radius of the floors to the center" type="float" />
+  <FloorCount description="How many floors" type="uint32" />
+  <AngularSpeed description="Regular/normal speed" type="float" />
+  <Phase description="The phase of movement" type="float" />
+  <FloorSize description="Size of the floor" type="enum">
+    <Enum description="A" value="0" />
+    <Enum description="B" value="1" />
+    <Enum description="C" value="2" />
+  </FloorSize>
+  <RotateType description="Which Direction" type="enum">
+    <Enum description="Left" value="0" />
+    <Enum description="Right" value="1" />
+  </RotateType>
+  <VisualType description="How it looks" type="enum">
+    <Enum description="A" value="0" />
+    <Enum description="B" value="1" />
+  </VisualType>
+  <IsOneway type="bool" description="Whether or not you can jump through this floor." />
+  <IsEventDriven type="bool" default="false" description="Whether this object is active by default or must be triggered by something first." />
+  <Extra type="description" value="Floors which move in a circle hung by a chain!" />
+  <Extra type="model" value="cmn_obj_chainfloor_base.model" />
+  <Extra length="72" name="RawByteLength" />
+</Template>

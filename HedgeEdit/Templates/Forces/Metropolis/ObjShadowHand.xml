@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <SearchDistance type="float" description="When will it rise" />
+  <Trigger type="sbyte" description="What activates this object. Range means the object is activated simply by the player coming within its range. Message means this object needs to be triggered by another object.">
+	<Enum description="Message" value="0" />
+	<Enum description="Range" value="1" />
+  </Trigger>
+  
+  <UpTime type="float" description="How long it will be up" />
+  <DownTime type="float" description="How long it will be down" />
+  
+  <Extra type="model" value="w6_obj_phantomCubez.model" />
+  <Extra type="description" value="Red Cubes in Null Space" />
+  <Extra length="32" name="RawByteLength" />
+</Template>

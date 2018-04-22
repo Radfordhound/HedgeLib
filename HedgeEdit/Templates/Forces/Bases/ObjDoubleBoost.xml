@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <PathUID type="uint" description="The UID of the path used by this object." />
+  <AutoRunSpeed type="float" default="600" description="The speed Sonic and the custom hero will boost at while in auto-run mode." />
+  
+  <Extra type="description" value="Base for ObjDoubleBoostTriggers and ObjDoubleBoostVolumes." />
+  <Extra length="24" name="RawByteLength" />
+</Template>
