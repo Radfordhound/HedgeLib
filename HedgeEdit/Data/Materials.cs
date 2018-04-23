@@ -187,7 +187,7 @@ namespace HedgeEdit
         }
 
         public static GensMaterial LoadMaterial(string path,
-            string name = null)
+            string name = null, bool nonEditable = true)
         {
             // Don't bother loading this material again if we've already loaded it
             if (string.IsNullOrEmpty(name))

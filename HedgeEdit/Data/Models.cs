@@ -51,7 +51,8 @@ namespace HedgeEdit
 
         public static VPModel GetModel(string name, string resDir = null,
             bool isTerrain = false, bool loadMats = false, string group = null,
-            bool nonEditable = true, GensTerrainInstanceInfo instInfo = null)
+            bool nonEditable = true, GensTerrainInstanceInfo instInfo = null,
+            bool spawnInstance = true)
         {
             if (string.IsNullOrEmpty(name))
                 return DefaultCube;
@@ -68,8 +69,8 @@ namespace HedgeEdit
                         string path = Path.Combine(dir, $"{name}{mdlExt}");
                         if (File.Exists(path))
                         {
-                            var mdl = LoadModel(path, resDir, isTerrain,
-                                loadMats, group, nonEditable, instInfo);
+                            var mdl = LoadModel(path, resDir, isTerrain, loadMats,
+                                group, nonEditable, instInfo, spawnInstance);
 
                             if (mdl != null)
                                 return mdl;
@@ -85,6 +86,15 @@ namespace HedgeEdit
             }
             else
             {
+                if (spawnInstance && instInfo != null)
+                {
+                    Program.MainUIInvoke(() =>
+                    {
+                        g[name].Instances.Add(new VPObjectInstance(
+                            instInfo.TransformMatrix, instInfo.FileName));
+                    });
+                }
+
                 return g[name];
             }
         }
@@ -199,7 +209,7 @@ namespace HedgeEdit
                         {
                             LoadMaterial(Path.Combine(resDir,
                                 $"{mesh.MaterialName}{matExt}"),
-                                mesh.MaterialName);
+                                mesh.MaterialName, nonEditable);
                         }
 
                         Program.MainUIInvoke(() =>
@@ -216,7 +226,8 @@ namespace HedgeEdit
 
         public static VPModel LoadModel(string path, string resDir = null,
             bool isTerrain = false, bool loadMats = false, string group = null,
-            bool nonEditable = true, GensTerrainInstanceInfo instInfo = null)
+            bool nonEditable = true, GensTerrainInstanceInfo instInfo = null,
+            bool spawnInstance = true)
         {
             // Figure out what type of model to use
             Model mdl;
@@ -277,17 +288,24 @@ namespace HedgeEdit
                         dict = GetTerrainGroup(group, true);
                     });
 
-                    instance = (instInfo == null) ? new VPObjectInstance(shortName) :
-                        new VPObjectInstance(instInfo.TransformMatrix, shortName);
+                    if (spawnInstance)
+                    {
+                        instance = (instInfo == null) ? new VPObjectInstance(shortName) :
+                            new VPObjectInstance(instInfo.TransformMatrix, instInfo.FileName);
+                    }
 
                     // Don't bother loading the model again if we've
                     // already loaded a model with the same name.
                     if (dict.ContainsKey(shortName))
                     {
-                        Program.MainUIInvoke(() =>
+                        if (spawnInstance)
                         {
-                            AddTerrainInstance(shortName, instance, group);
-                        });
+                            Program.MainUIInvoke(() =>
+                            {
+                                AddTerrainInstance(shortName, instance, group);
+                            });
+                        }
+
                         return dict[shortName];
                     }
                 }
@@ -325,7 +343,7 @@ namespace HedgeEdit
 
                     if (!useResDirs && File.Exists(pth))
                     {
-                        var mat = LoadMaterial(pth, mesh.MaterialName);
+                        var mat = LoadMaterial(pth, mesh.MaterialName, nonEditable);
                         if (mat != null)
                             continue;
                     }
@@ -339,7 +357,8 @@ namespace HedgeEdit
             {
                 if (isTerrain)
                 {
-                    vpMdl = AddModelInstance(mdl, instance, dict);
+                    vpMdl = (spawnInstance) ? AddModelInstance(mdl,
+                        instance, dict) : AddModel(mdl, dict);
                 }
                 else
                 {
