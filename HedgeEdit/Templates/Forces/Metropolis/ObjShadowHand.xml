@@ -11,5 +11,5 @@
   
   <Extra type="model" value="w6_obj_phantomCubez.model" />
   <Extra type="description" value="Red Cubes in Null Space" />
-  <Extra length="32" name="RawByteLength" />
+  <Extra length="16" name="RawByteLength" />
 </Template>

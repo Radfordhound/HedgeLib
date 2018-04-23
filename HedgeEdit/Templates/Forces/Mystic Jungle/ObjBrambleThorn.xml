@@ -13,5 +13,5 @@
   <Extra type="model" value="w4_obj_bramblethornC.model" condition="type == 2" />
   <Extra type="model" value="w4_obj_bramblethornD.model" condition="type == 3" />
   <Extra type="description" value="Fancy thorns from Mystic Jungle." />
-  <Extra length="104" name="RawByteLength" />
+  <Extra length="1" name="RawByteLength" />
 </Template>

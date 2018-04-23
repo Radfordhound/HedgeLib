@@ -9,5 +9,5 @@
   <IsEventDriven type="bool" default="false" description="Whether this object is active by default or must be triggered by something first." />
   <Extra type="model" value="w6_obj_golemtail.model" />
   <Extra type="description" value="LongBoi's hand." />
-  <Extra length="32" name="RawByteLength" />
+  <Extra length="2" name="RawByteLength" />
 </Template>

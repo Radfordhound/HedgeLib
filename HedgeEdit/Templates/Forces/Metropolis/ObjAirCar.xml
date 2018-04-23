@@ -7,5 +7,5 @@
   
   <Extra type="description" value="Flying Cars! I wish we had those but all we got was sonic forces. :c" />
   <Extra type="model" value="w6_obj_aircar.model" />
-  <Extra length="32" name="RawByteLength" />
+  <Extra length="16" name="RawByteLength" />
 </Template>

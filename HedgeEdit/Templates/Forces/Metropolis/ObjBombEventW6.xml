@@ -37,5 +37,5 @@
   <Event2_Timer type="float" description="How long to wait after this event is triggered before sending a signal to all affected objects." />
   
   <GismoTargets type="forcesObjectList" description="The gismos affected by this event." />
-  <Extra length="256" name="RawByteLength" />
+  <Extra length="136" name="RawByteLength" />
 </Template>

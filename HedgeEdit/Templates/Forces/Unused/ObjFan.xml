@@ -12,7 +12,7 @@
   <InitialDelay type="float" default="0.5" description="How long the object waits before starting the normal active/inactive cycle." />
   <IsEventDriven type="bool" default="false" description="Whether this object is active by default or must be triggered by something first." />
   
-  <Extra type="description" value="Fans like from past games, they blow you up into the air. These are actually unused in Forces, but are fully-functional! The underwater fans in Chemical Plant are ObjWaterFans (an underwater variant of ObjFan)." />
+  <Extra type="description" value="Fans like from past games; they blow you up into the air. These are actually unused in Forces, but are fully-functional! The underwater fans in Chemical Plant are ObjWaterFans (an underwater variant of ObjFan)." />
   <Extra type="model" value="cmn_obj_fan_ground.model" />
-  <Extra length="48" name="RawByteLength" />
+  <Extra length="28" name="RawByteLength" />
 </Template>

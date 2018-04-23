@@ -14,5 +14,5 @@
   
   <Extra type="description" value="The bombing planes from Mystic Jungle." />
   <Extra type="model" value="w4_obj_bomber.model" />
-  <Extra length="68" name="RawByteLength" />
+  <Extra length="28" name="RawByteLength" />
 </Template>

@@ -14,5 +14,5 @@
   
   <Extra type="description" value="Underwater variants of the unused ObjFan." />
   <Extra type="model" value="cmn_obj_fan_ground.model" />
-  <Extra length="48" name="RawByteLength" />
+  <Extra length="28" name="RawByteLength" />
 </Template>

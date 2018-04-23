@@ -3,5 +3,5 @@
   <Dummy type="int" description="A dummy value. Has no in-game effect." />
   <Extra type="model" value="w6_obj_grid.model" />
   <Extra type="description" value="Null space I think" />
-  <Extra length="24" name="RawByteLength" />
+  <Extra length="4" name="RawByteLength" />
 </Template>

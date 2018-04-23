@@ -8,5 +8,5 @@
   
   <Extra type="description" value="Yellow disappearing floors." />
   <Extra type="model" value="w7_obj_disappearfloor.model" />
-  <Extra length="48" name="RawByteLength" />
+  <Extra length="20" name="RawByteLength" />
 </Template>

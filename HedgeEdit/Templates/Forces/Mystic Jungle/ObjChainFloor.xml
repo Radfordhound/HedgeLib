@@ -19,7 +19,8 @@
   </VisualType>
   <IsOneway type="bool" description="Whether or not you can jump through this floor." />
   <IsEventDriven type="bool" default="false" description="Whether this object is active by default or must be triggered by something first." />
+  
   <Extra type="description" value="Floors which move in a circle hung by a chain!" />
   <Extra type="model" value="cmn_obj_chainfloor_base.model" />
-  <Extra length="72" name="RawByteLength" />
+  <Extra length="24" name="RawByteLength" />
 </Template>

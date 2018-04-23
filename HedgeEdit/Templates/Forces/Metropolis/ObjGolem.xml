@@ -8,5 +8,5 @@
   
   <Extra type="model" value="w6_obj_golem.model" />
   <Extra type="description" value="LongBoi." />
-  <Extra length="16" name="RawByteLength" />
+  <Extra length="1" name="RawByteLength" />
 </Template>
