@@ -55,6 +55,10 @@ namespace HedgeEdit.Lua
             UserData.RegisterType<SetObjectParam>();
             UserData.RegisterType<SetObjectTransform>();
             UserData.RegisterType<SetObject>();
+            UserData.RegisterType<SetObjectTypeParamExtra>();
+            UserData.RegisterType<SetObjectTypeParamEnum>();
+            UserData.RegisterType<SetObjectTypeParam>();
+            UserData.RegisterType<SetObjectType>();
             UserData.RegisterType<SetData>();
 
             UserData.RegisterType<KeyValuePair<string, GensMaterial>>();

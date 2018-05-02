@@ -183,7 +183,7 @@ namespace HedgeEdit.UI
 
                 try
                 {
-                    script.Call("InitSetObject", obj);
+                    script.Call("InitSetObject", obj, template);
                 }
                 catch (Exception ex)
                 {

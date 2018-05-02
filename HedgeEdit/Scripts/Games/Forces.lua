@@ -151,7 +151,7 @@ function SaveAll(dataDir, cacheDir, stageID)
 	-- TODO: Repack
 end
 
-function InitSetObject(obj)
+function InitSetObject(obj, template)
 	AddCustomData(obj, "ParentID", "ushort", 0)
 	AddCustomData(obj, "ParentGroupID", "ushort", 0)
 	AddCustomData(obj, "GroupID", "ushort", 0)
@@ -159,6 +159,12 @@ function InitSetObject(obj)
 	AddCustomData(obj, "ChildRotOffset", "vector3", "0,0,0")
 	AddCustomData(obj, "RangeIn", "float", 1000)
 	AddCustomData(obj, "RangeOut", "float", 1200)
+
+	local rawLenExtra = template.GetExtra("RawByteLength")
+	if rawLenExtra ~= nil then
+		obj.CustomData["RawByteLength"] =
+			GenSetObjectParam("uint", rawLenExtra.Value)
+	end
 
 	obj.CustomData["Name"] = GenSetObjectParam("string",
 		obj.ObjectType .. tostring(obj.ObjectID))

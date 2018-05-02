@@ -87,7 +87,7 @@ function SaveAll(dataDir, cacheDir, stageID)
 	-- TODO
 end
 
-function InitSetObject(obj)
+function InitSetObject(obj, template)
 	AddCustomData(obj, "Unknown1", "ushort", 0)
 	AddCustomData(obj, "Unknown2", "uint", 0)
 	AddCustomData(obj, "Unknown3", "uint", 0)

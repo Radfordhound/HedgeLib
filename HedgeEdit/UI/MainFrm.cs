@@ -788,9 +788,14 @@ namespace HedgeEdit.UI
                     Transform = obj.Transform
                 };
 
+                // Get Object Template (if any)
+                var template = (Stage.GameType != null &&
+                    Stage.GameType.ObjectTemplates.ContainsKey(obj.ObjectType)) ?
+                    Stage.GameType.ObjectTemplates[obj.ObjectType] : null;
+
                 Data.CurrentSetLayer.Objects.Add(newObj);
                 // TODO: Fix crashing if this is called while loading
-                script.Call("InitSetObject", newObj);
+                script.Call("InitSetObject", newObj, template);
 
                 Data.LoadObjectResources(Stage.GameType, newObj);
                 Viewport.SelectObject(newObj);
