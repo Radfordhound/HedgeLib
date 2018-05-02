@@ -10,7 +10,9 @@ namespace HedgeLib.Models
     {
         // Variables/Constants
         public HedgehogEngineHeader Header = new GensHeader();
-        public const string Extension = ".model", TerrainExtension = ".terrain-model";
+        public const string Extension = ".model", TerrainExtension = ".terrain-model",
+            ModelMirageType = "Model";
+
         public const int SubMeshSlotCount = 4;
         public const uint NextGenSignature = 0x133054A, PS3RootType = 0x3ED;
 
@@ -120,7 +122,7 @@ namespace HedgeLib.Models
             }
         }
 
-        protected Mesh ReadSubMesh(GensReader reader, float scale = 1)
+        protected unsafe Mesh ReadSubMesh(GensReader reader, float scale = 1)
         {
             uint offset; // Generic uint reused for different data
 
@@ -172,22 +174,22 @@ namespace HedgeLib.Models
             var faces = new ushort[faceCount];
             reader.JumpTo(faceOffset, false);
 
-            for (uint i = 0; i < faceCount; ++i)
-            {
-                faces[i] = reader.ReadUInt16();
-                //Console.WriteLine($"Face: {faces[i]}");
-            }
-
             // Convert faces from triangle strips
-            // Taken from LibGens (for now) because my gosh
+            // Basically taken from LibGens because I honestly
+            // don't think there's another way to do it lol
             int newStrip = 3, newIndex = 0;
-            ushort face1 = 0, face2 = 0, face3 = 0;
-            ushort lastFace = 0;
+            ushort face1 = 0, face2 = 0, face3 = 0, t;
+            uint count = 0, faceIndex = 0;
 
-            var newFaces = new List<uint>();
+            // HACK: We go through the whole loop twice, the first time just
+            // to get the new faceCount, second time to actually get the faces.
+            // This way we don't have to do any copying (yes, lists do it too)
+            // which is a huge performance improvement.
             for (uint i = 0; i < faceCount; ++i)
             {
-                ushort t = faces[i];
+                t = reader.ReadUInt16();
+                faces[i] = t;
+
                 if (t == 0xFFFF)
                 {
                     newStrip = 3;
@@ -195,8 +197,38 @@ namespace HedgeLib.Models
                 }
                 else
                 {
-                    if (newStrip == 3) lastFace = t;
+                    newStrip -= 1;
+                    face3 = face2;
+                    face2 = face1;
+                    face1 = t;
 
+                    if (newStrip == 0)
+                    {
+                        if ((face1 != face2) && (face2 != face3) && (face1 != face3))
+                            count += 3;
+
+                        newStrip = 1;
+                        ++newIndex;
+                    }
+                }
+            }
+
+            // Alright, we've got the new count!
+            // Time to actually get the faces.
+            var newFaces = new uint[count];
+            newStrip = 3; newIndex = 0;
+            face1 = face2 = face3 = 0;
+
+            for (uint i = 0; i < faceCount; ++i)
+            {
+                t = faces[i];
+                if (t == 0xFFFF)
+                {
+                    newStrip = 3;
+                    newIndex = 0;
+                }
+                else
+                {
                     newStrip -= 1;
                     face3 = face2;
                     face2 = face1;
@@ -208,25 +240,18 @@ namespace HedgeLib.Models
                         {
                             if ((newIndex % 2) == 0)
                             {
-                                newFaces.Add(face1);
-                                newFaces.Add(face2);
-                                newFaces.Add(face3);
+                                newFaces[faceIndex] = face1;
+                                newFaces[++faceIndex] = face2;
+                                newFaces[++faceIndex] = face3;
                             }
                             else
                             {
-                                newFaces.Add(face3);
-                                newFaces.Add(face2);
-                                newFaces.Add(face1);
+                                newFaces[faceIndex] = face3;
+                                newFaces[++faceIndex] = face2;
+                                newFaces[++faceIndex] = face1;
                             }
 
-                            //newFaces.Add(((newIndex % 2) == 0) ?
-                            //    new Vector3(face1, face2, face3) :
-                            //    new Vector3(face3, face2, face1));
-
-                            //newFaces.Add((doReverse) ? face1 : face3);
-                            //newFaces.Add(face2);
-                            //newFaces.Add((doReverse) ? face3 : face1);
-                            //Console.WriteLine($"Final face: {vect}");
+                            ++faceIndex;
                         }
 
                         newStrip = 1;
@@ -235,20 +260,12 @@ namespace HedgeLib.Models
                 }
             }
 
-            //for (uint i = 0; i < faceCount; ++i)
-            //{
-            //    ushort t = faces[i];
-            //    if (t != 0xFFFF)
-            //    {
-            //        newFaces.Add(t);
-            //    }
-            //}
-
             // Vertex Format
             var vertexFormat = new List<VertexFormatElement>();
+            var fs = reader.BaseStream;
             reader.JumpTo(vertexFormatOffset, false);
 
-            for (int i = 0; i < 0xFF; ++i)
+            for (byte i = 0; i < 0xFF; ++i)
             {
                 offset = reader.ReadUInt32();
                 if (offset > 1000) break;
@@ -262,96 +279,103 @@ namespace HedgeLib.Models
                 };
 
                 vertexFormat.Add(element);
-                reader.JumpAhead(1);
+                fs.ReadByte();
             }
 
             // Vertices
             var data = new float[vertexCount * Mesh.StructureLength];
             var idc = new float[vertexCount * 4]; // TODO: Care
 
-            for (uint i = 0; i < vertexCount; ++i)
+            // HACK: Read this stuff using pointers to avoid boundry checks.
+            fixed (float* dataStart = data)
+            fixed (float* idcp = idc)
             {
-                // Set default vertex coloring
-                data[(i * Mesh.StructureLength) + Mesh.ColorPos] = 1;
-                data[(i * Mesh.StructureLength) + Mesh.ColorPos + 1] = 1;
-                data[(i * Mesh.StructureLength) + Mesh.ColorPos + 2] = 1;
-                data[(i * Mesh.StructureLength) + Mesh.ColorPos + 3] = 1;
+                float* dp; // Pointer to data
+                uint structStart;
 
-                // Just to be accurate
-                offset = (vertexOffset + (i * vertexSize));
-                foreach (var element in vertexFormat)
+                for (uint i = 0; i < vertexCount; ++i)
                 {
-                    reader.JumpTo(offset + element.Offset, false);
-                    switch (element.ID)
+                    // Set default vertex coloring
+                    structStart = (i * Mesh.StructureLength);
+                    dp = dataStart + structStart + Mesh.ColorPos;
+
+                    // RGBA = 1, 1, 1, 1
+                    *dp = 1; *++dp = 1;
+                    *++dp = 1; *++dp = 1;
+
+                    // Just to be accurate
+                    offset = (vertexOffset + (i * vertexSize));
+                    foreach (var element in vertexFormat)
                     {
-                        // Vertex Positions
-                        case 0:
-                            element.Read(reader, data,
-                                (i * Mesh.StructureLength) + Mesh.VertPos, scale);
-                            break;
+                        reader.JumpTo(offset + element.Offset, false);
+                        switch (element.ID)
+                        {
+                            // Vertex Positions
+                            case 0:
+                                element.Read(reader, dataStart +
+                                    structStart + Mesh.VertPos, scale);
+                                break;
 
-                        // Bone Weights
-                        case 1:
-                            // TODO
-                            element.Read(reader, idc, i);
-                            break;
+                            // Bone Weights
+                            case 1:
+                                // TODO
+                                element.Read(reader, idcp);
+                                break;
 
-                        // Bone Indices
-                        case 2:
-                            // TODO
-                            element.Read(reader, idc, i);
-                            break;
+                            // Bone Indices
+                            case 2:
+                                // TODO
+                                element.Read(reader, idcp);
+                                break;
 
-                        // Normals
-                        case 3:
-                            // TODO: Do I need to scale normals?
-                            element.Read(reader, data,
-                                (i * Mesh.StructureLength) + Mesh.NormPos);
-                            break;
+                            // Normals
+                            case 3:
+                                // TODO: Do I need to scale normals?
+                                element.Read(reader, dataStart +
+                                    structStart + Mesh.NormPos);
+                                break;
 
-                        // UV Coordinates
-                        case 5:
-                            if (element.Index < 1)
-                            {
-                                element.Read(reader, data,
-                                    (i * Mesh.StructureLength) + Mesh.UVPos);
-                            }
-                            else
-                            {
-                                // TODO: Read multi-UV Channels
-                                element.Read(reader, idc, i);
-                            }
-                            break;
+                            // UV Coordinates
+                            case 5:
+                                if (element.Index < 1)
+                                {
+                                    element.Read(reader, dataStart +
+                                        structStart + Mesh.UVPos);
+                                }
+                                else
+                                {
+                                    // TODO: Read multi-UV Channels
+                                    element.Read(reader, idcp);
+                                }
+                                break;
 
-                        // Tangents
-                        case 6:
-                            // TODO
-                            element.Read(reader, idc, i);
-                            break;
+                            // Tangents
+                            case 6:
+                                // TODO
+                                element.Read(reader, idcp);
+                                break;
 
-                        // Binormals
-                        case 7:
-                            // TODO
-                            element.Read(reader, idc, i);
-                            break;
+                            // Binormals
+                            case 7:
+                                // TODO
+                                element.Read(reader, idcp);
+                                break;
 
-                        // Vertex Colors
-                        case 10:
-                            element.Read(reader, data,
-                                (i * Mesh.StructureLength) + Mesh.ColorPos);
-                            break;
+                            // Vertex Colors
+                            case 10:
+                                element.Read(reader, dataStart +
+                                    structStart + Mesh.ColorPos);
+                                break;
+                        }
                     }
+
+                    ++dp;
                 }
             }
 
             // Bones
-            var bones = new byte[boneCount];
             reader.JumpTo(boneOffset, false);
-
-            for (uint i = 0; i < boneCount; ++i)
-            {
-                bones[i] = reader.ReadByte();
-            }
+            var bones = reader.ReadBytes((int)boneCount);
 
             // Texture Unit Offsets
             var textureUnitOffsets = new uint[textureUnitCount];
@@ -383,7 +407,7 @@ namespace HedgeLib.Models
             var mesh = new Mesh()
             {
                 VertexData = data,
-                Triangles = newFaces.ToArray(),
+                Triangles = newFaces,
                 MaterialName = materialName
             };
 
@@ -415,24 +439,24 @@ namespace HedgeLib.Models
             }
 
             // Methods
-            public void Read(GensReader reader, float[] data, uint i, float scale = 1)
+            public unsafe void Read(GensReader reader, float* data, float scale = 1)
             {
                 switch ((DataTypes)Type)
                 {
                     case DataTypes.Vector2:
-                        data[i] = reader.ReadSingle() * scale;
-                        data[i + 1] = reader.ReadSingle() * scale;
+                        *data = reader.ReadSingle() * scale;
+                        *++data = reader.ReadSingle() * scale;
                         break;
 
                     case DataTypes.Vector2_Half:
-                        data[i] = reader.ReadHalf();
-                        data[i + 1] = reader.ReadHalf();
+                        *data = reader.ReadHalf();
+                        *++data = reader.ReadHalf();
                         break;
 
                     case DataTypes.Vector3:
-                        data[i] = reader.ReadSingle() * scale;
-                        data[i + 1] = reader.ReadSingle() * scale;
-                        data[i + 2] = reader.ReadSingle() * scale;
+                        *data = reader.ReadSingle() * scale;
+                        *++data = reader.ReadSingle() * scale;
+                        *++data = reader.ReadSingle() * scale;
                         break;
 
                     case DataTypes.Vector3_360:
@@ -446,10 +470,10 @@ namespace HedgeLib.Models
                         break;
 
                     case DataTypes.Vector4:
-                        data[i] = reader.ReadSingle() * scale;
-                        data[i + 1] = reader.ReadSingle() * scale;
-                        data[i + 2] = reader.ReadSingle() * scale;
-                        data[i + 3] = reader.ReadSingle() * scale;
+                        *data = reader.ReadSingle() * scale;
+                        *++data = reader.ReadSingle() * scale;
+                        *++data = reader.ReadSingle() * scale;
+                        *++data = reader.ReadSingle() * scale;
                         break;
 
                     case DataTypes.Vector4_Byte:
@@ -471,19 +495,19 @@ namespace HedgeLib.Models
                 {
                     case DataTypes.Vector2:
                         writer.Write(data[i] * scale);
-                        writer.Write(data[i + 1] * scale);
+                        writer.Write(data[++i] * scale);
                         break;
 
                     case DataTypes.Vector2_Half:
                         // TODO: Is this correct?
                         writer.WriteHalf((Half)(data[i] * scale));
-                        writer.WriteHalf((Half)(data[i + 1] * scale));
+                        writer.WriteHalf((Half)(data[++i] * scale));
                         break;
 
                     case DataTypes.Vector3:
                         writer.Write(data[i] * scale);
-                        writer.Write(data[i + 1] * scale);
-                        writer.Write(data[i + 2] * scale);
+                        writer.Write(data[++i] * scale);
+                        writer.Write(data[++i] * scale);
                         break;
 
                     case DataTypes.Vector3_360:
@@ -498,9 +522,9 @@ namespace HedgeLib.Models
 
                     case DataTypes.Vector4:
                         writer.Write(data[i] * scale);
-                        writer.Write(data[i + 1] * scale);
-                        writer.Write(data[i + 2] * scale);
-                        writer.Write(data[i + 3] * scale);
+                        writer.Write(data[++i] * scale);
+                        writer.Write(data[++i] * scale);
+                        writer.Write(data[++i] * scale);
                         break;
 
                     case DataTypes.Vector4_Byte:
