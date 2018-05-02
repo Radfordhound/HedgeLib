@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Dummy type="int" description="A dummy value. Has no in-game effect." />
+  <Extra type="model" value="chr_zavok.model" />
+  <Extra type="description" value="Unused form of ZAVAWK?! Seems to always crash the game." />
+  <Extra type="RawByteLength" length="4" />
+</Template>

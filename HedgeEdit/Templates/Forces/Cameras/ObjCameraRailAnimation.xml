@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <IsCameraView type="bool" description="Whether the positioning of this object is used as camera position(?)" />
+  <FOV type="float" default="45" description="The Field-Of-View of this camera." />
+  <UpDirType type="sbyte" description="Which up vector this object uses.">
+    <Enum description="World Y-Up" value="0" />
+    <Enum description="Object Y-Up" value="1" />
+  </UpDirType>
+  
+  <EyePathID type="uint" description="The UID of the path the camera looks along?" />
+  <EyePathOffset type="float" description="Distance from the path the camera looks along?" />
+  <AtPathID type="uint" description="The UID of the path the camera follows?" />
+  <AtPathOffset type="float" description="Distance from the path the camera follows?" />
+  
+  <Type type="sbyte" description="How to animate the camera.">
+    <Enum description="Time Driven" value="0" />
+    <Enum description="Player Position Driven" value="1" />
+    <Enum description="Eye Path Nearest Base" value="2" />
+    <Enum description="At Path Nearest Base" value="3" />
+  </Type>
+  
+  <MotionLength type="float" default="2.5" description="How long the animation takes to complete if Type is set to Time Driven?" />
+  <ReversePathAdvance type="bool" description="Whether or not to reverse the direction in which the camera advances along the path?" />
+  <CorrectTargetPoint type="bool" description="Whether or not to correct the target's position?" />
+  
+  <Extra type="description" value="A simple camera which just follows the player." />
+  <Extra type="RawByteLength" length="40" />
+</Template>

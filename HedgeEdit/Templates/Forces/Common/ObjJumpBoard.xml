@@ -3,7 +3,7 @@
   <ImpulseSpeedOnNormal type="float" default="500" description="How much speed the player will fly off with normally." />
   <ImpulseSpeedOnBoost type="float" default="500" description="How much speed the player will fly off with while boosting." />
   <OutOfControl type="float" default="2.5" description="How long the game locks your control for after coming in contact with this object." />
-  <MotionTime type="float" default="2.5" description="How long the player's ramp animation will last." />
+  <MotionTime type="float" default="2.5" description="How long the player will remain being flung forward/upwards before gravity begins to apply." />
   <DrawType type="byte" default="0" description="TODO">
 	<Enum description="Normal" value="0" />
     <Enum description="Rigidbody" value="1" />

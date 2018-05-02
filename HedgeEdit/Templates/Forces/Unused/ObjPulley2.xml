@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <PathUID type="uint" description="The UID of the path used by this object." />
+  <NodeList type="forcesObjectList" description="A list of ObjPulley2Nodes used for... something?" />
+  <StartPosition1D type="float" description="The 1-dimentional position within the given path at which the pulley will start." />
+  <EndPosition1D type="float" description="The 1-dimentional position within the given path at which the pulley will stop." />
+  <MinSpeed type="float" description="The amount of speed you'll zip along the given path just by grabbing the pulley." />
+  <MaxSpeed type="float" description="The maximum amount of speed you can zip along the given path if you grab the pulley at a fast pace." />
+  
+  <ColumnLength type="sbyte" description="How long this pulley's column is.">
+    <Enum description="Short" value="0" />
+    <Enum description="Long" value="1" />
+  </ColumnLength>
+  
+  <Event0>
+	<Targets type="forcesObjectList" description="The objects affected by this event." />
+	<Type type="sbyte" description="What type of signal to send to each affected object.">
+	  <Enum description="Turn On" value="0" />
+	  <Enum description="Turn Off" value="1" />
+	</Type>
+	<Timer type="float" description="How long to wait after this event is triggered before sending a signal to all affected objects." />
+  </Event0>
+
+  <Event1>
+	<Targets type="forcesObjectList" description="The objects affected by this event." />
+	<Type type="sbyte" description="What type of signal to send to each affected object.">
+	  <Enum description="Turn On" value="0" />
+	  <Enum description="Turn Off" value="1" />
+	</Type>
+	<Timer type="float" description="How long to wait after this event is triggered before sending a signal to all affected objects." />
+  </Event1>
+
+  <Event2>
+	<Targets type="forcesObjectList" description="The objects affected by this event." />
+	<Type type="sbyte" description="What type of signal to send to each affected object.">
+	  <Enum description="Turn On" value="0" />
+	  <Enum description="Turn Off" value="1" />
+	</Type>
+	<Timer type="float" description="How long to wait after this event is triggered before sending a signal to all affected objects." />
+  </Event2>
+  
+  <Extra type="model" value="cmn_obj_pulley.model" />
+  <Extra type="description" value="Unused variants of pulleys which come with columns." />
+  <Extra type="RawByteLength" length="152" />
+</Template>

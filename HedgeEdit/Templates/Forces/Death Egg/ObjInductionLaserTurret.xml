@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <SearchBoxExtents type="vector3" description="Search area." />
+  <SearchBoxOffset type="vector3" description="Distance of search area." />
+  <LaserSpeed type="float" description="Speed of the lasers." />
+  <LaserHomingKeepTime type="float" description="How long the lasers should continue to home-in on the player." />
+  <LaserRotateAngleMax type="float" description="The maximum angle the lasers can rotate to." />
+  <LaserNonHomingLength type="float" description="The length of the lasers when not homing-in on the player." />
+  <ChargeTime type="float" description="Time before shooting again." />
+  <LaserRange type="float" description="How far the lasers can be shot." />
+  <FireInterval type="float" description="How often lasers should be fired." />
+  <AttackAfterWaitTime type="float" description="After wait time, how long to fire." />
+  <LaunchLaserNum type="uint" description="How many lasers to shoot." />
+  
+  <Extra type="model" value="w1_obj_inductionlaser.model" />
+  <Extra type="description" value="A turret from Egg Gate which fires at the player." />
+  <Extra type="RawByteLength" length="80" />
+</Template>

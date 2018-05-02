@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <IsCameraView type="bool" description="Whether the positioning of this object is used as camera position(?)" />
+  <FOV type="float" default="45" description="The Field-Of-View of this camera." />
+  <PathUID type="uint" description="The UID of the path used by this object." />
+  <PathOffset type="float" default="1" description="How much this camera's position should be offset from the path." />
+  <GravityOffset type="float" default="0" description="How much to offset this camera's position in the direction of the player's gravity?" />
+  <PlayerOffset type="vector3" description="How much to offset this camera's position from the player's position." />
+  
+  <Extra type="description" value="A Camera set to follow the player along a path." />
+  <Extra type="RawByteLength" length="48" />
+</Template>

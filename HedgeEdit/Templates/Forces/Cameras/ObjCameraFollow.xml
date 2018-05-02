@@ -17,5 +17,6 @@
     <Enum description="Simple" value="1" />
   </FollowType>
   
+  <Extra type="description" value="A simple camera which just follows the player." />
   <Extra type="RawByteLength" length="96" />
 </Template>

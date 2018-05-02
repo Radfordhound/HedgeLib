@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Shape type="sbyte" description="The shape of this volume.">
+    <Enum description="Box" value="0" />
+    <Enum description="Sphere" value="1" />
+    <Enum description="Cylinder" value="2" />
+    <Enum description="Capsule" value="3" />
+  </Shape>
+  
+  <BasePoint type="sbyte" description="The origin of this volume?">
+    <Enum description="Center" value="0" />
+    <Enum description="Z Plane" value="1" />
+    <Enum description="X Plane" value="2" />
+    <Enum description="Y Plane" value="3" />
+  </BasePoint>
+  
+  <CollisionFilter type="sbyte" description="The filter used to determine what types of objects can trigger this volume.">
+    <Enum description="Default" value="0" />
+    <Enum description="Hit Enemy" value="1" />
+    <Enum description="All" value="2" />
+  </CollisionFilter>
+  
+  <Width type="float" description="The width of this volume." />
+  <Height type="float" description="The height of this volume." />
+  <Depth type="float" description="The depth of this volume." />
+  <AllowWhenLeave type="bool" description="Whether to allow you to become Super Sonic again after you leave the volume." />
+  <Initial type="bool" description="TODO (Is enabled by default?)" />
+  
+  <Extra type="description" value="A volume which disallows the usage of Super Sonic." />
+  <Extra type="RawByteLength" length="20" />
+</Template>

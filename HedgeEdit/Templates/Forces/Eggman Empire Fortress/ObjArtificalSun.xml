@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Dummy type="int" description="A dummy value. Has no in-game effect." />
+  <Extra type="model" value="w7_obj_artificialsun.model" />
+  <Extra type="description" value="The sun is falling in the sky beyond" />
+  <Extra type="RawByteLength" length="4" />
+</Template>

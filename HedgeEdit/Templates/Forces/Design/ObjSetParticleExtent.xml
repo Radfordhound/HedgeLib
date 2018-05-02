@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <ParticleName type="string" description="The name of the .cemt file this object uses (without the .cemt extension)." />
+  <Scale type="float" default="1" description="The scaling of this particle." />
+  <ColorR type="byte" default="255" description="The amount of red color in this particle." />
+  <ColorG type="byte" default="255" description="The amount of green color in this particle." />
+  <ColorB type="byte" default="255" description="The amount of blue color in this particle." />
+  <ColorA type="byte" default="255" description="The amount of alpha in this particle." />
+  
+  <Shape type="sbyte" description="The shape of this volume.">
+    <Enum description="Sphere" value="0" />
+    <Enum description="Box" value="1" />
+  </Shape>
+  
+  <Extents type="vector3" description="The size of this volume." />
+  <EmitPointType type="sbyte" description="What the particles will face.">
+    <Enum description="The Volume's Rotation" value="0" />
+    <Enum description="The Player" value="1" />
+  </EmitPointType>
+  
+  <DirectionType type="sbyte" description="The direction the effects will move along.">
+    <Enum description="Y-Up" value="0" />
+    <Enum description="Normal(?)" value="1" />
+    <Enum description="Random" value="2" />
+  </DirectionType>
+  
+  <Interval type="float" description="How long each effect lasts?" />
+  <LoopTime type="float" description="How long till it loops." />
+  <BottomExclusion type="bool" description="Excludes the bottom half." />
+  <UpperHalfOnly type="bool" description="Effects the upper part only." />
+  
+  <InitialState type="sbyte" description="Activity">
+    <Enum description="Active" value="0" />
+    <Enum description="Inactive" value="1" />
+  </InitialState>
+  
+  <SectorID type="int" default="0" description="The ID of the terrain sector this particle gets loaded-in with?" />
+  
+  <Extra type="description" value="Particles." />
+  <Extra type="RawByteLength" length="80" />
+</Template>

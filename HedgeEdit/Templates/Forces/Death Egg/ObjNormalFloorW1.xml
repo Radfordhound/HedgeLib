@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Size type="sbyte" description="The size of this object.">
+    <Enum description="Small (2M)" value="0" />
+    <Enum description="Medium (3M)" value="1" />
+    <Enum description="Large (5M)" value="2" />
+  </Size>
+  
+  <VisualType type="sbyte" description="Which type of floor to use.">
+    <Enum description="Type A" value="0" />
+    <Enum description="Type B" value="1" />
+  </VisualType>
+  
+  <MoveType type="sbyte" description="How this object moves.">
+    <Enum description="None" value="0" />
+    <Enum description="Point" value="1" />
+    <Enum description="Path" value="2" />
+  </MoveType>
+  
+  <PatrolType type="sbyte" description="How this object behaves after arriving at its destination. Return means the object will return to its starting point. Loop means the object will continue moving back and forth indefinitely. OneWay means the object will simply stop moving.">
+    <Enum description="Return" value="0" />
+    <Enum description="Loop" value="1" />
+    <Enum description="OneWay" value="2" />
+  </PatrolType>
+  
+  <TimeType type="sbyte" description="TODO">
+    <Enum description="Local" value="0" />
+    <Enum description="Global" value="1" />
+  </TimeType>
+  
+  <IsEventDriven type="bool" default="false" description="Whether this object is active by default or must be triggered by something first." />
+  <In3D type="bool" default="true" description="Whether this object is in a 3D section, or a 2D section." />
+  <IsOneway type="bool" default="true" description="Whether you can jump through this floor from the bottom." />
+  <DoesFall type="bool" description="Whether this floor will fall after the player stands on it for a while." />
+  <DoesBreak type="bool" description="Whether this floor will crumble into pieces after the player stands on it for a while." />
+  <IsSyncRot type="bool" description="Whether to sync rotation?" />
+  <IsSmoothMove type="bool" default="true" description="Whether this floor's movement is smoothed." />
+  <IsReverse type="bool" description="Whether this floor's movement is reversed?" />
+  <IsPressDead type="bool" description="TODO" />
+  <MoveVector type="vector3" description="The XYZ direction this floor moves in if MoveType == Point." />
+  <PathUID type="uint" description="The UID of the path used by this object if MoveType == Path." />
+  <LocatorList type="forcesObjectList" description="TODO" />
+  <WaitTime type="float" default="2" description="How long to wait before changing movement direction?" />
+  <InitialDelay type="float" default="0.5" description="How long the object waits before starting the normal active/inactive cycle." />
+  <Speed type="float" default="200" description="How fast this object moves." />
+  
+  <Extra type="description" value="Floating Platforms from stages in Death Egg zone." />
+  <Extra type="model" value="w1_obj_floorA_s_SV5x.model" condition="VisualType == 0 and not DoesFall and not In3D and not IsOneway and Size == 2" />
+  <Extra type="model" value="w1_obj_floorA_s_SV5.model" condition="VisualType == 0 and not DoesFall and not In3D and IsOneway and Size == 2" />
+  <Extra type="model" value="w1_obj_floorA_s_SV3x.model" condition="VisualType == 0 and not DoesFall and not In3D and not IsOneway and Size == 1" />
+  <Extra type="model" value="w1_obj_floorA_s_SV3.model" condition="VisualType == 0 and not DoesFall and not In3D and IsOneway and Size == 1" />
+  <Extra type="model" value="w1_obj_floorA_s_SV2x.model" condition="VisualType == 0 and not DoesFall and not In3D and not IsOneway and Size == 0" />
+  <Extra type="model" value="w1_obj_floorA_s_SV2.model" condition="VisualType == 0 and not DoesFall and not In3D and IsOneway and Size == 0" />
+  <Extra type="model" value="w1_obj_floorA_s_FV5x.model" condition="VisualType == 0 and not DoesFall and In3D and not IsOneway and Size == 2" />
+  <Extra type="model" value="w1_obj_floorA_s_FV5.model" condition="VisualType == 0 and not DoesFall and In3D and IsOneway and Size == 2" />
+  <Extra type="model" value="w1_obj_floorA_s_FV3x.model" condition="VisualType == 0 and not DoesFall and In3D and not IsOneway and Size == 1" />
+  <Extra type="model" value="w1_obj_floorA_s_FV3.model" condition="VisualType == 0 and not DoesFall and In3D and IsOneway and Size == 1" />
+  <Extra type="model" value="w1_obj_floorA_s_FV2x.model" condition="VisualType == 0 and not DoesFall and In3D and not IsOneway and Size == 0" />
+  <Extra type="model" value="w1_obj_floorA_s_FV2.model" condition="VisualType == 0 and not DoesFall and In3D and IsOneway and Size == 0" />
+  
+  <Extra type="model" value="w1_obj_floorA_f_SV5x.model" condition="VisualType == 0 and DoesFall and not In3D and not IsOneway and Size == 2" />
+  <Extra type="model" value="w1_obj_floorA_f_SV5.model" condition="VisualType == 0 and DoesFall and not In3D and IsOneway and Size == 2" />
+  <Extra type="model" value="w1_obj_floorA_f_SV3x.model" condition="VisualType == 0 and DoesFall and not In3D and not IsOneway and Size == 1" />
+  <Extra type="model" value="w1_obj_floorA_f_SV3.model" condition="VisualType == 0 and DoesFall and not In3D and IsOneway and Size == 1" />
+  <Extra type="model" value="w1_obj_floorA_f_SV2x.model" condition="VisualType == 0 and DoesFall and not In3D and not IsOneway and Size == 0" />
+  <Extra type="model" value="w1_obj_floorA_f_SV2.model" condition="VisualType == 0 and DoesFall and not In3D and IsOneway and Size == 0" />
+  <Extra type="model" value="w1_obj_floorA_f_FV5x.model" condition="VisualType == 0 and DoesFall and In3D and not IsOneway and Size == 2" />
+  <Extra type="model" value="w1_obj_floorA_f_FV5.model" condition="VisualType == 0 and DoesFall and In3D and IsOneway and Size == 2" />
+  <Extra type="model" value="w1_obj_floorA_f_FV3x.model" condition="VisualType == 0 and DoesFall and In3D and not IsOneway and Size == 1" />
+  <Extra type="model" value="w1_obj_floorA_f_FV3.model" condition="VisualType == 0 and DoesFall and In3D and IsOneway and Size == 1" />
+  <Extra type="model" value="w1_obj_floorA_f_FV2x.model" condition="VisualType == 0 and DoesFall and In3D and not IsOneway and Size == 0" />
+  <Extra type="model" value="w1_obj_floorA_f_FV2.model" condition="VisualType == 0 and DoesFall and In3D and IsOneway and Size == 0" />
+  <Extra type="RawByteLength" length="80" />
+</Template>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <ColumnLength type="sbyte" description="How long this pulley's column is.">
+    <Enum description="Short" value="0" />
+    <Enum description="Long" value="1" />
+  </ColumnLength>
+  
+  <Extra type="description" value="Unused node objects meant to be used by the unused ObjPulley2." />
+  <Extra type="RawByteLength" length="1" />
+</Template>

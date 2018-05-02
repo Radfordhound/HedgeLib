@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <IsCameraView type="bool" description="Whether the positioning of this object is used as camera position(?)" />
+  <FOV type="float" default="45" description="The Field-Of-View of this camera." />
+  <EnableLimitAngle type="bool" description="Whether to enable/disable the Azimuth angle limits." />
+  <AzimuthLimitAngle type="float" description="Angle limit for turning, includes azimuth. To understand what it means google azimuth, it is hard to explain." />
+  <GravityOffset type="float" description="How much to offset this camera's position in the direction of the player's gravity?" />
+  <PlayerOffset type="vector3" description="How much to offset this camera's position from the player's position." />
+  <LineOffset type="float" description="How much to distance the camera from the path the camera is currently following." />
+  <PositionMode type="sbyte" description="How the camera should be positioned.">
+    <Enum description="Fixed point" value="0" />
+    <Enum description="Maintain some distance" value="1" />
+  </PositionMode>
+  <Distance type="float" default="140" description="The distance this camera stays away from the player." />
+  
+  <Extra type="description" value="A camera which can be used to pan vertically." />
+  <Extra type="RawByteLength" length="64" />
+</Template>

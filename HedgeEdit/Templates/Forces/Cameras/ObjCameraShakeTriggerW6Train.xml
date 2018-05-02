@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <ContinuousShakeStatus padding="0">
+    <Magnitude type="float" default="4" description="How much the screen will constantly shake while within this volume." />
+    <Frequency type="int" default="6" description="How frequently this continuous shaking will occur." />
+    <ZRot type="float" description="How much the shaking should be rotated along the Z axis while within this volume." />
+  </ContinuousShakeStatus>
+  
+  <PeriodicShakeStatus padding="0">
+    <Magnitude type="float" default="4" description="How much the screen will shake periodically." />
+    <Frequency type="int" default="6" description="How frequently each shake should occur while periodically shaking." />
+    <ZRot type="float" description="How much the periodic shaking should be rotated along the Z axis." />
+    <ShakeTime type="float" default="0.5" description="How long to shake before stopping for CycleTime." />
+    <CycleTime type="float" default="2" description="How long to wait before shaking again." />
+  </PeriodicShakeStatus>
+  
+  <Width type="float" default="200" description="The width of this volume." />
+  <Height type="float" default="1000" description="The height of this volume." />
+  <Depth type="float" default="200" description="The depth of this volume." />
+  
+  <Extra type="description" value="A volume (not sure why this one is called a trigger) used in Null Space which causes the screen to SHAKEEE constantly, with a separate type of shake occurring periodically." />
+  <Extra type="RawByteLength" length="44" />
+</Template>

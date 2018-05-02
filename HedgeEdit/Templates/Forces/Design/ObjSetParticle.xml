@@ -7,11 +7,16 @@
   <ColorB type="byte" default="255" description="The amount of blue color in this particle." />
   <ColorA type="byte" default="255" description="The amount of alpha in this particle." />
   
-  <SoundName type="string" description="The name of the cue played by this object." />
-  <SoundIs3D type="bool" default="true" description="Whether the sound played by this object is three-dimensional." />
-  <SoundVolume type="float" default="1" description="The volume of the sound played by this object." />
+  <Sound padding="0">
+	<Name type="string" description="The name of the cue played by this object." />
+	<Is3D type="bool" default="true" description="Whether the sound played by this object is three-dimensional." />
+	<Volume type="float" default="1" description="The volume of the sound played by this object." />
+  </Sound>
   
-  <RumbleName type="string" description="TODO" />
+  <Rumble padding="0">
+    <Name type="string" description="TODO" />
+  </Rumble>
+  
   <Trigger type="byte" description="What activates this object. Range means the object is activated simply by the player coming within its range. Message means this object needs to be triggered by another object.">
 	<Enum description="Range" value="0" />
     <Enum description="Message" value="1" />

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <SizeType type="sbyte" description="Size">
+    <Enum description="Small" value="0" />
+    <Enum description="Big" value="1" />
+  </SizeType>
+  
+  <Hide type="bool" description="Whether this object should be invisible?" />
+  <Height type="float" description="The height of this ceiling." />
+  <FallTime type="float" description="How long the ceiling takes to fall all the way down." />
+  <FastFallDistance type="float" description="How far the ceiling will fall downwards?" />
+  <FastFallTime type="float" description="How long the ceiling will take to fall when triggered to fall faster?" />
+  <DoesLoop type="bool" description="Whether the ceiling will repeatedly fall/rise, or will only fall once and never move again." />
+  <RiseWaitTime type="float" description="How long until the ceiling rises up." />
+  <RiseTime type="float" description="How long the ceiling takes to rise." />
+  <FallWaitTime type="float" description="How long until the ceiling falls." />
+  
+  <Extra type="model" value="w1_obj_downceilingB.model" condition="SizeType == 0" />
+  <Extra type="model" value="w1_obj_downceilingA.model" condition="SizeType == 1" />
+  <Extra type="description" value="Falling ceilings from Egg Gate which crush you on contact." />
+  <Extra type="RawByteLength" length="36" />
+</Template>

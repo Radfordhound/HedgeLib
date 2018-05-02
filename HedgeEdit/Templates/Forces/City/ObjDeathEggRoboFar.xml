@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <StartTime type="float" description="How long the robots wait before beginning to animate." />
+  <Extra type="model" value="w3_obj_deatheggrobo_hi.model" />
+  <Extra type="description" value="The Death Egg Robots far away in the background of City Heights." />
+  <Extra length="4" name="RawByteLength" />
+</Template>

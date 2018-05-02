@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <IsCameraView type="bool" description="Whether the positioning of this object is used as camera position(?)" />
+  <FOV type="float" default="45" description="The Field-Of-View of this camera." />
+  <Distance type="float" default="140" description="The distance this camera stays away from the player." />
+  <GravityOffset type="float" default="0" description="How much to offset this camera's position in the direction of the player's gravity?" />
+  <PlayerOffset type="vector3" description="How much to offset this camera's position from the player's position." />
+  <WorldOffset type="vector3" description="How much to offset this camera's position from its position in the world." />
+  
+  <Extra type="description" value="An incredibly simple camera which just points in the direction of the object." />
+  <Extra type="RawByteLength" length="48" />
+</Template>

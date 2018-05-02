@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <TriggerObjects type="forcesObjectList" description="This event will be triggered once the RequiredAmount of objects in this list meet the given Condition." />
+  <Condition type="sbyte" description="The RequiredAmount of TriggerObjects need to be...">
+    <Enum description="Destroyed" value="0" />
+  </Condition>
+  
+  <RequiredAmount type="sbyte" description="How many TriggerObjects need to meet the given Condition.">
+    <Enum description="All of them" value="0" />
+    <Enum description="One or more" value="1" />
+  </RequiredAmount>
+  
+  <TimesType type="sbyte" description="How many times this event can be triggered.">
+    <Enum description="Once" value="0" />
+    <Enum description="Several Times" value="1" />
+  </TimesType>
+  
+  <Event0_Targets type="forcesObjectList" description="The objects affected by this event." />
+  <Event0_Type type="sbyte" description="What type of signal to send to each affected object.">
+    <Enum description="Turn On" value="0" />
+    <Enum description="Turn Off" value="1" />
+  </Event0_Type>
+  <Event0_Timer type="float" description="How long to wait after this event is triggered before sending a signal to all affected objects." />
+  
+  <Event1_Targets type="forcesObjectList" description="The objects affected by this event." />
+  <Event1_Type type="sbyte" description="What type of signal to send to each affected object.">
+    <Enum description="Turn On" value="0" />
+    <Enum description="Turn Off" value="1" />
+  </Event1_Type>
+  <Event1_Timer type="float" description="How long to wait after this event is triggered before sending a signal to all affected objects." />
+  
+  <Event2_Targets type="forcesObjectList" description="The objects affected by this event." />
+  <Event2_Type type="sbyte" description="What type of signal to send to each affected object.">
+    <Enum description="Turn On" value="0" />
+    <Enum description="Turn Off" value="1" />
+  </Event2_Type>
+  <Event2_Timer type="float" description="How long to wait after this event is triggered before sending a signal to all affected objects." />
+  
+  <Extra type="description" value="An object which triggers an event once a given condition is satisfied on a given amount of objects." />
+  <Extra type="RawByteLength" length="128" />
+</Template>

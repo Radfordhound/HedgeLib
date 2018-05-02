@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <IsCameraView type="bool" description="Whether the positioning of this object is used as camera position(?)" />
+  <FOV type="float" default="45" description="The Field-Of-View of this camera." />
+  <Distance type="float" default="140" description="The distance this camera stays away from the player." />
+  <DistanceOutOfEnergy type="float" default="125" description="The distance this camera stays away from the player if the double boost meter is ever fully-depleted." />
+  <PathUID type="uint" description="The UID of the path used by this object." />
+  <PathOffset type="float" default="1" description="How much this camera's position should be offset from the path." />
+  <ReversePathFront type="bool" default="false" description="Whether to use the back of the path as the front, and vice-versa." />
+  <TargetOffset type="vector3" description="The amount this camera's position is offset from the target's position." />
+  <TargetOffset type="vector3" description="The amount this camera's position is offset from the target's position if the double boost meter is ever fully-depleted." />
+  <AzimuthOffsetDeg type="float" description="I'm really tired and this one's hard to explain, please just google azimuth thx." />
+  <Elevation type="float" description="The elevation of this camera." />
+  <SideFollowRate type="float" description="How much it follows you sideways" />
+  <UpFollowRate type="float" description="How much it follows you upwards" />
+  <ShakeOffset type="float" description="Shaking distance" />
+  
+  <Extra type="description" value="A camera designed specifically to be used during a double boost section." />
+  <Extra type="RawByteLength" length="96" />
+</Template>

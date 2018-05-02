@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <IsReversed type="bool" default="false" description="Whether this object is reversed or not." />
+  <Extra type="model" value="cmn_obj_thorngrind.model" />
+  <Extra type="description" value="Spikes on grind rails. Can you even imagine the amount of pain you'd experience if you ran into one of these in real life?" />
+  <Extra length="1" name="RawByteLength" />
+</Template>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <IsEventDriven type="bool" default="false" description="Whether this object is active by default or must be triggered by something first." />
+  <IsClockWise type="bool" description="Clockwsise/Anticlockwise" />
+  <MoveTime type="float" description="How long this object moves." />
+  <Speed type="float" default="500" description="How much speed this object will send you off with." />
+  <OutOfControl type="float" default="0.5" description="How long the game locks your control for after coming in contact with this object." />
+  <KeepVelocityDistance type="float" default="0.25" description="How long you keep your velocity gained from this object before gravity takes effect." />
+  
+  <Extra type="model" value="cmn_obj_spring.model" />
+  <Extra type="description" value="Blocks from Egg Gate with a spring attached which quickly shift upwards when the player comes in contact with them. 'I don't do well in tight spaces'" />
+  <Extra type="RawByteLength" length="20" />
+</Template>

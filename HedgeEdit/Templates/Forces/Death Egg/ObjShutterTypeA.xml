@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <SlideTime type="float" default="1.65" description="How long before the doors slide shut." />
+  <FastSlideDistance type="float" default="10" description="How far the doors need to slide to fully close?" />
+  <FastSlideTime type="float" default="0.05" description="How long the doors take to finish closing?" />
+  
+  <Extra type="model" value="w1_obj_shutterR_A.model" />
+  <!-- TODO: Make it so you can have multiple models per-object, and add this: w1_obj_shutterL_A.model -->
+  <Extra type="description" value="Doors from Prison Hall which can close in on a player." />
+  <Extra type="RawByteLength" length="12" />
+</Template>

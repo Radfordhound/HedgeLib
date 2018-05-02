@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <EffectType type="sbyte" description="The type of effect to emit throughout this volume.">
+    <Enum description="Fire Sparks" value="0" />
+    <Enum description="Snow" value="1" />
+    <Enum description="Noise (Unused/Glitchy)" value="2" />
+    <Enum description="Hide Particles?" value="3" />
+  </EffectType>
+  
+  <IsOnlyScreenSpace type="bool" description="Whether the effects should be in world-space (3D effects in the world), or only in screen-space (2D effects drawn on the screen)." />
+  <EmitterCount type="uint" description="How many particle emitters there should be within this volume." />
+  
+  <Shape type="sbyte" description="The shape of this volume.">
+    <Enum description="Box" value="0" />
+    <Enum description="Sphere" value="1" />
+  </Shape>
+  
+  <Priority type="uint" description="The priority of this volume. Higher-priority volumes take precedence." />
+  <Width type="float" description="The width of this volume." />
+  <Height type="float" description="The height of this volume." />
+  <Depth type="float" description="The depth of this volume." />
+  <ZOffset type="float" description="How far within the volume (along the Z axis) the effects will be emitted?" />
+  
+  <Extra type="description" value="Volumes which emit a given particle effect throughout themselves. Used for effects like fire sparks or snow floating through the air." />
+  <Extra type="RawByteLength" length="32" />
+</Template>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <IsCameraView type="bool" description="Whether the positioning of this object is used as camera position(?)" />
+  <FOV type="float" default="45" description="The Field-Of-View of this camera." />
+  <Distance type="float" default="140" description="The distance this camera stays away from the player." />
+  <Elevation type="float" description="The elevation of this camera." />
+  <GravityOffset type="float" description="How much to offset this camera's position in the direction of the player's gravity?" />
+  <PlayerOffset type="vector3" description="How much to offset this camera's position from the player's position." />
+  
+  <Extra type="description" value="A camera which will only follow the player vertically (X and Z movement will be ignored)." />
+  <Extra type="RawByteLength" length="48" />
+</Template>

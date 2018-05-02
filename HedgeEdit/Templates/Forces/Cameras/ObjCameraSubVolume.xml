@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Template>
+  <Target type="forcesObjectReference" description="The camera object that this volume activates." />
+  <Shape type="sbyte" description="The shape of this volume.">
+    <Enum description="Box" value="0" />
+    <Enum description="Sphere" value="1" />
+    <Enum description="Cylinder" value="2" />
+  </Shape>
+  <BasePoint type="sbyte" description="Starting point of the volume?">
+    <Enum description="At the center" value="0" />
+    <Enum description="Z-Axis plane?" value="1" />
+  </BasePoint>
+  
+  <Width type="float" default="200" description="The width of this volume." />
+  <Height type="float" default="1000" description="The height of this volume." />
+  <Depth type="float" default="200" description="The depth of this volume." />
+  
+  <Extra type="description" value="A volume which changes the current camera. Takes precedence over ObjCameraVolumes?" />
+  <Extra type="RawByteLength" length="20" />
+</Template>
