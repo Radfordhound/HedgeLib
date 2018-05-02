@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.MouseWheel += MouseScroll;
+            this.components = new System.ComponentModel.Container();
             this.menuStrip = new System.Windows.Forms.MenuStrip();
             this.fileMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.newMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -46,25 +47,24 @@
             this.selectSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.cutMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.copyMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.pasteMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.PasteMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.deleteMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.selectSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.selectAllMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.selectNoneMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.selectSeparator3 = new System.Windows.Forms.ToolStripSeparator();
-            this.sceneViewMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.assetsDialogMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.SceneViewMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.AssetsDialogMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.viewSelectedMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.luaMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.openLuaTerminalMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewport = new OpenTK.GLControl();
             this.mainSplitContainer = new System.Windows.Forms.SplitContainer();
-            this.topSplitContainer = new System.Windows.Forms.SplitContainer();
-            this.addObjectBtn = new System.Windows.Forms.Button();
             this.removeObjectBtn = new System.Windows.Forms.Button();
-            this.objectCountLbl = new System.Windows.Forms.Label();
-            this.bottomSplitContainer = new System.Windows.Forms.SplitContainer();
+            this.leftSplitContainer = new System.Windows.Forms.SplitContainer();
+            this.horzSplitter = new System.Windows.Forms.Label();
+            this.tableLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
             this.rotZBox = new System.Windows.Forms.TextBox();
             this.rotYBox = new System.Windows.Forms.TextBox();
             this.rotXBox = new System.Windows.Forms.TextBox();
@@ -74,9 +74,9 @@
             this.viewSelectedBtn = new System.Windows.Forms.Button();
             this.objectSelectedLbl = new System.Windows.Forms.Label();
             this.objectProperties = new PropertyGridEx.PropertyGridEx();
+            this.objectTypeLbl = new System.Windows.Forms.Label();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.objectTypeLbl = new System.Windows.Forms.Label();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.statusBarLbl = new System.Windows.Forms.ToolStripStatusLabel();
             this.statusBarProgressBar = new System.Windows.Forms.ToolStripProgressBar();
@@ -85,14 +85,10 @@
             this.mainSplitContainer.Panel1.SuspendLayout();
             this.mainSplitContainer.Panel2.SuspendLayout();
             this.mainSplitContainer.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.topSplitContainer)).BeginInit();
-            this.topSplitContainer.Panel1.SuspendLayout();
-            this.topSplitContainer.Panel2.SuspendLayout();
-            this.topSplitContainer.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.bottomSplitContainer)).BeginInit();
-            this.bottomSplitContainer.Panel1.SuspendLayout();
-            this.bottomSplitContainer.Panel2.SuspendLayout();
-            this.bottomSplitContainer.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.leftSplitContainer)).BeginInit();
+            this.leftSplitContainer.Panel1.SuspendLayout();
+            this.leftSplitContainer.Panel2.SuspendLayout();
+            this.leftSplitContainer.SuspendLayout();
             this.statusStrip.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -144,23 +140,23 @@
             this.openMenuItem.Text = "&Open...";
             this.openMenuItem.Click += new System.EventHandler(this.OpenMenuItem_Click);
             // 
-            // saveSetsMenuItem
+            // SaveSetsMenuItem
             // 
-            this.SaveSetsMenuItem.Name = "saveSetsMenuItem";
+            this.SaveSetsMenuItem.Enabled = false;
+            this.SaveSetsMenuItem.Name = "SaveSetsMenuItem";
             this.SaveSetsMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
             this.SaveSetsMenuItem.Size = new System.Drawing.Size(195, 22);
             this.SaveSetsMenuItem.Text = "&Save Sets";
-            this.SaveSetsMenuItem.Enabled = false;
             this.SaveSetsMenuItem.Click += new System.EventHandler(this.SaveSetsMenuItem_Click);
             // 
             // saveAllMenuItem
             // 
+            this.saveAllMenuItem.Enabled = false;
             this.saveAllMenuItem.Name = "saveAllMenuItem";
             this.saveAllMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift) 
             | System.Windows.Forms.Keys.S)));
             this.saveAllMenuItem.Size = new System.Drawing.Size(195, 22);
             this.saveAllMenuItem.Text = "Save &All";
-            this.saveAllMenuItem.Enabled = false;
             this.saveAllMenuItem.Click += new System.EventHandler(this.SaveAllMenuItem_Click);
             // 
             // fileSeparator1
@@ -203,14 +199,14 @@
             this.selectSeparator1,
             this.cutMenuItem,
             this.copyMenuItem,
-            this.pasteMenuItem,
+            this.PasteMenuItem,
             this.deleteMenuItem,
             this.selectSeparator2,
             this.selectAllMenuItem,
             this.selectNoneMenuItem,
             this.selectSeparator3,
-            this.sceneViewMenuItem,
-            this.assetsDialogMenuItem});
+            this.SceneViewMenuItem,
+            this.AssetsDialogMenuItem});
             this.editMenu.Name = "editMenu";
             this.editMenu.Size = new System.Drawing.Size(39, 22);
             this.editMenu.Text = "&Edit";
@@ -257,14 +253,14 @@
             this.copyMenuItem.Text = "&Copy";
             this.copyMenuItem.Click += new System.EventHandler(this.CopyMenuItem_Click);
             // 
-            // pasteMenuItem
+            // PasteMenuItem
             // 
-            this.pasteMenuItem.Enabled = false;
-            this.pasteMenuItem.Name = "pasteMenuItem";
-            this.pasteMenuItem.ShortcutKeyDisplayString = "Ctrl+V";
-            this.pasteMenuItem.Size = new System.Drawing.Size(179, 22);
-            this.pasteMenuItem.Text = "&Paste";
-            this.pasteMenuItem.Click += new System.EventHandler(this.PasteMenuItem_Click);
+            this.PasteMenuItem.Enabled = false;
+            this.PasteMenuItem.Name = "PasteMenuItem";
+            this.PasteMenuItem.ShortcutKeyDisplayString = "Ctrl+V";
+            this.PasteMenuItem.Size = new System.Drawing.Size(179, 22);
+            this.PasteMenuItem.Text = "&Paste";
+            this.PasteMenuItem.Click += new System.EventHandler(this.PasteMenuItem_Click);
             // 
             // deleteMenuItem
             // 
@@ -302,22 +298,23 @@
             this.selectSeparator3.Name = "selectSeparator3";
             this.selectSeparator3.Size = new System.Drawing.Size(176, 6);
             // 
-            // sceneViewMenuItem
+            // SceneViewMenuItem
             // 
-            this.sceneViewMenuItem.Name = "sceneViewMenuItem";
-            this.sceneViewMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.E)));
-            this.sceneViewMenuItem.Size = new System.Drawing.Size(179, 22);
-            this.sceneViewMenuItem.Text = "Scene &View";
-            this.sceneViewMenuItem.Click += new System.EventHandler(this.SceneViewMenuItem_Click);
-            this.sceneViewMenuItem.CheckOnClick = true;
+            this.SceneViewMenuItem.CheckOnClick = true;
+            this.SceneViewMenuItem.Name = "SceneViewMenuItem";
+            this.SceneViewMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.E)));
+            this.SceneViewMenuItem.Size = new System.Drawing.Size(179, 22);
+            this.SceneViewMenuItem.Text = "Scene &View";
+            this.SceneViewMenuItem.Click += new System.EventHandler(this.SceneViewMenuItem_Click);
             // 
-            // assetsDialogMenuItem
+            // AssetsDialogMenuItem
             // 
-            this.assetsDialogMenuItem.Name = "assetsDialogMenuItem";
-            this.assetsDialogMenuItem.Size = new System.Drawing.Size(179, 22);
-            this.assetsDialogMenuItem.Text = "A&ssets Dialog";
-            this.assetsDialogMenuItem.Click += new System.EventHandler(this.AssetsDialogMenuItem_Click);
-            this.assetsDialogMenuItem.CheckOnClick = true;
+            this.AssetsDialogMenuItem.CheckOnClick = true;
+            this.AssetsDialogMenuItem.Name = "AssetsDialogMenuItem";
+            this.AssetsDialogMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.R)));
+            this.AssetsDialogMenuItem.Size = new System.Drawing.Size(179, 22);
+            this.AssetsDialogMenuItem.Text = "A&ssets Dialog";
+            this.AssetsDialogMenuItem.Click += new System.EventHandler(this.AssetsDialogMenuItem_Click);
             // 
             // viewMenu
             // 
@@ -375,54 +372,16 @@
             // 
             // mainSplitContainer.Panel1
             // 
-            this.mainSplitContainer.Panel1.Controls.Add(this.topSplitContainer);
+            this.mainSplitContainer.Panel1.Controls.Add(this.leftSplitContainer);
             this.mainSplitContainer.Panel1MinSize = 180;
             // 
             // mainSplitContainer.Panel2
             // 
             this.mainSplitContainer.Panel2.Controls.Add(this.viewport);
-            this.mainSplitContainer.Size = new System.Drawing.Size(534, 365);
+            this.mainSplitContainer.Size = new System.Drawing.Size(534, 569);
             this.mainSplitContainer.SplitterDistance = 180;
             this.mainSplitContainer.SplitterWidth = 3;
             this.mainSplitContainer.TabIndex = 2;
-            // 
-            // topSplitContainer
-            // 
-            this.topSplitContainer.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.topSplitContainer.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
-            this.topSplitContainer.Location = new System.Drawing.Point(0, 0);
-            this.topSplitContainer.Margin = new System.Windows.Forms.Padding(2);
-            this.topSplitContainer.Name = "topSplitContainer";
-            this.topSplitContainer.Orientation = System.Windows.Forms.Orientation.Horizontal;
-            // 
-            // topSplitContainer.Panel1
-            // 
-            this.topSplitContainer.Panel1.Controls.Add(this.addObjectBtn);
-            this.topSplitContainer.Panel1.Controls.Add(this.removeObjectBtn);
-            this.topSplitContainer.Panel1.Controls.Add(this.objectCountLbl);
-            this.topSplitContainer.Panel1MinSize = 75;
-            // 
-            // topSplitContainer.Panel2
-            // 
-            this.topSplitContainer.Panel2.Controls.Add(this.bottomSplitContainer);
-            this.topSplitContainer.Panel2MinSize = 70;
-            this.topSplitContainer.Size = new System.Drawing.Size(180, 365);
-            this.topSplitContainer.SplitterDistance = 75;
-            this.topSplitContainer.SplitterWidth = 3;
-            this.topSplitContainer.TabIndex = 1;
-            // 
-            // addObjectBtn
-            // 
-            this.addObjectBtn.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.addObjectBtn.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.addObjectBtn.Location = new System.Drawing.Point(5, 27);
-            this.addObjectBtn.Margin = new System.Windows.Forms.Padding(2);
-            this.addObjectBtn.Name = "addObjectBtn";
-            this.addObjectBtn.Size = new System.Drawing.Size(170, 19);
-            this.addObjectBtn.TabIndex = 1;
-            this.addObjectBtn.Text = "&Add Object";
-            this.addObjectBtn.UseVisualStyleBackColor = true;
             // 
             // removeObjectBtn
             // 
@@ -430,8 +389,8 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.removeObjectBtn.Enabled = false;
             this.removeObjectBtn.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.removeObjectBtn.Location = new System.Drawing.Point(5, 51);
-            this.removeObjectBtn.Margin = new System.Windows.Forms.Padding(2);
+            this.removeObjectBtn.Location = new System.Drawing.Point(5, 107);
+            this.removeObjectBtn.Margin = new System.Windows.Forms.Padding(6);
             this.removeObjectBtn.Name = "removeObjectBtn";
             this.removeObjectBtn.Size = new System.Drawing.Size(170, 19);
             this.removeObjectBtn.TabIndex = 2;
@@ -439,54 +398,71 @@
             this.removeObjectBtn.UseVisualStyleBackColor = true;
             this.removeObjectBtn.Click += RemoveObject;
             // 
-            // objectCountLbl
+            // leftSplitContainer
             // 
-            this.objectCountLbl.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.objectCountLbl.Font = new System.Drawing.Font("Segoe UI", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.objectCountLbl.Location = new System.Drawing.Point(0, 0);
-            this.objectCountLbl.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
-            this.objectCountLbl.Name = "objectCountLbl";
-            this.objectCountLbl.Padding = new System.Windows.Forms.Padding(0, 3, 0, 0);
-            this.objectCountLbl.Size = new System.Drawing.Size(180, 75);
-            this.objectCountLbl.TabIndex = 0;
-            this.objectCountLbl.Text = "0 Objects";
-            this.objectCountLbl.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.leftSplitContainer.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.leftSplitContainer.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
+            this.leftSplitContainer.Location = new System.Drawing.Point(0, 0);
+            this.leftSplitContainer.Margin = new System.Windows.Forms.Padding(0);
+            this.leftSplitContainer.Name = "leftSplitContainer";
+            this.leftSplitContainer.Orientation = System.Windows.Forms.Orientation.Horizontal;
             // 
-            // bottomSplitContainer
+            // leftSplitContainer.Panel1
             // 
-            this.bottomSplitContainer.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.bottomSplitContainer.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
-            this.bottomSplitContainer.Location = new System.Drawing.Point(0, 0);
-            this.bottomSplitContainer.Margin = new System.Windows.Forms.Padding(0);
-            this.bottomSplitContainer.Name = "bottomSplitContainer";
-            this.bottomSplitContainer.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            this.leftSplitContainer.Panel1.Controls.Add(this.horzSplitter);
+            this.leftSplitContainer.Panel1.Controls.Add(this.tableLayoutPanel);
+            this.leftSplitContainer.Panel1.Controls.Add(this.viewSelectedBtn);
+            this.leftSplitContainer.Panel1.Controls.Add(this.removeObjectBtn);
+            this.leftSplitContainer.Panel1.Controls.Add(this.objectSelectedLbl);
+            this.leftSplitContainer.Panel1MinSize = 128;
             // 
-            // bottomSplitContainer.Panel1
+            // leftSplitContainer.Panel2
             // 
-            this.bottomSplitContainer.Panel1.Controls.Add(this.rotZBox);
-            this.bottomSplitContainer.Panel1.Controls.Add(this.rotYBox);
-            this.bottomSplitContainer.Panel1.Controls.Add(this.rotXBox);
-            this.bottomSplitContainer.Panel1.Controls.Add(this.posZBox);
-            this.bottomSplitContainer.Panel1.Controls.Add(this.posYBox);
-            this.bottomSplitContainer.Panel1.Controls.Add(this.posXBox);
-            this.bottomSplitContainer.Panel1.Controls.Add(this.viewSelectedBtn);
-            this.bottomSplitContainer.Panel1.Controls.Add(this.objectSelectedLbl);
-            this.bottomSplitContainer.Panel1MinSize = 90;
+            this.leftSplitContainer.Panel2.Controls.Add(this.objectProperties);
+            this.leftSplitContainer.Panel2.Controls.Add(this.objectTypeLbl);
+            this.leftSplitContainer.Size = new System.Drawing.Size(180, 257);
+            this.leftSplitContainer.SplitterDistance = 128;
+            this.leftSplitContainer.SplitterWidth = 6;
+            this.leftSplitContainer.TabIndex = 0;
             // 
-            // bottomSplitContainer.Panel2
+            // horzSplitter
             // 
-            this.bottomSplitContainer.Panel2.Controls.Add(this.objectProperties);
-            this.bottomSplitContainer.Panel2.Controls.Add(this.objectTypeLbl);
-            this.bottomSplitContainer.Size = new System.Drawing.Size(180, 287);
-            this.bottomSplitContainer.SplitterDistance = 90;
-            this.bottomSplitContainer.TabIndex = 0;
+            this.horzSplitter.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.horzSplitter.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.horzSplitter.Location = new System.Drawing.Point(0, 34);
+            this.horzSplitter.Name = "horzSplitter";
+            this.horzSplitter.Size = new System.Drawing.Size(180, 2);
+            this.horzSplitter.TabIndex = 1;
+            // 
+            // tableLayoutPanel
+            // 
+            this.tableLayoutPanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.tableLayoutPanel.Controls.Add(this.rotZBox, 2, 1);
+            this.tableLayoutPanel.Controls.Add(this.rotYBox, 1, 1);
+            this.tableLayoutPanel.Controls.Add(this.rotXBox, 1, 0);
+            this.tableLayoutPanel.Controls.Add(this.posZBox, 2, 0);
+            this.tableLayoutPanel.Controls.Add(this.posYBox, 1, 0);
+            this.tableLayoutPanel.Controls.Add(this.posXBox, 0, 0);
+            this.tableLayoutPanel.ColumnCount = 3;
+            this.tableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33.33333333333333F));
+            this.tableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33.33333333333333F));
+            this.tableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33.33333333333333F));
+            this.tableLayoutPanel.Location = new System.Drawing.Point(0, 35);
+            this.tableLayoutPanel.Name = "tableLayoutPanel";
+            this.tableLayoutPanel.RowCount = 2;
+            this.tableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel.Size = new System.Drawing.Size(180, 45);
+            this.tableLayoutPanel.TabIndex = 1;
             // 
             // rotZBox
             // 
             this.rotZBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.rotZBox.Enabled = false;
-            this.rotZBox.Location = new System.Drawing.Point(121, 45);
+            this.rotZBox.Location = new System.Drawing.Point(0, 0);
             this.rotZBox.Margin = new System.Windows.Forms.Padding(2);
             this.rotZBox.Name = "rotZBox";
             this.rotZBox.Size = new System.Drawing.Size(54, 20);
@@ -498,10 +474,10 @@
             // 
             // rotYBox
             // 
-            this.rotYBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            this.rotYBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.rotYBox.Enabled = false;
-            this.rotYBox.Location = new System.Drawing.Point(63, 45);
+            this.rotYBox.Location = new System.Drawing.Point(63, 61);
             this.rotYBox.Margin = new System.Windows.Forms.Padding(2);
             this.rotYBox.Name = "rotYBox";
             this.rotYBox.Size = new System.Drawing.Size(54, 20);
@@ -513,10 +489,10 @@
             // 
             // rotXBox
             // 
-            this.rotXBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            this.rotXBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.rotXBox.Enabled = false;
-            this.rotXBox.Location = new System.Drawing.Point(5, 45);
+            this.rotXBox.Location = new System.Drawing.Point(5, 61);
             this.rotXBox.Margin = new System.Windows.Forms.Padding(2);
             this.rotXBox.Name = "rotXBox";
             this.rotXBox.Size = new System.Drawing.Size(54, 20);
@@ -528,10 +504,10 @@
             // 
             // posZBox
             // 
-            this.posZBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            this.posZBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.posZBox.Enabled = false;
-            this.posZBox.Location = new System.Drawing.Point(121, 24);
+            this.posZBox.Location = new System.Drawing.Point(121, 40);
             this.posZBox.Margin = new System.Windows.Forms.Padding(2);
             this.posZBox.Name = "posZBox";
             this.posZBox.Size = new System.Drawing.Size(54, 20);
@@ -543,10 +519,10 @@
             // 
             // posYBox
             // 
-            this.posYBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            this.posYBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.posYBox.Enabled = false;
-            this.posYBox.Location = new System.Drawing.Point(63, 24);
+            this.posYBox.Location = new System.Drawing.Point(63, 40);
             this.posYBox.Margin = new System.Windows.Forms.Padding(2);
             this.posYBox.Name = "posYBox";
             this.posYBox.Size = new System.Drawing.Size(54, 20);
@@ -558,10 +534,10 @@
             // 
             // posXBox
             // 
-            this.posXBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            this.posXBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.posXBox.Enabled = false;
-            this.posXBox.Location = new System.Drawing.Point(5, 24);
+            this.posXBox.Location = new System.Drawing.Point(5, 40);
             this.posXBox.Margin = new System.Windows.Forms.Padding(2);
             this.posXBox.Name = "posXBox";
             this.posXBox.Size = new System.Drawing.Size(54, 20);
@@ -573,12 +549,12 @@
             // 
             // viewSelectedBtn
             // 
-            this.viewSelectedBtn.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            this.viewSelectedBtn.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.viewSelectedBtn.Enabled = false;
             this.viewSelectedBtn.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.viewSelectedBtn.Location = new System.Drawing.Point(5, 69);
-            this.viewSelectedBtn.Margin = new System.Windows.Forms.Padding(2);
+            this.viewSelectedBtn.Location = new System.Drawing.Point(5, 85);
+            this.viewSelectedBtn.Margin = new System.Windows.Forms.Padding(6);
             this.viewSelectedBtn.Name = "viewSelectedBtn";
             this.viewSelectedBtn.Size = new System.Drawing.Size(170, 19);
             this.viewSelectedBtn.TabIndex = 2;
@@ -596,32 +572,46 @@
             this.objectSelectedLbl.Padding = new System.Windows.Forms.Padding(0, 3, 0, 0);
             this.objectSelectedLbl.Size = new System.Drawing.Size(180, 90);
             this.objectSelectedLbl.TabIndex = 1;
-            this.objectSelectedLbl.Text = "0 Object(s) Selected";
+            this.objectSelectedLbl.Text = "0 Objects\nNothing Selected";
             this.objectSelectedLbl.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
             // objectProperties
             // 
+            this.objectProperties.AutoSizeProperties = true;
+            // 
+            // 
+            // 
+            this.objectProperties.DocCommentDescription.AccessibleName = "";
+            this.objectProperties.DocCommentDescription.Location = new System.Drawing.Point(3, 24);
+            this.objectProperties.DocCommentDescription.Name = "";
+            this.objectProperties.DocCommentDescription.Size = new System.Drawing.Size(174, 31);
+            this.objectProperties.DocCommentDescription.TabIndex = 1;
+            this.objectProperties.DocCommentImage = null;
+            // 
+            // 
+            // 
+            this.objectProperties.DocCommentTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold);
+            this.objectProperties.DocCommentTitle.Location = new System.Drawing.Point(3, 3);
+            this.objectProperties.DocCommentTitle.Name = "";
+            this.objectProperties.DocCommentTitle.Size = new System.Drawing.Size(174, 21);
+            this.objectProperties.DocCommentTitle.TabIndex = 0;
             this.objectProperties.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.objectProperties.DrawFlatToolbar = true;
             this.objectProperties.Location = new System.Drawing.Point(0, 23);
             this.objectProperties.Margin = new System.Windows.Forms.Padding(2);
             this.objectProperties.Name = "objectProperties";
+            this.objectProperties.PropertySort = System.Windows.Forms.PropertySort.Categorized;
+            this.objectProperties.ShowCustomPropertiesSet = true;
             this.objectProperties.Size = new System.Drawing.Size(180, 170);
             this.objectProperties.TabIndex = 0;
-            this.objectProperties.AutoSizeProperties = true;
-            this.objectProperties.ShowCustomPropertiesSet = true;
-            this.objectProperties.DrawFlatToolbar = true;
-            this.objectProperties.PropertySort = System.Windows.Forms.PropertySort.Categorized;
+            // 
+            // 
+            // 
             this.objectProperties.ToolStrip.BackColor = System.Drawing.Color.White;
-            // 
-            // columnHeader1
-            // 
-            this.columnHeader1.Text = "Name";
-            this.columnHeader1.Width = 150;
-            // 
-            // columnHeader2
-            // 
-            this.columnHeader2.Text = "Value";
-            this.columnHeader2.Width = 90;
+            this.objectProperties.ToolStrip.Location = new System.Drawing.Point(0, 0);
+            this.objectProperties.ToolStrip.Name = "";
+            this.objectProperties.ToolStrip.Size = new System.Drawing.Size(180, 25);
+            this.objectProperties.ToolStrip.TabIndex = 1;
             // 
             // objectTypeLbl
             // 
@@ -634,6 +624,16 @@
             this.objectTypeLbl.Size = new System.Drawing.Size(180, 23);
             this.objectTypeLbl.TabIndex = 2;
             this.objectTypeLbl.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            // 
+            // columnHeader1
+            // 
+            this.columnHeader1.Text = "Name";
+            this.columnHeader1.Width = 150;
+            // 
+            // columnHeader2
+            // 
+            this.columnHeader2.Text = "Value";
+            this.columnHeader2.Width = 90;
             // 
             // statusStrip
             // 
@@ -677,24 +677,20 @@
             this.MinimumSize = new System.Drawing.Size(550, 450);
             this.Name = "MainFrm";
             this.Text = "HedgeEdit";
-            this.Load += new System.EventHandler(this.MainFrm_Load);
             this.Activated += new System.EventHandler(this.MainFrm_Activate);
             this.Deactivate += new System.EventHandler(this.MainFrm_Deactivate);
+            this.Load += new System.EventHandler(this.MainFrm_Load);
             this.menuStrip.ResumeLayout(false);
             this.menuStrip.PerformLayout();
             this.mainSplitContainer.Panel1.ResumeLayout(false);
             this.mainSplitContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.mainSplitContainer)).EndInit();
             this.mainSplitContainer.ResumeLayout(false);
-            this.topSplitContainer.Panel1.ResumeLayout(false);
-            this.topSplitContainer.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.topSplitContainer)).EndInit();
-            this.topSplitContainer.ResumeLayout(false);
-            this.bottomSplitContainer.Panel1.ResumeLayout(false);
-            this.bottomSplitContainer.Panel1.PerformLayout();
-            this.bottomSplitContainer.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.bottomSplitContainer)).EndInit();
-            this.bottomSplitContainer.ResumeLayout(false);
+            this.leftSplitContainer.Panel1.ResumeLayout(false);
+            this.leftSplitContainer.Panel1.PerformLayout();
+            this.leftSplitContainer.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.leftSplitContainer)).EndInit();
+            this.leftSplitContainer.ResumeLayout(false);
             this.statusStrip.ResumeLayout(false);
             this.statusStrip.PerformLayout();
             this.ResumeLayout(false);
@@ -722,7 +718,7 @@
         private System.Windows.Forms.ToolStripSeparator selectSeparator1;
         private System.Windows.Forms.ToolStripMenuItem cutMenuItem;
         private System.Windows.Forms.ToolStripMenuItem copyMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem pasteMenuItem;
+        public System.Windows.Forms.ToolStripMenuItem PasteMenuItem;
         private System.Windows.Forms.ToolStripMenuItem deleteMenuItem;
         private System.Windows.Forms.ToolStripSeparator selectSeparator2;
         private System.Windows.Forms.ToolStripMenuItem selectAllMenuItem;
@@ -732,13 +728,12 @@
         private System.Windows.Forms.ToolStripMenuItem openLuaTerminalMenuItem;
         private OpenTK.GLControl viewport;
         private System.Windows.Forms.SplitContainer mainSplitContainer;
-        private System.Windows.Forms.Label objectCountLbl;
-        private System.Windows.Forms.Button addObjectBtn;
         private System.Windows.Forms.Button removeObjectBtn;
-        private System.Windows.Forms.SplitContainer topSplitContainer;
-        private System.Windows.Forms.SplitContainer bottomSplitContainer;
+        private System.Windows.Forms.SplitContainer leftSplitContainer;
         private System.Windows.Forms.Label objectSelectedLbl;
         private System.Windows.Forms.Button viewSelectedBtn;
+        private System.Windows.Forms.Label horzSplitter;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel;
         private System.Windows.Forms.TextBox posZBox;
         private System.Windows.Forms.TextBox posYBox;
         private System.Windows.Forms.TextBox posXBox;
@@ -750,8 +745,8 @@
         private System.Windows.Forms.ColumnHeader columnHeader1;
         private System.Windows.Forms.ColumnHeader columnHeader2;
         private System.Windows.Forms.ToolStripSeparator selectSeparator3;
-        private System.Windows.Forms.ToolStripMenuItem sceneViewMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem assetsDialogMenuItem;
+        public System.Windows.Forms.ToolStripMenuItem SceneViewMenuItem;
+        public System.Windows.Forms.ToolStripMenuItem AssetsDialogMenuItem;
         private System.Windows.Forms.StatusStrip statusStrip;
         private System.Windows.Forms.ToolStripStatusLabel statusBarLbl;
         private System.Windows.Forms.ToolStripProgressBar statusBarProgressBar;

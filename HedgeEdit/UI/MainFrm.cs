@@ -155,6 +155,12 @@ namespace HedgeEdit.UI
                 };
             };
 
+            // Update Edit Menu Items
+            cutMenuItem.Enabled = objsSelected;
+            copyMenuItem.Enabled = objsSelected;
+            PasteMenuItem.Enabled = (Data.CurrentSetLayer != null);
+            deleteMenuItem.Enabled = objsSelected;
+
             // Update Labels
             int objCount = 0;
             foreach (var layer in Data.SetLayers)
@@ -165,8 +171,11 @@ namespace HedgeEdit.UI
                 }
             }
 
-            objectCountLbl.Text = $"{objCount} Objects";
-            objectSelectedLbl.Text = $"{selectedObjs} Object(s) Selected";
+            string selectedTxt = (selectedObjs == 0) ? "Nothing Selected" :
+                (selectedObjs == 1) ? "1 Instance Selected" :
+                $"{selectedObjs} Instances Selected";
+
+            objectSelectedLbl.Text = $"{objCount} Objects\n{selectedTxt}";
 
             // Enable/Disable EVERYTHING
             posXBox.Enabled = posYBox.Enabled = posZBox.Enabled =
@@ -756,6 +765,9 @@ namespace HedgeEdit.UI
 
         private void PasteMenuItem_Click(object sender, EventArgs e)
         {
+            if (Data.CurrentSetLayer == null)
+                return;
+
             // Get Data from Clipboard (if any)
             var dataObject = Clipboard.GetDataObject();
             if (dataObject == null)
@@ -841,7 +853,7 @@ namespace HedgeEdit.UI
 
         private void SceneViewMenuItem_Click(object sender, EventArgs e)
         {
-            if (sceneViewMenuItem.Checked)
+            if (SceneViewMenuItem.Checked)
             {
                 if (sceneView == null || sceneView.IsDisposed)
                 {
@@ -868,14 +880,14 @@ namespace HedgeEdit.UI
             {
                 assetsDialog = new AssetsDialog();
                 assetsDialog.Show();
-            }else
+            }
+            else
             {
                 if (assetsDialog.Visible)
                     assetsDialog.Hide();
                 else
                     assetsDialog.Show();
             }
-            
         }
         #endregion
 

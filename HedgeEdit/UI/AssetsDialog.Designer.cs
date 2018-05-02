@@ -78,6 +78,7 @@
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
             this.Text = "Assets";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.AssetsDialog_FormClosing);
             this.ResumeLayout(false);
 
         }

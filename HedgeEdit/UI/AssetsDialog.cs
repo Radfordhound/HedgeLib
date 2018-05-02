@@ -12,6 +12,7 @@ namespace HedgeEdit.UI
         protected string currentFolder = "";
         protected const string ObjectsDir = "Objects", ModelsDir = "Models",
             MatsDir = "Materials", TexturesDir = "Textures", BackDir = "...";
+
         protected const int FolderImageIndex = 0, FileImageIndex = 1;
 
         // Constructors
@@ -140,6 +141,11 @@ namespace HedgeEdit.UI
         }
 
         // GUI Events
+        private void AssetsDialog_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            Program.MainForm.AssetsDialogMenuItem.Checked = false;
+        }
+
         private void AssetsList_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             // Get Clicked Item

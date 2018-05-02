@@ -135,6 +135,7 @@
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.Text = "Scene View";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.SceneView_FormClosing);
             this.sceneViewMenu.ResumeLayout(false);
             this.ResumeLayout(false);
 

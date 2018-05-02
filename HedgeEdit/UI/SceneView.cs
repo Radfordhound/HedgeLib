@@ -124,6 +124,11 @@ namespace HedgeEdit.UI
         }
 
         // GUI Events
+        private void SceneView_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            Program.MainForm.SceneViewMenuItem.Checked = false;
+        }
+
         private void TreeView_AfterSelect(object sender, TreeViewEventArgs e)
         {
             var tag = e.Node.Tag;
@@ -135,6 +140,7 @@ namespace HedgeEdit.UI
             {
                 Data.CurrentSetLayer = layer;
                 Program.MainForm.UpdateTitle(Stage.ID);
+                Program.MainForm.PasteMenuItem.Enabled = (layer != null);
             }
             else if (tag is VPObjectInstance instance)
             {
