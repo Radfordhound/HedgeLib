@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 using HedgeLib.Misc;
+using System.Linq;
 
 namespace HedgeCnvrsEditor
 {
@@ -183,7 +184,7 @@ namespace HedgeCnvrsEditor
                     case 1:
                         {
                             cell.TypeName = typeBx.Text;
-                            cell.Data = dataBx.Text;
+                            cell.Data = dataBx.Text.Replace("\r\n","\n");
                             break;
                         }
                     case 2:
