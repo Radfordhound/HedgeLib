@@ -156,7 +156,6 @@
             // 
             // splitContainer.Panel1
             // 
-            this.splitContainer.Panel1.Controls.Add(this.filterTxtBx);
             this.splitContainer.Panel1.Controls.Add(this.treeView);
             // 
             // splitContainer.Panel2
@@ -168,13 +167,12 @@
             // 
             // filterTxtBx
             // 
-            this.filterTxtBx.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.filterTxtBx.Enabled = false;
-            this.filterTxtBx.Location = new System.Drawing.Point(0, 521);
+            this.filterTxtBx.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.filterTxtBx.ForeColor = System.Drawing.SystemColors.ScrollBar;
+            this.filterTxtBx.Location = new System.Drawing.Point(798, 2);
             this.filterTxtBx.Name = "filterTxtBx";
             this.filterTxtBx.Size = new System.Drawing.Size(224, 20);
             this.filterTxtBx.TabIndex = 1;
-            this.filterTxtBx.Visible = false;
             // 
             // treeView
             // 
@@ -251,6 +249,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1022, 565);
+            this.Controls.Add(this.filterTxtBx);
             this.Controls.Add(this.splitContainer);
             this.Controls.Add(this.menuStrip);
             this.MainMenuStrip = this.menuStrip;
@@ -259,7 +258,6 @@
             this.menuStrip.ResumeLayout(false);
             this.menuStrip.PerformLayout();
             this.splitContainer.Panel1.ResumeLayout(false);
-            this.splitContainer.Panel1.PerformLayout();
             this.splitContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).EndInit();
             this.splitContainer.ResumeLayout(false);

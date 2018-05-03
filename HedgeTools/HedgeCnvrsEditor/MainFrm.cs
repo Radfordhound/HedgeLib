@@ -3,6 +3,7 @@ using System.Linq;
 using System.Windows.Forms;
 using HedgeLib.Misc;
 using System.IO;
+using System.Drawing;
 
 namespace HedgeCnvrsEditor
 {
@@ -22,6 +23,8 @@ namespace HedgeCnvrsEditor
             treeView.AfterLabelEdit += TreeView_LabelEdit;
             listView.DoubleClick += ListView_DoubleClick;
             filterTxtBx.TextChanged += FilterTxtBx_TextChanged;
+            filterTxtBx.LostFocus += FilterTxtBx_LostFocus;
+            filterTxtBx.GotFocus += FilterTxtBx_GotFocus;
         }
 
         // Methods
@@ -173,7 +176,7 @@ namespace HedgeCnvrsEditor
 
         void UpdateGUI()
         {
-            FilterTreeView(filterTxtBx.Text);
+            FilterTreeView(filterTxtBx.ForeColor == Color.Gray ? string.Empty : filterTxtBx.Text);
             UpdateListView();
         }
 
@@ -423,8 +426,6 @@ namespace HedgeCnvrsEditor
                     }
                 case Keys.Control | Keys.F:
                     {
-                        filterTxtBx.Visible = filterTxtBx.Enabled = !filterTxtBx.Enabled;
-                        filterTxtBx.Text = string.Empty;
                         filterTxtBx.Select();
                         return true;
                     }
@@ -446,7 +447,26 @@ namespace HedgeCnvrsEditor
 
         private void FilterTxtBx_TextChanged(object sender, EventArgs e)
         {
+            if(filterTxtBx.ForeColor == Color.Black && ForcesText != null)
             FilterTreeView(filterTxtBx.Text);
+        }
+
+        private void FilterTxtBx_LostFocus(object sender, EventArgs e)
+        {
+            if(string.IsNullOrEmpty(filterTxtBx.Text))
+            {
+                filterTxtBx.ForeColor = Color.Gray;
+                filterTxtBx.Text = "Type here to search";
+            }
+        }
+
+        private void FilterTxtBx_GotFocus(object sender, EventArgs e)
+        {
+            if(filterTxtBx.ForeColor == Color.Gray)
+            {
+                filterTxtBx.ForeColor = Color.Black;
+                filterTxtBx.Text = string.Empty;
+            }
         }
     }
     #endregion
