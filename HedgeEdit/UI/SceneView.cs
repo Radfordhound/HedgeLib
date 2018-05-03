@@ -12,6 +12,7 @@ namespace HedgeEdit.UI
         // Variables/Constants
         public static bool CanAddLayer = false;
         private MainFrm mainForm = null;
+        private string filter = string.Empty;
 
         // Constructors
         public SceneView()
@@ -55,26 +56,28 @@ namespace HedgeEdit.UI
                     string name = (obj.CustomData.ContainsKey("Name")) ?
                         $"{(obj.CustomData["Name"].Data as string)} ({obj.ObjectID})" :
                         $"{obj.ObjectType} ({obj.ObjectID})";
-
-                    var objNode = new TreeNode(name)
+                    if (name.Contains(filter))
                     {
-                        Tag = obj
-                    };
-
-                    // Children objects
-                    if (obj.Children != null)
-                    {
-                        for (int i2 = 0; i2 < obj.Children.Length;)
+                        var objNode = new TreeNode(name)
                         {
-                            var child = obj.Children[i2];
-                            objNode.Nodes.Add(new TreeNode($"Child {++i2}")
-                            {
-                                Tag = child
-                            });
-                        }
-                    }
+                            Tag = obj
+                        };
 
-                    layerNode.Nodes.Add(objNode);
+                        // Children objects
+                        if (obj.Children != null)
+                        {
+                            for (int i2 = 0; i2 < obj.Children.Length;)
+                            {
+                                var child = obj.Children[i2];
+                                objNode.Nodes.Add(new TreeNode($"Child {++i2}")
+                                {
+                                    Tag = child
+                                });
+                            }
+                        }
+
+                        layerNode.Nodes.Add(objNode);
+                    }
                 }
 
                 layersNode.Nodes.Add(layerNode);
@@ -99,6 +102,7 @@ namespace HedgeEdit.UI
                 {
                     foreach (var instance in mdl.Value.Instances)
                     {
+                        if(((string)instance.CustomData).Contains(filter))
                         AddTerrainNode(groupNode, instance);
                     }
                 }
@@ -306,6 +310,44 @@ namespace HedgeEdit.UI
                     layer.ExportXML(sfd.FileName, Stage.GameType.ObjectTemplates);
                 }
             }
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            switch (keyData)
+            {
+                case Keys.Control | Keys.F:
+                    {
+                        ToggleFilterBx();
+                        return true;
+                    }
+
+                default:
+                    return base.ProcessCmdKey(ref msg, keyData);
+            }
+        }
+
+        public void ToggleFilterBx()
+        {
+            filterBx.Visible = filterBx.Enabled = !filterBx.Focused;
+
+            if (filterBx.Enabled)
+            {
+                filterBx.Select();
+            }
+            else
+            {
+                Select();
+                filter = string.Empty;
+                filterBx.Text = filter;
+                RefreshView();
+            }
+        }
+
+        private void FilterBx_Changed(object sender, EventArgs e)
+        {
+            filter = filterBx.Text;
+            RefreshView();
         }
     }
 }

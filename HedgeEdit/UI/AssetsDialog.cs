@@ -14,6 +14,7 @@ namespace HedgeEdit.UI
             MatsDir = "Materials", TexturesDir = "Textures", BackDir = "...";
 
         protected const int FolderImageIndex = 0, FileImageIndex = 1;
+        private string filter = string.Empty;
 
         // Constructors
         public AssetsDialog()
@@ -50,7 +51,8 @@ namespace HedgeEdit.UI
                     foreach (var template in Stage.GameType.ObjectTemplates)
                     {
                         if (!string.IsNullOrEmpty(template.Value.Category) &&
-                            !categories.Contains(template.Value.Category))
+                            !categories.Contains(template.Value.Category) &&
+                            template.Value.Name.Contains(filter))
                         {
                             categories.Add(template.Value.Category);
                         }
@@ -78,6 +80,7 @@ namespace HedgeEdit.UI
                 {
                     foreach (var mdl in models)
                     {
+                        if(mdl.Key.Contains(filter))
                         assetsList.Items.Add(new ListViewItem(
                             mdl.Key, FileImageIndex)
                         {
@@ -92,6 +95,7 @@ namespace HedgeEdit.UI
             {
                 foreach (var mat in Data.Materials)
                 {
+                    if(mat.Key.Contains(filter))
                     assetsList.Items.Add(new ListViewItem(
                         mat.Key, FileImageIndex)
                     {
@@ -105,6 +109,7 @@ namespace HedgeEdit.UI
             {
                 foreach (var tex in Data.Textures)
                 {
+                    if(tex.Key.Contains(filter))
                     assetsList.Items.Add(new ListViewItem(
                         tex.Key, FileImageIndex)
                     {
@@ -126,6 +131,7 @@ namespace HedgeEdit.UI
                         if (template.Value.Category != category)
                             continue;
 
+                        if(template.Key.Contains(filter))
                         assetsList.Items.Add(new ListViewItem(
                             template.Key, FileImageIndex)
                         {
@@ -213,6 +219,44 @@ namespace HedgeEdit.UI
             }
 
             // TODO: Open other types of files
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            switch (keyData)
+            {
+                case Keys.Control | Keys.F:
+                    {
+                        ToggleFilterBx();
+                        return true;
+                    }
+
+                default:
+                    return base.ProcessCmdKey(ref msg, keyData);
+            }
+        }
+
+        public void ToggleFilterBx()
+        {
+            filterBx.Visible = filterBx.Enabled = !filterBx.Focused;
+
+            if (filterBx.Enabled)
+            {
+                filterBx.Select();
+            }
+            else
+            {
+                Select();
+                filter = string.Empty;
+                filterBx.Text = filter;
+                RefreshGUI();
+            }
+        }
+
+        private void FilterBx_Changed(object sender, EventArgs e)
+        {
+            filter = filterBx.Text;
+            RefreshGUI();
         }
     }
 }

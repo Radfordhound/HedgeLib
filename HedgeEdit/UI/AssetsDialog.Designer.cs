@@ -36,6 +36,7 @@
             System.Windows.Forms.ListViewItem listViewItem4 = new System.Windows.Forms.ListViewItem("Textures", 0);
             this.folderImgList = new System.Windows.Forms.ImageList(this.components);
             this.assetsList = new System.Windows.Forms.ListView();
+            this.filterBx = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // folderImgList
@@ -58,20 +59,34 @@
             listViewItem4});
             this.assetsList.LargeImageList = this.folderImgList;
             this.assetsList.Location = new System.Drawing.Point(0, 0);
+            this.assetsList.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.assetsList.Name = "assetsList";
-            this.assetsList.Size = new System.Drawing.Size(228, 444);
+            this.assetsList.Size = new System.Drawing.Size(152, 289);
             this.assetsList.SmallImageList = this.folderImgList;
             this.assetsList.TabIndex = 0;
             this.assetsList.UseCompatibleStateImageBehavior = false;
             this.assetsList.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.AssetsList_MouseDoubleClick);
             // 
+            // filterBx
+            // 
+            this.filterBx.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.filterBx.Enabled = false;
+            this.filterBx.Location = new System.Drawing.Point(0, 269);
+            this.filterBx.Name = "filterBx";
+            this.filterBx.Size = new System.Drawing.Size(152, 20);
+            this.filterBx.TabIndex = 1;
+            this.filterBx.Visible = false;
+            this.filterBx.TextChanged += new System.EventHandler(this.FilterBx_Changed);
+            // 
             // AssetsDialog
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(228, 444);
+            this.ClientSize = new System.Drawing.Size(152, 289);
+            this.Controls.Add(this.filterBx);
             this.Controls.Add(this.assetsList);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
+            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "AssetsDialog";
@@ -80,6 +95,7 @@
             this.Text = "Assets";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.AssetsDialog_FormClosing);
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -87,5 +103,6 @@
 
         private System.Windows.Forms.ImageList folderImgList;
         private System.Windows.Forms.ListView assetsList;
+        private System.Windows.Forms.TextBox filterBx;
     }
 }
