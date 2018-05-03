@@ -184,7 +184,7 @@ namespace HedgeCnvrsEditor
                     case 1:
                         {
                             cell.TypeName = typeBx.Text;
-                            cell.Data = dataBx.Text.Replace("\r\n","\n");
+                            cell.Data = dataBx.Text.Replace("\r","");
                             break;
                         }
                     case 2:
