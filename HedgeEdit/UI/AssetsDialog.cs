@@ -290,6 +290,23 @@ namespace HedgeEdit.UI
             RefreshWithFilter();
         }
 
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            switch (keyData)
+            {
+                case Keys.Enter:
+                    AssetsList_MouseDoubleClick(null, null);
+                    return true;
+
+                case Keys.Back:
+                    BackBtn_Click(null, null);
+                    return true;
+
+                default:
+                    return base.ProcessCmdKey(ref msg, keyData);
+            }
+        }
+
         // Others
         public class SearchBox : ToolStripTextBox
         {
