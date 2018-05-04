@@ -110,7 +110,9 @@ namespace HedgeLib.Headers
                 get => name;
                 set
                 {
+                    if (value == null) return;
                     int len = value.Length;
+
                     if (len == NameLength)
                     {
                         name = value;
@@ -119,7 +121,7 @@ namespace HedgeLib.Headers
                     {
                         // I'm aware this essentially creates two new strings.
                         // However, in this case, I feel it's efficient enough™.
-                        name += new string(' ', NameLength - len);
+                        name = value + new string(' ', NameLength - len);
                     }
                     else throw new Exception("MirageNode Names must be <= 8 characters!");
                 }
