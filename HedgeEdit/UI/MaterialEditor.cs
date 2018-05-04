@@ -1,4 +1,5 @@
-﻿using HedgeLib.Materials;
+﻿using HedgeLib.Headers;
+using HedgeLib.Materials;
 using HedgeLib.Textures;
 using OpenTK.Graphics.ES30;
 using System;
@@ -14,7 +15,9 @@ namespace HedgeEdit.UI
         public static GensMaterial Material;
         public List<SerializableParameter> Parameters = new List<SerializableParameter>();
         public List<SerializableTexture> Textures = new List<SerializableTexture>();
+        protected SerializableNode root = new SerializableNode();
         protected string matPath;
+        protected bool useMirageHeader = false;
 
         // Constructors
         public MaterialEditor()
@@ -42,6 +45,15 @@ namespace HedgeEdit.UI
         public void NewMaterial()
         {
             Material = new GensMaterial();
+            var mHeader = new MirageHeader()
+            {
+                RootNodeType = 3
+            };
+
+            mHeader.GenerateNodes(GensMaterial.MaterialMirageType);
+            root = new SerializableNode(mHeader.RootNode);
+
+            matPath = null;
             UpdateTitle("Untitled");
             RefreshUI();
         }
@@ -62,16 +74,27 @@ namespace HedgeEdit.UI
                 matPath = sfd.FileName;
             }
 
+            UpdateMaterial();
             Material.Save(matPath, true);
             UpdateTitle(Path.GetFileNameWithoutExtension(matPath));
         }
 
         public void RefreshUI()
         {
-            // Material
+            // Header
             propertyGrid.Item.Clear();
-            object obj = Material;
-            string category = "Material";
+            propertyGrid.Item.Add("Use Mirage Header", useMirageHeader, false,
+                "Header", "Whether to use the MirageHeader (only supported by LW/Forces!)", true);
+
+            object obj = root;
+            string category = "Header";
+
+            AddProperty("Mirage Nodes", "Children",
+                "Nodes used by the MirageHeader. Only saved if Use Mirage Header is true.");
+
+            // Material
+            obj = Material;
+            category = "Material";
 
             AddProperty("Shader Name", "ShaderName", "The name of the shader.");
             AddProperty("Sub-Shader Name", "SubShaderName", "The name of the sub-shader.");
@@ -95,7 +118,6 @@ namespace HedgeEdit.UI
             }
 
             AddProperty("Parameters", "Parameters", "The material's parameters.");
-            //propertyGrid.Item[propertyGrid.Item.Count - 1].IsBrowsable = true;
 
             // Texset
             category = "Textures";
@@ -123,6 +145,38 @@ namespace HedgeEdit.UI
             }
         }
 
+        protected void UpdateMaterial()
+        {
+            // Generate Header/Assign Root Node
+            if (useMirageHeader)
+            {
+                Material.Header = new MirageHeader
+                {
+                    RootNode = root.GetNode()
+                };
+            }
+            else
+            {
+                Material.Header = new GensHeader();
+            }
+
+            // Assign Parameters
+            Material.Parameters.Clear();
+            for (int i = 0; i < Parameters.Count; ++i)
+            {
+                Material.Parameters.Add(Parameters[i].GetParameter());
+            }
+
+            // Assign Textures
+            var textures = Material.Texset.Textures;
+            textures.Clear();
+
+            for (int i = 0; i < Textures.Count; ++i)
+            {
+                textures.Add(Textures[i].GetTexture());
+            }
+        }
+
         // GUI Events
         private void Viewport_Paint(object sender, PaintEventArgs e)
         {
@@ -146,21 +200,7 @@ namespace HedgeEdit.UI
 
         private void MaterialEditor_FormClosing(object sender, FormClosingEventArgs e)
         {
-            // Assign Parameters
-            Material.Parameters.Clear();
-            for (int i = 0; i < Parameters.Count; ++i)
-            {
-                Material.Parameters.Add(Parameters[i].GetParameter());
-            }
-
-            // Assign Textures
-            var textures = Material.Texset.Textures;
-            textures.Clear();
-
-            for (int i = 0; i < Textures.Count; ++i)
-            {
-                textures.Add(Textures[i].GetTexture());
-            }
+            UpdateMaterial();
         }
 
         private void NewToolStripMenuItem_Click(object sender, EventArgs e)
@@ -189,7 +229,12 @@ namespace HedgeEdit.UI
                     return;
                 }
 
+                useMirageHeader = (mat.Header is MirageHeader);
+                if (useMirageHeader)
+                    root = new SerializableNode(((MirageHeader)mat.Header).RootNode);
+
                 Material = mat;
+                matPath = ofd.FileName;
                 UpdateTitle(Path.GetFileNameWithoutExtension(ofd.FileName));
                 RefreshUI();
             }
@@ -275,6 +320,72 @@ namespace HedgeEdit.UI
             public override string ToString()
             {
                 return tex.Type;
+            }
+        }
+
+        [Serializable]
+        public class SerializableNode
+        {
+            // Variables/Constants
+            public string Name
+            {
+                get => name;
+                set
+                {
+                    if (value.Length > MirageHeader.Node.NameLength)
+                    {
+                        GUI.ShowErrorBox(
+                            "ERROR: MirageNode names cannot contain more than 8 characters!");
+                    }
+                    else
+                    {
+                        name = value;
+                    }
+                }
+            }
+
+            public List<SerializableNode> Children { get => children; set => value = children; }
+            public uint DataSize { get => node.DataSize; set => value = node.DataSize; }
+            public uint Value { get => node.Value; set => value = node.DataSize; }
+
+            protected List<SerializableNode> children = new List<SerializableNode>();
+            protected MirageHeader.Node node;
+            protected string name = string.Empty;
+
+            // Constructors
+            public SerializableNode()
+            {
+                node = new MirageHeader.Node();
+            }
+
+            public SerializableNode(MirageHeader.Node node)
+            {
+                this.node = node;
+                name = node.Name;
+
+                foreach (var child in node.Nodes)
+                {
+                    children.Add(new SerializableNode(child));
+                }
+            }
+
+            // Methods
+            public MirageHeader.Node GetNode()
+            {
+                node.Name = name;
+                node.Nodes.Clear();
+
+                foreach (var child in children)
+                {
+                    node.Nodes.Add(child.GetNode());
+                }
+
+                return node;
+            }
+
+            public override string ToString()
+            {
+                return name;
             }
         }
     }
