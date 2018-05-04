@@ -386,9 +386,12 @@ namespace HedgeEdit.UI
                 string.IsNullOrWhiteSpace(Data.CurrentSetLayer.Name)) ?
                 string.Empty : $" [{Data.CurrentSetLayer.Name}]";
 
+            bool isAprilFools = (DateTime.Today.Month == 4 && DateTime.Today.Day == 1);
+
             Text = string.Format("{0} - {1}{2}",
-                (string.IsNullOrEmpty(stgID)) ? "Untitled" : stgID,
-                Program.Name, currentLayer);
+                (string.IsNullOrEmpty(stgID)) ?
+                (isAprilFools) ? "idk??" : "Untitled" : stgID,
+                (isAprilFools) ? "hegedot" : Program.Name, currentLayer);
         }
 
         public void UpdateStatus(string status)
