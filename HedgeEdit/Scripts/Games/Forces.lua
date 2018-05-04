@@ -184,8 +184,7 @@ end
 function SaveAll(dataDir, cacheDir, stageID)
 	-- Materials
 	SetDataType("Forces")
-	--SaveMaterials("{0}/{1}/", "", ".material")
-	-- TODO: Allow editing materials in obj pacs
+	SaveMaterials("{0}/{1}/", "", ".material")
 
 	-- TODO: Save Models/Instances
 	-- TODO: Repack
