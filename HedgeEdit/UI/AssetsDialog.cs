@@ -295,12 +295,20 @@ namespace HedgeEdit.UI
             switch (keyData)
             {
                 case Keys.Enter:
-                    AssetsList_MouseDoubleClick(null, null);
-                    return true;
+                    if (searchBox.ShowingHint)
+                    {
+                        AssetsList_MouseDoubleClick(null, null);
+                        return true;
+                    }else
+                        return base.ProcessCmdKey(ref msg, keyData);
 
                 case Keys.Back:
-                    BackBtn_Click(null, null);
-                    return true;
+                    if (searchBox.ShowingHint)
+                    {
+                        BackBtn_Click(null, null);
+                        return true;
+                    }else
+                        return base.ProcessCmdKey(ref msg, keyData);
 
                 default:
                     return base.ProcessCmdKey(ref msg, keyData);
