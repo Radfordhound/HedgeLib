@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Xml.Linq;
 using HedgeLib.Headers;
 using HedgeLib.IO;
 
@@ -19,6 +20,11 @@ namespace HedgeLib.Textures
         public GensTexture(string name)
         {
             Name = name;
+        }
+
+        public GensTexture(XElement elem)
+        {
+            ImportXML(elem);
         }
 
         // Methods
@@ -70,6 +76,25 @@ namespace HedgeLib.Textures
             writer.WriteNullTerminatedString(Type);
 
             writer.FixPadding(4);
+        }
+
+        public virtual void ImportXML(XElement elem)
+        {
+            Name = elem.GetAttrValue("name");
+            Type = elem.GetAttrValue("type");
+            TexFlags = elem.GetUIntAttr("flags");
+            TextureName = elem.Value;
+        }
+
+        public virtual XElement ExportXML()
+        {
+            var elem = new XElement("Texture");
+            elem.AddAttr("name", Name);
+            elem.AddAttr("type", Type);
+            elem.AddAttr("flags", TexFlags);
+            elem.Value = TextureName;
+
+            return elem;
         }
     }
 }
