@@ -244,8 +244,43 @@ namespace HedgeEdit.UI
                     foreach (var customData in setObj.CustomData)
                     {
                         object data = customData.Value;
-                        itemSet.Add($"_{customData.Key}", ref data, "Data", false,
-                            "Custom Data", string.Empty, true);
+                        var type = customData.Value.DataType;
+                        CustomProperty item;
+
+                        if (type == typeof(Vector2))
+                        {
+                            var p = new SerializableVector2Param((SetObjectParam)data);
+                            item = new CustomProperty($"_{customData.Key}", p, false,
+                                "Custom Data", string.Empty, true)
+                            {
+                                IsBrowsable = true
+                            };
+                        }
+                        else if (type == typeof(Vector3))
+                        {
+                            var p = new SerializableVector3Param((SetObjectParam)data);
+                            item = new CustomProperty($"_{customData.Key}", p, false,
+                                "Custom Data", string.Empty, true)
+                            {
+                                IsBrowsable = true
+                            };
+                        }
+                        else if (type == typeof(ForcesSetData.ObjectReference))
+                        {
+                            var p = new SerializableForcesObjectRefParam((SetObjectParam)data);
+                            item = new CustomProperty($"_{customData.Key}", p, false,
+                                "Custom Data", string.Empty, true)
+                            {
+                                IsBrowsable = true
+                            };
+                        }
+                        else
+                        {
+                            item = new CustomProperty($"_{customData.Key}", ref data,
+                                "Data", false, "Custom Data", string.Empty, true);
+                        }
+
+                        itemSet.Add(item);
                     }
 
                     // Parameters
@@ -290,8 +325,7 @@ namespace HedgeEdit.UI
                             item = new CustomProperty(name, p, false,
                                 "Parameters", templateParam?.Description, true)
                             {
-                                IsBrowsable = true,
-                                //BrowsableLabelStyle = BrowsableTypeConverter.LabelStyle.
+                                IsBrowsable = true
                             };
                         }
                         else if (type == typeof(Vector3))
@@ -300,8 +334,7 @@ namespace HedgeEdit.UI
                             item = new CustomProperty(name, p, false,
                                 "Parameters", templateParam?.Description, true)
                             {
-                                IsBrowsable = true,
-                                //BrowsableLabelStyle = BrowsableTypeConverter.LabelStyle.
+                                IsBrowsable = true
                             };
                         }
                         else if (type == typeof(ForcesSetData.ObjectReference))
@@ -310,8 +343,7 @@ namespace HedgeEdit.UI
                             item = new CustomProperty(name, p, false,
                                 "Parameters", templateParam?.Description, true)
                             {
-                                IsBrowsable = true,
-                                //BrowsableLabelStyle = BrowsableTypeConverter.LabelStyle.
+                                IsBrowsable = true
                             };
                         }
                         else
