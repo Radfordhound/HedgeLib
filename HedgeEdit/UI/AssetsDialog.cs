@@ -1,7 +1,7 @@
 using HedgeLib.Sets;
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace HedgeEdit.UI
@@ -11,10 +11,9 @@ namespace HedgeEdit.UI
         // Variables/Constants
         protected string currentFolder = "";
         protected const string ObjectsDir = "Objects", ModelsDir = "Models",
-            MatsDir = "Materials", TexturesDir = "Textures", BackDir = "...";
+            MatsDir = "Materials", TexturesDir = "Textures";
 
         protected const int FolderImageIndex = 0, FileImageIndex = 1;
-        private string filter = string.Empty;
 
         // Constructors
         public AssetsDialog()
@@ -24,26 +23,33 @@ namespace HedgeEdit.UI
         }
 
         // Methods
-        protected void RefreshGUI()
+        protected void RefreshWithFilter()
+        {
+            RefreshGUI((string.IsNullOrEmpty(searchBox.Text) ||
+                searchBox.ShowingHint) ? null : searchBox.Text);
+        }
+
+        protected void RefreshGUI(string filter = null)
         {
             assetsList.BeginUpdate();
             assetsList.Items.Clear();
 
+            bool isSearching = (!string.IsNullOrEmpty(filter));
+            if (isSearching)
+                filter = filter.ToLower();
+
             // Root
-            if (string.IsNullOrEmpty(currentFolder))
+            bool isRoot = string.IsNullOrEmpty(currentFolder);
+            if (isRoot)
             {
-                assetsList.Items.Add(ObjectsDir, FolderImageIndex);
-                assetsList.Items.Add(ModelsDir, FolderImageIndex);
-                assetsList.Items.Add(MatsDir, FolderImageIndex);
-                assetsList.Items.Add(TexturesDir, FolderImageIndex);
-            }
-            else
-            {
-                assetsList.Items.Add(BackDir, FolderImageIndex);
+                AddFolder(ObjectsDir, ObjectsDir);
+                AddFolder(ModelsDir, ModelsDir);
+                AddFolder(MatsDir, MatsDir);
+                AddFolder(TexturesDir, TexturesDir);
             }
 
             // Objects
-            if (currentFolder == ObjectsDir)
+            if (isSearching || currentFolder == ObjectsDir)
             {
                 if (Stage.GameType != null)
                 {
@@ -51,75 +57,62 @@ namespace HedgeEdit.UI
                     foreach (var template in Stage.GameType.ObjectTemplates)
                     {
                         if (!string.IsNullOrEmpty(template.Value.Category) &&
-                            !categories.Contains(template.Value.Category) &&
-                            template.Value.Name.Contains(filter))
+                            !categories.Contains(template.Value.Category))
                         {
                             categories.Add(template.Value.Category);
+                        }
+
+                        if (isSearching && (isRoot || $"{ObjectsDir}\\{template.Value.Category}"
+                            .StartsWith(currentFolder)))
+                        {
+                            AddFile(template.Key, template.Value);
                         }
                     }
 
                     foreach (var category in categories)
                     {
-                        assetsList.Items.Add(new ListViewItem(
-                            category, FolderImageIndex));
+                        string path = $"{ObjectsDir}\\{category}";
+                        if (!isSearching || (isRoot || path.StartsWith(currentFolder)))
+                        {
+                            AddFolder(category, path);
+                        }
                     }
                 }
             }
 
             // Models
-            else if (currentFolder == ModelsDir)
+            if (currentFolder == ModelsDir || (isSearching && isRoot))
             {
                 AddModels(Data.DefaultTerrainGroup);
                 foreach (var group in Data.TerrainGroups)
                 {
                     AddModels(group.Value);
                 }
-
-                // Sub-Method
-                void AddModels(Dictionary<string, VPModel> models)
-                {
-                    foreach (var mdl in models)
-                    {
-                        if(mdl.Key.Contains(filter))
-                        assetsList.Items.Add(new ListViewItem(
-                            mdl.Key, FileImageIndex)
-                        {
-                            Tag = mdl.Value
-                        });
-                    }
-                }
             }
 
             // Materials
-            else if (currentFolder == MatsDir)
+            if (currentFolder == MatsDir || (isSearching && isRoot))
             {
                 foreach (var mat in Data.Materials)
                 {
-                    if(mat.Key.Contains(filter))
-                    assetsList.Items.Add(new ListViewItem(
-                        mat.Key, FileImageIndex)
-                    {
-                        Tag = mat.Value
-                    });
+                    if (mat.Value.NonEditable)
+                        continue;
+
+                    AddFile(mat.Key, mat.Value);
                 }
             }
 
             // Textures
-            else if (currentFolder == TexturesDir)
+            if (currentFolder == TexturesDir || (isSearching && isRoot))
             {
                 foreach (var tex in Data.Textures)
                 {
-                    if(tex.Key.Contains(filter))
-                    assetsList.Items.Add(new ListViewItem(
-                        tex.Key, FileImageIndex)
-                    {
-                        Tag = tex.Value
-                    });
+                    AddFile(tex.Key, tex.Value);
                 }
             }
             
             // Object Templates
-            else if (currentFolder.StartsWith($"{ObjectsDir}\\"))
+            else if (!isSearching && currentFolder.StartsWith($"{ObjectsDir}\\"))
             {
                 if (Stage.GameType != null)
                 {
@@ -131,19 +124,50 @@ namespace HedgeEdit.UI
                         if (template.Value.Category != category)
                             continue;
 
-                        if(template.Key.Contains(filter))
-                        assetsList.Items.Add(new ListViewItem(
-                            template.Key, FileImageIndex)
-                        {
-                            Tag = template.Value
-                        });
+                        AddFile(template.Key, template.Value);
                     }
                 }
             }
 
-            // TODO
-
             assetsList.EndUpdate();
+            backBtn.Enabled = (isSearching || !isRoot);
+
+            string dir = (isRoot) ? "Assets" :
+                $"Assets\\{currentFolder}";
+
+            Text = (!isSearching) ? dir :
+                $"Searching in {dir}...";
+
+            // Sub-Methods
+            void AddModels(Dictionary<string, VPModel> models)
+            {
+                foreach (var mdl in models)
+                {
+                    AddFile(mdl.Key, models);
+                }
+            }
+
+            void AddFile(string name, object tag)
+            {
+                AddItem(name, tag, FileImageIndex);
+            }
+
+            void AddFolder(string name, string path)
+            {
+                AddItem(name, path, FolderImageIndex);
+            }
+
+            void AddItem(string name, object tag, int imgIndex)
+            {
+                if (!isSearching || name.ToLower().Contains(filter))
+                {
+                    assetsList.Items.Add(new ListViewItem(
+                        name, imgIndex)
+                    {
+                        Tag = tag
+                    });
+                }
+            }
         }
 
         // GUI Events
@@ -163,18 +187,8 @@ namespace HedgeEdit.UI
             // Folders
             if (item.ImageIndex == FolderImageIndex)
             {
-                if (!string.IsNullOrEmpty(currentFolder) && item.Text == BackDir)
-                {
-                    // go bacc
-                    int slashIndex = currentFolder.LastIndexOf('\\');
-                    currentFolder = currentFolder.Substring(0,
-                        (slashIndex < 0) ? 0 : slashIndex);
-                }
-                else
-                {
-                    currentFolder = Path.Combine(currentFolder, item.Text);
-                }
-
+                currentFolder = (string)item.Tag;
+                searchBox.ShowingHint = true;
                 RefreshGUI();
             }
 
@@ -215,48 +229,150 @@ namespace HedgeEdit.UI
                 // Refresh UI
                 Program.MainForm.RefreshGUI();
                 Program.MainForm.RefreshSceneView();
+            }
 
+            // Models
+            else if (item.Tag is Dictionary<string, VPModel> group)
+            {
+                var pos = Viewport.CameraPos + (Viewport.CameraForward * 10);
+                pos /= Stage.GameType.UnitMultiplier;
+
+                // TODO: Set proper instance name
+                var instance = new VPObjectInstance(pos, $"{item.Text}{group.Count}");
+                Data.AddInstance(item.Text, instance, group);
+
+                Viewport.SelectedInstances.Clear();
+                Viewport.SelectObject(instance);
+
+                // Refresh UI
+                Program.MainForm.RefreshGUI();
+                Program.MainForm.RefreshSceneView();
             }
 
             // TODO: Open other types of files
         }
 
-        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        private void BackBtn_Click(object sender, EventArgs e)
         {
-            switch (keyData)
+            if (!string.IsNullOrEmpty(currentFolder))
             {
-                case Keys.Control | Keys.F:
-                    {
-                        ToggleFilterBx();
-                        return true;
-                    }
+                // go bacc
+                int slashIndex = currentFolder.LastIndexOf('\\');
+                currentFolder = currentFolder.Substring(0,
+                    (slashIndex < 0) ? 0 : slashIndex);
 
-                default:
-                    return base.ProcessCmdKey(ref msg, keyData);
-            }
-        }
-
-        public void ToggleFilterBx()
-        {
-            filterBx.Visible = filterBx.Enabled = !filterBx.Focused;
-
-            if (filterBx.Enabled)
-            {
-                filterBx.Select();
+                RefreshWithFilter();
             }
             else
             {
-                Select();
-                filter = string.Empty;
-                filterBx.Text = filter;
+                searchBox.ShowingHint = true;
                 RefreshGUI();
             }
         }
 
-        private void FilterBx_Changed(object sender, EventArgs e)
+        private void RefreshBtn_Click(object sender, EventArgs e)
         {
-            filter = filterBx.Text;
-            RefreshGUI();
+            RefreshWithFilter();
+        }
+
+        private void SearchBox_TextChanged(object sender, EventArgs e)
+        {
+            RefreshWithFilter();
+        }
+
+        // Others
+        public class SearchBox : ToolStripTextBox
+        {
+            // Variables/Constants
+            public string HintText = "Search...";
+            public bool ShowingHint
+            {
+                get => showHint;
+                set
+                {
+                    showHint = value;
+                    Text = (value) ? HintText : string.Empty;
+                }
+            }
+
+            protected bool showHint = true;
+
+            // Constructors
+            public SearchBox() : base()
+            {
+                Text = HintText;
+            }
+
+            public SearchBox(string name) : base(name)
+            {
+                Text = HintText;
+            }
+
+            // Methods
+            public override Size GetPreferredSize(Size constrainingSize)
+            {
+                // Use the default size if on the overflow menu or on a vertical ToolStrip.
+                if (IsOnOverflow || Owner.Orientation == Orientation.Vertical)
+                    return DefaultSize;
+
+                // Subtract the width of the overflow button if it is displayed.
+                int width = Owner.DisplayRectangle.Width;
+                if (Owner.OverflowButton.Visible)
+                {
+                    width -= Owner.OverflowButton.Width -
+                        Owner.OverflowButton.Margin.Horizontal;
+                }
+
+                int springBoxCount = 0;
+                foreach (ToolStripItem item in Owner.Items)
+                {
+                    // Ignore items on the overflow menu.
+                    if (item.IsOnOverflow)
+                        continue;
+
+                    if (item is SearchBox)
+                    {
+                        // For SearchBox items, increment the count and 
+                        // subtract the margin width from the total available width.
+                        ++springBoxCount;
+                        width -= item.Margin.Horizontal;
+                    }
+                    else
+                    {
+                        // For all other items, subtract the full width
+                        // from the total available width.
+                        width -= item.Width - item.Margin.Horizontal;
+                    }
+                }
+
+                // If there are multiple SearchBox items in the owning
+                // ToolStrip, divide the total available width between them. 
+                if (springBoxCount > 1)
+                    width /= springBoxCount;
+
+                // If the available width is less than the default width, use the
+                // default width, forcing one or more items onto the overflow menu.
+                if (width < DefaultSize.Width)
+                    width = DefaultSize.Width;
+
+                // Retrieve the preferred size from the base class, but change the
+                // width to the calculated width. 
+                var size = base.GetPreferredSize(constrainingSize);
+                size.Width = width;
+                return size;
+            }
+
+            protected override void OnEnter(EventArgs e)
+            {
+                if (showHint)
+                    ShowingHint = false;
+            }
+
+            protected override void OnLeave(EventArgs e)
+            {
+                if (!showHint && string.IsNullOrEmpty(Text))
+                    ShowingHint = true;
+            }
         }
     }
 }
