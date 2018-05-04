@@ -9,7 +9,7 @@ namespace HedgeLib.Headers
     public abstract class HedgehogEngineHeader : IHeader
     {
         // Variables/Constants
-        public uint RootNodeType, FooterOffsetAbs;
+        public uint RootNodeType, FooterOffset;
 
         // Methods
         public abstract void Read(ExtendedBinaryReader reader);

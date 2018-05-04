@@ -54,90 +54,79 @@ namespace HedgeLib.IO
             bool isBigEndian = true) : base(output, encoding, isBigEndian) {}
 
         public GensWriter(Stream output, HedgehogEngineHeader header,
-            bool isBigEndian = true) : base(output, Encoding.ASCII, isBigEndian)
+            string mirageType = null, bool isBigEndian = true) :
+            base(output, Encoding.ASCII, isBigEndian)
         {
+            if (!string.IsNullOrEmpty(mirageType) && header is MirageHeader mirageHeader)
+            {
+                mirageHeader.GenerateNodes(mirageType);
+            }
+
             header.PrepareWrite(this);
         }
 
         public GensWriter(Stream output, Encoding encoding,
-            HedgehogEngineHeader header, bool isBigEndian = true) :
-            base(output, encoding, isBigEndian)
+            HedgehogEngineHeader header, string mirageType = null,
+            bool isBigEndian = true) : base(output, encoding, isBigEndian)
         {
+            if (!string.IsNullOrEmpty(mirageType) && header is MirageHeader mirageHeader)
+            {
+                mirageHeader.GenerateNodes(mirageType);
+            }
+
             header.PrepareWrite(this);
         }
 
         // Methods
-        public void FinishWrite(HedgehogEngineHeader header, string mirageType = null)
+        public void FinishWrite(HedgehogEngineHeader header,
+            string mirageType = null, bool writeEOFNull = true)
         {
             // Write Footer and Update Header Values
             uint footerPos = (uint)BaseStream.Position;
             if (header is GensHeader gensHeader)
             {
-                WriteFooter(true);
+                WriteFooter(true, writeEOFNull);
 
-                header.FooterOffsetAbs = footerPos;
-                gensHeader.FooterOffset = (footerPos - Offset);
+                header.FooterOffset = footerPos;
+                gensHeader.RootNodeSize = (footerPos - Offset);
                 gensHeader.FileSize = (uint)BaseStream.Position;
             }
             else if (header is MirageHeader mirageHeader)
             {
                 FixPadding(16);
 
-                MirageHeader.Node typeNode, contextsNode;
                 uint footerPosPadded = (uint)BaseStream.Position;
                 uint len = MirageHeader.Node.Length;
 
-                header.FooterOffsetAbs = footerPosPadded;
-                WriteFooter(false);
+                header.FooterOffset = footerPosPadded;
+                WriteFooter(false, writeEOFNull);
                 
-                if (mirageHeader.RootNode.Nodes.Count < 1)
-                {
-                    // Auto-Generate MirageHeader
-                    if (string.IsNullOrEmpty(mirageType))
-                        throw new Exception("Could not auto-generate MirageNodes.");
-
-                    typeNode = mirageHeader.AddNode(mirageType, 1);
-                    contextsNode = typeNode.AddNode(
-                        MirageHeader.Contexts, header.RootNodeType);
-                }
-                else
-                {
-                    // Update Type
-                    typeNode = mirageHeader.GetNode(mirageType, false);
-                    if (typeNode == null)
-                    {
-                        mirageHeader.RootNode.Nodes.Clear();
-                        typeNode = mirageHeader.AddNode(mirageType, 1);
-                    }
-
-                    // Update Contexts
-                    contextsNode = typeNode.GetNode(
-                        MirageHeader.Contexts, false);
-
-                    if (contextsNode == null)
-                    {
-                        contextsNode = typeNode.AddNode(MirageHeader.Contexts,
-                            header.RootNodeType);
-                    }
-                    else
-                    {
-                        contextsNode.Value = header.RootNodeType;
-                    }
-                }
-
                 // Update Sizes
                 uint fileSize = (uint)BaseStream.Position;
-                mirageHeader.FooterLength = (fileSize - footerPosPadded);
-
+                mirageHeader.FooterOffsetsCount = (uint)offsets.Count;
                 mirageHeader.RootNode.DataSize = fileSize;
-                UpdateSize(typeNode, footerPosPadded);
-                UpdateSize(contextsNode, footerPos);
-                // TODO: Update the sizes of each node
+
+                if (!string.IsNullOrEmpty(mirageType))
+                {
+                    MirageHeader.Node typeNode, contextsNode;
+                    typeNode = mirageHeader.GetNode(mirageType, false);
+
+                    if (typeNode != null)
+                    {
+                        UpdateSize(typeNode, footerPosPadded);
+                        contextsNode = typeNode.GetNode(MirageHeader.Contexts, false);
+
+                        if (contextsNode != null)
+                            UpdateSize(contextsNode, footerPos);
+                    }
+                }
 
                 // Sub-Methods
                 void UpdateSize(MirageHeader.Node node, uint endPos)
                 {
-                    node.DataSize = (endPos - len);
+                    if (node.DataSize == 0)
+                        node.DataSize = (endPos - len);
+
                     len += MirageHeader.Node.Length;
                 }
             }
@@ -147,7 +136,7 @@ namespace HedgeLib.IO
             header.FinishWrite(this);
         }
 
-        public void WriteFooter(bool writeCount)
+        public void WriteFooter(bool writeCount, bool writeEOFNull = true)
         {
             if (writeCount)
                 Write((uint)offsets.Count);
@@ -157,7 +146,8 @@ namespace HedgeLib.IO
                 Write(offset.Value - Offset);
             }
 
-            WriteNulls(4);
+            if (writeEOFNull)
+                WriteNulls(4);
         }
     }
 }

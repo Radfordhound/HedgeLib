@@ -8,8 +8,8 @@ namespace HedgeLib.Headers
     public class MirageHeader : HedgehogEngineHeader
     {
         // Variables/Constants
-        public Node RootNode;
-        public uint FooterLength;
+        public Node RootNode = new Node();
+        public uint FooterOffsetsCount;
 
         public const string NodesExt = "NodesExt", NodePrms = "NodePrms",
             SCAParam = "SCAParam", Contexts = "Contexts";
@@ -42,11 +42,54 @@ namespace HedgeLib.Headers
         {
             reader.Offset = Node.Length;
             RootNode = new Node();
-            RootNode.ReadRoot(reader, out FooterOffsetAbs, out FooterLength);
+            RootNode.ReadRoot(reader, out FooterOffset, out FooterOffsetsCount);
 
             var contexts = RootNode.GetNode(Contexts, true);
             if (contexts != null)
                 RootNodeType = contexts.Value;
+        }
+
+        public void GenerateNodes(string type)
+        {
+            if (RootNode == null)
+                RootNode = new Node();
+
+            if (RootNode.Nodes.Count < 1)
+            {
+                Node typeNode, contextsNode;
+                if (RootNode.Nodes.Count < 1)
+                {
+                    // Auto-Generate MirageHeader
+                    if (string.IsNullOrEmpty(type))
+                        throw new Exception("Could not auto-generate MirageNodes.");
+
+                    typeNode = AddNode(type, 1);
+                    contextsNode = typeNode.AddNode(
+                        Contexts, RootNodeType);
+                }
+                else
+                {
+                    // Update Type
+                    typeNode = GetNode(type, false);
+                    if (typeNode == null)
+                    {
+                        RootNode.Nodes.Clear();
+                        typeNode = AddNode(type, 1);
+                    }
+
+                    // Update Contexts
+                    contextsNode = typeNode.GetNode(Contexts, false);
+                    if (contextsNode == null)
+                    {
+                        contextsNode = typeNode.AddNode(
+                            Contexts, RootNodeType);
+                    }
+                    else
+                    {
+                        contextsNode.Value = RootNodeType;
+                    }
+                }
+            }
         }
 
         public override void PrepareWrite(ExtendedBinaryWriter writer)
@@ -86,7 +129,8 @@ namespace HedgeLib.Headers
             }
 
             public uint DataSize, Value;
-            public NodeFlags Flags;
+            public NodeFlags Flags => flags;
+            protected NodeFlags flags;
             protected string name;
 
             public const uint Length = 0x10;
@@ -109,7 +153,7 @@ namespace HedgeLib.Headers
 
             public Node(string name, uint value)
             {
-                this.name = name;
+                Name = name;
                 Value = value;
             }
 
@@ -140,12 +184,12 @@ namespace HedgeLib.Headers
             }
 
             public void ReadRoot(ExtendedBinaryReader reader,
-                out uint footerOffset, out uint footerLength)
+                out uint footerOffset, out uint footerCount)
             {
                 DataSize = reader.ReadUInt32();
                 Value = reader.ReadUInt32();
                 footerOffset = reader.ReadUInt32();
-                footerLength = reader.ReadUInt32();
+                footerCount = reader.ReadUInt32();
 
                 FinishRead(reader);
             }
@@ -172,11 +216,11 @@ namespace HedgeLib.Headers
             protected void FinishRead(ExtendedBinaryReader reader)
             {
                 // Separate Flags and Size
-                Flags = (NodeFlags)(DataSize >> 29);
+                flags = (NodeFlags)(DataSize >> 29);
                 DataSize &= 0x1FFFFFFF;
 
                 // Return if this node has no child nodes
-                if ((Flags & NodeFlags.HasNoChildren) != 0)
+                if ((flags & NodeFlags.HasNoChildren) != 0)
                     return;
 
                 // Read Child Nodes
@@ -186,7 +230,7 @@ namespace HedgeLib.Headers
                     child = new Node(reader);
                     Nodes.Add(child);
                 }
-                while ((child.Flags & NodeFlags.IsLastChildNode) == 0);
+                while ((child.flags & NodeFlags.IsLastChildNode) == 0);
             }
 
             public void PrepareWrite(ExtendedBinaryWriter writer)
@@ -201,16 +245,14 @@ namespace HedgeLib.Headers
             public void FinishWriteRoot(ExtendedBinaryWriter writer,
                 MirageHeader header)
             {
-                Value = header.RootNodeType;
+                Value = Signature;
+                flags |= NodeFlags.IsRootNode;
                 Write(writer);
 
-                writer.Write(header.FooterOffsetAbs);
-                writer.Write(header.FooterLength);
+                writer.Write(header.FooterOffset);
+                writer.Write(header.FooterOffsetsCount);
 
-                foreach (var node in Nodes)
-                {
-                    node.FinishWrite(writer);
-                }
+                WriteChildren(writer);
             }
 
             public void FinishWrite(ExtendedBinaryWriter writer)
@@ -218,15 +260,27 @@ namespace HedgeLib.Headers
                 Write(writer);
                 writer.Write(name.ToCharArray());
 
-                foreach (var node in Nodes)
+                WriteChildren(writer);
+            }
+
+            protected void WriteChildren(ExtendedBinaryWriter writer)
+            {
+                for (int i = 0; i < Nodes.Count; ++i)
                 {
+                    var node = Nodes[i];
+                    if (i == (Nodes.Count - 1))
+                        node.flags |= NodeFlags.IsLastChildNode;
+
                     node.FinishWrite(writer);
                 }
             }
 
             protected void Write(ExtendedBinaryWriter writer)
             {
-                writer.Write(((uint)Flags << 29) | DataSize);
+                if (Nodes.Count < 1)
+                    flags |= NodeFlags.HasNoChildren;
+
+                writer.Write(((uint)flags << 29) | DataSize);
                 writer.Write(Value);
             }
         }

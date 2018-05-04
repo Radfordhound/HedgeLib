@@ -5,7 +5,7 @@ namespace HedgeLib.Headers
     public class GensHeader : HedgehogEngineHeader
     {
         // Variables/Constants
-        public uint FileSize, FooterOffset,
+        public uint FileSize, RootNodeSize,
             RootNodeOffset = Length, FileEndOffset;
 
         public const uint Length = 0x18;
@@ -27,9 +27,9 @@ namespace HedgeLib.Headers
         {
             FileSize = reader.ReadUInt32();
             RootNodeType = reader.ReadUInt32();
-            FooterOffset = reader.ReadUInt32();
+            RootNodeSize = reader.ReadUInt32();
             RootNodeOffset = reader.ReadUInt32();
-            FooterOffsetAbs = reader.ReadUInt32();
+            FooterOffset = reader.ReadUInt32();
             FileEndOffset = reader.ReadUInt32();
 
             reader.Offset = RootNodeOffset;
@@ -49,9 +49,9 @@ namespace HedgeLib.Headers
         {
             writer.Write(FileSize);
             writer.Write(RootNodeType);
-            writer.Write(FooterOffset);
+            writer.Write(RootNodeSize);
             writer.Write(RootNodeOffset);
-            writer.Write(FooterOffsetAbs);
+            writer.Write(FooterOffset);
             writer.Write(FileEndOffset);
         }
     }
