@@ -70,6 +70,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\Archives.cs" />
+    <Compile Include="Data\Asset.cs" />
     <Compile Include="Data\Materials.cs" />
     <Compile Include="UI\GUI.cs" />
     <Compile Include="Data\Objects.cs" />

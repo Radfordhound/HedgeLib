@@ -61,10 +61,15 @@ namespace HedgeEdit.Lua
             UserData.RegisterType<SetObjectType>();
             UserData.RegisterType<SetData>();
 
-            UserData.RegisterType<KeyValuePair<string, GensMaterial>>();
-            UserData.RegisterType<GensMaterial>();
             UserData.RegisterType<VPModel>();
             UserData.RegisterType<GensTerrainList>();
+            UserData.RegisterType<GensMaterial>();
+
+            UserData.RegisterType<AssetDirectory>();
+            UserData.RegisterType<AssetDirectories>();
+            UserData.RegisterType<Asset<GensMaterial>>();
+            UserData.RegisterType<KeyValuePair<string, Asset<GensMaterial>>>();
+            UserData.RegisterType<AssetCollection<GensMaterial>>();
         }
 
         public static bool EvaluateCondition(string condition)

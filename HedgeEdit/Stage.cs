@@ -38,7 +38,7 @@ namespace HedgeEdit
             ID = stageID;
             DataDir = dataDir;
 
-            var resDir = game.ResourcesDir;
+            var resDir = new AssetDirectory(game.ResourcesDir);
             Data.ModelDirectories.Add(resDir);
             Data.ResourceDirectories.Add(resDir);
 

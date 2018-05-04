@@ -95,6 +95,9 @@ namespace HedgeEdit.UI
             {
                 foreach (var mat in Data.Materials)
                 {
+                    if (mat.Value.NonEditable)
+                        continue;
+
                     AddFile(mat.Key, mat.Value);
                 }
             }

@@ -113,7 +113,8 @@ namespace HedgeEdit.Lua
             if (!File.Exists(path))
                 return null;
 
-            return Data.LoadModel(path, resDir, false, loadMats);
+            return Data.LoadModel(path, resDir, false, loadMats, null,
+                path.StartsWith(Program.ResourcesDirectory));
         }
 
         public SetData AddSetLayer(string name)

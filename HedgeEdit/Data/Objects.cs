@@ -67,12 +67,14 @@ namespace HedgeEdit
                 var mdlExt = Types.ModelExtension;
                 foreach (var dir in ModelDirectories)
                 {
-                    if (Directory.Exists(dir))
+                    if (Directory.Exists(dir.FullPath))
                     {
-                        string path = Path.Combine(dir, $"{name}{mdlExt}");
+                        string path = Path.Combine(dir.FullPath, $"{name}{mdlExt}");
                         if (File.Exists(path))
                         {
-                            var mdl = LoadModel(path, resDir, false, true);
+                            var mdl = LoadModel(path, resDir, false, true, null,
+                                path.StartsWith(Program.ResourcesDirectory));
+
                             if (mdl != null)
                                 return mdl;
 

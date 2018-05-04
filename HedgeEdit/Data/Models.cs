@@ -17,7 +17,7 @@ namespace HedgeEdit
             new Dictionary<string, VPModel>();
 
         public static VPModel DefaultCube;
-        public static List<string> ModelDirectories = new List<string>();
+        public static AssetDirectories ModelDirectories = new AssetDirectories();
 
         // Methods
         public static VPObjectInstance GetInstance(VPModel model, object obj)
@@ -64,9 +64,9 @@ namespace HedgeEdit
                 var mdlExt = (isTerrain) ? Types.TerrainModelExtension : Types.ModelExtension;
                 foreach (var dir in ResourceDirectories)
                 {
-                    if (Directory.Exists(dir))
+                    if (Directory.Exists(dir.FullPath))
                     {
-                        string path = Path.Combine(dir, $"{name}{mdlExt}");
+                        string path = Path.Combine(dir.FullPath, $"{name}{mdlExt}");
                         if (File.Exists(path))
                         {
                             var mdl = LoadModel(path, resDir, isTerrain, loadMats,
@@ -369,15 +369,14 @@ namespace HedgeEdit
             return vpMdl;
         }
 
-        public static void AddModelDirectoryFromPath(string path)
+        public static AssetDirectory AddModelDirectoryFromPath(string path)
         {
-            AddModelDirectory(Path.GetDirectoryName(path));
+            return AddModelDirectory(Path.GetDirectoryName(path));
         }
 
-        public static void AddModelDirectory(string dir)
+        public static AssetDirectory AddModelDirectory(string dir)
         {
-            if (!ModelDirectories.Contains(dir))
-                ModelDirectories.Add(dir);
+            return ModelDirectories.AddDirectory(dir);
         }
 
         public static bool AddTerrainInstance(string modelName,
