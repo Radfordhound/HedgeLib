@@ -348,7 +348,7 @@ namespace HedgeEdit
                             continue;
                     }
 
-                    GetMaterial(mesh.MaterialName);
+                    GetMaterial(mesh.MaterialName, nonEditable);
                 }
             }
 

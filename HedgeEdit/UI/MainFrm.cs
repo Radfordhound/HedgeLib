@@ -889,12 +889,13 @@ namespace HedgeEdit.UI
                     assetsDialog.Show();
             }
         }
-        #endregion
 
-        private void AddObject(object sender, EventArgs e)
+        private void MatEditorMenuItem_Click(object sender, EventArgs e)
         {
-            // TODO
+            var matEditor = new MaterialEditor();
+            matEditor.ShowDialog();
         }
+        #endregion
 
         private void RemoveObject(object sender, EventArgs e)
         {
@@ -991,8 +992,17 @@ namespace HedgeEdit.UI
 
         private void LoadSaveEnable(bool enable)
         {
+            // Changes made with any of these while loading/saving could be problematic.
+            if (!enable && assetsDialog != null)
+            {
+                assetsDialog.Close();
+                assetsDialog = null;
+                AssetsDialogMenuItem.Checked = false;
+            }
+
             openMenuItem.Enabled = SaveSetsMenuItem.Enabled =
-                saveAllMenuItem.Enabled = enable;
+                saveAllMenuItem.Enabled = MatEditorMenuItem.Enabled =
+                AssetsDialogMenuItem.Enabled = enable;
         }
 
         // Other

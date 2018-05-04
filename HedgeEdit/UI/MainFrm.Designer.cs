@@ -55,6 +55,7 @@
             this.selectSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.SceneViewMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.AssetsDialogMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.MatEditorMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.viewSelectedMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.luaMenu = new System.Windows.Forms.ToolStripMenuItem();
@@ -206,7 +207,8 @@
             this.selectNoneMenuItem,
             this.selectSeparator3,
             this.SceneViewMenuItem,
-            this.AssetsDialogMenuItem});
+            this.AssetsDialogMenuItem,
+            this.MatEditorMenuItem});
             this.editMenu.Name = "editMenu";
             this.editMenu.Size = new System.Drawing.Size(39, 22);
             this.editMenu.Text = "&Edit";
@@ -315,6 +317,14 @@
             this.AssetsDialogMenuItem.Size = new System.Drawing.Size(179, 22);
             this.AssetsDialogMenuItem.Text = "A&ssets Dialog";
             this.AssetsDialogMenuItem.Click += new System.EventHandler(this.AssetsDialogMenuItem_Click);
+            // 
+            // MatEditorMenuItem
+            // 
+            this.MatEditorMenuItem.Name = "MatEditorMenuItem";
+            this.MatEditorMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.M)));
+            this.MatEditorMenuItem.Size = new System.Drawing.Size(179, 22);
+            this.MatEditorMenuItem.Text = "&Material Editor";
+            this.MatEditorMenuItem.Click += new System.EventHandler(this.MatEditorMenuItem_Click);
             // 
             // viewMenu
             // 
@@ -747,6 +757,7 @@
         private System.Windows.Forms.ToolStripSeparator selectSeparator3;
         public System.Windows.Forms.ToolStripMenuItem SceneViewMenuItem;
         public System.Windows.Forms.ToolStripMenuItem AssetsDialogMenuItem;
+        public System.Windows.Forms.ToolStripMenuItem MatEditorMenuItem;
         private System.Windows.Forms.StatusStrip statusStrip;
         private System.Windows.Forms.ToolStripStatusLabel statusBarLbl;
         private System.Windows.Forms.ToolStripProgressBar statusBarProgressBar;

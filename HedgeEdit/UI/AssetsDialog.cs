@@ -1,3 +1,4 @@
+﻿using HedgeLib.Materials;
 using HedgeLib.Sets;
 using System;
 using System.Collections.Generic;
@@ -247,6 +248,15 @@ namespace HedgeEdit.UI
                 // Refresh UI
                 Program.MainForm.RefreshGUI();
                 Program.MainForm.RefreshSceneView();
+            }
+
+            // Materials
+            else if (item.Tag is Asset<GensMaterial> mat)
+            {
+                var matDialog = new MaterialEditor(mat.Data, item.Text,
+                    $"{mat.Directory.FullPath}\\{item.Text}{Types.MaterialExtension}");
+
+                matDialog.ShowDialog();
             }
 
             // TODO: Open other types of files

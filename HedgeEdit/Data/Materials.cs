@@ -58,7 +58,7 @@ namespace HedgeEdit
             }
         }
 
-        public static GensMaterial GetMaterial(string name)
+        public static GensMaterial GetMaterial(string name, bool nonEditable = true)
         {
             if (string.IsNullOrEmpty(name))
                 return DefaultMaterial;
@@ -74,7 +74,7 @@ namespace HedgeEdit
                         string path = Path.Combine(dir.FullPath, $"{name}{matExt}");
                         if (File.Exists(path))
                         {
-                            var mat = LoadMaterial(path, name);
+                            var mat = LoadMaterial(path, name, nonEditable);
                             if (mat != null)
                                 return mat;
 
