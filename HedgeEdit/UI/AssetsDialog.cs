@@ -292,27 +292,21 @@ namespace HedgeEdit.UI
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            switch (keyData)
+            if (searchBox.ShowingHint)
             {
-                case Keys.Enter:
-                    if (searchBox.ShowingHint)
-                    {
+                switch (keyData)
+                {
+                    case Keys.Enter:
                         AssetsList_MouseDoubleClick(null, null);
                         return true;
-                    }else
-                        return base.ProcessCmdKey(ref msg, keyData);
 
-                case Keys.Back:
-                    if (searchBox.ShowingHint)
-                    {
+                    case Keys.Back:
                         BackBtn_Click(null, null);
                         return true;
-                    }else
-                        return base.ProcessCmdKey(ref msg, keyData);
-
-                default:
-                    return base.ProcessCmdKey(ref msg, keyData);
+                }
             }
+
+            return base.ProcessCmdKey(ref msg, keyData);
         }
 
         // Others
