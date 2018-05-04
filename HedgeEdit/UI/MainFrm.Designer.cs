@@ -441,7 +441,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tableLayoutPanel.Controls.Add(this.rotZBox, 2, 1);
             this.tableLayoutPanel.Controls.Add(this.rotYBox, 1, 1);
-            this.tableLayoutPanel.Controls.Add(this.rotXBox, 1, 0);
+            this.tableLayoutPanel.Controls.Add(this.rotXBox, 0, 1);
             this.tableLayoutPanel.Controls.Add(this.posZBox, 2, 0);
             this.tableLayoutPanel.Controls.Add(this.posYBox, 1, 0);
             this.tableLayoutPanel.Controls.Add(this.posXBox, 0, 0);
