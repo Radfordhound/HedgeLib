@@ -54,40 +54,37 @@ namespace HedgeLib.Headers
             if (RootNode == null)
                 RootNode = new Node();
 
+            Node typeNode, contextsNode;
             if (RootNode.Nodes.Count < 1)
             {
-                Node typeNode, contextsNode;
-                if (RootNode.Nodes.Count < 1)
-                {
-                    // Auto-Generate MirageHeader
-                    if (string.IsNullOrEmpty(type))
-                        throw new Exception("Could not auto-generate MirageNodes.");
+                // Auto-Generate MirageHeader
+                if (string.IsNullOrEmpty(type))
+                    throw new Exception("Could not auto-generate MirageNodes.");
 
+                typeNode = AddNode(type, 1);
+                contextsNode = typeNode.AddNode(
+                    Contexts, RootNodeType);
+            }
+            else
+            {
+                // Update Type
+                typeNode = GetNode(type, false);
+                if (typeNode == null)
+                {
+                    RootNode.Nodes.Clear();
                     typeNode = AddNode(type, 1);
+                }
+
+                // Update Contexts
+                contextsNode = typeNode.GetNode(Contexts, false);
+                if (contextsNode == null)
+                {
                     contextsNode = typeNode.AddNode(
                         Contexts, RootNodeType);
                 }
                 else
                 {
-                    // Update Type
-                    typeNode = GetNode(type, false);
-                    if (typeNode == null)
-                    {
-                        RootNode.Nodes.Clear();
-                        typeNode = AddNode(type, 1);
-                    }
-
-                    // Update Contexts
-                    contextsNode = typeNode.GetNode(Contexts, false);
-                    if (contextsNode == null)
-                    {
-                        contextsNode = typeNode.AddNode(
-                            Contexts, RootNodeType);
-                    }
-                    else
-                    {
-                        contextsNode.Value = RootNodeType;
-                    }
+                    contextsNode.Value = RootNodeType;
                 }
             }
         }
