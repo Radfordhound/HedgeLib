@@ -24,3 +24,5 @@ artifacts:
   name: ForcesGISMEditor
 - path: HedgeTools/HedgeCnvrsEditor/bin/Debug
   name: HedgeCnvrsEditor
+- path: HedgeTools/HedgeForcesSCFNTConverter/bin/Debug
+  name: ForcesSCFNTConverter
