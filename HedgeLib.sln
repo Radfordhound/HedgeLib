@@ -21,7 +21,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ForcesGISMEditor", "HedgeTo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HedgeCnvrsEditor", "HedgeTools\HedgeCnvrsEditor\HedgeCnvrsEditor.csproj", "{1B424F08-998B-4575-B2CE-AFE58F79B42D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ForcesSCFNTGenerator", "HedgeTools\ForcesSCFNTGenerator\ForcesSCFNTGenerator.csproj", "{9EB0D514-2E5D-4440-B416-7D4DD4559A11}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ForcesSCFNTConverter", "HedgeTools\ForcesSCFNTConverter\ForcesSCFNTConverter.csproj", "{9EB0D514-2E5D-4440-B416-7D4DD4559A11}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

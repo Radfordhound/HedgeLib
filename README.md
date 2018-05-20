@@ -74,7 +74,7 @@ Right now this includes the following:
 - [Hedge Cnvrs Editor](HedgeTools/HedgeCnvrsEditor)
   * A GUI tool that allows editing of the Forces CNVRS-TEXT format (basically a list of text used in different areas in the game e.g.: Loading Screen).
   
-- [Forces SCFNT Generator](HedgeTools/ForcesSCFNTGenerator)
+- [Forces SCFNT Converter](HedgeTools/ForcesSCFNTConverter)
   * A Command Line tool that allows for conversion of OTF or TTF files into a SCFNT format.
 
 # Building

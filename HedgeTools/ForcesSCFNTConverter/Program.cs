@@ -3,7 +3,7 @@ using HedgeLib.Headers;
 using System.IO;
 using System;
 
-namespace ForcesSCFNTGenerator
+namespace ForcesSCFNTConverter
 {
     public class Program
     {
@@ -39,16 +39,18 @@ namespace ForcesSCFNTGenerator
 
             // Reads font into Memory
             var data = File.ReadAllBytes(fileInfo.FullName);
+            // Grabs the file name
+            var name = Path.GetFileNameWithoutExtension(fileInfo.Name);
             // Opens a new File
             using (var stream = File.OpenWrite(outputFilePath))
             {
                 BINAWriter writer = new BINAWriter(stream, BINA.BINATypes.Version2, false, true);
-                writer.WriteSignature("KFCS1000");  // Signature
-                writer.Write((long)data.Length);    // FileSize
-                writer.WriteNulls(0x10);            // Unknown
-                writer.Write((long)data.Length);    // FileSize again
-                writer.Write(data);                 // Font data
-                writer.FinishWrite(Header);         // Finalise Writing
+                writer.WriteSignature("KFCS1000");      // "KFC" signature
+                writer.AddString("FontName", name, 8);  // Pointer to file name
+                writer.WriteNulls(0x10);                // Unknown
+                writer.Write((long)data.Length);        // Font size
+                writer.Write(data);                     // Font data
+                writer.FinishWrite(Header);             // Finalise writing
             }
         }
 
@@ -62,8 +64,8 @@ namespace ForcesSCFNTGenerator
 
         public static void ShowHelp()
         {
-            Console.WriteLine("ForcesSCFNTGenerator input [output]");
-            Console.WriteLine("By: Slashiee, SuperSonic16");
+            Console.WriteLine("ForcesSCFNTConverter input [output]");
+            Console.WriteLine("By: Slashiee and SuperSonic16");
 
             Console.WriteLine();
             Console.WriteLine("Arguments (arguments surrounded by square brackets are optional):");
