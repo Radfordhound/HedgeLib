@@ -1,0 +1,26 @@
+version: 1.0.{build}
+image: Visual Studio 2017
+nuget:
+  project_feed: true
+before_build:
+- cmd: nuget restore
+build:
+  project: HedgeLib.sln
+  verbosity: minimal
+artifacts:
+- path: HedgeLib/bin/Debug
+  name: HedgeLib
+- path: HedgeEdit/bin/Debug
+  name: HedgeEdit
+- path: HedgeTools/HedgeGISMEditor/bin/Debug
+  name: HedgeGISMEditor
+- path: HedgeTools/HedgeArchiveEditor/bin/Debug
+  name: HedgeArchiveEditor
+- path: HedgeTools/HedgeArcPack/bin/Debug
+  name: HedgeArcPack
+- path: HedgeTools/HedgePFD/bin/Debug
+  name: HedgePFD
+- path: HedgeTools/ForcesGISMEditor/bin/Debug
+  name: ForcesGISMEditor
+- path: HedgeTools/HedgeCnvrsEditor/bin/Debug
+  name: HedgeCnvrsEditor
