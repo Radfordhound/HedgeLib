@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ForcesGISMEditor", "HedgeTo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HedgeCnvrsEditor", "HedgeTools\HedgeCnvrsEditor\HedgeCnvrsEditor.csproj", "{1B424F08-998B-4575-B2CE-AFE58F79B42D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ForcesSCFNTConverter", "HedgeTools\ForcesSCFNTConverter\ForcesSCFNTConverter.csproj", "{9EB0D514-2E5D-4440-B416-7D4DD4559A11}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -59,6 +61,10 @@ Global
 		{1B424F08-998B-4575-B2CE-AFE58F79B42D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1B424F08-998B-4575-B2CE-AFE58F79B42D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1B424F08-998B-4575-B2CE-AFE58F79B42D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9EB0D514-2E5D-4440-B416-7D4DD4559A11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9EB0D514-2E5D-4440-B416-7D4DD4559A11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9EB0D514-2E5D-4440-B416-7D4DD4559A11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9EB0D514-2E5D-4440-B416-7D4DD4559A11}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -70,6 +76,7 @@ Global
 		{01BC5182-8158-462E-9577-E3BC39605A4B} = {965BE90A-F869-45E1-8F44-97BEBAA12A06}
 		{07D4587C-AE7C-4E98-A3C8-2F08B72600E4} = {965BE90A-F869-45E1-8F44-97BEBAA12A06}
 		{1B424F08-998B-4575-B2CE-AFE58F79B42D} = {965BE90A-F869-45E1-8F44-97BEBAA12A06}
+		{9EB0D514-2E5D-4440-B416-7D4DD4559A11} = {965BE90A-F869-45E1-8F44-97BEBAA12A06}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {637995FC-1FB4-45F7-8336-B9C78FAA11F7}
