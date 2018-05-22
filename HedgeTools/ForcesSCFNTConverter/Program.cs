@@ -25,7 +25,7 @@ namespace ForcesSCFNTConverter
             // Checks if the input has .otf or .ttf
             if (!CheckExtension(args[0], ".otf", ".ttf", ".scfnt"))
             {
-                Console.WriteLine("Error: Input file doesn't have a .otf or .ttf extension!\n");
+                Console.WriteLine("Error: Input file doesn't have a .otf, .ttf or .scfnt extension!\n");
                 ShowHelp();
                 return;
             }
