@@ -3,77 +3,118 @@
     public class AABB
     {
         // Variables/Constants
-        public Vector3 Center, Size;
+        public Vector3 Minimum, Maximum;
 
         // Constructors
         public AABB()
         {
-            Center = new Vector3(0, 0, 0);
-            Size = new Vector3(1, 1, 1);
+            Minimum = new Vector3(-1, -1, -1);
+            Maximum = new Vector3(1, 1, 1);
         }
 
-        public AABB(Vector3 center, Vector3 size)
+        public AABB(Vector3 min, Vector3 max)
         {
-            Center = center;
-            Size = size;
+            Minimum = min;
+            Maximum = max;
         }
 
         // Methods
         public void AddPoint(Vector3 point)
         {
-            AddPoint(point.X, point.Y, point.Z);
+            // Max Checks
+            if (point.X > Maximum.X)
+                Maximum.X = point.X;
+
+            if (point.Y > Maximum.Y)
+                Maximum.Y = point.Y;
+
+            if (point.Z > Maximum.Z)
+                Maximum.Z = point.Z;
+
+            // Min Checks
+            if (point.X < Minimum.X)
+                Minimum.X = point.X;
+
+            if (point.Y < Minimum.Y)
+                Minimum.Y = point.Y;
+
+            if (point.Z < Minimum.Z)
+                Minimum.Z = point.Z;
         }
 
         public void AddPoint(float x, float y, float z)
         {
-            var max = (Center + Size);
-            var min = (Center - Size);
-
-            // TODO: Do checking with distance instead
-
-            //System.Console.WriteLine($"before: {Size}");
             // Max Checks
-            if (x > max.X)
-                Size.X += (x - max.X);
+            if (x > Maximum.X)
+                Maximum.X = x;
 
-            if (y > max.Y)
-                Size.Y += (y - max.Y);
+            if (y > Maximum.Y)
+                Maximum.Y = y;
 
-            if (z > max.Z)
-                Size.Z += (z - max.Z);
+            if (z > Maximum.Z)
+                Maximum.Z = z;
 
             // Min Checks
-            if (x < min.X)
-                Size.X -= (min.X - x);
+            if (x < Minimum.X)
+                Minimum.X = x;
 
-            if (y < min.Y)
-                Size.Y -= (min.Y - y);
+            if (y < Minimum.Y)
+                Minimum.Y = y;
 
-            if (z < min.Z)
-                Size.Z -= (min.Z - z);
-
-            //System.Console.WriteLine($"after: {Size}");
+            if (z < Minimum.Z)
+                Minimum.Z = z;
         }
 
         public bool Intersects(Vector3 origin,
             Vector3 direction, uint distance = 100)
         {
+            for (int i = 0; i < distance; ++i)
+            {
+                origin += direction;
+                if (Contains(origin))
+                    return true;
+            }
+
+            return false;
+        }
+
+        public bool Intersects(Vector3 origin, Vector3 direction,
+            Vector3 offset, uint distance = 100)
+        {
             return Intersects(origin, direction,
-                Center, Size, distance);
+                Minimum, Maximum, offset, distance);
         }
 
         public bool Contains(Vector3 point)
         {
-            return Contains(point, Center, Size);
+            return (Minimum.X <= point.X && point.X <= Maximum.X &&
+                   Minimum.Y <= point.Y && point.Y <= Maximum.Y &&
+                   Minimum.Z <= point.Z && point.Z <= Maximum.Z);
         }
 
         public static bool Intersects(Vector3 origin, Vector3 direction,
-            Vector3 center, Vector3 size, uint distance = 100)
+            Vector3 min, Vector3 max, uint distance = 100)
         {
             for (int i = 0; i < distance; ++i)
             {
                 origin += direction;
-                if (Contains(origin, center, size))
+                if (Contains(origin, min, max))
+                    return true;
+            }
+
+            return false;
+        }
+
+        public static bool Intersects(Vector3 origin, Vector3 direction,
+            Vector3 min, Vector3 max, Vector3 offset, uint distance = 100)
+        {
+            min += offset;
+            max += offset;
+
+            for (int i = 0; i < distance; ++i)
+            {
+                origin += direction;
+                if (Contains(origin, min, max))
                     return true;
             }
 
@@ -81,12 +122,11 @@
         }
 
         public static bool Contains(Vector3 point,
-            Vector3 center, Vector3 size)
+            Vector3 min, Vector3 max)
         {
-            var dist = (center - point);
-            return (System.Math.Abs(dist.X) <= size.X &&
-                System.Math.Abs(dist.Y) <= size.Y &&
-                System.Math.Abs(dist.Z) <= size.Z);
+            return (min.X <= point.X && point.X <= max.X &&
+                   min.Y <= point.Y && point.Y <= max.Y &&
+                   min.Z <= point.Z && point.Z <= max.Z);
         }
     }
 }

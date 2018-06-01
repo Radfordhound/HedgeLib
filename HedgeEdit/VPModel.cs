@@ -11,7 +11,7 @@ namespace HedgeEdit
     {
         // Variables/Constants
         public List<VPObjectInstance> Instances = new List<VPObjectInstance>();
-        public Vector3 BoundingSize;
+        public AABB BoundingBox = new AABB();
         protected VPMesh[] meshes;
 
         // Constructors
@@ -23,9 +23,7 @@ namespace HedgeEdit
             int meshCount = mdl.Meshes.Count;
             Mesh mesh;
 
-            var aabb = new AABB();
             meshes = new VPMesh[meshCount];
-
             for (int i = 0; i < meshCount; ++i)
             {
                 mesh = mdl.Meshes[i];
@@ -36,10 +34,14 @@ namespace HedgeEdit
                     for (uint i2 = Mesh.VertPos; i2 < mesh.VertexData.Length;
                         i2 += Mesh.StructureLength)
                     {
-                        aabb.AddPoint(
-                            mesh.VertexData[i2],
-                            mesh.VertexData[i2 + 1],
-                            mesh.VertexData[i2 + 2]);
+                        var wp = OpenTK.Vector3.TransformPosition(
+                            new OpenTK.Vector3(
+                                mesh.VertexData[i2],
+                                mesh.VertexData[i2 + 1],
+                                mesh.VertexData[i2 + 2]),
+                            OpenTK.Matrix4.Identity);
+
+                        BoundingBox.AddPoint(wp.X, wp.Y, wp.Z);
                     }
                 }
 
@@ -93,24 +95,20 @@ namespace HedgeEdit
                     Slot = mesh.Slot
                 };
             }
-
-            if (generateAABB)
-                BoundingSize = aabb.Size;
         }
 
         // Methods
         public VPObjectInstance InstanceIntersects(OpenTK.Vector3 origin,
             OpenTK.Vector3 direction, uint distance = 100)
         {
-            //var dest = (origin + (direction * distance));
             var o = Types.ToHedgeLib(origin);
             var d = Types.ToHedgeLib(direction);
 
             foreach (var instance in Instances)
             {
                 // TODO: Try to make this more efficient if possible
-                if (AABB.Intersects(o, d, Types.ToHedgeLib(
-                    instance.Position), BoundingSize, distance))
+                if (BoundingBox.Intersects(o, d, Types.ToHedgeLib(
+                    instance.Position), distance))
                 {
                     return instance;
                 }
