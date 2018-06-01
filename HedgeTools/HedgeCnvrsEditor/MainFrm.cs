@@ -180,7 +180,7 @@ namespace HedgeCnvrsEditor
             UpdateListView();
         }
 
-        void FilterTreeView(string filter)
+        void FilterTreeView(string filter = null)
         {
             if (ForcesText == null)
                 return;
@@ -361,7 +361,7 @@ namespace HedgeCnvrsEditor
                 });
             }
 
-            FilterTreeView(filterTxtBx.Text);
+            FilterTreeView();
         }
 
         private void TreeView_LabelEdit(object sender, NodeLabelEditEventArgs e)
