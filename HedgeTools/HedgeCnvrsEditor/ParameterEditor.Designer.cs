@@ -44,6 +44,8 @@
             this.dataBx.Name = "dataBx";
             this.dataBx.Size = new System.Drawing.Size(551, 84);
             this.dataBx.TabIndex = 0;
+            this.dataBx.WordWrap = false;
+            this.dataBx.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             // 
             // OkBtn
             // 
