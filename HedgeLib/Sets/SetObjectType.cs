@@ -83,7 +83,7 @@ namespace HedgeLib.Sets
             Name = Path.GetFileNameWithoutExtension(filePath);
             base.Load(filePath);
         }
-
+        
         public override void Load(Stream fileStream)
         {
             var xml = XDocument.Load(fileStream);
@@ -110,6 +110,8 @@ namespace HedgeLib.Sets
 
                 if (uint.TryParse(paddingAttr?.Value, out var p))
                     padding = p;
+                else
+                    padding = null;
 
                 var g = new SetObjectTypeParamGroup(elemName, padding, descAttr?.Value);
                 foreach (var elem in element.Elements())
@@ -263,6 +265,55 @@ namespace HedgeLib.Sets
         {
             Name = name;
             DataType = dataType;
+        }
+
+        public SetObjectTypeParam(XElement elem, bool useQuaternions = true)
+        {
+            // Set Name
+            Name = elem.Name.LocalName;
+
+            // Auto-Detect Data Type
+            if (elem.HasElements)
+            {
+                if ((elem.Element("x") != null || elem.Element("X") != null) &&
+                    (elem.Element("y") != null || elem.Element("Y") != null))
+                {
+                    if (elem.Element("z") != null || elem.Element("Z") != null)
+                    {
+                        if (elem.Element("w") != null || elem.Element("W") != null)
+                        {
+                            DataType = (useQuaternions) ?
+                                typeof(Quaternion) : typeof(Vector4);
+                        }
+                        else
+                            DataType = typeof(Vector3);
+                    }
+                    else
+                        DataType = typeof(Vector2);
+                }
+            }
+            else
+            {
+                string data = elem.Value;
+                switch (data.ToLower())
+                {
+                    case "false":
+                    case "true":
+                        DataType = typeof(bool);
+                        break;
+
+                    default:
+                    {
+                        if (float.TryParse(data, out var f))
+                        {
+                            DataType = typeof(float);
+                        }
+                        else
+                            DataType = typeof(string);
+                        break;
+                    }
+                }
+            }
         }
     }
 
