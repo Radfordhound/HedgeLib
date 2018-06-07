@@ -45,6 +45,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Animations\MaterialAnimation.cs" />
+    <Compile Include="Animations\VisibilityAnimation.cs" />
     <Compile Include="Archives\ForcesArchive.cs" />
     <Compile Include="Archives\S06Archive.cs" />
     <Compile Include="Half.cs" />
@@ -65,6 +67,8 @@
     <Compile Include="Misc\ForcesGISM.cs" />
     <Compile Include="RFL\ForcesCaptionParam.cs" />
     <Compile Include="RFL\ForcesDLCParam.cs" />
+    <Compile Include="Animations\GensAnimation.cs" />
+    <Compile Include="Animations\UVAnimation.cs" />
     <Compile Include="RFL\ForcesRFL.cs" />
     <Compile Include="Misc\ForcesText.cs" />
     <Compile Include="Misc\GensPFI.cs" />
