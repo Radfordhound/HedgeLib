@@ -10,7 +10,7 @@ namespace ForcesSCFNTConverter
     public class Program
     {
         // Variables/Constants
-        public static BINAHeader Header = new BINAHeader() { Version = 210 };
+        public static BINAHeader Header = new BINAv2Header(210);
 
         // Methods
         public static void Main(string[] args)
@@ -61,7 +61,7 @@ namespace ForcesSCFNTConverter
 
         public static void ExportScfnt(Stream stream, string name, byte[] data)
         {
-            BINAWriter writer = new BINAWriter(stream, BINA.BINATypes.Version2, false, true);
+            var writer = new BINAWriter(stream, Header);
             writer.WriteSignature("KFCS1000");      // "KFC" signature
             writer.AddString("FontName", name, 8);  // Pointer to file name
             writer.WriteNulls(0x10);                // Unknown
@@ -72,7 +72,7 @@ namespace ForcesSCFNTConverter
 
         public static void ExportFont(Stream stream, string outputFile)
         {
-            var reader = new BINAReader(stream, BINA.BINATypes.Version2);
+            var reader = new BINAReader(stream);
             reader.ReadHeader();
 
             var sig = reader.ReadSignature(8);

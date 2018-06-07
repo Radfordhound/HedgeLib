@@ -80,11 +80,8 @@ namespace HedgeGISMEditor
             if (dr == DialogResult.Cancel) return;
             Gism.Gismos = Gismos.ToArray();
             Gism.UnknownBoolean1 = (checkBox1.Checked) ? 1u : 0u;
-
-            using (var fileStream = File.Create(FileName))
-            {
-                Gism.Save(fileStream, (dr == DialogResult.Yes));
-            }
+            Gism.Header.IsBigEndian = (dr == DialogResult.Yes);
+            Gism.Save(FileName, true);
         }
 
         // GUI Events
