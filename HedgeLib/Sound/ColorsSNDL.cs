@@ -1,7 +1,6 @@
 ﻿using HedgeLib.IO;
 using HedgeLib.Exceptions;
 using HedgeLib.Headers;
-using HedgeLib.Misc;
 using System.IO;
 
 namespace HedgeLib.Sound
@@ -10,15 +9,15 @@ namespace HedgeLib.Sound
     {
         // Variables/Constants
         public string[] SoundEntries;
-        public BINAHeader Header = new BINAHeader();
+        public BINAHeader Header = new BINAv1Header();
 
         public const string Signature = "\0SOU", Extension = ".sndl.orc";
 
         // Methods
         public override void Load(Stream fileStream)
         {
-            // HEADER
-            var reader = new BINAReader(fileStream, BINA.BINATypes.Version1);
+            // Header
+            var reader = new BINAReader(fileStream);
             Header = reader.ReadHeader();
 
             string sig = reader.ReadSignature(4);
@@ -29,7 +28,7 @@ namespace HedgeLib.Sound
             uint soundEntryCount = reader.ReadUInt32();
             uint soundEntriesOffset = reader.ReadUInt32();
 
-            // DATA
+            // Data
             SoundEntries = new string[soundEntryCount];
             var soundNameOffsets = new uint[soundEntryCount];
             reader.JumpTo(soundEntriesOffset, false);
@@ -50,16 +49,14 @@ namespace HedgeLib.Sound
 
         public override void Save(Stream fileStream)
         {
-            // HEADER
-            var writer = new BINAWriter(fileStream,
-                BINA.BINATypes.Version1, true);
-
+            // Header
+            var writer = new BINAWriter(fileStream, Header);
             writer.WriteSignature(Signature);
             writer.Write(1u); // TODO: Figure out what this value is.
             writer.Write(SoundEntries.Length);
             writer.AddOffset("soundEntriesOffset");
 
-            // DATA
+            // Data
             writer.FillInOffset("soundEntriesOffset", false);
 
             for (uint i = 0; i < SoundEntries.Length; ++i)

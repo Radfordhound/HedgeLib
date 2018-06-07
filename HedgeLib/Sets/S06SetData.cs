@@ -9,7 +9,7 @@ namespace HedgeLib.Sets
     public class S06SetData : SetData
     {
         // Variables/Constants
-        public BINAHeader Header = new BINAHeader();
+        public BINAHeader Header = new BINAv1Header();
         public const string Extension = ".set";
 
         // Methods
@@ -17,7 +17,7 @@ namespace HedgeLib.Sets
             Dictionary<string, SetObjectType> objectTemplates)
         {
             // Header
-            var reader = new BINAReader(fileStream, BINA.BINATypes.Version1);
+            var reader = new BINAReader(fileStream);
             Header = reader.ReadHeader();
 
             reader.JumpAhead(0x2C); // Skip "test" string
@@ -97,7 +97,7 @@ namespace HedgeLib.Sets
                         uint amount = reader.ReadUInt32();
 
                         if (amount != 1)
-                            Console.WriteLine("WARNING: Amount != 1. ({0})", amount);
+                            Console.WriteLine($"WARNING: Amount != 1. ({amount})");
 
                         long pos = reader.BaseStream.Position;
                         reader.JumpTo(offset, false);
@@ -118,7 +118,7 @@ namespace HedgeLib.Sets
                         break;
 
                     default:
-                        Console.WriteLine("WARNING: Unknown object param type {0}!", type);
+                        Console.WriteLine($"WARNING: Unknown object param type {type}!");
                         return null;
                 }
 
@@ -128,12 +128,11 @@ namespace HedgeLib.Sets
 
         public override void Save(Stream fileStream)
         {
-            var writer = new BINAWriter(fileStream, BINA.BINATypes.Version1, true);
+            var writer = new BINAWriter(fileStream, Header);
             var typeCounts = new Dictionary<string, int>();
             uint stringParamCount = 0;
 
             // Header
-            Header.IsFooterMagicPresent = false;
             writer.WriteNulls(0xC);
             writer.WriteNullTerminatedString("test");
             writer.WriteNulls(0x1B);

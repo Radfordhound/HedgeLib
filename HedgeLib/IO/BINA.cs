@@ -1,6 +1,4 @@
-﻿using HedgeLib.Exceptions;
-using HedgeLib.Headers;
-using System;
+﻿using HedgeLib.Headers;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -10,126 +8,41 @@ namespace HedgeLib.IO
     public static class BINA
     {
         public static Encoding Encoding => Encoding.GetEncoding("shift-jis");
-
         public enum OffsetTypes
         {
             SixBit = 0x40,
             FourteenBit = 0x80,
             ThirtyBit = 0xC0
         }
-
-        public enum BINATypes
-        {
-            Version1 = 1, Version2 = 2
-        }
     }
 
     public class BINAReader : ExtendedBinaryReader
     {
-        // Variables/Constants
-        private BINA.BINATypes version = BINA.BINATypes.Version1;
-
         // Constructors
-        public BINAReader(Stream input, BINA.BINATypes type =
-            BINA.BINATypes.Version1) : base(input, BINA.Encoding, true)
+        public BINAReader(Stream input, uint offset = 0) :
+            base(input, BINA.Encoding)
         {
-            version = type;
-            Offset = (version == BINA.BINATypes.Version2) ?
-                BINAHeader.Ver2Length : BINAHeader.Ver1Length;
+            Offset = offset;
         }
 
-        public BINAReader(Stream input, Encoding encoding, BINA.BINATypes type =
-            BINA.BINATypes.Version1) : base(input, encoding, true)
+        public BINAReader(Stream input, Encoding encoding,
+            uint offset = 0) : base(input, encoding)
         {
-            version = type;
-            Offset = (version == BINA.BINATypes.Version2) ?
-                BINAHeader.Ver2Length : BINAHeader.Ver1Length;
+            Offset = offset;
         }
 
         // Methods
-        public BINAHeader ReadHeader(bool ignoreSignature = false)
+        public BINAHeader ReadHeader()
         {
-            var header = new BINAHeader();
-            if (version == BINA.BINATypes.Version1)
-            {
-                // Header
-                header.FileSize = ReadUInt32();
-                header.FinalTableOffset = ReadUInt32();
-                header.FinalTableLength = ReadUInt32();
+            var sig = ReadSignature(4);
+            JumpBehind(4);
 
-                uint unknown1 = ReadUInt32();
-                if (unknown1 != 0)
-                    Console.WriteLine("WARNING: Unknown1 is not zero! ({0})", unknown1);
+            if (sig == BINAHeader.Signature)
+                return new BINAv2Header(this);
+            else if (sig == PACxHeader.PACxSignature)
+                return new PACxHeader(this);
 
-                ushort unknownFlag1 = ReadUInt16();
-                header.IsFooterMagicPresent = (ReadUInt16() == 1);
-
-                // Version String
-                string versionString = ReadSignature(3);
-                if (versionString != BINAHeader.Ver1String)
-                {
-                    Console.WriteLine(
-                        "WARNING: Unknown BINA header version, expected {0} got {1}!",
-                        BINAHeader.Ver1String, versionString);
-                }
-
-                IsBigEndian = (ReadChar() == 'B'); // TODO: Find out if this is correct
-
-                // BINA Signature
-                string sig = ReadSignature(4);
-                if (!ignoreSignature && sig != BINAHeader.Signature)
-                    throw new InvalidSignatureException(BINAHeader.Signature, sig);
-
-                // TODO: Find out what this is - maybe additional data length?
-                uint unknown2 = ReadUInt32();
-                if (unknown2 != 0)
-                    Console.WriteLine("WARNING: Unknown2 is not zero! ({0})", unknown2);
-            }
-            else
-            {
-                // BINA Header
-                string sig = ReadSignature(4);
-                if (!ignoreSignature && sig != BINAHeader.Signature)
-                    throw new InvalidSignatureException(BINAHeader.Signature, sig);
-
-                // Version String
-                string verString = ReadSignature(3);
-                if (!ushort.TryParse(verString, out header.Version))
-                {
-                    Console.WriteLine(
-                        "WARNING: BINA header version was invalid {0}",
-                        verString);
-                }
-
-                IsBigEndian = (ReadChar() == 'B');
-                header.FileSize = ReadUInt32();
-
-                ushort nodeCount = ReadUInt16();
-                ushort unknown1 = ReadUInt16(); // Always 0?
-
-                // TODO: Read Nodes Properly
-                if (nodeCount < 1)
-                    return header;
-
-                // DATA Header
-                string dataSig = ReadSignature();
-                if (dataSig != BINAHeader.DataSignature)
-                    throw new InvalidSignatureException(BINAHeader.DataSignature, dataSig);
-
-                header.DataLength = ReadUInt32();
-                header.StringTableOffset = ReadUInt32();
-                header.StringTableLength = ReadUInt32();
-                header.FinalTableLength = ReadUInt32();
-
-                // Additional data
-                ushort additionalDataLength = ReadUInt16();
-                ushort unknown3 = ReadUInt16();
-
-                JumpAhead(additionalDataLength);
-                Offset = (uint)BaseStream.Position;
-            }
-
-            return header;
+            return new BINAv1Header(this);
         }
 
         public List<uint> ReadFooter(uint finalTableLength)
@@ -178,32 +91,24 @@ namespace HedgeLib.IO
     {
         // Variables/Constants
         protected List<StringTableEntry> strings = new List<StringTableEntry>();
-        protected BINA.BINATypes version = BINA.BINATypes.Version1;
 
         // Constructors
-        public BINAWriter(Stream output, BINA.BINATypes type = BINA.BINATypes.Version1,
-            bool isBigEndian = true, bool writeHeader = true) :
-            base(output, BINA.Encoding, isBigEndian)
+        public BINAWriter(Stream output, uint offset = 0,
+            bool isBigEndian = false) : base(output, BINA.Encoding, isBigEndian)
         {
-            version = type;
-            Offset = (version == BINA.BINATypes.Version2) ?
-                BINAHeader.Ver2Length : BINAHeader.Ver1Length;
+            Offset = offset;
+        }
 
-            if (writeHeader)
-                WriteNulls(Offset);
+        public BINAWriter(Stream output, BINAHeader header) :
+            base(output, BINA.Encoding, header.IsBigEndian)
+        {
+            header.PrepareWrite(this);
         }
 
         public BINAWriter(Stream output, Encoding encoding,
-            BINA.BINATypes type = BINA.BINATypes.Version1,
-            bool isBigEndian = true, bool writeHeader = true) :
-            base(output, encoding, isBigEndian)
+            BINAHeader header) : base(output, encoding, header.IsBigEndian)
         {
-            version = type;
-            Offset = (version == BINA.BINATypes.Version2) ?
-                BINAHeader.Ver2Length : BINAHeader.Ver1Length;
-
-            if (writeHeader)
-                WriteNulls(Offset);
+            header.PrepareWrite(this);
         }
 
         // Methods
@@ -211,7 +116,9 @@ namespace HedgeLib.IO
         {
             WriteStringTable(header);
             WriteFooter(header);
-            FillInHeader(header);
+
+            BaseStream.Position = 0;
+            header.FinishWrite(this);
         }
 
         public void WriteStringTable(BINAHeader header)
@@ -219,13 +126,22 @@ namespace HedgeLib.IO
             uint stringTablePos = WriteStringTable();
 
             // Update header values
-            header.StringTableOffset = stringTablePos - Offset;
-            header.StringTableLength = (uint)BaseStream.Position - stringTablePos;
+            if (header is BINAv2Header h2)
+            {
+                h2.StringTableOffset = (stringTablePos - Offset);
+                h2.StringTableLength = (uint)BaseStream.Position - stringTablePos;
+            }
+            else if (header is PACxHeader h3)
+            {
+                h3.StringTableLength = (uint)BaseStream.Position - stringTablePos;
+            }
         }
 
         public uint WriteStringTable()
         {
+            FixPadding();
             uint stringTablePos = (uint)BaseStream.Position;
+
             foreach (var tableEntry in strings)
             {
                 // Fill-in all the offsets that point to this string in the file
@@ -248,15 +164,20 @@ namespace HedgeLib.IO
             uint footerStartPos = WriteFooter();
 
             // Update header values and write footer magic
-            header.FinalTableOffset = footerStartPos - Offset;
             header.FinalTableLength = (uint)BaseStream.Position - footerStartPos;
-            header.DataLength = (uint)BaseStream.Position - 0x10;
-
-            if (header.IsFooterMagicPresent)
+            if (header is BINAv1Header h1)
             {
-                Write(BINAHeader.FooterMagic2);
-                WriteNulls(4);
-                WriteNullTerminatedString(BINAHeader.FooterMagic);
+                h1.FinalTableOffset = (footerStartPos - Offset);
+                if (h1.IsFooterMagicPresent)
+                    h1.WriteFooterMagic(this);
+            }
+            else if (header is BINAv2Header h2)
+            {
+                h2.DataLength = (uint)BaseStream.Position - 0x10;
+            }
+            else if (header is PACxHeader h3)
+            {
+                h3.DataLength = (uint)BaseStream.Position - 0x10;
             }
 
             header.FileSize = (uint)BaseStream.Position;
@@ -294,47 +215,6 @@ namespace HedgeLib.IO
             return footerStartPos;
         }
 
-        public void FillInHeader(BINAHeader header, string sig = BINAHeader.Signature)
-        {
-            BaseStream.Position = 0;
-            if (version == BINA.BINATypes.Version1)
-            {
-                Write(header.FileSize);
-                Write(header.FinalTableOffset);
-                Write(header.FinalTableLength);
-                WriteNulls(4); // TODO: Figure out what this is (probably padding).
-
-                WriteNulls(2); // TODO: Figure out what this flag is.
-                Write((header.IsFooterMagicPresent) ? (ushort)1 : (ushort)0);
-
-                WriteSignature(BINAHeader.Ver1String);
-                Write((IsBigEndian) ? 'B' : 'L');
-                WriteSignature(sig);
-                WriteNulls(4); // TODO: Find out what this is.
-            }
-            else
-            {
-                // BINA Header
-                WriteSignature(sig);
-                WriteSignature(header.Version.ToString());
-                Write((IsBigEndian) ? 'B' : 'L');
-                Write(header.FileSize);
-
-                // TODO: Write Nodes Properly
-                Write((ushort)1); // NodeCount
-                Write((ushort)0); // Possibly IsFooterMagicPresent?
-
-                // DATA Header
-                WriteSignature(BINAHeader.DataSignature);
-                Write(header.DataLength);
-                Write(header.StringTableOffset);
-                Write(header.StringTableLength);
-
-                Write(header.FinalTableLength);
-                Write((ushort)(Offset - (BaseStream.Position + 4)));
-            }
-        }
-
         public void AddString(string offsetName, string str, uint offsetLength = 4)
         {
             if (string.IsNullOrEmpty(offsetName)) return;
@@ -366,7 +246,6 @@ namespace HedgeLib.IO
                 strings.Add(tableEntry);
         }
 
-        // TODO
         public override void FillInOffset(string name,
             bool absolute = true, bool removeOffset = false)
         {

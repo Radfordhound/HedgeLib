@@ -9,7 +9,7 @@ namespace HedgeLib.Sets
     public class LWSetData : SetData
     {
         // Variables/Constants
-        public BINAHeader Header = new BINAHeader();
+        public BINAHeader Header = new BINAv2Header();
 
         // Methods
         public override void Load(Stream fileStream,
@@ -20,7 +20,7 @@ namespace HedgeLib.Sets
                     "Cannot load LW set data without object templates.");
 
             // Header
-            var reader = new BINAReader(fileStream, BINA.BINATypes.Version2);
+            var reader = new BINAReader(fileStream);
             Header = reader.ReadHeader();
 
             // SOBJ Data
@@ -30,14 +30,8 @@ namespace HedgeLib.Sets
 
         public override void Save(Stream fileStream)
         {
-            Save(fileStream, true);
-        }
-
-        public void Save(Stream fileStream, bool isBigEndian)
-        {
             // Header
-            var writer = new BINAWriter(fileStream,
-                BINA.BINATypes.Version2, isBigEndian);
+            var writer = new BINAWriter(fileStream, Header);
 
             // SOBJ Data
             SOBJ.Write(writer, Objects, SOBJ.SOBJType.LostWorld);

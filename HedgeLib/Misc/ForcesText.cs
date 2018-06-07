@@ -14,7 +14,7 @@ namespace HedgeLib.Misc
         public Dictionary<string, CellType> Types = new Dictionary<string, CellType>();
         public List<Layout> Layouts = new List<Layout>();
         public List<Sheet> Sheets = new List<Sheet>();
-        public BINAHeader Header = new BINAHeader() { Version = 210 };
+        public BINAHeader Header = new BINAv2Header(210);
 
         public const string Extension = ".cnvrs-text";
         public const char NullReplaceChar = '⭗';
@@ -23,7 +23,7 @@ namespace HedgeLib.Misc
         public override void Load(Stream fileStream)
         {
             // BINA Header
-            var reader = new BINAReader(fileStream, BINA.BINATypes.Version2);
+            var reader = new BINAReader(fileStream);
             Header = reader.ReadHeader();
 
             // Header
@@ -374,9 +374,8 @@ namespace HedgeLib.Misc
         public override void Save(Stream fileStream)
         {
             // BINA Header
-            var writer = new BINAWriter(fileStream, BINA.BINATypes.Version2, false);
+            var writer = new BINAWriter(fileStream, Header);
             var rand = new Random();
-            Header.Version = 210;
 
             // Header
             writer.Write((byte)3); // TODO: Figure out what this is lol

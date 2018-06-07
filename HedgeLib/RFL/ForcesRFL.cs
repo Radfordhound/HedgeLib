@@ -9,26 +9,24 @@ namespace HedgeLib.RFL
     public class ForcesRFL : FileBase
     {
         // Variables/Constants
-        public BINAHeader Header = new BINAHeader() { Version = 210 };
+        public BINAHeader Header = new BINAv2Header(210);
         public const string Extension = ".rfl";
 
         // Methods
         public override sealed void Load(Stream fileStream)
         {
             // BINA Header
-            var reader = new BINAReader(
-                fileStream, BINA.BINATypes.Version2);
+            var reader = new BINAReader(fileStream);
+            Header = reader.ReadHeader();
 
             // Data
-            Header = reader.ReadHeader();
             Read(reader, Header);
         }
 
         public override sealed void Save(Stream fileStream)
         {
             // BINA Header
-            var writer = new BINAWriter(
-                fileStream, BINA.BINATypes.Version2, false);
+            var writer = new BINAWriter(fileStream, Header);
 
             // Data
             Write(writer);

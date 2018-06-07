@@ -7,10 +7,9 @@ namespace HedgeLib.Misc
     public class ForcesGISM : FileBase
     {
         // Variables/Constants
-        public BINAHeader Header = new BINAHeader();
+        public BINAHeader Header = new BINAv2Header(210);
         public ReactionData[] _ReactionData = new ReactionData[ReactionDataCount];
         public PhysicsParam _PhysicsParam;
-
 
         public string ModelName, SkeletonName, MeshName;
         public Vector3 BoundingSize, ShapeOffset;
@@ -50,7 +49,7 @@ namespace HedgeLib.Misc
         // Methods
         public override void Load(Stream fileStream)
         {
-            var reader = new BINAReader(fileStream, BINA.BINATypes.Version2);
+            var reader = new BINAReader(fileStream);
             Header = reader.ReadHeader();
             IsBigEndian = reader.IsBigEndian;
 
@@ -96,37 +95,20 @@ namespace HedgeLib.Misc
 
         public override void Save(Stream fileStream)
         {
-            Save(fileStream, IsBigEndian);
-        }
-
-        public void Save(Stream fileStream, bool isBigEndian)
-        {
-            var writer = new BINAWriter(fileStream,
-                BINA.BINATypes.Version2, isBigEndian);
-
-            Header.Version = 210;
+            var writer = new BINAWriter(fileStream, Header);
             writer.Write(RangeIn);
             writer.Write(RangeDistance);
 
-            if (string.IsNullOrEmpty(ModelName))
-                writer.Write(0UL);
-            else
-                writer.AddString("modelName", ModelName, 8);
+            writer.AddString("modelName", ModelName, 8);
             writer.WriteNulls(8);
 
-            if (string.IsNullOrEmpty(SkeletonName))
-                writer.Write(0UL);
-            else
-                writer.AddString("skeletonName", SkeletonName, 8);
+            writer.AddString("skeletonName", SkeletonName, 8);
             writer.WriteNulls(8);
 
             writer.Write((uint)BoundingShape);
             writer.Write(BoundingSize);
 
-            if (string.IsNullOrEmpty(MeshName))
-                writer.Write(0UL);
-            else
-                writer.AddString("meshName", MeshName, 8);
+            writer.AddString("meshName", MeshName, 8);
             writer.WriteNulls(16);
 
             writer.Write(ShapeOffset);
@@ -194,10 +176,8 @@ namespace HedgeLib.Misc
             public void Write(BINAWriter writer, int index)
             {
                 // MotionData
-                if (string.IsNullOrEmpty(_MotionData.MotionName))
-                    writer.Write(0UL);
-                else
-                    writer.AddString($"_MotionData.MotionName{index}", _MotionData.MotionName, 8);
+                writer.AddString($"_MotionData.MotionName{index}",
+                    _MotionData.MotionName, 8);
                 writer.WriteNulls(8);
 
                 writer.Write(_MotionData.SyncFrame);
@@ -205,58 +185,40 @@ namespace HedgeLib.Misc
                 writer.WriteNulls(6);
 
                 // MirageAnimationData
-                if (string.IsNullOrEmpty(_MirageAnimData.TextureSrtAnimName0))
-                    writer.Write(0UL);
-                else
-                    writer.AddString($"_MirageAnimData.TextureSrtAnimName0{index}", _MirageAnimData.TextureSrtAnimName0, 8);
+                writer.AddString($"_MirageAnimData.TextureSrtAnimName0{index}",
+                    _MirageAnimData.TextureSrtAnimName0, 8);
                 writer.WriteNulls(8);
 
-                if (string.IsNullOrEmpty(_MirageAnimData.TextureSrtAnimName0))
-                    writer.Write(0UL);
-                else
-                    writer.AddString($"_MirageAnimData.TextureSrtAnimName0{index}", _MirageAnimData.TextureSrtAnimName1, 8);
+                writer.AddString($"_MirageAnimData.TextureSrtAnimName1{index}",
+                    _MirageAnimData.TextureSrtAnimName1, 8);
                 writer.WriteNulls(8);
 
-                if (string.IsNullOrEmpty(_MirageAnimData.TextureSrtAnimName0))
-                    writer.Write(0UL);
-                else
-                    writer.AddString($"_MirageAnimData.TextureSrtAnimName0{index}", _MirageAnimData.TextureSrtAnimName2, 8);
+                writer.AddString($"_MirageAnimData.TextureSrtAnimName2{index}",
+                    _MirageAnimData.TextureSrtAnimName2, 8);
                 writer.WriteNulls(8);
 
-                if (string.IsNullOrEmpty(_MirageAnimData.TexturePatAnimName0))
-                    writer.Write(0UL);
-                else
-                    writer.AddString($"_MirageAnimData.TexturePatAnimName0{index}", _MirageAnimData.TexturePatAnimName0, 8);
+                writer.AddString($"_MirageAnimData.TexturePatAnimName0{index}",
+                    _MirageAnimData.TexturePatAnimName0, 8);
                 writer.WriteNulls(8);
 
-                if (string.IsNullOrEmpty(_MirageAnimData.TexturePatAnimName1))
-                    writer.Write(0UL);
-                else
-                    writer.AddString($"_MirageAnimData.TexturePatAnimName1{index}", _MirageAnimData.TexturePatAnimName1, 8);
+                writer.AddString($"_MirageAnimData.TexturePatAnimName1{index}",
+                    _MirageAnimData.TexturePatAnimName1, 8);
                 writer.WriteNulls(8);
 
-                if (string.IsNullOrEmpty(_MirageAnimData.TexturePatAnimName2))
-                    writer.Write(0UL);
-                else
-                    writer.AddString($"_MirageAnimData.TexturePatAnimName2{index}", _MirageAnimData.TexturePatAnimName2, 8);
+                writer.AddString($"_MirageAnimData.TexturePatAnimName2{index}",
+                    _MirageAnimData.TexturePatAnimName2, 8);
                 writer.WriteNulls(8);
 
-                if (string.IsNullOrEmpty(_MirageAnimData.MaterialAnimName0))
-                    writer.Write(0UL);
-                else
-                    writer.AddString($"_MirageAnimData.MaterialAnimName0{index}", _MirageAnimData.MaterialAnimName0, 8);
+                writer.AddString($"_MirageAnimData.MaterialAnimName0{index}",
+                    _MirageAnimData.MaterialAnimName0, 8);
                 writer.WriteNulls(8);
 
-                if (string.IsNullOrEmpty(_MirageAnimData.MaterialAnimName1))
-                    writer.Write(0UL);
-                else
-                    writer.AddString($"_MirageAnimData.MaterialAnimName1{index}", _MirageAnimData.MaterialAnimName1, 8);
+                writer.AddString($"_MirageAnimData.MaterialAnimName1{index}",
+                    _MirageAnimData.MaterialAnimName1, 8);
                 writer.WriteNulls(8);
 
-                if (string.IsNullOrEmpty(_MirageAnimData.MaterialAnimName2))
-                    writer.Write(0UL);
-                else
-                    writer.AddString($"_MirageAnimData.MaterialAnimName2{index}", _MirageAnimData.MaterialAnimName2, 8);
+                writer.AddString($"_MirageAnimData.MaterialAnimName2{index}",
+                    _MirageAnimData.MaterialAnimName2, 8);
                 writer.WriteNulls(16);
 
                 // ProgramMotionData
@@ -272,29 +234,22 @@ namespace HedgeLib.Misc
                 writer.WriteNulls(4);
 
                 // EffectData
-                if (string.IsNullOrEmpty(_EffectData.EffectName))
-                    writer.Write(0UL);
-                else
-                    writer.AddString($"_EffectData.EffectName{index}", _EffectData.EffectName, 8);
+                writer.AddString($"_EffectData.EffectName{index}", _EffectData.EffectName, 8);
                 writer.WriteNulls(8);
 
                 writer.Write(_EffectData.LinkMotionStop);
                 writer.WriteNulls(7);
 
                 // SoundData
-                if (string.IsNullOrEmpty(_SoundData.CueName))
-                    writer.Write(0UL);
-                else
-                    writer.AddString($"_SoundData.CueName{index}", _SoundData.CueName, 8);
+                writer.AddString($"_SoundData.CueName{index}", _SoundData.CueName, 8);
                 writer.WriteNulls(8);
 
                 // KillData
                 writer.Write((uint)_KillData.KillType);
                 writer.Write(_KillData.KillTime);
-                if (string.IsNullOrEmpty(_KillData.BreakMotionName))
-                    writer.Write(0UL);
-                else
-                    writer.AddString($"_KillData.BreakMotionName{index}", _KillData.BreakMotionName, 8);
+
+                writer.AddString($"_KillData.BreakMotionName{index}",
+                    _KillData.BreakMotionName, 8);
                 writer.WriteNulls(8);
 
                 writer.Write(_KillData._DebrisData.Gravity);
@@ -450,7 +405,6 @@ namespace HedgeLib.Misc
                     // Constructors
                     public DebrisData(BINAReader reader)
                     {
-                        System.Console.WriteLine(reader.BaseStream.Position);
                         Gravity = reader.ReadSingle();
                         LifeTime = reader.ReadSingle();
                         Mass = reader.ReadSingle();
@@ -460,6 +414,7 @@ namespace HedgeLib.Misc
                 }
             }
         }
+
         // Structs
         public struct PhysicsParam
         {

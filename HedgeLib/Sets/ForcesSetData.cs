@@ -11,7 +11,7 @@ namespace HedgeLib.Sets
     public class ForcesSetData : SetData
     {
         // Variables/Constants
-        public BINAHeader Header = new BINAHeader();
+        public BINAHeader Header = new BINAv2Header(210);
         public const string Extension = ".gedit";
 
         // Methods
@@ -23,7 +23,7 @@ namespace HedgeLib.Sets
                     "Cannot load Forces set data without object templates.");
 
             // BINA Header
-            var reader = new BINAReader(fileStream, BINA.BINATypes.Version2);
+            var reader = new BINAReader(fileStream);
             Header = reader.ReadHeader();
 
             // Set Data Header
@@ -321,13 +321,8 @@ namespace HedgeLib.Sets
 
         public override void Save(Stream fileStream)
         {
-            // BINA Header
-            var writer = new BINAWriter(fileStream,
-                BINA.BINATypes.Version2, false);
-
-            Header.Version = 210;
-
-            // Set Data Header
+            // Header
+            var writer = new BINAWriter(fileStream, Header);
             writer.Write(0UL);
             writer.Write(0UL);
 
@@ -357,7 +352,6 @@ namespace HedgeLib.Sets
                 WriteObjectParameters(writer, Objects[i], i);
             }
 
-            writer.FixPadding(4);
             writer.FinishWrite(Header);
         }
 

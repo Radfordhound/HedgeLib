@@ -17,7 +17,7 @@ namespace HedgeLib.RFL
         public override void Read(BINAReader reader, BINAHeader header = null)
         {
             // Stage Entries
-            uint stopOffset = (header.StringTableOffset + reader.Offset);
+            uint stopOffset = ((header as BINAv2Header).StringTableOffset + reader.Offset);
             StageEntries.Clear();
 
             while (reader.BaseStream.Position < stopOffset)

@@ -3,7 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System;
 using System.Linq;
-using HedgeLib.Exceptions;
+using HedgeLib.Headers;
 
 namespace HedgeLib.Archives
 {
@@ -11,7 +11,7 @@ namespace HedgeLib.Archives
     public class ForcesArchive : Archive
     {
         // Variables/Constants
-        public uint? ID;
+        public PACxHeader Header = new PACxHeader();
         public const string Extension = ".pac", Signature = "PACx";
 
         // Huge thanks to Skyth for these lists as well!
@@ -148,39 +148,9 @@ namespace HedgeLib.Archives
 
         public override void Load(Stream fileStream)
         {
-            // BINA Header
-            var reader = new BINAReader(fileStream, BINA.BINATypes.Version2);
-            string sig = reader.ReadSignature(4);
-            if (sig != Signature)
-                throw new InvalidSignatureException(Signature, sig);
-
-            // Version String
-            string verString = reader.ReadSignature(3);
-            if (!ushort.TryParse(verString, out var version))
-            {
-                Console.WriteLine(
-                    "WARNING: PACx header version was invalid {0}",
-                    verString);
-            }
-
-            reader.Offset = 0;
-            reader.IsBigEndian = (reader.ReadChar() == 'B');
-            ID = reader.ReadUInt32();
-            uint arcSize = reader.ReadUInt32();
-
-            // PAC Header
-            uint nodesSize = reader.ReadUInt32();
-            uint pacsSize = reader.ReadUInt32();
-            uint entriesSize = reader.ReadUInt32();
-            uint stringsSize = reader.ReadUInt32();
-            uint dataSize = reader.ReadUInt32();
-            uint finalTableLength = reader.ReadUInt32();
-
-            // 1 = HasNoSplits, 2 = IsSplit, 5 = HasSplits
-            ushort pacSplitType = reader.ReadUInt16(); 
-
-            ushort unknown1 = reader.ReadUInt16(); // Always 0x108?
-            uint splitCount = reader.ReadUInt32();
+            // PACx Header
+            var reader = new BINAReader(fileStream);
+            Header.Read(reader);
 
             // Type Names
             var typeTree = ReadNodeTree(reader);
@@ -264,7 +234,7 @@ namespace HedgeLib.Archives
                     // File Entries
                     reader.JumpTo(file.DataOffset);
                     uint pacID = reader.ReadUInt32();
-                    if (pacID != ID)
+                    if (pacID != Header.ID)
                     {
                         Console.WriteLine(
                             $"WARNING: Skipped file {name} as its pac ID was missing");
@@ -392,16 +362,18 @@ namespace HedgeLib.Archives
             bool isRootPAC = (!sizeLimit.HasValue && splitList != null);
 
             // BINA Header
-            var writer = new BINAWriter(fileStream,
-                BINA.BINATypes.Version2, false, false);
-
-            writer.WriteNulls(0x30);
-            writer.Offset = 0;
-
-            if (!ID.HasValue)
+            var writer = new BINAWriter(fileStream, Header);
+            if (Header.ID == 0)
             {
+                // Get a random non-zero value between 1 and 0xFFFFFFFF
+                // because I care too much™
                 var rand = new Random();
-                ID = (uint)rand.Next(1, int.MaxValue);
+                do
+                {
+                    Header.ID = unchecked((uint)rand.Next(
+                        int.MinValue, int.MaxValue));
+                }
+                while (Header.ID == 0);
             }
 
             // Generate Node Trees
@@ -580,18 +552,18 @@ namespace HedgeLib.Archives
             }
 
             // Write PACs section
-            uint pacsSize = 0;
+            Header.SplitListLength = 0;
             if (isRootPAC)
             {
                 writer.Write((ulong)splitList.Count);
                 writer.AddOffset("splitPACsOffset", 8);
-                pacsSize += 16;
+                Header.SplitListLength += 16;
 
                 writer.FillInOffsetLong("splitPACsOffset", true, false);
                 for (int i = 0; i < splitList.Count; ++i)
                 {
                     writer.AddString($"splitPACName{i}", splitList[i], 8);
-                    pacsSize += 8;
+                    Header.SplitListLength += 8;
                 }
             }
 
@@ -607,7 +579,7 @@ namespace HedgeLib.Archives
                         $"{Types[fileTree.Key]}nodeDataOffset{i}", true, false);
 
                     var file = Data[node.ArchiveFileIndex] as ArchiveFile;
-                    writer.Write(ID.Value);
+                    writer.Write(Header.ID);
                     writer.Write((ulong)file.Data.Length);
                     writer.Write(0U);
 
@@ -653,33 +625,26 @@ namespace HedgeLib.Archives
 
             // Write Offset Table
             writer.FixPadding(8);
-            uint footerPos = writer.WriteFooter();
-            writer.FixPadding(8);
+            uint footerPos = writer.WriteFooter(Header);
 
             // Fill-In Header
             uint fileSize = (uint)fileStream.Position;
             writer.BaseStream.Position = 0;
 
-            writer.WriteSignature(Signature);
-            writer.WriteSignature("301");
-            writer.Write((writer.IsBigEndian) ? 'B' : 'L');
-            writer.Write(ID.Value);
-            writer.Write(fileSize);
+            Header.NodeTreeLength = (uint)(fileEntriesOffset -
+                PACxHeader.Length) - Header.SplitListLength;
 
-            writer.Write((uint)(fileEntriesOffset - 0x30) - pacsSize);
-            writer.Write(pacsSize);
-            writer.Write(stringTablePos - (uint)fileEntriesOffset);
-            writer.Write((uint)fileDataOffset - stringTablePos);
-            writer.Write(footerPos - (uint)fileDataOffset);
-            writer.Write(fileSize - footerPos);
+            Header.FileEntriesLength = stringTablePos - (uint)fileEntriesOffset;
+            Header.StringTableLength = (uint)fileDataOffset - stringTablePos;
+            Header.DataLength = (footerPos - (uint)fileDataOffset);
 
-            // 5 if there are splits but this is the root, 2 if this is a split, 1 if no splits
-            writer.Write((sizeLimit.HasValue) ? (ushort)2 :
-                (splitList != null) ? (ushort)5 : (ushort)1);
+            // 5 if there are splits and this is the root, 2 if this is a split, 1 if no splits
+            Header.PacType = (sizeLimit.HasValue) ? PACxHeader.PACTypes.IsSplit :
+                (splitList != null) ? PACxHeader.PACTypes.HasSplits :
+                PACxHeader.PACTypes.HasNoSplits;
 
-            writer.Write((ushort)0x108);
-            writer.Write((splitList == null) ? 0U : (uint)splitList.Count);
-
+            Header.SplitCount = (splitList == null) ? 0U : (uint)splitList.Count;
+            Header.FinishWrite(writer);
             return endIndex;
         }
 

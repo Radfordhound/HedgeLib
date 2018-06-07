@@ -1,18 +1,31 @@
-﻿namespace HedgeLib.Headers
+﻿using HedgeLib.IO;
+using System;
+
+namespace HedgeLib.Headers
 {
-    public class BINAHeader
+    public class BINAHeader : IHeader
     {
         // Variables/Constants
-        public uint FileSize, FinalTableOffset, FinalTableLength,
-            DataLength, StringTableOffset, StringTableLength;
-        public ushort Version = 200;
-        public bool IsFooterMagicPresent = false;
-
+        public uint FileSize, FinalTableLength;
+        public ushort Version;
+        public bool IsBigEndian;
         public const string Signature = "BINA";
-        public const string DataSignature = "DATA";
-        public const string Ver1String = "\0\01", FooterMagic = "bvh";
+        public const char BigEndianFlag = 'B', LittleEndianFlag = 'L';
 
-        public const uint Ver1Length = 0x20, Ver2Length = 0x40,
-            FooterMagic2 = 0x10;
+        // Methods
+        public virtual void Read(ExtendedBinaryReader reader)
+        {
+            throw new NotImplementedException();
+        }
+
+        public virtual void PrepareWrite(ExtendedBinaryWriter writer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public virtual void FinishWrite(ExtendedBinaryWriter writer)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

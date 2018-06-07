@@ -9,7 +9,10 @@ namespace HedgeLib.Sets
     public class ColorsSetData : SetData
     {
         // Variables/Constants
-        public BINAHeader Header = new BINAHeader();
+        public BINAHeader Header = new BINAv1Header()
+        {
+            IsFooterMagicPresent = true
+        };
 
         // Methods
         public override void Load(Stream fileStream,
@@ -20,7 +23,7 @@ namespace HedgeLib.Sets
                     "Cannot load Colors set data without object templates.");
 
             // Header
-            var reader = new BINAReader(fileStream, BINA.BINATypes.Version1);
+            var reader = new BINAReader(fileStream);
             Header = reader.ReadHeader();
 
             // SOBJ Data
@@ -31,9 +34,7 @@ namespace HedgeLib.Sets
         public override void Save(Stream fileStream)
         {
             // Header
-            Header.IsFooterMagicPresent = true;
-            var writer = new BINAWriter(fileStream,
-                BINA.BINATypes.Version1, true);
+            var writer = new BINAWriter(fileStream, Header);
 
             // SOBJ Data
             SOBJ.Write(writer, Objects, SOBJ.SOBJType.Colors);

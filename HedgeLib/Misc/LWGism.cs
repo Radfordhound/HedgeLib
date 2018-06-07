@@ -8,7 +8,7 @@ namespace HedgeLib.Misc
     public class LWGism : FileBase
     {
         // Variables/Constants
-        public BINAHeader Header = new BINAHeader();
+        public BINAHeader Header = new BINAv2Header(200);
         public LWGismo[] Gismos;
         public uint UnknownBoolean1 = 1;
         public bool IsBigEndian
@@ -23,7 +23,7 @@ namespace HedgeLib.Misc
         public override void Load(Stream fileStream)
         {
             // Header
-            var reader = new BINAReader(fileStream, BINA.BINATypes.Version2);
+            var reader = new BINAReader(fileStream);
             Header = reader.ReadHeader();
             IsBigEndian = reader.IsBigEndian;
 
@@ -94,16 +94,8 @@ namespace HedgeLib.Misc
 
         public override void Save(Stream fileStream)
         {
-            Save(fileStream, true);
-        }
-
-        public void Save(Stream fileStream, bool isBigEndian)
-        {
             // Header
-            var writer = new BINAWriter(fileStream,
-                BINA.BINATypes.Version2, isBigEndian);
-
-            IsBigEndian = isBigEndian;
+            var writer = new BINAWriter(fileStream, Header);
             writer.AddString("gismOffset", Signature);
             writer.Write(UnknownBoolean1);
             writer.Write((uint)Gismos.Length);
