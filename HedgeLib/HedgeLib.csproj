@@ -54,9 +54,12 @@
     <Compile Include="Havok\HavokPackFile.cs" />
     <Compile Include="Havok\HavokTagFile.cs" />
     <Compile Include="Havok\HavokXML.cs" />
+    <Compile Include="Headers\BINAv1Header.cs" />
+    <Compile Include="Headers\BINAv2Header.cs" />
     <Compile Include="Headers\HedgehogEngineHeader.cs" />
     <Compile Include="Headers\IHeader.cs" />
     <Compile Include="Headers\MirageHeader.cs" />
+    <Compile Include="Headers\PACxHeader.cs" />
     <Compile Include="Materials\GensMaterial.cs" />
     <Compile Include="Math\AABB.cs" />
     <Compile Include="Misc\ForcesGISM.cs" />
