@@ -15,7 +15,7 @@ namespace HedgeLib.Headers
         {
             HasNoSplits = 1,
             IsSplit = 2,
-            HasSplit = 5
+            HasSplits = 5
         }
 
         public const string PACxSignature = "PACx";
@@ -80,7 +80,6 @@ namespace HedgeLib.Headers
         public override void PrepareWrite(ExtendedBinaryWriter writer)
         {
             writer.WriteNulls(Length);
-            writer.Offset = Length;
             writer.IsBigEndian = IsBigEndian;
         }
 

@@ -159,9 +159,11 @@ namespace HedgeLib.IO
             return stringTablePos;
         }
 
-        public void WriteFooter(BINAHeader header)
+        public uint WriteFooter(BINAHeader header)
         {
             uint footerStartPos = WriteFooter();
+            if (header is PACxHeader)
+                FixPadding(8);
 
             // Update header values and write footer magic
             header.FinalTableLength = (uint)BaseStream.Position - footerStartPos;
@@ -175,12 +177,9 @@ namespace HedgeLib.IO
             {
                 h2.DataLength = (uint)BaseStream.Position - 0x10;
             }
-            else if (header is PACxHeader h3)
-            {
-                h3.DataLength = (uint)BaseStream.Position - 0x10;
-            }
 
             header.FileSize = (uint)BaseStream.Position;
+            return footerStartPos;
         }
 
         public uint WriteFooter()
