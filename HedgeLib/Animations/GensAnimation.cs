@@ -191,9 +191,9 @@ namespace HedgeLib.Animations
                     anim = new VisibilityAnimation();
                     break;
 
-                case "textureanimation":
-                    anim = new TextureAnimation();
-                    break;
+                //case "textureanimation":
+                //    anim = new TextureAnimation();
+                //    break;
 
                 default:
                     throw new NotSupportedException(
