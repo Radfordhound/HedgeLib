@@ -33,6 +33,7 @@ namespace HedgeLib.Headers
             // We need to know whether the file is big or little endian first
             var pos = reader.BaseStream.Position;
             reader.BaseStream.Position += 0x14;
+            reader.IsBigEndian = false;
 
             // Version String/Endian Flag
             uint binaFlags = reader.ReadUInt32();
@@ -42,22 +43,17 @@ namespace HedgeLib.Headers
             {
                 // Endian Flag
                 reader.IsBigEndian = IsBigEndian = ((char)(
-                    (binaFlags & 0xFF000000) >> 16) == BigEndianFlag);
+                    (binaFlags & 0xFF000000) >> 24) == BigEndianFlag);
 
                 // Quick way to grab the last 3 bytes from binaFlags (which
                 // are chars) and stuff them into a string we can then
                 // safely parse into a ushort via ushort.TryParse
                 fixed (char* vp = verString)
                 {
-                    *vp = (char)((binaFlags & 0xFF0000) >> 8);
-                    vp[1] = (char)(binaFlags & 0xFF00);
-                    vp[2] = (char)((binaFlags & 0xFF) << 8);
+                    *vp = (char)((binaFlags & 0xFF0000) >> 16);
+                    vp[1] = (char)((binaFlags & 0xFF00) >> 16);
+                    vp[2] = (char)(binaFlags & 0xFF);
                 }
-
-                // TODO: Do I need to get rid of nulls for ushort.TryParse?
-                // TODO: PLEASE TEST ALL OF THIS LOL
-                Console.WriteLine(verString);
-                Console.WriteLine();
             }
 
             if (!ushort.TryParse(verString, out Version))
@@ -117,12 +113,12 @@ namespace HedgeLib.Headers
             writer.Write((IsFooterMagicPresent) ? (ushort)1 : (ushort)0);
 
             string verString = Version.ToString();
-            writer.WriteSignature(verString);
             if (verString.Length < 3)
             {
                 writer.WriteNulls((uint)(3 - verString.Length));
             }
 
+            writer.WriteSignature(verString);
             writer.Write((IsBigEndian) ? BigEndianFlag : LittleEndianFlag);
             writer.WriteSignature(Signature);
             writer.WriteNulls(4); // TODO: Find out what this is.
