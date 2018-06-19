@@ -231,39 +231,39 @@ namespace HedgeEdit
                 CameraRot.Y -= mouseDifference.Y * 0.1f;
 
                 // Set Camera Movement Speed
-                //if (IsKeyDown(keyState, Key.LeftShift, Key.RightShift))
-                //{
-                //    camSpeed = fastSpeed;
-                //}
-                //else if (IsKeyDown(keyState, Key.LeftAlt, Key.RightAlt))
-                //{
-                //    camSpeed = slowSpeed;
-                //}
-                //else
-                //{
-                //    camSpeed = normalSpeed;
-                //}
+                if (Input.IsInputDown(Inputs.Fast))
+                {
+                    camSpeed = fastSpeed;
+                }
+                else if (Input.IsInputDown(Inputs.Slow))
+                {
+                    camSpeed = slowSpeed;
+                }
+                else
+                {
+                    camSpeed = normalSpeed;
+                }
 
-                //// Set Camera Position
-                //if (IsKeyDown(keyState, Key.W))
-                //{
-                //    CameraPos += camSpeed * CameraForward;
-                //}
-                //else if (IsKeyDown(keyState, Key.S))
-                //{
-                //    CameraPos -= camSpeed * CameraForward;
-                //}
+                // Set Camera Position
+                if (Input.IsInputDown(Inputs.Up))
+                {
+                    CameraPos += camSpeed * CameraForward;
+                }
+                else if (Input.IsInputDown(Inputs.Down))
+                {
+                    CameraPos -= camSpeed * CameraForward;
+                }
 
-                //if (IsKeyDown(keyState, Key.A))
-                //{
-                //    CameraPos -= Vector3.Normalize(
-                //        Vector3.Cross(CameraForward, camUp)) * camSpeed;
-                //}
-                //else if (IsKeyDown(keyState, Key.D))
-                //{
-                //    CameraPos += Vector3.Normalize(
-                //        Vector3.Cross(CameraForward, camUp)) * camSpeed;
-                //}
+                if (Input.IsInputDown(Inputs.Left))
+                {
+                    CameraPos += Vector3.Normalize(
+                        Vector3.Cross(CameraForward, camUp)) * camSpeed;
+                }
+                else if (Input.IsInputDown(Inputs.Right))
+                {
+                    CameraPos -= Vector3.Normalize(
+                        Vector3.Cross(CameraForward, camUp)) * camSpeed;
+                }
 
                 // Snap cursor to center of viewport
                 Cursor.Position =

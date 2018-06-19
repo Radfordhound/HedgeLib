@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace HedgeEdit.UI
 {
-    public partial class MainFrm : Form
+    public partial class MainFrm : Form, IMessageFilter
     {
         // Variables/Constants
         /// <summary>
@@ -52,6 +52,7 @@ namespace HedgeEdit.UI
             InitializeComponent();
             UpdateTitle();
             Application.Idle += Application_Idle;
+            Application.AddMessageFilter(this);
             statusBarLbl.Text = "";
 
             objectProperties.ToolStrip.Items[0].Click += CategorizeButton_Click;
@@ -414,13 +415,37 @@ namespace HedgeEdit.UI
 
         // GUI Events
         #region MainFrm/Viewport Events
+        public bool PreFilterMessage(ref Message m)
+        {
+            switch (m.Msg)
+            {
+                // Key Down
+                case 256:
+                    Input.SetInputDown((Keys)m.WParam);
+
+                    if (Viewport.IsMovingCamera)
+                        return true;
+                    break;
+
+                // Key Up
+                case 257:
+                    Input.SetInputUp((Keys)m.WParam);
+                    break;
+            }
+
+            return false;
+        }
+
+        private void MainFrm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            Application.RemoveMessageFilter(this);
+        }
+
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
             // Handle these shortcut keys only if no textBoxes are in focus
             if (activeTxtBx != null)
                 return base.ProcessCmdKey(ref msg, keyData);
-
-            Input.KeyState = keyData;
 
             switch (keyData)
             {
@@ -436,7 +461,7 @@ namespace HedgeEdit.UI
 
                 // Copy Selected Object(s)
                 case Keys.Control | Keys.C:
-                    CopyMenuItem_Click(null,null);
+                    CopyMenuItem_Click(null, null);
                     return true;
 
                 // Paste Selected Object(s)

@@ -677,6 +677,7 @@
             this.Text = "HedgeEdit";
             this.Activated += new System.EventHandler(this.MainFrm_Activate);
             this.Deactivate += new System.EventHandler(this.MainFrm_Deactivate);
+            this.FormClosing += MainFrm_FormClosing;
             this.Load += new System.EventHandler(this.MainFrm_Load);
             this.menuStrip.ResumeLayout(false);
             this.menuStrip.PerformLayout();
