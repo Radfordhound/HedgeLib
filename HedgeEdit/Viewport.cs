@@ -74,62 +74,62 @@ namespace HedgeEdit
             // Vertices
             var vertices = SharpDX.Direct3D11.Buffer.Create(device, BindFlags.VertexBuffer, new[]
             {
-                new Vector4(-1.0f, -1.0f, -1.0f, 1.0f), new Vector4(1.0f, 0.0f, 0.0f, 1.0f), // Front
-                new Vector4(-1.0f,  1.0f, -1.0f, 1.0f), new Vector4(1.0f, 0.0f, 0.0f, 1.0f),
-                new Vector4( 1.0f,  1.0f, -1.0f, 1.0f), new Vector4(1.0f, 0.0f, 0.0f, 1.0f),
-                new Vector4(-1.0f, -1.0f, -1.0f, 1.0f), new Vector4(1.0f, 0.0f, 0.0f, 1.0f),
-                new Vector4( 1.0f,  1.0f, -1.0f, 1.0f), new Vector4(1.0f, 0.0f, 0.0f, 1.0f),
-                new Vector4( 1.0f, -1.0f, -1.0f, 1.0f), new Vector4(1.0f, 0.0f, 0.0f, 1.0f),
+                -1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f, // Front
+                -1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,
+                 1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,
+                -1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,
+                 1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,
+                 1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,
 
-                new Vector4(-1.0f, -1.0f,  1.0f, 1.0f), new Vector4(0.0f, 1.0f, 0.0f, 1.0f), // BACK
-                new Vector4( 1.0f,  1.0f,  1.0f, 1.0f), new Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-                new Vector4(-1.0f,  1.0f,  1.0f, 1.0f), new Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-                new Vector4(-1.0f, -1.0f,  1.0f, 1.0f), new Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-                new Vector4( 1.0f, -1.0f,  1.0f, 1.0f), new Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-                new Vector4( 1.0f,  1.0f,  1.0f, 1.0f), new Vector4(0.0f, 1.0f, 0.0f, 1.0f),
+                -1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f, // BACK
+                 1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,
+                -1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,
+                -1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,
+                 1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,
+                 1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,
 
-                new Vector4(-1.0f, 1.0f, -1.0f,  1.0f), new Vector4(0.0f, 0.0f, 1.0f, 1.0f), // Top
-                new Vector4(-1.0f, 1.0f,  1.0f,  1.0f), new Vector4(0.0f, 0.0f, 1.0f, 1.0f),
-                new Vector4( 1.0f, 1.0f,  1.0f,  1.0f), new Vector4(0.0f, 0.0f, 1.0f, 1.0f),
-                new Vector4(-1.0f, 1.0f, -1.0f,  1.0f), new Vector4(0.0f, 0.0f, 1.0f, 1.0f),
-                new Vector4( 1.0f, 1.0f,  1.0f,  1.0f), new Vector4(0.0f, 0.0f, 1.0f, 1.0f),
-                new Vector4( 1.0f, 1.0f, -1.0f,  1.0f), new Vector4(0.0f, 0.0f, 1.0f, 1.0f),
+                -1.0f, 1.0f, -1.0f,     0.0f, 0.0f, 1.0f, 1.0f, // Top
+                -1.0f, 1.0f,  1.0f,     0.0f, 0.0f, 1.0f, 1.0f,
+                 1.0f, 1.0f,  1.0f,     0.0f, 0.0f, 1.0f, 1.0f,
+                -1.0f, 1.0f, -1.0f,     0.0f, 0.0f, 1.0f, 1.0f,
+                 1.0f, 1.0f,  1.0f,     0.0f, 0.0f, 1.0f, 1.0f,
+                 1.0f, 1.0f, -1.0f,     0.0f, 0.0f, 1.0f, 1.0f,
 
-                new Vector4(-1.0f,-1.0f, -1.0f,  1.0f), new Vector4(1.0f, 1.0f, 0.0f, 1.0f), // Bottom
-                new Vector4( 1.0f,-1.0f,  1.0f,  1.0f), new Vector4(1.0f, 1.0f, 0.0f, 1.0f),
-                new Vector4(-1.0f,-1.0f,  1.0f,  1.0f), new Vector4(1.0f, 1.0f, 0.0f, 1.0f),
-                new Vector4(-1.0f,-1.0f, -1.0f,  1.0f), new Vector4(1.0f, 1.0f, 0.0f, 1.0f),
-                new Vector4( 1.0f,-1.0f, -1.0f,  1.0f), new Vector4(1.0f, 1.0f, 0.0f, 1.0f),
-                new Vector4( 1.0f,-1.0f,  1.0f,  1.0f), new Vector4(1.0f, 1.0f, 0.0f, 1.0f),
+                -1.0f,-1.0f, -1.0f,     1.0f, 1.0f, 0.0f, 1.0f, // Bottom
+                 1.0f,-1.0f,  1.0f,     1.0f, 1.0f, 0.0f, 1.0f,
+                -1.0f,-1.0f,  1.0f,     1.0f, 1.0f, 0.0f, 1.0f,
+                -1.0f,-1.0f, -1.0f,     1.0f, 1.0f, 0.0f, 1.0f,
+                 1.0f,-1.0f, -1.0f,     1.0f, 1.0f, 0.0f, 1.0f,
+                 1.0f,-1.0f,  1.0f,     1.0f, 1.0f, 0.0f, 1.0f,
 
-                new Vector4(-1.0f, -1.0f, -1.0f, 1.0f), new Vector4(1.0f, 0.0f, 1.0f, 1.0f), // Left
-                new Vector4(-1.0f, -1.0f,  1.0f, 1.0f), new Vector4(1.0f, 0.0f, 1.0f, 1.0f),
-                new Vector4(-1.0f,  1.0f,  1.0f, 1.0f), new Vector4(1.0f, 0.0f, 1.0f, 1.0f),
-                new Vector4(-1.0f, -1.0f, -1.0f, 1.0f), new Vector4(1.0f, 0.0f, 1.0f, 1.0f),
-                new Vector4(-1.0f,  1.0f,  1.0f, 1.0f), new Vector4(1.0f, 0.0f, 1.0f, 1.0f),
-                new Vector4(-1.0f,  1.0f, -1.0f, 1.0f), new Vector4(1.0f, 0.0f, 1.0f, 1.0f),
+                -1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 1.0f, 1.0f, // Left
+                -1.0f, -1.0f,  1.0f,    1.0f, 0.0f, 1.0f, 1.0f,
+                -1.0f,  1.0f,  1.0f,    1.0f, 0.0f, 1.0f, 1.0f,
+                -1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 1.0f, 1.0f,
+                -1.0f,  1.0f,  1.0f,    1.0f, 0.0f, 1.0f, 1.0f,
+                -1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 1.0f, 1.0f,
 
-                new Vector4( 1.0f, -1.0f, -1.0f, 1.0f), new Vector4(0.0f, 1.0f, 1.0f, 1.0f), // Right
-                new Vector4( 1.0f,  1.0f,  1.0f, 1.0f), new Vector4(0.0f, 1.0f, 1.0f, 1.0f),
-                new Vector4( 1.0f, -1.0f,  1.0f, 1.0f), new Vector4(0.0f, 1.0f, 1.0f, 1.0f),
-                new Vector4( 1.0f, -1.0f, -1.0f, 1.0f), new Vector4(0.0f, 1.0f, 1.0f, 1.0f),
-                new Vector4( 1.0f,  1.0f, -1.0f, 1.0f), new Vector4(0.0f, 1.0f, 1.0f, 1.0f),
-                new Vector4( 1.0f,  1.0f,  1.0f, 1.0f), new Vector4(0.0f, 1.0f, 1.0f, 1.0f),
+                 1.0f, -1.0f, -1.0f,    0.0f, 1.0f, 1.0f, 1.0f, // Right
+                 1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 1.0f, 1.0f,
+                 1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 1.0f, 1.0f,
+                 1.0f, -1.0f, -1.0f,    0.0f, 1.0f, 1.0f, 1.0f,
+                 1.0f,  1.0f, -1.0f,    0.0f, 1.0f, 1.0f, 1.0f,
+                 1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 1.0f, 1.0f,
             });
 
             // Setup a layout
             CurrentShader = Shaders.ShaderPrograms["Default"];
             var layout = new InputLayout(device, CurrentShader.Signature, new[]
             {
-                new InputElement("POSITION", 0, Format.R32G32B32A32_Float, 0, 0),
-                new InputElement("COLOR", 0, Format.R32G32B32A32_Float, 16, 0)
+                new InputElement("POSITION", 0, Format.R32G32B32_Float, 0, 0),
+                new InputElement("COLOR", 0, Format.R32G32B32A32_Float, 12, 0)
             });
 
             // Setup our context
             context.InputAssembler.InputLayout = layout;
             context.InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
             context.InputAssembler.SetVertexBuffers(0, new VertexBufferBinding(
-                vertices, Utilities.SizeOf<Vector4>() * 2, 0));
+                vertices, Utilities.SizeOf<Vector3>() + Utilities.SizeOf<Vector4>(), 0));
 
             vertices.Dispose();
             layout.Dispose(); // TODO: Is this ok??
