@@ -20,7 +20,7 @@ namespace HedgeEdit
         public static List<VPObjectInstance> SelectedInstances =
             new List<VPObjectInstance>();
 
-        public static TransformGizmo Gizmo = new TransformGizmo();
+        //public static TransformGizmo Gizmo = new TransformGizmo();
         public static Shaders.Shader CurrentShader;
         public static Vector3 CameraPos = new Vector3(0, 0, -5), CameraRot = new Vector3(0, 0, 0);//new Vector3(-90, 0, 0);
         public static Vector3 CameraForward { get; private set; } = new Vector3(0, 0, 1);//new Vector3(0, 0, -1);
