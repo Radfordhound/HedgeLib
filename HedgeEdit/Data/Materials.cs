@@ -2,7 +2,6 @@
 using HedgeLib.Headers;
 using HedgeLib.Materials;
 using HedgeLib.Textures;
-using OpenTK.Graphics.ES30;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -306,74 +305,76 @@ namespace HedgeEdit
 
         private static int GenTexture(Texture tex)
         {
-            int texture = GL.GenTexture();
-            GL.BindTexture(TextureTarget.Texture2D, texture);
+            // TODO
+            //int texture = GL.GenTexture();
+            //GL.BindTexture(TextureTarget.Texture2D, texture);
 
-            if (tex == null)
-                throw new ArgumentNullException("tex");
+            //if (tex == null)
+            //    throw new ArgumentNullException("tex");
 
-            // Set Parameters
-            GL.TexParameter(TextureTarget.Texture2D,
-                TextureParameterName.TextureMinFilter,
-                (float)TextureMinFilter.LinearMipmapLinear);
+            //// Set Parameters
+            //GL.TexParameter(TextureTarget.Texture2D,
+            //    TextureParameterName.TextureMinFilter,
+            //    (float)TextureMinFilter.LinearMipmapLinear);
 
-            GL.TexParameter(TextureTarget.Texture2D,
-                TextureParameterName.TextureMagFilter,
-                (int)TextureMagFilter.Linear);
+            //GL.TexParameter(TextureTarget.Texture2D,
+            //    TextureParameterName.TextureMagFilter,
+            //    (int)TextureMagFilter.Linear);
 
-            GL.TexParameter(TextureTarget.Texture2D,
-                TextureParameterName.TextureWrapS,
-                (int)TextureWrapMode.Repeat);
+            //GL.TexParameter(TextureTarget.Texture2D,
+            //    TextureParameterName.TextureWrapS,
+            //    (int)TextureWrapMode.Repeat);
 
-            GL.TexParameter(TextureTarget.Texture2D,
-                TextureParameterName.TextureWrapT,
-                (int)TextureWrapMode.Repeat);
+            //GL.TexParameter(TextureTarget.Texture2D,
+            //    TextureParameterName.TextureWrapT,
+            //    (int)TextureWrapMode.Repeat);
 
-            GL.TexParameter(TextureTarget.Texture2D,
-                TextureParameterName.TextureBaseLevel,
-                0);
+            //GL.TexParameter(TextureTarget.Texture2D,
+            //    TextureParameterName.TextureBaseLevel,
+            //    0);
 
-            GL.TexParameter(TextureTarget.Texture2D,
-                TextureParameterName.TextureMaxLevel,
-                (int)tex.MipmapCount - 1);
+            //GL.TexParameter(TextureTarget.Texture2D,
+            //    TextureParameterName.TextureMaxLevel,
+            //    (int)tex.MipmapCount - 1);
 
-            // Generate textures
-            uint mipmapCount = ((tex.MipmapCount == 0) ? 1 : tex.MipmapCount);
-            int w = (int)tex.Width, h = (int)tex.Height;
-            for (int i = 0; i < mipmapCount; ++i)
-            {
-                // Un-Compressed
-                if (tex.CompressionFormat == Texture.CompressionFormats.None)
-                {
-                    GL.TexImage2D(TextureTarget2d.Texture2D,
-                        i, // level
-                        (TextureComponentCount)tex.PixelFormat,
-                        w,
-                        h,
-                        0, // border
-                        (PixelFormat)tex.PixelFormat,
-                        PixelType.UnsignedByte,
-                        tex.ColorData[i]);
-                }
+            //// Generate textures
+            //uint mipmapCount = ((tex.MipmapCount == 0) ? 1 : tex.MipmapCount);
+            //int w = (int)tex.Width, h = (int)tex.Height;
+            //for (int i = 0; i < mipmapCount; ++i)
+            //{
+            //    // Un-Compressed
+            //    if (tex.CompressionFormat == Texture.CompressionFormats.None)
+            //    {
+            //        GL.TexImage2D(TextureTarget2d.Texture2D,
+            //            i, // level
+            //            (TextureComponentCount)tex.PixelFormat,
+            //            w,
+            //            h,
+            //            0, // border
+            //            (PixelFormat)tex.PixelFormat,
+            //            PixelType.UnsignedByte,
+            //            tex.ColorData[i]);
+            //    }
 
-                // Compressed
-                else
-                {
-                    GL.CompressedTexImage2D(TextureTarget2d.Texture2D,
-                        i, // level
-                        (CompressedInternalFormat)tex.CompressionFormat,
-                        w,
-                        h,
-                        0, // border
-                        tex.ColorData[i].Length,
-                        tex.ColorData[i]);
-                }
+            //    // Compressed
+            //    else
+            //    {
+            //        GL.CompressedTexImage2D(TextureTarget2d.Texture2D,
+            //            i, // level
+            //            (CompressedInternalFormat)tex.CompressionFormat,
+            //            w,
+            //            h,
+            //            0, // border
+            //            tex.ColorData[i].Length,
+            //            tex.ColorData[i]);
+            //    }
 
-                w /= 2;
-                h /= 2;
-            }
+            //    w /= 2;
+            //    h /= 2;
+            //}
 
-            return texture;
+            //return texture;
+            return 0;
         }
     }
 }

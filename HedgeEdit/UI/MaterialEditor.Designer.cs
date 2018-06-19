@@ -32,7 +32,6 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MaterialEditor));
             this.splitContainer = new System.Windows.Forms.SplitContainer();
             this.propertyGrid = new PropertyGridEx.PropertyGridEx();
-            this.viewport = new OpenTK.GLControl();
             this.menuStrip = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.newToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -61,7 +60,6 @@
             // 
             // splitContainer.Panel2
             // 
-            this.splitContainer.Panel2.Controls.Add(this.viewport);
             this.splitContainer.Size = new System.Drawing.Size(678, 511);
             this.splitContainer.SplitterDistance = 400;
             this.splitContainer.TabIndex = 0;
@@ -102,18 +100,6 @@
             this.propertyGrid.ToolStrip.Name = "";
             this.propertyGrid.ToolStrip.Size = new System.Drawing.Size(400, 25);
             this.propertyGrid.ToolStrip.TabIndex = 1;
-            // 
-            // viewport
-            // 
-            this.viewport.BackColor = System.Drawing.Color.Black;
-            this.viewport.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.viewport.Location = new System.Drawing.Point(0, 0);
-            this.viewport.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this.viewport.Name = "viewport";
-            this.viewport.Size = new System.Drawing.Size(274, 511);
-            this.viewport.TabIndex = 0;
-            this.viewport.VSync = false;
-            this.viewport.Paint += new System.Windows.Forms.PaintEventHandler(this.Viewport_Paint);
             // 
             // menuStrip
             // 
@@ -218,7 +204,6 @@
 
         private System.Windows.Forms.SplitContainer splitContainer;
         private PropertyGridEx.PropertyGridEx propertyGrid;
-        private OpenTK.GLControl viewport;
         private System.Windows.Forms.MenuStrip menuStrip;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem newToolStripMenuItem;

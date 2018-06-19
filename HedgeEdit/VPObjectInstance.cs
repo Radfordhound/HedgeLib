@@ -1,4 +1,4 @@
-﻿using OpenTK;
+﻿using SharpDX;
 using System;
 
 namespace HedgeEdit
@@ -37,10 +37,10 @@ namespace HedgeEdit
             }
         }
 
-        public Matrix4 Matrix => matrix;
+        public Matrix Matrix => matrix;
         public object CustomData = null;
 
-        protected Matrix4 matrix = Matrix4.Identity;
+        protected Matrix matrix = Matrix.Identity;
         protected Quaternion rot = Quaternion.Identity;
         protected Vector3 pos = Vector3.Zero, scale = Vector3.One;
 
@@ -62,14 +62,11 @@ namespace HedgeEdit
         /// </summary>
         /// <param name="matrix">A 4x4 matrix representing the transform of this object.</param>
         /// <param name="customData">Any custom data you wish to store for later use.</param>
-        public VPObjectInstance(Matrix4 matrix, object customData = null)
+        public VPObjectInstance(Matrix matrix, object customData = null)
         {
             this.matrix = matrix;
             CustomData = customData;
-
-            pos = matrix.ExtractTranslation();
-            rot = matrix.ExtractRotation();
-            scale = matrix.ExtractScale();
+            matrix.Decompose(out scale, out rot, out pos);
         }
 
         /// <summary>
@@ -85,10 +82,12 @@ namespace HedgeEdit
             MatrixQDDecomposition(matrix, rotMatrix, out scale);
 
             pos = new Vector3(matrix[0, 3], matrix[1, 3], matrix[2, 3]);
-            rot = Quaternion.FromMatrix(new Matrix3(
+            var mRot = new Matrix3x3(
                 rotMatrix[0, 0], rotMatrix[0, 1], rotMatrix[0, 2],
                 rotMatrix[1, 0], rotMatrix[1, 1], rotMatrix[1, 2],
-                rotMatrix[2, 0], rotMatrix[2, 1], rotMatrix[2, 2]));
+                rotMatrix[2, 0], rotMatrix[2, 1], rotMatrix[2, 2]);
+
+            Quaternion.RotationMatrix(ref mRot, out rot);
 
             CustomData = customData;
             UpdateMatrix();
@@ -158,9 +157,10 @@ namespace HedgeEdit
         // Methods
         protected void UpdateMatrix()
         {
-            matrix = Matrix4.CreateScale(scale) *
-                Matrix4.CreateFromQuaternion(rot) *
-                Matrix4.CreateTranslation(pos);
+            // TODO: Is this correct? lol
+            matrix = Matrix.Translation(pos) *
+                Matrix.RotationQuaternion(rot) *
+                Matrix.Scaling(scale);
         }
 
         // The following 2 methods were taken from OGRE (for now) with some light modifications

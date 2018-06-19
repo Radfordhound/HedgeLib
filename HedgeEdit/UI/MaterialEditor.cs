@@ -1,7 +1,6 @@
 ﻿using HedgeLib.Headers;
 using HedgeLib.Materials;
 using HedgeLib.Textures;
-using OpenTK.Graphics.ES30;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -178,26 +177,6 @@ namespace HedgeEdit.UI
         }
 
         // GUI Events
-        private void Viewport_Paint(object sender, PaintEventArgs e)
-        {
-            // Clear the background color
-            viewport.MakeCurrent();
-            GL.ClearColor(0, 0, 0, 1);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-            // Start using our "Default" program and bind our VAO
-            //int defaultID = Shaders.ShaderPrograms["Default"];
-            //GL.UseProgram(defaultID);
-
-            // Draw
-            //Data.DefaultCube.Draw(defaultID, Mesh.Slots.Default);
-
-            // TODO: Draw preview mesh
-
-            //GL.Flush();
-            viewport.SwapBuffers();
-        }
-
         private void MaterialEditor_FormClosing(object sender, FormClosingEventArgs e)
         {
             UpdateMaterial();

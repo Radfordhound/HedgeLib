@@ -431,7 +431,7 @@ namespace HedgeEdit
         }
 
         public static VPObjectInstance AddObjectInstance(VPModel obj,
-            OpenTK.Vector3 pos, OpenTK.Quaternion rot, OpenTK.Vector3 scale,
+            SharpDX.Vector3 pos, SharpDX.Quaternion rot, SharpDX.Vector3 scale,
             object customData = null)
         {
             return AddObjectInstance(obj, new VPObjectInstance(
@@ -439,7 +439,7 @@ namespace HedgeEdit
         }
 
         public static VPObjectInstance AddObjectInstance(string modelName,
-            OpenTK.Vector3 pos, OpenTK.Quaternion rot, OpenTK.Vector3 scale,
+            SharpDX.Vector3 pos, SharpDX.Quaternion rot, SharpDX.Vector3 scale,
             object customData = null)
         {
             return AddObjectInstance(modelName, new VPObjectInstance(

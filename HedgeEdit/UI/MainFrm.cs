@@ -13,14 +13,11 @@ namespace HedgeEdit.UI
     public partial class MainFrm : Form
     {
         // Variables/Constants
-        public static SceneView SceneView
-        {
-            get => sceneView;
-        }
-
-        // Apparently, for every call to Cursor.Hide, there must be a call to
-        // Cursor.Show, otherwise the Cursor.Show and Cursor.Hide functions will
-        // stop working for some idiotic reason lol.
+        /// <summary>
+        /// Apparently, for every call to Cursor.Hide, there must be a call to
+        /// Cursor.Show, otherwise the Cursor.Show and Cursor.Hide functions will
+        /// stop working for some idiotic reason lol.
+        /// </summary>
         public static bool CursorVisible
         {
             get => cursorVisible;
@@ -423,6 +420,8 @@ namespace HedgeEdit.UI
             if (activeTxtBx != null)
                 return base.ProcessCmdKey(ref msg, keyData);
 
+            Input.KeyState = keyData;
+
             switch (keyData)
             {
                 // Undo Changes
@@ -472,7 +471,7 @@ namespace HedgeEdit.UI
             LuaScript.Initialize();
             LuaTerminal.InitLog();
             GameList.Load(Program.StartupPath);
-            Viewport.Init(viewport);
+            Viewport.Init(mainSplitContainer.Panel2);
             Data.LoadDefaults();
         }
 
@@ -489,10 +488,11 @@ namespace HedgeEdit.UI
 
         private void Application_Idle(object sender, EventArgs e)
         {
-            while (viewport.IsIdle)
-            {
-                Viewport.Render();
-            }
+            Viewport.Update();
+            //while (viewport.IsIdle)
+            //{
+            //    Viewport.Render();
+            //}
         }
 
         private void Viewport_Paint(object sender, PaintEventArgs e)
@@ -502,7 +502,7 @@ namespace HedgeEdit.UI
 
         private void Viewport_Resize(object sender, EventArgs e)
         {
-            Viewport.Resize(viewport.Width, viewport.Height);
+            Viewport.OnResize();
         }
 
         private void Viewport_MouseDown(object sender, MouseEventArgs e)

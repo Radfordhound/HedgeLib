@@ -45,7 +45,7 @@ Right now it supports the following:
 - [Reading/Writing BINA headers/footers.](HedgeLib/IO/BINA.cs)
 
 ## HedgeEdit
-A level editor built with OpenTK/Winforms designed to carry much of the same
+A level editor built with SharpDX/WinForms designed to carry much of the same
 functionality as "SonicGlvl", but with support for a large number of games in the series, rather than just Generations.
 
 Right now it's a major WIP, though feel free to try it out!

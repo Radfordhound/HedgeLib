@@ -31,6 +31,7 @@ namespace HedgeEdit
 
             MainForm = new MainFrm();
             Application.Run(MainForm);
+            Viewport.Dispose();
         }
 
         public static void MainUIInvoke(Action action)

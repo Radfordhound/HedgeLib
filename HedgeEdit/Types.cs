@@ -299,34 +299,34 @@ namespace HedgeEdit
             }
         }
 
-        public static Vector3 ToHedgeLib(OpenTK.Vector3 vector)
+        public static Vector3 ToHedgeLib(SharpDX.Vector3 vector)
         {
             return new Vector3(vector.X, vector.Y, vector.Z);
         }
 
-        public static OpenTK.Vector3 ToOpenTK(Vector3 vector)
+        public static SharpDX.Vector3 ToOpenTK(Vector3 vector)
         {
-            return new OpenTK.Vector3(vector.X, vector.Y, vector.Z);
+            return new SharpDX.Vector3(vector.X, vector.Y, vector.Z);
         }
 
-        public static Vector4 ToHedgeLib(OpenTK.Vector4 vector)
+        public static Vector4 ToHedgeLib(SharpDX.Vector4 vector)
         {
             return new Vector4(vector.X, vector.Y, vector.Z, vector.W);
         }
 
-        public static Quaternion ToHedgeLib(OpenTK.Quaternion quat)
+        public static Quaternion ToHedgeLib(SharpDX.Quaternion quat)
         {
             return new Quaternion(quat.X, quat.Y, quat.Z, quat.W);
         }
 
-        public static OpenTK.Vector4 ToOpenTK(Vector4 vector)
+        public static SharpDX.Vector4 ToOpenTK(Vector4 vector)
         {
-            return new OpenTK.Vector4(vector.X, vector.Y, vector.Z, vector.W);
+            return new SharpDX.Vector4(vector.X, vector.Y, vector.Z, vector.W);
         }
 
-        public static OpenTK.Quaternion ToOpenTK(Quaternion quat)
+        public static SharpDX.Quaternion ToOpenTK(Quaternion quat)
         {
-            return new OpenTK.Quaternion(quat.X, quat.Y, quat.Z, quat.W);
+            return new SharpDX.Quaternion(quat.X, quat.Y, quat.Z, quat.W);
         }
     }
 }

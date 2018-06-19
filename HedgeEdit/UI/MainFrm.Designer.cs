@@ -60,7 +60,6 @@
             this.viewSelectedMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.luaMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.openLuaTerminalMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.viewport = new OpenTK.GLControl();
             this.mainSplitContainer = new System.Windows.Forms.SplitContainer();
             this.removeObjectBtn = new System.Windows.Forms.Button();
             this.leftSplitContainer = new System.Windows.Forms.SplitContainer();
@@ -358,20 +357,6 @@
             this.openLuaTerminalMenuItem.Text = "Open Lua &Terminal";
             this.openLuaTerminalMenuItem.Click += new System.EventHandler(this.OpenLuaTerminal);
             // 
-            // viewport
-            // 
-            this.viewport.BackColor = System.Drawing.Color.Black;
-            this.viewport.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.viewport.Location = new System.Drawing.Point(0, 0);
-            this.viewport.Name = "viewport";
-            this.viewport.Size = new System.Drawing.Size(351, 365);
-            this.viewport.TabIndex = 1;
-            this.viewport.VSync = true;
-            this.viewport.Paint += new System.Windows.Forms.PaintEventHandler(this.Viewport_Paint);
-            this.viewport.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Viewport_MouseDown);
-            this.viewport.MouseUp += new System.Windows.Forms.MouseEventHandler(this.Viewport_MouseUp);
-            this.viewport.Resize += new System.EventHandler(this.Viewport_Resize);
-            // 
             // mainSplitContainer
             // 
             this.mainSplitContainer.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -387,11 +372,14 @@
             // 
             // mainSplitContainer.Panel2
             // 
-            this.mainSplitContainer.Panel2.Controls.Add(this.viewport);
             this.mainSplitContainer.Size = new System.Drawing.Size(534, 569);
             this.mainSplitContainer.SplitterDistance = 180;
             this.mainSplitContainer.SplitterWidth = 3;
             this.mainSplitContainer.TabIndex = 2;
+            this.mainSplitContainer.Panel2.Paint += Viewport_Paint;
+            this.mainSplitContainer.Panel2.MouseDown += Viewport_MouseDown;
+            this.mainSplitContainer.Panel2.MouseUp += Viewport_MouseUp;
+            this.mainSplitContainer.Panel2.Resize += Viewport_Resize;
             // 
             // removeObjectBtn
             // 
@@ -705,7 +693,6 @@
             this.statusStrip.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
 
         #endregion
@@ -736,7 +723,6 @@
         private System.Windows.Forms.ToolStripMenuItem viewSelectedMenuItem;
         private System.Windows.Forms.ToolStripMenuItem luaMenu;
         private System.Windows.Forms.ToolStripMenuItem openLuaTerminalMenuItem;
-        private OpenTK.GLControl viewport;
         private System.Windows.Forms.SplitContainer mainSplitContainer;
         private System.Windows.Forms.Button removeObjectBtn;
         private System.Windows.Forms.SplitContainer leftSplitContainer;
