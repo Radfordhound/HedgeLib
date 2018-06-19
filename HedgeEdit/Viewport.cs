@@ -10,7 +10,6 @@ using SharpDX.Mathematics.Interop;
 
 using Point = System.Drawing.Point;
 using Device = SharpDX.Direct3D11.Device;
-using SharpDX.DirectInput;
 
 namespace HedgeEdit
 {
@@ -35,7 +34,6 @@ namespace HedgeEdit
         private static DepthStencilView depthView;
 
         private static Control vp;
-        private static Keyboard keyboard;
         private static Point prevMousePos = Point.Empty;
         //private static MouseState prevMouseState;
         private static Vector3 camUp = new Vector3(0, 1, 0);
@@ -134,14 +132,6 @@ namespace HedgeEdit
             vertices.Dispose();
             layout.Dispose(); // TODO: Is this ok??
 
-            // Setup our Input
-            var directInput = new DirectInput();
-            keyboard = new Keyboard(directInput);
-
-            // Acquire the joystick
-            keyboard.Properties.BufferSize = 128;
-            keyboard.Acquire();
-
             // Set out Current Shader and call OnResize to finalise viewport
             CurrentShader.Use(context);
             OnResize();
@@ -214,8 +204,6 @@ namespace HedgeEdit
             if (IsMovingCamera)
             {
                 // Update camera transform
-                //var keyState = Keyboard.GetState();
-                //var mouseState = Mouse.GetState();
                 var mousePos = Cursor.Position;
                 var vpMousePos = vp.PointToClient(mousePos);
 
@@ -460,39 +448,6 @@ namespace HedgeEdit
 
             SelectedInstances.Add(instance);
             return instance;
-        }
-
-        private static bool IsKeyDown(KeyboardUpdate[] keyState, Key key)
-        {
-            KeyboardUpdate update;
-            for (int i = 0; i < keyState.Length; ++i)
-            {
-                update = keyState[i];
-                if ((update.IsPressed || !update.IsReleased) &&
-                    update.Key == key)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static bool IsKeyDown(KeyboardUpdate[] keyState, Key key, Key altKey)
-        {
-            KeyboardUpdate update;
-            for (int i = 0; i < keyState.Length; ++i)
-            {
-                update = keyState[i];
-
-                if ((update.IsPressed || !update.IsReleased) &&
-                    (update.Key == key || update.Key == altKey))
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
     }
 }
