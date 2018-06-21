@@ -26,9 +26,12 @@ namespace HedgeEdit
         public static float FOV = 40.0f, NearDistance = 0.1f, FarDistance = 1000000f;
         public static bool IsMovingCamera = false;
 
+        public static Device Device => device;
+        public static DeviceContext Context { get; private set; }
+        public static InputAssemblerStage InputAssembler { get; private set; }
+
         private static Device device;
         private static SwapChain swapChain;
-        private static DeviceContext context;
         private static Texture2D backBuffer, depthBuffer;
         private static RenderTargetView renderView;
         private static DepthStencilView depthView;
@@ -64,76 +67,34 @@ namespace HedgeEdit
                 out device, out swapChain);
 
             // Setup our context reference, back buffer, and RenderTargetView
-            context = device.ImmediateContext;
+            Context = device.ImmediateContext;
 
             // Load the shaders
             Shaders.LoadAll(device);
-
-            // Vertices
-            var vertices = SharpDX.Direct3D11.Buffer.Create(device, BindFlags.VertexBuffer, new[]
-            {
-                -1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f, // Front
-                -1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,
-                 1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,
-                -1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,
-                 1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,
-                 1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,
-
-                -1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f, // BACK
-                 1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,
-                -1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,
-                -1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,
-                 1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,
-                 1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,
-
-                -1.0f, 1.0f, -1.0f,     0.0f, 0.0f, 1.0f, 1.0f, // Top
-                -1.0f, 1.0f,  1.0f,     0.0f, 0.0f, 1.0f, 1.0f,
-                 1.0f, 1.0f,  1.0f,     0.0f, 0.0f, 1.0f, 1.0f,
-                -1.0f, 1.0f, -1.0f,     0.0f, 0.0f, 1.0f, 1.0f,
-                 1.0f, 1.0f,  1.0f,     0.0f, 0.0f, 1.0f, 1.0f,
-                 1.0f, 1.0f, -1.0f,     0.0f, 0.0f, 1.0f, 1.0f,
-
-                -1.0f,-1.0f, -1.0f,     1.0f, 1.0f, 0.0f, 1.0f, // Bottom
-                 1.0f,-1.0f,  1.0f,     1.0f, 1.0f, 0.0f, 1.0f,
-                -1.0f,-1.0f,  1.0f,     1.0f, 1.0f, 0.0f, 1.0f,
-                -1.0f,-1.0f, -1.0f,     1.0f, 1.0f, 0.0f, 1.0f,
-                 1.0f,-1.0f, -1.0f,     1.0f, 1.0f, 0.0f, 1.0f,
-                 1.0f,-1.0f,  1.0f,     1.0f, 1.0f, 0.0f, 1.0f,
-
-                -1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 1.0f, 1.0f, // Left
-                -1.0f, -1.0f,  1.0f,    1.0f, 0.0f, 1.0f, 1.0f,
-                -1.0f,  1.0f,  1.0f,    1.0f, 0.0f, 1.0f, 1.0f,
-                -1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 1.0f, 1.0f,
-                -1.0f,  1.0f,  1.0f,    1.0f, 0.0f, 1.0f, 1.0f,
-                -1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 1.0f, 1.0f,
-
-                 1.0f, -1.0f, -1.0f,    0.0f, 1.0f, 1.0f, 1.0f, // Right
-                 1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 1.0f, 1.0f,
-                 1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 1.0f, 1.0f,
-                 1.0f, -1.0f, -1.0f,    0.0f, 1.0f, 1.0f, 1.0f,
-                 1.0f,  1.0f, -1.0f,    0.0f, 1.0f, 1.0f, 1.0f,
-                 1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 1.0f, 1.0f,
-            });
 
             // Setup a layout
             CurrentShader = Shaders.ShaderPrograms["Default"];
             var layout = new InputLayout(device, CurrentShader.Signature, new[]
             {
-                new InputElement("POSITION", 0, Format.R32G32B32_Float, 0, 0),
-                new InputElement("COLOR", 0, Format.R32G32B32A32_Float, 12, 0)
+                new InputElement("POSITION", 0, Format.R32G32B32_Float, Mesh.VertPos, 0),
+                new InputElement("NORMAL", 0, Format.R32G32B32_Float,
+                    Mesh.NormPos * sizeof(float), 0),
+                new InputElement("COLOR", 0, Format.R32G32B32A32_Float,
+                    Mesh.ColorPos * sizeof(float), 0),
+                new InputElement("TEXCOORD", 0, Format.R32G32_Float,
+                    Mesh.UVPos * sizeof(float), 0)
             });
 
-            // Setup our context
-            context.InputAssembler.InputLayout = layout;
-            context.InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
-            context.InputAssembler.SetVertexBuffers(0, new VertexBufferBinding(
-                vertices, Utilities.SizeOf<Vector3>() + Utilities.SizeOf<Vector4>(), 0));
+            // Setup the Input Assembler
+            InputAssembler = Context.InputAssembler;
+            InputAssembler.InputLayout = layout;
+            InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
 
-            vertices.Dispose();
+            // Dispose
             layout.Dispose(); // TODO: Is this ok??
 
             // Set out Current Shader and call OnResize to finalise viewport
-            CurrentShader.Use(context);
+            CurrentShader.Use(Context);
             OnResize();
         }
 
@@ -172,9 +133,9 @@ namespace HedgeEdit
             depthView = new DepthStencilView(device, depthBuffer);
 
             // Setup targets and viewport for rendering
-            context.Rasterizer.SetViewport(new SharpDX.Viewport(0, 0,
+            Context.Rasterizer.SetViewport(new SharpDX.Viewport(0, 0,
                 vp.ClientSize.Width, vp.ClientSize.Height, 0.0f, 1.0f));
-            context.OutputMerger.SetTargets(depthView, renderView);
+            Context.OutputMerger.SetTargets(depthView, renderView);
         }
 
         public static void Dispose()
@@ -187,14 +148,17 @@ namespace HedgeEdit
                 shader.Value.Dispose();
             }
 
+            Data.DefaultCube.Dispose();
+            // TODO: Dispose of all models
+
             depthBuffer.Dispose();
             depthView.Dispose();
             renderView.Dispose();
             backBuffer.Dispose();
-            context.ClearState();
-            context.Flush();
+            Context.ClearState();
+            Context.Flush();
             device.Dispose();
-            context.Dispose();
+            Context.Dispose();
             swapChain.Dispose();
             //factory.Dispose(); // TODO
         }
@@ -282,8 +246,8 @@ namespace HedgeEdit
                 throw new Exception("Cannot render viewport - viewport not yet initialized!");
 
             // Clear the background color
-            context.ClearDepthStencilView(depthView, DepthStencilClearFlags.Depth, 1, 0);
-            context.ClearRenderTargetView(renderView, Color.Black);
+            Context.ClearDepthStencilView(depthView, DepthStencilClearFlags.Depth, 1, 0);
+            Context.ClearRenderTargetView(renderView, Color.Black);
             // TODO
 
             //GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -302,10 +266,10 @@ namespace HedgeEdit
             //    MathHelper.DegreesToRadians(FOV),
             //    (float)vp.Width / vp.Height, NearDistance, FarDistance);
 
-            //// Update shader transform matrices
+            // Update shader transform matrices
             var worldViewProj = Matrix.Multiply(view, proj);
             worldViewProj.Transpose();
-            context.UpdateSubresource(ref worldViewProj, CurrentShader.ConstantBuffer);
+            Context.UpdateSubresource(ref worldViewProj, CurrentShader.ConstantBuffer);
             //int viewLoc = GL.GetUniformLocation(defaultID, "view");
             //int projectionLoc = GL.GetUniformLocation(defaultID, "projection");
 
@@ -374,35 +338,38 @@ namespace HedgeEdit
             //    }
             //}
 
-            //// Draw all models in the scene
-            //for (int i = 0; i < 4; ++i)
-            //{
-            //    var slot = (Mesh.Slots)i;
-            //    Data.DefaultCube.Draw(defaultID, slot);
+            // Draw all models in the scene
+            Mesh.Slots slot;
+            for (int i = 0; i < 4; ++i)
+            {
+                slot = (Mesh.Slots)i;
+                Data.DefaultCube.Draw(slot);
 
-            //    foreach (var mdl in Data.DefaultTerrainGroup)
-            //    {
-            //        mdl.Value.Draw(defaultID, slot);
-            //    }
+                foreach (var mdl in Data.DefaultTerrainGroup)
+                {
+                    mdl.Value.Draw(slot);
+                }
 
-            //    foreach (var group in Data.TerrainGroups)
-            //    {
-            //        foreach (var mdl in group.Value)
-            //        {
-            //            mdl.Value.Draw(defaultID, slot);
-            //        }
-            //    }
+                foreach (var group in Data.TerrainGroups)
+                {
+                    foreach (var mdl in group.Value)
+                    {
+                        mdl.Value.Draw(slot);
+                    }
+                }
 
-            //    foreach (var mdl in Data.Objects)
-            //    {
-            //        mdl.Value.Draw(defaultID, slot);
-            //    }
-            //}
+                foreach (var mdl in Data.Objects)
+                {
+                    mdl.Value.Draw(slot);
+                }
+            }
 
             ////int prevID = Shaders.ShaderPrograms["Preview"];
             ////GL.UseProgram(prevID);
             //Data.PreviewBox.Draw(defaultID, Mesh.Slots.Default, true);
-            context.Draw(36, 0);
+
+            // TODO: OLD SHARPDX TEST
+            //Context.Draw(36, 0);
 
             //// Draw Transform Gizmos
             //Gizmo.Render(defaultID);

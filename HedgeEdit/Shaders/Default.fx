@@ -1,19 +1,27 @@
 ﻿struct VS_IN
 {
 	float3 pos : POSITION;
-	//float4 norm : NORMAL;
+	float3 norm : NORMAL;
 	float4 col : COLOR;
-	//float2 uv0 : TEXCOORD;
+	float2 uv0 : TEXCOORD;
 };
 
 struct PS_IN
 {
 	float4 pos : SV_POSITION;
 	float4 col : COLOR;
-	//float2 uv0 : TEXCOORD;
+	float2 uv0 : TEXCOORD;
 };
 
+//SamplerState Sampler
+//{
+//	Filter = MIN_MAG_MIP_LINEAR;
+//	AddressU = Wrap;
+//	AddressV = Wrap;
+//};
+
 float4x4 worldViewProj;
+//Texture2D tex0;
 
 PS_IN VS(VS_IN input)
 {
@@ -22,7 +30,7 @@ PS_IN VS(VS_IN input)
 
 	output.pos = mul(pos, worldViewProj);
 	output.col = input.col;
-	//output.uv0 = input.uv0;
+	output.uv0 = input.uv0;
 
 	return output;
 }
@@ -30,4 +38,5 @@ PS_IN VS(VS_IN input)
 float4 PS(PS_IN input) : SV_Target
 {
 	return input.col;
+	//return tex0.Sample(Sampler, input.uv0) * input.col;
 }

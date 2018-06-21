@@ -48,6 +48,10 @@ namespace HedgeEdit
             DefaultTexture = GenTexture(defaultTex);
             DefaultMaterial = new GensMaterial();
             DefaultCube = new VPModel(mdl, true);
+            //PreviewBox = new VPModel(mdl, true);
+
+            // TODO: REMOVE THIS
+            DefaultCube.Instances.Add(new VPObjectInstance());
 
             watch.Stop();
             Console.WriteLine("Default assets init time: {0}",
