@@ -20,8 +20,11 @@ struct PS_IN
 //	AddressV = Wrap;
 //};
 
-float4x4 worldViewProj;
-//Texture2D tex0;
+cbuffer VS_CONSTANT_BUFFER : register(b0)
+{
+	float4x4 worldViewProj;
+	//Texture2D tex0;
+};
 
 PS_IN VS(VS_IN input)
 {

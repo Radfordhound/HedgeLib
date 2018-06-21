@@ -205,11 +205,13 @@ namespace HedgeEdit
             foreach (var instance in Instances)
             {
                 // Update Transforms
-                var modelTransform = instance.Matrix;
+                var model = instance.Matrix;
+                model = Matrix.Multiply(model, Viewport.ViewProjection);
+                model.Transpose();
 
                 // Update shader transform matrices
-                // TODO
-                //GL.UniformMatrix4(modelLoc, false, ref modelTransform);
+                Viewport.Context.UpdateSubresource(ref model,
+                    Viewport.CurrentShader.ConstantBuffer);
 
                 // Update Highlight Color
                 // TODO

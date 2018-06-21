@@ -51,7 +51,8 @@ namespace HedgeEdit
             //PreviewBox = new VPModel(mdl, true);
 
             // TODO: REMOVE THIS
-            DefaultCube.Instances.Add(new VPObjectInstance());
+            DefaultCube.Instances.Add(new VPObjectInstance(new SharpDX.Vector3(0, 0, 0),
+                new SharpDX.Quaternion(0, 0.17365f, 0, 0.98481f)));
 
             watch.Stop();
             Console.WriteLine("Default assets init time: {0}",

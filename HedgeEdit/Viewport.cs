@@ -29,6 +29,7 @@ namespace HedgeEdit
         public static Device Device => device;
         public static DeviceContext Context { get; private set; }
         public static InputAssemblerStage InputAssembler { get; private set; }
+        public static Matrix ViewProjection;
 
         private static Device device;
         private static SwapChain swapChain;
@@ -267,9 +268,8 @@ namespace HedgeEdit
             //    (float)vp.Width / vp.Height, NearDistance, FarDistance);
 
             // Update shader transform matrices
-            var worldViewProj = Matrix.Multiply(view, proj);
-            worldViewProj.Transpose();
-            Context.UpdateSubresource(ref worldViewProj, CurrentShader.ConstantBuffer);
+            ViewProjection = Matrix.Multiply(view, proj);
+
             //int viewLoc = GL.GetUniformLocation(defaultID, "view");
             //int projectionLoc = GL.GetUniformLocation(defaultID, "projection");
 
