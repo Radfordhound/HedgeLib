@@ -8,6 +8,8 @@ using SharpDX.DXGI;
 using System;
 using System.Collections.Generic;
 
+using Buffer = SharpDX.Direct3D11.Buffer;
+
 namespace HedgeEdit
 {
     public class VPModel
@@ -50,28 +52,24 @@ namespace HedgeEdit
                 }
 
                 // Send vertex data to the GPU
-                var vertices = SharpDX.Direct3D11.Buffer.Create(Viewport.Device,
+                var vertices = Buffer.Create(Viewport.Device,
                     BindFlags.VertexBuffer, mesh.VertexData);
 
                 // Setup our Vertex Buffer Binding
                 var binding = new VertexBufferBinding(vertices,
                     Mesh.StructureByteLength, 0);
 
-                // Generate an element buffer object
-                // TODO: Triangle indexing
-
-                //GL.GenBuffers(1, out uint ebo);
-                //GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
-                //GL.BufferData(BufferTarget.ElementArrayBuffer, mesh.Triangles.Length *
-                //    sizeof(uint), mesh.Triangles, BufferUsageHint.StaticDraw);
+                // Send index data to the GPU
+                var indices = Buffer.Create(Viewport.Device,
+                    BindFlags.IndexBuffer, mesh.Triangles);
 
                 // Generate a VPMesh
                 meshes[i] = new VPMesh()
                 {
+                    IndexBuffer = indices,
                     Binding = binding,
                     MaterialName = mesh.MaterialName,
                     TriangleCount = mesh.Triangles.Length,
-                    VertexCount = mesh.VertexData.Length / Mesh.StructureLength,
                     Slot = mesh.Slot
                 };
             }
@@ -158,6 +156,7 @@ namespace HedgeEdit
             foreach (var mesh in meshes)
             {
                 mesh.Binding.Buffer.Dispose();
+                mesh.IndexBuffer.Dispose();
             }
         }
 
@@ -300,9 +299,10 @@ namespace HedgeEdit
         protected struct VPMesh
         {
             // Variables/Constants
-            public string MaterialName;
+            public Buffer IndexBuffer;
             public VertexBufferBinding Binding;
-            public int TriangleCount, VertexCount;
+            public string MaterialName;
+            public int TriangleCount;
             public Mesh.Slots Slot;
 
             // Methods
@@ -332,12 +332,13 @@ namespace HedgeEdit
                     tex = Data.DefaultTexture;
                 }
 
-                // Bind the Vertex Buffer
+                // Bind our Buffers
                 // TODO: Bind Texture(s)
                 Viewport.InputAssembler.SetVertexBuffers(0, Binding);
+                Viewport.InputAssembler.SetIndexBuffer(IndexBuffer, Format.R32_UInt, 0);
 
                 // Draw the mesh
-                Viewport.Context.Draw(VertexCount, 0);
+                Viewport.Context.DrawIndexed(TriangleCount, 0, 0);
 
                 // Bind the texture and the mesh's VAO
                 //GL.BindTexture(TextureTarget.Texture2D, tex);
