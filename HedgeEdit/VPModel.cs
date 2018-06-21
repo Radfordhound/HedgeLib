@@ -155,8 +155,7 @@ namespace HedgeEdit
         {
             foreach (var mesh in meshes)
             {
-                mesh.Binding.Buffer.Dispose();
-                mesh.IndexBuffer.Dispose();
+                mesh.Dispose();
             }
         }
 
@@ -350,6 +349,12 @@ namespace HedgeEdit
 
                 // Un-bind the VAO
                 //GL.BindVertexArray(0);
+            }
+
+            public void Dispose()
+            {
+                Binding.Buffer.Dispose();
+                IndexBuffer.Dispose();
             }
         }
     }
