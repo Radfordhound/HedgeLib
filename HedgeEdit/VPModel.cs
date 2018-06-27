@@ -1,8 +1,6 @@
-﻿using HedgeLib;
-using HedgeLib.Math;
+﻿using HedgeLib.Math;
 using HedgeLib.Models;
 using SharpDX;
-using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
 using System;
@@ -295,7 +293,7 @@ namespace HedgeEdit
         }
 
         // Other
-        protected struct VPMesh
+        protected struct VPMesh : IDisposable
         {
             // Variables/Constants
             public Buffer IndexBuffer;
@@ -353,8 +351,12 @@ namespace HedgeEdit
 
             public void Dispose()
             {
+                if (IndexBuffer == null)
+                    return;
+
                 Binding.Buffer.Dispose();
                 IndexBuffer.Dispose();
+                IndexBuffer = null;
             }
         }
     }
