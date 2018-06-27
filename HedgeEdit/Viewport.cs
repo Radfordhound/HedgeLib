@@ -37,6 +37,7 @@ namespace HedgeEdit
         private static RenderTargetView renderView;
         private static DepthStencilView depthView;
 
+        private static Matrix proj;
         private static Control vp;
         private static Point prevMousePos = Point.Empty;
         //private static MouseState prevMouseState;
@@ -118,7 +119,7 @@ namespace HedgeEdit
             // Create the depth buffer
             depthBuffer = new Texture2D(device, new Texture2DDescription()
             {
-                Format = Format.D32_Float_S8X24_UInt,
+                Format = Format.D24_UNorm_S8_UInt,
                 ArraySize = 1,
                 MipLevels = 1,
                 Width = vp.ClientSize.Width,
@@ -137,6 +138,10 @@ namespace HedgeEdit
             Context.Rasterizer.SetViewport(new SharpDX.Viewport(0, 0,
                 vp.ClientSize.Width, vp.ClientSize.Height, 0.0f, 1.0f));
             Context.OutputMerger.SetTargets(depthView, renderView);
+
+            // Setup Projection Matrix
+            proj = Matrix.PerspectiveFovLH((float)Math.PI / 4.0f,
+                vp.Width / (float)vp.Height, NearDistance, FarDistance);
         }
 
         public static void Dispose()
@@ -144,11 +149,13 @@ namespace HedgeEdit
             if (device == null)
                 return;
 
+            // Dispose Shaders
             foreach (var shader in Shaders.ShaderPrograms)
             {
                 shader.Value.Dispose();
             }
 
+            // Dispose Models
             Data.DefaultCube.Dispose();
             foreach (var mdl in Data.DefaultTerrainGroup)
             {
@@ -168,16 +175,19 @@ namespace HedgeEdit
                 mdl.Value.Dispose();
             }
 
+            // Dispose D3D stuff
             depthBuffer.Dispose();
             depthView.Dispose();
             renderView.Dispose();
             backBuffer.Dispose();
             Context.ClearState();
             Context.Flush();
-            device.Dispose();
             Context.Dispose();
+            device.Dispose();
             swapChain.Dispose();
             //factory.Dispose(); // TODO
+
+            device = null;
         }
 
         public static void Update()
@@ -263,8 +273,8 @@ namespace HedgeEdit
                 throw new Exception("Cannot render viewport - viewport not yet initialized!");
 
             // Clear the background color
-            Context.ClearDepthStencilView(depthView, DepthStencilClearFlags.Depth, 1, 0);
             Context.ClearRenderTargetView(renderView, Color.Black);
+            Context.ClearDepthStencilView(depthView, DepthStencilClearFlags.Depth, 1, 0);
             // TODO
 
             //GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -274,8 +284,6 @@ namespace HedgeEdit
             //GL.UseProgram(defaultID);
 
             var view = Matrix.LookAtLH(CameraPos, CameraPos + CameraForward, camUp);
-            var proj = Matrix.PerspectiveFovLH((float)Math.PI / 4.0f,
-                vp.Width / (float)vp.Height, NearDistance, FarDistance);
             //var view = Matrix4.LookAt(CameraPos,
             //    CameraPos + CameraForward, camUp);
 
