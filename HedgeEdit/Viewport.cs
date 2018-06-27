@@ -6,7 +6,6 @@ using SharpDX;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
 using SharpDX.Direct3D;
-using SharpDX.Mathematics.Interop;
 
 using Point = System.Drawing.Point;
 using Device = SharpDX.Direct3D11.Device;
@@ -20,7 +19,7 @@ namespace HedgeEdit
             new List<VPObjectInstance>();
 
         //public static TransformGizmo Gizmo = new TransformGizmo();
-        public static Shaders.Shader CurrentShader;
+        public static Shader CurrentShader;
         public static Vector3 CameraPos = new Vector3(0, 0, -5), CameraRot = new Vector3(0, 0, 0);//new Vector3(-90, 0, 0);
         public static Vector3 CameraForward { get; private set; } = new Vector3(0, 0, 1);//new Vector3(0, 0, -1);
         public static float FOV = 40.0f, NearDistance = 0.1f, FarDistance = 1000000f;
@@ -71,12 +70,12 @@ namespace HedgeEdit
             // Setup our context reference, back buffer, and RenderTargetView
             Context = device.ImmediateContext;
 
-            // Load the shaders
-            Shaders.LoadAll(device);
+            // Load the shader list
+            Data.LoadShaderList(device);
+            CurrentShader = Data.Shaders["Default"];
 
             // Setup a layout
-            CurrentShader = Shaders.ShaderPrograms["Default"];
-            var layout = new InputLayout(device, CurrentShader.Signature, new[]
+            var layout = new InputLayout(device, CurrentShader.VertexSignature, new[]
             {
                 new InputElement("POSITION", 0, Format.R32G32B32_Float, Mesh.VertPos, 0),
                 new InputElement("NORMAL", 0, Format.R32G32B32_Float,
@@ -150,7 +149,7 @@ namespace HedgeEdit
                 return;
 
             // Dispose Shaders
-            foreach (var shader in Shaders.ShaderPrograms)
+            foreach (var shader in Data.Shaders)
             {
                 shader.Value.Dispose();
             }

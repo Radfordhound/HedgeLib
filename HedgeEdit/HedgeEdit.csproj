@@ -22,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -31,6 +32,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject>HedgeEdit.Program</StartupObject>
@@ -82,6 +84,7 @@
     <Compile Include="Data\Asset.cs" />
     <Compile Include="Data\Materials.cs" />
     <Compile Include="Input.cs" />
+    <Compile Include="Shader.cs" />
     <Compile Include="UI\GUI.cs" />
     <Compile Include="Data\Objects.cs" />
     <Compile Include="GameEntry.cs" />
@@ -135,7 +138,7 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Shaders.cs" />
+    <Compile Include="Data\Shaders.cs" />
     <Compile Include="Stage.cs" />
     <Compile Include="UI\StgOpenDialog.cs">
       <SubType>Form</SubType>
