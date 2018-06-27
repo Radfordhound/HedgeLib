@@ -150,7 +150,23 @@ namespace HedgeEdit
             }
 
             Data.DefaultCube.Dispose();
-            // TODO: Dispose of all models
+            foreach (var mdl in Data.DefaultTerrainGroup)
+            {
+                mdl.Value.Dispose();
+            }
+
+            foreach (var group in Data.TerrainGroups)
+            {
+                foreach (var mdl in group.Value)
+                {
+                    mdl.Value.Dispose();
+                }
+            }
+
+            foreach (var mdl in Data.Objects)
+            {
+                mdl.Value.Dispose();
+            }
 
             depthBuffer.Dispose();
             depthView.Dispose();
