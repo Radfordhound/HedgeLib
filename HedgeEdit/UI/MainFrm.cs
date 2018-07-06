@@ -489,14 +489,6 @@ namespace HedgeEdit.UI
 
         private void Application_Idle(object sender, EventArgs e)
         {
-            while (viewport.IsIdle)
-            {
-                Viewport.Render();
-            }
-        }
-
-        private void Viewport_Paint(object sender, PaintEventArgs e)
-        {
             Viewport.Render();
         }
 

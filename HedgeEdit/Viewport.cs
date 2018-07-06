@@ -55,6 +55,9 @@ namespace HedgeEdit
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactorSrc.SrcAlpha,
                 BlendingFactorDest.OneMinusSrcAlpha);
+
+            vp.MakeCurrent();
+            vp.VSync = true;
         }
 
         public static void Resize(int width, int height)
@@ -68,7 +71,6 @@ namespace HedgeEdit
                 throw new Exception("Cannot render viewport - viewport not yet initialized!");
 
             // Clear the background color
-            vp.MakeCurrent();
             GL.ClearColor(0, 0, 0, 1);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 

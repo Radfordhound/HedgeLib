@@ -367,7 +367,6 @@
             this.viewport.Size = new System.Drawing.Size(351, 365);
             this.viewport.TabIndex = 1;
             this.viewport.VSync = true;
-            this.viewport.Paint += new System.Windows.Forms.PaintEventHandler(this.Viewport_Paint);
             this.viewport.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Viewport_MouseDown);
             this.viewport.MouseUp += new System.Windows.Forms.MouseEventHandler(this.Viewport_MouseUp);
             this.viewport.Resize += new System.EventHandler(this.Viewport_Resize);
