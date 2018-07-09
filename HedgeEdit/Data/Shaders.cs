@@ -31,7 +31,7 @@ namespace HedgeEdit
 
             var shaderNames = File.ReadAllLines(pth1);
 
-            // Load all vertex & fragment shaders on the list and make GL programs from them
+            // Load all vertex & pixel shaders on the list
             for (int i = 0; i < shaderNames.Length; ++i)
             {
                 // Make sure both shaders exist first
@@ -44,18 +44,38 @@ namespace HedgeEdit
                     continue;
 
                 // Load the Shader
-                var shader = new Shader();
-                var layout = new HedgeEditConstantBuffer(); // TODO: Have different types
-                shader.Load(device, ref layout, pth1, pth2);
+                var constantBuffer = new HedgeEditConstantBuffer();
+                var shader = new Shader(constantBuffer);
+
+                shader.Load(device, ref constantBuffer.Layout, pth1, pth2);
                 Shaders.Add(name, shader);
             }
         }
 
         // Other
         [StructLayout(LayoutKind.Sequential)]
-        public struct HedgeEditConstantBuffer
+        public struct HedgeEditConstantBufferLayout
         {
+            // Variables/Constants
             public Matrix WorldViewProj;
+        }
+
+        public class HedgeEditConstantBuffer : ConstantBuffer
+        {
+            // Variables/Constants
+            public HedgeEditConstantBufferLayout Layout;
+
+            // Constructors
+            public HedgeEditConstantBuffer()
+            {
+                Layout = new HedgeEditConstantBufferLayout();
+            }
+
+            // Methods
+            protected override void Write(DataStream ds)
+            {
+                ds.Write(Layout);
+            }
         }
     }
 }

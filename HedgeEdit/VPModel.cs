@@ -5,7 +5,7 @@ using SharpDX.Direct3D11;
 using SharpDX.DXGI;
 using System;
 using System.Collections.Generic;
-
+using static HedgeEdit.Data;
 using Buffer = SharpDX.Direct3D11.Buffer;
 
 namespace HedgeEdit
@@ -198,6 +198,9 @@ namespace HedgeEdit
             //if (!isPreview)
             //    GL.Uniform4(highlightLoc, new OpenTK.Vector4(1, 1, 1, 1));
 
+            var constantBuffer = ((HedgeEditConstantBuffer)
+                Viewport.CurrentShader.ConstantBuffer);
+
             foreach (var instance in Instances)
             {
                 // Update Transforms
@@ -206,8 +209,8 @@ namespace HedgeEdit
                 model.Transpose();
 
                 // Update shader transform matrices
-                Viewport.Context.UpdateSubresource(ref model,
-                    Viewport.CurrentShader.ConstantBuffer);
+                constantBuffer.Layout.WorldViewProj = model;
+                Viewport.CurrentShader.ConstantBuffer.Update();
 
                 // Update Highlight Color
                 // TODO

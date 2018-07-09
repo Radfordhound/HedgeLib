@@ -1,7 +1,7 @@
-﻿using SharpDX.D3DCompiler;
+﻿using SharpDX;
+using SharpDX.D3DCompiler;
 using SharpDX.Direct3D11;
 using System;
-using System.Runtime.InteropServices;
 using Buffer = SharpDX.Direct3D11.Buffer;
 
 namespace HedgeEdit
@@ -12,10 +12,17 @@ namespace HedgeEdit
         public VertexShader VertexShader;
         public PixelShader PixelShader;
         public ShaderSignature VertexSignature;
-        public Buffer ConstantBuffer;
+        public ConstantBuffer ConstantBuffer;
 
         public const string VSExtension = ".vs",
             PSExtension = ".ps", Extension = ".fx";
+
+        // Constructors
+        public Shader(ConstantBuffer constantBuffer)
+        {
+            ConstantBuffer = constantBuffer ??
+                throw new ArgumentNullException("constantBuffer");
+        }
 
         // Methods
         public void Load<T>(Device device, ref T constBufferLayout,
@@ -31,18 +38,8 @@ namespace HedgeEdit
             PixelShader = new PixelShader(device, psByteCode);
 
             // Setup our Constant Buffer
-            var bufferDesc = new BufferDescription()
-            {
-                SizeInBytes = Marshal.SizeOf<T>(),
-                Usage = ResourceUsage.Default,
-                BindFlags = BindFlags.ConstantBuffer,
-                CpuAccessFlags = CpuAccessFlags.None,
-                OptionFlags = ResourceOptionFlags.None,
-                StructureByteStride = 0
-            };
-
-            ConstantBuffer = Buffer.Create(device,
-                ref constBufferLayout, bufferDesc);
+            //ConstantBuffer = new ConstantBuffer();
+            ConstantBuffer.CreateBuffer(device, constBufferLayout);
 
             // Dispose of Shader Byte Code
             vsByteCode.Dispose();
@@ -51,21 +48,70 @@ namespace HedgeEdit
 
         public void Use(DeviceContext context)
         {
-            context.VertexShader.SetConstantBuffer(0, ConstantBuffer);
+            context.VertexShader.SetConstantBuffer(0, ConstantBuffer.Buffer);
             context.VertexShader.Set(VertexShader);
             context.PixelShader.Set(PixelShader);
         }
 
         public void Dispose()
         {
-            if (ConstantBuffer == null)
+            if (VertexSignature == null)
                 return;
 
             VertexSignature.Dispose();
             VertexShader.Dispose();
             PixelShader.Dispose();
             ConstantBuffer.Dispose();
-            ConstantBuffer = null;
+
+            VertexSignature = null;
+            VertexShader = null;
+            PixelShader = null;
+        }
+    }
+
+    public abstract class ConstantBuffer : IDisposable
+    {
+        // Variables/Constants
+        public Buffer Buffer;
+
+        // Methods
+        public void CreateBuffer<T>(Device device, T layout)
+            where T : struct
+        {
+            var bufferDesc = new BufferDescription()
+            {
+                SizeInBytes = Utilities.SizeOf<T>(),
+                Usage = ResourceUsage.Dynamic,
+                BindFlags = BindFlags.ConstantBuffer,
+                CpuAccessFlags = CpuAccessFlags.Write,
+                OptionFlags = ResourceOptionFlags.None,
+                StructureByteStride = 0
+            };
+
+            //Layout = layout;
+            Buffer = Buffer.Create(device, ref layout, bufferDesc);
+        }
+
+        public void Update()
+        {
+            Viewport.Context.MapSubresource(Buffer, MapMode.WriteDiscard,
+                MapFlags.None, out DataStream ds);
+
+            Write(ds);
+
+            ds.Dispose();
+            Viewport.Context.UnmapSubresource(Buffer, 0);
+        }
+
+        protected abstract void Write(DataStream ds);
+
+        public void Dispose()
+        {
+            if (Buffer == null)
+                return;
+
+            Buffer.Dispose();
+            Buffer = null;
         }
     }
 }
