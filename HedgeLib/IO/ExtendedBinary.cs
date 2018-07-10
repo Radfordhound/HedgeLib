@@ -131,7 +131,7 @@ namespace HedgeLib.IO
             return (T)ReadByType(typeof(T));
         }
 
-        public object ReadByType(Type type)
+        public object ReadByType(Type type, bool throwExceptionWhenUnknown = true)
         {
             if (type == typeof(bool))
                 return ReadBoolean();
@@ -167,11 +167,54 @@ namespace HedgeLib.IO
                 return ReadQuaternion();
             else if (type == typeof(Vector4))
                 return ReadVector4();
+            else if (type == typeof(string))
+                return ReadString();
 
             // TODO: Add more types.
+            if (throwExceptionWhenUnknown)
+                throw new NotImplementedException(
+                    $"Cannot read \"{type}\" by type yet!");
+            return null;
+        }
 
-            throw new NotImplementedException(
-                $"Cannot read \"{type}\" by type yet!");
+        public T ReadStruct<T>(Type LengthType = null)
+        {
+            return (T)ReadStruct(typeof(T), LengthType);
+        }
+
+        public object ReadStruct(Type type, Type LengthType = null)
+        {
+            if (LengthType == null)
+                LengthType = typeof(byte);
+            object structure = Activator.CreateInstance(type);
+            var fields = type.GetFields();
+            foreach (var field in fields)
+            {
+                if (field.FieldType.IsArray)
+                {
+                    var array = Array.CreateInstance(field.FieldType.GetElementType(),
+                        (int)Convert.ChangeType(ReadByType(LengthType), typeof(int)));
+                    for (int i = 0; i < array.Length; ++i)
+                        array.SetValue(ReadStruct(field.FieldType.GetElementType(), LengthType), i);
+                    field.SetValue(structure, array);
+                }
+                else
+                {
+                    object value = ReadByType(field.FieldType, false);
+                    if (value != null)
+                    {
+                        if (field.IsLiteral)
+                            return value;
+                        else
+                            field.SetValue(structure, value);
+                    }else
+                    {
+                        if (!field.IsLiteral)
+                            structure = ReadStruct(field.FieldType, LengthType);
+                    }
+                }
+            }
+            return structure;
         }
 
         // 1-Byte Types
@@ -548,7 +591,7 @@ namespace HedgeLib.IO
             WriteByType(typeof(T), data);
         }
 
-        public void WriteByType(Type type, object data)
+        public bool WriteByType(Type type, object data, bool throwExceptionWhenUnknown = true)
         {
             if (type == typeof(bool))
                 Write((bool)data);
@@ -582,14 +625,54 @@ namespace HedgeLib.IO
                 Write((Vector3)data);
             else if (type == typeof(Vector4) || type == typeof(Quaternion))
                 Write((Vector4)data);
+            else if (type == typeof(string))
+                Write((string)data);
             else
             {
-                throw new NotImplementedException(
-                    $"Cannot write \"{type} by type yet!");
+                if (throwExceptionWhenUnknown)
+                    throw new NotImplementedException(
+                       $"Cannot write \"{type} by type yet!");
+                return false;
             }
+            return true;
 
             // TODO: Add more types.
         }
+
+        public void WriteStruct<T>(T structure, Type LengthType = null)
+        {
+            WriteStruct(typeof(T), structure, LengthType);
+        }
+
+        public void WriteStruct(Type type, object structure, Type LengthType = null)
+        {
+            if (LengthType == null)
+                LengthType = typeof(byte);
+            var fields = type.GetFields();
+            foreach (var field in fields)
+            {
+                if (field.FieldType.IsArray)
+                {
+                    var array = (Array)field.GetValue(structure);
+                    WriteByType(LengthType, Convert.ChangeType(array.Length, LengthType));
+                    for (int i = 0; i < array.Length; ++i)
+                    {
+                        bool written = WriteByType(field.FieldType.GetElementType(), array.GetValue(i), false);
+                        if (!written) WriteStruct(field.FieldType.GetElementType(), array.GetValue(i), LengthType);
+                    }
+                }
+                else
+                {
+                    bool written = WriteByType(field.FieldType, field.GetValue(structure), false);
+                    if (!written)
+                    {
+                        if (!field.IsLiteral)
+                            WriteStruct(field.FieldType, field.GetValue(structure), LengthType);
+                    }
+                }
+            }
+        }
+
 
         // 2-Byte Types
         public override void Write(short value)
