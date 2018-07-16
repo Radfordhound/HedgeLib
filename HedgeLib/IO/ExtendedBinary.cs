@@ -87,8 +87,7 @@ namespace HedgeLib.IO
 
         public string ReadSignature(int length = 4)
         {
-            var chars = ReadChars(length);
-            return new string(chars);
+            return Encoding.ASCII.GetString(ReadBytes(length));
         }
 
         public string ReadNullTerminatedString()
