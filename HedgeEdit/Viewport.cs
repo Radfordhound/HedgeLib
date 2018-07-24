@@ -258,9 +258,9 @@ namespace HedgeEdit
 
                 var front = new Vector3()
                 {
-                    X = -(float)Math.Sin(x) * yCos,
+                    X = (float)Math.Sin(x) * yCos,
                     Y = (float)Math.Sin(y),
-                    Z = (float)Math.Cos(x) * yCos
+                    Z = -(float)Math.Cos(x) * yCos
                 };
 
                 CameraForward = Vector3.Normalize(front);
