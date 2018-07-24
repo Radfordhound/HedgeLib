@@ -143,7 +143,7 @@ namespace HedgeEdit
             Context.Rasterizer.State = new RasterizerState(device, rasterizerDesc);
 
             // Setup Projection Matrix
-            proj = Matrix.PerspectiveFovRH((float)Math.PI / 4.0f,
+            proj = Matrix.PerspectiveFovRH(MathUtil.DegreesToRadians(FOV),
                 vp.Width / (float)vp.Height, NearDistance, FarDistance);
         }
 
