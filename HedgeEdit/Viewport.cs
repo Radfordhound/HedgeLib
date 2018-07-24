@@ -20,8 +20,8 @@ namespace HedgeEdit
 
         //public static TransformGizmo Gizmo = new TransformGizmo();
         public static Shader CurrentShader;
-        public static Vector3 CameraPos = new Vector3(0, 0, -5), CameraRot = new Vector3(0, 0, 0);//new Vector3(-90, 0, 0);
-        public static Vector3 CameraForward { get; private set; } = new Vector3(0, 0, 1);//new Vector3(0, 0, -1);
+        public static Vector3 CameraPos = new Vector3(0, 0, 5), CameraRot = new Vector3(0, 0, 0);//new Vector3(-90, 0, 0);
+        public static Vector3 CameraForward { get; private set; } = new Vector3(0, 0, -1);
         public static float FOV = 40.0f, NearDistance = 0.1f, FarDistance = 1000000f;
         public static bool IsMovingCamera = false;
 
@@ -138,8 +138,12 @@ namespace HedgeEdit
                 vp.ClientSize.Width, vp.ClientSize.Height, 0.0f, 1.0f));
             Context.OutputMerger.SetTargets(depthView, renderView);
 
+            var rasterizerDesc = RasterizerStateDescription.Default();
+            rasterizerDesc.IsFrontCounterClockwise = true;
+            Context.Rasterizer.State = new RasterizerState(device, rasterizerDesc);
+
             // Setup Projection Matrix
-            proj = Matrix.PerspectiveFovLH((float)Math.PI / 4.0f,
+            proj = Matrix.PerspectiveFovRH((float)Math.PI / 4.0f,
                 vp.Width / (float)vp.Height, NearDistance, FarDistance);
         }
 
@@ -234,12 +238,12 @@ namespace HedgeEdit
 
                 if (Input.IsInputDown(Inputs.Left))
                 {
-                    CameraPos += Vector3.Normalize(
+                    CameraPos -= Vector3.Normalize(
                         Vector3.Cross(CameraForward, camUp)) * camSpeed;
                 }
                 else if (Input.IsInputDown(Inputs.Right))
                 {
-                    CameraPos -= Vector3.Normalize(
+                    CameraPos += Vector3.Normalize(
                         Vector3.Cross(CameraForward, camUp)) * camSpeed;
                 }
 
@@ -254,7 +258,7 @@ namespace HedgeEdit
 
                 var front = new Vector3()
                 {
-                    X = (float)Math.Sin(x) * yCos,
+                    X = -(float)Math.Sin(x) * yCos,
                     Y = (float)Math.Sin(y),
                     Z = (float)Math.Cos(x) * yCos
                 };
@@ -282,7 +286,7 @@ namespace HedgeEdit
             //int defaultID = Shaders.ShaderPrograms["Default"];
             //GL.UseProgram(defaultID);
 
-            var view = Matrix.LookAtLH(CameraPos, CameraPos + CameraForward, camUp);
+            var view = Matrix.LookAtRH(CameraPos, CameraPos + CameraForward, camUp);
             //var view = Matrix4.LookAt(CameraPos,
             //    CameraPos + CameraForward, camUp);
 

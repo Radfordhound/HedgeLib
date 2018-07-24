@@ -157,10 +157,9 @@ namespace HedgeEdit
         // Methods
         protected void UpdateMatrix()
         {
-            // TODO: Is this correct? lol
-            matrix = Matrix.Translation(pos) *
+            matrix = Matrix.Scaling(scale) *
                 Matrix.RotationQuaternion(rot) *
-                Matrix.Scaling(scale);
+                Matrix.Translation(pos);
         }
 
         // The following 2 methods were taken from OGRE (for now) with some light modifications
@@ -168,7 +167,7 @@ namespace HedgeEdit
         // and can't find any information about it online.
         protected float RSQ(float r)
         {
-            return (1 / (float)System.Math.Sqrt(r));
+            return (1 / (float)Math.Sqrt(r));
         }
 
         protected void MatrixQDDecomposition(float[,] m,
