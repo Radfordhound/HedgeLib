@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Xml.Linq;
 
 namespace HedgeLib.Sets
@@ -151,19 +152,19 @@ namespace HedgeLib.Sets
 
                 if (dataType == typeof(Vector2))
                 {
-                    data = Helpers.XMLReadVector2(paramElem);
+                    data = paramElem.GetVector2();
                 }
                 else if (dataType == typeof(Vector3))
                 {
-                    data = Helpers.XMLReadVector3(paramElem);
+                    data = paramElem.GetVector3();
                 }
                 else if (dataType == typeof(Vector4))
                 {
-                    data = Helpers.XMLReadVector4(paramElem);
+                    data = paramElem.GetVector4();
                 }
                 else if (dataType == typeof(Quaternion))
                 {
-                    data = Helpers.XMLReadQuat(paramElem);
+                    data = paramElem.GetQuaternion();
                 }
                 else if (dataType == typeof(uint[]))
                 {
@@ -232,9 +233,9 @@ namespace HedgeLib.Sets
 
                 return new SetObjectTransform()
                 {
-                    Position = Helpers.XMLReadVector3(posElem),
-                    Rotation = Helpers.XMLReadQuat(rotElem),
-                    Scale = Helpers.XMLReadVector3(scaleElem)
+                    Position = posElem.GetVector3(),
+                    Rotation = rotElem.GetQuaternion(),
+                    Scale = scaleElem.GetVector3()
                 };
             }
         }
@@ -337,15 +338,19 @@ namespace HedgeLib.Sets
                 
                 if (dataType == typeof(Vector2))
                 {
-                    Helpers.XMLWriteVector2(elem, (Vector2)param.Data);
+                    elem.AddElem((Vector2)param.Data);
                 }
                 else if (dataType == typeof(Vector3))
                 {
-                    Helpers.XMLWriteVector3(elem, (Vector3)param.Data);
+                    elem.AddElem((Vector3)param.Data);
                 }
-                else if (dataType == typeof(Vector4) || dataType == typeof(Quaternion))
+                else if (dataType == typeof(Vector4))
                 {
-                    Helpers.XMLWriteVector4(elem, (Vector4)param.Data);
+                    elem.AddElem((Vector4)param.Data);
+                }
+                else if (dataType == typeof(Quaternion))
+                {
+                    elem.AddElem((Quaternion)param.Data);
                 }
                 else if (dataType == typeof(uint[]))
                 {
@@ -394,9 +399,9 @@ namespace HedgeLib.Sets
                 var rotElem = new XElement("Rotation");
                 var scaleElem = new XElement("Scale");
 
-                Helpers.XMLWriteVector3(posElem, transform.Position);
-                Helpers.XMLWriteVector4(rotElem, transform.Rotation);
-                Helpers.XMLWriteVector3(scaleElem, transform.Scale);
+                posElem.AddElem(transform.Position);
+                rotElem.AddElem(transform.Rotation);
+                scaleElem.AddElem(transform.Scale);
 
                 // Add elements to new transform element and return it.
                 return new XElement(name, posElem, rotElem, scaleElem);

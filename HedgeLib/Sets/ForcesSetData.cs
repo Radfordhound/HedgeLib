@@ -3,6 +3,7 @@ using HedgeLib.IO;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Numerics;
 using System.Xml.Linq;
 
 namespace HedgeLib.Sets
@@ -106,7 +107,7 @@ namespace HedgeLib.Sets
                 typeof(Vector3), childRotOffset));
 
             obj.Transform.Position = pos;
-            obj.Transform.Rotation = new Quaternion(rot, true);
+            obj.Transform.Rotation = MathHelpers.FromEulerAngles(rot, true);
 
             long extraParamsOffset = reader.ReadInt64();
             ulong unknownCount1 = reader.ReadUInt64();

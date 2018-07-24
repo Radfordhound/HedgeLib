@@ -5,6 +5,7 @@ using PropertyGridEx;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Numerics;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -93,8 +94,8 @@ namespace HedgeEdit.UI
                     objTemplate, out Vector3 offsetPos);
 
                 // Update Position/Scale
-                instance.Scale = Types.ToOpenTK(obj.Transform.Scale);
-                instance.Position = Types.ToOpenTK((obj.Transform.Position *
+                instance.Scale = Types.ToSharpDX(obj.Transform.Scale);
+                instance.Position = Types.ToSharpDX((obj.Transform.Position *
                     unitMultiplier) + offsetPos);
 
                 // Update Modes if necessary
@@ -190,7 +191,7 @@ namespace HedgeEdit.UI
 
             // Update Rotation Boxes
             var eulerAngles = (transform != null) ?
-                transform.Rotation.ToEulerAngles() : new Vector3();
+                transform.Rotation.ToEulerAngles() : Vector3.Zero;
 
             rotXBox.Text = eulerAngles.X.ToString();
             rotYBox.Text = eulerAngles.Y.ToString();
@@ -603,7 +604,7 @@ namespace HedgeEdit.UI
                     obj.Transform;
 
                 // Get rotation if necessary
-                Quaternion rot = null;
+                Quaternion rot = Quaternion.Identity;
                 bool editedRot = (sender == rotXBox ||
                     sender == rotYBox || sender == rotZBox);
 
@@ -612,7 +613,7 @@ namespace HedgeEdit.UI
                     float x = (sender == rotXBox) ? f : float.Parse(rotXBox.Text);
                     float y = (sender == rotYBox) ? f : float.Parse(rotYBox.Text);
                     float z = (sender == rotZBox) ? f : float.Parse(rotZBox.Text);
-                    rot = new Quaternion(new Vector3(x, y, z), false);
+                    rot = MathHelpers.FromEulerAngles(y, z, x);
                 }
 
                 // Move any selected objects in the SetData
@@ -659,7 +660,7 @@ namespace HedgeEdit.UI
                 instance.Position = pos;
 
                 if (editedRot)
-                    instance.Rotation = Types.ToOpenTK(rot);
+                    instance.Rotation = Types.ToSharpDX(rot);
             }
             else
             {

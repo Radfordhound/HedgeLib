@@ -1,6 +1,7 @@
 ﻿using HedgeLib.Headers;
 using HedgeLib.IO;
 using System.IO;
+using System.Numerics;
 
 namespace HedgeLib.Terrain
 {

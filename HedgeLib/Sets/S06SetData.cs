@@ -3,6 +3,7 @@ using HedgeLib.IO;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Numerics;
 
 namespace HedgeLib.Sets
 {
@@ -47,7 +48,7 @@ namespace HedgeLib.Sets
 
                 obj.Transform.Position = reader.ReadVector3();
                 reader.JumpAhead(4);
-                obj.Transform.Rotation = new Quaternion(reader.ReadVector4());
+                obj.Transform.Rotation = reader.ReadQuaternion();
 
                 uint paramCount = reader.ReadUInt32();
                 uint paramOffset = reader.ReadUInt32();

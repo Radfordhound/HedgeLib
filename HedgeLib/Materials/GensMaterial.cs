@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using HedgeLib.Headers;
 using HedgeLib.Textures;
 using System.Xml.Linq;
+using System.Numerics;
 
 namespace HedgeLib.Materials
 {

@@ -2,12 +2,18 @@
 using HedgeLib.IO;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 
 namespace HedgeLib.Sets
 {
     public static class SOBJ
     {
         // Variables/Constants
+        public enum SOBJType
+        {
+            Colors, LostWorld
+        }
+
         public const string Signature = "SOBJ", Extension = ".orc";
 
         // Methods
@@ -51,7 +57,6 @@ namespace HedgeLib.Sets
 
             // Object Types
             reader.JumpTo(objTypeOffsetsOffset, false);
-
             for (uint i = 0; i < objTypeCount; ++i)
             {
                 // Object Type
@@ -95,6 +100,7 @@ namespace HedgeLib.Sets
 
                 reader.BaseStream.Position = curTypePos;
             }
+
             return objs;
         }
 
@@ -206,7 +212,6 @@ namespace HedgeLib.Sets
                     }
                 }
             }
-
         }
 
         private static SetObject ReadObject(ExtendedBinaryReader reader,
@@ -376,11 +381,12 @@ namespace HedgeLib.Sets
         private static SetObjectTransform ReadTransform(
             ExtendedBinaryReader reader, bool readLocalSpace)
         {
-            var transform = new SetObjectTransform();
-
             // World Space
-            transform.Position = reader.ReadVector3();
-            transform.Rotation = new Quaternion(reader.ReadVector3(), true);
+            var transform = new SetObjectTransform
+            {
+                Position = reader.ReadVector3(),
+                Rotation = MathHelpers.FromEulerAngles(reader.ReadVector3(), true)
+            };
 
             // Local Space
             if (readLocalSpace)
@@ -510,12 +516,6 @@ namespace HedgeLib.Sets
             // Local-Space
             if (writeLocalSpace)
                 writer.WriteNulls(0x18);
-        }
-
-        // Other
-        public enum SOBJType
-        {
-            Colors, LostWorld
         }
     }
 }

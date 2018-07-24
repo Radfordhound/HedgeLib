@@ -1,6 +1,7 @@
 ﻿using HedgeLib.IO;
 using HedgeLib.Headers;
 using System.IO;
+using System.Numerics;
 
 namespace HedgeLib.Misc
 {

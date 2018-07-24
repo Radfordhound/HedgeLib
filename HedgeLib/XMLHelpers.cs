@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Numerics;
 using System.Xml.Linq;
 
 namespace HedgeLib
@@ -187,15 +188,15 @@ namespace HedgeLib
         public static Vector4 GetVector4Elem(this XElement elem, string name)
         {
             var v = new Vector4();
-            GetVector4(elem.Element(name), v);
+            GetVector4(elem.Element(name), out v.X, out v.Y, out v.Z, out v.W);
             return v;
         }
 
         public static Quaternion GetQuatElem(this XElement elem, string name)
         {
-            var v = new Quaternion();
-            GetVector4(elem.Element(name), v);
-            return v;
+            var q = new Quaternion();
+            GetVector4(elem.Element(name), out q.X, out q.Y, out q.Z, out q.W);
+            return q;
         }
 
         public static Vector2 GetVector2(this XElement elem)
@@ -237,40 +238,44 @@ namespace HedgeLib
         public static Vector4 GetVector4(this XElement elem)
         {
             var v = new Vector4();
-            GetVector4(elem, v);
+            GetVector4(elem, out v.X, out v.Y, out v.Z, out v.W);
             return v;
         }
 
         public static Quaternion GetQuaternion(this XElement elem)
         {
-            var v = new Quaternion();
-            GetVector4(elem, v);
-            return v;
+            var q = new Quaternion();
+            GetVector4(elem, out q.X, out q.Y, out q.Z, out q.W);
+            return q;
         }
 
-        private static void GetVector4(XElement e, Vector4 v)
+        private static void GetVector4(XElement e, out float x,
+            out float y, out float z, out float w)
         {
             if (e == null)
+            {
+                x = y = z = w = 0;
                 return;
+            }
 
-            var x = e.Element("x");
-            var y = e.Element("y");
-            var z = e.Element("z");
-            var w = e.Element("w");
+            var xElem = e.Element("x");
+            var yElem = e.Element("y");
+            var zElem = e.Element("z");
+            var wElem = e.Element("w");
 
-            if (x == null)
-                x = e.Element("X");
-            if (y == null)
-                y = e.Element("Y");
-            if (z == null)
-                z = e.Element("Z");
-            if (w == null)
-                w = e.Element("W");
+            if (xElem == null)
+                xElem = e.Element("X");
+            if (yElem == null)
+                yElem = e.Element("Y");
+            if (zElem == null)
+                zElem = e.Element("Z");
+            if (wElem == null)
+                wElem = e.Element("W");
 
-            float.TryParse(x?.Value, out v.X);
-            float.TryParse(y?.Value, out v.Y);
-            float.TryParse(z?.Value, out v.Z);
-            float.TryParse(w?.Value, out v.W);
+            float.TryParse(xElem?.Value, out x);
+            float.TryParse(yElem?.Value, out y);
+            float.TryParse(zElem?.Value, out z);
+            float.TryParse(wElem?.Value, out w);
         }
 
         public static string GetStringElem(this XElement elem, string name)
@@ -315,6 +320,16 @@ namespace HedgeLib
             elem.Add(x, y, z, w);
         }
 
+        public static void AddElem(this XElement elem, Quaternion quat)
+        {
+            var x = new XElement("x", quat.X);
+            var y = new XElement("y", quat.Y);
+            var z = new XElement("z", quat.Z);
+            var w = new XElement("w", quat.W);
+
+            elem.Add(x, y, z, w);
+        }
+
         public static void AddElem(this XElement elem, string name, Vector2 vect)
         {
             var v = new XElement(name);
@@ -334,6 +349,13 @@ namespace HedgeLib
             var v = new XElement(name);
             v.AddElem(vect);
             elem.Add(v);
+        }
+
+        public static void AddElem(this XElement elem, string name, Quaternion quat)
+        {
+            var q = new XElement(name);
+            q.AddElem(quat);
+            elem.Add(q);
         }
     }
 }

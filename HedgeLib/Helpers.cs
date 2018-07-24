@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Numerics;
 using System.Security.Cryptography;
 using System.Xml.Linq;
 
@@ -61,32 +62,27 @@ namespace HedgeLib
                 }
                 else throw new NotImplementedException();
             }
-            else if (conversionType == typeof(Vector4))
+            else if (conversionType == typeof(Vector4) || conversionType == typeof(Quaternion))
             {
                 if (value.GetType() == typeof(string))
                 {
-					return StringToVector4();
-                }
-                else throw new NotImplementedException();
-            }
-            else if (conversionType == typeof(Quaternion))
-            {
-                if (value.GetType() == typeof(string))
-                {
-                    return new Quaternion(StringToVector4());
+                    float x, y, z, w;
+                    var singles = ((string)value).Split(',');
+
+                    x = Convert.ToSingle(singles[0]);
+                    y = Convert.ToSingle(singles[1]);
+                    z = Convert.ToSingle(singles[2]);
+                    w = Convert.ToSingle(singles[3]);
+
+                    if (conversionType == typeof(Quaternion))
+                        return new Quaternion(x, y, z, w);
+                    else
+                        return new Vector4(x, y, z, w);
                 }
                 else throw new NotImplementedException();
             }
 
             return Convert.ChangeType(value, conversionType);
-
-			// Sub-Methods
-			Vector4 StringToVector4()
-			{
-				var singles = ((string)value).Split(',');
-				return new Vector4(Convert.ToSingle(singles[0]), Convert.ToSingle(singles[1]),
-					Convert.ToSingle(singles[2]), Convert.ToSingle(singles[3]));
-			}
         }
 
         [Obsolete("Please use the extension method elem.GetVector2() from XMLHelpers instead.")]

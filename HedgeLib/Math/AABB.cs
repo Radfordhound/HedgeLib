@@ -1,4 +1,6 @@
-﻿namespace HedgeLib.Math
+﻿using System.Numerics;
+
+namespace HedgeLib.Math
 {
     public class AABB
     {

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Numerics;
 using System.Text;
 
 namespace HedgeLib.IO
@@ -367,22 +368,9 @@ namespace HedgeLib.IO
         }
         
         // 16-Byte Types
-        public virtual Vector4 ReadVector4()
+        public virtual unsafe Vector4 ReadVector4()
         {
             var vec = new Vector4();
-            ReadVector4(vec);
-            return vec;
-        }
-
-        public virtual Quaternion ReadQuaternion()
-        {
-            var vec = new Quaternion();
-            ReadVector4(vec);
-            return vec;
-        }
-
-        protected unsafe virtual void ReadVector4(Vector4 vec)
-        {
             uint v = ReadUInt32();
             vec.X = *((float*)&v);
 
@@ -394,6 +382,26 @@ namespace HedgeLib.IO
 
             v = ReadUInt32();
             vec.W = *((float*)&v);
+
+            return vec;
+        }
+
+        public virtual unsafe Quaternion ReadQuaternion()
+        {
+            var vec = new Quaternion();
+            uint v = ReadUInt32();
+            vec.X = *((float*)&v);
+
+            v = ReadUInt32();
+            vec.Y = *((float*)&v);
+
+            v = ReadUInt32();
+            vec.Z = *((float*)&v);
+
+            v = ReadUInt32();
+            vec.W = *((float*)&v);
+
+            return vec;
         }
 
         // TODO: Write override methods for decimals
@@ -622,8 +630,10 @@ namespace HedgeLib.IO
                 Write((Vector2)data);
             else if (type == typeof(Vector3))
                 Write((Vector3)data);
-            else if (type == typeof(Vector4) || type == typeof(Quaternion))
+            else if (type == typeof(Vector4))
                 Write((Vector4)data);
+            else if (type == typeof(Quaternion))
+                Write((Quaternion)data);
             else if (type == typeof(string))
                 Write((string)data);
             else
@@ -953,6 +963,65 @@ namespace HedgeLib.IO
                 dataBuffer[11] = (byte)(*p >> 24);
 
                 f = vect.W;
+                dataBuffer[12] = (byte)(*p);
+                dataBuffer[13] = (byte)(*p >> 8);
+                dataBuffer[14] = (byte)(*p >> 16);
+                dataBuffer[15] = (byte)(*p >> 24);
+            }
+
+            Write(dataBuffer, 0, 16);
+        }
+
+        public virtual unsafe void Write(Quaternion quat)
+        {
+            float f = quat.X;
+            var p = ((uint*)&f);
+
+            if (IsBigEndian)
+            {
+                dataBuffer[0] = (byte)(*p >> 24);
+                dataBuffer[1] = (byte)(*p >> 16);
+                dataBuffer[2] = (byte)(*p >> 8);
+                dataBuffer[3] = (byte)(*p);
+
+                f = quat.Y;
+                dataBuffer[4] = (byte)(*p >> 24);
+                dataBuffer[5] = (byte)(*p >> 16);
+                dataBuffer[6] = (byte)(*p >> 8);
+                dataBuffer[7] = (byte)(*p);
+
+                f = quat.Z;
+                dataBuffer[8] = (byte)(*p >> 24);
+                dataBuffer[9] = (byte)(*p >> 16);
+                dataBuffer[10] = (byte)(*p >> 8);
+                dataBuffer[11] = (byte)(*p);
+
+                f = quat.W;
+                dataBuffer[12] = (byte)(*p >> 24);
+                dataBuffer[13] = (byte)(*p >> 16);
+                dataBuffer[14] = (byte)(*p >> 8);
+                dataBuffer[15] = (byte)(*p);
+            }
+            else
+            {
+                dataBuffer[0] = (byte)(*p);
+                dataBuffer[1] = (byte)(*p >> 8);
+                dataBuffer[2] = (byte)(*p >> 16);
+                dataBuffer[3] = (byte)(*p >> 24);
+
+                f = quat.Y;
+                dataBuffer[4] = (byte)(*p);
+                dataBuffer[5] = (byte)(*p >> 8);
+                dataBuffer[6] = (byte)(*p >> 16);
+                dataBuffer[7] = (byte)(*p >> 24);
+
+                f = quat.Z;
+                dataBuffer[8] = (byte)(*p);
+                dataBuffer[9] = (byte)(*p >> 8);
+                dataBuffer[10] = (byte)(*p >> 16);
+                dataBuffer[11] = (byte)(*p >> 24);
+
+                f = quat.W;
                 dataBuffer[12] = (byte)(*p);
                 dataBuffer[13] = (byte)(*p >> 8);
                 dataBuffer[14] = (byte)(*p >> 16);

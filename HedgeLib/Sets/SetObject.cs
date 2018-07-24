@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
 
 namespace HedgeLib.Sets
 {
@@ -95,8 +96,7 @@ namespace HedgeLib.Sets
     public class SetObjectTransform
     {
         // Variables/Constants
-        public Quaternion Rotation = new Quaternion(0, 0, 0, 1);
-        public Vector3 Position = new Vector3(0, 0, 0),
-			Scale = new Vector3(1, 1, 1);
+        public Quaternion Rotation = Quaternion.Identity;
+        public Vector3 Position = Vector3.Zero, Scale = Vector3.One;
     }
 }

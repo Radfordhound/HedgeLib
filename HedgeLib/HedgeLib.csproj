@@ -39,6 +39,8 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
@@ -63,6 +65,7 @@
     <Compile Include="Headers\MirageHeader.cs" />
     <Compile Include="Headers\PACxHeader.cs" />
     <Compile Include="Materials\GensMaterial.cs" />
+    <Compile Include="MathHelpers.cs" />
     <Compile Include="Math\AABB.cs" />
     <Compile Include="Misc\ForcesGISM.cs" />
     <Compile Include="RFL\ForcesCaptionParam.cs" />
@@ -73,7 +76,6 @@
     <Compile Include="Misc\ForcesText.cs" />
     <Compile Include="Misc\GensPFI.cs" />
     <Compile Include="Models\GensModel.cs" />
-    <Compile Include="Quaternion.cs" />
     <Compile Include="RFL\ForcesStageScore.cs" />
     <Compile Include="RFL\ForcesWorldmapDiscuss.cs" />
     <Compile Include="Sets\ForcesSetData.cs" />
@@ -119,7 +121,6 @@
     <Compile Include="Textures\GensTexture.cs" />
     <Compile Include="Textures\Texture.cs" />
     <Compile Include="Types.cs" />
-    <Compile Include="Vector.cs" />
     <Compile Include="XMLHelpers.cs" />
   </ItemGroup>
   <ItemGroup />

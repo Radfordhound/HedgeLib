@@ -1,9 +1,9 @@
-﻿using HedgeLib;
-using HedgeLib.Materials;
+﻿using HedgeLib.Materials;
 using HedgeLib.Models;
 using HedgeLib.Sets;
 using HedgeLib.Textures;
 using System;
+using System.Numerics;
 
 namespace HedgeEdit
 {
@@ -304,7 +304,7 @@ namespace HedgeEdit
             return new Vector3(vector.X, vector.Y, vector.Z);
         }
 
-        public static SharpDX.Vector3 ToOpenTK(Vector3 vector)
+        public static SharpDX.Vector3 ToSharpDX(Vector3 vector)
         {
             return new SharpDX.Vector3(vector.X, vector.Y, vector.Z);
         }
@@ -319,12 +319,12 @@ namespace HedgeEdit
             return new Quaternion(quat.X, quat.Y, quat.Z, quat.W);
         }
 
-        public static SharpDX.Vector4 ToOpenTK(Vector4 vector)
+        public static SharpDX.Vector4 ToSharpDX(Vector4 vector)
         {
             return new SharpDX.Vector4(vector.X, vector.Y, vector.Z, vector.W);
         }
 
-        public static SharpDX.Quaternion ToOpenTK(Quaternion quat)
+        public static SharpDX.Quaternion ToSharpDX(Quaternion quat)
         {
             return new SharpDX.Quaternion(quat.X, quat.Y, quat.Z, quat.W);
         }

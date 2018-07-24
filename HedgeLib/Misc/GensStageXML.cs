@@ -3,6 +3,7 @@ using HedgeLib.IO;
 using System.Xml.Linq;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 
 namespace HedgeLib.Misc
 {
@@ -58,7 +59,7 @@ namespace HedgeLib.Misc
         public class SonicElement
         {
             // Variables/Constants
-            public Vector3 Position = new Vector3(0, 0, 0);
+            public Vector3 Position = Vector3.Zero;
             public string StartMode, CameraView;
             public float YawRotation = 0, StartSpeed = 0,
                 StartTime = 0, DeadHeight = -200;
@@ -71,7 +72,7 @@ namespace HedgeLib.Misc
                 // Position
                 var posElem = elem.Element("Position");
                 if (posElem != null)
-                    Position = Helpers.XMLReadVector3(posElem);
+                    Position = posElem.GetVector3();
 
                 // Yaw
                 var yawRotElem = elem.Element("Yaw");

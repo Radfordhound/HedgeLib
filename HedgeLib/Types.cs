@@ -1,6 +1,7 @@
 ﻿using HedgeLib.Sets;
 using System;
 using System.Linq;
+using System.Numerics;
 
 namespace HedgeLib
 {
@@ -31,15 +32,15 @@ namespace HedgeLib
             new DataType(typeof(long), 0L, "signed long", "sint64", "long", "int64"),
             new DataType(typeof(ulong), 0UL, "unsigned long", "uint64", "ulong"),
             new DataType(typeof(double), 0D, "double"),
-            new DataType(typeof(Vector2), new Vector2(), "vector2"),
+            new DataType(typeof(Vector2), Vector2.Zero, "vector2"),
 
             // 12-Byte Values
-            new DataType(typeof(Vector3), new Vector3(), "vect", "vector", "vector3", "position"),
+            new DataType(typeof(Vector3), Vector3.Zero, "vect", "vector", "vector3", "position"),
 
             // 16-Byte Values
             new DataType(typeof(decimal), 0M, "decimal"),
-            new DataType(typeof(Vector4), new Vector4(), "vector4"),
-            new DataType(typeof(Quaternion), new Quaternion(), "quat", "quaternion"),
+            new DataType(typeof(Vector4), Vector4.Zero, "vector4"),
+            new DataType(typeof(Quaternion), Quaternion.Identity, "quat", "quaternion"),
 
             // Other Values
             new DataType(typeof(string), string.Empty, "string"),

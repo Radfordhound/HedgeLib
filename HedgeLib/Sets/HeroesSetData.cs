@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Numerics;
 using System.Text;
 
 namespace HedgeLib.Sets
@@ -29,14 +30,13 @@ namespace HedgeLib.Sets
             var miscEntryIDs = new List<ushort>();
 
             // Object Entries
-            var reader = new ExtendedBinaryReader(fileStream, Encoding.ASCII, true);
-
+            var reader = new ExtendedBinaryReader(fileStream, true);
             for (uint i = 0; i < HeroesObjectLimit; ++i)
             {
                 var pos = reader.ReadVector3();
-                float rotX = (float)(reader.ReadInt32() * 180.0 / 32768.0);
-                float rotY = (float)(reader.ReadInt32() * 180.0 / 32768.0);
-                float rotZ = (float)(reader.ReadInt32() * 180.0 / 32768.0);
+                float rotX = (float)(reader.ReadInt32() * (System.Math.PI / 32768f));
+                float rotY = (float)(reader.ReadInt32() * (System.Math.PI / 32768f));
+                float rotZ = (float)(reader.ReadInt32() * (System.Math.PI / 32768f));
 
                 ushort unknown1 = reader.ReadUInt16();
                 byte stageType = reader.ReadByte();
@@ -85,7 +85,8 @@ namespace HedgeLib.Sets
                     {
                         Position = pos,
                         // TODO: Make sure rotation is correct
-                        Rotation = new Quaternion(new Vector3(rotX, rotY, rotZ), false)
+                        Rotation = Quaternion.CreateFromYawPitchRoll(
+                            rotY, rotZ, rotX) // Heroes uses Pitch, Yaw, Roll (Y, Z, X)
                     }
                 });
             }
@@ -152,9 +153,9 @@ namespace HedgeLib.Sets
                 // Write object entries
                 var rot = obj.Transform.Rotation.ToEulerAngles(false);
                 writer.Write(obj.Transform.Position);
-                writer.Write((int)(rot.X * 32768.0 / 180.0));
-                writer.Write((int)(rot.Y * 32768.0 / 180.0));
-                writer.Write((int)(rot.Z * 32768.0 / 180.0));
+                writer.Write((int)((rot.X * 32768f) / 180.0));
+                writer.Write((int)((rot.Y * 32768f) / 180.0));
+                writer.Write((int)((rot.Z * 32768f) / 180.0));
 
                 // Yeah in the actual game the same thing is just written twice for some reason
                 byte stageType = obj.GetCustomDataValue<byte>("StageType");

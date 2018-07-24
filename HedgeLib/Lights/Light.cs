@@ -1,6 +1,7 @@
 ﻿using HedgeLib.Headers;
 using HedgeLib.IO;
 using System.IO;
+using System.Numerics;
 
 namespace HedgeLib.Lights
 {
@@ -9,7 +10,7 @@ namespace HedgeLib.Lights
     {
         // Variables/Constants
         public GensHeader Header = new GensHeader();
-        public Vector3 Position = new Vector3(), Color = new Vector3();
+        public Vector3 Position = Vector3.Zero, Color = Vector3.One;
         public float UnknownTotal1, UnknownTotal2, UnknownTotal3,
             OmniInnerRange, OmniOuterRange;
 

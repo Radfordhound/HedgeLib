@@ -4,6 +4,7 @@ using HedgeLib.Sets;
 using MoonSharp.Interpreter;
 using System;
 using System.IO;
+using System.Numerics;
 
 namespace HedgeEdit.Lua
 {

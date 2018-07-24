@@ -5,6 +5,7 @@ using HedgeLib.Models;
 using HedgeLib.Sets;
 using System.Collections.Generic;
 using System.IO;
+using System.Numerics;
 
 namespace HedgeEdit
 {
@@ -451,8 +452,8 @@ namespace HedgeEdit
             Vector3 scale, object customData = null)
         {
             return AddObjectInstance(obj, new VPObjectInstance(
-                Types.ToOpenTK(pos), Types.ToOpenTK(rot),
-                Types.ToOpenTK(scale), customData));
+                Types.ToSharpDX(pos), Types.ToSharpDX(rot),
+                Types.ToSharpDX(scale), customData));
         }
 
         public static VPObjectInstance AddObjectInstance(string modelName,
@@ -460,8 +461,8 @@ namespace HedgeEdit
             Vector3 scale, object customData = null)
         {
             return AddObjectInstance(modelName, new VPObjectInstance(
-                Types.ToOpenTK(pos), Types.ToOpenTK(rot),
-                Types.ToOpenTK(scale), customData));
+                Types.ToSharpDX(pos), Types.ToSharpDX(rot),
+                Types.ToSharpDX(scale), customData));
         }
 
         public static VPObjectInstance AddTransform(VPModel obj,
