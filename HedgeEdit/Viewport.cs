@@ -37,6 +37,7 @@ namespace HedgeEdit
         private static DepthStencilView depthView;
 
         private static Matrix proj;
+        private static SharpDX.Viewport viewport;
         private static Control vp;
         private static Point prevMousePos = Point.Empty;
         //private static MouseState prevMouseState;
@@ -134,8 +135,10 @@ namespace HedgeEdit
             depthView = new DepthStencilView(device, depthBuffer);
 
             // Setup targets and viewport for rendering
-            Context.Rasterizer.SetViewport(new SharpDX.Viewport(0, 0,
-                vp.ClientSize.Width, vp.ClientSize.Height, 0.0f, 1.0f));
+            viewport = new SharpDX.Viewport(0, 0,
+                vp.ClientSize.Width, vp.ClientSize.Height, 0, 1.0f);
+
+            Context.Rasterizer.SetViewport(viewport);
             Context.OutputMerger.SetTargets(depthView, renderView);
 
             var rasterizerDesc = RasterizerStateDescription.Default();
@@ -191,6 +194,109 @@ namespace HedgeEdit
             //factory.Dispose(); // TODO
 
             device = null;
+        }
+
+        public static void Click()
+        {
+            var mousePos = Cursor.Position;
+            var vpMousePos = vp.PointToClient(mousePos);
+
+            // Get mouse world coordinates/direction
+            //ViewProjection.Invert();
+            Matrix.Invert(ref ViewProjection, out Matrix vpInv);
+            var near = UnProject(0);
+
+            //// Transform Gizmos
+            //if (mouseState.LeftButton == OpenTK.Input.ButtonState.Released &&
+            //    prevMouseState.LeftButton == OpenTK.Input.ButtonState.Pressed)
+            //    Gizmo.IsMoving = false;
+
+            //if (Gizmo.IsMoving)
+            //    Gizmo.Update(near);
+
+            // Object Selection
+            if (vpMousePos.X >= 0 && vpMousePos.Y >= 0 && vpMousePos.X <= vp.Width &&
+                vpMousePos.Y <= vp.Height && Program.MainForm.Active)
+            {
+                var far = UnProject(1);
+                var direction = (far - near);
+                direction.Normalize(); // TODO: Is NormalizeFast accurate enough?
+                //var mp = new Vector3(vpMousePos.X, vpMousePos.Y, 0f);
+                //viewport.Unproject(ref mp, ref vpInv, out Vector3 near);
+
+                //mp.Z = 0.5f;
+                //viewport.Unproject(ref mp, ref vpInv, out Vector3 far);
+
+                //var direction = (far - near);
+                //Console.WriteLine(p);
+                //Console.WriteLine($"far: {far}");
+                //Console.WriteLine($"near: {near}");
+                //direction.Normalize();
+                //Console.WriteLine($"dir: {direction}");
+
+                // Check for Transform Gizmo clicks first, then object clicks
+                //if (!Gizmo.Click(near, direction))
+                //{
+                    // Fire a ray from mouse coordinates in camera direction and
+                    // select any object that ray comes in contact with.
+                    if (!SelectObject(Data.DefaultCube))
+                    {
+                        foreach (var obj in Data.Objects)
+                        {
+                            SelectObject(obj.Value);
+                        }
+                    }
+                //}
+
+                // Sub-Methods
+                bool SelectObject(VPModel mdl)
+                {
+                    // TODO: Fix farther objects being selected first due to dictionary order
+                    var instance = mdl.InstanceIntersects(near, direction);
+                    if (instance != null && instance.CustomData != null)
+                    {
+                        if (!Input.IsInputDown(Inputs.MultiSelect))
+                            SelectedInstances.Clear();
+
+                        if (!SelectedInstances.Contains(instance))
+                        {
+                            SelectedInstances.Add(instance);
+                            Program.MainForm.RefreshGUI();
+                            return true;
+                        }
+                    }
+
+                    if (Program.MainForm.Focused)
+                        SelectedInstances.Clear();
+
+                    return false;
+                }
+            }
+
+            // Sub-Methods
+            Vector3 UnProject(float z)
+            {
+                // This method was hacked together from
+                // a bunch of StackOverflow posts lol
+                var vec = new Vector4()
+                {
+                    X = 2.0f * vpMousePos.X / vp.Width - 1,
+                    Y = -(2.0f * vpMousePos.Y / vp.Height - 1),
+                    Z = z,
+                    W = 1.0f
+                };
+
+                Vector4.Transform(ref vec, ref vpInv, out vec);
+
+                if (vec.W > float.Epsilon || vec.W < float.Epsilon)
+                {
+                    vec.X /= vec.W;
+                    vec.Y /= vec.W;
+                    vec.Z /= vec.W;
+                }
+
+                return new Vector3(vec.X, vec.Y, vec.Z);
+            }
         }
 
         public static void Update()
@@ -267,6 +373,26 @@ namespace HedgeEdit
                 Render();
             }
 
+            else if (Input.IsInputDown(Inputs.Up))
+            {
+                CameraPos += 0.1f * CameraForward;
+
+                // Update Transforms
+                float x = MathUtil.DegreesToRadians(CameraRot.X);
+                float y = MathUtil.DegreesToRadians(CameraRot.Y);
+                float yCos = (float)Math.Cos(y);
+
+                var front = new Vector3()
+                {
+                    X = (float)Math.Sin(x) * yCos,
+                    Y = (float)Math.Sin(y),
+                    Z = -(float)Math.Cos(x) * yCos
+                };
+
+                CameraForward = Vector3.Normalize(front);
+                Render();
+            }
+
             prevMousePos = Cursor.Position;
         }
 
@@ -302,68 +428,6 @@ namespace HedgeEdit
 
             //GL.UniformMatrix4(viewLoc, false, ref view);
             //GL.UniformMatrix4(projectionLoc, false, ref projection);
-
-            //// Get mouse world coordinates/direction
-            //view.Invert();
-            //projection.Invert();
-            //var near = UnProject(0);
-
-            //// Transform Gizmos
-            //if (mouseState.LeftButton == OpenTK.Input.ButtonState.Released &&
-            //    prevMouseState.LeftButton == OpenTK.Input.ButtonState.Pressed)
-            //    Gizmo.IsMoving = false;
-
-            //if (Gizmo.IsMoving)
-            //    Gizmo.Update(near);
-
-            //// Object Selection
-            //if (mouseState.LeftButton == OpenTK.Input.ButtonState.Pressed &&
-            //    prevMouseState.LeftButton == OpenTK.Input.ButtonState.Released &&
-            //    vpMousePos.X >= 0 && vpMousePos.Y >= 0 && vpMousePos.X <= vp.Width &&
-            //    vpMousePos.Y <= vp.Height && Program.MainForm.Active)
-            //{
-            //    var far = UnProject(1);
-            //    var direction = (far - near);
-            //    direction.Normalize(); // TODO: Is NormalizeFast accurate enough?
-
-            //    // Check for Transform Gizmo clicks first, then object clicks
-            //    if (!Gizmo.Click(near, direction))
-            //    {
-            //        // Fire a ray from mouse coordinates in camera direction and
-            //        // select any object that ray comes in contact with.
-            //        if (!SelectObject(Data.DefaultCube))
-            //        {
-            //            foreach (var obj in Data.Objects)
-            //            {
-            //                SelectObject(obj.Value);
-            //            }
-            //        }
-            //    }
-
-            //    // Sub-Methods
-            //    bool SelectObject(VPModel mdl)
-            //    {
-            //        // TODO: Fix farther objects being selected first due to dictionary order
-            //        var instance = mdl.InstanceIntersects(near, direction);
-            //        if (instance != null && instance.CustomData != null)
-            //        {
-            //            if (!keyState.IsKeyDown(Key.LControl))
-            //                SelectedInstances.Clear();
-
-            //            if (!SelectedInstances.Contains(instance))
-            //            {
-            //                SelectedInstances.Add(instance);
-            //                Program.MainForm.RefreshGUI();
-            //                return true;
-            //            }
-            //        }
-
-            //        if (Program.MainForm.Focused)
-            //            SelectedInstances.Clear();
-
-            //        return false;
-            //    }
-            //}
 
             // Draw all models in the scene
             Mesh.Slots slot;
@@ -406,32 +470,6 @@ namespace HedgeEdit
             //vp.SwapBuffers();
             //prevMouseState = mouseState;
             swapChain.Present(0, PresentFlags.None);
-
-            //// Sub-Methods
-            //Vector3 UnProject(float z)
-            //{
-            //    // This method was hacked together from
-            //    // a bunch of StackOverflow posts lol
-            //    var vec = new Vector4()
-            //    {
-            //        X = 2.0f * vpMousePos.X / vp.Width - 1,
-            //        Y = -(2.0f * vpMousePos.Y / vp.Height - 1),
-            //        Z = z,
-            //        W = 1.0f
-            //    };
-
-            //    Vector4.Transform(ref vec, ref projection, out vec);
-            //    Vector4.Transform(ref vec, ref view, out vec);
-
-            //    if (vec.W > float.Epsilon || vec.W < float.Epsilon)
-            //    {
-            //        vec.X /= vec.W;
-            //        vec.Y /= vec.W;
-            //        vec.Z /= vec.W;
-            //    }
-
-            //    return vec.Xyz;
-            //}
         }
 
         public static VPObjectInstance SelectObject(object obj)

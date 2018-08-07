@@ -5,7 +5,8 @@ namespace HedgeEdit
     public enum Inputs
     {
         None = 0, Left = 1, Right = 2,
-        Up = 4, Down = 8, Fast = 16, Slow = 32
+        Up = 4, Down = 8, Fast = 16, Slow = 32,
+        MultiSelect = 64
     }
 
     public struct Input
@@ -18,7 +19,8 @@ namespace HedgeEdit
             Up = new Input(Keys.W, Keys.Up),
             Down = new Input(Keys.S, Keys.Down),
             Fast = new Input(Keys.ShiftKey),
-            Slow = new Input(Keys.ControlKey);
+            Slow = new Input(Keys.ControlKey),
+            MultiSelect = new Input(Keys.ControlKey);
 
         public static Inputs InputState, PrevInputState;
 
@@ -60,6 +62,9 @@ namespace HedgeEdit
 
             if (Slow.IsDown(key))
                 InputState |= Inputs.Slow;
+
+            if (MultiSelect.IsDown(key))
+                InputState |= Inputs.MultiSelect;
         }
 
         public static void SetInputUp(Keys key)
@@ -81,6 +86,9 @@ namespace HedgeEdit
 
             if (Slow.IsDown(key))
                 InputState &= ~Inputs.Slow;
+
+            if (MultiSelect.IsDown(key))
+                InputState &= ~Inputs.MultiSelect;
         }
 
         public bool IsDown(Keys keyState)

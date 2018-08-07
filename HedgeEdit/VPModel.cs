@@ -158,8 +158,8 @@ namespace HedgeEdit
         }
 
         // Methods
-        public VPObjectInstance InstanceIntersects(SharpDX.Vector3 origin,
-            SharpDX.Vector3 direction, uint distance = 100)
+        public VPObjectInstance InstanceIntersects(Vector3 origin,
+            Vector3 direction, uint distance = 100)
         {
             var o = Types.ToHedgeLib(origin);
             var d = Types.ToHedgeLib(direction);
