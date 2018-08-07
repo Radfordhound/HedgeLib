@@ -311,26 +311,29 @@ namespace HedgeEdit
                 if (Slot != slot)
                     return;
 
-                int tex;
+                Texture2D tex;
                 if (!isPreview)
                 {
                     // Get the material
                     var mat = (string.IsNullOrEmpty(MaterialName) ||
-                        !Data.Materials.ContainsKey(MaterialName)) ?
-                        Data.DefaultMaterial : Data.Materials[MaterialName];
+                        !Materials.ContainsKey(MaterialName)) ?
+                        DefaultMaterial : Materials[MaterialName];
 
                     // Get the texture
                     string texName = (mat.Texset.Textures.Count > 0) ?
                         mat.Texset.Textures[0].TextureName : null;
 
                     tex = (string.IsNullOrEmpty(texName) ||
-                        !Data.Textures.ContainsKey(texName)) ?
-                        Data.DefaultTexture : Data.Textures[texName];
+                        !Textures.ContainsKey(texName)) ?
+                        DefaultTexture : Textures[texName];
                 }
                 else
                 {
-                    tex = Data.DefaultTexture;
+                    tex = DefaultTexture;
                 }
+
+                //Viewport.Context.PixelShader.SetShaderResource(0,
+                //    new ShaderResourceView(Viewport.Device, tex));
 
                 // Bind our Buffers
                 // TODO: Bind Texture(s)

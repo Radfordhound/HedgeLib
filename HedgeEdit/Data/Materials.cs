@@ -2,6 +2,9 @@
 using HedgeLib.Headers;
 using HedgeLib.Materials;
 using HedgeLib.Textures;
+using SharpDX;
+using SharpDX.Direct3D11;
+using SharpDX.DXGI;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,15 +17,15 @@ namespace HedgeEdit
         public static AssetCollection<GensMaterial> Materials =
             new AssetCollection<GensMaterial>();
 
-        public static Dictionary<string, int> Textures =
-            new Dictionary<string, int>();
+        public static Dictionary<string, Texture2D> Textures =
+            new Dictionary<string, Texture2D>();
 
         public static AssetDirectories ResourceDirectories = new AssetDirectories();
         public static GensMaterial DefaultMaterial;
-        public static int DefaultTexture;
+        public static Texture2D DefaultTexture;
 
         // Methods
-        public static int GetTexture(string name)
+        public static Texture2D GetTexture(string name)
         {
             if (string.IsNullOrEmpty(name))
                 return DefaultTexture;
@@ -39,7 +42,7 @@ namespace HedgeEdit
                         if (File.Exists(path))
                         {
                             var tex = LoadTexture(path, name);
-                            if (tex >= 0)
+                            if (tex != null)
                                 return tex;
 
                             // TODO: Maybe remove this line so it keeps trying other dirs?
@@ -102,10 +105,10 @@ namespace HedgeEdit
             return ResourceDirectories.AddDirectory(dir);
         }
 
-        public static int AddTexture(string name, Texture tex)
+        public static Texture2D AddTexture(string name, Texture tex)
         {
             // Add/Replace Texture
-            int texture = GenTexture(tex);
+            var texture = GenTexture(tex);
             if (!Textures.ContainsKey(name))
             {
                 Textures.Add(name, texture);
@@ -118,7 +121,7 @@ namespace HedgeEdit
             return texture;
         }
 
-        public static int LoadTexture(string path, string name = null)
+        public static Texture2D LoadTexture(string path, string name = null)
         {
             // Don't bother loading this texture again if we've already loaded it
             name = (string.IsNullOrEmpty(name)) ?
@@ -168,19 +171,20 @@ namespace HedgeEdit
             // Load Texture
             try
             {
-                int texID = -1;
+                Texture2D texture = null;
                 tex.Load(path);
+
                 Program.MainUIInvoke(() =>
                 {
-                    texID = AddTexture(name, tex);
+                    texture = AddTexture(name, tex);
                 });
 
-                return texID;
+                return texture;
             }
             catch (Exception ex)
             {
                 LuaTerminal.LogError($"ERROR: {ex.Message}");
-                return -1;
+                return null;
             }
         }
 
@@ -303,8 +307,84 @@ namespace HedgeEdit
             mat.Save(path, true);
         }
 
-        private static int GenTexture(Texture tex)
+        private static Texture2D GenTexture(Texture tex)
         {
+            return null;
+            // TODO: Multiply tex.Width by something different depending on format
+            int len = 0, stride = (int)tex.Width * 4;
+            for (int i = 0; i < tex.ColorData.Length; ++i)
+            {
+                len += tex.ColorData[i].Length;
+            }
+
+            var stream = new DataStream((int)tex.Height * stride, true, true);
+            //var description = new Texture2DDescription()
+            //{
+            //    Width = (int)tex.Width,
+            //    Height = (int)tex.Height,
+            //    ArraySize = 1,
+            //    MipLevels = (int)tex.MipmapCount,
+            //    Format = (Format)tex.Format,
+            //    SampleDescription = new SampleDescription(1, 0),
+            //    //BindFlags = BindFlags.ConstantBuffer,
+            //    //CpuAccessFlags = CpuAccessFlags.Write,
+            //    //OptionFlags = ResourceOptionFlags.None,
+            //    //Usage = ResourceUsage.Dynamic
+            //};
+
+            var description = new Texture2DDescription()
+            {
+                Width = (int)tex.Width,
+                Height = (int)tex.Height,
+                ArraySize = 1,
+                BindFlags = SharpDX.Direct3D11.BindFlags.ShaderResource | BindFlags.RenderTarget,
+                Usage = SharpDX.Direct3D11.ResourceUsage.Default,
+                CpuAccessFlags = SharpDX.Direct3D11.CpuAccessFlags.None,
+                Format = (Format)tex.Format,
+                MipLevels = 1, // (int)tex.MipmapCount
+                OptionFlags = ResourceOptionFlags.GenerateMipMaps, // ResourceOptionFlags.GenerateMipMap
+                SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0),
+            };
+
+            //System.Windows.Forms.MessageBox.Show(tex.MipmapCount.ToString());
+
+            //using (var texture2D = new Texture2D(Viewport.Device,
+            //    description, new[] { new DataBox(stream.DataPointer) }))
+            //{
+
+            //}
+
+            foreach (var layer in tex.ColorData)
+            {
+                if (layer.Length < 1)
+                    continue;
+
+                stream.Write(layer, 0, layer.Length);
+                break;
+            }
+
+            //var samplerState = new SamplerState(Viewport.Device, new SamplerStateDescription()
+            //{
+            //    AddressU
+            //});
+
+            // TODO: Multiply tex.Width by something different depending on format
+            return new Texture2D(Viewport.Device, description,
+                new DataRectangle(stream.DataPointer, stride));
+
+            //return new Texture2D(Viewport.Device, description,
+            //    new[] { new DataBox(stream.DataPointer, (int)tex.Width * 4, 0) });
+
+            //    var texture = new Texture2D(Viewport.Device, new Texture2DDescription()
+            //{
+            //    CpuAccessFlags = CpuAccessFlags.None,
+            //    MipLevels = (int)tex.MipmapCount,
+            //    Height = (int)tex.Height,
+            //    Width = (int)tex.Width,
+            //    Format = SharpDX.DXGI.Format.A8P8, // TODO
+            //}, );
+
+
             // TODO
             //int texture = GL.GenTexture();
             //GL.BindTexture(TextureTarget.Texture2D, texture);
@@ -374,7 +454,7 @@ namespace HedgeEdit
             //}
 
             //return texture;
-            return 0;
+            //return 0;
         }
     }
 }

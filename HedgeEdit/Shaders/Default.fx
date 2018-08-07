@@ -13,17 +13,17 @@ struct PS_IN
 	float2 uv0 : TEXCOORD;
 };
 
-//SamplerState Sampler
-//{
-//	Filter = MIN_MAG_MIP_LINEAR;
-//	AddressU = Wrap;
-//	AddressV = Wrap;
-//};
-
 cbuffer VS_CONSTANT_BUFFER : register(b0)
 {
 	float4x4 worldViewProj;
-	//Texture2D tex0;
+};
+
+Texture2D tex0 : register(t0);
+SamplerState Sampler : register(s0)
+{
+	Filter = MIN_MAG_MIP_LINEAR;
+	AddressU = Wrap;
+	AddressV = Wrap;
 };
 
 PS_IN VS(VS_IN input)

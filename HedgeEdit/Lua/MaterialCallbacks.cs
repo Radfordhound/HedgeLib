@@ -1,5 +1,6 @@
 ﻿using HedgeEdit.UI;
 using HedgeLib.Materials;
+using SharpDX.Direct3D11;
 using System;
 using System.IO;
 
@@ -19,7 +20,7 @@ namespace HedgeEdit.Lua
             script.Globals["SaveMaterial"] = (Action<string, GensMaterial>)SaveMaterial;
             script.Globals["SaveMaterials"] = (Action<string, string, string, bool>)SaveMaterials;
 
-            script.Globals["LoadTexture"] = (Func<string, string, int>)LoadTexture;
+            script.Globals["LoadTexture"] = (Func<string, string, Texture2D>)LoadTexture;
             script.Globals["AddResourceDirectory"] = (Action<string>)AddResourceDirectory;
             script.Globals["AddResourceDirectoryFromPath"] =
                 (Action<string>)AddResourceDirectoryFromPath;
@@ -82,12 +83,12 @@ namespace HedgeEdit.Lua
                 GUI.HideProgress();
         }
 
-        public int LoadTexture(string path, string name = null)
+        public Texture2D LoadTexture(string path, string name = null)
         {
             // Format path strings, return if file doesn't exist
             path = FormatCacheDir(path);
             if (!File.Exists(path))
-                return -1;
+                return null;
 
             return Data.LoadTexture(path, name);
         }
