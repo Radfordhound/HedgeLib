@@ -11,7 +11,7 @@ namespace HedgeLib.Textures
         /// should always be half the size of the previous mipmap.
         /// </summary>
         public byte[][] ColorData;
-        public uint Width, Height, MipmapCount;
+        public uint Width, Height, MipmapCount = 1, Depth = 1, Pitch;
         public DXGI_FORMATS Format = DXGI_FORMATS.R32G32B32A32_FLOAT;
 
         public enum DXGI_FORMATS : uint
@@ -136,6 +136,50 @@ namespace HedgeLib.Textures
             V208 = 131,
             V408 = 132,
             FORCE_UINT = 0xFFFFFFFF
+        }
+
+        // Methods
+        public unsafe void ConvertToFloat()
+        {
+            int i = 0;
+            for (uint slice = 0; slice < Depth; ++slice)
+            {
+                for (uint level = 0; level < MipmapCount; ++level)
+                {
+                    switch (Format)
+                    {
+                        case DXGI_FORMATS.R8G8B8A8_UINT:
+                        {
+                            var floatLayer = new byte[ColorData[i].Length * sizeof(float)];
+                            
+                            fixed (byte* o = ColorData[i])
+                            fixed (byte* n = floatLayer)
+                            {
+                                float* fl = (float*)n;
+                                byte* d = o;
+
+                                for (int i2 = 0; i2 < ColorData[i].Length; ++i2)
+                                {
+                                    *fl = (*d / 255f);
+                                    ++fl;
+                                    ++d;
+                                }
+                            }
+
+                            ColorData[i] = floatLayer;
+                            Format = DXGI_FORMATS.R32G32B32A32_FLOAT;
+                            break;
+                        }
+
+                        // TODO: More formats
+
+                        default:
+                            return;
+                    }
+
+                    ++i;
+                }
+            }
         }
     }
 }

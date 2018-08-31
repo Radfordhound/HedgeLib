@@ -311,13 +311,19 @@ namespace HedgeEdit
                 if (Slot != slot)
                     return;
 
-                Texture2D tex;
+                ShaderResourceView tex;
                 if (!isPreview)
                 {
                     // Get the material
                     var mat = (string.IsNullOrEmpty(MaterialName) ||
                         !Materials.ContainsKey(MaterialName)) ?
                         DefaultMaterial : Materials[MaterialName];
+
+                    // Set the shader
+                    Viewport.CurrentShader = (Shaders.ContainsKey(mat.ShaderName)) ?
+                        Shaders[mat.ShaderName] : Shaders["Default"];
+
+                    // TODO: Make this actually work lol
 
                     // Get the texture
                     string texName = (mat.Texset.Textures.Count > 0) ?
@@ -332,11 +338,9 @@ namespace HedgeEdit
                     tex = DefaultTexture;
                 }
 
-                //Viewport.Context.PixelShader.SetShaderResource(0,
-                //    new ShaderResourceView(Viewport.Device, tex));
+                Viewport.Context.PixelShader.SetShaderResource(0, tex);
 
                 // Bind our Buffers
-                // TODO: Bind Texture(s)
                 Viewport.InputAssembler.SetVertexBuffers(0, Binding);
                 Viewport.InputAssembler.SetIndexBuffer(IndexBuffer, Format.R32_UInt, 0);
 

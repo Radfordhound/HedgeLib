@@ -57,11 +57,10 @@ namespace HedgeLib.Textures
             reader.JumpTo(Header.Size + 4, true);
 
             // Depth
-            uint depth = 1;
             if (Header.HasFlag(DDSHeader.FLAGS.DEPTH) &&
                 Header.HasFlag(DDSHeader.CAPS2.VOLUME))
             {
-                depth = Header.Depth;
+                Depth = Header.Depth;
 
                 // TODO
                 throw new NotImplementedException(
@@ -69,7 +68,7 @@ namespace HedgeLib.Textures
             }
             else if (Header.HasFlag(DDSHeader.CAPS2.CUBEMAP))
             {
-                depth = 6;
+                Depth = 6;
 
                 // TODO
                 throw new NotImplementedException(
@@ -77,14 +76,11 @@ namespace HedgeLib.Textures
             }
 
             // MipMaps
-            uint mipmapCount = 1;
             if (Header.HasFlag(DDSHeader.FLAGS.MIPMAP_COUNT) &&
                 Header.HasFlag(DDSHeader.CAPS.MIPMAP))
             {
-                mipmapCount = Header.MipmapCount;
+                MipmapCount = Header.MipmapCount;
             }
-
-            MipmapCount = mipmapCount;
 
             // Caps
             if (!Header.HasFlag(DDSHeader.CAPS.TEXTURE))
@@ -98,84 +94,41 @@ namespace HedgeLib.Textures
             // TODO
 
             // DX10 Header/Pixel Format
-            uint pixelsPerBlock = 16;
+            uint pixelsPerBlock;
             byte blockSize;
+
+            // Whether or not uncompressed pixels need to be re-arranged to RGBA
+            bool isARGB = false;
 
             if (Header.PixelFormat.HasFlag(DDSPixelFormat.FLAGS.FOURCC))
             {
+                // Get Pixel Format
                 switch ((DDSPixelFormat.FOURCCS)Header.PixelFormat.FourCC)
                 {
                     // DX10 Header
                     case DDSPixelFormat.FOURCCS.DX10:
                     {
                         var dx10Header = new DX10Header(reader);
-                        depth = dx10Header.ArraySize;
+                        Depth = dx10Header.ArraySize;
                         Format = (DXGI_FORMATS)dx10Header.DXGIFormat;
-
-                        switch (Format)
-                        {
-                            // BC1
-                            case DXGI_FORMATS.BC1_TYPELESS:
-                            case DXGI_FORMATS.BC1_UNORM:
-                                //CompressionFormat = CompressionFormats.RGB_S3TC_DXT1_EXT;
-                                blockSize = 8;
-                                break;
-                            
-                            // BC3
-                            case DXGI_FORMATS.BC3_TYPELESS:
-                            case DXGI_FORMATS.BC3_UNORM:
-                                //CompressionFormat = CompressionFormats.RGBA_S3TC_DXT3_EXT;
-                                blockSize = 16;
-                                break;
-                            
-                            // BC5
-                            case DXGI_FORMATS.BC5_TYPELESS:
-                            case DXGI_FORMATS.BC5_SNORM:
-                            case DXGI_FORMATS.BC5_UNORM:
-                                //CompressionFormat = CompressionFormats.RGBA_S3TC_DXT5_EXT;
-                                blockSize = 16;
-                                break;
-                            
-                            // BC7
-                            case DXGI_FORMATS.BC7_TYPELESS:
-                            case DXGI_FORMATS.BC7_UNORM:
-                                //CompressionFormat = CompressionFormats.RGBA_BPTC_UNORM_EXT;
-                                blockSize = 16;
-                                break;
-                            
-                            case DXGI_FORMATS.BC7_UNORM_SRGB:
-                                //CompressionFormat = CompressionFormats.SRGB_ALPHA_BPTC_UNORM_EXT;
-                                blockSize = 16;
-                                break;
-                            
-                            // TODO: Add support for BC1 SRGB, BC2, BC3 SRGB, BC4, and BC6
-                            default:
-                                throw new NotImplementedException(string.Format(
-                                    "Reading DX10 DXGI type \"{0}\" is not yet supported.",
-                                    dx10Header.DXGIFormat));
-                        }
-                        
                         break;
                     }
 
                     // DXT1
                     case DDSPixelFormat.FOURCCS.DXT1:
-                        //CompressionFormat = CompressionFormats.RGB_S3TC_DXT1_EXT;
-                        blockSize = 8;
+                        Format = DXGI_FORMATS.BC1_UNORM;
                         break;
 
                     // DXT3
                     case DDSPixelFormat.FOURCCS.DXT3:
-                        //CompressionFormat = CompressionFormats.RGBA_S3TC_DXT3_EXT;
-                        blockSize = 16;
+                        Format = DXGI_FORMATS.BC2_UNORM;
                         break;
 
                     // DXT5
                     case DDSPixelFormat.FOURCCS.DXT5:
                     case DDSPixelFormat.FOURCCS.ATI2:
                     case DDSPixelFormat.FOURCCS.BC5S:
-                        //CompressionFormat = CompressionFormats.RGBA_S3TC_DXT5_EXT;
-                        blockSize = 16;
+                        Format = DXGI_FORMATS.BC3_UNORM;
                         break;
 
                     // TODO: Add support for DXT2 and DXT4
@@ -185,6 +138,37 @@ namespace HedgeLib.Textures
                             Header.PixelFormat.FourCC,
                             "is not yet supported."));
                 }
+
+                // Get Block Size
+                blockSize = (Format == DXGI_FORMATS.BC1_TYPELESS ||
+                    Format == DXGI_FORMATS.BC1_UNORM ||
+                    Format == DXGI_FORMATS.BC1_UNORM_SRGB ||
+                    Format == DXGI_FORMATS.BC4_TYPELESS ||
+                    Format == DXGI_FORMATS.BC4_SNORM ||
+                    Format == DXGI_FORMATS.BC4_UNORM) ? (byte)8 : (byte)16;
+
+                // Get Pixels per Block
+                pixelsPerBlock = (Format == DXGI_FORMATS.BC1_TYPELESS ||
+                    Format == DXGI_FORMATS.BC1_UNORM ||
+                    Format == DXGI_FORMATS.BC1_UNORM_SRGB ||
+                    Format == DXGI_FORMATS.BC2_TYPELESS ||
+                    Format == DXGI_FORMATS.BC2_UNORM ||
+                    Format == DXGI_FORMATS.BC2_UNORM_SRGB ||
+                    Format == DXGI_FORMATS.BC3_TYPELESS ||
+                    Format == DXGI_FORMATS.BC3_UNORM ||
+                    Format == DXGI_FORMATS.BC3_UNORM_SRGB ||
+                    Format == DXGI_FORMATS.BC4_SNORM ||
+                    Format == DXGI_FORMATS.BC4_TYPELESS ||
+                    Format == DXGI_FORMATS.BC4_UNORM ||
+                    Format == DXGI_FORMATS.BC5_SNORM ||
+                    Format == DXGI_FORMATS.BC5_TYPELESS ||
+                    Format == DXGI_FORMATS.BC5_UNORM ||
+                    Format == DXGI_FORMATS.BC6H_SF16 ||
+                    Format == DXGI_FORMATS.BC6H_TYPELESS ||
+                    Format == DXGI_FORMATS.BC6H_UF16 ||
+                    Format == DXGI_FORMATS.BC7_TYPELESS ||
+                    Format == DXGI_FORMATS.BC7_UNORM ||
+                    Format == DXGI_FORMATS.BC7_UNORM_SRGB) ? 16U : 1U;
             }
             else
             {
@@ -192,6 +176,12 @@ namespace HedgeLib.Textures
                 {
                     throw new NotImplementedException(
                         "Reading DDS files without RGB data is not yet supported.");
+                }
+
+                if (Header.PixelFormat.RGBBitCount == 0)
+                {
+                    throw new InvalidDataException(
+                        "RGBBitCount must be greater than 0.");
                 }
 
                 if (Header.PixelFormat.RGBBitCount % 8 != 0)
@@ -206,46 +196,82 @@ namespace HedgeLib.Textures
                         "RGBBitCount must be less than or equal to 32.");
                 }
 
-                if (Header.PixelFormat.RGBBitCount != 32)
+                // Get Format
+                bool alpha = Header.PixelFormat.HasFlag(DDSPixelFormat.FLAGS.ALPHA_PIXELS);
+                const uint first8 = 0xFF000000, second8 = 0xFF0000,
+                    third8 = 0xFF00, fourth8 = 0xFF;
+
+                switch (Header.PixelFormat.RGBBitCount)
                 {
-                    throw new NotImplementedException(
-                        "Reading DDS files with non 32-bit data is not yet supported.");
+                    case 32:
+                        {
+                            switch (Header.PixelFormat.RBitMask)
+                            {
+                                case second8:
+                                    if (alpha)
+                                    {
+                                        Format = DXGI_FORMATS.R8G8B8A8_UINT;
+                                        isARGB = true;
+                                    }
+                                    else
+                                    {
+                                        // TODO: X8R8G8B8
+                                        throw new NotImplementedException(
+                                            "Cannot read DDS file; unsupported pixel format.");
+                                    }
+                                    break;
+
+                                // TODO: OTHER FORMATS!!
+                                default:
+                                    throw new NotImplementedException(
+                                        "Cannot read DDS file; unsupported pixel format.");
+                            }
+
+                            break;
+                        }
+
+                    default:
+                        throw new NotImplementedException(
+                            "Cannot read DDS file; unsupported pixel format.");
                 }
 
                 pixelsPerBlock = 1;
-                Format = DXGI_FORMATS.R8G8B8A8_UINT;
-                //CompressionFormat = CompressionFormats.None;
                 blockSize = (byte)(Header.PixelFormat.RGBBitCount / 8);
-                //PixelFormat = PixelFormats.RGBA;
             }
 
-            // Whether or not uncompressed pixels need to be re-arranged to RGBA
-            bool isARGB = false;
-            //bool isARGB = (CompressionFormat == CompressionFormats.None &&
-            //    Header.PixelFormat.RGBBitCount == 32 &&
-            //    Header.PixelFormat.ABitMask == 0xFF000000 &&
-            //    Header.PixelFormat.RBitMask == 0xFF0000 &&
-            //    Header.PixelFormat.GBitMask == 0xFF00 &&
-            //    Header.PixelFormat.BBitMask == 0xFF);
+            // Pitch
+            if (Header.HasFlag(DDSHeader.FLAGS.PITCH))
+            {
+                Pitch = Header.PitchOrLinearSize;
+            }
+            else if (pixelsPerBlock != 1)
+            {
+                Pitch = System.Math.Max(1, ((Width + 3) / 4)) * blockSize;
+            }
+
+            // TODO: Are these what Microsoft is referring to by "R8G8_B8G8,
+            // G8R8_G8B8, legacy UYVY-packed, and legacy YUY2-packed formats"?
+            else if (Format == DXGI_FORMATS.R8G8_B8G8_UNORM ||
+                Format == DXGI_FORMATS.G8R8_G8B8_UNORM ||
+                Format == DXGI_FORMATS.AYUV || Format == DXGI_FORMATS.YUY2)
+            {
+                Pitch = ((Width + 1) >> 1) * 4;
+            }
+            else
+            {
+                // TODO: Is this correct?
+                Pitch = (Width * Header.PixelFormat.RGBBitCount + 7) / 8;
+            }
 
             // Data
-            uint width = Width, height = Height;
-            ColorData = new byte[mipmapCount * depth][];
+            uint index = 0;
+            ColorData = new byte[MipmapCount * Depth][];
 
-            for (uint slice = 0; slice < depth; ++slice)
+            for (uint slice = 0; slice < Depth; ++slice)
             {
-                for (uint level = 0; level < mipmapCount; ++level)
+                uint width = Width, height = Height;
+                for (uint level = 0; level < MipmapCount; ++level)
                 {
-                    // Pad out width/height to 4x4 blocks
-                    //if (CompressionFormat != CompressionFormats.None)
-                    //{
-                    //    if (width % 4 != 0)
-                    //        width = ((width / 4) + 1) * 4;
-
-                    //    if (height % 4 != 0)
-                    //        height = ((height / 4) + 1) * 4;
-                    //}
-
                     // Compute size of this block
                     uint size = ((width * height) / pixelsPerBlock) * blockSize;
 
@@ -253,31 +279,35 @@ namespace HedgeLib.Textures
                     if (isARGB)
                     {
                         uint p;
-                        ColorData[level] = new byte[size];
+                        var data = new byte[size];
 
-                        for (uint i = 0; i < size; i += 4)
+                        for (uint i = 0; i < size; ++i)
                         {
                             // Convert from ARGB8 to RGBA8
                             p = reader.ReadUInt32();
-                            ColorData[level][i] = (byte)((p & Header.PixelFormat.RBitMask) >> 16);
-                            ColorData[level][i + 1] =
+                            data[i] = (byte)((p & Header.PixelFormat.RBitMask) >> 16);
+                            data[++i] =
                                 (byte)((p & Header.PixelFormat.GBitMask) >> 8);
 
-                            ColorData[level][i + 2] = (byte)(p & Header.PixelFormat.BBitMask);
-                            ColorData[level][i + 3] =
+                            data[++i] = (byte)(p & Header.PixelFormat.BBitMask);
+                            data[++i] =
                                 (byte)((p & Header.PixelFormat.ABitMask) >> 24);
                         }
+
+                        ColorData[index] = data;
                     }
 
                     // Otherwise, simply read the block
                     else
                     {
-                        ColorData[level] = reader.ReadBytes((int)size);
+                        ColorData[index] = reader.ReadBytes((int)size);
                     }
 
                     // Divide width/height by 2 for the next mipmap
                     width /= 2;
                     height /= 2;
+
+                    ++index;
                 }
             }
         }

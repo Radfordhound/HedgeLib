@@ -17,15 +17,15 @@ namespace HedgeEdit
         public static AssetCollection<GensMaterial> Materials =
             new AssetCollection<GensMaterial>();
 
-        public static Dictionary<string, Texture2D> Textures =
-            new Dictionary<string, Texture2D>();
+        public static Dictionary<string, ShaderResourceView> Textures =
+            new Dictionary<string, ShaderResourceView>();
 
         public static AssetDirectories ResourceDirectories = new AssetDirectories();
         public static GensMaterial DefaultMaterial;
-        public static Texture2D DefaultTexture;
+        public static ShaderResourceView DefaultTexture;
 
         // Methods
-        public static Texture2D GetTexture(string name)
+        public static ShaderResourceView GetTexture(string name)
         {
             if (string.IsNullOrEmpty(name))
                 return DefaultTexture;
@@ -105,7 +105,7 @@ namespace HedgeEdit
             return ResourceDirectories.AddDirectory(dir);
         }
 
-        public static Texture2D AddTexture(string name, Texture tex)
+        public static ShaderResourceView AddTexture(string name, Texture tex)
         {
             // Add/Replace Texture
             var texture = GenTexture(tex);
@@ -121,7 +121,7 @@ namespace HedgeEdit
             return texture;
         }
 
-        public static Texture2D LoadTexture(string path, string name = null)
+        public static ShaderResourceView LoadTexture(string path, string name = null)
         {
             // Don't bother loading this texture again if we've already loaded it
             name = (string.IsNullOrEmpty(name)) ?
@@ -171,7 +171,7 @@ namespace HedgeEdit
             // Load Texture
             try
             {
-                Texture2D texture = null;
+                ShaderResourceView texture = null;
                 tex.Load(path);
 
                 Program.MainUIInvoke(() =>
@@ -307,154 +307,65 @@ namespace HedgeEdit
             mat.Save(path, true);
         }
 
-        private static Texture2D GenTexture(Texture tex)
+        private static ShaderResourceView GenTexture(Texture tex)
         {
-            return null;
-            // TODO: Multiply tex.Width by something different depending on format
-            int len = 0, stride = (int)tex.Width * 4;
+            // Ensure the texture is in a float4 format for our shaders
+            tex.ConvertToFloat();
+
+            // Compute the total size, in bytes, of the texture
+            int len = 0;
             for (int i = 0; i < tex.ColorData.Length; ++i)
             {
                 len += tex.ColorData[i].Length;
             }
 
-            var stream = new DataStream((int)tex.Height * stride, true, true);
-            //var description = new Texture2DDescription()
-            //{
-            //    Width = (int)tex.Width,
-            //    Height = (int)tex.Height,
-            //    ArraySize = 1,
-            //    MipLevels = (int)tex.MipmapCount,
-            //    Format = (Format)tex.Format,
-            //    SampleDescription = new SampleDescription(1, 0),
-            //    //BindFlags = BindFlags.ConstantBuffer,
-            //    //CpuAccessFlags = CpuAccessFlags.Write,
-            //    //OptionFlags = ResourceOptionFlags.None,
-            //    //Usage = ResourceUsage.Dynamic
-            //};
-
+            // Setup a DataStream and Texture Description
+            var stream = new DataStream(len, true, true);
             var description = new Texture2DDescription()
             {
                 Width = (int)tex.Width,
                 Height = (int)tex.Height,
-                ArraySize = 1,
-                BindFlags = SharpDX.Direct3D11.BindFlags.ShaderResource | BindFlags.RenderTarget,
-                Usage = SharpDX.Direct3D11.ResourceUsage.Default,
-                CpuAccessFlags = SharpDX.Direct3D11.CpuAccessFlags.None,
+                ArraySize = (int)tex.Depth,
+                BindFlags = BindFlags.ShaderResource,
+                Usage = ResourceUsage.Default,
+                CpuAccessFlags = CpuAccessFlags.None,
                 Format = (Format)tex.Format,
-                MipLevels = 1, // (int)tex.MipmapCount
-                OptionFlags = ResourceOptionFlags.GenerateMipMaps, // ResourceOptionFlags.GenerateMipMap
-                SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0),
+                MipLevels = (int)tex.MipmapCount,
+                OptionFlags = ResourceOptionFlags.None,
+                SampleDescription = new SampleDescription(1, 0),
             };
 
-            //System.Windows.Forms.MessageBox.Show(tex.MipmapCount.ToString());
+            // Write the texture's data to the stream and
+            // generate DataRectangles for each mipmap
+            byte[] layer;
+            var rectangles = new DataRectangle[tex.ColorData.Length];
+            var p = stream.DataPointer;
+            int index = 0, pitch = (int)tex.Pitch;
 
-            //using (var texture2D = new Texture2D(Viewport.Device,
-            //    description, new[] { new DataBox(stream.DataPointer) }))
-            //{
-
-            //}
-
-            foreach (var layer in tex.ColorData)
+            for (uint slice = 0; slice < tex.Depth; ++slice)
             {
-                if (layer.Length < 1)
-                    continue;
+                for (uint level = 0; level < tex.MipmapCount; ++level)
+                {
+                    layer = tex.ColorData[index];
+                    if (layer.Length > 0)
+                    {
+                        stream.Write(layer, 0, layer.Length);
+                    }
 
-                stream.Write(layer, 0, layer.Length);
-                break;
+                    rectangles[index] = new DataRectangle(p, pitch);
+                    p += layer.Length;
+
+                    pitch /= 2;
+                    ++index;
+                }
             }
 
-            //var samplerState = new SamplerState(Viewport.Device, new SamplerStateDescription()
-            //{
-            //    AddressU
-            //});
+            // Create a Texture2D and ShaderResourceView
+            var tex2D = new Texture2D(Viewport.Device, description, rectangles);
+            var srv = new ShaderResourceView(Viewport.Device, tex2D);
+            tex2D.Dispose();
 
-            // TODO: Multiply tex.Width by something different depending on format
-            return new Texture2D(Viewport.Device, description,
-                new DataRectangle(stream.DataPointer, stride));
-
-            //return new Texture2D(Viewport.Device, description,
-            //    new[] { new DataBox(stream.DataPointer, (int)tex.Width * 4, 0) });
-
-            //    var texture = new Texture2D(Viewport.Device, new Texture2DDescription()
-            //{
-            //    CpuAccessFlags = CpuAccessFlags.None,
-            //    MipLevels = (int)tex.MipmapCount,
-            //    Height = (int)tex.Height,
-            //    Width = (int)tex.Width,
-            //    Format = SharpDX.DXGI.Format.A8P8, // TODO
-            //}, );
-
-
-            // TODO
-            //int texture = GL.GenTexture();
-            //GL.BindTexture(TextureTarget.Texture2D, texture);
-
-            //if (tex == null)
-            //    throw new ArgumentNullException("tex");
-
-            //// Set Parameters
-            //GL.TexParameter(TextureTarget.Texture2D,
-            //    TextureParameterName.TextureMinFilter,
-            //    (float)TextureMinFilter.LinearMipmapLinear);
-
-            //GL.TexParameter(TextureTarget.Texture2D,
-            //    TextureParameterName.TextureMagFilter,
-            //    (int)TextureMagFilter.Linear);
-
-            //GL.TexParameter(TextureTarget.Texture2D,
-            //    TextureParameterName.TextureWrapS,
-            //    (int)TextureWrapMode.Repeat);
-
-            //GL.TexParameter(TextureTarget.Texture2D,
-            //    TextureParameterName.TextureWrapT,
-            //    (int)TextureWrapMode.Repeat);
-
-            //GL.TexParameter(TextureTarget.Texture2D,
-            //    TextureParameterName.TextureBaseLevel,
-            //    0);
-
-            //GL.TexParameter(TextureTarget.Texture2D,
-            //    TextureParameterName.TextureMaxLevel,
-            //    (int)tex.MipmapCount - 1);
-
-            //// Generate textures
-            //uint mipmapCount = ((tex.MipmapCount == 0) ? 1 : tex.MipmapCount);
-            //int w = (int)tex.Width, h = (int)tex.Height;
-            //for (int i = 0; i < mipmapCount; ++i)
-            //{
-            //    // Un-Compressed
-            //    if (tex.CompressionFormat == Texture.CompressionFormats.None)
-            //    {
-            //        GL.TexImage2D(TextureTarget2d.Texture2D,
-            //            i, // level
-            //            (TextureComponentCount)tex.PixelFormat,
-            //            w,
-            //            h,
-            //            0, // border
-            //            (PixelFormat)tex.PixelFormat,
-            //            PixelType.UnsignedByte,
-            //            tex.ColorData[i]);
-            //    }
-
-            //    // Compressed
-            //    else
-            //    {
-            //        GL.CompressedTexImage2D(TextureTarget2d.Texture2D,
-            //            i, // level
-            //            (CompressedInternalFormat)tex.CompressionFormat,
-            //            w,
-            //            h,
-            //            0, // border
-            //            tex.ColorData[i].Length,
-            //            tex.ColorData[i]);
-            //    }
-
-            //    w /= 2;
-            //    h /= 2;
-            //}
-
-            //return texture;
-            //return 0;
+            return srv;
         }
     }
 }

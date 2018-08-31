@@ -19,11 +19,28 @@ namespace HedgeEdit
             new List<VPObjectInstance>();
 
         //public static TransformGizmo Gizmo = new TransformGizmo();
-        public static Shader CurrentShader;
+        public static Shader CurrentShader
+        {
+            get => currentShader;
+            set
+            {
+                if (value == currentShader)
+                    return;
+
+                currentShader = value;
+                currentShader.Use(Context);
+            }
+        }
+
         public static Vector3 CameraPos = new Vector3(0, 0, 5), CameraRot = new Vector3(0, 0, 0);//new Vector3(-90, 0, 0);
         public static Vector3 CameraForward { get; private set; } = new Vector3(0, 0, -1);
         public static float FOV = 40.0f, NearDistance = 0.1f, FarDistance = 1000000f;
-        public static bool IsMovingCamera = false;
+
+        public static bool IsMovingCamera
+        {
+            get => (isMovingCamera && vp.Focused);
+            set => isMovingCamera = value;
+        }
 
         public static Device Device => device;
         public static DeviceContext Context { get; private set; }
@@ -36,12 +53,14 @@ namespace HedgeEdit
         private static RenderTargetView renderView;
         private static DepthStencilView depthView;
 
+        private static Shader currentShader;
         private static Matrix proj;
         private static SharpDX.Viewport viewport;
         private static Control vp;
         private static Point prevMousePos = Point.Empty;
         //private static MouseState prevMouseState;
         private static Vector3 camUp = new Vector3(0, 1, 0);
+        private static bool isMovingCamera = false;
 
         public const int BufferCount = 2;
         private static float camSpeed = normalSpeed;
@@ -52,8 +71,15 @@ namespace HedgeEdit
         {
             // Create a device and swap chain using the given width/height/handle
             vp = control;
+
+            #if DEBUG
+                var dcf = DeviceCreationFlags.Debug;
+            #else
+                var dcf = DeviceCreationFlags.None;
+            #endif
+
             Device.CreateWithSwapChain(DriverType.Hardware,
-                DeviceCreationFlags.None, new SwapChainDescription()
+                dcf, new SwapChainDescription()
                 {
                     BufferCount = BufferCount,
                     IsWindowed = true,
@@ -73,10 +99,10 @@ namespace HedgeEdit
 
             // Load the shader list
             Data.LoadShaderList(device);
-            CurrentShader = Data.Shaders["Default"];
+            currentShader = Data.Shaders["Default"];
 
             // Setup a layout
-            var layout = new InputLayout(device, CurrentShader.VertexSignature, new[]
+            var layout = new InputLayout(device, currentShader.VertexSignature, new[]
             {
                 new InputElement("POSITION", 0, Format.R32G32B32_Float, Mesh.VertPos, 0),
                 new InputElement("NORMAL", 0, Format.R32G32B32_Float,
@@ -92,11 +118,24 @@ namespace HedgeEdit
             InputAssembler.InputLayout = layout;
             InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
 
+            // Setup the Sampler
+            Context.PixelShader.SetSampler(0, new SamplerState(device,
+                new SamplerStateDescription()
+                {
+                    Filter = Filter.MinMagMipLinear,
+                    AddressU = TextureAddressMode.Wrap,
+                    AddressV = TextureAddressMode.Wrap,
+                    AddressW = TextureAddressMode.Wrap,
+                    MaximumAnisotropy = 1,
+                    MinimumLod = 0,
+                    MaximumLod = float.MaxValue,
+                }));
+
             // Dispose
             layout.Dispose(); // TODO: Is this ok??
 
             // Set out Current Shader and call OnResize to finalise viewport
-            CurrentShader.Use(Context);
+            currentShader.Use(Context);
             OnResize();
         }
 
@@ -161,6 +200,8 @@ namespace HedgeEdit
                 shader.Value.Dispose();
             }
 
+            Data.Shaders.Clear();
+
             // Dispose Models
             Data.DefaultCube.Dispose();
             foreach (var mdl in Data.DefaultTerrainGroup)
@@ -180,6 +221,18 @@ namespace HedgeEdit
             {
                 mdl.Value.Dispose();
             }
+
+            Data.DefaultTerrainGroup.Clear();
+            Data.TerrainGroups.Clear();
+            Data.Objects.Clear();
+
+            // Dispose Textures
+            foreach (var tex in Data.Textures)
+            {
+                tex.Value.Dispose();
+            }
+
+            Data.Textures.Clear();
 
             // Dispose D3D stuff
             depthBuffer.Dispose();
@@ -301,7 +354,7 @@ namespace HedgeEdit
 
         public static void Update()
         {
-            if (IsMovingCamera)
+            if (isMovingCamera)
             {
                 // Update camera transform
                 var mousePos = Cursor.Position;
@@ -356,26 +409,6 @@ namespace HedgeEdit
                 // Snap cursor to center of viewport
                 Cursor.Position =
                     vp.PointToScreen(new Point(vp.Width / 2, vp.Height / 2));
-
-                // Update Transforms
-                float x = MathUtil.DegreesToRadians(CameraRot.X);
-                float y = MathUtil.DegreesToRadians(CameraRot.Y);
-                float yCos = (float)Math.Cos(y);
-
-                var front = new Vector3()
-                {
-                    X = (float)Math.Sin(x) * yCos,
-                    Y = (float)Math.Sin(y),
-                    Z = -(float)Math.Cos(x) * yCos
-                };
-
-                CameraForward = Vector3.Normalize(front);
-                Render();
-            }
-
-            else if (Input.IsInputDown(Inputs.Up))
-            {
-                CameraPos += 0.1f * CameraForward;
 
                 // Update Transforms
                 float x = MathUtil.DegreesToRadians(CameraRot.X);

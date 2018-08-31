@@ -20,7 +20,7 @@ namespace HedgeEdit.Lua
             script.Globals["SaveMaterial"] = (Action<string, GensMaterial>)SaveMaterial;
             script.Globals["SaveMaterials"] = (Action<string, string, string, bool>)SaveMaterials;
 
-            script.Globals["LoadTexture"] = (Func<string, string, Texture2D>)LoadTexture;
+            script.Globals["LoadTexture"] = (Func<string, string, ShaderResourceView>)LoadTexture;
             script.Globals["AddResourceDirectory"] = (Action<string>)AddResourceDirectory;
             script.Globals["AddResourceDirectoryFromPath"] =
                 (Action<string>)AddResourceDirectoryFromPath;
@@ -83,7 +83,7 @@ namespace HedgeEdit.Lua
                 GUI.HideProgress();
         }
 
-        public Texture2D LoadTexture(string path, string name = null)
+        public ShaderResourceView LoadTexture(string path, string name = null)
         {
             // Format path strings, return if file doesn't exist
             path = FormatCacheDir(path);

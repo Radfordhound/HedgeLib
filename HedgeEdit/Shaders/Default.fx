@@ -24,6 +24,7 @@ SamplerState Sampler : register(s0)
 	Filter = MIN_MAG_MIP_LINEAR;
 	AddressU = Wrap;
 	AddressV = Wrap;
+	AddressW = Wrap;
 };
 
 PS_IN VS(VS_IN input)
@@ -40,6 +41,6 @@ PS_IN VS(VS_IN input)
 
 float4 PS(PS_IN input) : SV_Target
 {
-	return input.col;
-	//return tex0.Sample(Sampler, input.uv0) * input.col;
+	//return input.col;
+	return tex0.Sample(Sampler, input.uv0) * input.col;
 }
