@@ -78,19 +78,15 @@ namespace HedgeEdit
         /// <param name="customData">Any custom data you wish to store for later use.</param>
         public VPObjectInstance(float[,] matrix, object customData = null)
         {
-            var rotMatrix = new float[3, 3];
-            MatrixQDDecomposition(matrix, rotMatrix, out scale);
-
-            pos = new Vector3(matrix[0, 3], matrix[1, 3], matrix[2, 3]);
-            var mRot = new Matrix3x3(
-                rotMatrix[0, 0], rotMatrix[0, 1], rotMatrix[0, 2],
-                rotMatrix[1, 0], rotMatrix[1, 1], rotMatrix[1, 2],
-                rotMatrix[2, 0], rotMatrix[2, 1], rotMatrix[2, 2]);
-
-            Quaternion.RotationMatrix(ref mRot, out rot);
-
+            this.matrix = new Matrix
+            {
+                Column1 = new Vector4(matrix[0, 0], matrix[0, 1], matrix[0, 2], matrix[0, 3]),
+                Column2 = new Vector4(matrix[1, 0], matrix[1, 1], matrix[1, 2], matrix[1, 3]),
+                Column3 = new Vector4(matrix[2, 0], matrix[2, 1], matrix[2, 2], matrix[2, 3]),
+                Column4 = new Vector4(matrix[3, 0], matrix[3, 1], matrix[3, 2], matrix[3, 3])
+            };
+            this.matrix.Decompose(out scale, out rot, out pos);
             CustomData = customData;
-            UpdateMatrix();
         }
 
         /// <summary>
@@ -160,82 +156,6 @@ namespace HedgeEdit
             matrix = Matrix.Scaling(scale) *
                 Matrix.RotationQuaternion(rot) *
                 Matrix.Translation(pos);
-        }
-
-        // The following 2 methods were taken from OGRE (for now) with some light modifications
-        // because try as I might I can't seem to understand how this decomposition works
-        // and can't find any information about it online.
-        protected float RSQ(float r)
-        {
-            return (1 / (float)Math.Sqrt(r));
-        }
-
-        protected void MatrixQDDecomposition(float[,] m,
-            float[,] q, out Vector3 d)
-        {
-            float fInvLength = m[0, 0] * m[0, 0] + m[1, 0] * m[1, 0] + m[2, 0] * m[2, 0];
-
-            if (fInvLength != 0)
-                fInvLength = RSQ(fInvLength);
-
-            q[0, 0] = m[0, 0] * fInvLength;
-            q[1, 0] = m[1, 0] * fInvLength;
-            q[2, 0] = m[2, 0] * fInvLength;
-
-            float fDot = q[0, 0] * m[0, 1] + q[1, 0] * m[1, 1] + q[2, 0] * m[2, 1];
-            q[0, 1] = m[0, 1] - fDot * q[0, 0];
-            q[1, 1] = m[1, 1] - fDot * q[1, 0];
-            q[2, 1] = m[2, 1] - fDot * q[2, 0];
-            fInvLength = q[0, 1] * q[0, 1] + q[1, 1] * q[1, 1] + q[2, 1] * q[2, 1];
-
-            if (fInvLength != 0)
-                fInvLength = RSQ(fInvLength);
-
-            q[0, 1] *= fInvLength;
-            q[1, 1] *= fInvLength;
-            q[2, 1] *= fInvLength;
-
-            fDot = q[0, 0] * m[0, 2] + q[1, 0] * m[1, 2] + q[2, 0] * m[2, 2];
-            q[0, 2] = m[0, 2] - fDot * q[0, 0];
-            q[1, 2] = m[1, 2] - fDot * q[1, 0];
-            q[2, 2] = m[2, 2] - fDot * q[2, 0];
-
-            fDot = q[0, 1] * m[0, 2] + q[1, 1] * m[1, 2] + q[2, 1] * m[2, 2];
-            q[0, 2] -= fDot * q[0, 1];
-            q[1, 2] -= fDot * q[1, 1];
-            q[2, 2] -= fDot * q[2, 1];
-            fInvLength = q[0, 2] * q[0, 2] + q[1, 2] * q[1, 2] + q[2, 2] * q[2, 2];
-
-            if (fInvLength != 0)
-                fInvLength = RSQ(fInvLength);
-
-            q[0, 2] *= fInvLength;
-            q[1, 2] *= fInvLength;
-            q[2, 2] *= fInvLength;
-
-            float fDet = q[0, 0] * q[1, 1] * q[2, 2] + q[0, 1] * q[1, 2] * q[2, 0] +
-                q[0, 2] * q[1, 0] * q[2, 1] - q[0, 2] * q[1, 1] * q[2, 0] - q[0, 1] *
-                q[1, 0] * q[2, 2] - q[0, 0] * q[1, 2] * q[2, 1];
-
-            if (fDet < 0.0)
-            {
-                // Negate all values in the matrix
-                for (int iRow = 0; iRow < 3; ++iRow)
-                {
-                    for (int iCol = 0; iCol < 3; ++iCol)
-                    {
-                        q[iRow, iCol] = -q[iRow, iCol];
-                    }
-                }
-            }
-
-            // Get Diagonal
-            d = new Vector3()
-            {
-                X = q[0, 0] * m[0, 0] + q[1, 0] * m[1, 0] + q[2, 0] * m[2, 0],
-                Y = q[0, 1] * m[0, 1] + q[1, 1] * m[1, 1] + q[2, 1] * m[2, 1],
-                Z = q[0, 2] * m[0, 2] + q[1, 2] * m[1, 2] + q[2, 2] * m[2, 2]
-            };
         }
     }
 }
