@@ -206,7 +206,6 @@ namespace HedgeEdit
                 // Update Transforms
                 var model = instance.Matrix;
                 model = Matrix.Multiply(model, Viewport.ViewProjection);
-                model.Transpose();
 
                 // Update shader transform matrices
                 constantBuffer.Layout.WorldViewProj = model;

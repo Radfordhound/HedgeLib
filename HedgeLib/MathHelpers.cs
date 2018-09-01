@@ -48,32 +48,41 @@ namespace HedgeLib
         /// <returns>Pitch, Yaw, Roll ordered Euler Angles which represents the given Quaternion.</returns>
         public static Vector3 ToEulerAngles(this Quaternion q, bool inRadians = false)
         {
-            float multi = inRadians ? 1 : 57.2958f;
-            // Credits to https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
-            // roll (x-axis rotation)
-            var sinr = +2.0 * (q.W * q.X + q.Y * q.Z);
-            var cosr = +1.0 - 2.0 * (q.X * q.X + q.Y * q.Y);
-            var roll = System.Math.Atan2(sinr, cosr);
-
-            // pitch (y-axis rotation)
-            var sinp = +2.0 * (q.W * q.Y - q.Z * q.X);
-            double pitch;
-            if (System.Math.Abs(sinp) >= 1)
+            // Adapted from http://www.euclideanspace.com/maths/geometry/rotations/
+            double test = q.X * q.Y + q.Z * q.W;
+            if (test > 0.499)
             {
-                var sign = sinp < 0 ? -1f : 1f;
-                pitch = (System.Math.PI / 2) * sign; // use 90 degrees if out of range
-            }
-            else
-            {
-                pitch = System.Math.Asin(sinp);
+                // Singularity at north pole
+                return GetVect(2 * System.Math.Atan2(q.X, q.W),
+                    System.Math.PI / 2, 0);
             }
 
-            // yaw (z-axis rotation)
-            var siny = +2.0 * (q.W * q.Z + q.X * q.Y);
-            var cosy = +1.0 - 2.0 * (q.Y * q.Y + q.Z * q.Z);
-            var yaw = System.Math.Atan2(siny, cosy);
+            if (test < -0.499)
+            {
+                // Singularity at south pole
+                return GetVect(-2 * System.Math.Atan2(q.X, q.W),
+                    -System.Math.PI / 2, 0);
+            }
 
-            return new Vector3((float)(roll * multi), (float)(pitch * multi), (float)(yaw * multi));
+            double sqx = q.X * q.X;
+            double sqy = q.Y * q.Y;
+            double sqz = q.Z * q.Z;
+
+            // We construct a Vector with the order Bank, Heading, then Attitude
+            // to match the axes used in Sonic games.
+            return GetVect(
+                System.Math.Atan2(2 * q.X * q.W - 2 * q.Y * q.Z, 1 - 2 * sqx - 2 * sqz),
+                System.Math.Atan2(2 * q.Y * q.W - 2 * q.X * q.Z, 1 - 2 * sqy - 2 * sqz),
+                System.Math.Asin(2 * test));
+
+            // Sub-Methods
+            Vector3 GetVect(double x, double y, double z)
+            {
+                return (inRadians) ?
+                    new Vector3((float)x, (float)y, (float)z) :
+                    new Vector3((float)x * RadiansToDegrees, (float)y *
+                    RadiansToDegrees, (float)z * RadiansToDegrees);
+            }
         }
     }
 }

@@ -13,9 +13,9 @@ struct PS_IN
 	float2 uv0 : TEXCOORD;
 };
 
-cbuffer VS_CONSTANT_BUFFER : register(b0)
+cbuffer cbDefault : register(b0)
 {
-	float4x4 worldViewProj;
+	row_major float4x4 worldViewProj;
 };
 
 Texture2D tex0 : register(t0);
