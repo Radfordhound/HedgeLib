@@ -271,8 +271,8 @@ namespace ForcesGISMEditor
             reaction._MirageAnimData.TextureSrtAnimName1 = MirageAnimData_TexSrtAnimName1Bx.Text;
             reaction._MirageAnimData.TextureSrtAnimName2 = MirageAnimData_TexSrtAnimName2Bx.Text;
             reaction._MirageAnimData.TexturePatAnimName0 = MirageAnimData_TexPATAnimName0Bx.Text;
-            reaction._MirageAnimData.TexturePatAnimName1 = MirageAnimData_TexPATAnimName0Bx.Text;
-            reaction._MirageAnimData.TexturePatAnimName2 = MirageAnimData_TexPATAnimName0Bx.Text;
+            reaction._MirageAnimData.TexturePatAnimName1 = MirageAnimData_TexPATAnimName1Bx.Text;
+            reaction._MirageAnimData.TexturePatAnimName2 = MirageAnimData_TexPATAnimName2Bx.Text;
             reaction._MirageAnimData.MaterialAnimName0 = MirageAnimData_MatAnimName0Bx.Text;
             reaction._MirageAnimData.MaterialAnimName1 = MirageAnimData_MatAnimName1Bx.Text;
             reaction._MirageAnimData.MaterialAnimName2 = MirageAnimData_MatAnimName2Bx.Text;
