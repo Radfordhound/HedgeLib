@@ -198,18 +198,26 @@ namespace HedgeEdit
             //if (!isPreview)
             //    GL.Uniform4(highlightLoc, new OpenTK.Vector4(1, 1, 1, 1));
 
-            var constantBuffer = ((HedgeEditConstantBuffer)
-                Viewport.CurrentShader.ConstantBuffer);
-
             foreach (var instance in Instances)
             {
-                // Update Transforms
-                var model = instance.Matrix;
-                model = Matrix.Multiply(model, Viewport.ViewProjection);
+                // Update Constant Buffers
+                if (Viewport.RenderMode == Viewport.RenderModes.Default)
+                {
+                    Buffers.CBDefaultInstance.Data.World = instance.Matrix;
+                    Buffers.CBDefaultInstance.Update();
+                    Buffers.CBDefaultInstance.VSSetConstantBuffer(1);
+                    Buffers.CBDefaultInstance.PSSetConstantBuffer(1);
+                }
+                else if (Viewport.RenderMode == Viewport.RenderModes.HedgehogEngine2)
+                {
+                    Buffers.CBMaterialDynamic.Data.world_matrix = instance.Matrix;
+                    Buffers.CBMaterialDynamic.Data.prev_world_matrix = instance.PrevMatrix;
+                    Buffers.CBMaterialDynamic.Data.u_modulate_color = Vector4.One; // TODO
 
-                // Update shader transform matrices
-                constantBuffer.Layout.WorldViewProj = model;
-                Viewport.CurrentShader.ConstantBuffer.Update();
+                    Buffers.CBMaterialDynamic.Update();
+                    Buffers.CBMaterialDynamic.VSSetConstantBuffer(2);
+                    Buffers.CBMaterialDynamic.PSSetConstantBuffer(2);
+                }
 
                 // Update Highlight Color
                 // TODO
@@ -240,58 +248,6 @@ namespace HedgeEdit
                 //    GL.Uniform4(highlightLoc, new OpenTK.Vector4(1, 1, 1, 1));
                 //}
             }
-
-            //int modelLoc = GL.GetUniformLocation(shaderID, "model");
-            //int highlightLoc = GL.GetUniformLocation(shaderID, "highlight");
-
-            //OpenTK.Vector4 col;
-            //if (isPreview)
-            //{
-            //    // TODO: Use transparency setting
-            //    var color = (Vector3)instance.CustomData;
-            //    col = new OpenTK.Vector4(color.X, color.Y, color.Z, 0.27451f);
-            //}
-            //else
-            //    col = new OpenTK.Vector4(1, 1, 1, 1);
-
-            //if (!isPreview)
-            //    GL.Uniform4(highlightLoc, new OpenTK.Vector4(1, 1, 1, 1));
-
-            //foreach (var instance in Instances)
-            //{
-            //    // Update Transforms
-            //    var modelTransform = instance.Matrix;
-
-            //    // Update shader transform matrices
-            //    GL.UniformMatrix4(modelLoc, false, ref modelTransform);
-
-            //    // Update Highlight Color
-            //    bool selected = Viewport.SelectedInstances.Contains(instance);
-            //    if (selected)
-            //    {
-            //        GL.Uniform4(highlightLoc, new OpenTK.Vector4(1, 0, 0,
-            //            (isPreview) ? 0.27451f * 2 : 1)); // TODO: Use transparency setting
-            //    }
-            //    else if (isPreview)
-            //    {
-            //        // TODO: Use transparency setting
-            //        var color = (Vector3)instance.CustomData;
-            //        GL.Uniform4(highlightLoc, new OpenTK.Vector4(
-            //            color.X, color.Y, color.Z, 0.27451f));
-            //    }
-
-            //    // Draw the meshes
-            //    for (int i = 0; i < meshes.Length; ++i)
-            //    {
-            //        meshes[i].Draw(slot, isPreview);
-            //    }
-
-            //    // Set Highlight Color back to default
-            //    if (selected && !isPreview)
-            //    {
-            //        GL.Uniform4(highlightLoc, new OpenTK.Vector4(1, 1, 1, 1));
-            //    }
-            //}
         }
 
         // Other
@@ -319,10 +275,8 @@ namespace HedgeEdit
                         DefaultMaterial : Materials[MaterialName];
 
                     // Set the shader
-                    Viewport.CurrentShader = (Shaders.ContainsKey(mat.ShaderName)) ?
-                        Shaders[mat.ShaderName] : Shaders["Default"];
-
-                    // TODO: Make this actually work lol
+                    Viewport.CurrentPShader = (PixelShaders.ContainsKey(mat.ShaderName)) ?
+                        PixelShaders[mat.ShaderName] : PixelShaders["Default"];
 
                     // Get the texture
                     string texName = (mat.Texset.Textures.Count > 0) ?
@@ -334,7 +288,25 @@ namespace HedgeEdit
                 }
                 else
                 {
+                    Viewport.CurrentPShader = PixelShaders["Default"];
                     tex = DefaultTexture;
+                }
+
+                // Update Constant Buffers
+                if (Viewport.RenderMode == Viewport.RenderModes.HedgehogEngine2)
+                {
+                    Buffers.CBMaterialAnimation.Data.diffuse_color = new Vector4(1, 1, 1, 1);
+                    Buffers.CBMaterialAnimation.Data.emissive_color = Vector4.One;
+                    Buffers.CBMaterialAnimation.Data.ambient_color = Vector4.One;
+                    Buffers.CBMaterialAnimation.Data.emissive_color = Vector4.One;
+                    Buffers.CBMaterialAnimation.Update();
+                    Buffers.CBMaterialAnimation.PSSetConstantBuffer(4);
+
+                    // TODO: Don't update CBMaterialStatic every frame
+                    Buffers.CBMaterialStatic.Data.Luminance = Vector4.One;
+
+                    Buffers.CBMaterialStatic.Update();
+                    Buffers.CBMaterialStatic.PSSetConstantBuffer(3);
                 }
 
                 Viewport.Context.PixelShader.SetShaderResource(0, tex);

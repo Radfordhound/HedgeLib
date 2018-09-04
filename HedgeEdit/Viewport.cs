@@ -19,22 +19,35 @@ namespace HedgeEdit
             new List<VPObjectInstance>();
 
         //public static TransformGizmo Gizmo = new TransformGizmo();
-        public static Shader CurrentShader
+        public static VShader CurrentVShader
         {
-            get => currentShader;
+            get => currentVShader;
             set
             {
-                if (value == currentShader)
+                if (value == currentVShader)
                     return;
 
-                currentShader = value;
-                currentShader.Use(Context);
+                currentVShader = value;
+                currentVShader.Use(Context);
             }
         }
 
-        public static Vector3 CameraPos = new Vector3(0, 0, 5), CameraRot = new Vector3(0, 0, 0);//new Vector3(-90, 0, 0);
+        public static PShader CurrentPShader
+        {
+            get => currentPShader;
+            set
+            {
+                if (value == currentPShader)
+                    return;
+
+                currentPShader = value;
+                currentPShader.Use(Context);
+            }
+        }
+
+        public static Vector3 CameraPos = new Vector3(0, 0, 5), CameraRot = new Vector3(0, 0, 0);
         public static Vector3 CameraForward { get; private set; } = new Vector3(0, 0, -1);
-        public static float FOV = 40.0f, NearDistance = 0.1f, FarDistance = 1000000f;
+        public static float FOV = 40.0f, NearDistance = 0.1f, FarDistance = 10000f;
 
         public static bool IsMovingCamera
         {
@@ -45,7 +58,13 @@ namespace HedgeEdit
         public static Device Device => device;
         public static DeviceContext Context { get; private set; }
         public static InputAssemblerStage InputAssembler { get; private set; }
-        public static Matrix ViewProjection;
+        public static Matrix ViewProjection = Matrix.Identity;
+        public static RenderModes RenderMode { get; private set; } = RenderModes.Default;
+
+        public enum RenderModes
+        {
+            Default, HedgehogEngine2
+        }
 
         private static Device device;
         private static SwapChain swapChain;
@@ -53,7 +72,8 @@ namespace HedgeEdit
         private static RenderTargetView renderView;
         private static DepthStencilView depthView;
 
-        private static Shader currentShader;
+        private static VShader currentVShader;
+        private static PShader currentPShader;
         private static Matrix proj;
         private static SharpDX.Viewport viewport;
         private static Control vp;
@@ -97,25 +117,38 @@ namespace HedgeEdit
             // Setup our context reference, back buffer, and RenderTargetView
             Context = device.ImmediateContext;
 
-            // Load the shader list
-            Data.LoadShaderList(device);
-            currentShader = Data.Shaders["Default"];
+            // Setup our InputElements
+            var elements = (RenderMode == RenderModes.HedgehogEngine2) ?
+                InputElements.HedgehogEngine2 : InputElements.Default;
 
-            // Setup a layout
-            var layout = new InputLayout(device, currentShader.VertexSignature, new[]
+            // Load the shader list
+            Data.LoadShaders(device, Data.ShadersDirectory, elements);
+
+            // TODO: Load these separately instead and ensure they exist
+            currentVShader = Data.VertexShaders["Default"];
+            currentPShader = Data.PixelShaders["Default"];
+            // Setup ConstantBuffers
+            if (RenderMode == RenderModes.Default)
             {
-                new InputElement("POSITION", 0, Format.R32G32B32_Float, Mesh.VertPos, 0),
-                new InputElement("NORMAL", 0, Format.R32G32B32_Float,
-                    Mesh.NormPos * sizeof(float), 0),
-                new InputElement("COLOR", 0, Format.R32G32B32A32_Float,
-                    Mesh.ColorPos * sizeof(float), 0),
-                new InputElement("TEXCOORD", 0, Format.R32G32_Float,
-                    Mesh.UVPos * sizeof(float), 0)
-            });
+                Buffers.CBDefault = new ConstantBuffer<BufferLayouts.CBDefault>(device);
+                Buffers.CBDefaultInstance = new ConstantBuffer<
+                    BufferLayouts.CBDefaultInstance>(device);
+            }
+            else if (RenderMode == RenderModes.HedgehogEngine2)
+            {
+                Buffers.CBWorld = new ConstantBuffer<BufferLayouts.CBWorld>(device);
+                Buffers.CBMaterialDynamic = new ConstantBuffer<
+                    BufferLayouts.CBMaterialDynamic>(device);
+
+                Buffers.CBMaterialStatic = new ConstantBuffer<
+                    BufferLayouts.CBMaterialStatic>(device);
+
+                Buffers.CBMaterialAnimation = new ConstantBuffer<
+                    BufferLayouts.CBMaterialAnimation>(device);
+            }
 
             // Setup the Input Assembler
             InputAssembler = Context.InputAssembler;
-            InputAssembler.InputLayout = layout;
             InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
 
             // Setup the Sampler
@@ -131,11 +164,9 @@ namespace HedgeEdit
                     MaximumLod = float.MaxValue,
                 }));
 
-            // Dispose
-            layout.Dispose(); // TODO: Is this ok??
-
-            // Set out Current Shader and call OnResize to finalise viewport
-            currentShader.Use(Context);
+            // Set out current shaders and call OnResize to finalise viewport
+            currentVShader.Use(Context);
+            currentPShader.Use(Context);
             OnResize();
         }
 
@@ -195,12 +226,21 @@ namespace HedgeEdit
                 return;
 
             // Dispose Shaders
-            foreach (var shader in Data.Shaders)
+            foreach (var shader in Data.VertexShaders)
             {
                 shader.Value.Dispose();
             }
 
-            Data.Shaders.Clear();
+            foreach (var shader in Data.PixelShaders)
+            {
+                shader.Value.Dispose();
+            }
+
+            Data.VertexShaders.Clear();
+            Data.PixelShaders.Clear();
+
+            // Dispose Buffers
+            Buffers.DisposeAll();
 
             // Dispose Models
             Data.DefaultCube.Dispose();
@@ -434,33 +474,60 @@ namespace HedgeEdit
             if (device == null)
                 throw new Exception("Cannot render viewport - viewport not yet initialized!");
 
-            // Clear the background color
-            Context.ClearRenderTargetView(renderView, Color.Black);
-            Context.ClearDepthStencilView(depthView, DepthStencilClearFlags.Depth, 1, 0);
-            // TODO
-
-            //GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-            //// Start using our "Default" program and bind our VAO
-            //int defaultID = Shaders.ShaderPrograms["Default"];
-            //GL.UseProgram(defaultID);
-
             var view = Matrix.LookAtRH(CameraPos, CameraPos + CameraForward, camUp);
-            //var view = Matrix4.LookAt(CameraPos,
-            //    CameraPos + CameraForward, camUp);
+            if (RenderMode == RenderModes.Default)
+            {
+                // Update Constant Buffer Data
+                ViewProjection = Matrix.Multiply(view, proj);
+                Buffers.CBDefault.Data.ViewProj = ViewProjection;
 
-            //var projection = Matrix4.CreatePerspectiveFieldOfView(
-            //    MathHelper.DegreesToRadians(FOV),
-            //    (float)vp.Width / vp.Height, NearDistance, FarDistance);
+                // Send the new Constant Buffer to the GPU
+                Buffers.CBDefault.Update();
+                Buffers.CBDefault.VSSetConstantBuffer(0);
+                Buffers.CBDefault.PSSetConstantBuffer(0);
 
-            // Update shader transform matrices
-            ViewProjection = Matrix.Multiply(view, proj);
+                // Clear the background color
+                Context.ClearRenderTargetView(renderView, Color.Black);
+                Context.ClearDepthStencilView(depthView, DepthStencilClearFlags.Depth, 1, 0);
+            }
+            else if (RenderMode == RenderModes.HedgehogEngine2)
+            {
+                // Update Constant Buffer Data
+                Buffers.CBWorld.Data.g_LightScatteringColor = new Vector4(
+                    0.039f, 0.274f, 0.549f, 1);
 
-            //int viewLoc = GL.GetUniformLocation(defaultID, "view");
-            //int projectionLoc = GL.GetUniformLocation(defaultID, "projection");
+                Buffers.CBWorld.Data.g_tonemap_param = new Vector4(
+                    1, 1, 1, 1);
 
-            //GL.UniformMatrix4(viewLoc, false, ref view);
-            //GL.UniformMatrix4(projectionLoc, false, ref projection);
+                Buffers.CBWorld.Data.g_debug_option = Vector4.One;
+                Buffers.CBWorld.Data.prev_view_proj_matrix = ViewProjection;
+                Buffers.CBWorld.Data.proj_matrix = proj;
+                Buffers.CBWorld.Data.view_matrix = view;
+                Buffers.CBWorld.Data.u_cameraPosition = new Vector4(CameraPos, 1);
+
+                // TODO: FIGURE THIS CRAP OUT
+                Buffers.CBWorld.Data.g_LightScatteringFarNearScale = new Vector4(1, 1, 1, 1);
+                Buffers.CBWorld.Data.g_LightScattering_Ray_Mie_Ray2_Mie2 = new Vector4(
+                    0.58f, 1, 0.58f, 1);
+
+                Buffers.CBWorld.Data.u_lightDirection = new Vector4(
+                    -0.2991572f, -0.8605858f, 0.4121857f, 1);
+
+                Buffers.CBWorld.Data.g_LightScattering_ConstG_FogDensity =
+                    new Vector4(1, 1, 1, 1);
+
+                // Send the new Constant Buffer to the GPU
+                Buffers.CBWorld.Update();
+                Buffers.CBWorld.VSSetConstantBuffer(0);
+                Buffers.CBWorld.PSSetConstantBuffer(0);
+
+                ViewProjection = Matrix.Multiply(view, proj);
+
+                // Set OutputMerger Targets and Clear Depth Buffer
+                // TODO: Deferred Rendering
+                //Context.OutputMerger.SetTargets(depthView, renderViews);
+                Context.ClearDepthStencilView(depthView, DepthStencilClearFlags.Depth, 1, 0);
+            }
 
             // Draw all models in the scene
             Mesh.Slots slot;
@@ -491,9 +558,6 @@ namespace HedgeEdit
             ////int prevID = Shaders.ShaderPrograms["Preview"];
             ////GL.UseProgram(prevID);
             //Data.PreviewBox.Draw(defaultID, Mesh.Slots.Default, true);
-
-            // TODO: OLD SHARPDX TEST
-            //Context.Draw(36, 0);
 
             //// Draw Transform Gizmos
             //Gizmo.Render(defaultID);

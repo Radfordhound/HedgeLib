@@ -83,10 +83,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BufferLayouts.cs" />
+    <Compile Include="Buffers.cs" />
     <Compile Include="Data\Archives.cs" />
     <Compile Include="Data\Asset.cs" />
     <Compile Include="Data\Materials.cs" />
     <Compile Include="Input.cs" />
+    <Compile Include="InputElements.cs" />
     <Compile Include="Shader.cs" />
     <Compile Include="UI\GUI.cs" />
     <Compile Include="Data\Objects.cs" />
@@ -211,15 +214,9 @@
     <None Include="Resources\DefaultTexture.dds">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <Content Include="Shaders\Default.frag">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <None Include="Shaders\Default.fx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <Content Include="Shaders\Default.vert">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <None Include="Scripts\Games\Colors.lua">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -247,11 +244,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Shaders\ShaderList.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HedgeLib\HedgeLib.csproj">

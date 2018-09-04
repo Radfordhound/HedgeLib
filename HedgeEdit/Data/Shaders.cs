@@ -1,80 +1,46 @@
-﻿using SharpDX;
-using SharpDX.Direct3D11;
+﻿using SharpDX.Direct3D11;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.InteropServices;
 
 namespace HedgeEdit
 {
     public static partial class Data
     {
         // Variables/Constants
-        public static Dictionary<string, Shader> Shaders =
-            new Dictionary<string, Shader>();
+        public static Dictionary<string, VShader> VertexShaders =
+            new Dictionary<string, VShader>();
 
-        public const string ShadersDirectory = "Shaders", ShaderList = "ShaderList.txt";
+        public static Dictionary<string, PShader> PixelShaders =
+            new Dictionary<string, PShader>();
+
+        public static string ShadersDirectory => Path.Combine(Program.StartupPath, ShadersPath);
+        public const string ShadersPath = "Shaders", ShaderList = "ShaderList.txt";
 
         // Methods
-        public static void LoadShaderList(Device device)
+        public static void LoadShaders(Device device, string dir, InputElement[] elements,
+            string vsEntryPoint = Shader.VSEntryPoint, string psEntryPoint = Shader.PSEntryPoint)
         {
-            // Make some generic variables we can re-use
-            string pth1, pth2, name;
-
-            // Load the shader list
-            var shaderDir = Path.Combine(Program.StartupPath, ShadersDirectory);
-            pth1 = Path.Combine(shaderDir, ShaderList);
-            if (!File.Exists(pth1))
+            // Load all shaders in the given directory
+            foreach (var pth in Directory.GetFiles(dir, $"*{Shader.Extension}"))
             {
-                throw new FileNotFoundException(
-                    "Cannot load shaders - shader list not found!", pth1);
+                var vshader = new VShader(device, pth, elements, vsEntryPoint);
+                var pshader = new PShader(device, pth, psEntryPoint);
+                string name = Path.GetFileNameWithoutExtension(pth);
+
+                VertexShaders.Add(name, vshader);
+                PixelShaders.Add(name, pshader);
             }
 
-            var shaderNames = File.ReadAllLines(pth1);
-
-            // Load all vertex & pixel shaders on the list
-            for (int i = 0; i < shaderNames.Length; ++i)
+            foreach (var pth in Directory.GetFiles(dir, $"*{Shader.VSExtension}"))
             {
-                // Make sure both shaders exist first
-                // TODO: Make it so shaders can be in two separate files or in one
-                name = shaderNames[i];
-                pth1 = Path.Combine(shaderDir, $"{name}{Shader.Extension}");
-                pth2 = Path.Combine(shaderDir, $"{name}{Shader.Extension}");
-
-                if (!File.Exists(pth1) || !File.Exists(pth2))
-                    continue;
-
-                // Load the Shader
-                var constantBuffer = new HedgeEditConstantBuffer();
-                var shader = new Shader(constantBuffer);
-
-                shader.Load(device, ref constantBuffer.Layout, pth1, pth2);
-                Shaders.Add(name, shader);
-            }
-        }
-
-        // Other
-        [StructLayout(LayoutKind.Sequential)]
-        public struct HedgeEditConstantBufferLayout
-        {
-            // Variables/Constants
-            public Matrix WorldViewProj;
-        }
-
-        public class HedgeEditConstantBuffer : ConstantBuffer
-        {
-            // Variables/Constants
-            public HedgeEditConstantBufferLayout Layout;
-
-            // Constructors
-            public HedgeEditConstantBuffer()
-            {
-                Layout = new HedgeEditConstantBufferLayout();
+                var shader = new VShader(device, pth, elements, Shader.EntryPoint);
+                VertexShaders.Add(Path.GetFileNameWithoutExtension(pth), shader);
             }
 
-            // Methods
-            protected override void Write(DataStream ds)
+            foreach (var pth in Directory.GetFiles(dir, $"*{Shader.PSExtension}"))
             {
-                ds.Write(Layout);
+                var shader = new PShader(device, pth, Shader.EntryPoint);
+                PixelShaders.Add(Path.GetFileNameWithoutExtension(pth), shader);
             }
         }
     }

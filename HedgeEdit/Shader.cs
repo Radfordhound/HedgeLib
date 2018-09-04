@@ -1,117 +1,154 @@
-﻿using SharpDX;
-using SharpDX.D3DCompiler;
+﻿using SharpDX.D3DCompiler;
 using SharpDX.Direct3D11;
 using System;
-using Buffer = SharpDX.Direct3D11.Buffer;
 
 namespace HedgeEdit
 {
-    public class Shader : IDisposable
+    public abstract class Shader : IDisposable
     {
         // Variables/Constants
-        public VertexShader VertexShader;
-        public PixelShader PixelShader;
-        public ShaderSignature VertexSignature;
-        public ConstantBuffer ConstantBuffer;
+        public const string EntryPoint = "main",
+            VSEntryPoint = "VS", PSEntryPoint = "PS";
 
         public const string VSExtension = ".vs",
             PSExtension = ".ps", Extension = ".fx";
 
         // Constructors
-        public Shader(ConstantBuffer constantBuffer)
+        ~Shader()
         {
-            ConstantBuffer = constantBuffer ??
-                throw new ArgumentNullException("constantBuffer");
+            Dispose();
         }
 
         // Methods
-        public void Load<T>(Device device, ref T constBufferLayout,
-            string vsPath, string psPath) where T : struct
+        public abstract void Use(DeviceContext context);
+        public abstract void Dispose();
+    }
+
+    public class VShader : Shader
+    {
+        // Variables/Constants
+        public VertexShader VertexShader { get; protected set; }
+        public InputLayout InputLayout { get; protected set; }
+
+        // Constructors
+        public VShader(Device device, string pth, InputElement[] elements,
+            string entryPoint = EntryPoint)
+        {
+            Load(device, pth, elements, entryPoint);
+        }
+
+        public VShader(Device device, byte[] byteCode, InputElement[] elements)
+        {
+            Load(device, byteCode, elements);
+        }
+
+        public VShader(VertexShader vertexShader, InputLayout layout)
+        {
+            VertexShader = vertexShader ?? throw new ArgumentNullException("vertexShader");
+            InputLayout = layout ?? throw new ArgumentNullException("layout");
+        }
+
+        ~VShader()
+        {
+            Dispose();
+        }
+
+        // Methods
+        public void Load(Device device, string pth, InputElement[] elements,
+            string entryPoint = EntryPoint)
         {
             // Load HLSL code and compile it
-            var vsByteCode = ShaderBytecode.CompileFromFile(vsPath, "VS", "vs_4_0");
-            var psByteCode = ShaderBytecode.CompileFromFile(psPath, "PS", "ps_4_0");
-            VertexSignature = ShaderSignature.GetInputSignature(vsByteCode);
+            var vsByteCode = ShaderBytecode.CompileFromFile(pth, entryPoint, "vs_4_0");
+            var signature = ShaderSignature.GetInputSignature(vsByteCode);
+
+            // Create InputLayout
+            InputLayout = new InputLayout(device, signature, elements);
+            signature.Dispose();
 
             // Make D3D Shaders from compiled HLSL
             VertexShader = new VertexShader(device, vsByteCode);
-            PixelShader = new PixelShader(device, psByteCode);
-
-            // Setup our Constant Buffer
-            //ConstantBuffer = new ConstantBuffer();
-            ConstantBuffer.CreateBuffer(device, constBufferLayout);
 
             // Dispose of Shader Byte Code
             vsByteCode.Dispose();
-            psByteCode.Dispose();
         }
 
-        public void Use(DeviceContext context)
+        public void Load(Device device, byte[] byteCode, InputElement[] elements)
         {
-            context.VertexShader.SetConstantBuffer(0, ConstantBuffer.Buffer);
+            var signature = ShaderSignature.GetInputSignature(byteCode);
+
+            // Create InputLayout
+            InputLayout = new InputLayout(device, signature, elements);
+            signature.Dispose();
+
+            // Make D3D Shaders from compiled HLSL
+            VertexShader = new VertexShader(device, byteCode);
+        }
+
+        public override void Use(DeviceContext context)
+        {
+            context.InputAssembler.InputLayout = InputLayout;
             context.VertexShader.Set(VertexShader);
-            context.PixelShader.Set(PixelShader);
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
-            if (VertexSignature == null)
-                return;
-
-            VertexSignature.Dispose();
             VertexShader.Dispose();
-            PixelShader.Dispose();
-            ConstantBuffer.Dispose();
-
-            VertexSignature = null;
-            VertexShader = null;
-            PixelShader = null;
+            InputLayout.Dispose();
         }
     }
 
-    public abstract class ConstantBuffer : IDisposable
+    public class PShader : Shader
     {
         // Variables/Constants
-        public Buffer Buffer;
+        public PixelShader PixelShader { get; protected set; }
+
+        // Constructors
+        public PShader(Device device, byte[] byteCode)
+        {
+            Load(device, byteCode);
+        }
+
+        public PShader(Device device, string pth, string entryPoint = EntryPoint)
+        {
+            Load(device, pth, entryPoint);
+        }
+
+        public PShader(PixelShader pixelShader)
+        {
+            PixelShader = pixelShader ?? throw new ArgumentNullException("pixelShader");
+        }
+
+        ~PShader()
+        {
+            Dispose();
+        }
 
         // Methods
-        public void CreateBuffer<T>(Device device, T layout)
-            where T : struct
+        public void Load(Device device, string pth, string entryPoint = EntryPoint)
         {
-            var bufferDesc = new BufferDescription()
-            {
-                SizeInBytes = Utilities.SizeOf<T>(),
-                Usage = ResourceUsage.Dynamic,
-                BindFlags = BindFlags.ConstantBuffer,
-                CpuAccessFlags = CpuAccessFlags.Write,
-                OptionFlags = ResourceOptionFlags.None,
-                StructureByteStride = 0
-            };
+            // Load HLSL code and compile it
+            var psByteCode = ShaderBytecode.CompileFromFile(pth, entryPoint, "ps_4_0");
 
-            //Layout = layout;
-            Buffer = Buffer.Create(device, ref layout, bufferDesc);
+            // Make D3D Shaders from compiled HLSL
+            PixelShader = new PixelShader(device, psByteCode);
+
+            // Dispose of Shader Byte Code
+            psByteCode.Dispose();
         }
 
-        public void Update()
+        public void Load(Device device, byte[] byteCode)
         {
-            Viewport.Context.MapSubresource(Buffer, MapMode.WriteDiscard,
-                MapFlags.None, out DataStream ds);
-
-            Write(ds);
-
-            ds.Dispose();
-            Viewport.Context.UnmapSubresource(Buffer, 0);
+            PixelShader = new PixelShader(device, byteCode);
         }
 
-        protected abstract void Write(DataStream ds);
-
-        public void Dispose()
+        public override void Use(DeviceContext context)
         {
-            if (Buffer == null)
-                return;
+            context.PixelShader.Set(PixelShader);
+        }
 
-            Buffer.Dispose();
-            Buffer = null;
+        public override void Dispose()
+        {
+            PixelShader.Dispose();
         }
     }
 }
