@@ -35,11 +35,16 @@ namespace HedgeEdit
                 {
                     Width = 1,
                     Height = 1,
-                    Format = Texture.DXGI_FORMATS.R8G8B8A8_UINT,
+                    Format = Texture.DXGI_FORMATS.R32G32B32_FLOAT,
                     MipmapCount = 1,
                     ColorData = new byte[][]
                     {
-                        new byte[] { 255, 255, 255, 255 }
+                        new byte[]
+                        {
+                            0, 0, 0x80, 0x3F,
+                            0, 0, 0x80, 0x3F,
+                            0, 0, 0x80, 0x3F,
+                        }
                     }
                 };
             }
