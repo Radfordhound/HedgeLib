@@ -38,9 +38,10 @@ namespace HedgeEdit
         }
 
         public Matrix Matrix => matrix;
+        public Matrix PrevMatrix => prevMatrix;
         public object CustomData = null;
 
-        protected Matrix matrix = Matrix.Identity;
+        protected Matrix matrix = Matrix.Identity, prevMatrix = Matrix.Identity;
         protected Quaternion rot = Quaternion.Identity;
         protected Vector3 pos = Vector3.Zero, scale = Vector3.One;
 
@@ -64,7 +65,7 @@ namespace HedgeEdit
         /// <param name="customData">Any custom data you wish to store for later use.</param>
         public VPObjectInstance(Matrix matrix, object customData = null)
         {
-            this.matrix = matrix;
+            prevMatrix = this.matrix = matrix;
             CustomData = customData;
             matrix.Decompose(out scale, out rot, out pos);
         }
@@ -79,6 +80,7 @@ namespace HedgeEdit
         public VPObjectInstance(float[] matrix, object customData = null)
         {
             this.matrix = new Matrix(matrix);
+            prevMatrix = this.matrix;
             this.matrix.Decompose(out scale, out rot, out pos);
             CustomData = customData;
         }
@@ -147,6 +149,7 @@ namespace HedgeEdit
         // Methods
         protected void UpdateMatrix()
         {
+            prevMatrix = matrix;
             matrix = Matrix.Scaling(scale) *
                 Matrix.RotationQuaternion(rot) *
                 Matrix.Translation(pos);
