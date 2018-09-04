@@ -9,10 +9,10 @@ namespace HedgeLib.Terrain
     {
         // Variables/Constants
         public GensHeader Header = new GensHeader();
-        public float[,] TransformMatrix => matrix;
+        public float[] TransformMatrix => matrix;
         public string FileName, ModelFileName;
 
-        private float[,] matrix = new float[4, 4];
+        private float[] matrix = new float[16];
         public const string Extension = ".terrain-instanceinfo";
 
         // Methods
@@ -35,11 +35,15 @@ namespace HedgeLib.Terrain
 
             // Matrix
             reader.JumpTo(matrixOffset, false);
-            for (int x = 0; x < 4; ++x)
+
+            int index;
+            for (int i = 0; i < 4; ++i)
             {
-                for (int y = 0; y < 4; ++y)
+                index = i;
+                for (int i2 = 0; i2 < 4; ++i2)
                 {
-                    matrix[x, y] = reader.ReadSingle();
+                    matrix[index] = reader.ReadSingle();
+                    index += 4;
                 }
             }
 

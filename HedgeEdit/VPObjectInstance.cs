@@ -76,15 +76,9 @@ namespace HedgeEdit
         /// <param name="matrix">4x4 Matrix composed of an orthogonal
         /// rotation, diagonal scale, and position.</param>
         /// <param name="customData">Any custom data you wish to store for later use.</param>
-        public VPObjectInstance(float[,] matrix, object customData = null)
+        public VPObjectInstance(float[] matrix, object customData = null)
         {
-            this.matrix = new Matrix
-            {
-                Column1 = new Vector4(matrix[0, 0], matrix[0, 1], matrix[0, 2], matrix[0, 3]),
-                Column2 = new Vector4(matrix[1, 0], matrix[1, 1], matrix[1, 2], matrix[1, 3]),
-                Column3 = new Vector4(matrix[2, 0], matrix[2, 1], matrix[2, 2], matrix[2, 3]),
-                Column4 = new Vector4(matrix[3, 0], matrix[3, 1], matrix[3, 2], matrix[3, 3])
-            };
+            this.matrix = new Matrix(matrix);
             this.matrix.Decompose(out scale, out rot, out pos);
             CustomData = customData;
         }
