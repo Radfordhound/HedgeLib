@@ -226,4 +226,64 @@ namespace HedgeEdit.D3D.BufferLayouts.HE2
 
         public void Init() { }
     }
+
+    [StructLayout(LayoutKind.Explicit, Size = 4112)]
+    public struct CBSHLightFieldProbes : IBufferLayout
+    {
+        [FieldOffset(0)]
+        public Vector4 shlightfield_default;
+        [FieldOffset(16)]
+        public Vector4 shlightfield_multiply_color_up;
+        [FieldOffset(32)]
+        public Vector4 shlightfield_multiply_color_down;
+        [FieldOffset(48), MarshalAs(UnmanagedType.ByValArray, SizeConst = 18)]
+        public Vector4[] shlightfield_probes_SHLightFieldProbe;
+        [FieldOffset(4096)]
+        public Vector4 shlightfield_probe_SHLightFieldProbe_end;
+
+        public void Init()
+        {
+            shlightfield_probes_SHLightFieldProbe = new Vector4[18];
+        }
+    }
+
+    [StructLayout(LayoutKind.Explicit, Size = 65408)]
+    public struct CBLocalLightIndexData : IBufferLayout
+    {
+        // TODO: This is actually a UInt4. Will this be a problem?
+        [FieldOffset(0), MarshalAs(UnmanagedType.ByValArray, SizeConst = 4088)]
+        public Int4[] g_local_light_index_data;
+
+        public void Init()
+        {
+            g_local_light_index_data = new Int4[4088];
+        }
+    }
+
+    [StructLayout(LayoutKind.Explicit, Size = 64016)]
+    public struct CBLocalLightContextData : IBufferLayout
+    {
+        [FieldOffset(0)]
+        public Vector4 g_local_light_count;
+        [FieldOffset(16), MarshalAs(UnmanagedType.ByValArray, SizeConst = 1000)]
+        public Matrix[] g_local_light_data;
+
+        public void Init()
+        {
+            g_local_light_data = new Matrix[1000];
+        }
+    }
+
+    [StructLayout(LayoutKind.Explicit, Size = 2048)]
+    public struct CBLocalLightTileData : IBufferLayout
+    {
+        // TODO: This is actually a UInt4. Will this be a problem?
+        [FieldOffset(0), MarshalAs(UnmanagedType.ByValArray, SizeConst = 128)]
+        public Int4[] g_local_light_tile_data;
+
+        public void Init()
+        {
+            g_local_light_tile_data = new Int4[128];
+        }
+    }
 }
