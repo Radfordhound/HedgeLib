@@ -83,14 +83,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BufferLayouts.cs" />
-    <Compile Include="Buffers.cs" />
+    <Compile Include="D3D\BufferGroups\IBufferGroup.cs" />
+    <Compile Include="D3D\BufferLayouts\Default.cs" />
+    <Compile Include="D3D\BufferLayouts\HE2.cs" />
+    <Compile Include="D3D\BufferLayouts\IBufferLayout.cs" />
+    <Compile Include="D3D\Buffers.cs" />
+    <Compile Include="D3D\BufferGroups\DefaultGroup.cs" />
+    <Compile Include="D3D\ConstantBuffer.cs" />
+    <Compile Include="D3D\BufferGroups\HE2Group.cs" />
     <Compile Include="Data\Archives.cs" />
     <Compile Include="Data\Asset.cs" />
     <Compile Include="Data\Materials.cs" />
     <Compile Include="Input.cs" />
-    <Compile Include="InputElements.cs" />
-    <Compile Include="Shader.cs" />
+    <Compile Include="D3D\InputElements.cs" />
+    <Compile Include="D3D\Shader.cs" />
     <Compile Include="UI\GUI.cs" />
     <Compile Include="Data\Objects.cs" />
     <Compile Include="GameEntry.cs" />

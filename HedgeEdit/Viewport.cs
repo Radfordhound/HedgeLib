@@ -6,6 +6,7 @@ using SharpDX;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
 using SharpDX.Direct3D;
+using HedgeEdit.D3D;
 
 using Point = System.Drawing.Point;
 using Device = SharpDX.Direct3D11.Device;
@@ -118,8 +119,7 @@ namespace HedgeEdit
             Context = device.ImmediateContext;
 
             // Setup our InputElements
-            var elements = (RenderMode == RenderModes.HedgehogEngine2) ?
-                InputElements.HedgehogEngine2 : InputElements.Default;
+            var elements = InputElements.GetElements(RenderMode);
 
             // Load the shader list
             Data.LoadShaders(device, Data.ShadersDirectory, elements);
@@ -127,25 +127,9 @@ namespace HedgeEdit
             // TODO: Load these separately instead and ensure they exist
             currentVShader = Data.VertexShaders["Default"];
             currentPShader = Data.PixelShaders["Default"];
+
             // Setup ConstantBuffers
-            if (RenderMode == RenderModes.Default)
-            {
-                Buffers.CBDefault = new ConstantBuffer<BufferLayouts.CBDefault>(device);
-                Buffers.CBDefaultInstance = new ConstantBuffer<
-                    BufferLayouts.CBDefaultInstance>(device);
-            }
-            else if (RenderMode == RenderModes.HedgehogEngine2)
-            {
-                Buffers.CBWorld = new ConstantBuffer<BufferLayouts.CBWorld>(device);
-                Buffers.CBMaterialDynamic = new ConstantBuffer<
-                    BufferLayouts.CBMaterialDynamic>(device);
-
-                Buffers.CBMaterialStatic = new ConstantBuffer<
-                    BufferLayouts.CBMaterialStatic>(device);
-
-                Buffers.CBMaterialAnimation = new ConstantBuffer<
-                    BufferLayouts.CBMaterialAnimation>(device);
-            }
+            Buffers.Init(device, RenderMode);
 
             // Setup the Input Assembler
             InputAssembler = Context.InputAssembler;
@@ -275,18 +259,16 @@ namespace HedgeEdit
             Data.Textures.Clear();
 
             // Dispose D3D stuff
-            depthBuffer.Dispose();
-            depthView.Dispose();
-            renderView.Dispose();
-            backBuffer.Dispose();
+            Utilities.Dispose(ref renderView);
+            Utilities.Dispose(ref backBuffer);
+            Utilities.Dispose(ref depthView);
+            Utilities.Dispose(ref depthBuffer);
+
             Context.ClearState();
             Context.Flush();
-            Context.Dispose();
-            device.Dispose();
-            swapChain.Dispose();
-            //factory.Dispose(); // TODO
 
-            device = null;
+            Utilities.Dispose(ref swapChain);
+            Utilities.Dispose(ref device);
         }
 
         public static void Click()
@@ -479,12 +461,12 @@ namespace HedgeEdit
             {
                 // Update Constant Buffer Data
                 ViewProjection = Matrix.Multiply(view, proj);
-                Buffers.CBDefault.Data.ViewProj = ViewProjection;
+                Buffers.Default.CBDefault.Data.ViewProj = ViewProjection;
 
                 // Send the new Constant Buffer to the GPU
-                Buffers.CBDefault.Update();
-                Buffers.CBDefault.VSSetConstantBuffer(0);
-                Buffers.CBDefault.PSSetConstantBuffer(0);
+                Buffers.Default.CBDefault.Update();
+                Buffers.Default.CBDefault.VSSetConstantBuffer(0);
+                Buffers.Default.CBDefault.PSSetConstantBuffer(0);
 
                 // Clear the background color
                 Context.ClearRenderTargetView(renderView, Color.Black);
@@ -493,33 +475,33 @@ namespace HedgeEdit
             else if (RenderMode == RenderModes.HedgehogEngine2)
             {
                 // Update Constant Buffer Data
-                Buffers.CBWorld.Data.g_LightScatteringColor = new Vector4(
+                Buffers.HE2.CBWorld.Data.g_LightScatteringColor = new Vector4(
                     0.039f, 0.274f, 0.549f, 1);
 
-                Buffers.CBWorld.Data.g_tonemap_param = new Vector4(
+                Buffers.HE2.CBWorld.Data.g_tonemap_param = new Vector4(
                     1, 1, 1, 1);
 
-                Buffers.CBWorld.Data.g_debug_option = Vector4.One;
-                Buffers.CBWorld.Data.prev_view_proj_matrix = ViewProjection;
-                Buffers.CBWorld.Data.proj_matrix = proj;
-                Buffers.CBWorld.Data.view_matrix = view;
-                Buffers.CBWorld.Data.u_cameraPosition = new Vector4(CameraPos, 1);
+                Buffers.HE2.CBWorld.Data.g_debug_option = Vector4.One;
+                Buffers.HE2.CBWorld.Data.prev_view_proj_matrix = ViewProjection;
+                Buffers.HE2.CBWorld.Data.proj_matrix = proj;
+                Buffers.HE2.CBWorld.Data.view_matrix = view;
+                Buffers.HE2.CBWorld.Data.u_cameraPosition = new Vector4(CameraPos, 1);
 
                 // TODO: FIGURE THIS CRAP OUT
-                Buffers.CBWorld.Data.g_LightScatteringFarNearScale = new Vector4(1, 1, 1, 1);
-                Buffers.CBWorld.Data.g_LightScattering_Ray_Mie_Ray2_Mie2 = new Vector4(
+                Buffers.HE2.CBWorld.Data.g_LightScatteringFarNearScale = new Vector4(1, 1, 1, 1);
+                Buffers.HE2.CBWorld.Data.g_LightScattering_Ray_Mie_Ray2_Mie2 = new Vector4(
                     0.58f, 1, 0.58f, 1);
 
-                Buffers.CBWorld.Data.u_lightDirection = new Vector4(
+                Buffers.HE2.CBWorld.Data.u_lightDirection = new Vector4(
                     -0.2991572f, -0.8605858f, 0.4121857f, 1);
 
-                Buffers.CBWorld.Data.g_LightScattering_ConstG_FogDensity =
+                Buffers.HE2.CBWorld.Data.g_LightScattering_ConstG_FogDensity =
                     new Vector4(1, 1, 1, 1);
 
                 // Send the new Constant Buffer to the GPU
-                Buffers.CBWorld.Update();
-                Buffers.CBWorld.VSSetConstantBuffer(0);
-                Buffers.CBWorld.PSSetConstantBuffer(0);
+                Buffers.HE2.CBWorld.Update();
+                Buffers.HE2.CBWorld.VSSetConstantBuffer(0);
+                Buffers.HE2.CBWorld.PSSetConstantBuffer(0);
 
                 ViewProjection = Matrix.Multiply(view, proj);
 

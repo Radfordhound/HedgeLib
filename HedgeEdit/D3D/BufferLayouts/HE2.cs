@@ -1,28 +1,8 @@
 ﻿using SharpDX;
 using System.Runtime.InteropServices;
 
-namespace HedgeEdit.BufferLayouts
+namespace HedgeEdit.D3D.BufferLayouts.HE2
 {
-    public interface IBufferLayout
-    {
-        void Init();
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct CBDefault : IBufferLayout
-    {
-        public Matrix ViewProj;
-        public void Init() { }
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct CBDefaultInstance : IBufferLayout
-    {
-        public Matrix World;
-        public void Init() { }
-    }
-
-    // Forces
     [StructLayout(LayoutKind.Explicit, Size = 3744)]
     public struct CBWorld : IBufferLayout
     {

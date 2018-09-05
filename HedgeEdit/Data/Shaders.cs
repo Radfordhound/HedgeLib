@@ -1,4 +1,5 @@
-﻿using SharpDX.Direct3D11;
+﻿using HedgeEdit.D3D;
+using SharpDX.Direct3D11;
 using System.Collections.Generic;
 using System.IO;
 

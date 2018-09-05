@@ -2,7 +2,7 @@
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
 
-namespace HedgeEdit
+namespace HedgeEdit.D3D
 {
     public static class InputElements
     {
@@ -59,5 +59,18 @@ namespace HedgeEdit
         //    new InputElement("BLENDWEIGHT", 0, Format.R32G32B32A32_Float, 132, 0),
         //    new InputElement("BLENDINDICES", 0, Format.R32G32B32A32_SInt, 148, 0)
         //};
+
+        // Methods
+        public static InputElement[] GetElements(Viewport.RenderModes renderMode)
+        {
+            switch (renderMode)
+            {
+                case Viewport.RenderModes.HedgehogEngine2:
+                    return HedgehogEngine2;
+
+                default:
+                    return Default;
+            }
+        }
     }
 }

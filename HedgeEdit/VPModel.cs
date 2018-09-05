@@ -1,4 +1,5 @@
-﻿using HedgeLib.Math;
+﻿using HedgeEdit.D3D;
+using HedgeLib.Math;
 using HedgeLib.Models;
 using SharpDX;
 using SharpDX.Direct3D11;
@@ -201,22 +202,24 @@ namespace HedgeEdit
             foreach (var instance in Instances)
             {
                 // Update Constant Buffers
-                if (Viewport.RenderMode == Viewport.RenderModes.Default)
+                switch (Viewport.RenderMode)
                 {
-                    Buffers.CBDefaultInstance.Data.World = instance.Matrix;
-                    Buffers.CBDefaultInstance.Update();
-                    Buffers.CBDefaultInstance.VSSetConstantBuffer(1);
-                    Buffers.CBDefaultInstance.PSSetConstantBuffer(1);
-                }
-                else if (Viewport.RenderMode == Viewport.RenderModes.HedgehogEngine2)
-                {
-                    Buffers.CBMaterialDynamic.Data.world_matrix = instance.Matrix;
-                    Buffers.CBMaterialDynamic.Data.prev_world_matrix = instance.PrevMatrix;
-                    Buffers.CBMaterialDynamic.Data.u_modulate_color = Vector4.One; // TODO
+                    case Viewport.RenderModes.HedgehogEngine2:
+                        Buffers.HE2.CBMaterialDynamic.Data.world_matrix = instance.Matrix;
+                        Buffers.HE2.CBMaterialDynamic.Data.prev_world_matrix = instance.PrevMatrix;
+                        Buffers.HE2.CBMaterialDynamic.Data.u_modulate_color = Vector4.One; // TODO
 
-                    Buffers.CBMaterialDynamic.Update();
-                    Buffers.CBMaterialDynamic.VSSetConstantBuffer(2);
-                    Buffers.CBMaterialDynamic.PSSetConstantBuffer(2);
+                        Buffers.HE2.CBMaterialDynamic.Update();
+                        Buffers.HE2.CBMaterialDynamic.VSSetConstantBuffer(2);
+                        Buffers.HE2.CBMaterialDynamic.PSSetConstantBuffer(2);
+                        break;
+
+                    default:
+                        Buffers.Default.CBDefaultInstance.Data.World = instance.Matrix;
+                        Buffers.Default.CBDefaultInstance.Update();
+                        Buffers.Default.CBDefaultInstance.VSSetConstantBuffer(1);
+                        Buffers.Default.CBDefaultInstance.PSSetConstantBuffer(1);
+                        break;
                 }
 
                 // Update Highlight Color
@@ -295,18 +298,18 @@ namespace HedgeEdit
                 // Update Constant Buffers
                 if (Viewport.RenderMode == Viewport.RenderModes.HedgehogEngine2)
                 {
-                    Buffers.CBMaterialAnimation.Data.diffuse_color = new Vector4(1, 1, 1, 1);
-                    Buffers.CBMaterialAnimation.Data.emissive_color = Vector4.One;
-                    Buffers.CBMaterialAnimation.Data.ambient_color = Vector4.One;
-                    Buffers.CBMaterialAnimation.Data.emissive_color = Vector4.One;
-                    Buffers.CBMaterialAnimation.Update();
-                    Buffers.CBMaterialAnimation.PSSetConstantBuffer(4);
+                    Buffers.HE2.CBMaterialAnimation.Data.diffuse_color = new Vector4(1, 1, 1, 1);
+                    Buffers.HE2.CBMaterialAnimation.Data.emissive_color = Vector4.One;
+                    Buffers.HE2.CBMaterialAnimation.Data.ambient_color = Vector4.One;
+                    Buffers.HE2.CBMaterialAnimation.Data.emissive_color = Vector4.One;
+                    Buffers.HE2.CBMaterialAnimation.Update();
+                    Buffers.HE2.CBMaterialAnimation.PSSetConstantBuffer(4);
 
                     // TODO: Don't update CBMaterialStatic every frame
-                    Buffers.CBMaterialStatic.Data.Luminance = Vector4.One;
+                    Buffers.HE2.CBMaterialStatic.Data.Luminance = Vector4.One;
 
-                    Buffers.CBMaterialStatic.Update();
-                    Buffers.CBMaterialStatic.PSSetConstantBuffer(3);
+                    Buffers.HE2.CBMaterialStatic.Update();
+                    Buffers.HE2.CBMaterialStatic.PSSetConstantBuffer(3);
                 }
 
                 Viewport.Context.PixelShader.SetShaderResource(0, tex);

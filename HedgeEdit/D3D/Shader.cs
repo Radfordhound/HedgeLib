@@ -2,7 +2,7 @@
 using SharpDX.Direct3D11;
 using System;
 
-namespace HedgeEdit
+namespace HedgeEdit.D3D
 {
     public abstract class Shader : IDisposable
     {

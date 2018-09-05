@@ -1,45 +1,9 @@
-﻿using HedgeEdit.BufferLayouts;
+﻿using HedgeEdit.D3D.BufferLayouts;
 using SharpDX;
 using SharpDX.Direct3D11;
 
-namespace HedgeEdit
+namespace HedgeEdit.D3D
 {
-    public static class Buffers
-    {
-        // Variables/Constants
-        public static ConstantBuffer<CBDefault> CBDefault;
-        public static ConstantBuffer<CBDefaultInstance> CBDefaultInstance;
-
-        public static ConstantBuffer<CBWorld> CBWorld;
-        public static ConstantBuffer<CBMaterialDynamic> CBMaterialDynamic;
-        public static ConstantBuffer<CBMaterialAnimation> CBMaterialAnimation;
-        public static ConstantBuffer<CBMaterialStatic> CBMaterialStatic;
-
-        // Methods
-        public static void DisposeAll()
-        {
-            // Default
-            if (CBDefault != null)
-                CBDefault.Dispose();
-
-            if (CBDefaultInstance != null)
-                CBDefaultInstance.Dispose();
-
-            // Hedgehog Engine 2
-            if (CBWorld != null)
-                CBWorld.Dispose();
-
-            if (CBMaterialDynamic != null)
-                CBMaterialDynamic.Dispose();
-
-            if (CBMaterialAnimation != null)
-                CBMaterialAnimation.Dispose();
-
-            if (CBMaterialStatic != null)
-                CBMaterialStatic.Dispose();
-        }
-    }
-
     public abstract class ConstantBuffer : System.IDisposable
     {
         // Variables/Constants
@@ -71,7 +35,8 @@ namespace HedgeEdit
 
         public virtual void Dispose()
         {
-            Buffer.Dispose();
+            if (Buffer != null)
+                Buffer.Dispose();
         }
     }
 
