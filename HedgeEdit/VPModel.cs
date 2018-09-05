@@ -10,7 +10,7 @@ using Buffer = SharpDX.Direct3D11.Buffer;
 
 namespace HedgeEdit
 {
-    public class VPModel
+    public class VPModel : IDisposable
     {
         // Variables/Constants
         public List<VPObjectInstance> Instances = new List<VPObjectInstance>();
