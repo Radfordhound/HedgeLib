@@ -758,21 +758,49 @@ namespace HedgeEdit
                 UpdateBuffersFirstPass((prevRenderMode != RenderModes.Default));
 
                 // Render each preview box
+                bool hasUpdated;
+                DrawModelPreviewBoxes(Data.DefaultCube);
+
+                foreach (var mdl in Data.DefaultTerrainGroup)
+                {
+                    DrawModelPreviewBoxes(mdl.Value);
+                }
+
+                foreach (var group in Data.TerrainGroups)
+                {
+                    foreach (var mdl in group.Value)
+                    {
+                        DrawModelPreviewBoxes(mdl.Value);
+                    }
+                }
+
                 foreach (var mdl in Data.Objects)
                 {
-                    foreach (var instance in mdl.Value.Instances)
-                    {
-                        if (!SelectedInstances.Contains(instance))
-                            continue;
-
-                        previewBox.Update(mdl.Value.BoundingBox.GetCorners());
-                        previewBox.Draw(instance);
-                    }
+                    DrawModelPreviewBoxes(mdl.Value);
                 }
 
                 // Reset RenderMode and PrimitiveTopology
                 RenderMode = prevRenderMode;
                 InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
+
+                // Sub-Methods
+                void DrawModelPreviewBoxes(VPModel mdl)
+                {
+                    hasUpdated = false;
+                    foreach (var instance in mdl.Instances)
+                    {
+                        if (!SelectedInstances.Contains(instance))
+                            continue;
+
+                        if (!hasUpdated)
+                        {
+                            previewBox.Update(mdl.BoundingBox.GetCorners());
+                            hasUpdated = true;
+                        }
+
+                        previewBox.Draw(instance);
+                    }
+                }
             }
         }
     }
