@@ -1,4 +1,5 @@
-﻿using SharpDX;
+﻿using HedgeEdit.D3D;
+using SharpDX;
 using System;
 
 namespace HedgeEdit
@@ -147,6 +148,42 @@ namespace HedgeEdit
         }
 
         // Methods
+        public void UpdateConstantBuffers()
+        {
+            switch (Viewport.RenderMode)
+            {
+                case Viewport.RenderModes.HedgehogEngine2:
+                    Buffers.HE2.CBMaterialDynamic.Data.world_matrix = matrix;
+                    Buffers.HE2.CBMaterialDynamic.Data.prev_world_matrix = prevMatrix;
+
+                    // TODO: light_field_color
+
+                    Buffers.HE2.CBMaterialDynamic.Data.u_modulate_color =
+                        new Vector4(1, 1, 1, 1f); // TODO
+
+                    // TODO: u_view_offset
+                    // TODO: u_model_user_param_0
+                    // TODO: u_model_user_param_1
+                    // TODO: u_model_user_param_2
+                    // TODO: u_model_user_param_3
+                    // TODO: u_disable_max_bone_influences_8
+                    // TODO: u_enable_highlight_object
+                    // TODO: u_enable_highlight_chara
+
+                    Buffers.HE2.CBMaterialDynamic.Update();
+                    Buffers.HE2.CBMaterialDynamic.VSSetConstantBuffer(2);
+                    Buffers.HE2.CBMaterialDynamic.PSSetConstantBuffer(2);
+                    break;
+
+                default:
+                    Buffers.Default.CBDefaultInstance.Data.World = matrix;
+                    Buffers.Default.CBDefaultInstance.Update();
+                    Buffers.Default.CBDefaultInstance.VSSetConstantBuffer(1);
+                    Buffers.Default.CBDefaultInstance.PSSetConstantBuffer(1);
+                    break;
+            }
+        }
+
         protected void UpdateMatrix()
         {
             prevMatrix = matrix;

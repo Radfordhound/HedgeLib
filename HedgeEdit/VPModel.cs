@@ -192,25 +192,7 @@ namespace HedgeEdit
             foreach (var instance in Instances)
             {
                 // Update Constant Buffers
-                switch (Viewport.RenderMode)
-                {
-                    case Viewport.RenderModes.HedgehogEngine2:
-                        Buffers.HE2.CBMaterialDynamic.Data.world_matrix = instance.Matrix;
-                        Buffers.HE2.CBMaterialDynamic.Data.prev_world_matrix = instance.PrevMatrix;
-                        Buffers.HE2.CBMaterialDynamic.Data.u_modulate_color = Vector4.One; // TODO
-
-                        Buffers.HE2.CBMaterialDynamic.Update();
-                        Buffers.HE2.CBMaterialDynamic.VSSetConstantBuffer(2);
-                        Buffers.HE2.CBMaterialDynamic.PSSetConstantBuffer(2);
-                        break;
-
-                    default:
-                        Buffers.Default.CBDefaultInstance.Data.World = instance.Matrix;
-                        Buffers.Default.CBDefaultInstance.Update();
-                        Buffers.Default.CBDefaultInstance.VSSetConstantBuffer(1);
-                        Buffers.Default.CBDefaultInstance.PSSetConstantBuffer(1);
-                        break;
-                }
+                instance.UpdateConstantBuffers();
 
                 // Update Highlight Color
                 // TODO
