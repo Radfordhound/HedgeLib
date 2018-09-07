@@ -97,6 +97,7 @@
     <Compile Include="Input.cs" />
     <Compile Include="D3D\InputElements.cs" />
     <Compile Include="D3D\Shader.cs" />
+    <Compile Include="PreviewBox.cs" />
     <Compile Include="Primitives\Cube.cs" />
     <Compile Include="UI\GUI.cs" />
     <Compile Include="Data\Objects.cs" />

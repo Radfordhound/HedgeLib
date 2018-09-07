@@ -91,6 +91,7 @@ namespace HedgeEdit
         private static Texture2D backBuffer, depthBuffer;
         private static RenderTargetView renderView;
         private static DepthStencilView depthView;
+        private static PreviewBox previewBox;
 
         private static VShader currentVShader;
         private static PShader currentPShader;
@@ -149,6 +150,9 @@ namespace HedgeEdit
             currentPShader = Data.PixelShaders["Default"];
 
             // Setup ConstantBuffers
+            if (RenderMode != RenderModes.Default)
+                Buffers.Init(device, RenderModes.Default);
+
             Buffers.Init(device, RenderMode);
 
             // Setup the Input Assembler
@@ -167,6 +171,9 @@ namespace HedgeEdit
                     MinimumLod = 0,
                     MaximumLod = float.MaxValue,
                 }));
+
+            // Setup our Preview Box
+            previewBox = new PreviewBox(device);
 
             // Set out current shaders and call OnResize to finalise viewport
             currentVShader.Use(Context);
@@ -288,6 +295,9 @@ namespace HedgeEdit
 
             Data.Textures.Clear();
 
+            // Dispose Preview Box
+            Utilities.Dispose(ref previewBox);
+
             // Dispose D3D stuff
             Utilities.Dispose(ref renderView);
             Utilities.Dispose(ref backBuffer);
@@ -326,6 +336,8 @@ namespace HedgeEdit
                 var far = UnProject(1);
                 var direction = (far - near);
                 direction.Normalize(); // TODO: Is NormalizeFast accurate enough?
+
+                var ray = new Ray(near, direction);
                 //var mp = new Vector3(vpMousePos.X, vpMousePos.Y, 0f);
                 //viewport.Unproject(ref mp, ref vpInv, out Vector3 near);
 
@@ -357,7 +369,7 @@ namespace HedgeEdit
                 bool SelectObject(VPModel mdl)
                 {
                     // TODO: Fix farther objects being selected first due to dictionary order
-                    var instance = mdl.InstanceIntersects(near, direction);
+                    var instance = mdl.InstanceIntersects(ref ray);
                     if (instance != null && instance.CustomData != null)
                     {
                         if (!Input.IsInputDown(Inputs.MultiSelect))
@@ -385,8 +397,8 @@ namespace HedgeEdit
                 // a bunch of StackOverflow posts lol
                 var vec = new Vector4()
                 {
-                    X = 2.0f * vpMousePos.X / vp.Width - 1,
-                    Y = -(2.0f * vpMousePos.Y / vp.Height - 1),
+                    X = ((2.0f * vpMousePos.X) / vp.Width) - 1,
+                    Y = -(((2.0f * vpMousePos.Y) / vp.Height) - 1),
                     Z = z,
                     W = 1.0f
                 };
@@ -765,6 +777,39 @@ namespace HedgeEdit
                 {
                     mdl.Value.Draw(slot, skipMaterials);
                 }
+            }
+
+            // Render selected instance boundries
+            if (SelectedInstances.Count > 0)
+            {
+                // Change RenderMode and PrimitiveTopology
+                var prevRenderMode = RenderMode;
+                RenderMode = RenderModes.Default;
+                InputAssembler.PrimitiveTopology = PrimitiveTopology.LineList;
+
+                // Set Vertex/Pixel Shaders
+                CurrentVShader = Data.VertexShaders["BoundingBox"];
+                CurrentPShader = Data.PixelShaders["BoundingBox"];
+
+                // Update Constant Buffers
+                UpdateBuffersFirstPass((prevRenderMode != RenderModes.Default));
+
+                // Render each preview box
+                foreach (var mdl in Data.Objects)
+                {
+                    foreach (var instance in mdl.Value.Instances)
+                    {
+                        if (!SelectedInstances.Contains(instance))
+                            continue;
+
+                        previewBox.Update(mdl.Value.BoundingBox.GetCorners());
+                        previewBox.Draw(instance);
+                    }
+                }
+
+                // Reset RenderMode and PrimitiveTopology
+                RenderMode = prevRenderMode;
+                InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
             }
         }
     }

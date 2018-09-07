@@ -97,17 +97,6 @@ namespace HedgeEdit
 
             // Draw the mesh
             Viewport.Context.DrawIndexed(TriangleCount, 0, 0);
-
-            // Bind the texture and the mesh's VAO
-            //GL.BindTexture(TextureTarget.Texture2D, tex);
-            //GL.BindVertexArray(VAO);
-
-            // Draw the mesh
-            //GL.DrawElements(PrimitiveType.Triangles, TriangleCount,
-            //    DrawElementsType.UnsignedInt, IntPtr.Zero);
-
-            // Un-bind the VAO
-            //GL.BindVertexArray(0);
         }
 
         public void Dispose()

@@ -1,5 +1,4 @@
-﻿using HedgeLib.Math;
-using HedgeLib.Models;
+﻿using HedgeLib.Models;
 using SharpDX;
 using SharpDX.Direct3D11;
 using System;
@@ -12,7 +11,8 @@ namespace HedgeEdit
     {
         // Variables/Constants
         public List<VPObjectInstance> Instances = new List<VPObjectInstance>();
-        public AABB BoundingBox = new AABB();
+        public VPMesh[] Meshes => meshes;
+        public BoundingBox BoundingBox;
         protected VPMesh[] meshes;
 
         // Constructors
@@ -32,19 +32,21 @@ namespace HedgeEdit
                 // Generate an AABB
                 if (generateAABB)
                 {
-                    // TODO
-                    //for (uint i2 = Mesh.VertPos; i2 < mesh.VertexData.Length;
-                    //    i2 += Mesh.StructureLength)
-                    //{
-                    //    var wp = OpenTK.Vector3.TransformPosition(
-                    //        new OpenTK.Vector3(
-                    //            mesh.VertexData[i2],
-                    //            mesh.VertexData[i2 + 1],
-                    //            mesh.VertexData[i2 + 2]),
-                    //        OpenTK.Matrix4.Identity);
+                    int pointLen = (mesh.VertexData.Length / Mesh.StructureLength);
+                    var points = new Vector3[pointLen];
+                    int dataIndex = Mesh.VertPos;
 
-                    //    BoundingBox.AddPoint(wp.X, wp.Y, wp.Z);
-                    //}
+                    for (uint i2 = 0; i2 < pointLen; ++i2)
+                    {
+                        points[i2] = new Vector3(
+                            mesh.VertexData[dataIndex],
+                            mesh.VertexData[dataIndex + 1],
+                            mesh.VertexData[dataIndex + 2]);
+                        dataIndex += Mesh.StructureLength;
+                    }
+
+                    var meshBox = BoundingBox.FromPoints(points);
+                    BoundingBox.Merge(ref BoundingBox, ref meshBox, out BoundingBox);
                 }
 
                 // Send vertex data to the GPU
@@ -62,82 +64,11 @@ namespace HedgeEdit
                 // Generate a VPMesh
                 meshes[i] = new VPMesh(indices, binding, mesh);
             }
+        }
 
-            //int meshCount = mdl.Meshes.Count;
-            //Mesh mesh;
-
-            //meshes = new VPMesh[meshCount];
-            //for (int i = 0; i < meshCount; ++i)
-            //{
-            //    mesh = mdl.Meshes[i];
-
-            //    // Generate an AABB
-            //    if (generateAABB)
-            //    {
-            //        for (uint i2 = Mesh.VertPos; i2 < mesh.VertexData.Length;
-            //            i2 += Mesh.StructureLength)
-            //        {
-            //            var wp = OpenTK.Vector3.TransformPosition(
-            //                new OpenTK.Vector3(
-            //                    mesh.VertexData[i2],
-            //                    mesh.VertexData[i2 + 1],
-            //                    mesh.VertexData[i2 + 2]),
-            //                OpenTK.Matrix4.Identity);
-
-            //            BoundingBox.AddPoint(wp.X, wp.Y, wp.Z);
-            //        }
-            //    }
-
-            //    // Setup a vertex array object and vertex buffer object
-            //    GL.GenVertexArrays(1, out uint vao);
-            //    GL.GenBuffers(1, out uint vbo);
-
-            //    // Bind the VAO and VBO
-            //    GL.BindVertexArray(vao);
-            //    GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
-
-            //    // Send vertex data to the GPU
-            //    GL.BufferData(BufferTarget.ArrayBuffer, mesh.VertexData.Length *
-            //        sizeof(float), mesh.VertexData, BufferUsageHint.StaticDraw);
-
-            //    // Vertex Positions
-            //    GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float,
-            //        false, Mesh.StructureByteLength, Mesh.VertPos);
-            //    GL.EnableVertexAttribArray(0);
-
-            //    // Normals
-            //    GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float,
-            //        false, Mesh.StructureByteLength, Mesh.NormPos * sizeof(float));
-            //    GL.EnableVertexAttribArray(1);
-
-            //    // Colors
-            //    GL.VertexAttribPointer(2, 4, VertexAttribPointerType.Float,
-            //        false, Mesh.StructureByteLength, Mesh.ColorPos * sizeof(float));
-            //    GL.EnableVertexAttribArray(2);
-
-            //    // UV Coordinates
-            //    GL.VertexAttribPointer(3, 2, VertexAttribPointerType.Float,
-            //        false, Mesh.StructureByteLength, Mesh.UVPos * sizeof(float));
-            //    GL.EnableVertexAttribArray(3);
-
-            //    // Generate an element buffer object
-            //    GL.GenBuffers(1, out uint ebo);
-            //    GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
-            //    GL.BufferData(BufferTarget.ElementArrayBuffer, mesh.Triangles.Length *
-            //        sizeof(uint), mesh.Triangles, BufferUsageHint.StaticDraw);
-
-            //    // Un-bind the VAO (and, by extension, the VBO/EBO)
-            //    GL.BindVertexArray(0);
-
-            //    // Generate a VPMesh
-            //    meshes[i] = new VPMesh()
-            //    {
-            //        VAO = vao,
-            //        MaterialName = mesh.MaterialName,
-            //        TriangleCount = mesh.Triangles.Length,
-            //        Slot = mesh.Slot
-            //    };
-            //}
+        ~VPModel()
+        {
+            Dispose();
         }
 
         public void Dispose()
@@ -149,18 +80,21 @@ namespace HedgeEdit
         }
 
         // Methods
-        public VPObjectInstance InstanceIntersects(Vector3 origin,
-            Vector3 direction, uint distance = 100)
+        public VPObjectInstance InstanceIntersects(ref Ray ray)
         {
-            var o = Types.ToHedgeLib(origin);
-            var d = Types.ToHedgeLib(direction);
-
+            BoundingBox bb;
             foreach (var instance in Instances)
             {
-                // TODO: Try to make this more efficient if possible
-                if (BoundingBox.Intersects(o, d, Types.ToHedgeLib(
-                    instance.Position), distance))
+                // Transform the bounding box by the instance's matrix
+                bb.Maximum = (Vector3)Vector3.Transform(
+                    BoundingBox.Maximum, instance.Matrix);
+                bb.Minimum = (Vector3)Vector3.Transform(
+                    BoundingBox.Minimum, instance.Matrix);
+
+                // Check if the ray intersects the transformed bounding box
+                if (bb.Intersects(ref ray))
                 {
+                    // TODO: Return distance here and do distance check
                     return instance;
                 }
             }
