@@ -476,83 +476,50 @@ namespace HedgeEdit
             if (device == null)
                 throw new Exception("Cannot render viewport - viewport not yet initialized!");
 
+            // Clear the background color
+            Context.ClearRenderTargetView(renderView, Color.Black);
+            Context.ClearDepthStencilView(depthView, DepthStencilClearFlags.Depth, 1, 0);
+
+            // Update Constant Buffer data
+            UpdateBuffersFirstPass();
+
+            // Render the Scene
             if (RenderMode == RenderModes.Default)
             {
-                // Update Constant Buffer Data
-                viewProj = Matrix.Multiply(view, proj);
-                Buffers.Default.CBDefault.Data.ViewProj = viewProj;
-
-                // Send the new Constant Buffer to the GPU
-                Buffers.Default.CBDefault.Update();
-                Buffers.Default.CBDefault.VSSetConstantBuffer(0);
-                Buffers.Default.CBDefault.PSSetConstantBuffer(0);
-
-                // Clear the background color
-                Context.ClearRenderTargetView(renderView, Color.Black);
-                Context.ClearDepthStencilView(depthView, DepthStencilClearFlags.Depth, 1, 0);
+                // Set Vertex Shader and Render Scene
+                CurrentVShader = Data.VertexShaders["Default"];
+                RenderScene();
             }
             else if (RenderMode == RenderModes.HedgehogEngine2)
             {
-                // Update Constant Buffer Data
-                Buffers.HE2.CBWorld.Data.g_LightScatteringColor = new Vector4(
-                    0.039f, 0.274f, 0.549f, 1);
+                // TODO: Finish Deferred stuff and commit it lol
 
-                Buffers.HE2.CBWorld.Data.g_tonemap_param = new Vector4(
-                    1, 1, 1, 1);
+                // Setup First Pass
+                CurrentVShader = Data.VertexShaders["common_vs"];
+                //deferredBuffers.PreRender(Context);
 
-                Buffers.HE2.CBWorld.Data.g_debug_option = Vector4.One;
-                Buffers.HE2.CBWorld.Data.prev_view_proj_matrix = ViewProjection;
-                Buffers.HE2.CBWorld.Data.proj_matrix = proj;
-                Buffers.HE2.CBWorld.Data.view_matrix = view;
-                Buffers.HE2.CBWorld.Data.u_cameraPosition = new Vector4(CameraPos, 1);
+                // Render First Pass
+                RenderScene();
 
-                // TODO: FIGURE THIS CRAP OUT
-                Buffers.HE2.CBWorld.Data.g_LightScatteringFarNearScale = new Vector4(1, 1, 1, 1);
-                Buffers.HE2.CBWorld.Data.g_LightScattering_Ray_Mie_Ray2_Mie2 = new Vector4(
-                    0.58f, 1, 0.58f, 1);
+                // Setup Second Pass
+                Context.OutputMerger.SetTargets(depthView, renderView);
+                //for (int i = 0; i < 13; ++i)
+                //{
+                //    Context.PixelShader.SetSampler(i, sampler);
+                //}
 
-                Buffers.HE2.CBWorld.Data.u_lightDirection = new Vector4(
-                    -0.2991572f, -0.8605858f, 0.4121857f, 1);
+                //CurrentVShader = Data.VertexShaders["test"];
+                //CurrentPShader = Data.PixelShaders["test"];
+                //Context.PixelShader.SetShaderResources(0, deferredBuffers.ShaderResourceViews);
+                UpdateBuffersSecondPass();
+                
+                // Render Second Pass
+                //Data.SecondPassQuad.Draw(Mesh.Slots.Default, true); // TODO
 
-                Buffers.HE2.CBWorld.Data.g_LightScattering_ConstG_FogDensity =
-                    new Vector4(1, 1, 1, 1);
-
-                // Send the new Constant Buffer to the GPU
-                Buffers.HE2.CBWorld.Update();
-                Buffers.HE2.CBWorld.VSSetConstantBuffer(0);
-                Buffers.HE2.CBWorld.PSSetConstantBuffer(0);
-
-                ViewProjection = Matrix.Multiply(view, proj);
-
-                // Set OutputMerger Targets and Clear Depth Buffer
-                // TODO: Deferred Rendering
-                //Context.OutputMerger.SetTargets(depthView, renderViews);
-                Context.ClearDepthStencilView(depthView, DepthStencilClearFlags.Depth, 1, 0);
-            }
-
-            // Draw all models in the scene
-            Mesh.Slots slot;
-            for (int i = 0; i < 4; ++i)
-            {
-                slot = (Mesh.Slots)i;
-                Data.DefaultCube.Draw(slot);
-
-                foreach (var mdl in Data.DefaultTerrainGroup)
+                // Unbind PixelShader resources
+                for (int i = 0; i < deferredBuffers.ShaderResourceViews.Length; ++i)
                 {
-                    mdl.Value.Draw(slot);
-                }
-
-                foreach (var group in Data.TerrainGroups)
-                {
-                    foreach (var mdl in group.Value)
-                    {
-                        mdl.Value.Draw(slot);
-                    }
-                }
-
-                foreach (var mdl in Data.Objects)
-                {
-                    mdl.Value.Draw(slot);
+                    Context.PixelShader.SetShaderResource(i, null);
                 }
             }
 
@@ -560,13 +527,11 @@ namespace HedgeEdit
             ////GL.UseProgram(prevID);
             //Data.PreviewBox.Draw(defaultID, Mesh.Slots.Default, true);
 
-            //// Draw Transform Gizmos
+            // Draw Transform Gizmos
             //Gizmo.Render(defaultID);
+            // TODO
 
-            //// Swap our buffers
-            ////GL.Flush();
-            //vp.SwapBuffers();
-            //prevMouseState = mouseState;
+            // Present our finalized image
             swapChain.Present(0, PresentFlags.None);
         }
 
@@ -588,6 +553,219 @@ namespace HedgeEdit
         {
             view = Matrix.LookAtRH(camPos,
                 camPos + CameraForward, camUp);
+        }
+
+        private static void UpdateBuffersFirstPass(bool updateMatrices = true)
+        {
+            if (RenderMode == RenderModes.HedgehogEngine2)
+            {
+                // Update CBWorld Constant Buffer
+                if (updateMatrices)
+                {
+                    Buffers.HE2.CBWorld.Data.view_matrix = view;
+                    Buffers.HE2.CBWorld.Data.proj_matrix = proj;
+                    Buffers.HE2.CBWorld.Data.prev_view_proj_matrix = viewProj;
+                    viewProj = Matrix.Multiply(view, proj);
+                    Buffers.HE2.CBWorld.Data.inv_view_matrix = Matrix.Invert(view);
+                    Buffers.HE2.CBWorld.Data.inv_proj_matrix = Matrix.Invert(proj);
+                    // TODO: culling_proj_matrix
+                    Buffers.HE2.CBWorld.Data.view_proj_matrix = viewProj;
+                    Buffers.HE2.CBWorld.Data.inv_view_proj_matrix = Matrix.Invert(viewProj);
+                }
+
+                Buffers.HE2.CBWorld.Data.u_cameraPosition = camPos;
+
+                // TODO: Finish proper NeedleFxSceneData RFL loading and commit it
+                //if (Stage.NeedleFxSceneData != null)
+                //{
+                //    var item = Stage.NeedleFxSceneData.Items[0];
+
+                //    // TODO: jitter_offset
+                //    // TODO: shadow_camera_view_matrix_third_row
+                //    // TODO: shadow_view_matrix
+                //    // TODO: shadow_view_proj_matrix
+                //    // TODO: shadow_map_parameter[2]
+
+                //    // TODO: Is this correct?
+                //    var renderTarget = Stage.NeedleFxSceneData.Config.rendertarget;
+                //    Buffers.HE2.CBWorld.Data.shadow_map_size = new Vector4(
+                //        renderTarget.shadowMapWidth, renderTarget.shadowMapHeight,
+                //        1, 1);
+
+                //    // TODO: shadow_cascade_offset[4]
+                //    // TODO: shadow_cascade_scale[4]
+                //    // TODO: shadow_cascade_frustums_eye_space_depth
+                //    // TODO: shadow_cascade_transition_scale
+                //    // TODO: heightmap_view_matrix
+                //    // TODO: heightmap_view_proj_matrix
+                //    // TODO: heightmap_parameter
+                //    // TODO: u_lightColor
+
+                //    Buffers.HE2.CBWorld.Data.u_lightDirection = new Vector4(
+                //        -0.2991572f, -0.8605858f, 0.4121857f, 1); // TODO
+
+                //    // TODO: g_probe_data[72]
+                //    // TODO: g_probe_pos[24]
+                //    // TODO: g_probe_param[24]
+                //    // TODO: g_probe_count
+
+                //    // TODO: Is this correct?
+                //    Buffers.HE2.CBWorld.Data.g_LightScattering_Ray_Mie_Ray2_Mie2 = new Vector4(
+                //        item.lightscattering.rayleigh, item.lightscattering.mie,
+                //        item.lightscattering.rayleigh, item.lightscattering.mie);
+
+                //    Buffers.HE2.CBWorld.Data.g_LightScattering_ConstG_FogDensity =
+                //        new Vector4(0.1f, 0.1f, 0.1f, 0.1f);
+
+                //    Buffers.HE2.CBWorld.Data.g_LightScatteringFarNearScale = new Vector4(
+                //        item.lightscattering.zfar, item.lightscattering.znear, 1, 1);
+
+                //    var lsc = item.lightscattering.color;
+                //    Buffers.HE2.CBWorld.Data.g_LightScatteringColor = new Vector4(
+                //        lsc.X / 255f, lsc.Y / 255f, lsc.Z / 255f, 1);
+
+                //    // TODO: g_alphathreshold
+                //    // TODO: g_smoothness_param
+                //    // TODO: g_time_param
+                //    // TODO: g_billboard_guest_param
+                //    // TODO: g_billboard_guest_look_position[2]
+                //    // TODO: g_billboard_guest_enable_multi_direction
+                //    // TODO: g_billboard_guest_use_look_position
+                //    // TODO: u_planar_projection_shadow_plane
+                //    // TODO: u_planar_projection_shadow_light_position
+                //    // TODO: u_planar_projection_shadow_color
+                //    // TODO: u_planar_projection_shadow_param
+                //    // TODO: g_global_user_param_0
+                //    // TODO: g_global_user_param_1
+                //    // TODO: g_global_user_param_2
+                //    // TODO: g_global_user_param_3
+
+                //    Buffers.HE2.CBWorld.Data.g_tonemap_param = new Vector4(
+                //        item.tonemap.middleGray, item.tonemap.lumMax,
+                //        item.tonemap.lumMin, item.tonemap.adaptedRatio);
+
+                //    // TODO: u_contrast_factor[3]
+                //    Buffers.HE2.CBWorld.Data.u_hls_offset = new Vector4(
+                //        item.colorContrast.hlsHueOffset,
+                //        item.colorContrast.hlsLightnessOffset,
+                //        item.colorContrast.hlsSaturationOffset, 1);
+
+                //    // TODO: u_hls_rgb
+                //    Buffers.HE2.CBWorld.Data.enable_hls_correction =
+                //        item.colorContrast.useHlsCorrection;
+
+                //    // TODO: u_color_grading_factor
+                //    // TODO: u_screen_info
+                //    // TODO: u_viewport_info
+                //    // TODO: u_view_param
+
+                //    Buffers.HE2.CBWorld.Data.u_sggi_param[0] = new Vector4(
+                //        item.sggi.sgStartSmoothness, item.sggi.sgEndSmoothness, 0, 0);
+
+                //    // TODO: The other u_sggi_param lol
+
+                //    // TODO: u_histogram_param
+                //    // TODO: u_occlusion_capsule_param[2]
+                //    // TODO: u_ssao_param
+                //    // TODO: u_highlight_param[2]
+                //    // TODO: u_wind_param[2]
+
+                //    Buffers.HE2.CBWorld.Data.u_wind_frequencies = new Vector4(
+                //        item.sceneEnv.wind_frequencies);
+
+                //    Buffers.HE2.CBWorld.Data.u_grass_lod_distance = Types.ToSharpDX(
+                //        item.sceneEnv.grass_lod_distance);
+
+                //    Buffers.HE2.CBWorld.Data.enable_ibl_plus_directional_specular =
+                //        item.renderOption.debugIBLPlusDirectionalSpecular;
+                //    Buffers.HE2.CBWorld.Data.g_debug_option = Vector4.Zero;
+
+                //    // TODO: g_debug_param_float
+                //    // TODO: g_debug_param_int
+                //}
+
+                // Send the new Constant Buffer to the GPU
+                Buffers.HE2.CBWorld.Update();
+                Buffers.HE2.CBWorld.VSSetConstantBuffer(0);
+                Buffers.HE2.CBWorld.PSSetConstantBuffer(0);
+            }
+            else
+            {
+                // Update CBDefault Constant Buffer
+                if (updateMatrices)
+                {
+                    viewProj = Matrix.Multiply(view, proj);
+                    Buffers.Default.CBDefault.Data.ViewProj = viewProj;
+
+                    // Don't need to update the CB unless we changed it!
+                    Buffers.Default.CBDefault.Update();
+                }
+
+                // Send the new Constant Buffer to the GPU
+                Buffers.Default.CBDefault.VSSetConstantBuffer(0);
+                Buffers.Default.CBDefault.PSSetConstantBuffer(0);
+            }
+        }
+
+        private static void UpdateBuffersSecondPass()
+        {
+            // Update Constant Buffers for Second Pass
+            if (RenderMode == RenderModes.HedgehogEngine2)
+            {
+                // TODO: shlightfield_default
+                // TODO: shlightfield_multiply_color_up
+                // TODO: shlightfield_multiply_color_down
+                // TODO: shlightfield_probes_SHLightFieldProbe
+                // TODO: shlightfield_probe_SHLightFieldProbe_end
+                // TODO: g_local_light_index_data
+                // TODO: g_local_light_count
+                // TODO: g_local_light_data
+                // TODO: g_local_light_tile_data
+
+                // Send the new Constant Buffers to the GPU
+                Buffers.HE2.CBSHLightFieldProbes.Update();
+                Buffers.HE2.CBLocalLightIndexData.Update();
+                Buffers.HE2.CBLocalLightContextData.Update();
+                Buffers.HE2.CBLocalLightTileData.Update();
+
+                Buffers.HE2.CBSHLightFieldProbes.PSSetConstantBuffer(6);
+                Buffers.HE2.CBLocalLightIndexData.PSSetConstantBuffer(7);
+                Buffers.HE2.CBLocalLightContextData.PSSetConstantBuffer(8);
+                Buffers.HE2.CBLocalLightTileData.PSSetConstantBuffer(9);
+
+                // Also set CBWorld again since we unset it to render the preview boxes
+                Buffers.HE2.CBWorld.VSSetConstantBuffer(0);
+                Buffers.HE2.CBWorld.PSSetConstantBuffer(0);
+            }
+        }
+
+        private static void RenderScene(bool skipMaterials = false)
+        {
+            // Draw all models in the scene
+            Mesh.Slots slot;
+            for (int i = 0; i < 4; ++i)
+            {
+                slot = (Mesh.Slots)i;
+                Data.DefaultCube.Draw(slot, skipMaterials);
+
+                foreach (var mdl in Data.DefaultTerrainGroup)
+                {
+                    mdl.Value.Draw(slot, skipMaterials);
+                }
+
+                foreach (var group in Data.TerrainGroups)
+                {
+                    foreach (var mdl in group.Value)
+                    {
+                        mdl.Value.Draw(slot, skipMaterials);
+                    }
+                }
+
+                foreach (var mdl in Data.Objects)
+                {
+                    mdl.Value.Draw(slot, skipMaterials);
+                }
+            }
         }
     }
 }

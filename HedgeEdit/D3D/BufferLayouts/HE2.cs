@@ -53,7 +53,7 @@ namespace HedgeEdit.D3D.BufferLayouts.HE2
         [FieldOffset(1040)]
         public Vector4 u_lightDirection;
         [FieldOffset(1056)]
-        public Vector4 u_cameraPosition;
+        public Vector3 u_cameraPosition;
         [FieldOffset(1072), MarshalAs(UnmanagedType.ByValArray, SizeConst = 72)]
         public Vector4[] g_probe_data;
         [FieldOffset(2224), MarshalAs(UnmanagedType.ByValArray, SizeConst = 24)]
