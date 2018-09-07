@@ -44,33 +44,50 @@ namespace HedgeEdit.D3D
     {
         // Variables/Constants
         public T Data;
+        protected MapMode? mapMode;
 
         // Constructors
-        public ConstantBuffer(Device device, ref BufferDescription bufferDesc)
+        public ConstantBuffer(Device device, ref BufferDescription bufferDesc,
+            MapMode? mapMode = null)
         {
+            this.mapMode = mapMode;
             Create(device, ref bufferDesc);
         }
 
-        public ConstantBuffer(Device device)
+        public ConstantBuffer(Device device,
+            ResourceUsage resourceUsage = ResourceUsage.Default,
+            CpuAccessFlags cpuAccessFlags = CpuAccessFlags.None,
+            MapMode? mapMode = null)
         {
             var bufferDesc = new BufferDescription()
             {
                 SizeInBytes = Utilities.SizeOf<T>(),
-                Usage = ResourceUsage.Default,
+                Usage = resourceUsage,
                 BindFlags = BindFlags.ConstantBuffer,
-                CpuAccessFlags = CpuAccessFlags.None,
+                CpuAccessFlags = cpuAccessFlags,
                 OptionFlags = ResourceOptionFlags.None,
                 StructureByteStride = 0
             };
 
+            this.mapMode = mapMode;
             Create(device, ref bufferDesc);
         }
 
         // Methods
         public override void Update()
         {
-            // TODO: Is there a more efficient way to do this?
-            DeviceContext.UpdateSubresource(ref Data, Buffer);
+            if (mapMode.HasValue)
+            {
+                var db = DeviceContext.MapSubresource(Buffer, 0,
+                    mapMode.Value, MapFlags.None);
+
+                Utilities.WriteAndPosition(db.DataPointer, ref Data);
+                DeviceContext.UnmapSubresource(Buffer, 0);
+            }
+            else
+            {
+                DeviceContext.UpdateSubresource(ref Data, Buffer);
+            }
         }
 
         protected void Create(Device device, ref BufferDescription bufferDesc)
