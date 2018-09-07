@@ -46,8 +46,28 @@ namespace HedgeEdit
             }
         }
 
-        public static Vector3 CameraPos = new Vector3(0, 0, 5), CameraRot = new Vector3(0, 0, 0);
-        public static Vector3 CameraForward { get; private set; } = new Vector3(0, 0, -1);
+        public static Vector3 CameraPos
+        {
+            get => camPos;
+            set
+            {
+                camPos = value;
+                UpdateViewMatrix();
+            }
+        }
+
+        public static Vector3 CameraRot
+        {
+            get => camRot;
+            set
+            {
+                camRot = value;
+                UpdateCameraForward();
+                UpdateViewMatrix();
+            }
+        }
+
+        public static Vector3 CameraForward { get; private set; } = Vector3.ForwardRH;
         public static float FOV = 40.0f, NearDistance = 0.1f, FarDistance = 10000f;
 
         public static bool IsMovingCamera
@@ -59,7 +79,6 @@ namespace HedgeEdit
         public static Device Device => device;
         public static DeviceContext Context { get; private set; }
         public static InputAssemblerStage InputAssembler { get; private set; }
-        public static Matrix ViewProjection = Matrix.Identity;
         public static RenderModes RenderMode { get; private set; } = RenderModes.Default;
 
         public enum RenderModes
@@ -75,12 +94,13 @@ namespace HedgeEdit
 
         private static VShader currentVShader;
         private static PShader currentPShader;
-        private static Matrix proj;
+        private static Matrix view, proj, viewProj;
         private static SharpDX.Viewport viewport;
         private static Control vp;
         private static Point prevMousePos = Point.Empty;
         //private static MouseState prevMouseState;
-        private static Vector3 camUp = new Vector3(0, 1, 0);
+        private static Vector3 camPos = new Vector3(0, 0, 5), camRot;
+        private static Vector3 camUp = Vector3.Up;
         private static bool isMovingCamera = false;
 
         public const int BufferCount = 2;
@@ -204,6 +224,16 @@ namespace HedgeEdit
                 vp.Width / (float)vp.Height, NearDistance, FarDistance);
         }
 
+        public static VPObjectInstance SelectObject(object obj)
+        {
+            var instance = Data.GetObjectInstance(obj);
+            if (instance == null)
+                return null;
+
+            SelectedInstances.Add(instance);
+            return instance;
+        }
+
         public static void Dispose()
         {
             if (device == null)
@@ -278,7 +308,7 @@ namespace HedgeEdit
 
             // Get mouse world coordinates/direction
             //ViewProjection.Invert();
-            Matrix.Invert(ref ViewProjection, out Matrix vpInv);
+            Matrix.Invert(ref viewProj, out Matrix vpInv);
             var near = UnProject(0);
 
             //// Transform Gizmos
@@ -390,8 +420,8 @@ namespace HedgeEdit
                     mousePos.X - prevMousePos.X,
                     mousePos.Y - prevMousePos.Y);
 
-                CameraRot.X += mouseDifference.X * 0.1f;
-                CameraRot.Y -= mouseDifference.Y * 0.1f;
+                camRot.X += mouseDifference.X * 0.1f;
+                camRot.Y -= mouseDifference.Y * 0.1f;
 
                 // Set Camera Movement Speed
                 if (Input.IsInputDown(Inputs.Fast))
@@ -410,21 +440,21 @@ namespace HedgeEdit
                 // Set Camera Position
                 if (Input.IsInputDown(Inputs.Up))
                 {
-                    CameraPos += camSpeed * CameraForward;
+                    camPos += camSpeed * CameraForward;
                 }
                 else if (Input.IsInputDown(Inputs.Down))
                 {
-                    CameraPos -= camSpeed * CameraForward;
+                    camPos -= camSpeed * CameraForward;
                 }
 
                 if (Input.IsInputDown(Inputs.Left))
                 {
-                    CameraPos -= Vector3.Normalize(
+                    camPos -= Vector3.Normalize(
                         Vector3.Cross(CameraForward, camUp)) * camSpeed;
                 }
                 else if (Input.IsInputDown(Inputs.Right))
                 {
-                    CameraPos += Vector3.Normalize(
+                    camPos += Vector3.Normalize(
                         Vector3.Cross(CameraForward, camUp)) * camSpeed;
                 }
 
@@ -433,18 +463,8 @@ namespace HedgeEdit
                     vp.PointToScreen(new Point(vp.Width / 2, vp.Height / 2));
 
                 // Update Transforms
-                float x = MathUtil.DegreesToRadians(CameraRot.X);
-                float y = MathUtil.DegreesToRadians(CameraRot.Y);
-                float yCos = (float)Math.Cos(y);
-
-                var front = new Vector3()
-                {
-                    X = (float)Math.Sin(x) * yCos,
-                    Y = (float)Math.Sin(y),
-                    Z = -(float)Math.Cos(x) * yCos
-                };
-
-                CameraForward = Vector3.Normalize(front);
+                UpdateCameraForward();
+                UpdateViewMatrix();
                 Render();
             }
 
@@ -456,12 +476,11 @@ namespace HedgeEdit
             if (device == null)
                 throw new Exception("Cannot render viewport - viewport not yet initialized!");
 
-            var view = Matrix.LookAtRH(CameraPos, CameraPos + CameraForward, camUp);
             if (RenderMode == RenderModes.Default)
             {
                 // Update Constant Buffer Data
-                ViewProjection = Matrix.Multiply(view, proj);
-                Buffers.Default.CBDefault.Data.ViewProj = ViewProjection;
+                viewProj = Matrix.Multiply(view, proj);
+                Buffers.Default.CBDefault.Data.ViewProj = viewProj;
 
                 // Send the new Constant Buffer to the GPU
                 Buffers.Default.CBDefault.Update();
@@ -551,14 +570,24 @@ namespace HedgeEdit
             swapChain.Present(0, PresentFlags.None);
         }
 
-        public static VPObjectInstance SelectObject(object obj)
+        private static void UpdateCameraForward()
         {
-            var instance = Data.GetObjectInstance(obj);
-            if (instance == null)
-                return null;
+            float x = MathUtil.DegreesToRadians(camRot.X);
+            float y = MathUtil.DegreesToRadians(camRot.Y);
+            float yCos = (float)Math.Cos(y);
 
-            SelectedInstances.Add(instance);
-            return instance;
+            CameraForward = Vector3.Normalize(new Vector3()
+            {
+                X = (float)Math.Sin(x) * yCos,
+                Y = (float)Math.Sin(y),
+                Z = -(float)Math.Cos(x) * yCos
+            });
+        }
+
+        private static void UpdateViewMatrix()
+        {
+            view = Matrix.LookAtRH(camPos,
+                camPos + CameraForward, camUp);
         }
     }
 }
