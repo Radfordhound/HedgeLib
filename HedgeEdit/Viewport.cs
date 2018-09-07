@@ -751,8 +751,8 @@ namespace HedgeEdit
                 InputAssembler.PrimitiveTopology = PrimitiveTopology.LineList;
 
                 // Set Vertex/Pixel Shaders
-                CurrentVShader = Data.VertexShaders["BoundingBox"];
-                CurrentPShader = Data.PixelShaders["BoundingBox"];
+                CurrentVShader = Data.VertexShaders["DefaultUntextured"];
+                CurrentPShader = Data.PixelShaders["DefaultUntextured"];
 
                 // Update Constant Buffers
                 UpdateBuffersFirstPass((prevRenderMode != RenderModes.Default));
