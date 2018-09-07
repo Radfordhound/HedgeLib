@@ -529,10 +529,10 @@ namespace HedgeEdit
                 //Data.SecondPassQuad.Draw(Mesh.Slots.Default, true); // TODO
 
                 // Unbind PixelShader resources
-                for (int i = 0; i < deferredBuffers.ShaderResourceViews.Length; ++i)
-                {
-                    Context.PixelShader.SetShaderResource(i, null);
-                }
+                //for (int i = 0; i < deferredBuffers.ShaderResourceViews.Length; ++i)
+                //{
+                //    Context.PixelShader.SetShaderResource(i, null);
+                //}
             }
 
             ////int prevID = Shaders.ShaderPrograms["Preview"];
