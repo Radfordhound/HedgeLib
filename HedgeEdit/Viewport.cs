@@ -336,38 +336,46 @@ namespace HedgeEdit
                 //{
                     // Fire a ray from mouse coordinates in camera direction and
                     // select any object that ray comes in contact with.
-                    if (!SelectObject(Data.DefaultCube))
+                    VPObjectInstance instance = null;
+                    float instanceDistance = float.MaxValue;
+
+                    GetClickedInstances(Data.DefaultCube);
+                    foreach (var obj in Data.Objects)
                     {
-                        foreach (var obj in Data.Objects)
+                        GetClickedInstances(obj.Value);
+                    }
+
+                    if (instance != null)
+                    {
+                        if (!SelectedInstances.Contains(instance))
                         {
-                            SelectObject(obj.Value);
+                            if (!Input.IsInputDown(Inputs.MultiSelect))
+                                SelectedInstances.Clear();
+
+                            SelectedInstances.Add(instance);
+                            Program.MainForm.RefreshGUI();
+                            Render();
+                        }
+                    }
+                    else if (SelectedInstances.Count > 0)
+                    {
+                        SelectedInstances.Clear();
+                        Program.MainForm.RefreshGUI();
+                        Render();
+                    }
+
+                    // Sub-Methods
+                    void GetClickedInstances(VPModel mdl)
+                    {
+                        var inst = mdl.InstanceIntersects(ref ray, out float distance);
+                        if (inst != null && inst.CustomData != null &&
+                            distance <= instanceDistance)
+                        {
+                            instance = inst;
+                            instanceDistance = distance;
                         }
                     }
                 //}
-
-                // Sub-Methods
-                bool SelectObject(VPModel mdl)
-                {
-                    // TODO: Fix farther objects being selected first due to dictionary order
-                    var instance = mdl.InstanceIntersects(ref ray);
-                    if (instance != null && instance.CustomData != null)
-                    {
-                        if (!Input.IsInputDown(Inputs.MultiSelect))
-                            SelectedInstances.Clear();
-
-                        if (!SelectedInstances.Contains(instance))
-                        {
-                            SelectedInstances.Add(instance);
-                            Program.MainForm.RefreshGUI();
-                            return true;
-                        }
-                    }
-
-                    if (Program.MainForm.Focused)
-                        SelectedInstances.Clear();
-
-                    return false;
-                }
             }
         }
 

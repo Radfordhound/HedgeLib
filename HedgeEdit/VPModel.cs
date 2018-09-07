@@ -80,7 +80,7 @@ namespace HedgeEdit
         }
 
         // Methods
-        public VPObjectInstance InstanceIntersects(ref Ray ray)
+        public VPObjectInstance InstanceIntersects(ref Ray ray, out float distance)
         {
             BoundingBox bb;
             foreach (var instance in Instances)
@@ -92,13 +92,13 @@ namespace HedgeEdit
                     BoundingBox.Minimum, instance.Matrix);
 
                 // Check if the ray intersects the transformed bounding box
-                if (bb.Intersects(ref ray))
+                if (bb.Intersects(ref ray, out distance))
                 {
-                    // TODO: Return distance here and do distance check
                     return instance;
                 }
             }
 
+            distance = 0;
             return null;
         }
 
