@@ -97,6 +97,7 @@
     <Compile Include="Input.cs" />
     <Compile Include="D3D\InputElements.cs" />
     <Compile Include="D3D\Shader.cs" />
+    <Compile Include="Primitives\Cube.cs" />
     <Compile Include="UI\GUI.cs" />
     <Compile Include="Data\Objects.cs" />
     <Compile Include="GameEntry.cs" />
@@ -212,9 +213,6 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <None Include="Resources\DefaultCube.mdl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Include="Resources\README.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

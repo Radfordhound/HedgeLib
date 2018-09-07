@@ -13,11 +13,8 @@ namespace HedgeEdit
         {
             // Load default model
             var watch = System.Diagnostics.Stopwatch.StartNew();
-            string cubePth = Path.Combine(Program.StartupPath,
-                Program.ResourcesPath, $"DefaultCube{Model.MDLExtension}");
+            var mdl = new Model(Primitives.Cube.Mesh);
 
-            var mdl = new Model();
-            mdl.Load(cubePth);
 
             // Load default texture
             string defaultTexPath = Path.Combine(Program.StartupPath,
