@@ -316,11 +316,6 @@ namespace HedgeEdit
             var mousePos = Cursor.Position;
             var vpMousePos = vp.PointToClient(mousePos);
 
-            // Get mouse world coordinates/direction
-            //ViewProjection.Invert();
-            Matrix.Invert(ref viewProj, out Matrix vpInv);
-            var near = UnProject(0);
-
             //// Transform Gizmos
             //if (mouseState.LeftButton == OpenTK.Input.ButtonState.Released &&
             //    prevMouseState.LeftButton == OpenTK.Input.ButtonState.Pressed)
@@ -333,23 +328,8 @@ namespace HedgeEdit
             if (vpMousePos.X >= 0 && vpMousePos.Y >= 0 && vpMousePos.X <= vp.Width &&
                 vpMousePos.Y <= vp.Height && Program.MainForm.Active)
             {
-                var far = UnProject(1);
-                var direction = (far - near);
-                direction.Normalize(); // TODO: Is NormalizeFast accurate enough?
-
-                var ray = new Ray(near, direction);
-                //var mp = new Vector3(vpMousePos.X, vpMousePos.Y, 0f);
-                //viewport.Unproject(ref mp, ref vpInv, out Vector3 near);
-
-                //mp.Z = 0.5f;
-                //viewport.Unproject(ref mp, ref vpInv, out Vector3 far);
-
-                //var direction = (far - near);
-                //Console.WriteLine(p);
-                //Console.WriteLine($"far: {far}");
-                //Console.WriteLine($"near: {near}");
-                //direction.Normalize();
-                //Console.WriteLine($"dir: {direction}");
+                var ray = Ray.GetPickRay(vpMousePos.X,
+                    vpMousePos.Y, viewport, viewProj);
 
                 // Check for Transform Gizmo clicks first, then object clicks
                 //if (!Gizmo.Click(near, direction))
@@ -388,31 +368,6 @@ namespace HedgeEdit
 
                     return false;
                 }
-            }
-
-            // Sub-Methods
-            Vector3 UnProject(float z)
-            {
-                // This method was hacked together from
-                // a bunch of StackOverflow posts lol
-                var vec = new Vector4()
-                {
-                    X = ((2.0f * vpMousePos.X) / vp.Width) - 1,
-                    Y = -(((2.0f * vpMousePos.Y) / vp.Height) - 1),
-                    Z = z,
-                    W = 1.0f
-                };
-
-                Vector4.Transform(ref vec, ref vpInv, out vec);
-
-                if (vec.W > float.Epsilon || vec.W < float.Epsilon)
-                {
-                    vec.X /= vec.W;
-                    vec.Y /= vec.W;
-                    vec.Z /= vec.W;
-                }
-
-                return new Vector3(vec.X, vec.Y, vec.Z);
             }
         }
 
