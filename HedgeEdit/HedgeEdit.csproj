@@ -141,6 +141,7 @@
     <Compile Include="UI\TxtBxDialog.Designer.cs">
       <DependentUpon>TxtBxDialog.cs</DependentUpon>
     </Compile>
+    <Compile Include="VPMesh.cs" />
     <Compile Include="VPModel.cs" />
     <Compile Include="UI\MainFrm.cs">
       <SubType>Form</SubType>

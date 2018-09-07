@@ -1,12 +1,9 @@
-﻿using HedgeEdit.D3D;
-using HedgeLib.Math;
+﻿using HedgeLib.Math;
 using HedgeLib.Models;
 using SharpDX;
 using SharpDX.Direct3D11;
-using SharpDX.DXGI;
 using System;
 using System.Collections.Generic;
-using static HedgeEdit.Data;
 using Buffer = SharpDX.Direct3D11.Buffer;
 
 namespace HedgeEdit
@@ -63,14 +60,7 @@ namespace HedgeEdit
                     BindFlags.IndexBuffer, mesh.Triangles);
 
                 // Generate a VPMesh
-                meshes[i] = new VPMesh()
-                {
-                    IndexBuffer = indices,
-                    Binding = binding,
-                    MaterialName = mesh.MaterialName,
-                    TriangleCount = mesh.Triangles.Length,
-                    Slot = mesh.Slot
-                };
+                meshes[i] = new VPMesh(indices, binding, mesh);
             }
 
             //int meshCount = mdl.Meshes.Count;
@@ -178,7 +168,7 @@ namespace HedgeEdit
             return null;
         }
 
-        public void Draw(Mesh.Slots slot, bool isPreview = false)
+        public void Draw(Mesh.Slots slot, bool skipMaterial = false)
         {
             if (meshes == null)
                 throw new Exception("Cannot draw model - model not initialized!");
@@ -241,7 +231,7 @@ namespace HedgeEdit
                 // Draw the meshes
                 for (int i = 0; i < meshes.Length; ++i)
                 {
-                    meshes[i].Draw(slot, isPreview);
+                    meshes[i].Draw(slot, skipMaterial);
                 }
 
                 // Set Highlight Color back to default
@@ -250,97 +240,6 @@ namespace HedgeEdit
                 //{
                 //    GL.Uniform4(highlightLoc, new OpenTK.Vector4(1, 1, 1, 1));
                 //}
-            }
-        }
-
-        // Other
-        protected struct VPMesh : IDisposable
-        {
-            // Variables/Constants
-            public Buffer IndexBuffer;
-            public VertexBufferBinding Binding;
-            public string MaterialName;
-            public int TriangleCount;
-            public Mesh.Slots Slot;
-
-            // Methods
-            public void Draw(Mesh.Slots slot, bool isPreview = false)
-            {
-                if (Slot != slot)
-                    return;
-
-                ShaderResourceView tex;
-                if (!isPreview)
-                {
-                    // Get the material
-                    var mat = (string.IsNullOrEmpty(MaterialName) ||
-                        !Materials.ContainsKey(MaterialName)) ?
-                        DefaultMaterial : Materials[MaterialName];
-
-                    // Set the shader
-                    Viewport.CurrentPShader = (PixelShaders.ContainsKey(mat.ShaderName)) ?
-                        PixelShaders[mat.ShaderName] : PixelShaders["Default"];
-
-                    // Get the texture
-                    string texName = (mat.Texset.Textures.Count > 0) ?
-                        mat.Texset.Textures[0].TextureName : null;
-
-                    tex = (string.IsNullOrEmpty(texName) ||
-                        !Textures.ContainsKey(texName)) ?
-                        DefaultTexture : Textures[texName];
-                }
-                else
-                {
-                    Viewport.CurrentPShader = PixelShaders["Default"];
-                    tex = DefaultTexture;
-                }
-
-                // Update Constant Buffers
-                if (Viewport.RenderMode == Viewport.RenderModes.HedgehogEngine2)
-                {
-                    Buffers.HE2.CBMaterialAnimation.Data.diffuse_color = new Vector4(1, 1, 1, 1);
-                    Buffers.HE2.CBMaterialAnimation.Data.emissive_color = Vector4.One;
-                    Buffers.HE2.CBMaterialAnimation.Data.ambient_color = Vector4.One;
-                    Buffers.HE2.CBMaterialAnimation.Data.emissive_color = Vector4.One;
-                    Buffers.HE2.CBMaterialAnimation.Update();
-                    Buffers.HE2.CBMaterialAnimation.PSSetConstantBuffer(4);
-
-                    // TODO: Don't update CBMaterialStatic every frame
-                    Buffers.HE2.CBMaterialStatic.Data.Luminance = Vector4.One;
-
-                    Buffers.HE2.CBMaterialStatic.Update();
-                    Buffers.HE2.CBMaterialStatic.PSSetConstantBuffer(3);
-                }
-
-                Viewport.Context.PixelShader.SetShaderResource(0, tex);
-
-                // Bind our Buffers
-                Viewport.InputAssembler.SetVertexBuffers(0, Binding);
-                Viewport.InputAssembler.SetIndexBuffer(IndexBuffer, Format.R32_UInt, 0);
-
-                // Draw the mesh
-                Viewport.Context.DrawIndexed(TriangleCount, 0, 0);
-
-                // Bind the texture and the mesh's VAO
-                //GL.BindTexture(TextureTarget.Texture2D, tex);
-                //GL.BindVertexArray(VAO);
-
-                // Draw the mesh
-                //GL.DrawElements(PrimitiveType.Triangles, TriangleCount,
-                //    DrawElementsType.UnsignedInt, IntPtr.Zero);
-
-                // Un-bind the VAO
-                //GL.BindVertexArray(0);
-            }
-
-            public void Dispose()
-            {
-                if (IndexBuffer == null)
-                    return;
-
-                Binding.Buffer.Dispose();
-                IndexBuffer.Dispose();
-                IndexBuffer = null;
             }
         }
     }
