@@ -45,7 +45,7 @@ namespace HedgeEdit.D3D
         public VShader(VertexShader vertexShader, InputLayout layout)
         {
             VertexShader = vertexShader ?? throw new ArgumentNullException("vertexShader");
-            InputLayout = layout ?? throw new ArgumentNullException("layout");
+            InputLayout = layout;
         }
 
         ~VShader()
@@ -62,7 +62,10 @@ namespace HedgeEdit.D3D
             var signature = ShaderSignature.GetInputSignature(vsByteCode);
 
             // Create InputLayout
-            InputLayout = new InputLayout(device, signature, elements);
+            if (elements != null && elements.Length > 0)
+                InputLayout = new InputLayout(device, signature, elements);
+
+            // Dispose Input Signature
             signature.Dispose();
 
             // Make D3D Shaders from compiled HLSL
@@ -74,10 +77,14 @@ namespace HedgeEdit.D3D
 
         public void Load(Device device, byte[] byteCode, InputElement[] elements)
         {
+            // Create Input Signature
             var signature = ShaderSignature.GetInputSignature(byteCode);
 
             // Create InputLayout
-            InputLayout = new InputLayout(device, signature, elements);
+            if (elements != null && elements.Length > 0)
+                InputLayout = new InputLayout(device, signature, elements);
+
+            // Dispose Input Signature
             signature.Dispose();
 
             // Make D3D Shaders from compiled HLSL
@@ -93,7 +100,9 @@ namespace HedgeEdit.D3D
         public override void Dispose()
         {
             VertexShader.Dispose();
-            InputLayout.Dispose();
+
+            if (InputLayout != null)
+                InputLayout.Dispose();
         }
     }
 
