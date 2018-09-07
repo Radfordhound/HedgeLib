@@ -30,9 +30,15 @@ namespace HedgeEdit.D3D.BufferGroups
         // Methods
         public void Init(Device device)
         {
-            CBWorld = new ConstantBuffer<CBWorld>(device);
-            CBMaterialDynamic = new ConstantBuffer<CBMaterialDynamic>(device);
-            CBMaterialAnimation = new ConstantBuffer<CBMaterialAnimation>(device);
+            CBWorld = new ConstantBuffer<CBWorld>(device, ResourceUsage.Dynamic,
+                CpuAccessFlags.Write, MapMode.WriteDiscard);
+
+            CBMaterialDynamic = new ConstantBuffer<CBMaterialDynamic>(device,
+                ResourceUsage.Dynamic, CpuAccessFlags.Write, MapMode.WriteDiscard);
+
+            CBMaterialAnimation = new ConstantBuffer<CBMaterialAnimation>(device,
+                ResourceUsage.Dynamic, CpuAccessFlags.Write, MapMode.WriteDiscard);
+
             CBMaterialStatic = new ConstantBuffer<CBMaterialStatic>(device);
             CBSHLightFieldProbes = new ConstantBuffer<CBSHLightFieldProbes>(device);
             CBLocalLightIndexData = new ConstantBuffer<CBLocalLightIndexData>(device);
