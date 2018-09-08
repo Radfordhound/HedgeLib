@@ -57,7 +57,7 @@ namespace HedgeEdit
 
                 // Set the shader
                 Viewport.CurrentPShader = (PixelShaders.ContainsKey(mat.ShaderName)) ?
-                    PixelShaders[mat.ShaderName] : PixelShaders["IgnoreLight_d"];
+                    PixelShaders[mat.ShaderName] : PixelShaders["Default"];
 
                 // Get the texture
                 string texName = (mat.Texset.Textures.Count > 0) ?
