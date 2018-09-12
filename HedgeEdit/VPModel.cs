@@ -51,7 +51,8 @@ namespace HedgeEdit
 
                 // Send vertex data to the GPU
                 var vertices = Buffer.Create(Viewport.Device,
-                    BindFlags.VertexBuffer, mesh.VertexData);
+                    BindFlags.VertexBuffer, mesh.VertexData, 0,
+                    ResourceUsage.Immutable);
 
                 // Setup our Vertex Buffer Binding
                 var binding = new VertexBufferBinding(vertices,
@@ -59,7 +60,8 @@ namespace HedgeEdit
 
                 // Send index data to the GPU
                 var indices = Buffer.Create(Viewport.Device,
-                    BindFlags.IndexBuffer, mesh.Triangles);
+                    BindFlags.IndexBuffer, mesh.Triangles, 0,
+                    ResourceUsage.Immutable);
 
                 // Generate a VPMesh
                 meshes[i] = new VPMesh(indices, binding, mesh);
