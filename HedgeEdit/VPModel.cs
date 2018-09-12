@@ -135,6 +135,8 @@ namespace HedgeEdit
                 meshes[i].Bind();
                 for (int i2 = 0; i2 < Instances.Count; ++i2)
                 {
+                    instance = Instances[i2];
+
                     // Update Constant Buffers and Draw Mesh
                     instance.UpdateConstantBuffers();
                     meshes[i].Draw(skipMaterial);
