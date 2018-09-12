@@ -376,7 +376,7 @@
             this.mainSplitContainer.SplitterDistance = 180;
             this.mainSplitContainer.SplitterWidth = 3;
             this.mainSplitContainer.TabIndex = 2;
-            this.mainSplitContainer.Panel2.Paint += Viewport_Paint;
+            this.mainSplitContainer.Panel2.MouseMove += Viewport_MouseMove;
             this.mainSplitContainer.Panel2.MouseDown += Viewport_MouseDown;
             this.mainSplitContainer.Panel2.MouseUp += Viewport_MouseUp;
             this.mainSplitContainer.Panel2.Resize += Viewport_Resize;

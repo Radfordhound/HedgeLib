@@ -38,8 +38,11 @@ namespace HedgeEdit.UI
             }
         }
 
+        public bool Running => running;
         public bool Active => active;
-        protected bool active = true;
+        public bool DontClose = false;
+        protected bool active = true, updateMousePos = true,
+            running = false, scheduledClose = false;
 
         private static SceneView sceneView = null;
         private static bool cursorVisible = true;
@@ -52,76 +55,14 @@ namespace HedgeEdit.UI
         {
             InitializeComponent();
             UpdateTitle();
-            Application.Idle += Application_Idle;
             Application.AddMessageFilter(this);
             statusBarLbl.Text = "";
+            running = true;
 
             objectProperties.ToolStrip.Items[0].Click += CategorizeButton_Click;
             objectProperties.ToolStrip.Items.RemoveAt(3);
             objectProperties.ToolStrip.Items.RemoveAt(3);
             objectProperties.PropertyValueChanged += ObjectProperties_ValueChanged;
-        }
-
-        private void ObjectProperties_ValueChanged(
-            object s, PropertyValueChangedEventArgs e)
-        {
-            SetObjectType objTemplate = null;
-            var firstInstance = Viewport.SelectedInstances[0];
-            var firstObj = (firstInstance.CustomData as SetObject);
-            if (firstObj == null)
-                return;
-
-            // Get Object Template
-            if (objTemplate == null)
-            {
-                var objTemplates = Stage.GameType.ObjectTemplates;
-                if (objTemplates.ContainsKey(firstObj.ObjectType))
-                    objTemplate = objTemplates[firstObj.ObjectType];
-                else return;
-            }
-
-            // Update Object Models
-            float unitMultiplier = Stage.GameType.UnitMultiplier;
-            foreach (var instance in Viewport.SelectedInstances)
-            {
-                // Get Object
-                var obj = (instance.CustomData as SetObject);
-                if (obj == null)
-                    continue;
-
-                // Get Model
-                var mdl = Data.GetObjectModelInfo(obj,
-                    objTemplate, out Vector3 offsetPos);
-
-                // Update Position/Scale
-                instance.Scale = Types.ToSharpDX(obj.Transform.Scale);
-                instance.Position = Types.ToSharpDX((obj.Transform.Position *
-                    unitMultiplier) + offsetPos);
-
-                // Update Modes if necessary
-                if (mdl.Instances.Contains(instance))
-                    continue;
-
-                // Remove from DefaultCube
-                if (mdl != Data.DefaultCube &&
-                    Data.DefaultCube.Instances.Remove(instance))
-                {
-                    mdl.Instances.Add(instance);
-                    continue;
-                }
-
-                // Remove from Objects
-                foreach (var objMdl in Data.Objects)
-                {
-                    if (mdl != objMdl.Value &&
-                        objMdl.Value.Instances.Remove(instance))
-                    {
-                        break;
-                    }
-                }
-
-                mdl.Instances.Add(instance);
-            }
         }
 
         // Methods
@@ -414,6 +355,19 @@ namespace HedgeEdit.UI
                 sceneView.RefreshView();
         }
 
+        public void InvokeSafe(Delegate method)
+        {
+            if (!running)
+                return;
+
+            DontClose = true;
+            Invoke(method);
+            DontClose = false;
+
+            if (scheduledClose)
+                Invoke(new Action(Close));
+        }
+
         // GUI Events
         #region MainFrm/Viewport Events
         public bool PreFilterMessage(ref Message m)
@@ -439,7 +393,15 @@ namespace HedgeEdit.UI
 
         private void MainFrm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            Application.RemoveMessageFilter(this);
+            running = false;
+            if (DontClose)
+            {
+                scheduledClose = e.Cancel = true;
+            }
+            else if (!scheduledClose)
+            {
+                Application.RemoveMessageFilter(this);
+            }
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
@@ -510,20 +472,7 @@ namespace HedgeEdit.UI
         {
             active = Viewport.IsMovingCamera = false;
             CursorVisible = true;
-        }
-
-        private void Application_Idle(object sender, EventArgs e)
-        {
-            Viewport.Update();
-            //while (viewport.IsIdle)
-            //{
-            //    Viewport.Render();
-            //}
-        }
-
-        private void Viewport_Paint(object sender, PaintEventArgs e)
-        {
-            Viewport.Render();
+            Input.InputState = Inputs.None;
         }
 
         private void Viewport_Resize(object sender, EventArgs e)
@@ -531,12 +480,43 @@ namespace HedgeEdit.UI
             Viewport.OnResize();
         }
 
+        private void Viewport_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (!updateMousePos)
+            {
+                updateMousePos = true;
+                return;
+            }
+
+            if (Viewport.IsMovingCamera)
+            {
+                var camRot = Viewport.CameraRot;
+                Viewport.CameraRot = new SharpDX.Vector3(
+                    camRot.X + (Cursor.Position.X - Viewport.PrevMousePos.X) * 0.1f,
+                    camRot.Y - (Cursor.Position.Y - Viewport.PrevMousePos.Y) * 0.1f,
+                    camRot.Z);
+
+                // Snap cursor to center of viewport
+                updateMousePos = false;
+                Cursor.Position = mainSplitContainer.Panel2.PointToScreen(
+                    new System.Drawing.Point(mainSplitContainer.Panel2.Width / 2,
+                    mainSplitContainer.Panel2.Height / 2));
+
+                Viewport.PrevMousePos = Cursor.Position;
+            }
+        }
+
         private void Viewport_MouseDown(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
             {
+                Viewport.PrevMousePos = Cursor.Position;
                 Viewport.IsMovingCamera = true;
                 CursorVisible = false;
+            }
+            else if (e.Button == MouseButtons.Left)
+            {
+                Viewport.Click();
             }
         }
 
@@ -958,6 +938,70 @@ namespace HedgeEdit.UI
         }
         #endregion
 
+        private void ObjectProperties_ValueChanged(
+            object s, PropertyValueChangedEventArgs e)
+        {
+            SetObjectType objTemplate = null;
+            var firstInstance = Viewport.SelectedInstances[0];
+            var firstObj = (firstInstance.CustomData as SetObject);
+            if (firstObj == null)
+                return;
+
+            // Get Object Template
+            if (objTemplate == null)
+            {
+                var objTemplates = Stage.GameType.ObjectTemplates;
+                if (objTemplates.ContainsKey(firstObj.ObjectType))
+                    objTemplate = objTemplates[firstObj.ObjectType];
+                else return;
+            }
+
+            // Update Object Models
+            float unitMultiplier = Stage.GameType.UnitMultiplier;
+            foreach (var instance in Viewport.SelectedInstances)
+            {
+                // Get Object
+                var obj = (instance.CustomData as SetObject);
+                if (obj == null)
+                    continue;
+
+                // Get Model
+                var mdl = Data.GetObjectModelInfo(obj,
+                    objTemplate, out Vector3 offsetPos);
+
+                // Update Position/Scale
+                instance.Scale = Types.ToSharpDX(obj.Transform.Scale);
+                instance.Position = Types.ToSharpDX((obj.Transform.Position *
+                    unitMultiplier) + offsetPos);
+
+                // Update Modes if necessary
+                if (mdl.Instances.Contains(instance))
+                    continue;
+
+                // Remove from DefaultCube
+                if (mdl != Data.DefaultCube &&
+                    Data.DefaultCube.Instances.Remove(instance))
+                {
+                    mdl.Instances.Add(instance);
+                    continue;
+                }
+
+                // Remove from Objects
+                foreach (var objMdl in Data.Objects)
+                {
+                    if (mdl != objMdl.Value &&
+                        objMdl.Value.Instances.Remove(instance))
+                    {
+                        break;
+                    }
+                }
+
+                mdl.Instances.Add(instance);
+            }
+
+            Viewport.RenderOnNextFrame = true;
+        }
+
         private void RemoveObject(object sender, EventArgs e)
         {
             if (Viewport.SelectedInstances.Count < 1)
@@ -1015,7 +1059,6 @@ namespace HedgeEdit.UI
             if (Viewport.SelectedInstances.Count == 1)
             {
                 var instance = Viewport.SelectedInstances[0];
-
                 Viewport.CameraPos = instance.Position - (Viewport.CameraForward * 10);
 
                 // TODO: Set camera rotation
@@ -1024,12 +1067,16 @@ namespace HedgeEdit.UI
             {
                 // TODO: Show all of the objects currently selected.
             }
+            else return;
+
+            Viewport.RenderOnNextFrame = true;
         }
 
         private void MouseScroll(object sender, MouseEventArgs e)
         {
             // Zooming
             Viewport.CameraPos += (e.Delta / 60) * Viewport.CameraForward;
+            Viewport.RenderOnNextFrame = true;
         }
 
         private void OpenLuaTerminal(object sender, EventArgs e)

@@ -7,6 +7,8 @@ using SharpDX.Direct3D11;
 using SharpDX.DXGI;
 using SharpDX.Direct3D;
 using HedgeEdit.D3D;
+using SharpDX.Windows;
+using System.Threading;
 
 using Point = System.Drawing.Point;
 using Device = SharpDX.Direct3D11.Device;
@@ -69,12 +71,7 @@ namespace HedgeEdit
 
         public static Vector3 CameraForward { get; private set; } = Vector3.ForwardRH;
         public static float FOV = 40.0f, NearDistance = 0.1f, FarDistance = 10000f;
-
-        public static bool IsMovingCamera
-        {
-            get => (isMovingCamera && vp.Focused);
-            set => isMovingCamera = value;
-        }
+        public static bool IsMovingCamera, RenderOnNextFrame = true;
 
         public static Device Device => device;
         public static DeviceContext Context { get; private set; }
@@ -98,11 +95,10 @@ namespace HedgeEdit
         private static Matrix view, proj, viewProj;
         private static SharpDX.Viewport viewport;
         private static Control vp;
-        private static Point prevMousePos = Point.Empty;
+        public static Point MouseDifference = Point.Empty, PrevMousePos = Point.Empty;
         //private static MouseState prevMouseState;
         private static Vector3 camPos = new Vector3(0, 0, 5), camRot;
         private static Vector3 camUp = Vector3.Up;
-        private static bool isMovingCamera = false;
 
         public const int BufferCount = 2;
         private static float camSpeed = normalSpeed;
@@ -179,6 +175,15 @@ namespace HedgeEdit
             currentVShader.Use(Context);
             currentPShader.Use(Context);
             OnResize();
+
+            // Start our Update/Render loop
+            var renderThread = new Thread(new ThreadStart(() =>
+            {
+                control.Invoke(new Action(() => {
+                    RenderLoop.Run(control, Update, true); }));
+            }));
+
+            renderThread.Start();
         }
 
         public static void OnResize()
@@ -226,9 +231,13 @@ namespace HedgeEdit
             rasterizerDesc.IsFrontCounterClockwise = true;
             Context.Rasterizer.State = new RasterizerState(device, rasterizerDesc);
 
-            // Setup Projection Matrix
+            // Setup Matrices
+            UpdateViewMatrix();
             proj = Matrix.PerspectiveFovRH(MathUtil.DegreesToRadians(FOV),
                 vp.Width / (float)vp.Height, NearDistance, FarDistance);
+
+            UpdateViewProjMatrix();
+            RenderOnNextFrame = true;
         }
 
         public static VPObjectInstance SelectObject(object obj)
@@ -381,23 +390,8 @@ namespace HedgeEdit
 
         public static void Update()
         {
-            if (isMovingCamera)
+            if (IsMovingCamera)
             {
-                // Update camera transform
-                var mousePos = Cursor.Position;
-                var vpMousePos = vp.PointToClient(mousePos);
-
-                float screenX = (float)vpMousePos.X / vp.Size.Width;
-                float screenY = (float)vpMousePos.Y / vp.Size.Height;
-
-                // Set Camera Rotation
-                var mouseDifference = new Point(
-                    mousePos.X - prevMousePos.X,
-                    mousePos.Y - prevMousePos.Y);
-
-                camRot.X += mouseDifference.X * 0.1f;
-                camRot.Y -= mouseDifference.Y * 0.1f;
-
                 // Set Camera Movement Speed
                 if (Input.IsInputDown(Inputs.Fast))
                 {
@@ -433,17 +427,17 @@ namespace HedgeEdit
                         Vector3.Cross(CameraForward, camUp)) * camSpeed;
                 }
 
-                // Snap cursor to center of viewport
-                Cursor.Position =
-                    vp.PointToScreen(new Point(vp.Width / 2, vp.Height / 2));
-
                 // Update Transforms
                 UpdateCameraForward();
                 UpdateViewMatrix();
                 Render();
             }
+            else if (RenderOnNextFrame)
+            {
+                Render();
+            }
 
-            prevMousePos = Cursor.Position;
+            RenderOnNextFrame = false;
         }
 
         public static void Render()
@@ -507,7 +501,7 @@ namespace HedgeEdit
             // TODO
 
             // Present our finalized image
-            swapChain.Present(0, PresentFlags.None);
+            swapChain.Present(1, PresentFlags.UseDuration);
         }
 
         private static void UpdateCameraForward()
@@ -530,6 +524,11 @@ namespace HedgeEdit
                 camPos + CameraForward, camUp);
         }
 
+        private static void UpdateViewProjMatrix()
+        {
+            viewProj = Matrix.Multiply(view, proj);
+        }
+
         private static void UpdateBuffersFirstPass(bool updateMatrices = true)
         {
             if (RenderMode == RenderModes.HedgehogEngine2)
@@ -540,7 +539,7 @@ namespace HedgeEdit
                     Buffers.HE2.CBWorld.Data.view_matrix = view;
                     Buffers.HE2.CBWorld.Data.proj_matrix = proj;
                     Buffers.HE2.CBWorld.Data.prev_view_proj_matrix = viewProj;
-                    viewProj = Matrix.Multiply(view, proj);
+                    UpdateViewProjMatrix();
                     Buffers.HE2.CBWorld.Data.inv_view_matrix = Matrix.Invert(view);
                     Buffers.HE2.CBWorld.Data.inv_proj_matrix = Matrix.Invert(proj);
                     // TODO: culling_proj_matrix
@@ -669,7 +668,7 @@ namespace HedgeEdit
                 // Update CBDefault Constant Buffer
                 if (updateMatrices)
                 {
-                    viewProj = Matrix.Multiply(view, proj);
+                    UpdateViewProjMatrix();
                     Buffers.Default.CBDefault.Data.ViewProj = viewProj;
 
                     // Don't need to update the CB unless we changed it!

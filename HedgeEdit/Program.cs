@@ -36,11 +36,13 @@ namespace HedgeEdit
 
         public static void MainUIInvoke(Action action)
         {
-            if (MainForm == null || MainForm.Disposing ||
-                MainForm.IsDisposed)
+            if (MainForm == null || !MainForm.Running)
+            {
+                System.Threading.Thread.CurrentThread.Abort();
                 return;
+            }
 
-            MainForm.Invoke(action);
+            MainForm.InvokeSafe(action);
         }
     }
 }
