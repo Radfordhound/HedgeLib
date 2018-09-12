@@ -43,14 +43,7 @@ namespace HedgeEdit
         }
 
         // Methods
-        public void Bind()
-        {
-            // Bind our Buffers
-            Viewport.InputAssembler.SetVertexBuffers(0, binding);
-            Viewport.InputAssembler.SetIndexBuffer(indexBuffer, Format.R32_UInt, 0);
-        }
-
-        public void Draw(bool skipMaterial = false)
+        public void Bind(bool skipMaterial = false)
         {
             if (!skipMaterial)
             {
@@ -75,6 +68,7 @@ namespace HedgeEdit
                 if (Viewport.RenderMode == Viewport.RenderModes.HedgehogEngine2)
                 {
                     // Update CBMaterialAnimation Constant Buffer
+                    // TODO: Get material animation from material and use that
                     Buffers.HE2.CBMaterialAnimation.Data.diffuse_color =
                         new Vector4(1, 1, 1, 1);
 
@@ -95,7 +89,13 @@ namespace HedgeEdit
                 Viewport.Context.PixelShader.SetShaderResource(0, tex);
             }
 
-            // Draw the mesh
+            // Bind our Buffers
+            Viewport.InputAssembler.SetVertexBuffers(0, binding);
+            Viewport.InputAssembler.SetIndexBuffer(indexBuffer, Format.R32_UInt, 0);
+        }
+
+        public void Draw()
+        {
             Viewport.Context.DrawIndexed(TriangleCount, 0, 0);
         }
 

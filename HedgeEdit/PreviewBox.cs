@@ -67,13 +67,13 @@ namespace HedgeEdit
 
         public void Bind()
         {
-            mesh.Bind();
+            mesh.Bind(true);
         }
 
         public void Draw(VPObjectInstance instance)
         {
             instance.UpdateConstantBuffers();
-            mesh.Draw(true);
+            mesh.Draw();
         }
 
         public void Dispose()

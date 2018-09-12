@@ -132,14 +132,14 @@ namespace HedgeEdit
                 if (meshes[i].Slot != slot)
                     continue;
 
-                meshes[i].Bind();
+                meshes[i].Bind(skipMaterial);
                 for (int i2 = 0; i2 < Instances.Count; ++i2)
                 {
                     instance = Instances[i2];
 
                     // Update Constant Buffers and Draw Mesh
                     instance.UpdateConstantBuffers();
-                    meshes[i].Draw(skipMaterial);
+                    meshes[i].Draw();
                 }
 
             }
