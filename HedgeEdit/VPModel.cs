@@ -123,39 +123,21 @@ namespace HedgeEdit
             //if (!isPreview)
             //    GL.Uniform4(highlightLoc, new OpenTK.Vector4(1, 1, 1, 1));
 
-            foreach (var instance in Instances)
+            VPObjectInstance instance;
+
+            for (int i = 0; i < meshes.Length; ++i)
             {
-                // Update Constant Buffers
-                instance.UpdateConstantBuffers();
+                if (meshes[i].Slot != slot)
+                    continue;
 
-                // Update Highlight Color
-                // TODO
-                //bool selected = Viewport.SelectedInstances.Contains(instance);
-                //if (selected)
-                //{
-                //    GL.Uniform4(highlightLoc, new OpenTK.Vector4(1, 0, 0,
-                //        (isPreview) ? 0.27451f * 2 : 1)); // TODO: Use transparency setting
-                //}
-                //else if (isPreview)
-                //{
-                //    // TODO: Use transparency setting
-                //    var color = (Vector3)instance.CustomData;
-                //    GL.Uniform4(highlightLoc, new OpenTK.Vector4(
-                //        color.X, color.Y, color.Z, 0.27451f));
-                //}
-
-                // Draw the meshes
-                for (int i = 0; i < meshes.Length; ++i)
+                meshes[i].Bind();
+                for (int i2 = 0; i2 < Instances.Count; ++i2)
                 {
-                    meshes[i].Draw(slot, skipMaterial);
+                    // Update Constant Buffers and Draw Mesh
+                    instance.UpdateConstantBuffers();
+                    meshes[i].Draw(skipMaterial);
                 }
 
-                // Set Highlight Color back to default
-                // TODO
-                //if (selected && !isPreview)
-                //{
-                //    GL.Uniform4(highlightLoc, new OpenTK.Vector4(1, 1, 1, 1));
-                //}
             }
         }
     }

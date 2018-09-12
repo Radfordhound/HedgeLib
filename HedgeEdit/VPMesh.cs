@@ -43,11 +43,15 @@ namespace HedgeEdit
         }
 
         // Methods
-        public void Draw(Mesh.Slots slot, bool skipMaterial = false)
+        public void Bind()
         {
-            if (Slot != slot || indexBuffer == null)
-                return;
+            // Bind our Buffers
+            Viewport.InputAssembler.SetVertexBuffers(0, binding);
+            Viewport.InputAssembler.SetIndexBuffer(indexBuffer, Format.R32_UInt, 0);
+        }
 
+        public void Draw(bool skipMaterial = false)
+        {
             if (!skipMaterial)
             {
                 // Get the material
@@ -90,10 +94,6 @@ namespace HedgeEdit
                 // Set Texture
                 Viewport.Context.PixelShader.SetShaderResource(0, tex);
             }
-
-            // Bind our Buffers
-            Viewport.InputAssembler.SetVertexBuffers(0, binding);
-            Viewport.InputAssembler.SetIndexBuffer(indexBuffer, Format.R32_UInt, 0);
 
             // Draw the mesh
             Viewport.Context.DrawIndexed(TriangleCount, 0, 0);

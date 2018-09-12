@@ -65,10 +65,15 @@ namespace HedgeEdit
             Viewport.Context.UnmapSubresource(vertexBuffer, 0);
         }
 
+        public void Bind()
+        {
+            mesh.Bind();
+        }
+
         public void Draw(VPObjectInstance instance)
         {
             instance.UpdateConstantBuffers();
-            mesh.Draw(Mesh.Slots.Default, true);
+            mesh.Draw(true);
         }
 
         public void Dispose()
