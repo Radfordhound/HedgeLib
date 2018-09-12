@@ -753,8 +753,9 @@ namespace HedgeEdit
                 CurrentVShader = Data.VertexShaders["DefaultUntextured"];
                 CurrentPShader = Data.PixelShaders["DefaultUntextured"];
 
-                // Update Constant Buffers
+                // Update Constant Buffers and Bind previewBox
                 UpdateBuffersFirstPass((prevRenderMode != RenderModes.Default));
+                previewBox.Bind();
 
                 // Render each preview box
                 bool hasUpdated;
