@@ -21,7 +21,6 @@ namespace HedgeEdit
         public static List<VPObjectInstance> SelectedInstances =
             new List<VPObjectInstance>();
 
-        //public static TransformGizmo Gizmo = new TransformGizmo();
         public static VShader CurrentVShader
         {
             get => currentVShader;
@@ -341,8 +340,8 @@ namespace HedgeEdit
                     vpMousePos.Y, viewport, viewProj);
 
                 // Check for Transform Gizmo clicks first, then object clicks
-                //if (!Gizmo.Click(near, direction))
-                //{
+                if (SelectedInstances.Count < 1 || !TransformGizmo.Click(ref ray))
+                {
                     // Fire a ray from mouse coordinates in camera direction and
                     // select any object that ray comes in contact with.
                     VPObjectInstance instance = null;
@@ -384,12 +383,19 @@ namespace HedgeEdit
                             instanceDistance = distance;
                         }
                     }
-                //}
+                }
             }
         }
 
         public static void Update()
         {
+            if (TransformGizmo.IsMoving)
+            {
+                var mousePos = Cursor.Position;
+                var vpMousePos = vp.PointToClient(mousePos);
+                TransformGizmo.Update(ref vpMousePos, ref viewport, ref viewProj);
+            }
+
             if (IsMovingCamera)
             {
                 // Set Camera Movement Speed
@@ -432,7 +438,7 @@ namespace HedgeEdit
                 UpdateViewMatrix();
                 Render();
             }
-            else if (RenderOnNextFrame)
+            else if (RenderOnNextFrame || TransformGizmo.IsMoving)
             {
                 Render();
             }
@@ -741,7 +747,7 @@ namespace HedgeEdit
                 }
             }
 
-            // Render selected instance boundries
+            // Render selected instance boundries and Transform Gizmos
             if (SelectedInstances.Count > 0)
             {
                 // Change RenderMode and PrimitiveTopology
@@ -801,6 +807,11 @@ namespace HedgeEdit
                         previewBox.Draw(instance);
                     }
                 }
+
+                // Render transform gizmos
+                Context.OutputMerger.SetTargets(renderView);
+                TransformGizmo.Draw();
+                Context.OutputMerger.SetTargets(depthView, renderView);
             }
         }
     }

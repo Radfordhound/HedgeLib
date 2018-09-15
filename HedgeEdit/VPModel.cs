@@ -16,7 +16,7 @@ namespace HedgeEdit
         protected VPMesh[] meshes;
 
         // Constructors
-        public VPModel(Model mdl, bool generateAABB = false)
+        public VPModel(Model mdl, bool generateAABB = true)
         {
             if (mdl == null)
                 throw new ArgumentNullException("mdl");

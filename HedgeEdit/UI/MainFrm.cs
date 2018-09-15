@@ -461,6 +461,7 @@ namespace HedgeEdit.UI
             GameList.Load(Program.StartupPath);
             Viewport.Init(mainSplitContainer.Panel2);
             Data.LoadDefaults();
+            TransformGizmo.Init();
         }
 
         private void MainFrm_Activate(object sender, EventArgs e)
@@ -470,7 +471,7 @@ namespace HedgeEdit.UI
 
         private void MainFrm_Deactivate(object sender, EventArgs e)
         {
-            active = Viewport.IsMovingCamera = false;
+            active = Viewport.IsMovingCamera = TransformGizmo.IsMoving = false;
             CursorVisible = true;
             Input.InputState = Inputs.None;
         }
@@ -524,8 +525,12 @@ namespace HedgeEdit.UI
         {
             if (e.Button == MouseButtons.Right)
             {
-                Viewport.IsMovingCamera = false;
+                Viewport.IsMovingCamera = TransformGizmo.IsMoving = false;
                 CursorVisible = true;
+            }
+            else if (e.Button == MouseButtons.Left)
+            {
+                TransformGizmo.IsMoving = false;
             }
         }
         #endregion
