@@ -113,7 +113,7 @@ namespace HedgeEdit
                     inst.Position = instance.Position;
                 }
 
-                PosAxis.Draw(Mesh.Slots.Default, true, false);
+                PosAxis.Draw(Mesh.Slots.Default, true);
             }
         }
     }
