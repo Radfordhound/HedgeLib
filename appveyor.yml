@@ -1,5 +1,6 @@
 version: 1.0.{build}
 image: Visual Studio 2017
+configuration: Release
 nuget:
   project_feed: true
 before_build:
@@ -8,21 +9,21 @@ build:
   project: HedgeLib.sln
   verbosity: minimal
 artifacts:
-- path: HedgeLib/bin/Debug
+- path: HedgeLib/bin/Release
   name: HedgeLib
-- path: HedgeEdit/bin/Debug
+- path: HedgeEdit/bin/Release
   name: HedgeEdit
-- path: HedgeTools/HedgeGISMEditor/bin/Debug
+- path: HedgeTools/HedgeGISMEditor/bin/Release
   name: HedgeGISMEditor
-- path: HedgeTools/HedgeArchiveEditor/bin/Debug
+- path: HedgeTools/HedgeArchiveEditor/bin/Release
   name: HedgeArchiveEditor
-- path: HedgeTools/HedgeArcPack/bin/Debug
+- path: HedgeTools/HedgeArcPack/bin/Release
   name: HedgeArcPack
-- path: HedgeTools/HedgePFD/bin/Debug
+- path: HedgeTools/HedgePFD/bin/Release
   name: HedgePFD
-- path: HedgeTools/ForcesGISMEditor/bin/Debug
+- path: HedgeTools/ForcesGISMEditor/bin/Release
   name: ForcesGISMEditor
-- path: HedgeTools/HedgeCnvrsEditor/bin/Debug
+- path: HedgeTools/HedgeCnvrsEditor/bin/Release
   name: HedgeCnvrsEditor
-- path: HedgeTools/ForcesSCFNTConverter/bin/Debug
+- path: HedgeTools/ForcesSCFNTConverter/bin/Release
   name: ForcesSCFNTConverter

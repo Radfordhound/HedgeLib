@@ -10,10 +10,8 @@ namespace HedgeEdit
         // Variables/Constants
         public static GameEntry GameType;
         public static EditorCache EditorCache;
-        public static LuaScript Script => script;
+        public static LuaScript Script { get; private set; }
         public static string ID, DataDir, CacheDir;
-
-        private static LuaScript script;
         private static string scriptPath;
 
         // Methods
@@ -71,15 +69,15 @@ namespace HedgeEdit
                 Program.ScriptsPath, LuaScript.GamesDir,
                 $"{game.ShortName}{LuaScript.Extension}");
 
-            if (script == null || scriptPath != pth)
+            if (Script == null || scriptPath != pth)
             {
-                script = new LuaScript();
+                Script = new LuaScript();
                 scriptPath = pth;
 
                 try
                 {
-                    script.DoScript(scriptPath);
-                    var canAddSetLayer = script.GetValue("CanAddSetLayer");
+                    Script.DoScript(scriptPath);
+                    var canAddSetLayer = Script.GetValue("CanAddSetLayer");
 
                     SceneView.CanAddLayer = (canAddSetLayer != null &&
                         canAddSetLayer.GetType() == typeof(bool)) ?
@@ -92,20 +90,26 @@ namespace HedgeEdit
             }
 
             // Unpack/Load
-            var unpackStopWatch = System.Diagnostics.Stopwatch.StartNew();
-
+#if DEBUG
+            var loadStopWatch = System.Diagnostics.Stopwatch.StartNew();
+#else
             try
             {
-                script.Call("Load", dataDir, CacheDir, stageID);
+#endif
+
+            Script.Call("Load", dataDir, CacheDir, stageID);
+
+#if DEBUG
+            loadStopWatch.Stop();
+            Console.WriteLine("Done loading! Time: {0}(ms).",
+                loadStopWatch.ElapsedMilliseconds);
+#else
             }
             catch (Exception ex)
             {
                 LuaTerminal.LogError($"ERROR: {ex.Message}, {ex.StackTrace}");
             }
-
-            unpackStopWatch.Stop();
-            Console.WriteLine("Done unpacking! Time: {0}(ms).",
-                unpackStopWatch.ElapsedMilliseconds);
+#endif
 
             // Generate new Editor Cache
             if (cacheExists)
@@ -138,14 +142,18 @@ namespace HedgeEdit
                 throw new ArgumentNullException("cacheDir");
 
             // Save Sets
+#if !DEBUG
             try
             {
-                script.Call(funcName, dataDir, CacheDir, ID);
+#endif
+            Script.Call(funcName, dataDir, CacheDir, ID);
+#if !DEBUG
             }
             catch (Exception ex)
             {
                 LuaTerminal.LogError($"ERROR: {ex.Message}");
             }
+#endif
 
             // Generate new Editor Cache
             string editorCachePath = Path.Combine(
