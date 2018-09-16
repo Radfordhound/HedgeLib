@@ -1,6 +1,12 @@
 version: 1.0.{build}
 image: Visual Studio 2017
 configuration: Release
+assembly_info:
+  patch: true
+  file: '**\AssemblyInfo.*'
+  assembly_version: '{version}'
+  assembly_file_version: '{version}'
+  assembly_informational_version: '{version}'
 nuget:
   project_feed: true
 before_build:

@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("HedgeEdit")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("An open-source level editor for games in the Sonic the Hedgehog franchise.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("HedgeEdit")]
-[assembly: AssemblyCopyright("Copyright ©  2017")]
+[assembly: AssemblyCopyright("Copyright © 2018 Radfordhound")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
