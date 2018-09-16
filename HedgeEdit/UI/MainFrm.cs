@@ -328,11 +328,17 @@ namespace HedgeEdit.UI
 
             bool isAprilFools = (DateTime.Today.Month == 4 && DateTime.Today.Day == 1);
 
-            Text = string.Format("{0} - {1} v{2}{3}",
+            Text = string.Format("{0} - {1} {2}{3}",
                 (string.IsNullOrEmpty(stgID)) ?
                 (isAprilFools) ? "idk??" : "Untitled" : stgID,
                 (isAprilFools) ? "hegedot" : Program.Name,
-                Application.ProductVersion, currentLayer);
+            
+            #if DEBUG
+                "(DEBUG BUILD)",
+            #else
+                Application.ProductVersion,
+            #endif
+                currentLayer);
         }
 
         public void UpdateStatus(string status)
