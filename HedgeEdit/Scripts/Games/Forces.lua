@@ -59,6 +59,28 @@ function LoadSectors(sectors, loadingText, stageDir, dirName)
 	end
 end
 
+function FillNilSectorTable(sectors)
+	newSectors = {}
+	for i = 0, 99 do
+		if not Contains(sectors, i) then
+			newSectors[#newSectors + 1] = i
+			print(i)
+		end
+	end
+
+	return newSectors
+end
+
+function Contains(t, v)
+	for i, s in ipairs(t) do
+		if s == v then
+			return true
+		end
+	end
+
+	return false
+end
+
 -- Callbacks
 function ExtractResources(sourceDir, destDir)
 	SetDataType("Forces")
@@ -158,17 +180,18 @@ function Load(dataDir, cacheDir, stageID)
 		stageDir .. dirName .. "_sky", "Sky")
 
 	-- Terrain Sectors (E.G. w5a01/w5a01_trr_s00.pac)
+	if staticSectors == nil and dynamicSectors ~= nil then
+		staticSectors = FillNilSectorTable(dynamicSectors)
+	elseif staticSectors ~= nil and dynamicSectors == nil then
+		dynamicSectors = FillNilSectorTable(staticSectors)
+	end
+
 	UIShowProgress()
 	if staticSectors == nil and dynamicSectors == nil then
 		LoadSectorRange(0, 99, "Terrain Sector", stageDir, dirName)
 	else
-		if staticSectors ~= nil then
-			LoadSectors(staticSectors, "Static Sector", stageDir, dirName)
-		end
-
-		if dynamicSectors ~= nil then
-			LoadSectors(dynamicSectors, "Dynamic Sector", stageDir, dirName)
-		end
+		LoadSectors(staticSectors, "Static Sector", stageDir, dirName)
+		LoadSectors(dynamicSectors, "Dynamic Sector", stageDir, dirName)
 	end
 end
 
