@@ -15,9 +15,10 @@ namespace HedgeEdit
         public static string ResourcesDirectory => Path.Combine(StartupPath, ResourcesPath);
         public static string CacheDirectory => Path.Combine(StartupPath, CachePath);
         public static string ScriptsDirectory => Path.Combine(StartupPath, ScriptsPath);
+        public static string InputPresetsDirectory => Path.Combine(Config.ConfigDir, InputPresetsPath);
 
         public const string ResourcesPath = "Resources", CachePath = "Cache",
-            ScriptsPath = "Scripts", Name = "HedgeEdit";
+            ScriptsPath = "Scripts", InputPresetsPath = "InputPresets", Name = "HedgeEdit";
 
         // Methods
         [STAThread]
@@ -30,6 +31,7 @@ namespace HedgeEdit
             Application.SetCompatibleTextRenderingDefault(false);
 
             MainForm = new MainFrm();
+            Config.Load();
             Application.Run(MainForm);
             Viewport.Dispose();
         }

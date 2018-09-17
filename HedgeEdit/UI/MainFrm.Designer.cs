@@ -56,6 +56,8 @@
             this.SceneViewMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.AssetsDialogMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.MatEditorMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.selectSeparator4 = new System.Windows.Forms.ToolStripSeparator();
+            this.optionsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.viewSelectedMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.luaMenu = new System.Windows.Forms.ToolStripMenuItem();
@@ -207,7 +209,9 @@
             this.selectSeparator3,
             this.SceneViewMenuItem,
             this.AssetsDialogMenuItem,
-            this.MatEditorMenuItem});
+            this.MatEditorMenuItem,
+            this.selectSeparator4,
+            this.optionsMenuItem,});
             this.editMenu.Name = "editMenu";
             this.editMenu.Size = new System.Drawing.Size(39, 22);
             this.editMenu.Text = "&Edit";
@@ -324,6 +328,18 @@
             this.MatEditorMenuItem.Size = new System.Drawing.Size(179, 22);
             this.MatEditorMenuItem.Text = "&Material Editor";
             this.MatEditorMenuItem.Click += new System.EventHandler(this.MatEditorMenuItem_Click);
+            // 
+            // selectSeparator4
+            // 
+            this.selectSeparator4.Name = "selectSeparator4";
+            this.selectSeparator4.Size = new System.Drawing.Size(176, 6);
+            // 
+            // optionsMenuItem
+            // 
+            this.optionsMenuItem.Name = "optionsMenuItem";
+            this.optionsMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.optionsMenuItem.Text = "O&ptions...";
+            this.optionsMenuItem.Click += new System.EventHandler(this.OptionsMenuItem_Click);
             // 
             // viewMenu
             // 
@@ -721,6 +737,8 @@
         private System.Windows.Forms.ToolStripSeparator selectSeparator2;
         private System.Windows.Forms.ToolStripMenuItem selectAllMenuItem;
         private System.Windows.Forms.ToolStripMenuItem selectNoneMenuItem;
+        private System.Windows.Forms.ToolStripSeparator selectSeparator4;
+        private System.Windows.Forms.ToolStripMenuItem optionsMenuItem;
         private System.Windows.Forms.ToolStripMenuItem viewSelectedMenuItem;
         private System.Windows.Forms.ToolStripMenuItem luaMenu;
         private System.Windows.Forms.ToolStripMenuItem openLuaTerminalMenuItem;

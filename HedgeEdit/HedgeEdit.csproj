@@ -92,6 +92,7 @@
     <Compile Include="D3D\BufferLayouts\IBufferLayout.cs" />
     <Compile Include="D3D\Buffers.cs" />
     <Compile Include="D3D\BufferGroups\DefaultGroup.cs" />
+    <Compile Include="Config.cs" />
     <Compile Include="D3D\ConstantBuffer.cs" />
     <Compile Include="D3D\BufferGroups\HE2Group.cs" />
     <Compile Include="Data\Archives.cs" />
@@ -132,6 +133,12 @@
     </Compile>
     <Compile Include="UI\MaterialEditor.Designer.cs">
       <DependentUpon>MaterialEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\OptionsDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\OptionsDialog.Designer.cs">
+      <DependentUpon>OptionsDialog.cs</DependentUpon>
     </Compile>
     <Compile Include="UI\SceneView.cs">
       <SubType>Form</SubType>
@@ -176,6 +183,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="UI\MaterialEditor.resx">
       <DependentUpon>MaterialEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\OptionsDialog.resx">
+      <DependentUpon>OptionsDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="UI\SceneView.resx">
       <DependentUpon>SceneView.cs</DependentUpon>

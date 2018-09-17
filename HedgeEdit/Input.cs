@@ -1,4 +1,7 @@
-﻿using System.Windows.Forms;
+﻿using HedgeLib;
+using System;
+using System.Windows.Forms;
+using System.Xml.Linq;
 
 namespace HedgeEdit
 {
@@ -23,6 +26,8 @@ namespace HedgeEdit
             MultiSelect = new Input(Keys.ControlKey);
 
         public static Inputs InputState, PrevInputState;
+        public const string PresetExtension = ".preset";
+        public const float PresetVersion = 1.0f;
 
         // Constructors
         public Input(Keys key, Keys altKey = Keys.None)
@@ -32,6 +37,75 @@ namespace HedgeEdit
         }
 
         // Methods
+        public static void LoadPreset(string filePath)
+        {
+            var xml = XDocument.Load(filePath);
+            float version = xml.Root.GetFloatAttr("Version");
+
+            // Inputs
+            Left = GetInputElem("Left");
+            Right = GetInputElem("Right");
+            Up = GetInputElem("Up");
+            Down = GetInputElem("Down");
+            Fast = GetInputElem("Fast");
+            Slow = GetInputElem("Slow");
+            MultiSelect = GetInputElem("MultiSelect");
+
+            // Sub-Methods
+            Input GetInputElem(string name)
+            {
+                var elem = xml.Root.Element(name);
+                if (elem != null)
+                {
+                    var keyAttr = elem.Attribute("key");
+                    var altKeyAttr = elem.Attribute("altKey");
+
+                    var input = new Input();
+                    if (!string.IsNullOrEmpty(keyAttr?.Value))
+                        Enum.TryParse(keyAttr.Value, true, out input.Key);
+
+                    if (!string.IsNullOrEmpty(altKeyAttr?.Value))
+                        Enum.TryParse(altKeyAttr.Value, true, out input.AltKey);
+
+                    return input;
+                }
+
+                return new Input();
+            }
+        }
+
+        public static void SavePreset(string filePath)
+        {
+            var root = new XElement("Preset");
+            root.AddAttr("Version", PresetVersion);
+
+            // Inputs
+            AddInputElem("Left", Left);
+            AddInputElem("Right", Right);
+            AddInputElem("Up", Up);
+            AddInputElem("Down", Down);
+            AddInputElem("Fast", Fast);
+            AddInputElem("Slow", Slow);
+            AddInputElem("MultiSelect", MultiSelect);
+
+            // Save the XML File
+            var xml = new XDocument(root);
+            xml.Save(filePath);
+
+            // Sub-Methods
+            void AddInputElem(string name, Input i)
+            {
+                root.Add(new XElement(name,
+                    new XAttribute("key", i.Key),
+                    new XAttribute("altKey", i.AltKey)));
+            }
+        }
+
+        public override string ToString()
+        {
+            return $"{Key} | {AltKey}";
+        }
+
         public static bool IsInputDown(Inputs input)
         {
             return (input & InputState) != 0;

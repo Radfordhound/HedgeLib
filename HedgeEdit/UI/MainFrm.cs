@@ -793,6 +793,12 @@ namespace HedgeEdit.UI
         {
             Close();
         }
+
+        private void OptionsMenuItem_Click(object sender, EventArgs e)
+        {
+            var optionsDialog = new OptionsDialog();
+            optionsDialog.ShowDialog();
+        }
         #endregion
 
         #region Edit Menu Events
