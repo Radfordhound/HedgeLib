@@ -33,8 +33,11 @@ namespace HedgeEdit
             if (!string.IsNullOrEmpty(presetNameElem?.Value))
             {
                 InputPreset = presetNameElem.Value;
-                Input.LoadPreset(Path.Combine(Program.InputPresetsDirectory,
-                    $"{InputPreset}{Input.PresetExtension}"));
+                string pth = Path.Combine(Program.InputPresetsDirectory,
+                    $"{InputPreset}{Input.PresetExtension}");
+
+                if (File.Exists(pth))
+                    Input.LoadPreset(pth);
             }
         }
 
