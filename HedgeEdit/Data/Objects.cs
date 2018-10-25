@@ -6,6 +6,7 @@ using HedgeLib.Sets;
 using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
+using System.Xml.Linq;
 
 namespace HedgeEdit
 {
@@ -335,45 +336,99 @@ namespace HedgeEdit
             return setData;
         }
 
-        public static void ImportSetLayerXML(string path)
+        public static void ImportSetLayerXML(string path,
+            bool selectObjects = false, bool initObjects = false)
+        {
+            using (var fs = File.OpenRead(path))
+            {
+                ImportSetLayerXML(fs, Path.GetFileNameWithoutExtension(path),
+                    selectObjects, initObjects);
+            }
+        }
+
+        public static void ImportSetLayerXML(Stream stream, string name,
+            bool selectObjects = false, bool initObjects = false)
+        {
+            var xml = XDocument.Load(stream);
+            ImportSetLayerXML(xml.Root, name, selectObjects, initObjects);
+        }
+
+        public static void ImportSetLayerXML(XElement elem, string name,
+            bool selectObjects = false, bool initObjects = false)
         {
             // Import Set Layer from XML file
             var setData = Types.SetDataType;
-            setData.Name = Path.GetFileNameWithoutExtension(path);
-            setData.ImportXML(path);
+            setData.Name = name;
+            setData.ImportXElement(elem);
             LoadSetLayerResources(Stage.GameType, setData);
 
             // If a layer of the same name already exists, replace it.
-            int setIndex = -1;
-            for (int i = 0; i < SetLayers.Count; ++i)
+            SetData oldLayer = null;
+            foreach (var layer in SetLayers)
             {
-                if (SetLayers[i].Name == setData.Name)
+                if (layer.Name == setData.Name)
                 {
-                    setIndex = i;
+                    oldLayer = layer;
                     break;
                 }
             }
 
-            if (setIndex == -1)
+            var script = (initObjects) ? Stage.Script : null;
+            if (oldLayer == null)
             {
+                if (selectObjects)
+                    Viewport.SelectedInstances.Clear();
+
+                foreach (var obj in setData.Objects)
+                {
+                    if (initObjects)
+                    {
+                        // Get Object Template (if any)
+                        var template = (Stage.GameType != null &&
+                            Stage.GameType.ObjectTemplates.ContainsKey(obj.ObjectType)) ?
+                            Stage.GameType.ObjectTemplates[obj.ObjectType] : null;
+
+                        obj.ObjectID = (uint)CurrentSetLayer.Objects.Count;
+
+                        // TODO: Fix crashing if this is called while loading
+                        script.Call("InitSetObject", obj, template);
+                    }
+
+                    // Select Objects
+                    if (selectObjects)
+                        Viewport.SelectObject(obj);
+                }
+
                 SetLayers.Add(setData);
+                CurrentSetLayer = setData;
             }
             else
             {
-                var layer = SetLayers[setIndex];
                 Viewport.SelectedInstances.Clear();
-
-                foreach (var obj in layer.Objects)
+                foreach (var obj in setData.Objects)
                 {
-                    GetObject(obj, out VPModel mdl, out VPObjectInstance instance);
-                    if (mdl == null || instance == null) continue;
-                    mdl.Instances.Remove(instance);
+                    if (initObjects)
+                    {
+                        // Get Object Template (if any)
+                        var template = (Stage.GameType != null &&
+                            Stage.GameType.ObjectTemplates.ContainsKey(obj.ObjectType)) ?
+                            Stage.GameType.ObjectTemplates[obj.ObjectType] : null;
+
+                        obj.ObjectID = (uint)CurrentSetLayer.Objects.Count;
+
+                        // TODO: Fix crashing if this is called while loading
+                        script.Call("InitSetObject", obj, template);
+                    }
+
+                    // Add to existing layer
+                    oldLayer.Objects.Add(obj);
+
+                    // Select Objects
+                    if (selectObjects)
+                        Viewport.SelectObject(obj);
                 }
 
-                if (CurrentSetLayer == layer)
-                    CurrentSetLayer = setData;
-                
-                SetLayers[setIndex] = setData;
+                CurrentSetLayer = oldLayer;
             }
 
             // Refresh the UI

@@ -144,7 +144,8 @@ namespace HedgeEdit.UI
             {
                 Data.CurrentSetLayer = layer;
                 Program.MainForm.UpdateTitle(Stage.ID);
-                Program.MainForm.PasteMenuItem.Enabled = (layer != null);
+                Program.MainForm.PasteMenuItem.Enabled =
+                    !Program.MainForm.Busy;
             }
             else if (tag is VPObjectInstance instance)
             {

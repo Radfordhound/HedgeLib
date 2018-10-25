@@ -8,6 +8,7 @@ using System.IO;
 using System.Numerics;
 using System.Threading;
 using System.Windows.Forms;
+using System.Xml.Linq;
 
 namespace HedgeEdit.UI
 {
@@ -38,16 +39,17 @@ namespace HedgeEdit.UI
             }
         }
 
+        public bool Busy => busy;
         public bool Running => running;
         public bool Active => active;
         public bool DontClose = false;
         protected bool active = true, updateMousePos = true,
-            running = false, scheduledClose = false;
+            running = false, scheduledClose = false, busy = false;
 
         private static SceneView sceneView = null;
         private static bool cursorVisible = true;
         private Thread loadSaveThread;
-        private Control activeTxtBx = null;
+        private TextBox activeTxtBx = null;
         private AssetsDialog assetsDialog;
 
         // Constructors
@@ -98,7 +100,7 @@ namespace HedgeEdit.UI
             // Update Edit Menu Items
             cutMenuItem.Enabled = objsSelected;
             copyMenuItem.Enabled = objsSelected;
-            PasteMenuItem.Enabled = (Data.CurrentSetLayer != null);
+            PasteMenuItem.Enabled = (Data.CurrentSetLayer != null && !busy);
             deleteMenuItem.Enabled = objsSelected;
 
             // Update Labels
@@ -415,7 +417,14 @@ namespace HedgeEdit.UI
         {
             // Handle these shortcut keys only if no textBoxes are in focus
             if (activeTxtBx != null)
-                return base.ProcessCmdKey(ref msg, keyData);
+            {
+                // Don't allow us to paste non-numerical text into these textboxes
+                if (keyData != (Keys.Control | Keys.V) || float.TryParse(
+                    Clipboard.GetText(), out float f))
+                {
+                    return base.ProcessCmdKey(ref msg, keyData);
+                }
+            }
 
             switch (keyData)
             {
@@ -431,12 +440,14 @@ namespace HedgeEdit.UI
 
                 // Copy Selected Object(s)
                 case Keys.Control | Keys.C:
-                    CopyMenuItem_Click(null, null);
+                    if (copyMenuItem.Enabled)
+                        CopyMenuItem_Click(null, null);
                     return true;
 
                 // Paste Selected Object(s)
                 case Keys.Control | Keys.V:
-                    PasteMenuItem_Click(null, null);
+                    if (PasteMenuItem.Enabled)
+                        PasteMenuItem_Click(null, null);
                     return true;
 
                 // Delete Selected Object(s)
@@ -516,6 +527,8 @@ namespace HedgeEdit.UI
 
         private void Viewport_MouseDown(object sender, MouseEventArgs e)
         {
+            mainSplitContainer.Panel2.Focus();
+
             if (e.Button == MouseButtons.Right)
             {
                 Viewport.PrevMousePos = Cursor.Position;
@@ -570,7 +583,7 @@ namespace HedgeEdit.UI
 
         private void NumTxtBx_Enter(object sender, EventArgs e)
         {
-            activeTxtBx = sender as Control;
+            activeTxtBx = sender as TextBox;
         }
 
         private void NumTxtBx_Leave(object sender, EventArgs e)
@@ -698,6 +711,7 @@ namespace HedgeEdit.UI
                         statusBarProgressBar.Visible = false;
                         LoadSaveEnable(true);
                         RefreshSceneView();
+                        RefreshGUI();
                     }));
                 }));
 
@@ -719,6 +733,7 @@ namespace HedgeEdit.UI
                     statusBarLbl.Text = "Done Saving";
                     statusBarProgressBar.Visible = false;
                     LoadSaveEnable(true);
+                    RefreshGUI();
                 }));
             }));
 
@@ -739,6 +754,7 @@ namespace HedgeEdit.UI
                     statusBarLbl.Text = "Done Saving";
                     statusBarProgressBar.Visible = false;
                     LoadSaveEnable(true);
+                    RefreshGUI();
                 }));
             }));
 
@@ -819,7 +835,28 @@ namespace HedgeEdit.UI
 
         private void CopyMenuItem_Click(object sender, EventArgs e)
         {
-            Clipboard.SetDataObject(Viewport.SelectedInstances, true);
+            if (Viewport.SelectedInstances.Count < 1)
+                return;
+
+            var rootElem = new XElement("SetData");
+            foreach (var instance in Viewport.SelectedInstances)
+            {
+                // TODO: Allow copying Transforms and Terrain
+                var obj = (instance.CustomData as SetObject);
+                if (obj == null) continue;
+
+                var template = (Stage.GameType != null &&
+                    Stage.GameType.ObjectTemplates.ContainsKey(obj.ObjectType)) ?
+                    Stage.GameType.ObjectTemplates[obj.ObjectType] : null;
+
+                rootElem.Add(obj.GenerateXElement(template));
+            }
+
+            if (!rootElem.HasElements)
+                return;
+
+            var xml = new XDocument(rootElem);
+            Clipboard.SetText(xml.ToString());
         }
 
         private void PasteMenuItem_Click(object sender, EventArgs e)
@@ -828,49 +865,30 @@ namespace HedgeEdit.UI
                 return;
 
             // Get Data from Clipboard (if any)
-            var dataObject = Clipboard.GetDataObject();
-            if (dataObject == null)
-                return;
+            string txt = Clipboard.GetText();
+            XElement rootElem;
 
-            var type = typeof(List<VPObjectInstance>);
-            if (!dataObject.GetDataPresent(type))
-                return;
-
-            var list = (dataObject.GetData(type) as List<VPObjectInstance>);
-            if (list == null) return;
+            try
+            {
+                var xml = XDocument.Parse(txt);
+                rootElem = xml.Root;
+            }
+            catch
+            {
+                try
+                {
+                    rootElem = XElement.Parse(txt);
+                }
+                catch
+                {
+                    return;
+                }
+            }
 
             // Spawn copies of objects
-            var script = Stage.Script;
             Viewport.SelectedInstances.Clear();
-
-            foreach (var instance in list)
-            {
-                // TODO: Allow copying Transforms and Terrain
-                var obj = (instance.CustomData as SetObject);
-                if (obj == null) continue;
-
-                var newObj = new SetObject()
-                {
-                    Children = obj.Children,
-                    ObjectID = (uint)Data.CurrentSetLayer.Objects.Count,
-                    Parameters = obj.Parameters,
-                    CustomData = obj.CustomData,
-                    ObjectType = obj.ObjectType,
-                    Transform = obj.Transform
-                };
-
-                // Get Object Template (if any)
-                var template = (Stage.GameType != null &&
-                    Stage.GameType.ObjectTemplates.ContainsKey(obj.ObjectType)) ?
-                    Stage.GameType.ObjectTemplates[obj.ObjectType] : null;
-
-                Data.CurrentSetLayer.Objects.Add(newObj);
-                // TODO: Fix crashing if this is called while loading
-                script.Call("InitSetObject", newObj, template);
-
-                Data.LoadObjectResources(Stage.GameType, newObj);
-                Viewport.SelectObject(newObj);
-            }
+            Data.ImportSetLayerXML(rootElem,
+                Data.CurrentSetLayer.Name, true, true);
 
             RefreshSceneView();
             RefreshGUI();
@@ -1126,6 +1144,7 @@ namespace HedgeEdit.UI
                 AssetsDialogMenuItem.Checked = false;
             }
 
+            busy = !enable;
             openMenuItem.Enabled = SaveSetsMenuItem.Enabled =
                 saveAllMenuItem.Enabled = MatEditorMenuItem.Enabled =
                 AssetsDialogMenuItem.Enabled = enable;
