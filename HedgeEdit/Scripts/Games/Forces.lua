@@ -201,7 +201,8 @@ function SaveSets(dataDir, cacheDir, stageID)
 	IODeleteFilesInDir("{0}/gedit/{1}_gedit", ".gedit")
 	SaveSetLayers("{0}/gedit/{1}_gedit", "", ".gedit")
 	
-	-- TODO: Repack
+	Repack("{0}/gedit/{1}_gedit.pac", "{0}/gedit/{1}_gedit",
+		"Sets", false, false, nil)
 end
 
 function SaveAll(dataDir, cacheDir, stageID)

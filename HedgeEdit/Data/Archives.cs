@@ -201,7 +201,7 @@ namespace HedgeEdit
             }
             else if (arc is ForcesArchive forcesArc)
             {
-                forcesArc.Save(path, splitCount);
+                forcesArc.Save(path, splitCount, true);
             }
             else
             {
