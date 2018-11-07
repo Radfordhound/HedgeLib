@@ -240,11 +240,7 @@ namespace HedgeLib.Textures
             }
 
             // Pitch
-            if (Header.HasFlag(DDSHeader.FLAGS.PITCH))
-            {
-                Pitch = Header.PitchOrLinearSize;
-            }
-            else if (pixelsPerBlock != 1)
+            if (pixelsPerBlock != 1)
             {
                 Pitch = System.Math.Max(1, ((Width + 3) / 4)) * blockSize;
             }
