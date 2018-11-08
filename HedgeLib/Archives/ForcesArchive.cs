@@ -663,7 +663,7 @@ namespace HedgeLib.Archives
 
                     foreach (var data in dataList)
                     {
-                        int compareLength = System.Math.Min(minLength, data.Name.Length);
+                        int compareLength = Math.Min(minLength, data.Name.Length);
                         int matchLength = 0;
 
                         for (int i = 0; i < compareLength; ++i)
@@ -677,7 +677,7 @@ namespace HedgeLib.Archives
                         if (matchLength >= 1)
                         {
                             matches.Add(data);
-                            minLength = System.Math.Min(minLength, matchLength);
+                            minLength = Math.Min(minLength, matchLength);
                         }
                         else
                         {

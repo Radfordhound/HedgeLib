@@ -34,9 +34,9 @@ namespace HedgeLib.Sets
             for (uint i = 0; i < HeroesObjectLimit; ++i)
             {
                 var pos = reader.ReadVector3();
-                float rotX = (float)(reader.ReadInt32() * (System.Math.PI / 32768f));
-                float rotY = (float)(reader.ReadInt32() * (System.Math.PI / 32768f));
-                float rotZ = (float)(reader.ReadInt32() * (System.Math.PI / 32768f));
+                float rotX = (float)(reader.ReadInt32() * (Math.PI / 32768f));
+                float rotY = (float)(reader.ReadInt32() * (Math.PI / 32768f));
+                float rotZ = (float)(reader.ReadInt32() * (Math.PI / 32768f));
 
                 ushort unknown1 = reader.ReadUInt16();
                 byte stageType = reader.ReadByte();

@@ -242,7 +242,7 @@ namespace HedgeLib.Textures
             // Pitch
             if (pixelsPerBlock != 1)
             {
-                Pitch = System.Math.Max(1, ((Width + 3) / 4)) * blockSize;
+                Pitch = Math.Max(1, ((Width + 3) / 4)) * blockSize;
             }
 
             // TODO: Are these what Microsoft is referring to by "R8G8_B8G8,
