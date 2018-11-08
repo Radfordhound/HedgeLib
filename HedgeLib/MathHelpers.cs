@@ -1,12 +1,13 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 
 namespace HedgeLib
 {
     public static class MathHelpers
     {
         // Variables/Constants
-        public const float DegreesToRadians = (float)System.Math.PI / 180f;
-        public const float RadiansToDegrees = 180f / (float)System.Math.PI;
+        public const float DegreesToRadians = (float)Math.PI / 180f;
+        public const float RadiansToDegrees = 180f / (float)Math.PI;
 
         // Methods
         /// <summary>
@@ -48,32 +49,14 @@ namespace HedgeLib
         /// <returns>Pitch, Yaw, Roll ordered Euler Angles which represents the given Quaternion.</returns>
         public static Vector3 ToEulerAngles(this Quaternion q, bool inRadians = false)
         {
-            // Adapted from http://www.euclideanspace.com/maths/geometry/rotations/
-            double test = q.X * q.Y + q.Z * q.W;
-            if (test > 0.499)
-            {
-                // Singularity at north pole
-                return GetVect(2 * System.Math.Atan2(q.X, q.W),
-                    System.Math.PI / 2, 0);
-            }
+            // Based on code from arukibree's LibGens-SonicGLvl-LostWorld fork
+            float wsxs = q.W * q.W - q.X * q.X;
+            float ys = q.Y * q.Y, zs = q.Z * q.Z;
 
-            if (test < -0.499)
-            {
-                // Singularity at south pole
-                return GetVect(-2 * System.Math.Atan2(q.X, q.W),
-                    -System.Math.PI / 2, 0);
-            }
-
-            double sqx = q.X * q.X;
-            double sqy = q.Y * q.Y;
-            double sqz = q.Z * q.Z;
-
-            // We construct a Vector with the order Bank, Heading, then Attitude
-            // to match the axes used in Sonic games.
             return GetVect(
-                System.Math.Atan2(2 * q.X * q.W - 2 * q.Y * q.Z, 1 - 2 * sqx - 2 * sqz),
-                System.Math.Atan2(2 * q.Y * q.W - 2 * q.X * q.Z, 1 - 2 * sqy - 2 * sqz),
-                System.Math.Asin(2 * test));
+                Math.Asin(-2 * (q.Y * q.Z - q.W * q.X)),
+                Math.Atan2(2 * (q.X * q.Z + q.W * q.Y), wsxs - ys + zs),
+                Math.Atan2(2 * (q.X * q.Y + q.W * q.Z), wsxs + ys - zs));
 
             // Sub-Methods
             Vector3 GetVect(double x, double y, double z)
