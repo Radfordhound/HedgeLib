@@ -66,7 +66,6 @@
     <Compile Include="Headers\PACxHeader.cs" />
     <Compile Include="Materials\GensMaterial.cs" />
     <Compile Include="MathHelpers.cs" />
-    <Compile Include="Math\AABB.cs" />
     <Compile Include="Misc\ForcesGISM.cs" />
     <Compile Include="RFL\ForcesCaptionParam.cs" />
     <Compile Include="RFL\ForcesDLCParam.cs" />
