@@ -6,21 +6,11 @@ namespace HedgeLib.IO
     /// <summary>
     /// The base for all file-based classes in HedgeLib.
     /// </summary>
-    public class FileBase
+    public abstract class FileBase
     {
         // Methods
         public virtual void Load(string filePath)
         {
-            // Throw exceptions if necessary
-            if (string.IsNullOrEmpty(filePath))
-                throw new ArgumentNullException("filePath");
-
-            if (!File.Exists(filePath))
-            {
-                throw new FileNotFoundException(
-                    "The given file could not be loaded, as it cannot be found!", filePath);
-            }
-
             // Load the file
             using (var fileStream = File.OpenRead(filePath))
             {
