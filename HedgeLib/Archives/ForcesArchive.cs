@@ -4,10 +4,11 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 using HedgeLib.Headers;
+using System.Text;
 
 namespace HedgeLib.Archives
 {
-    // HUGELY based off of Skyth's Forces PAC specification (thanks bb lol)
+    // HUGELY based off of Skyth's SFPac/Forces PAC specification with permission (thanks bb)
     public class ForcesArchive : Archive
     {
         // Variables/Constants
@@ -15,7 +16,7 @@ namespace HedgeLib.Archives
         public const string Extension = ".pac", Signature = "PACx";
 
         // Huge thanks to Skyth for these lists as well!
-        protected Dictionary<string, string> Types = new Dictionary<string, string>()
+        protected readonly Dictionary<string, string> Types = new Dictionary<string, string>()
         {
             { ".asm", "ResAnimator" },
             { ".anm.hkx", "ResAnimSkeleton" },
@@ -59,7 +60,7 @@ namespace HedgeLib.Archives
             {".grass.bin", "ResTerrainGrassInfo" }
         };
 
-        protected string[] RootExclusiveTypes = new string[]
+        protected readonly string[] RootExclusiveTypes = new string[]
         {
             ".asm",
             ".anm.hkx",
@@ -91,6 +92,13 @@ namespace HedgeLib.Archives
             ".cnvrs-proj"
         };
 
+        protected enum DataEntryTypes : ulong
+        {
+            Regular,
+            NotHere,
+            BINAFile
+        }
+
         // Constructors
         public ForcesArchive() : base() { }
         public ForcesArchive(Archive arc) : base(arc) { }
@@ -114,7 +122,7 @@ namespace HedgeLib.Archives
             var splitArchivesList = new List<string>();
 
             string ext = fileInfo.Extension;
-            if (int.TryParse(ext.Substring(1), out var e))
+            if (int.TryParse(ext.Substring(1), out int e))
                 ext = "";
 
             // fileInfo.Extension only gets the last extension in the fileName.
@@ -148,166 +156,112 @@ namespace HedgeLib.Archives
 
         public override void Load(Stream fileStream)
         {
-            // PACx Header
+            // Read PACx Header
             var reader = new BINAReader(fileStream);
             Header.Read(reader);
 
-            // Type Names
-            var typeTree = ReadNodeTree(reader);
-            var names = new string[typeTree.Nodes.Count];
+            // Read Node Trees and compute Data Entry count
+            var typeTree = new NodeTree(reader);
+            var fileTrees = new NodeTree[typeTree.DataNodeIndices.Count];
 
-            for (int i = 0; i < typeTree.Nodes.Count; ++i)
+            int dataEntryCount = 0;
+            Node dataNode;
+
+            for (int i = 0; i < fileTrees.Length; ++i)
             {
-                var typeNode = typeTree.Nodes[i];
-                if (typeNode.ChildCount < 1)
+                dataNode = typeTree.Nodes[typeTree.DataNodeIndices[i]];
+                reader.JumpTo((long)dataNode.Data);
+                fileTrees[i] = new NodeTree(reader);
+                dataEntryCount += fileTrees[i].DataNodeIndices.Count;
+            }
+
+            // Read Data Entries
+            var dataEntries = new DataEntry[dataEntryCount];
+            int dataEntryIndex = -1;
+
+            foreach (var fileTree in fileTrees)
+            {
+                for (int i = 0; i < fileTree.DataNodeIndices.Count; ++i)
+                {
+                    dataNode = fileTree.Nodes[fileTree.DataNodeIndices[i]];
+                    reader.JumpTo((long)dataNode.Data);
+                    dataEntries[++dataEntryIndex] = new DataEntry(reader);
+                }
+            }
+
+            // Read Data
+            int dataSize, bytesRead;
+            foreach (var dataEntry in dataEntries)
+            {
+                if (dataEntry.DataType == DataEntryTypes.NotHere)
                     continue;
 
-                int nameIndex = -1;
-                if (typeNode.ChildIDTableOffset > 0)
-                {
-                    reader.JumpTo(typeNode.ChildIDTableOffset);
-                    nameIndex = reader.ReadInt32();
-                }
+                reader.JumpTo(dataEntry.DataOffset);
+                dataSize = dataEntry.Data.Length;
 
-                if (typeNode.NameOffset > 0)
+                do
                 {
-                    reader.JumpTo(typeNode.NameOffset);
-                    names[i] = reader.ReadNullTerminatedString();
+                    bytesRead = reader.Read(dataEntry.Data, 0, dataSize);
+                    if (bytesRead == 0)
+                    {
+                        throw new EndOfStreamException(
+                            "Could not read file data from PAC.");
+                    }
+
+                    dataSize -= bytesRead;
                 }
+                while (dataSize > 0);
             }
 
-            // Types
-            foreach (var type in typeTree.Nodes)
+            // Get file names and add files to archive
+            var builder = new StringBuilder(byte.MaxValue);
+            dataEntryIndex = -1;
+
+            foreach (var fileTree in fileTrees)
             {
-                if (!type.HasData)
-                    continue;
-
-                string name = string.Empty;
-                var n = type;
-
-                while (n.ParentIndex >= 0)
+                for (int i = 0; i < fileTree.DataNodeIndices.Count; ++i)
                 {
-                    name = $"{names[n.ParentIndex]}{name}";
-                    n = typeTree.Nodes[n.ParentIndex];
-                }
-
-                reader.JumpTo(type.DataOffset);
-                var fileTree = ReadNodeTree(reader);
-
-                // File Names
-                var fileNames = new string[fileTree.Nodes.Count];
-                for (int i = 0; i < fileTree.Nodes.Count; ++i)
-                {
-                    var fileNode = fileTree.Nodes[i];
-                    if (fileNode.ChildCount < 1)
+                    var dataEntry = dataEntries[++dataEntryIndex];
+                    if (dataEntry.DataType == DataEntryTypes.NotHere)
                         continue;
 
-                    int nameIndex = -1;
-                    if (fileNode.ChildIDTableOffset > 0)
+                    dataNode = fileTree.Nodes[fileTree.DataNodeIndices[i]];
+
+                    // Read extension
+                    reader.JumpTo(dataEntry.ExtensionOffset);
+                    builder.Append('.');
+                    builder.Append(reader.ReadNullTerminatedString());
+
+                    // Get full file name
+                    string pth;
+                    for (int i2 = dataNode.ParentIndex; i2 > 0;)
                     {
-                        reader.JumpTo(fileNode.ChildIDTableOffset);
-                        nameIndex = reader.ReadInt32();
+                        pth = fileTree.Nodes[i2].Name;
+                        i2 = fileTree.Nodes[i2].ParentIndex;
+
+                        if (string.IsNullOrEmpty(pth))
+                            continue;
+
+                        builder.Insert(0, pth);
                     }
 
-                    if (fileNode.NameOffset > 0)
-                    {
-                        reader.JumpTo(fileNode.NameOffset);
-                        fileNames[i] = reader.ReadNullTerminatedString();
-                    }
-                }
+                    // Add to archive
+                    Data.Add(new ArchiveFile(
+                        builder.ToString(),
+                        dataEntry.Data));
 
-                // File Nodes
-                foreach (var file in fileTree.Nodes)
-                {
-                    if (!file.HasData)
-                        continue;
-
-                    name = string.Empty;
-                    n = file;
-
-                    while (n.ParentIndex >= 0)
-                    {
-                        name = $"{fileNames[n.ParentIndex]}{name}";
-                        n = fileTree.Nodes[n.ParentIndex];
-                    }
-
-                    // File Entries
-                    reader.JumpTo(file.DataOffset);
-                    uint pacID = reader.ReadUInt32();
-                    if (pacID != Header.ID)
-                    {
-                        Console.WriteLine(
-                            $"WARNING: Skipped file {name} as its pac ID was missing");
-                        continue;
-                    }
-
-                    ulong fileSize = reader.ReadUInt64();
-                    uint padding1 = reader.ReadUInt32();
-                    long fileDataOffset = reader.ReadInt64();
-                    ulong padding2 = reader.ReadUInt64();
-                    long extensionOffset = reader.ReadInt64();
-                    uint pacType = reader.ReadUInt32();
-                    uint padding3 = reader.ReadUInt32();
-                    
-                    if (fileDataOffset <= 0 || pacType == 1)
-                        continue;
-
-                    // File Extension
-                    reader.JumpTo(extensionOffset);
-                    name += $".{reader.ReadNullTerminatedString()}";
-
-                    // File Data
-                    reader.JumpTo(fileDataOffset);
-                    var data = reader.ReadBytes((int)fileSize);
-
-                    // BINA Check
-                    // TODO: Remove this check
-                    if (data[0] == 0x42 && data[1] == 0x49 && data[2] == 0x4E && data[3] == 0x41)
-                    {
-                        if (pacType != 2)
-                        {
-                            Console.WriteLine(
-                                $"WARNING: FileType ({pacType}) != 2 when file carries BINA Header!");
-                        }
-                    }
-                    else
-                    {
-                        if (pacType == 2)
-                        {
-                            Console.WriteLine(
-                                $"WARNING: FileType ({pacType}) == 2 when file has no BINA Header!");
-                        }
-                    }
-
-                    Data.Add(new ArchiveFile(name, data));
+                    builder.Clear();
                 }
             }
-        }
-
-        protected NodeTree ReadNodeTree(BINAReader reader)
-        {
-            var nodeTree = new NodeTree();
-            uint nodesCount = reader.ReadUInt32();
-            nodeTree.DataNodeCount = reader.ReadUInt32();
-            long nodesOffset = reader.ReadInt64();
-            long dataNodeIndicesOffset = reader.ReadInt64();
-
-            // Nodes
-            reader.JumpTo(nodesOffset);
-            for (uint i = 0; i < nodesCount; ++i)
-            {
-                nodeTree.Nodes.Add(new Node(reader));
-            }
-
-            return nodeTree;
         }
 
         public override void Save(string filePath, bool overwrite = false)
         {
-            Save(filePath, 0x1E00000);
+            Save(filePath, overwrite: overwrite);
         }
 
-        public void Save(string filePath, uint? splitCount = 0x1E00000)
+        public void Save(string filePath, uint? splitCount = 0x1E00000,
+            bool overwrite = false)
         {
             var fileInfo = new FileInfo(filePath);
             string shortName = fileInfo.Name.Substring(0,
@@ -316,23 +270,53 @@ namespace HedgeLib.Archives
             // Generate Split Archives
             if (splitCount.HasValue)
             {
-                // Save Split PACs
-                var pacList = new List<string>();
-                int startIndex = 0, arcIndex = 0;
-                while (startIndex != -1)
+                // Determine whether splitting is necessary
+                bool doSplit = false;
+                foreach (var data in Data)
                 {
-                    string fileName = Path.Combine(fileInfo.DirectoryName,
-                        $"{shortName}{Extension}.{arcIndex.ToString("000")}");
+                    var file = (data as ArchiveFile);
+                    if (file == null)
+                        continue;
 
-                    using (var fileStream = File.Create(fileName))
+                    string ext = file.Name.Substring(file.Name.IndexOf('.'));
+                    if (!RootExclusiveTypes.Contains(ext))
                     {
-                        startIndex = Save(fileStream, splitCount, startIndex);
-                        pacList.Add($"{shortName}{Extension}.{arcIndex.ToString("000")}");
-                        ++arcIndex;
+                        doSplit = true;
+                        break;
+                    }
+                }
+
+                // Save Split PACs if necessary
+                List<string> pacList = null;
+                if (doSplit)
+                {
+                    pacList = new List<string>();
+                    int startIndex = 0, arcIndex = 0;
+
+                    while (startIndex != -1)
+                    {
+                        string fileName = $"{shortName}{Extension}.{arcIndex.ToString("000")}";
+                        string path = Path.Combine(fileInfo.DirectoryName, fileName);
+
+                        if (!overwrite && File.Exists(path))
+                        {
+                            throw new Exception(
+                                "Cannot save the given file - it already exists!");
+                        }
+
+                        using (var fileStream = File.Create(path))
+                        {
+                            startIndex = Save(fileStream, splitCount, startIndex);
+                            pacList.Add(fileName);
+                            ++arcIndex;
+                        }
                     }
                 }
 
                 // Save Root PAC
+                if (!overwrite && File.Exists(filePath))
+                    throw new Exception("Cannot save the given file - it already exists!");
+
                 using (var fileStream = File.Create(filePath))
                 {
                     Save(fileStream, null, 0, pacList);
@@ -342,16 +326,19 @@ namespace HedgeLib.Archives
             // Generate archive without splits
             else
             {
+                if (!overwrite && File.Exists(filePath))
+                    throw new Exception("Cannot save the given file - it already exists!");
+
                 using (var fileStream = File.Create(filePath))
                 {
-                    Save(fileStream, null, 0);
+                    Save(fileStream, null);
                 }
             }
         }
 
         public override void Save(Stream fileStream)
         {
-            Save(fileStream, null, 0);
+            Save(fileStream, null);
         }
 
         public int Save(Stream fileStream, uint? sizeLimit,
@@ -359,7 +346,7 @@ namespace HedgeLib.Archives
         {
             uint size = 0;
             int endIndex = -1;
-            bool isRootPAC = (!sizeLimit.HasValue && splitList != null);
+            bool isRootPAC = !sizeLimit.HasValue;
 
             // BINA Header
             var writer = new BINAWriter(fileStream, Header);
@@ -376,30 +363,24 @@ namespace HedgeLib.Archives
                 while (Header.ID == 0);
             }
 
-            // Generate Node Trees
-            var typeTree = new NodeTree();
-            typeTree.Nodes.Add(new Node()
-            {
-                ChildCount = 1,
-            });
-
-            typeTree.Nodes.Add(new Node()
-            {
-                Name = "Res",
-                ParentIndex = 0,
-            });
-
-            var fileTrees = new Dictionary<string, NodeTree>();
+            // Generate list of files to pack, categorized by extension
+            var filesByExt = new Dictionary<string, List<DataContainer>>();
             for (int i = startIndex; i < Data.Count; ++i)
             {
                 var file = (Data[i] as ArchiveFile);
                 if (file == null)
                     continue;
 
-                string ext = file.Name.Substring(file.Name.IndexOf('.'));
-                string shortName = file.Name.Substring(0,
-                    file.Name.Length - ext.Length);
+                int extIndex = file.Name.IndexOf('.');
+                if (extIndex == -1)
+                {
+                    Console.WriteLine(
+                        "WARNING: Skipped {0} as it has no extension!",
+                        file.Name);
+                    continue;
+                }
 
+                string ext = file.Name.Substring(extIndex);
                 if (!Types.ContainsKey(ext))
                 {
                     Console.WriteLine(
@@ -409,157 +390,112 @@ namespace HedgeLib.Archives
                 }
 
                 // Root-Exclusive Type Check
-                ulong fileDataType = 0;
+                var dataEntry = new DataEntry(file.Data);
                 if (isRootPAC)
                 {
-                    fileDataType = (RootExclusiveTypes.Contains(ext)) ?
-                        0UL : 1UL;
+                    dataEntry.DataType = (!RootExclusiveTypes.Contains(ext)) ?
+                        DataEntryTypes.NotHere : DataEntryTypes.Regular; ;
                 }
-
-                // BINA Header Check
-                if (file.Data[0] == 0x42 && file.Data[1] == 0x49 &&
-                    file.Data[2] == 0x4E && file.Data[3] == 0x41)
-                {
-                    fileDataType = 2;
-                }
-
-                if (!isRootPAC && RootExclusiveTypes.Contains(ext))
+                else if (RootExclusiveTypes.Contains(ext))
                     continue;
 
-                NodeTree fileTree;
-                string pacType = Types[ext];
-
-                // TODO: Do node name splitting more like the game does it
-                if (!fileTrees.ContainsKey(ext))
+                // BINA Header Check
+                if (file.Data != null && file.Data.Length > 3 &&
+                    file.Data[0] == 0x42 && file.Data[1] == 0x49 &&
+                    file.Data[2] == 0x4E && file.Data[3] == 0x41)
                 {
-                    ++typeTree.Nodes[1].ChildCount;
-                    ++typeTree.DataNodeCount;
-                    typeTree.Nodes.Add(new Node()
-                    {
-                        FullPathSize = 3,
-                        Name = pacType.Substring(3),
-                        ParentIndex = 1,
-                        ChildCount = 1
-                    });
-
-                    typeTree.Nodes.Add(new Node()
-                    {
-                        FullPathSize = (byte)pacType.Length,
-                        ParentIndex = typeTree.Nodes.Count - 1,
-                        DataOffset = -1,
-                        HasData = true
-                    });
-
-                    fileTree = new NodeTree();
-                    fileTree.Nodes.Add(new Node());
-
-                    fileTrees.Add(ext, fileTree);
+                    dataEntry.DataType = DataEntryTypes.BINAFile;
                 }
-                else
-                {
-                    fileTree = fileTrees[ext];
-                }
-
-                ++fileTree.Nodes[0].ChildCount;
-                ++fileTree.DataNodeCount;
-                fileTree.Nodes.Add(new Node()
-                {
-                    Name = shortName,
-                    ParentIndex = 0,
-                    ChildCount = 1
-                });
-
-                fileTree.Nodes.Add(new Node()
-                {
-                    ArchiveFileIndex = i,
-                    DataOffset = -1,
-                    ParentIndex = fileTree.Nodes.Count - 1,
-                    FullPathSize = (byte)shortName.Length,
-                    HasData = true,
-                    DataType = fileDataType
-                });
 
                 // Split if you exceed the sizeLimit
-                if (sizeLimit.HasValue && i < Data.Count - 1)
+                if (!isRootPAC && sizeLimit.HasValue)
                 {
                     // Not very accurate but close enough™
-                    size += (uint)(0x40 + file.Data.Length);
-
+                    size += (uint)file.Data.Length;
                     if (size >= sizeLimit.Value)
                     {
-                        endIndex = i + 1;
+                        endIndex = i;
                         break;
                     }
                 }
+
+                // Add Node to list, making the list first if necessary
+                List<DataContainer> files;
+                if (!filesByExt.ContainsKey(ext))
+                {
+                    files = new List<DataContainer>();
+                    filesByExt.Add(ext, files);
+                }
+                else
+                {
+                    files = filesByExt[ext];
+                }
+
+                // We use substring instead of Path.GetFileNameWithoutExtension
+                // to support files with multiple extensions (e.g. *.grass.bin)
+                string shortName = file.Name.Substring(0, extIndex);
+                files.Add(new DataContainer(shortName, dataEntry));
             }
 
-            // Write Node Trees
-            WriteNodeTree(writer, typeTree, "typeTree");
-
-            int nodeTreeIndex = -1;
-            foreach (var fileTree in fileTrees)
+            // Pack file list into Node Trees and generate types list
+            //var fileTrees = new Dictionary<string, NodeTree>();
+            var types = new List<DataContainer>();
+            foreach (var fileType in filesByExt)
             {
-                writer.FillInOffsetLong(
-                    $"typeTreenodeDataOffset{++nodeTreeIndex}", true, false);
+                var fileTree = new NodeTree(fileType.Value)
+                {
+                    CustomData = fileType.Key.Substring(1)
+                };
 
-                WriteNodeTree(writer, fileTree.Value, Types[fileTree.Key]);
+                types.Add(new DataContainer(
+                    Types[fileType.Key], fileTree));
+            }
+
+            // Pack types list into Node Tree
+            var typeTree = new NodeTree(types);
+
+            // Write types Node Tree
+            const string typeTreePrefix = "typeTree";
+            typeTree.Write(writer, typeTreePrefix);
+
+            // Write file Node Trees and generate an array of trees in the
+            // same order as they'll be in the file for easier writing
+            var fileTrees = new NodeTree[typeTree.DataNodeIndices.Count];
+            for (int i = 0; i < fileTrees.Length; ++i)
+            {
+                int dataNodeIndex = typeTree.DataNodeIndices[i];
+                var tree = (NodeTree)typeTree.Nodes[dataNodeIndex].Data;
+
+                writer.FillInOffsetLong(
+                    $"{typeTreePrefix}nodeDataOffset{dataNodeIndex}",
+                    true, false);
+
+                fileTrees[i] = tree;
+                tree.Write(writer, $"fileTree{i}");
             }
 
             // Write Data Node Indices
-            WriteTreeDataIndices(writer, typeTree, "typeTree");
-            foreach (var fileTree in fileTrees)
+            typeTree.WriteDataIndices(writer, typeTreePrefix);
+            for (int i = 0; i < fileTrees.Length; ++i)
             {
-                WriteTreeDataIndices(writer, fileTree.Value, Types[fileTree.Key]);
+                fileTrees[i].WriteDataIndices(writer, $"fileTree{i}");
             }
 
             // Write Child Node Indices
-            for (int i = 0; i < typeTree.Nodes.Count; ++i)
+            typeTree.WriteChildIndices(writer, typeTreePrefix);
+            for (int i = 0; i < fileTrees.Length; ++i)
             {
-                var node = typeTree.Nodes[i];
-                if (node.ChildCount < 1)
-                    continue;
-
-                writer.FillInOffsetLong(
-                    $"typeTreenodeChildIDTableOffset{i}", true, false);
-
-                for (int i2 = 0; i2 < node.ChildCount; ++i2)
-                {
-                    writer.Write(node.ChildIDs[i2]);
-                }
-
-                writer.FixPadding(8);
+                fileTrees[i].WriteChildIndices(writer, $"fileTree{i}");
             }
 
-            foreach (var fileTree in fileTrees)
-            {
-                var tree = fileTree.Value;
-                for (int i = 0; i < tree.Nodes.Count; ++i)
-                {
-                    var node = tree.Nodes[i];
-                    if (node.ChildCount < 1)
-                        continue;
-
-                    writer.FillInOffsetLong(
-                        $"{Types[fileTree.Key]}nodeChildIDTableOffset{i}", true, false);
-
-                    for (int i2 = 0; i2 < node.ChildCount; ++i2)
-                    {
-                        writer.Write(node.ChildIDs[i2]);
-                    }
-
-                    writer.FixPadding(8);
-                }
-            }
-
-            // Write PACs section
-            Header.SplitListLength = 0;
-            if (isRootPAC)
+            // Write Split PACs section
+            if (isRootPAC && splitList != null)
             {
                 writer.Write((ulong)splitList.Count);
-                writer.AddOffset("splitPACsOffset", 8);
+                writer.AddOffset($"splitPACsOffset", 8);
+                writer.FillInOffsetLong($"splitPACsOffset", true, false);
                 Header.SplitListLength += 16;
 
-                writer.FillInOffsetLong("splitPACsOffset", true, false);
                 for (int i = 0; i < splitList.Count; ++i)
                 {
                     writer.AddString($"splitPACName{i}", splitList[i], 8);
@@ -569,58 +505,23 @@ namespace HedgeLib.Archives
 
             // Write File Entries
             long fileEntriesOffset = fileStream.Position;
-            foreach (var fileTree in fileTrees)
+            for (int i = 0; i < fileTrees.Length; ++i)
             {
-                var tree = fileTree.Value;
-                for (int i = 0; i < tree.DataNodeCount; ++i)
-                {
-                    var node = tree.Nodes[tree.DataNodeIndices[i]];
-                    writer.FillInOffsetLong(
-                        $"{Types[fileTree.Key]}nodeDataOffset{i}", true, false);
-
-                    var file = Data[node.ArchiveFileIndex] as ArchiveFile;
-                    writer.Write(Header.ID);
-                    writer.Write((ulong)file.Data.Length);
-                    writer.Write(0U);
-
-                    if (node.DataType == 1)
-                    {
-                        writer.Write(0UL);
-                    }
-                    else
-                    {
-                        writer.AddOffset($"{Types[fileTree.Key]}fileDataOffset{i}", 8);
-                    }
-
-                    writer.Write(0UL);
-                    writer.AddString($"{Types[fileTree.Key]}extDataOffset{i}",
-                        fileTree.Key.Substring(1), 8);
-                    writer.Write(node.DataType);
-                }
+                fileTrees[i].WriteDataEntries(writer, $"fileTree{i}",
+                    (string)fileTrees[i].CustomData, Header.ID);
             }
 
             // Write String Table
-            uint stringTablePos = writer.WriteStringTable();
+            uint stringTablePos = (uint)fileStream.Position;
+            writer.WriteStringTable(Header);
             writer.FixPadding(8);
 
             // Write File Data
             long fileDataOffset = fileStream.Position;
-            foreach (var fileTree in fileTrees)
+            for (int i = 0; i < fileTrees.Length; ++i)
             {
-                var tree = fileTree.Value;
-                for (int i = 0; i < tree.DataNodeCount; ++i)
-                {
-                    var node = tree.Nodes[tree.DataNodeIndices[i]];
-                    if (node.DataType == 1)
-                        continue;
-
-                    writer.FixPadding(16);
-                    writer.FillInOffsetLong(
-                        $"{Types[fileTree.Key]}fileDataOffset{i}", true, false);
-
-                    var file = Data[node.ArchiveFileIndex] as ArchiveFile;
-                    writer.Write(file.Data);
-                }
+                fileTrees[i].WriteData(writer, $"fileTree{i}",
+                    (string)fileTrees[i].CustomData);
             }
 
             // Write Offset Table
@@ -648,127 +549,512 @@ namespace HedgeLib.Archives
             return endIndex;
         }
 
-        protected void WriteNodeTree(BINAWriter writer,
-            NodeTree tree, string prefix)
-        {
-            writer.Write(tree.Nodes.Count);
-            writer.Write(tree.DataNodeCount);
-            writer.AddOffset($"{prefix}nodesOffset", 8);
-            writer.AddOffset($"{prefix}dataNodeIndicesOffset", 8);
-
-            // Nodes
-            int dataIndex = -1;
-            tree.DataNodeIndices = new List<int>();
-            writer.FillInOffsetLong($"{prefix}nodesOffset", true, false);
-
-            for (int i = 0; i < tree.Nodes.Count; ++i)
-            {
-                // Name
-                var node = tree.Nodes[i];
-                if (!string.IsNullOrEmpty(node.Name))
-                {
-                    writer.AddString($"{prefix}nodeNameOffset{i}", node.Name, 8);
-                }
-                else
-                {
-                    writer.Write(0UL);
-                }
-
-                // Data
-                if (node.HasData)
-                {
-                    node.DataIndex = ++dataIndex;
-                    writer.AddOffset($"{prefix}nodeDataOffset{dataIndex}", 8);
-                    tree.DataNodeIndices.Add(i);
-                }
-                else
-                {
-                    writer.Write(0UL);
-                }
-
-                // Child Index Table Offset
-                if (node.ChildCount > 0)
-                {
-                    writer.AddOffset($"{prefix}nodeChildIDTableOffset{i}", 8);
-                }
-                else
-                {
-                    writer.Write(0UL);
-                }
-
-                // Populate Child IDs
-                if (node.ParentIndex >= 0)
-                {
-                    tree.Nodes[node.ParentIndex].ChildIDs.Add(i);
-                }
-
-                // Indices
-                writer.Write(node.ParentIndex);
-                writer.Write(i); // Global Index
-                writer.Write(node.DataIndex);
-
-                // Other
-                writer.Write(node.ChildCount);
-                writer.Write(node.HasData);
-                writer.Write(node.FullPathSize);
-            }
-        }
-
-        protected void WriteTreeDataIndices(
-            BINAWriter writer, NodeTree tree, string prefix)
-        {
-            // Data Node Indices
-            writer.FillInOffsetLong($"{prefix}dataNodeIndicesOffset", true, false);
-            for (int i = 0; i < tree.DataNodeIndices.Count; ++i)
-            {
-                writer.Write(tree.DataNodeIndices[i]);
-            }
-
-            writer.FixPadding(8);
-        }
-
         // Other
-        protected class NodeTree
-        {
-            public List<Node> Nodes = new List<Node>();
-            public List<int> DataNodeIndices = new List<int>();
-            public uint DataNodeCount = 0;
-        }
-
-        protected class Node
+        protected class DataContainer : IComparable
         {
             // Variables/Constants
-            public List<int> ChildIDs = new List<int>();
-            public string Name = string.Empty;
-
-            public ulong DataType = 0;
-            public long NameOffset = 0, DataOffset = 0, ChildIDTableOffset = 0;
-            public int ParentIndex = -1, GlobalIndex, DataIndex = -1, ArchiveFileIndex = -1;
-            public ushort ChildCount = 0;
-            public byte FullPathSize = 0;
-            public bool HasData = false;
+            public string Name;
+            public object Data;
 
             // Constructors
-            public Node() { }
-            public Node(ExtendedBinaryReader reader)
+            public DataContainer() { }
+            public DataContainer(string name, object data)
+            {
+                Name = name;
+                Data = data;
+            }
+
+            // Methods
+            public virtual int CompareTo(object obj)
+            {
+                if (obj == null)
+                    return 1;
+
+                if (obj is DataContainer data)
+                    return Name.CompareTo(data.Name);
+
+                throw new NotImplementedException(
+                    $"Cannot compare {GetType()} to {obj.GetType()}!");
+            }
+        }
+
+        protected class NodeTree
+        {
+            // Variables/Constants
+            public List<Node> Nodes = new List<Node>();
+            public List<int> DataNodeIndices = new List<int>();
+            public Node RootNode => Nodes[0];
+            public object CustomData;
+
+            // Constructors
+            public NodeTree()
+            {
+                Nodes.Add(new Node());
+            }
+
+            public NodeTree(List<DataContainer> dataList) : this()
+            {
+                Pack(RootNode, dataList);
+            }
+
+            public NodeTree(BINAReader reader)
             {
                 Read(reader);
             }
 
             // Methods
-            public void Read(ExtendedBinaryReader reader)
+            public Node AddChild(Node rootNode, string name,
+                object data = null, bool putDataInSubNode = true)
             {
-                NameOffset = reader.ReadInt64();
-                DataOffset = reader.ReadInt64();
-                ChildIDTableOffset = reader.ReadInt64();
+                if (putDataInSubNode && data != null)
+                {
+                    var childNode = rootNode.MakeChild(this, name, null);
+                    return childNode.MakeChild(this, null, data); // no stop
+                }
+
+                return rootNode.MakeChild(this, name, data);
+            }
+
+            // Taken with permission from Skyth's SFPac
+            public void Pack(Node rootNode, List<DataContainer> dataList)
+            {
+                int dataListLength = dataList.Count;
+                if (dataListLength == 0)
+                    return;
+
+                if (dataListLength == 1)
+                {
+                    AddChild(rootNode, dataList[0].Name, dataList[0].Data);
+                    return;
+                }
+
+                bool canPack = false;
+                foreach (var data in dataList)
+                {
+                    if (string.IsNullOrEmpty(data.Name))
+                    {
+                        throw new InvalidDataException(
+                            "Empty string found during node packing!");
+                    }
+
+                    foreach (var dataToCompare in dataList)
+                    {
+                        if (data != dataToCompare &&
+                            data.Name[0] == dataToCompare.Name[0])
+                        {
+                            canPack = true;
+                            break;
+                        }
+                    }
+
+                    if (canPack)
+                        break;
+                }
+
+                if (canPack)
+                {
+                    dataList.Sort();
+
+                    string nameToCompare = dataList[0].Name;
+                    int minLength = nameToCompare.Length;
+
+                    var matches = new List<DataContainer>();
+                    var noMatches = new List<DataContainer>();
+
+                    foreach (var data in dataList)
+                    {
+                        int compareLength = System.Math.Min(minLength, data.Name.Length);
+                        int matchLength = 0;
+
+                        for (int i = 0; i < compareLength; ++i)
+                        {
+                            if (data.Name[i] != nameToCompare[i])
+                                break;
+                            else
+                                ++matchLength;
+                        }
+
+                        if (matchLength >= 1)
+                        {
+                            matches.Add(data);
+                            minLength = System.Math.Min(minLength, matchLength);
+                        }
+                        else
+                        {
+                            noMatches.Add(data);
+                        }
+                    }
+
+                    if (matches.Count >= 1)
+                    {
+                        Node parentNode;
+                        if (minLength == nameToCompare.Length)
+                        {
+                            parentNode = AddChild(rootNode,
+                                dataList[0].Name, dataList[0].Data);
+
+                            parentNode = Nodes[parentNode.ParentIndex];
+                            matches.RemoveAt(0);
+                        }
+                        else
+                        {
+                            parentNode = AddChild(rootNode,
+                                nameToCompare.Substring(0, minLength));
+                        }
+
+                        foreach (var x in matches)
+                        {
+                            x.Name = x.Name.Substring(minLength);
+                        }
+
+                        Pack(parentNode, matches);
+                    }
+
+                    if (noMatches.Count >= 1)
+                    {
+                        Pack(rootNode, noMatches);
+                    }
+                }
+                else
+                {
+                    foreach (var data in dataList)
+                    {
+                        AddChild(rootNode, data.Name, data.Data);
+                    }
+                }
+            }
+
+            public void Read(BINAReader reader)
+            {
+                uint nodesCount = reader.ReadUInt32();
+                uint dataNodeCount = reader.ReadUInt32();
+                long nodesOffset = reader.ReadInt64();
+                long dataNodeIndicesOffset = reader.ReadInt64();
+
+                // Nodes
+                reader.JumpTo(nodesOffset);
+                Nodes.Capacity = (int)nodesCount;
+
+                for (int i = 0; i < nodesCount; ++i)
+                {
+                    Nodes.Add(new Node(reader, false));
+                }
+
+                // Data Node Indices
+                reader.JumpTo(dataNodeIndicesOffset);
+                DataNodeIndices.Capacity = (int)dataNodeCount;
+
+                for (int i = 0; i < dataNodeCount; ++i)
+                {
+                    DataNodeIndices.Add(reader.ReadInt32());
+                }
+            }
+
+            public void Write(BINAWriter writer, string prefix)
+            {
+                writer.Write(Nodes.Count);
+                writer.Write(DataNodeIndices.Count);
+                writer.AddOffset($"{prefix}nodesOffset", 8);
+                writer.AddOffset($"{prefix}dataNodeIndicesOffset", 8);
+
+                // Nodes
+                writer.FillInOffsetLong($"{prefix}nodesOffset", true, false);
+                foreach (var node in Nodes)
+                {
+                    node.Write(writer, this, prefix);
+                }
+            }
+
+            public void WriteDataIndices(BINAWriter writer, string prefix)
+            {
+                writer.FillInOffsetLong($"{prefix}dataNodeIndicesOffset", true, false);
+                for (int i = 0; i < DataNodeIndices.Count; ++i)
+                {
+                    writer.Write(DataNodeIndices[i]);
+                }
+
+                writer.FixPadding(8);
+            }
+
+            public void WriteChildIndices(BINAWriter writer, string prefix)
+            {
+                foreach (var node in Nodes)
+                {
+                    node.WriteChildIndices(writer, prefix);
+                }
+            }
+
+            public void WriteDataEntries(BINAWriter writer,
+                string prefix, string extension, uint id)
+            {
+                foreach (var node in Nodes)
+                {
+                    node.WriteDataEntries(writer, prefix, extension, id);
+                }
+            }
+
+            public void WriteData(BINAWriter writer,
+                string prefix, string extension)
+            {
+                foreach (var node in Nodes)
+                {
+                    node.WriteData(writer, extension);
+                }
+            }
+        }
+
+        protected class Node
+        {
+            // Variables/Constants
+            public List<int> ChildIndices = new List<int>();
+            public object Data = null;
+            public string Name = null;
+            public int ParentIndex = -1, Index = 0, DataIndex = -1;
+
+            public int ChildCount => ChildIndices.Count;
+
+            // Constructors
+            public Node() { }
+            public Node(BINAReader reader, bool readChildIndices = true)
+            {
+                Read(reader, readChildIndices);
+            }
+
+            public Node(string name, int index,
+                object data = null, int parentIndex = -1)
+            {
+                Name = name;
+                Data = data;
+                Index = index;
+                ParentIndex = parentIndex;
+            }
+
+            // Methods
+            /// <summary>
+            /// ( ͡° ͜ʖ ͡°)
+            /// </summary>
+            public Node MakeChild(NodeTree tree, string name, object data = null)
+            {
+                var childNode = new Node(name,
+                    tree.Nodes.Count, data, Index);
+
+                if (data != null)
+                {
+                    childNode.DataIndex = tree.DataNodeIndices.Count;
+                    tree.DataNodeIndices.Add(childNode.Index);
+                }
+
+                ChildIndices.Add(childNode.Index);
+                tree.Nodes.Add(childNode);
+
+                return childNode;
+            }
+
+            public int GetRecursiveChildCount(List<Node> nodes)
+            {
+                int count = ChildIndices.Count;
+                for (int i = 0; i < count; ++i)
+                {
+                    count += nodes[ChildIndices[i]].
+                        GetRecursiveChildCount(nodes);
+                }
+
+                return count;
+            }
+
+            public void Read(BINAReader reader, bool readChildIndices = true)
+            {
+                long nameOffset = reader.ReadInt64();
+                long dataOffset = reader.ReadInt64();
+                long childIndexTableOffset = reader.ReadInt64();
 
                 ParentIndex = reader.ReadInt32();
-                GlobalIndex = reader.ReadInt32();
+                Index = reader.ReadInt32();
                 DataIndex = reader.ReadInt32();
 
-                ChildCount = reader.ReadUInt16();
-                HasData = reader.ReadBoolean();
-                FullPathSize = reader.ReadByte();  // Not counting this node in.
+                ushort childCount = reader.ReadUInt16();
+                bool hasData = reader.ReadBoolean();
+                byte fullPathSize = reader.ReadByte(); // Not counting this node in
+
+                // Read name
+                if (nameOffset != 0)
+                    Name = reader.GetString((uint)nameOffset);
+
+                // (MINOR HACK) Store data offset in Data
+                // to be read later, avoiding some Seeks
+                if (hasData && dataOffset != 0)
+                    Data = dataOffset;
+
+                // Read Child Indices
+                if (!readChildIndices)
+                    return;
+
+                long curPos = reader.BaseStream.Position;
+                reader.JumpTo(childIndexTableOffset);
+                ChildIndices.Capacity = childCount;
+
+                for (int i = 0; i < childCount; ++i)
+                {
+                    ChildIndices.Add(reader.ReadInt32());
+                }
+
+                reader.JumpTo(curPos);
+            }
+
+            public void Write(BINAWriter writer, NodeTree tree, string prefix)
+            {
+                // Name
+                if (!string.IsNullOrEmpty(Name))
+                    writer.AddString($"{prefix}nodeNameOffset{Index}", Name, 8);
+                else
+                    writer.Write(0UL);
+
+                // Data
+                bool hasData = (Data != null);
+                if (hasData)
+                    writer.AddOffset($"{prefix}nodeDataOffset{Index}", 8);
+                else
+                    writer.Write(0UL);
+
+                // Child Index Table Offset
+                if (ChildIndices.Count > 0)
+                    writer.AddOffset($"{prefix}nodeChildIDTableOffset{Index}", 8);
+                else
+                    writer.Write(0UL);
+
+                // Indices
+                writer.Write(ParentIndex);
+                writer.Write(Index);
+                writer.Write(DataIndex);
+
+                // Other
+                writer.Write((ushort)ChildIndices.Count);
+                writer.Write(hasData);
+
+                // Full Path Size
+                string pth;
+                int fullPathSize = 0;
+
+                for (int i = ParentIndex; i > 0;)
+                {
+                    pth = tree.Nodes[i].Name;
+                    i = tree.Nodes[i].ParentIndex;
+
+                    if (string.IsNullOrEmpty(pth))
+                        continue;
+
+                    fullPathSize += pth.Length;
+                    if (fullPathSize > byte.MaxValue)
+                    {
+                        throw new NotSupportedException(
+                            "Forces cannot have file names > 255 characters in length!");
+                    }
+                }
+
+                writer.Write((byte)fullPathSize);
+            }
+
+            public void WriteChildIndices(BINAWriter writer, string prefix)
+            {
+                if (ChildIndices.Count < 1)
+                    return;
+
+                writer.FillInOffsetLong(
+                    $"{prefix}nodeChildIDTableOffset{Index}",
+                    true, false);
+
+                for (int i = 0; i < ChildIndices.Count; ++i)
+                {
+                    writer.Write(ChildIndices[i]);
+                }
+
+                writer.FixPadding(8);
+            }
+
+            public void WriteDataEntries(BINAWriter writer,
+                string prefix, string extension, uint id)
+            {
+                if (Data != null && Data is DataEntry dataEntry)
+                {
+                    writer.FillInOffsetLong(
+                        $"{prefix}nodeDataOffset{Index}", true, false);
+
+                    dataEntry.Write(writer, extension, id, DataIndex);
+                }
+            }
+
+            public void WriteData(BINAWriter writer, string extension)
+            {
+                // Write File Data
+                if (Data != null && Data is DataEntry dataEntry)
+                {
+                    dataEntry.WriteData(writer, extension, DataIndex);
+                }
+            }
+        }
+
+        protected class DataEntry
+        {
+            // Variables/Constants
+            public byte[] Data;
+            public long DataOffset, ExtensionOffset;
+            public DataEntryTypes DataType = DataEntryTypes.Regular;
+
+            // Constructors
+            public DataEntry() { }
+            public DataEntry(BINAReader reader)
+            {
+                Read(reader);
+            }
+
+            public DataEntry(byte[] data)
+            {
+                Data = data;
+            }
+
+            // Methods
+            public void Read(BINAReader reader)
+            {
+                uint id = reader.ReadUInt32();
+                long dataSize = reader.ReadInt64();
+                reader.JumpAhead(4);
+
+                DataOffset = reader.ReadInt64();
+                reader.JumpAhead(8);
+
+                ExtensionOffset = reader.ReadInt64();
+                DataType = (DataEntryTypes)reader.ReadUInt64();
+
+                if (DataType != DataEntryTypes.NotHere)
+                    Data = new byte[dataSize];
+            }
+
+            public void Write(BINAWriter writer, string extension, uint id, int index)
+            {
+                writer.Write(id);
+                writer.Write((ulong)Data.Length);
+                writer.Write(0U);
+
+                if (DataType == DataEntryTypes.NotHere)
+                    writer.Write(0UL);
+                else
+                    writer.AddOffset($"{extension}fileDataOffset{index}", 8);
+
+                writer.Write(0UL);
+                writer.AddString($"{extension}extDataOffset{index}", extension, 8);
+                writer.Write((ulong)DataType);
+            }
+
+            public void WriteData(BINAWriter writer, string extension, int index)
+            {
+                if (DataType == DataEntryTypes.NotHere)
+                    return;
+
+                writer.FixPadding(16);
+                writer.FillInOffsetLong(
+                    $"{extension}fileDataOffset{index}", true, false);
+
+                writer.Write(Data);
             }
         }
     }
