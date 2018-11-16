@@ -78,7 +78,7 @@ namespace HedgeArchiveEditor
             // Generations/Unleashed
             filters += "|Generations/Unleashed Archives (*.ar, *.arl, *.pfd)|*.ar;*.arl;*.pfd";
             // Lost World
-            filters += "|Lost World Archives (*.pac)|*.pac";
+            filters += "|Sonic Forces Archives (*.pac)|*.pac";
             // StoryBooks
             filters += "|StoryBook Series Archives (*.one)|*.one";
             // Heroes/Shadow
@@ -140,7 +140,7 @@ namespace HedgeArchiveEditor
                 // These checks may not work.
                 var type = Archives[index].GetType();
                 if (type == typeof(GensArchive)) ArchiveType = 0;
-                else if (type == typeof(LWArchive)) ArchiveType = 1;
+                else if (type == typeof(ForcesArchive)) ArchiveType = 1;
                 else if (type == typeof(SBArchive)) ArchiveType = 2;
                 else if (type == typeof(ONEArchive)) ArchiveType = 3;
             }
@@ -152,7 +152,7 @@ namespace HedgeArchiveEditor
                     fileLocation.EndsWith(GensArchive.SplitExtension) ||
                     fileLocation.EndsWith(GensArchive.PFDExtension))
                     ArchiveType = 0; // Generations/Unleashed
-                else if (fileLocation.EndsWith(LWArchive.Extension))
+                else if (fileLocation.EndsWith(ForcesArchive.Extension))
                     ArchiveType = 1; // Lost World
                 else if (fileLocation.EndsWith(SBArchive.Extension))
                     ArchiveType = 2; // Story Books
@@ -198,10 +198,10 @@ namespace HedgeArchiveEditor
                                 .ForEach(file => File.Delete(file));
                         genArc.Save(fileLocation, saveOptions.CheckBox1.Checked, splitAmount);
                         break;
-                    // Lost World
+                    // Forces
                     case 1:
-                        var lwArc = new LWArchive(archive);
-                        lwArc.Save(fileLocation, true);
+                        var fArc = new ForcesArchive(archive);
+                        fArc.Save(fileLocation, true);
                         break;
                     // Story Books
                     case 2:
@@ -299,6 +299,9 @@ namespace HedgeArchiveEditor
 
         public void RefreshTabPage(int index, bool refreshFileList = true)
         {
+            if(index < 0)
+                return;
+
             var tabPage = tabControl.TabPages[index];
             var listView = tabPage.Controls[0] as ListView;
             var archive = Archives[index];
@@ -554,7 +557,7 @@ namespace HedgeArchiveEditor
 
             return (fileExtension == GensArchive.Extension || fileExtension == GensArchive.ListExtension
                 || fileExtension == GensArchive.PFDExtension || fileExtension == GensArchive.SplitExtension
-                || fileExtension == LWArchive.Extension
+                || fileExtension == ForcesArchive.Extension
                 || fileExtension == SBArchive.Extension || fileExtension == ONEArchive.Extension);
         }
 

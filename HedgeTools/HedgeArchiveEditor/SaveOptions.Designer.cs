@@ -74,7 +74,7 @@
             this.ComboBox1.FormattingEnabled = true;
             this.ComboBox1.Items.AddRange(new object[] {
             "Generations/Unleashed",
-            "Lost World",
+            "Forces",
             "Story Books",
             "Heroes/Shadow"});
             this.ComboBox1.Location = new System.Drawing.Point(97, 6);
@@ -172,12 +172,24 @@
             this.NumericUpDown2.Hexadecimal = true;
             this.NumericUpDown2.Location = new System.Drawing.Point(164, 96);
             this.NumericUpDown2.Margin = new System.Windows.Forms.Padding(2);
-            this.NumericUpDown2.Maximum = 0xFFFFFFFF;
-            this.NumericUpDown2.Minimum = 0x25;
+            this.NumericUpDown2.Maximum = new decimal(new int[] {
+            -1,
+            0,
+            0,
+            0});
+            this.NumericUpDown2.Minimum = new decimal(new int[] {
+            37,
+            0,
+            0,
+            0});
             this.NumericUpDown2.Name = "NumericUpDown2";
             this.NumericUpDown2.Size = new System.Drawing.Size(80, 20);
             this.NumericUpDown2.TabIndex = 4;
-            this.NumericUpDown2.Value = 0xA00000;
+            this.NumericUpDown2.Value = new decimal(new int[] {
+            10485760,
+            0,
+            0,
+            0});
             // 
             // label5
             // 

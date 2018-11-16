@@ -140,9 +140,9 @@ namespace HedgeArchiveEditor
             {
                 arc = new GensArchive();
             }
-            else if (fileInfo.Extension == LWArchive.Extension)
+            else if (fileInfo.Extension == ForcesArchive.Extension)
             {
-                arc = new LWArchive();
+                arc = new ForcesArchive();
             }
             else if (fileInfo.Extension == ONEArchive.Extension)
             {
