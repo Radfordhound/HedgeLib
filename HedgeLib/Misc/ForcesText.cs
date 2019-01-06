@@ -741,6 +741,7 @@ namespace HedgeLib.Misc
                     var uuidAttr = elem.Attribute("uuid");
                     var typeAttr = elem.Attribute("type");
                     var layoutAttr = elem.Attribute("layout");
+                    var nameAttr = elem.Attribute("Name");
 
                     if (typeAttr == null || layoutAttr == null)
                     {
@@ -766,7 +767,8 @@ namespace HedgeLib.Misc
                     // Generate Cell
                     sheet.Cells.Add(new Cell()
                     {
-                        Name = elem.Name.LocalName,
+                        // Check if name attribute is null for compatibility with older xmls
+                        Name = nameAttr?.Value ?? elem.Name.LocalName,
                         Data = sb.ToString(),
                         TypeName = typeAttr.Value,
                         LayoutIndex = cats[layoutAttr.Value],
@@ -837,7 +839,7 @@ namespace HedgeLib.Misc
                 foreach (var cell in sheet.Cells)
                 {
                     // Separate the data into different elements per-line.
-                    var elem = new XElement(cell.Name);
+                    var elem = new XElement("Cell");
                     string data = cell.Data.Replace('\0', NullReplaceChar);
                     using (var reader = new StringReader(data))
                     {
@@ -854,6 +856,7 @@ namespace HedgeLib.Misc
                     }
 
                     // Write Element
+                    elem.Add(new XAttribute("Name", cell.Name));
                     elem.Add(new XAttribute("uuid", cell.UUID));
                     elem.Add(new XAttribute("type", cell.TypeName));
                     elem.Add(new XAttribute("layout",
