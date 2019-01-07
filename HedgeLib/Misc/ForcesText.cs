@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Xml.Linq;
 using System.Text;
+using System.Xml;
+using System.Diagnostics;
 
 namespace HedgeLib.Misc
 {
@@ -679,7 +681,8 @@ namespace HedgeLib.Misc
         public void ImportXML(Stream fileStream)
         {
             // Layouts
-            var xml = XDocument.Load(fileStream);
+            var reader = XmlReader.Create(fileStream, new XmlReaderSettings() { CheckCharacters = false });
+            var xml = XDocument.Load(reader);
             var layoutElems = xml.Root.Element("Layouts");
 
             var cats = new Dictionary<string, int>();
@@ -779,6 +782,8 @@ namespace HedgeLib.Misc
                 Sheets.Add(sheet);
             }
 
+            reader.Close();
+
             // Sub-Methods
             T? GetOptValue<T>(XElement e, string n) where T: struct
             {
@@ -840,19 +845,11 @@ namespace HedgeLib.Misc
                 {
                     // Separate the data into different elements per-line.
                     var elem = new XElement("Cell");
-                    string data = cell.Data.Replace('\0', NullReplaceChar);
-                    using (var reader = new StringReader(data))
+                    string data = cell.Data.Replace('\0', NullReplaceChar).Replace("\r", "");
+                    foreach(var line in data.Split('\n'))
                     {
-                        string line = string.Empty;
-                        do
-                        {
-                            line = reader.ReadLine();
-                            if (line != null)
-                            {
-                                elem.Add(new XElement("Line", line));
-                            }
-                        }
-                        while (line != null);
+                        if (line != null)
+                            elem.Add(new XElement("Line", line));
                     }
 
                     // Write Element
@@ -874,8 +871,12 @@ namespace HedgeLib.Misc
 
             // Write the generated XML File
             var xml = new XDocument(root);
-            xml.Save(fileStream);
-
+            using(var writer = XmlWriter.Create(fileStream, new XmlWriterSettings() { CheckCharacters = false,
+                NewLineHandling = NewLineHandling.None, Indent = true }))
+            {
+                xml.Save(writer);
+            }
+           
             // Sub-Methods
             void AddOptElem<T>(string n, XElement e, T? v)
                 where T : struct
