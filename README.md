@@ -33,7 +33,7 @@ This repository uses [AppVeyor](https://www.appveyor.com/) to automatically buil
 As such, you don't have to manually build any of the tools/libraries in this repository if you simply want to try out the latest versions.
 
 - [Stable (release) builds](https://github.com/Radfordhound/HedgeLib/releases) (none yet)
-- [Latest (development) builds](https://ci.appveyor.com/project/Radfordhound/hedgelib/build/artifacts)
+- [Latest (development) builds](https://ci.appveyor.com/project/Radfordhound/hedgelib)
 
 ## Manually building
 If you do wish to manually build, however, simply download and install the following (if you don't have them already):
