@@ -12,10 +12,29 @@ install:
 build:
   project: HedgeLib.sln
   verbosity: minimal
-artifacts:
-- path: HedgeLib/bin/**/Release
-  name: HedgeLib
-- path: HedgeEdit/bin/**/Release
-  name: HedgeEdit
-- path: HedgeTools/HedgeArcPack/bin/**/Release
-  name: HedgeArcPack
+
+for:
+-
+  matrix:
+    only:
+      - platform: Win32
+
+  artifacts:
+    - path: HedgeLib/bin/x86/Release
+      name: HedgeLib
+    - path: HedgeEdit/bin/x86/Release
+      name: HedgeEdit
+    - path: HedgeTools/HedgeArcPack/bin/x86/Release
+      name: HedgeArcPack
+-
+  matrix:
+    only:
+      - platform: x64
+
+  artifacts:
+    - path: HedgeLib/bin/x64/Release
+      name: HedgeLib
+    - path: HedgeEdit/bin/x64/Release
+      name: HedgeEdit
+    - path: HedgeTools/HedgeArcPack/bin/x64/Release
+      name: HedgeArcPack
