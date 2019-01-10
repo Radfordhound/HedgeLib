@@ -55,13 +55,13 @@ project("HedgeEdit")
 
 	-- Copy License
 	filter({ "configurations:Debug*", "platforms:x86" })
-		postbuildcommands("copy /y License.txt bin\\x86\\Debug\\License.txt")
+		postbuildcommands("copy /y License.txt bin\\x86\\Debug\\License.txt >NUL")
 
 	filter({ "configurations:Debug*", "platforms:x64" })
-		postbuildcommands("copy /y License.txt bin\\x64\\Debug\\License.txt")
+		postbuildcommands("copy /y License.txt bin\\x64\\Debug\\License.txt >NUL")
 
 	filter({ "configurations:Release*", "platforms:x86" })
-		postbuildcommands("copy /y License.txt bin\\x86\\Debug\\License.txt")
+		postbuildcommands("copy /y License.txt bin\\x86\\Release\\License.txt >NUL")
 
 	filter({ "configurations:Release*", "platforms:x64" })
-		postbuildcommands("copy /y License.txt bin\\x64\\Release\\License.txt")
+		postbuildcommands("copy /y License.txt bin\\x64\\Release\\License.txt >NUL")
