@@ -1,1 +1,0 @@
-Put resources (models, materials, etc) to be used by the editor here.

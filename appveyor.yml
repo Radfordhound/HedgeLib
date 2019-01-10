@@ -1,35 +1,26 @@
 version: 0.0.{build}
 image: Visual Studio 2017
+platform:
+- Win32
+- x64
 configuration: Release
-assembly_info:
-  patch: true
-  file: '**\AssemblyInfo.*'
-  assembly_version: '{version}'
-  assembly_file_version: '{version}'
-  assembly_informational_version: '{version}'
-nuget:
-  project_feed: true
-before_build:
-- cmd: nuget restore
+install:
+- ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha13/premake-5.0.0-alpha13-windows.zip", "C:\projects\hedgelib\premake.zip")
+- ps: Expand-Archive -LiteralPath C:\projects\hedgelib\premake.zip -DestinationPath C:\projects\hedgelib\
+- cmd: premake5 vs2017
 build:
   project: HedgeLib.sln
   verbosity: minimal
 artifacts:
-- path: HedgeLib/bin/Release
-  name: HedgeLib
-- path: HedgeEdit/bin/Release
-  name: HedgeEdit
-- path: HedgeTools/HedgeGISMEditor/bin/Release
-  name: HedgeGISMEditor
-- path: HedgeTools/HedgeArchiveEditor/bin/Release
-  name: HedgeArchiveEditor
-- path: HedgeTools/HedgeArcPack/bin/Release
-  name: HedgeArcPack
-- path: HedgeTools/HedgePFD/bin/Release
-  name: HedgePFD
-- path: HedgeTools/ForcesGISMEditor/bin/Release
-  name: ForcesGISMEditor
-- path: HedgeTools/HedgeCnvrsEditor/bin/Release
-  name: HedgeCnvrsEditor
-- path: HedgeTools/ForcesSCFNTConverter/bin/Release
-  name: ForcesSCFNTConverter
+- path: HedgeLib/bin/x86/Release
+  name: HedgeLib (Windows x86)
+- path: HedgeLib/bin/x64/Release
+  name: HedgeLib (Windows x64)
+- path: HedgeEdit/bin/x86/Release
+  name: HedgeEdit (Windows x86)
+- path: HedgeEdit/bin/x64/Release
+  name: HedgeEdit (Windows x64)
+- path: HedgeTools/HedgeArcPack/bin/x86/Release
+  name: HedgeArcPack (Windows x86)
+- path: HedgeTools/HedgeArcPack/bin/x64/Release
+  name: HedgeArcPack (Windows x64)

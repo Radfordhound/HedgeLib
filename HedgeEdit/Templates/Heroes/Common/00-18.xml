@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Template name="Item Box">
-  <ItemType type="byte" default="0" description="What item the item box contains." />
-</Template>

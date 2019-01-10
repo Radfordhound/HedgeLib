@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Template name="Ramp">
-  <ForwardSpeed type="float" default="2" description="How fast you'll go forwards after hitting the ramp." />
-  <VerticalSpeed type="float" default="1" description="How fast you'll go upwards after hitting the ramp." />
-  <OutOfControl type="uint16" default="100" description="How long the game sends you forwards/upwards and locks your control after coming in contact with this object." />
-</Template>

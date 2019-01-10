@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Template>
-  <Collision_Height type="float" default="50" description="?" />
-  <Collision_Length type="float" default="50" description="?" />
-  <Unknown5 type="uint32" default="0" description="?" />
-  <Extra type="RawByteLength" length="12" />
-</Template>

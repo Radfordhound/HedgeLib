@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Template name="Spring">
-  <FirstSpeed type="float" default="5" description="How much speed the spring will send you off with." />
-  <OutOfControl type="uint16" default="0" description="How long the game locks your control for after coming in contact with this object." />
-</Template>

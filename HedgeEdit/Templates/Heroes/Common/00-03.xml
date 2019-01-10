@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Template name="Ring">
-  <Unknown1 type="uint32" default="0" description="Related to the ring's placement (if they're in a line or circle, for example)." />
-  <LineLength type="float" default="0" description="If the ring object is to spawn a line of rings, this dictates it's length." />
-</Template>

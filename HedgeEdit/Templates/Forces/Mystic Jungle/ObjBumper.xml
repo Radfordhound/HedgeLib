@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Template>
-  <Impluse type="float" default="1" description="How fast to fling you away." />
-  
-  <Extra type="description" value="Bumpers from Casino Forest. Aka the bane of my existence. c:" />
-  <Extra type="model" value="w4_obj_bumper.model" />
-  <Extra length="4" name="RawByteLength" />
-</Template>

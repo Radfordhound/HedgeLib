@@ -4,48 +4,18 @@
 
 **IMPORTANT:** All code committed to this repository, preferably, should follow [these style guidelines](https://github.com/Radfordhound/HedgeLib/wiki/Code-Style).
 
-HedgeLib is a C# library [under the MIT license](https://github.com/Radfordhound/HedgeLib/blob/master/License.txt) that aims to make modding games in the Sonic the Hedgehog franchise easier, similar to [Dario's excellent "LibGens".](https://github.com/DarioSamo/libgens-sonicglvl)
+HedgeLib is a C++17 library [under the MIT license](License.txt) that aims to make modding games in the Sonic the Hedgehog franchise easier, similar to [Dario's excellent "LibGens".](https://github.com/DarioSamo/libgens-sonicglvl)
 
 Right now it supports the following:
 
-### Havok
-- [Reading/Writing XML Havok data.](HedgeLib/Havok/HavokXML.cs)
-
-### Hedgehog Engine
-- [Reading/Writing Lights.](HedgeLib/Lights/Light.cs)
-- [Reading/Writing Models.](HedgeLib/Models/GensModel.cs)
-- [Reading/Writing Materials.](HedgeLib/Materials/GensMaterial.cs)
-
-### Sonic Forces
-- [Reading/Writing Gismos.](HedgeLib/Misc/ForcesGISM.cs)
-- [Reading Archives.](HedgeLib/Archives/ForcesArchive.cs)
-- [Reading/Writing Set Data.](HedgeLib/Sets/ForcesSetData.cs)
-
-### Sonic Colors/Sonic Lost World
-- [Reading/Writing GISM files.](HedgeLib/Misc/LWGism.cs)
-- [Reading/Writing Set Data.](HedgeLib/Sets/SOBJ.cs)
-- [Reading/Writing SNDL (SouND List) files.](HedgeLib/Sound/ColorsSNDL.cs)
-
-### Sonic Unleashed/Sonic Generations
-- [Reading/Writing Uncompressed Archives.](HedgeLib/Archives/GensArchive.cs)
-- [Reading Set Data.](HedgeLib/Sets/GensSetData.cs)
-- [Reading/Writing Terrain Groups.](HedgeLib/Terrain/GensTerrainGroup.cs)
-- [Reading/Writing Light Lists.](HedgeLib/Lights/GensLightList.cs)
-- [Reading/Writing PFI Files.](HedgeLib/Misc/GensPFI.cs)
-
-### Sonic '06
-- [Reading Archives.](HedgeLib/Archives/S06Archive.cs)
-- [Reading/Writing Set Data.](HedgeLib/Sets/S06SetData.cs)
-
-### Sonic Heroes/Shadow the Hedgehog
-- [Reading/Writing Uncompressed Archives.](HedgeLib/Archives/ONEArchive.cs)
+### Sonic Lost World
+- Reading Archives.
 
 ### Other
-- [Reading DDS Texures.](HedgeLib/Textures/DDS.cs)
-- [Reading/Writing BINA headers/footers.](HedgeLib/IO/BINA.cs)
+- Reading/Writing BINA headers/footers.
 
 ## HedgeEdit
-A level editor built with SharpDX/WinForms designed to carry much of the same
+A level editor built with DirectX/Qt designed to carry much of the same
 functionality as "SonicGlvl", but with support for a large number of games in the series, rather than just Generations.
 
 Right now it's a major WIP, though feel free to try it out!
@@ -58,34 +28,38 @@ Right now this includes the following:
 - [Hedge Archive Packer](HedgeTools/HedgeArcPack)
   * A Command Line tool that allows quick and powerful editing of archiving formats from all games HedgeLib supports.
 
-- [Hedge Archive Editor](HedgeTools/HedgeArchiveEditor)
-  * A GUI tool that allows easy editing of archiving formats from all games HedgeLib supports.
-
-- [Hedge PFD](HedgeTools/HedgePFD)
-  * A Command Line tool that allows for quick packing of Generations/Unleashed PFD
-  files and generation of their accompanying PFI files.
-
-- [Forces GISM Editor](HedgeTools/ForcesGISMEditor)
-  * A GUI tool that allows editing of the Forces GISM format (basically a "Gismo" used by a stage).
-
-- [Hedge GISM Editor](HedgeTools/HedgeGISMEditor)
-  * A GUI tool that allows editing of the Lost World GISM format (basically a list of "Gismos" used by a stage).
-
-- [Hedge Cnvrs Editor](HedgeTools/HedgeCnvrsEditor)
-  * A GUI tool that allows editing of the Forces CNVRS-TEXT format (basically a list of text used in different areas in the game e.g.: Loading Screen).
-  
-- [Forces SCFNT Converter](HedgeTools/ForcesSCFNTConverter)
-  * A Command Line tool that allows for conversion of OTF or TTF files into a SCFNT format.
-
 # Building
 This repository uses [AppVeyor](https://www.appveyor.com/) to automatically build every commit!
 As such, you don't have to manually build any of the tools/libraries in this repository if you simply want to try out the latest versions.
 
-- [Stable (release) builds](https://github.com/Radfordhound/HedgeLib/releases)
+- [Stable (release) builds](https://github.com/Radfordhound/HedgeLib/releases) (none yet)
 - [Latest (development) builds](https://ci.appveyor.com/project/Radfordhound/hedgelib/build/artifacts)
 
 ## Manually building
-If you do wish to manually build, however, all that's required is the following:
+If you do wish to manually build, however, simply download and install the following (if you don't have them already):
 - [Visual Studio 2017 (or later).](https://www.visualstudio.com/downloads/)
-- .NET Framework 4.6/4.7 (can be downloaded from Visual Studio).
-- OpenTK, OpenTK.GLControl, and MoonSharp (these are all automatically downloaded as NuGet packages when HedgeEdit is first opened in Visual Studio).
+- [Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk) (for DirectX use in HedgeEdit; can be downloaded from Visual Studio).
+- [Qt.](https://www.qt.io/download)
+
+Then clone the repository and follow the following steps:
+
+1: Download [Premake 5](https://premake.github.io/download.html#v5) and extract premake5.exe to the directory you cloned HedgeLib to.
+
+2: If you installed Qt anywhere other than the default directory ("C:/Qt/5.12.0") open HedgeEdit/depends.lua and change the two paths located there.
+For example, if you installed Qt to "E:/Qt/5.12.0":
+
+```lua
+-- Change the following strings to whatever you want before generating
+-- project files with premake to change where dependencies are located.
+return {
+	QtDir32 = "E:/Qt/5.12.0/msvc2017",
+	QtDir64 = "E:/Qt/5.12.0/msvc2017_64"
+}
+```
+
+3: Open a cmd window in the folder you cloned HedgeLib to and run the following command:
+```
+premake5 vs2017
+```
+
+4: Open the HedgeLib.sln file that Premake generated in Visual Studio and hit "Build".

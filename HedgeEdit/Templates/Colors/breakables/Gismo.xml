@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Template>
-  <Unknown5 type="uint32" default="0" description="" />
-  <Type type="uint32" default="0" description="Numerical ID of Gismo, set by stage info." />
-  <Extra type="RawByteLength" length="8" />
-</Template>

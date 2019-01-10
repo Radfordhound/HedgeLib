@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Template>
-  <Height type="uint" default="1" description="How long the base of the column extends downwards. Not yet rendered by HedgeEdit." />
-  
-  <!-- TODO: Render these columns correctly in HedgeEdit! -->
-  <Extra type="model" value="cmn_obj_pulleystandA.model" />
-  <Extra type="description" value="Columns that look as though they're what's supporting the pulleys above. Used solely for decoration." />
-  <Extra type="RawByteLength" length="4" />
-</Template>

@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Template>
-  <Dummy type="uint" description="A dummy value. Has no in-game effect." />
-  <Extra type="model" value="w4_brk_woodbox.model" />
-  <Extra length="4" name="RawByteLength" />
-</Template>
