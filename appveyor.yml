@@ -9,20 +9,13 @@ install:
 - ps: Expand-Archive -LiteralPath C:\projects\hedgelib\premake.zip -DestinationPath C:\projects\hedgelib\
 - ps: Set-Content -Path C:\projects\hedgelib\hedgeedit\depends.lua -Value 'return { QtDir32 = "C:/Qt/5.11.2/msvc2015", QtDir64 = "C:/Qt/5.11.2/msvc2017_64" }'
 - cmd: premake5 vs2017
-- cmd: dir C:\Qt\5.11.2\*.*
 build:
   project: HedgeLib.sln
   verbosity: minimal
 artifacts:
-- path: HedgeLib/bin/x86/Release
-  name: HedgeLib (Windows x86)
-- path: HedgeLib/bin/x64/Release
-  name: HedgeLib (Windows x64)
-- path: HedgeEdit/bin/x86/Release
-  name: HedgeEdit (Windows x86)
-- path: HedgeEdit/bin/x64/Release
-  name: HedgeEdit (Windows x64)
-- path: HedgeTools/HedgeArcPack/bin/x86/Release
-  name: HedgeArcPack (Windows x86)
-- path: HedgeTools/HedgeArcPack/bin/x64/Release
-  name: HedgeArcPack (Windows x64)
+- path: HedgeLib/bin/*/Release
+  name: HedgeLib
+- path: HedgeEdit/bin/*/Release
+  name: HedgeEdit
+- path: HedgeTools/HedgeArcPack/bin/*/Release
+  name: HedgeArcPack
