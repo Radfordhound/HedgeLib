@@ -1,5 +1,6 @@
 #ifndef HOFFSETS_H_INCLUDED
 #define HOFFSETS_H_INCLUDED
+#include "endian.h"
 #include <cstdint>
 #include <stdexcept>
 #include <cstddef>
@@ -33,6 +34,8 @@ namespace HedgeLib::IO
 			DataOffset<std::uint32_t>(nullptr) {}
 
 		DataOffset32(const DataType* ptr) { Set(ptr); }
+
+		ENDIAN_SWAP(o);
 
 		template<typename CastedType>
 		inline CastedType* GetAs() const noexcept

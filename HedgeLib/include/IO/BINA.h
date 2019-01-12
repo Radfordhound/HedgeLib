@@ -4,6 +4,7 @@
 #include "dataSignature.h"
 #include "offsets.h"
 #include "file.h"
+#include "endian.h"
 #include <stdexcept>
 #include <cstdint>
 #include <cstddef>
@@ -55,6 +56,8 @@ namespace HedgeLib::IO::BINA
 		DBINAV2NodeHeader() = default;
 		constexpr DBINAV2NodeHeader(const DataSignature signature)
 			noexcept : signature(signature), size(0) {}
+
+		ENDIAN_SWAP(size);
 
 		static constexpr std::uintptr_t SizeOffset = (sizeof(signature));
 
@@ -186,6 +189,9 @@ namespace HedgeLib::IO::BINA
 		std::uint32_t OffsetTableSize = 0;
 		std::uint16_t RelativeDataOffset = PaddingSize; // ?
 		std::array<std::uint8_t, PaddingSize> Padding {};
+
+		ENDIAN_SWAP(Header, StringTableOffset, StringTableSize,
+			OffsetTableSize, RelativeDataOffset);
 
 		constexpr std::uint32_t Size() const noexcept
 		{
