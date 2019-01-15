@@ -30,11 +30,11 @@ for:
     verbosity: minimal
   after_build:
     - ps: |
-	    if ($env:PLATFORM -imatch "Win32") {
-		  Rename-Item C:\projects\hedgelib\HedgeEdit\bin\Win32 C:\projects\hedgelib\HedgeEdit\bin\x86
-		  Rename-Item C:\projects\hedgelib\HedgeLib\bin\Win32 C:\projects\hedgelib\HedgeLib\bin\x86
-		  Rename-Item C:\projects\hedgelib\HedgeArcPack\bin\Win32 C:\projects\hedgelib\HedgeArcPack\bin\x86
-		}
+        if ($env:PLATFORM -imatch "Win32") {
+          Rename-Item C:\projects\hedgelib\HedgeEdit\bin\Win32 C:\projects\hedgelib\HedgeEdit\bin\x86
+          Rename-Item C:\projects\hedgelib\HedgeLib\bin\Win32 C:\projects\hedgelib\HedgeLib\bin\x86
+          Rename-Item C:\projects\hedgelib\HedgeArcPack\bin\Win32 C:\projects\hedgelib\HedgeArcPack\bin\x86
+        }
   artifacts:
     - path: HedgeEdit/bin/$(PLATFORM)/Release
       name: HedgeEdit
@@ -51,13 +51,13 @@ for:
     - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha13/premake-5.0.0-alpha13-linux.tar.gz", "/home/appveyor/projects/hedgelib/premake.tar.gz")
     - sh: tar -zvxf /home/appveyor/projects/hedgelib/premake.tar.gz -C /home/appveyor/projects/hedgelib
     - sh: /home/appveyor/projects/hedgelib/premake5 gmake2
-	- sh: gcc -v
-	- sh: g++ -v
-	- sh: g++-8.2 -v
+    - sh: gcc -v
+    - sh: g++ -v
+    - sh: g++-8.2 -v
   build: off
   build_script:
     - sh: make CPP=g++-8.2.0 CXX=g++-8.2.0 LD=g++-8.2.0 config=release_$PLATFORM
-	- sh: sudo dpkg --get-selections
+    - sh: sudo dpkg --get-selections
   artifacts:
     - path: HedgeLib/bin/$(PLATFORM)/Release
       name: HedgeLib
