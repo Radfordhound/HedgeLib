@@ -2,8 +2,6 @@ version: 0.0.{build}
 image:
 - Visual Studio 2017
 - Ubuntu1804
-platform:
-- x64
 configuration: Release
 for:
 -
@@ -13,6 +11,7 @@ for:
 
   platform:
     - Win32
+    - x64
   install:
     - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha13/premake-5.0.0-alpha13-windows.zip", "C:\projects\hedgelib\premake.zip")
     - ps: Expand-Archive -LiteralPath C:\projects\hedgelib\premake.zip -DestinationPath C:\projects\hedgelib\
@@ -28,10 +27,12 @@ for:
 
   platform:
     - x86
+    - x64
   install:
     - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha13/premake-5.0.0-alpha13-linux.tar.gz", "premake.tar.gz")
+    - sh: ls
     - sh: tar --extract --file=premake.tar.gz premake5
-    - sh: premake5 gmake2
+    - sh: ./premake5 gmake2
   build:
     project: HedgeLib.sln
     verbosity: minimal
