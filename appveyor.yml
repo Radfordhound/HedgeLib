@@ -1,31 +1,81 @@
 version: 0.0.{build}
-image: Visual Studio 2017
+image:
+- Visual Studio 2017
+- Ubuntu1804
 platform:
-- Win32
 - x64
 configuration: Release
-install:
-- ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha13/premake-5.0.0-alpha13-windows.zip", "C:\projects\hedgelib\premake.zip")
-- ps: Expand-Archive -LiteralPath C:\projects\hedgelib\premake.zip -DestinationPath C:\projects\hedgelib\
-- ps: Set-Content -Path C:\projects\hedgelib\hedgeedit\depends.lua -Value 'return { QtDir32 = "C:/Qt/5.11.2/msvc2015", QtDir64 = "C:/Qt/5.11.2/msvc2017_64" }'
-- cmd: premake5 vs2017
-build:
-  project: HedgeLib.sln
-  verbosity: minimal
-
 for:
+-
+  matrix:
+    only:
+      - image: Visual Studio 2017
+
+  platform:
+    - Win32
+  install:
+    - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha13/premake-5.0.0-alpha13-windows.zip", "C:\projects\hedgelib\premake.zip")
+    - ps: Expand-Archive -LiteralPath C:\projects\hedgelib\premake.zip -DestinationPath C:\projects\hedgelib\
+    - ps: Set-Content -Path C:\projects\hedgelib\hedgeedit\depends.lua -Value 'return { QtDir32 = "C:/Qt/5.11.2/msvc2015", QtDir64 = "C:/Qt/5.11.2/msvc2017_64" }'
+    - cmd: premake5 vs2017
+  build:
+    project: HedgeLib.sln
+    verbosity: minimal
+-
+  matrix:
+    only:
+      - image: Ubuntu1804
+
+  platform:
+    - x86
+  install:
+    - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha13/premake-5.0.0-alpha13-linux.tar.gz", "premake.tar.gz")
+    - sh: tar --extract --file=premake.tar.gz premake5
+    - sh: premake5 gmake2
+  build:
+    project: HedgeLib.sln
+    verbosity: minimal
 -
   matrix:
     only:
       - platform: Win32
 
   artifacts:
-    - path: HedgeLib/bin/x86/Release
-      name: HedgeLib
     - path: HedgeEdit/bin/x86/Release
       name: HedgeEdit
+    - path: HedgeLib/bin/x86/Release
+      name: HedgeLib
     - path: HedgeTools/HedgeArcPack/bin/x86/Release
       name: HedgeArcPack
+-
+  matrix:
+    only:
+      - platform: x86
+
+  build_script:
+    - sh: make config=release_x86
+  artifacts:
+    - path: HedgeLib/bin/x86/Release
+      name: HedgeLib
+    - path: HedgeTools/HedgeArcPack/bin/x86/Release
+      name: HedgeArcPack
+-
+  matrix:
+    only:
+      - platform: x64
+        image: Ubuntu1804
+
+  build_script:
+    - sh: make config=release_x64
+-
+  matrix:
+    only:
+      - platform: x64
+        image: Visual Studio 2017
+
+  artifacts:
+    - path: HedgeEdit/bin/x64/Release
+      name: HedgeEdit
 -
   matrix:
     only:
@@ -34,7 +84,5 @@ for:
   artifacts:
     - path: HedgeLib/bin/x64/Release
       name: HedgeLib
-    - path: HedgeEdit/bin/x64/Release
-      name: HedgeEdit
     - path: HedgeTools/HedgeArcPack/bin/x64/Release
       name: HedgeArcPack
