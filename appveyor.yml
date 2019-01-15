@@ -18,37 +18,6 @@ for:
 -
   matrix:
     only:
-      - image: Visual Studio 2017
-
-  install:
-    - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha13/premake-5.0.0-alpha13-windows.zip", "C:\projects\hedgelib\premake.zip")
-    - ps: Expand-Archive -LiteralPath C:\projects\hedgelib\premake.zip -DestinationPath C:\projects\hedgelib\
-    - ps: Set-Content -Path C:\projects\hedgelib\hedgeedit\depends.lua -Value 'return { QtDir32 = "C:/Qt/5.11.2/msvc2015", QtDir64 = "C:/Qt/5.11.2/msvc2017_64" }'
-    - cmd: premake5 vs2017
-  build:
-    project: HedgeLib.sln
-    verbosity: minimal
--
-  matrix:
-    only:
-      - image: Ubuntu1804
-
-  install:
-    - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha13/premake-5.0.0-alpha13-linux.tar.gz", "/home/appveyor/projects/hedgelib/premake.tar.gz")
-    - sh: ls
-    - sh: tar -zvxf /home/appveyor/projects/hedgelib/premake.tar.gz -C /home/appveyor/projects/hedgelib
-    - sh: ls
-    - sh: tar -zvxf /home/appveyor/projects/hedgelib/premake.tar.gz -C /home/appveyor/projects/hedgelib/premake-modules
-    - sh: ls
-    - sh: ls /home/appveyor/projects/hedgelib
-    - sh: ls /home/appveyor/projects/hedgelib/premake-modules
-    - sh: ./home/appveyor/projects/hedgelib/premake5 gmake2
-  build:
-    project: HedgeLib.sln
-    verbosity: minimal
--
-  matrix:
-    only:
       - platform: Win32
         image: Visual Studio 2017
 
@@ -98,3 +67,30 @@ for:
       name: HedgeLib
     - path: HedgeTools/HedgeArcPack/bin/x64/Release
       name: HedgeArcPack
+-
+  matrix:
+    only:
+      - image: Visual Studio 2017
+
+  install:
+    - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha13/premake-5.0.0-alpha13-windows.zip", "C:\projects\hedgelib\premake.zip")
+    - ps: Expand-Archive -LiteralPath C:\projects\hedgelib\premake.zip -DestinationPath C:\projects\hedgelib\
+    - ps: Set-Content -Path C:\projects\hedgelib\hedgeedit\depends.lua -Value 'return { QtDir32 = "C:/Qt/5.11.2/msvc2015", QtDir64 = "C:/Qt/5.11.2/msvc2017_64" }'
+    - cmd: premake5 vs2017
+  build:
+    project: HedgeLib.sln
+    verbosity: minimal
+-
+  matrix:
+    only:
+      - image: Ubuntu1804
+
+  install:
+    - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha13/premake-5.0.0-alpha13-linux.tar.gz", "/home/appveyor/projects/hedgelib/premake.tar.gz")
+    - sh: tar -zvxf /home/appveyor/projects/hedgelib/premake.tar.gz -C /home/appveyor/projects/hedgelib
+    - sh: /home/appveyor/projects/hedgelib/premake5 gmake2
+    - sh: chmod +x /home/appveyor/projects/hedgelib/premake5
+    - sh: /home/appveyor/projects/hedgelib/premake5 gmake2
+  build:
+    project: HedgeLib.sln
+    verbosity: minimal
