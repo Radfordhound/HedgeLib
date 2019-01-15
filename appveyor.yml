@@ -38,10 +38,10 @@ for:
     - sh: ls
     - sh: tar -zvxf /home/appveyor/projects/hedgelib/premake.tar.gz -C /home/appveyor/projects/hedgelib
     - sh: ls
-	- sh: tar -zvxf /home/appveyor/projects/hedgelib/premake.tar.gz -C /home/appveyor/projects/hedgelib/premake-modules
-	- sh: ls
-	- sh: ls /home/appveyor/projects/hedgelib
-	- sh: ls /home/appveyor/projects/hedgelib/premake-modules
+    - sh: tar -zvxf /home/appveyor/projects/hedgelib/premake.tar.gz -C /home/appveyor/projects/hedgelib/premake-modules
+    - sh: ls
+    - sh: ls /home/appveyor/projects/hedgelib
+    - sh: ls /home/appveyor/projects/hedgelib/premake-modules
     - sh: ./home/appveyor/projects/hedgelib/premake5 gmake2
   build:
     project: HedgeLib.sln
