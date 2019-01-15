@@ -7,14 +7,18 @@ platform:
 - x86
 - x64
 configuration: Release
+matrix:
+  exclude:
+    - platform: x86
+      image: Visual Studio 2017
+    - platform: Win32
+      image: Ubuntu1804
+
 for:
 -
   matrix:
     only:
       - image: Visual Studio 2017
-
-    except:
-      - platform: x86
 
   install:
     - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha13/premake-5.0.0-alpha13-windows.zip", "C:\projects\hedgelib\premake.zip")
@@ -29,13 +33,10 @@ for:
     only:
       - image: Ubuntu1804
 
-    except:
-      - platform: Win32
-
   install:
     - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha13/premake-5.0.0-alpha13-linux.tar.gz", "/home/appveyor/projects/hedgelib/premake.tar.gz")
     - sh: ls
-    - sh: tar -zvxf /home/appveyor/projects/hedgelib/premake.tar.gz -C /home/appveyor/projects/hedgelib/premake5
+    - sh: tar -zvxf /home/appveyor/projects/hedgelib/premake.tar.gz -C /home/appveyor/projects/hedgelib
     - sh: ./home/appveyor/projects/hedgelib/premake5 gmake2
   build:
     project: HedgeLib.sln
