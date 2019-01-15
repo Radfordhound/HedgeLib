@@ -28,6 +28,8 @@ for:
   build:
     project: HedgeLib.sln
     verbosity: minimal
+  after_build:
+    - ps: if ($env:PLATFORM -imatch "Win32") { setx PLATFORM x86 }
   artifacts:
     - path: HedgeEdit/bin/$(PLATFORM)/Release
       name: HedgeEdit
@@ -46,7 +48,7 @@ for:
     - sh: /home/appveyor/projects/hedgelib/premake5 gmake2
   build: off
   build_script:
-    - sh: make config=release_$(PLATFORM)
+    - sh: make config=release_$PLATFORM
   artifacts:
     - path: HedgeLib/bin/$(PLATFORM)/Release
       name: HedgeLib
