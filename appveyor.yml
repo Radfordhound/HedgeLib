@@ -51,7 +51,7 @@ for:
     - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha13/premake-5.0.0-alpha13-linux.tar.gz", "/home/appveyor/projects/hedgelib/premake.tar.gz")
     - sh: tar -zvxf /home/appveyor/projects/hedgelib/premake.tar.gz -C /home/appveyor/projects/hedgelib
     - sh: /home/appveyor/projects/hedgelib/premake5 gmake2
-	- sh: sudo apt-get install -yq gcc-8-multilib g++-8-multilib
+    - sh: sudo apt-get install -yq gcc-8-multilib g++-8-multilib
   build: off
   build_script:
     - sh: make CPP=g++-8 CXX=g++-8 LD=g++-8 config=release_$PLATFORM
