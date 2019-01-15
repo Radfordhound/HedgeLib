@@ -37,6 +37,11 @@ for:
     - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha13/premake-5.0.0-alpha13-linux.tar.gz", "/home/appveyor/projects/hedgelib/premake.tar.gz")
     - sh: ls
     - sh: tar -zvxf /home/appveyor/projects/hedgelib/premake.tar.gz -C /home/appveyor/projects/hedgelib
+    - sh: ls
+	- sh: tar -zvxf /home/appveyor/projects/hedgelib/premake.tar.gz -C /home/appveyor/projects/hedgelib/premake-modules
+	- sh: ls
+	- sh: ls /home/appveyor/projects/hedgelib
+	- sh: ls /home/appveyor/projects/hedgelib/premake-modules
     - sh: ./home/appveyor/projects/hedgelib/premake5 gmake2
   build:
     project: HedgeLib.sln
