@@ -30,8 +30,6 @@ namespace HedgeLib::IO
 			return Data[index];
 		}
 
-		inline void EndianSwap() {}
-
 	private:
 		static inline constexpr std::array<std::uint8_t, 4>
 			ToArray(const std::string_view v)

@@ -1,5 +1,7 @@
 #ifndef HENDIAN_H_INCLUDED
 #define HENDIAN_H_INCLUDED
+#include "helpers.h"
+#include <utility>
 #include <cstdint>
 
 #ifdef _WIN32
@@ -68,9 +70,18 @@ namespace HedgeLib::IO::Endian
 	}
 
 	template<typename T>
+	using EndianSwap_t = decltype(std::declval<T&>().EndianSwap());
+
+	template<typename T>
+	constexpr bool HasEndianSwapFunction = is_detected_v<EndianSwap_t, T>;
+
+	template<typename T>
 	inline void SwapRecursive(T& value)
 	{
-		value.EndianSwap();
+		if constexpr (HasEndianSwapFunction<T>)
+		{
+			value.EndianSwap();
+		}
 	}
 
 	template<>
