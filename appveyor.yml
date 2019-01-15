@@ -28,6 +28,13 @@ for:
   build:
     project: HedgeLib.sln
     verbosity: minimal
+  artifacts:
+    - path: HedgeEdit/bin/$(PLATFORM)/Release
+      name: HedgeEdit
+    - path: HedgeLib/bin/$(PLATFORM)/Release
+      name: HedgeLib
+    - path: HedgeTools/HedgeArcPack/bin/$(PLATFORM)/Release
+      name: HedgeArcPack
 -
   matrix:
     only:
@@ -37,57 +44,11 @@ for:
     - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha13/premake-5.0.0-alpha13-linux.tar.gz", "/home/appveyor/projects/hedgelib/premake.tar.gz")
     - sh: tar -zvxf /home/appveyor/projects/hedgelib/premake.tar.gz -C /home/appveyor/projects/hedgelib
     - sh: /home/appveyor/projects/hedgelib/premake5 gmake2
-    - sh: chmod +x /home/appveyor/projects/hedgelib/premake5
-    - sh: /home/appveyor/projects/hedgelib/premake5 gmake2
   build: off
--
-  matrix:
-    only:
-      - platform: Win32
-
-  artifacts:
-    - path: HedgeEdit/bin/x86/Release
-      name: HedgeEdit
-    - path: HedgeLib/bin/x86/Release
-      name: HedgeLib
-    - path: HedgeTools/HedgeArcPack/bin/x86/Release
-      name: HedgeArcPack
--
-  matrix:
-    only:
-      - platform: x64
-        image: Visual Studio 2017
-
-  artifacts:
-    - path: HedgeEdit/bin/x64/Release
-      name: HedgeEdit
-    - path: HedgeLib/bin/x64/Release
-      name: HedgeLib
-    - path: HedgeTools/HedgeArcPack/bin/x64/Release
-      name: HedgeArcPack
--
-  matrix:
-    only:
-      - platform: x64
-        image: Ubuntu1804
-
   build_script:
-    - sh: make config=release_x64
+    - sh: make config=release_$(PLATFORM)
   artifacts:
-    - path: HedgeLib/bin/x64/Release
+    - path: HedgeLib/bin/$(PLATFORM)/Release
       name: HedgeLib
-    - path: HedgeTools/HedgeArcPack/bin/x64/Release
-      name: HedgeArcPack
--
-  matrix:
-    only:
-      - platform: x86
-        image: Ubuntu1804
-
-  build_script:
-    - sh: make config=release_x86
-  artifacts:
-    - path: HedgeLib/bin/x86/Release
-      name: HedgeLib
-    - path: HedgeTools/HedgeArcPack/bin/x86/Release
+    - path: HedgeTools/HedgeArcPack/bin/$(PLATFORM)/Release
       name: HedgeArcPack
