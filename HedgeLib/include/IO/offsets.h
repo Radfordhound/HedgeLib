@@ -35,8 +35,6 @@ namespace HedgeLib::IO
 
 		DataOffset32(const DataType* ptr) { Set(ptr); }
 
-		ENDIAN_SWAP(o);
-
 		template<typename CastedType>
 		inline CastedType* GetAs() const noexcept
 		{
@@ -98,6 +96,11 @@ namespace HedgeLib::IO
 			o = static_cast<std::uint32_t>(p - t);
 #endif
 		}
+
+		inline void EndianSwap()
+		{
+			HedgeLib::IO::Endian::SwapRecursive(o, *Get());
+		}
 	};
 
 	template<typename DataType>
@@ -152,6 +155,11 @@ namespace HedgeLib::IO
 			o = static_cast<std::uint64_t>(
 				reinterpret_cast<std::uintptr_t>(ptr));
 		}
+
+		inline void EndianSwap()
+		{
+			HedgeLib::IO::Endian::SwapRecursive(o, *Get());
+		}
 	};
 
 	template<typename DataType>
@@ -162,6 +170,8 @@ namespace HedgeLib::IO
 			DataOffset<std::uint32_t>(offset) {}
 		constexpr ArrOffset32(std::nullptr_t) :
 			DataOffset<std::uint32_t>(nullptr) {}
+
+		ENDIAN_SWAP(o);
 
 		inline DataType* Get() const noexcept
 		{
