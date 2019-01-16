@@ -26,15 +26,21 @@ namespace HedgeLib::IO
 		inline CastedType* GetAs() const noexcept;
 	};
 
+#ifdef x86
+#define HEDGELIB_OFFSET32_TYPE std::uint32_t
+#elif x64
+#define HEDGELIB_OFFSET32_TYPE std::int32_t
+#endif
+
 	template<typename DataType>
-	struct OffsetBase<std::uint32_t, DataType>
+	struct OffsetBase<HEDGELIB_OFFSET32_TYPE, DataType>
 	{
 	protected:
-		std::uint32_t o = 0;
+		HEDGELIB_OFFSET32_TYPE o = 0;
 
 	public:
 		constexpr OffsetBase() = default;
-		constexpr OffsetBase(const std::uint32_t offset) : o(offset) {}
+		constexpr OffsetBase(const HEDGELIB_OFFSET32_TYPE offset) : o(offset) {}
 		constexpr OffsetBase(std::nullptr_t) : o(0) {}
 
 		inline DataType* Get() const noexcept
@@ -52,7 +58,8 @@ namespace HedgeLib::IO
 #ifdef x86
 			o += origin;
 #elif x64
-			o = static_cast<std::uint32_t>(((origin + o) -
+			o = static_cast<HEDGELIB_OFFSET32_TYPE>(((
+				origin + static_cast<std::uint32_t>(o)) -
 				reinterpret_cast<std::uintptr_t>(this)));
 #endif
 		}
@@ -60,16 +67,13 @@ namespace HedgeLib::IO
 		inline void Set(const DataType* ptr)
 		{
 #ifdef x86
-			o = static_cast<std::uint32_t>(
+			o = static_cast<HEDGELIB_OFFSET32_TYPE>(
 				reinterpret_cast<std::uintptr_t>(ptr));
 #elif x64
-			std::uintptr_t t = reinterpret_cast<std::uintptr_t>(this);
-			std::uintptr_t p = reinterpret_cast<std::uintptr_t>(ptr);
+			std::intptr_t t = reinterpret_cast<std::intptr_t>(this);
+			std::intptr_t p = reinterpret_cast<std::intptr_t>(ptr);
 
-			if (p < t) // TODO: Use signed intptr instead?
-				throw std::runtime_error("Cannot store negative values in offset!");
-
-			o = static_cast<std::uint32_t>(p - t);
+			o = static_cast<HEDGELIB_OFFSET32_TYPE>(p - t);
 #endif
 		}
 
@@ -166,13 +170,13 @@ namespace HedgeLib::IO
 	};
 
 	template<typename DataType>
-	using DataOffset32 = DataOffset<std::uint32_t, DataType, false>;
+	using DataOffset32 = DataOffset<HEDGELIB_OFFSET32_TYPE, DataType, false>;
 
 	template<typename DataType>
 	using DataOffset64 = DataOffset<std::uint64_t, DataType, false>;
 
 	template<typename DataType>
-	using ArrOffset32 = DataOffset<std::uint32_t, DataType, true>;
+	using ArrOffset32 = DataOffset<HEDGELIB_OFFSET32_TYPE, DataType, true>;
 
 	template<typename DataType>
 	using ArrOffset64 = DataOffset<std::uint64_t, DataType, true>;
