@@ -27,9 +27,9 @@ namespace HedgeLib::Archives
 		GetSplitList(const std::filesystem::path filePath)
 	{
 		// Get split list from ResPacDepend list if PAC has already been read
-		if (d->TypesTree.NodeCount)
+		if (d->TypesTree.Nodes.Count())
 		{
-			for (std::uint32_t i = 0; i < d->TypesTree.NodeCount; ++i)
+			for (std::uint32_t i = 0; i < d->TypesTree.Nodes.Count(); ++i)
 			{
 				// Get ResPacDepend type node
 				auto& typeNode = d->TypesTree.Nodes[i];
@@ -41,14 +41,12 @@ namespace HedgeLib::Archives
 					continue;
 
 				// Get File Tree
-				auto fileTree = typeNode.Data.GetAs<
-					DPACxNodeTree<ArrOffset32, DataOffset32>>();
-
-				if (fileTree->NodeCount == 0)
+				auto fileTree = typeNode.Data.Get();
+				if (fileTree->Nodes.Count() == 0)
 					break;
 
 				// Get Data Entry
-				std::uint8_t* dataPtr = fileTree->Nodes[0].Data.Get();
+				std::uint8_t* dataPtr = fileTree->Nodes[0].Data.GetAs<std::uint8_t>();
 				dataPtr += sizeof(DPACDataEntry);
 
 				// Get Splits Entry Table
@@ -138,7 +136,7 @@ namespace HedgeLib::Archives
 		stringTablePtr -= d->Header.StringTableSize;
 
 		// Loop through typesTree
-        for (std::uint32_t i = 0; i < d->TypesTree.NodeCount; ++i)
+        for (std::uint32_t i = 0; i < d->TypesTree.Nodes.Count(); ++i)
         {
             auto& typeNode = d->TypesTree.Nodes[i];
 			if (!typeNode.Name)
@@ -148,14 +146,12 @@ namespace HedgeLib::Archives
             if (type == "pac.d:ResPacDepend")
                 continue;
 
-            auto fileTree = typeNode.Data.GetAs<
-				DPACxNodeTree<ArrOffset32, DataOffset32>>();
-
+            auto fileTree = typeNode.Data.Get();
             type = type.substr(0, type.find_last_of(':'));
 
-            for (std::uint32_t i2 = 0; i2 < fileTree->NodeCount; ++i2)
+            for (std::uint32_t i2 = 0; i2 < fileTree->Nodes.Count(); ++i2)
             {
-                auto dataEntry = fileTree->Nodes[i2].Data.GetAs<DPACDataEntry>();
+                auto dataEntry = fileTree->Nodes[i2].Data.Get();
                 if (dataEntry->Flags & DATA_FLAGS_NO_DATA)
 					continue;
 

@@ -120,7 +120,7 @@ namespace HedgeLib::IO
 		}
 	};
 
-	template<typename OffsetType, typename DataType, bool isArray = false>
+	template<typename OffsetType, typename DataType>
 	struct DataOffset : public OffsetBase<OffsetType, DataType>
 	{
 		constexpr DataOffset() = default;
@@ -128,11 +128,6 @@ namespace HedgeLib::IO
 			OffsetBase<OffsetType, DataType>(offset) {}
 		constexpr DataOffset(std::nullptr_t) :
 			OffsetBase<OffsetType, DataType>(nullptr) {}
-
-		constexpr operator OffsetType() const noexcept
-		{
-			return this->o; // TODO: Should we have this?
-		}
 
 		inline operator DataType*() const noexcept
 		{
@@ -154,57 +149,144 @@ namespace HedgeLib::IO
 			return (this->Get())[index];
 		}
 
+		constexpr const OffsetType& GetInternalOffset() const noexcept
+		{
+			return this->o;
+		}
+
 		inline void EndianSwap()
 		{
-			if constexpr (!isArray)
-			{
-				HedgeLib::IO::Endian::SwapRecursive(
-					this->o, *(this->Get()));
-			}
+			HedgeLib::IO::Endian::SwapRecursive(
+				this->o, *(this->Get()));
+		}
 
-			// TODO: Make an array variant!!
+		inline void FixOffset(const HedgeLib::IO::File& file,
+			const long origin, const std::uintptr_t endPtr, long& eof,
+			std::vector<std::uint32_t>* offsets) const
+		{
+			// Seek to the offset
+			long offPos = (eof - static_cast<long>((
+				endPtr - reinterpret_cast<std::uintptr_t>(this))));
+
+			eof = file.Tell();
+			file.Seek(offPos);
+
+			// Fix it
+			OffsetType off = static_cast<OffsetType>(eof - origin);
+			file.Write(&off, sizeof(off), 1);
+
+			// Add it to the list of offsets
+			offsets->push_back(static_cast<std::uint32_t>(offPos - origin));
+
+			// Seek to end of file for future writing
+			file.Seek(eof);
 		}
 
 		inline void WriteOffset(const HedgeLib::IO::File& file,
 			const long origin, const std::uintptr_t endPtr, long eof,
 			std::vector<std::uint32_t>* offsets) const
 		{
-			if constexpr (!isArray)
-			{
-				// Seek to the offset
-				long offPos = (eof - static_cast<long>((
-					endPtr - reinterpret_cast<std::uintptr_t>(this))));
-
-				eof = file.Tell();
-				file.Seek(offPos);
-
-				// Fix it
-				OffsetType off = static_cast<OffsetType>(eof - origin);
-				file.Write(&off, sizeof(off), 1);
-
-				// Add it to the list of offsets
-				offsets->push_back(static_cast<std::uint32_t>(offPos - origin));
-
-				// Write object pointed to by offset
-				file.Seek(eof);
-				HedgeLib::WriteRecursive(file, origin, endPtr,
-					eof, offsets, *(this->Get()));
-			}
-
-			// TODO: Make an array variant!!
+			// Fix offset and write object pointed to by offset
+			FixOffset(file, origin, endPtr, eof, offsets);
+			HedgeLib::WriteRecursive(file, origin, endPtr,
+				eof, offsets, *(this->Get()));
 		}
 	};
 
 	template<typename DataType>
-	using DataOffset32 = DataOffset<HEDGELIB_OFFSET32_TYPE, DataType, false>;
+	using DataOffset32 = DataOffset<HEDGELIB_OFFSET32_TYPE, DataType>;
 
 	template<typename DataType>
-	using DataOffset64 = DataOffset<std::uint64_t, DataType, false>;
+	using DataOffset64 = DataOffset<std::uint64_t, DataType>;
 
-	template<typename DataType>
-	using ArrOffset32 = DataOffset<HEDGELIB_OFFSET32_TYPE, DataType, true>;
+	template<typename OffsetType, typename DataType, typename CountType>
+	struct ArrOffset
+	{
+	protected:
+		CountType count;
+		DataOffset<OffsetType, DataType> o;
 
-	template<typename DataType>
-	using ArrOffset64 = DataOffset<std::uint64_t, DataType, true>;
+	public:
+		constexpr ArrOffset() = default;
+		constexpr ArrOffset(const OffsetType offset) :
+			count(0), o(offset) {}
+		constexpr ArrOffset(std::nullptr_t) :
+			count(0), o(nullptr) {}
+
+		inline operator DataType*() const noexcept
+		{
+			return o.Get();
+		}
+
+		inline DataType& operator* () const noexcept
+		{
+			return *(o.Get());
+		}
+
+		inline DataType* operator-> () const noexcept
+		{
+			return o.Get();
+		}
+
+		inline DataType& operator[] (const int index) const noexcept
+		{
+			return (o.Get())[index];
+		}
+
+		constexpr CountType Count() const noexcept
+		{
+			return count;
+		}
+
+		inline DataType* Get() const noexcept
+		{
+			return o.Get();
+		}
+
+		constexpr void Fix(const std::uintptr_t origin) noexcept
+		{
+			o.Fix(origin);
+		}
+
+		inline void Set(const DataType* ptr, const CountType count)
+		{
+			o.Set(ptr);
+			this->count = count;
+		}
+
+		template<typename CastedType>
+		inline CastedType* GetAs() const noexcept
+		{
+			return o.template GetAs<CastedType>();
+		}
+
+		inline void EndianSwap()
+		{
+			HedgeLib::IO::Endian::SwapRecursive(o.GetInternalOffset());
+			for (CountType i = 0; i < count; ++i)
+			{
+				HedgeLib::IO::Endian::SwapRecursive(
+					operator[](static_cast<int>(i)));
+			}
+		}
+
+		inline void WriteOffset(const HedgeLib::IO::File& file,
+			const long origin, const std::uintptr_t endPtr, long eof,
+			std::vector<std::uint32_t>* offsets) const
+		{
+			o.FixOffset(file, origin, endPtr, eof, offsets);
+			for (CountType i = 0; i < count; ++i)
+			{
+				HedgeLib::WriteRecursive(file, origin, endPtr,
+					eof, offsets, (o.Get())[i]);
+			}
+		}
+	};
+
+	template<typename DataType, typename CountType = std::uint32_t>
+	using ArrOffset32 = ArrOffset<HEDGELIB_OFFSET32_TYPE, DataType, CountType>;
+
+	template<typename DataType, typename CountType = std::uint64_t>
+	using ArrOffset64 = ArrOffset<std::uint64_t, DataType, CountType>;
 }
 #endif

@@ -45,19 +45,33 @@ namespace HedgeLib::Archives
 		}
     };
 
-    template<template<typename> class OffsetType>
+    template<template<typename> class OffsetType, typename DataType>
     struct DPACxNode
     {
         OffsetType<char> Name; // TODO: Non-BINA string type
-        OffsetType<std::uint8_t> Data;
+        OffsetType<DataType> Data;
+
+		ENDIAN_SWAP(Name, Data);
+		OFFSETS(Name, Data);
     };
 
-    template<template<typename> class ArrType,
-		template<typename> class OffsetType>
+	template<typename DataType>
     struct DPACxNodeTree
     {
-        std::uint32_t NodeCount;
-		ArrType<DPACxNode<OffsetType>> Nodes;
+		HedgeLib::IO::ArrOffset32<DPACxNode
+			<HedgeLib::IO::DataOffset32, DataType>> Nodes;
+
+		ENDIAN_SWAP(Nodes);
+
+		inline void WriteRecursive(
+			const HedgeLib::IO::File& file, const long origin,
+			std::vector<std::uint32_t>* offsets) const
+		{
+			// TODO: Is this correct?
+			HedgeLib::WriteRecursive(file, origin, reinterpret_cast
+				<std::uintptr_t>(this + 1), file.Tell(),
+				offsets, Nodes);
+		}
     };
 
     enum DataFlags : std::uint8_t
@@ -72,12 +86,16 @@ namespace HedgeLib::Archives
         std::uint32_t Unknown1 = 0;
         std::uint32_t Unknown2 = 0;
         DataFlags Flags = DATA_FLAGS_NONE;
+
+		ENDIAN_SWAP(DataSize, Unknown1, Unknown2);
     };
 
 	template<template<typename> class OffsetType>
 	struct DPACSplitEntry
 	{
 		OffsetType<char> Name; // TODO: Non-BINA string type
+
+		ENDIAN_SWAP(Name);
 	};
 
 	template<template<typename> class OffsetType>
@@ -85,14 +103,19 @@ namespace HedgeLib::Archives
 	{
 		OffsetType<DPACSplitEntry<OffsetType>> Splits;
 		std::uint32_t SplitsCount;
+
+		ENDIAN_SWAP(Splits, SplitsCount);
+		OFFSETS(Splits);
 	};
 
 	struct DLWArchive
 	{
 		DPACxDataNode Header;
-		DPACxNodeTree<HedgeLib::IO::ArrOffset32,
-			HedgeLib::IO::DataOffset32> TypesTree;
+		DPACxNodeTree<DPACxNodeTree<DPACDataEntry>> TypesTree;
 		// TODO: splits?
+
+		ENDIAN_SWAP(Header, TypesTree);
+		OFFSETS(TypesTree);
 	};
 
 	class LWArchive : public Archive
