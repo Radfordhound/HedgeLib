@@ -127,11 +127,6 @@ namespace HedgeLib::IO
 		constexpr DataOffset(std::nullptr_t) :
 			OffsetBase<OffsetType, DataType>(nullptr) {}
 
-		inline DataOffset(const DataType* ptr)
-		{
-			Set(ptr);
-		}
-
 		constexpr operator OffsetType() const noexcept
 		{
 			return this->o; // TODO: Should we have this?
