@@ -4,7 +4,7 @@
 #include "dataSignature.h"
 #include "offsets.h"
 #include "file.h"
-#include "endian.h"
+#include "reflect.h"
 #include <stdexcept>
 #include <cstdint>
 #include <cstddef>
@@ -15,7 +15,7 @@
 #include <memory>
 #include <filesystem>
 #include <typeinfo> // TODO?
-#include <algorithm> // TODO?
+#include <algorithm>
 #include <iostream> // TODO
 
 namespace HedgeLib::IO::BINA
@@ -225,6 +225,9 @@ namespace HedgeLib::IO::BINA
 		constexpr DBINAString() = default;
 		DBINAString(const char* c) : StringOffset(c) {}
 
+		ENDIAN_SWAP(StringOffset, UnknownOffset);
+		OFFSETS(StringOffset, UnknownOffset);
+
 		operator char*() const noexcept
 		{
 			return StringOffset;
@@ -234,8 +237,15 @@ namespace HedgeLib::IO::BINA
 	using BINAString32 = DBINAString<DataOffset32>;
 	using BINAString64 = DBINAString<DataOffset64>;
 
-	void WriteOffsets(const HedgeLib::IO::File& file,
-		const std::vector<std::uint32_t>& offsets) noexcept;
+	void WriteOffsetsSorted(const HedgeLib::IO::File& file,
+		std::vector<std::uint32_t>& offsets) noexcept;
+
+	inline void WriteOffsets(const HedgeLib::IO::File& file,
+		std::vector<std::uint32_t>& offsets) noexcept
+	{
+		std::sort(offsets.begin(), offsets.end());
+		WriteOffsetsSorted(file, offsets);
+	}
 
 	// TODO: Finish the ReadNodes functions somehow
 
@@ -334,16 +344,6 @@ namespace HedgeLib::IO::BINA
 		return Read<DataType, OffsetType>(file);
 	}
 
-	template<class NodeType, template<typename> class OffsetType>
-	void WriteNodeV2(const HedgeLib::IO::File& file,
-		const NodeType& node)
-	{
-		// Write the node
-		file.Write(&node, sizeof(node), 1);
-
-		// TODO: Write arrays/child objects and such
-		// TODO: Fix offsets and such
-	}
 
 	template<class DataType, template<typename> class OffsetType>
 	void WriteV2(const HedgeLib::IO::File& file,
@@ -353,17 +353,57 @@ namespace HedgeLib::IO::BINA
 		long startPos = file.Tell(); // So we can safely append to files as well
 		file.Write(&header, sizeof(header), 1);
 
-		// Write data node
-		WriteNodeV2<DataType, OffsetType>(file, data);
+		// Write data node and its children
+		//long endPos = WriteDataNodeV2<DataType, OffsetType>(file, data);
+		std::vector<std::uint32_t> offsets;
+		const long origin = (file.Tell() + sizeof(data.Header));
+		data.WriteRecursive(file, origin, offsets);
+
+		// TODO: Write arrays properly
+		// TODO: Write strings properly
+
+		// Write the offset table
+		std::uint32_t offTablePos = static_cast<std::uint32_t>(file.Tell());
+		WriteOffsets(file, offsets);
+		long endPos = file.Tell();
 
 		// Fix header file size
-		long endPos = file.Tell();
-		file.Seek(startPos + header.FileSizeOffset);
-
 		std::uint32_t size = static_cast<std::uint32_t>(endPos - startPos);
+		file.Seek(startPos + header.FileSizeOffset);
 		file.Write(&size, sizeof(size), 1);
 
-		file.Seek(endPos); // Just so future write operations continue on after the BINA part
+		// Fix Node Size
+		std::uint32_t nodeSize = static_cast<std::uint32_t>(
+			endPos - sizeof(BINA::DBINAV2Header));
+
+		file.Seek(startPos + (sizeof(BINA::DBINAV2Header) +
+			BINA::DBINAV2DataNode::SizeOffset));
+
+		file.Write(&nodeSize, sizeof(nodeSize), 1);
+
+		// Fix String Table Offset
+		// TODO
+		/*stringTablePos -= 0x40;
+		file.Seek(startPos + sizeof(BINA::DBINAV2Header) + 8);
+		file.Write(&stringTablePos, sizeof(stringTablePos), 1);*/
+
+		// Fix String Table Size
+		// TODO
+		offTablePos -= 0x40;
+		/*stringTablePos = (offTablePos - stringTablePos);
+
+		file.Seek(startPos + sizeof(BINA::DBINAV2Header) + 12);
+		file.Write(&stringTablePos, sizeof(std::uint32_t), 1);*/
+
+		// Fix Offset Table Size
+		offTablePos = static_cast<std::uint32_t>(
+			nodeSize - offTablePos - sizeof(BINA::DBINAV2DataNode));
+
+		file.Seek(startPos + sizeof(BINA::DBINAV2Header) + 16);
+		file.Write(&offTablePos, sizeof(std::uint32_t), 1);
+
+		// Go to end so future write operations continue on afterwards if needed
+		file.Seek(endPos);
 	}
 
 	template<class DataType, template<typename> class OffsetType>

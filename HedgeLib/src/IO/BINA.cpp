@@ -5,12 +5,11 @@
 
 namespace HedgeLib::IO::BINA
 {
-	void WriteOffsets(const HedgeLib::IO::File& file,
-		const std::vector<std::uint32_t>& offsets) noexcept
+	void WriteOffsetsSorted(const HedgeLib::IO::File& file,
+		std::vector<std::uint32_t>& offsets) noexcept
 	{
 		// TODO: Big endian support
 		std::uint32_t o, curOffset = 0;
-
 		for (auto& offset : offsets)
 		{
 			o = ((offset - curOffset) >> 2);

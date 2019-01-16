@@ -1,7 +1,7 @@
 #ifndef HOBJ_AURA_TRAIN_PARAMETER_H_INCLUDED
 #define HOBJ_AURA_TRAIN_PARAMETER_H_INCLUDED
-#include "IO/endian.h"
 #include "IO/BINA.h"
+#include "reflect.h"
 
 namespace HedgeLib::RFL
 {

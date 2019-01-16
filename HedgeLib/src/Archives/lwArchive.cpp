@@ -252,7 +252,7 @@ namespace HedgeLib::Archives
 
 					// Add BINA offset table
 					std::uint32_t offTablePos = static_cast<std::uint32_t>(f.Tell());
-					BINA::WriteOffsets(f, fileOffsets);
+					BINA::WriteOffsetsSorted(f, fileOffsets);
 					eof = f.Tell();
 
 					// Fix BINA header/data node

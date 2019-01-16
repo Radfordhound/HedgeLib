@@ -132,8 +132,5 @@ namespace HedgeLib::IO::Endian
 		SwapRecursive(value);
 		SwapRecursive(args...);
 	}
-
-#define ENDIAN_SWAP(...) inline void EndianSwap()\
-	{ HedgeLib::IO::Endian::SwapRecursive(__VA_ARGS__); }
 }
 #endif

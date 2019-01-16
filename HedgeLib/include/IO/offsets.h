@@ -1,6 +1,8 @@
 #ifndef HOFFSETS_H_INCLUDED
 #define HOFFSETS_H_INCLUDED
 #include "endian.h"
+#include "reflect.h"
+#include "file.h"
 #include <cstdint>
 #include <stdexcept>
 #include <cstddef>
@@ -158,6 +160,35 @@ namespace HedgeLib::IO
 			{
 				HedgeLib::IO::Endian::SwapRecursive(
 					this->o, *(this->Get()));
+			}
+
+			// TODO: Make an array variant!!
+		}
+
+		inline void WriteOffset(const HedgeLib::IO::File& file,
+			const long origin, const std::uintptr_t endPtr, long eof,
+			std::vector<std::uint32_t>& offsets) const
+		{
+			if constexpr (!isArray)
+			{
+				// Seek to the offset
+				long offPos = (eof - static_cast<long>((
+					endPtr - reinterpret_cast<std::uintptr_t>(this))));
+
+				eof = file.Tell();
+				file.Seek(offPos);
+
+				// Fix it
+				OffsetType off = static_cast<OffsetType>(eof - origin);
+				file.Write(&off, sizeof(off), 1);
+
+				// Add it to the list of offsets
+				offsets.push_back(static_cast<std::uint32_t>(offPos - origin));
+
+				// Write object pointed to by offset
+				file.Seek(eof);
+				HedgeLib::WriteRecursive(file, origin, endPtr,
+					eof, offsets, *(this->Get()));
 			}
 
 			// TODO: Make an array variant!!
