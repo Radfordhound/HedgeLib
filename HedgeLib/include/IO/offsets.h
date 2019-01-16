@@ -130,34 +130,35 @@ namespace HedgeLib::IO
 
 		constexpr operator OffsetType() const noexcept
 		{
-			return o; // TODO: Should we have this?
+			return this->o; // TODO: Should we have this?
 		}
 
 		inline operator DataType*() const noexcept
 		{
-			return Get();
+			return this->Get();
 		}
 
 		inline DataType& operator* () const noexcept
 		{
-			return *Get();
+			return *(this->Get());
 		}
 
 		inline DataType* operator-> () const noexcept
 		{
-			return Get();
+			return this->Get();
 		}
 
 		inline DataType& operator[] (const int index) const noexcept
 		{
-			return (Get())[index];
+			return (this->Get())[index];
 		}
 
 		inline void EndianSwap()
 		{
 			if constexpr (!isArray)
 			{
-				HedgeLib::IO::Endian::SwapRecursive(o, *Get());
+				HedgeLib::IO::Endian::SwapRecursive(
+					this->o, *(this->Get()));
 			}
 
 			// TODO: Make an array variant!!
