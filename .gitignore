@@ -7,6 +7,10 @@
 *.filters
 Makefile
 
+# Ignore premake itself
+premake5.exe
+premake5
+
 # User-specific files
 *.suo
 *.user
