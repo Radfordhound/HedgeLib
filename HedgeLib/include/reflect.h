@@ -3,7 +3,6 @@
 #include "helpers.h"
 #include "IO/endian.h"
 #include "IO/file.h"
-#include "IO/offsets.h"
 #include <cstdint>
 #include <vector>
 #include <utility>
@@ -32,11 +31,11 @@ namespace HedgeLib
 		const long origin, const std::uintptr_t endPtr, long eof,
 		std::vector<std::uint32_t>& offsets, T& value)
 	{
-		if constexpr (HedgeLib::HasWriteOffsetFunction<T>)
+		if constexpr (HasWriteOffsetFunction<T>)
 		{
 			value.WriteOffset(file, origin, endPtr, eof, offsets);
 		}
-		else if constexpr (HedgeLib::HasWriteRecursiveFunction<T>)
+		else if constexpr (HasWriteRecursiveFunction<T>)
 		{
 			value.WriteRecursive(file, origin, offsets);
 		}

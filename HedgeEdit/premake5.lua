@@ -20,8 +20,6 @@ project("HedgeEdit")
 	includedirs({ "ui", "../HedgeLib/include" })
 	files({ "src/**.cpp", "src/**.h", "ui/**.cpp",
 		"ui/**.h", "ui/**.ui", "ui/**.qrc" })
-		
-	-- TODO: Is app.manifest needed anymore? (Qt docs actually mentioned it)
 	
 	-- MSC Optimization
 	filter("toolset:msc")
