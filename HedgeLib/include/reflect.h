@@ -14,14 +14,14 @@ namespace HedgeLib
 
 	template<typename T>
 	using WriteRecursive_t = decltype(std::declval<T&>().WriteRecursive(
-		HedgeLib::IO::File(), 0, std::vector<std::uint32_t>()));
+		HedgeLib::IO::File(), 0, nullptr));
 
 	template<typename T>
 	constexpr bool HasWriteRecursiveFunction = is_detected_v<WriteRecursive_t, T>;
 
 	template<typename T>
 	using WriteOffset_t = decltype(std::declval<T&>().WriteOffset(
-		HedgeLib::IO::File(), 0, 0, 0, std::vector<std::uint32_t>()));
+		HedgeLib::IO::File(), 0, 0, 0, nullptr));
 
 	template<typename T>
 	constexpr bool HasWriteOffsetFunction = is_detected_v<WriteOffset_t, T>;
@@ -29,7 +29,7 @@ namespace HedgeLib
 	template<typename T>
 	inline void WriteRecursive(const HedgeLib::IO::File& file,
 		const long origin, const std::uintptr_t endPtr, long eof,
-		std::vector<std::uint32_t>& offsets, T& value)
+		std::vector<std::uint32_t>* offsets, T& value)
 	{
 		if constexpr (HasWriteOffsetFunction<T>)
 		{
@@ -48,7 +48,7 @@ namespace HedgeLib
 	template<typename T, typename... Args>
 	inline void WriteRecursive(const HedgeLib::IO::File& file,
 		const long origin, const std::uintptr_t endPtr, long eof,
-		std::vector<std::uint32_t>& offsets,
+		std::vector<std::uint32_t>* offsets,
 		T& value, Args&... args)
 	{
 		WriteRecursive(file, origin, endPtr, eof, offsets, value);
@@ -57,7 +57,7 @@ namespace HedgeLib
 
 #define OFFSETS(...) inline void WriteRecursive(\
 	const HedgeLib::IO::File& file, const long origin,\
-	std::vector<std::uint32_t>& offsets) const\
+	std::vector<std::uint32_t>* offsets) const\
 	{\
 		file.Write(this, sizeof(*this), 1);\
 		HedgeLib::WriteRecursive(file, origin, reinterpret_cast\

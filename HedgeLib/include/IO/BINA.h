@@ -344,7 +344,6 @@ namespace HedgeLib::IO::BINA
 		return Read<DataType, OffsetType>(file);
 	}
 
-
 	template<class DataType, template<typename> class OffsetType>
 	void WriteV2(const HedgeLib::IO::File& file,
 		const DataType& data, const DBINAV2Header& header)
@@ -357,7 +356,7 @@ namespace HedgeLib::IO::BINA
 		//long endPos = WriteDataNodeV2<DataType, OffsetType>(file, data);
 		std::vector<std::uint32_t> offsets;
 		const long origin = (file.Tell() + sizeof(data.Header));
-		data.WriteRecursive(file, origin, offsets);
+		data.WriteRecursive(file, origin, &offsets);
 
 		// TODO: Write arrays properly
 		// TODO: Write strings properly

@@ -167,7 +167,7 @@ namespace HedgeLib::IO
 
 		inline void WriteOffset(const HedgeLib::IO::File& file,
 			const long origin, const std::uintptr_t endPtr, long eof,
-			std::vector<std::uint32_t>& offsets) const
+			std::vector<std::uint32_t>* offsets) const
 		{
 			if constexpr (!isArray)
 			{
@@ -183,7 +183,7 @@ namespace HedgeLib::IO
 				file.Write(&off, sizeof(off), 1);
 
 				// Add it to the list of offsets
-				offsets.push_back(static_cast<std::uint32_t>(offPos - origin));
+				offsets->push_back(static_cast<std::uint32_t>(offPos - origin));
 
 				// Write object pointed to by offset
 				file.Seek(eof);
