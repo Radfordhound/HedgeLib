@@ -21,7 +21,11 @@ namespace HedgeLib::IO
 		constexpr OffsetBase(std::nullptr_t) : o(0) {}
 
 		inline DataType* Get() const noexcept;
-		constexpr void Fix(const std::uintptr_t origin) noexcept;
+		inline void EndianSwap();
+
+		constexpr void Fix(const std::uintptr_t origin,
+			const bool swapEndianness = false) noexcept;
+
 		inline void Set(const DataType* ptr);
 
 		template<typename CastedType>
@@ -55,8 +59,18 @@ namespace HedgeLib::IO
 #endif
 		}
 
-		constexpr void Fix(const std::uintptr_t origin) noexcept
+		inline void EndianSwap()
 		{
+			HedgeLib::IO::Endian::SwapRecursive(
+				*(this->Get()));
+		}
+
+		constexpr void Fix(const std::uintptr_t origin,
+			const bool swapEndianness = false) noexcept
+		{
+			if (swapEndianness)
+				HedgeLib::IO::Endian::SwapRecursive(this->o);
+
 #ifdef x86
 			o += origin;
 #elif x64
@@ -102,8 +116,18 @@ namespace HedgeLib::IO
 			return reinterpret_cast<DataType*>(o);
 		}
 
-		constexpr void Fix(const std::uintptr_t origin) noexcept
+		inline void EndianSwap()
 		{
+			HedgeLib::IO::Endian::SwapRecursive(
+				*(this->Get()));
+		}
+
+		constexpr void Fix(const std::uintptr_t origin,
+			const bool swapEndianness = false) noexcept
+		{
+			if (swapEndianness)
+				HedgeLib::IO::Endian::SwapRecursive(this->o);
+
 			o += origin;
 		}
 
@@ -149,15 +173,9 @@ namespace HedgeLib::IO
 			return (this->Get())[index];
 		}
 
-		constexpr const OffsetType& GetInternalOffset() const noexcept
+		constexpr OffsetType& GetInternalOffset() noexcept
 		{
 			return this->o;
-		}
-
-		inline void EndianSwap()
-		{
-			HedgeLib::IO::Endian::SwapRecursive(
-				this->o, *(this->Get()));
 		}
 
 		inline void FixOffset(const HedgeLib::IO::File& file,
@@ -243,9 +261,20 @@ namespace HedgeLib::IO
 			return o.Get();
 		}
 
-		constexpr void Fix(const std::uintptr_t origin) noexcept
+		inline void EndianSwap()
 		{
-			o.Fix(origin);
+			HedgeLib::IO::Endian::SwapRecursive(count);
+			for (CountType i = 0; i < count; ++i)
+			{
+				HedgeLib::IO::Endian::SwapRecursive(
+					operator[](static_cast<int>(i)));
+			}
+		}
+
+		constexpr void Fix(const std::uintptr_t origin,
+			const bool swapEndianness = false) noexcept
+		{
+			o.Fix(origin, swapEndianness);
 		}
 
 		inline void Set(const DataType* ptr, const CountType count)
@@ -258,16 +287,6 @@ namespace HedgeLib::IO
 		inline CastedType* GetAs() const noexcept
 		{
 			return o.template GetAs<CastedType>();
-		}
-
-		inline void EndianSwap()
-		{
-			HedgeLib::IO::Endian::SwapRecursive(o.GetInternalOffset());
-			for (CountType i = 0; i < count; ++i)
-			{
-				HedgeLib::IO::Endian::SwapRecursive(
-					operator[](static_cast<int>(i)));
-			}
 		}
 
 		inline void WriteOffset(const HedgeLib::IO::File& file,

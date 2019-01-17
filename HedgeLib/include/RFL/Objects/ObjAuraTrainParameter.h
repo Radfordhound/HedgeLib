@@ -11,7 +11,7 @@ namespace HedgeLib::RFL
 		float frontDistance;
 		float effectInterval;
 
-		ENDIAN_SWAP(Header, frontDistance, effectInterval);
+		ENDIAN_SWAP(frontDistance, effectInterval);
 	};
 }
 #endif

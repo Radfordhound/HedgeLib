@@ -33,7 +33,7 @@ namespace HedgeLib::RFL
 		HedgeLib::IO::BINA::BINAString64 MiscPac;
 		HedgeLib::IO::BINA::BINAString64 StgMissionLua;
 
-		ENDIAN_SWAP(Header, GadgetDatabase, CustomizeBody, CustomizeHead,
+		ENDIAN_SWAP(GadgetDatabase, CustomizeBody, CustomizeHead,
 			CustomizeGlass, CustomizeFace, CustomizeGlove, CustomizeShoes,
 			CustomizePattern, EventMovie, GameScore, StageScore,
 			MiscPac, StgMissionLua);

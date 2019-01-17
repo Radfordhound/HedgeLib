@@ -24,6 +24,9 @@ namespace HedgeLib::Archives
         std::uint32_t OffsetTableSize = 0;
         std::uint8_t Unknown1 = 1;
 
+		ENDIAN_SWAP(FileDataSize, ExtensionTableSize,
+			ProxyTableSize, StringTableSize, OffsetTableSize);
+
 		static constexpr std::uintptr_t SizeOffset =
 			HedgeLib::IO::BINA::DBINAV2NodeHeader::SizeOffset;
 
@@ -33,15 +36,19 @@ namespace HedgeLib::Archives
 		}
 
 		template<template<typename> class OffsetType>
-		void FixOffsets()
+		void FixOffsets(const bool swapEndianness = false)
 		{
+			if (swapEndianness)
+				EndianSwap();
+
 			if (!OffsetTableSize)
 				return;
 
 			std::uintptr_t ptr = reinterpret_cast<std::uintptr_t>(this);
 			HedgeLib::IO::BINA::FixOffsets<OffsetType>(
 				reinterpret_cast<std::uint8_t*>(ptr + Header.Size()),
-				OffsetTableSize, ptr - sizeof(HedgeLib::IO::BINA::DBINAV2Header));
+				OffsetTableSize, ptr - sizeof(HedgeLib::IO::BINA::DBINAV2Header),
+				swapEndianness);
 		}
     };
 
@@ -114,7 +121,7 @@ namespace HedgeLib::Archives
 		DPACxNodeTree<DPACxNodeTree<DPACDataEntry>> TypesTree;
 		// TODO: splits?
 
-		ENDIAN_SWAP(Header, TypesTree);
+		ENDIAN_SWAP(TypesTree);
 		OFFSETS(TypesTree);
 	};
 

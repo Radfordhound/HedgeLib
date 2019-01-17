@@ -23,6 +23,9 @@ namespace HedgeLib::IO::BINA
 	static constexpr DataSignature BINASignature = "BINA";
 	static constexpr DataSignature DATASignature = "DATA";
 
+	static constexpr char BigEndianFlag = 'B';
+	static constexpr char LittleEndianFlag = 'L';
+
 	enum BINAOffsetTypes : std::uint8_t
 	{
 		SixBit = 0x40,
@@ -34,13 +37,14 @@ namespace HedgeLib::IO::BINA
 	{
 		DataSignature Signature = BINASignature;
 		std::array<char, 3> Version { '2', '1', '0' };
-		char EndianFlag = 'L'; // TODO
+		char EndianFlag = LittleEndianFlag;
 		std::uint32_t FileSize = 0;
 		std::uint16_t NodeCount = 1;
 
 		constexpr DBINAV2Header() = default;
-		constexpr DBINAV2Header(const std::array<char, 3> version, const char endianFlag = 'L')
-			noexcept : Version(version), EndianFlag(endianFlag) {}
+		constexpr DBINAV2Header(const std::array<char, 3> version,
+			const char endianFlag = LittleEndianFlag) noexcept :
+			Version(version), EndianFlag(endianFlag) {}
 
 		static constexpr long FileSizeOffset = (sizeof(Signature) +
 			sizeof(Version) + sizeof(EndianFlag));
@@ -128,8 +132,8 @@ namespace HedgeLib::IO::BINA
 	}
 
 	template<template<typename> class OffsetType>
-	void FixOffsets(std::uint8_t* eof,
-		std::uint32_t offsetTableLen, std::uintptr_t origin)
+	void FixOffsets(std::uint8_t* eof, std::uint32_t offsetTableLen,
+		std::uintptr_t origin, const bool swapEndianness = false)
 	{
 		// TODO: Big endian support
 		auto d = reinterpret_cast<OffsetType<std::uint8_t>*>(origin);
@@ -174,7 +178,7 @@ namespace HedgeLib::IO::BINA
 				return;
 			}
 			
-			d->Fix(origin);
+			d->Fix(origin, swapEndianness);
 		}
 	}
 
@@ -190,7 +194,7 @@ namespace HedgeLib::IO::BINA
 		std::uint16_t RelativeDataOffset = PaddingSize; // ?
 		std::array<std::uint8_t, PaddingSize> Padding {};
 
-		ENDIAN_SWAP(Header, StringTableOffset, StringTableSize,
+		ENDIAN_SWAP(StringTableSize,
 			OffsetTableSize, RelativeDataOffset);
 
 		constexpr std::uint32_t Size() const noexcept
@@ -199,19 +203,22 @@ namespace HedgeLib::IO::BINA
 		}
 
 		template<template<typename> class OffsetType>
-		void FixOffsets()
+		void FixOffsets(const bool swapEndianness = false)
 		{
+			if (swapEndianness)
+				EndianSwap();
+
 			std::uintptr_t ptr = reinterpret_cast<std::uintptr_t>(this);
 			if (StringTableSize)
 			{
-				StringTableOffset.Fix(ptr + sizeof(DBINAV2DataNode));
+				StringTableOffset.Fix(ptr + sizeof(DBINAV2DataNode), swapEndianness);
 			}
 
 			if (OffsetTableSize)
 			{
 				BINA::FixOffsets<OffsetType>(reinterpret_cast
 					<std::uint8_t*>(ptr + Header.Size()),
-					OffsetTableSize, ptr + sizeof(DBINAV2DataNode));
+					OffsetTableSize, ptr + sizeof(DBINAV2DataNode), swapEndianness);
 			}
 		}
 	};
@@ -285,12 +292,22 @@ namespace HedgeLib::IO::BINA
 
 			if (nodeHeader.Signature() == DATASignature)
 			{
+				// Swap endianness of header if necessary
+				if (header.EndianFlag == BigEndianFlag)
+					nodeHeader.EndianSwap();
+
 				// Read node and fix offsets
 				NodePointer<DataType> data = ReadNode<DBINAV2NodeHeader,
 					DataType>(file, nodeHeader);
 
 				// gcc errors unless we include ".template"
-				data->Header.template FixOffsets<OffsetType>();
+				data->Header.template FixOffsets<OffsetType>(
+					header.EndianFlag == BigEndianFlag);
+
+				// Swap endianness of non-offsets if necessary
+				if (header.EndianFlag == BigEndianFlag)
+					data->EndianSwap();
+
 				return data;
 			}
 			else
@@ -353,7 +370,6 @@ namespace HedgeLib::IO::BINA
 		file.Write(&header, sizeof(header), 1);
 
 		// Write data node and its children
-		//long endPos = WriteDataNodeV2<DataType, OffsetType>(file, data);
 		std::vector<std::uint32_t> offsets;
 		const long origin = (file.Tell() + sizeof(data.Header));
 		data.WriteRecursive(file, origin, &offsets);
