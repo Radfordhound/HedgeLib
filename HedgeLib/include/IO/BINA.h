@@ -8,15 +8,12 @@
 #include <stdexcept>
 #include <cstdint>
 #include <cstddef>
-#include <cstdio> // TODO?
-#include <string_view> // TODO?
+#include <cstring>
 #include <vector>
 #include <array>
 #include <memory>
 #include <filesystem>
-#include <typeinfo> // TODO?
 #include <algorithm>
-#include <iostream> // TODO
 
 namespace HedgeLib::IO::BINA
 {
@@ -221,28 +218,191 @@ namespace HedgeLib::IO::BINA
 					OffsetTableSize, ptr + sizeof(DBINAV2DataNode), swapEndianness);
 			}
 		}
-	};
 
-	template<template<typename> class OffsetType>
-	struct DBINAString
-	{
-		OffsetType<char> StringOffset = nullptr;
-		OffsetType<char> UnknownOffset = nullptr;
-
-		constexpr DBINAString() = default;
-		DBINAString(const char* c) : StringOffset(c) {}
-
-		ENDIAN_SWAP(StringOffset, UnknownOffset);
-		OFFSETS(StringOffset, UnknownOffset);
-
-		operator char*() const noexcept
+		inline void FinishWrite(const HedgeLib::IO::File& file,
+			std::uint32_t strTablePos, std::uint32_t offTablePos,
+			long startPos, long endPos) const
 		{
-			return StringOffset;
+			// Fix Node Size
+			std::uint32_t nodeSize = static_cast<std::uint32_t>(
+				endPos - sizeof(BINA::DBINAV2Header));
+
+			file.Seek(startPos + (sizeof(BINA::DBINAV2Header) +
+				Header.SizeOffset));
+
+			file.Write(&nodeSize, sizeof(nodeSize), 1);
+
+			// Fix String Table Offset
+			strTablePos -= 0x40;
+			file.Seek(startPos + sizeof(BINA::DBINAV2Header) + 8);
+			file.Write(&strTablePos, sizeof(strTablePos), 1);
+
+			// Fix String Table Size
+			offTablePos -= 0x40;
+			strTablePos = (offTablePos - strTablePos);
+
+			file.Seek(startPos + sizeof(BINA::DBINAV2Header) + 12);
+			file.Write(&strTablePos, sizeof(std::uint32_t), 1);
+
+			// Fix Offset Table Size
+			offTablePos = static_cast<std::uint32_t>(nodeSize -
+				offTablePos - sizeof(BINA::DBINAV2DataNode));
+
+			file.Seek(startPos + sizeof(BINA::DBINAV2Header) + 16);
+			file.Write(&offTablePos, sizeof(std::uint32_t), 1);
 		}
 	};
 
-	using BINAString32 = DBINAString<DataOffset32>;
-	using BINAString64 = DBINAString<DataOffset64>;
+	struct BINAStringTableEntry
+	{
+		long StringOffsetPos;
+		char* StringData;
+	};
+
+	template<typename T>
+	using WriteRecursiveBINA_t = decltype(std::declval<T&>().WriteRecursiveBINA(
+		HedgeLib::IO::File(), 0, nullptr, nullptr));
+
+	template<typename T>
+	constexpr bool HasWriteRecursiveBINAFunction = is_detected_v<WriteRecursiveBINA_t, T>;
+
+	template<typename T>
+	using WriteOffsetBINA_t = decltype(std::declval<T&>().WriteOffsetBINA(
+		HedgeLib::IO::File(), 0, 0, 0, nullptr, nullptr));
+
+	template<typename T>
+	constexpr bool HasWriteOffsetBINAFunction = is_detected_v<WriteOffsetBINA_t, T>;
+
+	template<typename T>
+	inline void WriteRecursiveBINA(const HedgeLib::IO::File& file,
+		const long origin, const std::uintptr_t endPtr, long eof,
+		std::vector<std::uint32_t>* offsets,
+		std::vector<BINAStringTableEntry>* stringTable, const T& value)
+	{
+		if constexpr (HasWriteOffsetBINAFunction<T>)
+		{
+			value.WriteOffsetBINA(file, origin,
+				endPtr, eof, offsets, stringTable);
+		}
+		else if constexpr (HasWriteRecursiveBINAFunction<T>)
+		{
+			value.WriteRecursiveBINA(file, origin, offsets, stringTable);
+		}
+		else
+		{
+			WriteRecursive(file, origin, endPtr, eof, offsets, value);
+		}
+	}
+
+	template<template<typename> class OffsetType>
+	inline void AddStringBINA(const OffsetType<char>& stringOff,
+		const long origin, const std::uintptr_t endPtr, long eof,
+		std::vector<std::uint32_t>* offsets,
+		std::vector<BINA::BINAStringTableEntry>* stringTable)
+	{
+		// Get offset position
+		auto entry = BINAStringTableEntry();
+		entry.StringOffsetPos = (eof - static_cast<long>((
+			endPtr - reinterpret_cast<std::uintptr_t>(&stringOff))));
+
+		// Add it to the list of offsets
+		offsets->push_back(static_cast<std::uint32_t>(
+			entry.StringOffsetPos - origin));
+
+		entry.StringData = stringOff.Get();
+		stringTable->push_back(entry);
+	}
+
+	inline void WriteRecursiveBINA(const HedgeLib::IO::File& file,
+		const long origin, const std::uintptr_t endPtr, long eof,
+		std::vector<std::uint32_t>* offsets,
+		std::vector<BINAStringTableEntry>* stringTable,
+		const StringOffset32& value)
+	{
+		AddStringBINA<DataOffset32>(value, origin,
+			endPtr, eof, offsets, stringTable);
+	}
+
+	inline void WriteRecursiveBINA(const HedgeLib::IO::File& file,
+		const long origin, const std::uintptr_t endPtr, long eof,
+		std::vector<std::uint32_t>* offsets,
+		std::vector<BINAStringTableEntry>* stringTable,
+		const StringOffset64& value)
+	{
+		AddStringBINA<DataOffset64>(value, origin,
+			endPtr, eof, offsets, stringTable);
+	}
+
+	template<typename T, typename... Args>
+	inline void WriteRecursiveBINA(const HedgeLib::IO::File& file,
+		const long origin, const std::uintptr_t endPtr, long eof,
+		std::vector<std::uint32_t>* offsets,
+		std::vector<BINAStringTableEntry>* stringTable,
+		const T& value, Args&... args)
+	{
+		WriteRecursiveBINA(file, origin, endPtr, eof, offsets, stringTable, value);
+		WriteRecursiveBINA(file, origin, endPtr, eof, offsets, stringTable, args...);
+	}
+
+#define CUSTOM_WRITE_BINA inline void WriteRecursiveBINA(\
+	const HedgeLib::IO::File& file, const long origin,\
+	std::vector<std::uint32_t>* offsets,\
+	std::vector<HedgeLib::IO::BINA::BINAStringTableEntry>* stringTable) const
+
+#define WRITE_BEGIN_BINA CUSTOM_WRITE_BINA {\
+	file.Write(this, sizeof(*this), 1);\
+	long eof = file.Tell();
+
+#define CUSTOM_WRITE_OFFSETS_BINA(endPtr, eof, ...) HedgeLib::IO::\
+	BINA::WriteRecursiveBINA(file, origin, endPtr,\
+	eof, offsets, stringTable, __VA_ARGS__)
+
+#define WRITE_OFFSETS_BINA(...) CUSTOM_WRITE_OFFSETS_BINA(\
+	reinterpret_cast<std::uintptr_t>(this + 1), eof, __VA_ARGS__)
+
+#define OFFSETS_BINA(...) WRITE_BEGIN_BINA\
+	WRITE_OFFSETS_BINA(__VA_ARGS__);\
+	WRITE_END
+
+	template<typename StringType>
+	struct BINAString
+	{
+		StringType StringOffset = nullptr;
+		StringType UnknownOffset = nullptr;
+
+		constexpr BINAString() = default;
+		BINAString(const char* c) : StringOffset(c) {}
+
+		OFFSETS_BINA(StringOffset);
+
+		inline operator char*() const noexcept
+		{
+			return StringOffset.Get();
+		}
+	};
+
+	using BINAString32 = BINAString<StringOffset32>;
+	using BINAString64 = BINAString<StringOffset64>;
+
+	template<template<typename> class OffsetType>
+	void WriteStringTable(const HedgeLib::IO::File& file, const long origin,
+		std::vector<BINAStringTableEntry> stringTable) noexcept
+	{
+		for (auto& entry : stringTable)
+		{
+			// Fix offset
+			long eof = (file.Tell() - origin);
+			file.Seek(entry.StringOffsetPos);
+			file.Write(&eof, sizeof(OffsetType<char>), 1);
+
+			// Write string
+			file.Seek(eof + origin);
+			file.Write(entry.StringData, std::strlen(
+				entry.StringData) + 1, 1);
+		}
+
+		file.Pad();
+	}
 
 	void WriteOffsetsSorted(const HedgeLib::IO::File& file,
 		std::vector<std::uint32_t>& offsets) noexcept;
@@ -371,51 +531,30 @@ namespace HedgeLib::IO::BINA
 
 		// Write data node and its children
 		std::vector<std::uint32_t> offsets;
+		std::vector<BINAStringTableEntry> stringTable;
 		const long origin = (file.Tell() + sizeof(data.Header));
-		data.WriteRecursive(file, origin, &offsets);
 
-		// TODO: Write arrays properly
-		// TODO: Write strings properly
+		data.WriteRecursiveBINA(file, origin, &offsets, &stringTable);
+		file.Pad();
+
+		// Write the string table
+		std::uint32_t strTablePos = static_cast<std::uint32_t>(file.Tell());
+		WriteStringTable<OffsetType>(file, origin, stringTable);
 
 		// Write the offset table
 		std::uint32_t offTablePos = static_cast<std::uint32_t>(file.Tell());
 		WriteOffsets(file, offsets);
-		long endPos = file.Tell();
 
 		// Fix header file size
+		long endPos = file.Tell();
 		std::uint32_t size = static_cast<std::uint32_t>(endPos - startPos);
+
 		file.Seek(startPos + header.FileSizeOffset);
 		file.Write(&size, sizeof(size), 1);
 
-		// Fix Node Size
-		std::uint32_t nodeSize = static_cast<std::uint32_t>(
-			endPos - sizeof(BINA::DBINAV2Header));
-
-		file.Seek(startPos + (sizeof(BINA::DBINAV2Header) +
-			BINA::DBINAV2DataNode::SizeOffset));
-
-		file.Write(&nodeSize, sizeof(nodeSize), 1);
-
-		// Fix String Table Offset
-		// TODO
-		/*stringTablePos -= 0x40;
-		file.Seek(startPos + sizeof(BINA::DBINAV2Header) + 8);
-		file.Write(&stringTablePos, sizeof(stringTablePos), 1);*/
-
-		// Fix String Table Size
-		// TODO
-		offTablePos -= 0x40;
-		/*stringTablePos = (offTablePos - stringTablePos);
-
-		file.Seek(startPos + sizeof(BINA::DBINAV2Header) + 12);
-		file.Write(&stringTablePos, sizeof(std::uint32_t), 1);*/
-
-		// Fix Offset Table Size
-		offTablePos = static_cast<std::uint32_t>(
-			nodeSize - offTablePos - sizeof(BINA::DBINAV2DataNode));
-
-		file.Seek(startPos + sizeof(BINA::DBINAV2Header) + 16);
-		file.Write(&offTablePos, sizeof(std::uint32_t), 1);
+		// Fix other needed sizes/offsets
+		data.Header.FinishWrite(file, strTablePos,
+			offTablePos, startPos, endPos);
 
 		// Go to end so future write operations continue on afterwards if needed
 		file.Seek(endPos);

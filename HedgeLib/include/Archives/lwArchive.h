@@ -50,12 +50,50 @@ namespace HedgeLib::Archives
 				OffsetTableSize, ptr - sizeof(HedgeLib::IO::BINA::DBINAV2Header),
 				swapEndianness);
 		}
+
+		inline void FinishWrite(const HedgeLib::IO::File& file,
+			std::uint32_t strTablePos, std::uint32_t offTablePos,
+			long startPos, long endPos)
+		{
+			// Fix Node Size
+			std::uint32_t nodeSize = static_cast<std::uint32_t>(
+				endPos - sizeof(HedgeLib::IO::BINA::DBINAV2Header));
+
+			file.Seek(startPos + (sizeof(HedgeLib::IO::BINA::DBINAV2Header) +
+				Header.SizeOffset));
+
+			file.Write(&nodeSize, sizeof(nodeSize), 1);
+
+			// Fix File Data Size
+			// TODO
+
+			// Fix Extension Table Size
+			// TODO
+
+			// Fix Proxy Table Size
+			// TODO
+
+			// Fix String Table Size
+			strTablePos -= 0x40;
+			offTablePos -= 0x40;
+			strTablePos = (offTablePos - strTablePos);
+
+			file.Seek(startPos + sizeof(HedgeLib::IO::BINA::DBINAV2Header) + 0x14);
+			file.Write(&strTablePos, sizeof(std::uint32_t), 1);
+
+			// Fix Offset Table Size
+			offTablePos = static_cast<std::uint32_t>(nodeSize -
+				offTablePos - sizeof(HedgeLib::IO::BINA::DBINAV2DataNode));
+
+			file.Seek(startPos + sizeof(HedgeLib::IO::BINA::DBINAV2Header) + 0x18);
+			file.Write(&offTablePos, sizeof(std::uint32_t), 1);
+		}
     };
 
     template<template<typename> class OffsetType, typename DataType>
     struct DPACxNode
     {
-        OffsetType<char> Name; // TODO: Non-BINA string type
+        OffsetType<char> Name;
         OffsetType<DataType> Data;
 
 		ENDIAN_SWAP(Name, Data);
@@ -69,16 +107,7 @@ namespace HedgeLib::Archives
 			<HedgeLib::IO::DataOffset32, DataType>> Nodes;
 
 		ENDIAN_SWAP(Nodes);
-
-		inline void WriteRecursive(
-			const HedgeLib::IO::File& file, const long origin,
-			std::vector<std::uint32_t>* offsets) const
-		{
-			// TODO: Is this correct?
-			HedgeLib::WriteRecursive(file, origin, reinterpret_cast
-				<std::uintptr_t>(this + 1), file.Tell(),
-				offsets, Nodes);
-		}
+		OFFSETS(Nodes);
     };
 
     enum DataFlags : std::uint8_t
@@ -100,8 +129,7 @@ namespace HedgeLib::Archives
 	template<template<typename> class OffsetType>
 	struct DPACSplitEntry
 	{
-		OffsetType<char> Name; // TODO: Non-BINA string type
-
+		OffsetType<char> Name;
 		ENDIAN_SWAP(Name);
 	};
 

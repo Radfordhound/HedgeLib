@@ -11,8 +11,6 @@ namespace HedgeLib::RFL
 	{
 		std::uint8_t StartIndex;
 		std::uint8_t Length;
-
-		ENDIAN_SWAP(StartIndex, Length);
 	};
 
 	struct DLCParameter
@@ -33,10 +31,8 @@ namespace HedgeLib::RFL
 		HedgeLib::IO::BINA::BINAString64 MiscPac;
 		HedgeLib::IO::BINA::BINAString64 StgMissionLua;
 
-		ENDIAN_SWAP(GadgetDatabase, CustomizeBody, CustomizeHead,
-			CustomizeGlass, CustomizeFace, CustomizeGlove, CustomizeShoes,
-			CustomizePattern, EventMovie, GameScore, StageScore,
-			MiscPac, StgMissionLua);
+		ENDIAN_SWAP(MiscPac, StgMissionLua);
+		OFFSETS_BINA(MiscPac, StgMissionLua);
 	};
 }
 #endif

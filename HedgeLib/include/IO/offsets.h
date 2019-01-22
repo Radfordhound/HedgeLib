@@ -144,6 +144,17 @@ namespace HedgeLib::IO
 		}
 	};
 
+	// Foward-declarations for some BINA stuff
+	namespace BINA
+	{
+		struct BINAStringTableEntry;
+		template<typename T>
+		inline void WriteRecursiveBINA(const HedgeLib::IO::File& file,
+			const long origin, const std::uintptr_t endPtr, long eof,
+			std::vector<std::uint32_t>* offsets,
+			std::vector<BINAStringTableEntry>* stringTable, const T& value);
+	}
+
 	template<typename OffsetType, typename DataType>
 	struct DataOffset : public OffsetBase<OffsetType, DataType>
 	{
@@ -209,6 +220,17 @@ namespace HedgeLib::IO
 			HedgeLib::WriteRecursive(file, origin, endPtr,
 				eof, offsets, *(this->Get()));
 		}
+
+		inline void WriteOffsetBINA(const HedgeLib::IO::File& file,
+			const long origin, const std::uintptr_t endPtr, long eof,
+			std::vector<std::uint32_t>* offsets,
+			std::vector<BINA::BINAStringTableEntry>* stringTable) const
+		{
+			// Fix offset and write object pointed to by offset
+			FixOffset(file, origin, endPtr, eof, offsets);
+			BINA::WriteRecursiveBINA(file, origin, endPtr,
+				eof, offsets, stringTable, *(this->Get()));
+		}
 	};
 
 	template<typename DataType>
@@ -216,6 +238,9 @@ namespace HedgeLib::IO
 
 	template<typename DataType>
 	using DataOffset64 = DataOffset<std::uint64_t, DataType>;
+
+	using StringOffset32 = DataOffset32<char>;
+	using StringOffset64 = DataOffset64<char>;
 
 	template<typename OffsetType, typename DataType, typename CountType>
 	struct ArrOffset
@@ -298,6 +323,19 @@ namespace HedgeLib::IO
 			{
 				HedgeLib::WriteRecursive(file, origin, endPtr,
 					eof, offsets, (o.Get())[i]);
+			}
+		}
+
+		inline void WriteOffsetBINA(const HedgeLib::IO::File& file,
+			const long origin, const std::uintptr_t endPtr, long eof,
+			std::vector<std::uint32_t>* offsets,
+			std::vector<BINA::BINAStringTableEntry>* stringTable) const
+		{
+			o.FixOffset(file, origin, endPtr, eof, offsets);
+			for (CountType i = 0; i < count; ++i)
+			{
+				BINA::WriteRecursiveBINA(file, origin, endPtr,
+					eof, offsets, stringTable, (o.Get())[i]);
 			}
 		}
 	};
