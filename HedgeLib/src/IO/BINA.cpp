@@ -6,7 +6,7 @@
 namespace HedgeLib::IO::BINA
 {
 	void WriteOffsetsSorted(const HedgeLib::IO::File& file,
-		std::vector<std::uint32_t>& offsets) noexcept
+		const std::vector<std::uint32_t>& offsets) noexcept
 	{
 		// TODO: Big endian support
 		std::uint32_t o, curOffset = 0;

@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <cstdio>
 #include <cstdint>
+#include <vector>
 
 namespace HedgeLib::IO
 {
@@ -81,6 +82,71 @@ namespace HedgeLib::IO
 		inline int Seek(long offset, int origin = SEEK_SET) const noexcept
 		{
 			return std::fseek(fs, offset, origin);
+		}
+
+		template<typename T>
+		inline void FixOffsetNoSeek(T offsetValue) const noexcept
+		{
+			std::fwrite(&offsetValue, sizeof(offsetValue), 1, fs);
+		}
+
+		template<typename T>
+		inline void FixOffsetNoEOFSeek(long offsetPos,
+			T offsetValue) const noexcept
+		{
+			Seek(offsetPos);
+			FixOffsetNoSeek<T>(offsetValue);
+		}
+
+		template<typename T>
+		inline void FixOffset(long offsetPos,
+			T offsetValue) const noexcept
+		{
+			long eof = Tell();
+			FixOffsetNoEOFSeek<T>(offsetPos, offsetValue);
+			Seek(eof);
+		}
+
+		template<typename T>
+		inline T FixOffsetEOF(long offsetPos, long origin) const noexcept
+		{
+			long eof = Tell();
+			T offsetValue = static_cast<T>(eof - origin);
+			FixOffsetNoEOFSeek<T>(offsetPos, offsetValue);
+			Seek(eof);
+			return offsetValue;
+		}
+
+		template<typename T>
+		inline void FixOffsetNoSeek(long offsetPos, T offsetValue,
+			std::vector<std::uint32_t>& offsets) const noexcept
+		{
+			FixOffsetNoSeek<T>(offsetValue);
+			offsets.push_back(static_cast<std::uint32_t>(offsetPos));
+		}
+
+		template<typename T>
+		inline void FixOffsetNoEOFSeek(long offsetPos, T offsetValue,
+			std::vector<std::uint32_t>& offsets) const noexcept
+		{
+			FixOffsetNoEOFSeek<T>(offsetPos, offsetValue);
+			offsets.push_back(static_cast<std::uint32_t>(offsetPos));
+		}
+
+		template<typename T>
+		inline void FixOffset(long offsetPos, T offsetValue,
+			std::vector<std::uint32_t>& offsets) const noexcept
+		{
+			FixOffset<T>(offsetPos, offsetValue);
+			offsets.push_back(static_cast<std::uint32_t>(offsetPos));
+		}
+
+		template<typename T>
+		inline void FixOffsetEOF(long offsetPos, std::vector
+			<std::uint32_t>& offsets, long origin) const noexcept
+		{
+			FixOffsetEOF<T>(offsetPos, origin);
+			offsets.push_back(static_cast<std::uint32_t>(offsetPos));
 		}
 
 		void WriteNulls(std::size_t amount) const noexcept;

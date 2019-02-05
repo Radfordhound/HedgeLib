@@ -42,7 +42,7 @@ namespace HedgeLib::IO::detail
 
 	std::uintptr_t Getx64Pointer(const std::uint32_t index) noexcept
 	{
-		return dataOffset32Ptrs[index].value();
+		return (index == 0) ? 0 : dataOffset32Ptrs[index].value();
 	}
 
 	void Setx64Pointer(const std::uint32_t index,

@@ -17,7 +17,6 @@ namespace HedgeLib::IO
 
 	public:
 		constexpr OffsetBase() = default;
-		constexpr OffsetBase(const OffsetType offset) : o(offset) {}
 		constexpr OffsetBase(std::nullptr_t) : o(0) {}
 
 		inline void Set(const DataType* ptr) noexcept;
@@ -94,7 +93,11 @@ namespace HedgeLib::IO
 
 		void operator= (const OffsetBase& v) noexcept
 		{
-			o = detail::Addx64Pointer(detail::Getx64Pointer(v.o));
+			if (v.o != 0)
+			{
+				o = detail::Addx64Pointer(
+					detail::Getx64Pointer(v.o));
+			}
 		}
 #endif
 
@@ -187,6 +190,18 @@ namespace HedgeLib::IO
 	namespace BINA
 	{
 		struct BINAStringTableEntry;
+
+		template<typename T>
+		inline void WriteObjectBINA(const HedgeLib::IO::File& file,
+			const long origin, const std::uintptr_t endPtr, long eof,
+			std::vector<std::uint32_t>* offsets,
+			std::vector<BINAStringTableEntry>* stringTable, const T& value);
+
+		template<typename T>
+		inline void WriteChildrenBINA(const HedgeLib::IO::File& file,
+			const long origin, std::vector<std::uint32_t>* offsets,
+			std::vector<BINAStringTableEntry>* stringTable, const T& value);
+
 		template<typename T>
 		inline void WriteRecursiveBINA(const HedgeLib::IO::File& file,
 			const long origin, const std::uintptr_t endPtr, long eof,
@@ -223,23 +238,19 @@ namespace HedgeLib::IO
 			return (this->Get())[index];
 		}
 
-		inline void FixOffset(const HedgeLib::IO::File& file,
+		inline void FixOffsetRel(const HedgeLib::IO::File& file,
 			const long origin, const std::uintptr_t endPtr, long& eof,
 			std::vector<std::uint32_t>* offsets) const
 		{
-			// Seek to the offset
+			// Compute offset position
 			long offPos = (eof - static_cast<long>((
 				endPtr - reinterpret_cast<std::uintptr_t>(this))));
 
 			eof = file.Tell();
-			file.Seek(offPos);
 
-			// Fix it
-			OffsetType off = static_cast<OffsetType>(eof - origin);
-			file.Write(&off, sizeof(off), 1);
-
-			// Add it to the list of offsets
-			offsets->push_back(static_cast<std::uint32_t>(offPos - origin));
+			// Fix the offset
+			file.FixOffsetNoEOFSeek(static_cast<OffsetType>(offPos),
+				eof - origin, *offsets);
 
 			// Seek to end of file for future writing
 			file.Seek(eof);
@@ -250,7 +261,7 @@ namespace HedgeLib::IO
 			std::vector<std::uint32_t>* offsets) const
 		{
 			// Fix offset and write object pointed to by offset
-			FixOffset(file, origin, endPtr, eof, offsets);
+			FixOffsetRel(file, origin, endPtr, eof, offsets);
 			HedgeLib::WriteRecursive(file, origin, endPtr,
 				eof, offsets, *(this->Get()));
 		}
@@ -261,7 +272,7 @@ namespace HedgeLib::IO
 			std::vector<BINA::BINAStringTableEntry>* stringTable) const
 		{
 			// Fix offset and write object pointed to by offset
-			FixOffset(file, origin, endPtr, eof, offsets);
+			FixOffsetRel(file, origin, endPtr, eof, offsets);
 			BINA::WriteRecursiveBINA(file, origin, endPtr,
 				eof, offsets, stringTable, *(this->Get()));
 		}
@@ -285,10 +296,10 @@ namespace HedgeLib::IO
 
 	public:
 		constexpr ArrOffset() = default;
-		constexpr ArrOffset(const OffsetType offset) :
-			count(0), o(offset) {}
 		constexpr ArrOffset(std::nullptr_t) :
 			count(0), o(nullptr) {}
+		constexpr ArrOffset(const DataType* ptr) :
+			count(0), o(ptr) {}
 
 		inline operator DataType*() const noexcept
 		{
@@ -348,15 +359,26 @@ namespace HedgeLib::IO
 			return o.template GetAs<CastedType>();
 		}
 
+		inline void FixOffsetRel(const HedgeLib::IO::File& file,
+			const long origin, const std::uintptr_t endPtr, long& eof,
+			std::vector<std::uint32_t>* offsets) const
+		{
+			o.FixOffsetRel(file, origin, endPtr, eof, offsets);
+		}
+
 		inline void WriteOffset(const HedgeLib::IO::File& file,
 			const long origin, const std::uintptr_t endPtr, long eof,
 			std::vector<std::uint32_t>* offsets) const
 		{
-			o.FixOffset(file, origin, endPtr, eof, offsets);
+			o.FixOffsetRel(file, origin, endPtr, eof, offsets);
 			for (CountType i = 0; i < count; ++i)
 			{
-				HedgeLib::WriteRecursive(file, origin, endPtr,
-					eof, offsets, (o.Get())[i]);
+				WriteObject(file, origin, endPtr, eof, offsets, (o.Get())[i]);
+			}
+
+			for (CountType i = 0; i < count; ++i)
+			{
+				WriteChildren(file, origin, offsets, (o.Get())[i]);
 			}
 		}
 
@@ -365,11 +387,17 @@ namespace HedgeLib::IO
 			std::vector<std::uint32_t>* offsets,
 			std::vector<BINA::BINAStringTableEntry>* stringTable) const
 		{
-			o.FixOffset(file, origin, endPtr, eof, offsets);
+			o.FixOffsetRel(file, origin, endPtr, eof, offsets);
 			for (CountType i = 0; i < count; ++i)
 			{
-				BINA::WriteRecursiveBINA(file, origin, endPtr,
-					eof, offsets, stringTable, (o.Get())[i]);
+				BINA::WriteObjectBINA(file, origin, endPtr, eof,
+					offsets, stringTable, (o.Get())[i]);
+			}
+
+			for (CountType i = 0; i < count; ++i)
+			{
+				BINA::WriteChildrenBINA(file, origin, offsets,
+					stringTable, (o.Get())[i]);
 			}
 		}
 	};

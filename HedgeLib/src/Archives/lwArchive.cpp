@@ -18,16 +18,216 @@ namespace HedgeLib::Archives
 {
 	// TODO: Clean this file up a bit and provide better documentation
 
+	void LWArchive::GenerateDLWArchive()
+	{
+		// TODO
+	}
+
 	void LWArchive::Read(const HedgeLib::IO::File& file)
 	{
 		d = BINA::Read<DLWArchive, HedgeLib::IO::DataOffset32>(file);
+	}
+
+	void LWArchive::Write(const HedgeLib::IO::File& file)
+	{
+		// Generate DLWArchive if necessary
+		if (!d) GenerateDLWArchive();
+
+		// Write header
+		std::vector<std::uint32_t> offsets;
+		std::vector<BINA::BINAStringTableEntry> stringTable;
+		const long origin = 0;
+
+		BINA::DBINAV2Header header = CREATE_PACxHeader();
+		BINA::WriteHeaderV2(file, header);
+
+		// Write data node header and type tree
+		file.Write(d.get(), sizeof(*d), 1);
+		long eof = file.Tell();
+		long extTablePos = (eof - sizeof(d->TypesTree));
+
+		// Fix type tree offset
+		d->TypesTree.Nodes.FixOffsetRel(file, origin, reinterpret_cast
+			<std::uintptr_t>(d.get() + 1), eof, &offsets);
+
+		// Write type nodes
+		auto* typeNodes = d->TypesTree.Nodes.Get();
+		file.Write(typeNodes, sizeof(*typeNodes), static_cast
+			<std::size_t>(d->TypesTree.Nodes.Count()));
+
+		// Write file trees
+		long offPos = eof;
+		for (std::uint32_t i = 0; i < d->TypesTree.Nodes.Count(); ++i)
+		{
+			// Write file tree and fix type node offsets
+			auto& typeNode = d->TypesTree.Nodes[i];
+			auto* fileTree = typeNode.Data.Get();
+
+			BINA::FixString(typeNode.Name.Get(), offPos, offsets, stringTable);
+			offPos += 4;
+
+			file.FixOffsetEOF<std::uint32_t>(offPos, offsets, origin);
+			file.Write(fileTree, sizeof(fileTree), 1);
+			offPos += 4;
+
+			// Write file nodes
+			auto* fileNodes = fileTree->Nodes.Get();
+			file.Write(fileNodes, sizeof(*fileNodes), static_cast
+				<std::size_t>(fileTree->Nodes.Count()));
+
+			/*endPtr += (sizeof(*fileTree) + (sizeof(DPACxNode
+				<HedgeLib::IO::DataOffset32, DPACDataEntry>) *
+				fileTree->Nodes.Count()));*/
+		}
+
+		// Write file data
+		long fileDataPos = file.Tell();
+		const DPACSplitsEntryTable<DataOffset32>* splitEntryTable = nullptr;
+		long splitPos;
+
+		for (std::uint32_t i = 0; i < d->TypesTree.Nodes.Count(); ++i)
+		{
+			// Fix file tree offset
+			auto& typeNode = d->TypesTree.Nodes[i];
+			auto* fileTree = typeNode.Data.Get();
+
+			offPos += 4;
+			file.FixOffset(offPos, static_cast
+				<std::uint32_t>(offPos + 4), offsets);
+
+			offPos += 4;
+
+			// Write file data and fix file node offset
+			bool isSplitsList = (std::strcmp(typeNode.Name,
+				"pac.d:ResPacDepend") == 0);
+
+			for (std::uint32_t i2 = 0; i2 < fileTree->Nodes.Count(); ++i2)
+			{
+				// Fix file node offset
+				auto& fileNode = fileTree->Nodes[i2];
+				auto* fileDataEntry = fileNode.Data.Get();
+
+				BINA::FixString(fileNode.Name, offPos, offsets, stringTable);
+				offPos += 4;
+
+				file.Pad(16);
+				eof = file.Tell();
+
+				file.FixOffset(offPos, static_cast
+					<std::uint32_t>(eof), offsets);
+
+				offPos += 4;
+
+				// Write data entry
+				file.Write(fileDataEntry, sizeof(*fileDataEntry), 1);
+
+				// Write split entry table
+				if (isSplitsList)
+				{
+					// Write split entry table
+					long splitEntryTablePos = (eof + sizeof(*fileDataEntry));
+					splitEntryTable = reinterpret_cast<const DPACSplitsEntryTable
+						<DataOffset32>*>(fileDataEntry->GetDataPtr());
+
+					file.Write(splitEntryTable, sizeof(*splitEntryTable), 1);
+
+					// Fix split entry table offset
+					splitPos = (splitEntryTablePos + sizeof(*splitEntryTable));
+					file.FixOffset(splitEntryTablePos, static_cast
+						<std::uint32_t>(splitPos), offsets);
+
+					// Write split entries
+					file.WriteNulls(splitEntryTable->SplitsCount *
+						sizeof(StringOffset32));
+
+					// We fix splits after writing file data
+					// to do things like the game does.
+				}
+
+				// Write file data
+				else if (fileDataEntry->Flags != DATA_FLAGS_NO_DATA)
+				{
+					file.Write(fileDataEntry->GetDataPtr(), static_cast
+						<std::size_t>(fileDataEntry->DataSize), 1);
+				}
+			}
+		}
+
+		// Fix split entry table
+		if (splitEntryTable)
+		{
+			for (std::uint32_t i = 0; i < splitEntryTable->SplitsCount; ++i)
+			{
+				// Get offset position
+				BINA::FixString(splitEntryTable->Splits[i].Name,
+					splitPos, offsets, stringTable);
+				splitPos += sizeof(StringOffset32);
+			}
+		}
+
+		// Write proxy entry table
+		long proxyEntryTablePos = file.Tell();
+		file.WriteNulls(8);
+
+		// Write proxy entries
+		std::uint32_t proxyEntryCount = 0;
+		for (std::uint32_t i = 0; i < d->TypesTree.Nodes.Count(); ++i)
+		{
+			auto& typeNode = d->TypesTree.Nodes[i];
+			auto* fileTree = typeNode.Data.Get();
+
+			for (std::uint32_t i2 = 0; i2 < fileTree->Nodes.Count(); ++i2)
+			{
+				auto& fileNode = fileTree->Nodes[i2];
+				auto* fileDataEntry = fileNode.Data.Get();
+
+				if (fileDataEntry->Flags != DATA_FLAGS_NO_DATA)
+					continue;
+
+				BINA::AddString32(file, typeNode.Name, offsets, stringTable);
+				BINA::AddString32(file, fileNode.Name, offsets, stringTable);
+
+				file.Write(&i2, sizeof(i2), 1);
+				++proxyEntryCount;
+			}
+		}
+
+		// Fix proxy entry count/offset
+		eof = file.Tell();
+		file.Seek(proxyEntryTablePos);
+		file.Write(&proxyEntryCount, sizeof(proxyEntryCount), 1);
+
+		// Fix proxy entry table offset
+		std::uint32_t proxyEntryPos = static_cast
+			<std::uint32_t>(proxyEntryTablePos + 8);
+
+		file.FixOffsetNoSeek(proxyEntryTablePos + 4,
+			proxyEntryPos, offsets);
+
+		file.Seek(eof);
+
+		// Compute extension table size
+		d->Header.ExtensionTableSize = static_cast<std::uint32_t>(
+			fileDataPos - extTablePos);
+
+		// Compute file data size
+		d->Header.FileDataSize = static_cast<std::uint32_t>(
+			proxyEntryTablePos - fileDataPos);
+
+		// Compute proxy entry table size
+		d->Header.ProxyTableSize = static_cast<std::uint32_t>(
+			eof - proxyEntryTablePos);
+
+		// Finish writing
+		BINA::FinishWriteV2<DataOffset32, DPACxDataNode>(file,
+			origin, header, d->Header, offsets, stringTable);
 	}
 
 	std::vector<std::filesystem::path> LWArchive::
 		GetSplitList(const std::filesystem::path filePath)
 	{
 		// Get split list from ResPacDepend list if PAC has already been read
-		if (d->TypesTree.Nodes.Count())
+		if (d)
 		{
 			for (std::uint32_t i = 0; i < d->TypesTree.Nodes.Count(); ++i)
 			{
@@ -118,6 +318,13 @@ namespace HedgeLib::Archives
         File f = File();
         std::filesystem::create_directory(dir);
 
+		// If not dealing with a direct-loaded pac...
+		if (!d)
+		{
+			// TODO
+			return;
+		}
+
 		// Get BINA offsets as vector of std::uint32_t
 		std::uintptr_t origin = reinterpret_cast<std::uintptr_t>(&d->Header);
 		std::uint8_t* stringTablePtr = reinterpret_cast<std::uint8_t*>(
@@ -158,8 +365,7 @@ namespace HedgeLib::Archives
                 std::string name = static_cast<char*>(fileTree->Nodes[i2].Name);
                 name += '.' + type;
 
-                std::uint8_t* dataPtr = reinterpret_cast<std::uint8_t*>(dataEntry);
-                dataPtr += sizeof(DPACDataEntry);
+				const std::uint8_t* dataPtr = dataEntry->GetDataPtr();
 
 				// Collect offsets from the PAC's offset table that
 				// point to locations within individual files.
@@ -214,7 +420,7 @@ namespace HedgeLib::Archives
 						f.Seek((sizeof(BINA::DBINAV2Header) +
 							sizeof(BINA::DBINAV2DataNode)) + off);
 
-						std::uint8_t* offPtr = reinterpret_cast<DataOffset32
+						std::uint8_t* offPtr = reinterpret_cast<const DataOffset32
 							<std::uint8_t>*>(dataPtr + off)->Get();
 
 						// Check if offset is a string table entry...
