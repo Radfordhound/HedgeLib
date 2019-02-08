@@ -9,8 +9,19 @@
 
 namespace HedgeLib
 {
-#define ENDIAN_SWAP(...) inline void EndianSwap()\
-	{ HedgeLib::IO::Endian::SwapRecursive(__VA_ARGS__); }
+#define CUSTOM_ENDIAN_SWAP inline void EndianSwap()
+#define CUSTOM_ENDIAN_SWAP_RECURSIVE inline void EndianSwapRecursive()
+#define CUSTOM_ENDIAN_SWAP_TWOWAY inline void EndianSwap(bool isBigEndian)
+#define CUSTOM_ENDIAN_SWAP_RECURSIVE_TWOWAY inline void EndianSwapRecursive(bool isBigEndian)
+
+#define ENDIAN_SWAP_OBJECT(...) CUSTOM_ENDIAN_SWAP_TWOWAY {\
+	HedgeLib::IO::Endian::SwapTwoWay(isBigEndian, __VA_ARGS__); }
+
+#define ENDIAN_SWAP_RECURSIVE(...) CUSTOM_ENDIAN_SWAP_RECURSIVE_TWOWAY {\
+	HedgeLib::IO::Endian::SwapRecursiveTwoWay(isBigEndian, __VA_ARGS__); }
+
+#define ENDIAN_SWAP(...) ENDIAN_SWAP_OBJECT(__VA_ARGS__)\
+	ENDIAN_SWAP_RECURSIVE(__VA_ARGS__)
 
 	template<typename T>
 	using Write_t = decltype(std::declval<T&>().Write(
@@ -44,7 +55,7 @@ namespace HedgeLib
 		}
 		else
 		{
-			file.Write(&value, sizeof(value), 1);
+			file.Write(&value);
 		}
 	}
 

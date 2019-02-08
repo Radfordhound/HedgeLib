@@ -5,6 +5,7 @@
 #include "offsets.h"
 #include "file.h"
 #include "reflect.h"
+#include "endian.h"
 #include <stdexcept>
 #include <cstdint>
 #include <cstddef>
@@ -49,6 +50,8 @@ namespace HedgeLib::IO::BINA
 			const char endianFlag = LittleEndianFlag,
 			DataSignature signature = BINASignature) noexcept :
 			Version(version), EndianFlag(endianFlag), Signature(signature) {}
+
+		ENDIAN_SWAP(FileSize, NodeCount);
 
 		static constexpr long FileSizeOffset = (sizeof(Signature) +
 			sizeof(Version) + sizeof(EndianFlag));
@@ -209,7 +212,7 @@ namespace HedgeLib::IO::BINA
 		void FixOffsets(const bool swapEndianness = false)
 		{
 			if (swapEndianness)
-				EndianSwap();
+				EndianSwap(true);
 
 			std::uintptr_t ptr = reinterpret_cast<std::uintptr_t>(this);
 			if (StringTableSize)
@@ -228,7 +231,7 @@ namespace HedgeLib::IO::BINA
 
 		inline void FinishWrite(const HedgeLib::IO::File& file,
 			long strTablePos, long offTablePos,
-			long startPos, long endPos) const
+			long startPos, long endPos)
 		{
 			// Fix Node Size
 			startPos += sizeof(BINA::DBINAV2Header);
@@ -236,25 +239,25 @@ namespace HedgeLib::IO::BINA
 				endPos - startPos);
 
 			file.Seek(startPos + Header.SizeOffset);
-			file.Write(&nodeSize, sizeof(nodeSize), 1);
+			file.Write(&nodeSize);
 
 			// Fix String Table Offset
 			std::uint32_t strTableRelPos = static_cast<std::uint32_t>(
 				strTablePos - startPos - Origin);
 
-			file.Write(&strTableRelPos, sizeof(strTableRelPos), 1);
+			file.Write(&strTableRelPos);
 
 			// Fix String Table Size
 			std::uint32_t strTableSize = static_cast<std::uint32_t>(
 				offTablePos - strTablePos);
 
-			file.Write(&strTableSize, sizeof(strTableSize), 1);
+			file.Write(&strTableSize);
 
 			// Fix Offset Table Size
 			std::uint32_t offTableSize = static_cast<std::uint32_t>(
 				endPos - offTablePos);
 
-			file.Write(&offTableSize, sizeof(offTableSize), 1);
+			file.Write(&offTableSize);
 		}
 	};
 
@@ -408,31 +411,30 @@ namespace HedgeLib::IO::BINA
 	using BINAString32 = BINAString<StringOffset32>;
 	using BINAString64 = BINAString<StringOffset64>;
 
-	template<template<typename> class OffsetType>
+	template<typename OffsetType>
 	void WriteStringTable(const HedgeLib::IO::File& file, const long origin,
 		const std::vector<BINAStringTableEntry>& stringTable) noexcept
 	{
-		std::map<const char*, long> strings;
+		std::map<const char*, OffsetType> strings;
 		long eof = file.Tell();
 
 		for (auto& entry : stringTable)
 		{
 			// Seek to offset
-			long offValue = (eof - origin);
+			OffsetType offValue = static_cast<OffsetType>(eof - origin);
 			file.Seek(entry.StringOffsetPos);
 
 			// Fix offset and Write string if necessary
 			if (strings.find(entry.StringData) != strings.end())
 			{
-				file.Write(&strings[entry.StringData],
-					sizeof(OffsetType<char>), 1);
+				file.Write(&strings[entry.StringData]);
 			}
 			else
 			{
-				strings.insert(std::pair<const char*, long>(
+				strings.insert(std::pair<const char*, OffsetType>(
 					entry.StringData, offValue));
 
-				file.Write(&offValue, sizeof(OffsetType<char>), 1);
+				file.Write(&offValue);
 				file.Seek(offValue + origin);
 				file.Write(entry.StringData, std::strlen(
 					entry.StringData) + 1, 1);
@@ -477,7 +479,7 @@ namespace HedgeLib::IO::BINA
 		FixString(str, file.Tell(), offsets, stringTable);
 
 		T off = 0;
-		file.Write(&off, sizeof(T), 1);
+		file.Write(&off);
 	}
 
 	inline void AddString32(const HedgeLib::IO::File& file, const char* str,
@@ -534,7 +536,7 @@ namespace HedgeLib::IO::BINA
 			{
 				// Swap endianness of header if necessary
 				if (header.EndianFlag == BigEndianFlag)
-					nodeHeader.EndianSwap();
+					nodeHeader.EndianSwap(true);
 
 				// Read node and fix offsets
 				NodePointer<DataType> data = ReadNode<DBINAV2NodeHeader,
@@ -546,7 +548,7 @@ namespace HedgeLib::IO::BINA
 
 				// Swap endianness of non-offsets if necessary
 				if (header.EndianFlag == BigEndianFlag)
-					data->EndianSwap();
+					HedgeLib::IO::Endian::SwapRecursiveTwoWay(true, *data.get());
 
 				return data;
 			}
@@ -580,8 +582,11 @@ namespace HedgeLib::IO::BINA
 		// TODO: Autodetect BINA header type
 
 		auto header = DBINAV2Header();
-		if (!file.Read(&header, sizeof(header), 1))
+		if (!file.Read(&header))
 			throw std::runtime_error("Could not read BINA header!");
+
+		if (header.EndianFlag == BigEndianFlag)
+			header.EndianSwap(true);
 
 		return ReadV2<DataType, OffsetType>(file, header);
 	}
@@ -605,11 +610,11 @@ namespace HedgeLib::IO::BINA
 	{
 		// Write header
 		long startPos = file.Tell();
-		file.Write(&header, sizeof(header), 1);
+		file.Write(&header);
 		header.FileSize = startPos;
 	}
 
-	template<template<typename> class OffsetType, typename DataNodeType>
+	template<typename OffsetType, typename DataNodeType>
 	void FinishWriteV2(const HedgeLib::IO::File& file, const long origin,
 		DBINAV2Header& header, DataNodeType& dataNode,
 		std::vector<std::uint32_t>& offsets,
@@ -631,7 +636,7 @@ namespace HedgeLib::IO::BINA
 			endPos - startPos);
 
 		file.Seek(startPos + header.FileSizeOffset);
-		file.Write(&header.FileSize, sizeof(header.FileSize), 1);
+		file.Write(&header.FileSize);
 
 		// Fix other needed sizes/offsets
 		dataNode.FinishWrite(file, strTablePos,
@@ -641,7 +646,7 @@ namespace HedgeLib::IO::BINA
 		file.Seek(endPos);
 	}
 
-	template<class DataType, template<typename> class OffsetType>
+	template<class DataType, typename OffsetType>
 	void WriteReflectiveV2(const HedgeLib::IO::File& file,
 		const DataType& data, DBINAV2Header& header)
 	{
@@ -660,7 +665,7 @@ namespace HedgeLib::IO::BINA
 			header, data.Header, offsets, stringTable);
 	}
 
-	template<class DataType, template<typename> class OffsetType>
+	template<class DataType, typename OffsetType>
 	void WriteReflectiveV2(const HedgeLib::IO::File& file,
 		const DataType& data)
 	{
@@ -668,7 +673,7 @@ namespace HedgeLib::IO::BINA
 		WriteReflectiveV2<DataType, OffsetType>(file, data, header);
 	}
 
-	template<class DataType, template<typename> class OffsetType>
+	template<class DataType, typename OffsetType>
 	void SaveReflectiveV2(const std::filesystem::path filePath,
 		const DataType& data, const DBINAV2Header& header)
 	{
@@ -676,7 +681,7 @@ namespace HedgeLib::IO::BINA
 		WriteReflectiveV2<DataType, OffsetType>(file, data, header);
 	}
 
-	template<class DataType, template<typename> class OffsetType>
+	template<class DataType, typename OffsetType>
 	void SaveReflectiveV2(const std::filesystem::path filePath,
 		const DataType& data)
 	{

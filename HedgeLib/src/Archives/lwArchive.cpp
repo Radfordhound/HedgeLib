@@ -42,7 +42,7 @@ namespace HedgeLib::Archives
 		BINA::WriteHeaderV2(file, header);
 
 		// Write data node header and type tree
-		file.Write(d.get(), sizeof(*d), 1);
+		file.Write(d.get());
 		long eof = file.Tell();
 		long extTablePos = (eof - sizeof(d->TypesTree));
 
@@ -52,8 +52,8 @@ namespace HedgeLib::Archives
 
 		// Write type nodes
 		auto* typeNodes = d->TypesTree.Nodes.Get();
-		file.Write(typeNodes, sizeof(*typeNodes), static_cast
-			<std::size_t>(d->TypesTree.Nodes.Count()));
+		file.Write(typeNodes, static_cast<std::size_t>(
+			d->TypesTree.Nodes.Count()));
 
 		// Write file trees
 		long offPos = eof;
@@ -67,22 +67,18 @@ namespace HedgeLib::Archives
 			offPos += 4;
 
 			file.FixOffsetEOF<std::uint32_t>(offPos, offsets, origin);
-			file.Write(fileTree, sizeof(fileTree), 1);
+			file.Write(fileTree);
 			offPos += 4;
 
 			// Write file nodes
 			auto* fileNodes = fileTree->Nodes.Get();
-			file.Write(fileNodes, sizeof(*fileNodes), static_cast
-				<std::size_t>(fileTree->Nodes.Count()));
-
-			/*endPtr += (sizeof(*fileTree) + (sizeof(DPACxNode
-				<HedgeLib::IO::DataOffset32, DPACDataEntry>) *
-				fileTree->Nodes.Count()));*/
+			file.Write(fileNodes, static_cast<std::size_t>(
+				fileTree->Nodes.Count()));
 		}
 
 		// Write file data
 		long fileDataPos = file.Tell();
-		const DPACSplitsEntryTable<DataOffset32>* splitEntryTable = nullptr;
+		DPACSplitsEntryTable<DataOffset32>* splitEntryTable = nullptr;
 		long splitPos;
 
 		for (std::uint32_t i = 0; i < d->TypesTree.Nodes.Count(); ++i)
@@ -119,17 +115,17 @@ namespace HedgeLib::Archives
 				offPos += 4;
 
 				// Write data entry
-				file.Write(fileDataEntry, sizeof(*fileDataEntry), 1);
+				file.Write(fileDataEntry);
 
 				// Write split entry table
 				if (isSplitsList)
 				{
 					// Write split entry table
 					long splitEntryTablePos = (eof + sizeof(*fileDataEntry));
-					splitEntryTable = reinterpret_cast<const DPACSplitsEntryTable
+					splitEntryTable = reinterpret_cast<DPACSplitsEntryTable
 						<DataOffset32>*>(fileDataEntry->GetDataPtr());
 
-					file.Write(splitEntryTable, sizeof(*splitEntryTable), 1);
+					file.Write(splitEntryTable);
 
 					// Fix split entry table offset
 					splitPos = (splitEntryTablePos + sizeof(*splitEntryTable));
@@ -187,7 +183,7 @@ namespace HedgeLib::Archives
 				BINA::AddString32(file, typeNode.Name, offsets, stringTable);
 				BINA::AddString32(file, fileNode.Name, offsets, stringTable);
 
-				file.Write(&i2, sizeof(i2), 1);
+				file.Write(&i2);
 				++proxyEntryCount;
 			}
 		}
@@ -195,7 +191,7 @@ namespace HedgeLib::Archives
 		// Fix proxy entry count/offset
 		eof = file.Tell();
 		file.Seek(proxyEntryTablePos);
-		file.Write(&proxyEntryCount, sizeof(proxyEntryCount), 1);
+		file.Write(&proxyEntryCount);
 
 		// Fix proxy entry table offset
 		std::uint32_t proxyEntryPos = static_cast
@@ -219,7 +215,7 @@ namespace HedgeLib::Archives
 			eof - proxyEntryTablePos);
 
 		// Finish writing
-		BINA::FinishWriteV2<DataOffset32, DPACxDataNode>(file,
+		BINA::FinishWriteV2<std::uint32_t, DPACxDataNode>(file,
 			origin, header, d->Header, offsets, stringTable);
 	}
 

@@ -73,7 +73,7 @@ namespace HedgeLib::IO
 		}
 	}
 
-	void File::OpenNoClose(const std::filesystem::path filePath)
+	void File::OpenNoClose(const std::filesystem::path filePath, const FileMode mode)
 	{
 #ifdef _WIN32
 #ifdef UNICODE
@@ -90,9 +90,8 @@ namespace HedgeLib::IO
 
 	void File::Open(const std::filesystem::path filePath, const FileMode mode)
 	{
-		this->mode = mode;
 		Close();
-		OpenNoClose(filePath);
+		OpenNoClose(filePath, mode);
 	}
 
 	void File::WriteNulls(const std::size_t amount) const noexcept

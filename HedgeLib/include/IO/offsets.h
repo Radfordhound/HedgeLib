@@ -23,7 +23,7 @@ namespace HedgeLib::IO
 		inline OffsetBase(const DataType* ptr) noexcept;
 
 		inline DataType* Get() const noexcept;
-		inline void EndianSwap();
+		CUSTOM_ENDIAN_SWAP_RECURSIVE_TWOWAY;
 
 		constexpr void Fix(const std::uintptr_t origin,
 			const bool swapEndianness = false) noexcept;
@@ -111,17 +111,17 @@ namespace HedgeLib::IO
 #endif
 		}
 
-		inline void EndianSwap()
+		CUSTOM_ENDIAN_SWAP_RECURSIVE_TWOWAY
 		{
-			HedgeLib::IO::Endian::SwapRecursive(
-				*(this->Get()));
+			HedgeLib::IO::Endian::SwapRecursiveTwoWay(
+				isBigEndian, *(this->Get()));
 		}
 
 		constexpr void Fix(const std::uintptr_t origin,
 			const bool swapEndianness = false) noexcept
 		{
 			if (swapEndianness)
-				HedgeLib::IO::Endian::SwapRecursive(o);
+				HedgeLib::IO::Endian::Swap32(o);
 
 #ifdef x86
 			o += origin;
@@ -164,17 +164,17 @@ namespace HedgeLib::IO
 			return reinterpret_cast<DataType*>(o);
 		}
 
-		inline void EndianSwap()
+		CUSTOM_ENDIAN_SWAP_RECURSIVE_TWOWAY
 		{
-			HedgeLib::IO::Endian::SwapRecursive(
-				*(this->Get()));
+			HedgeLib::IO::Endian::SwapRecursiveTwoWay(
+				isBigEndian, *(this->Get()));
 		}
 
 		constexpr void Fix(const std::uintptr_t origin,
 			const bool swapEndianness = false) noexcept
 		{
 			if (swapEndianness)
-				HedgeLib::IO::Endian::SwapRecursive(this->o);
+				HedgeLib::IO::Endian::Swap64(o);
 
 			o += origin;
 		}
@@ -249,8 +249,8 @@ namespace HedgeLib::IO
 			eof = file.Tell();
 
 			// Fix the offset
-			file.FixOffsetNoEOFSeek(static_cast<OffsetType>(offPos),
-				eof - origin, *offsets);
+			file.FixOffsetNoEOFSeek(offPos, static_cast
+				<OffsetType>(eof - origin), *offsets);
 
 			// Seek to end of file for future writing
 			file.Seek(eof);
@@ -331,14 +331,24 @@ namespace HedgeLib::IO
 			return o.Get();
 		}
 
-		inline void EndianSwap()
+		CUSTOM_ENDIAN_SWAP
 		{
-			HedgeLib::IO::Endian::SwapRecursive(count);
+			HedgeLib::IO::Endian::Swap(count);
+		}
+
+		CUSTOM_ENDIAN_SWAP_RECURSIVE_TWOWAY
+		{
+			if (isBigEndian)
+				HedgeLib::IO::Endian::Swap(count);
+
 			for (CountType i = 0; i < count; ++i)
 			{
-				HedgeLib::IO::Endian::SwapRecursive(
-					operator[](static_cast<int>(i)));
+				HedgeLib::IO::Endian::SwapRecursiveTwoWay(
+					isBigEndian, operator[](static_cast<int>(i)));
 			}
+
+			if (!isBigEndian)
+				HedgeLib::IO::Endian::Swap(count);
 		}
 
 		constexpr void Fix(const std::uintptr_t origin,

@@ -1,5 +1,6 @@
 #ifndef HFILE_H_INCLUDED
 #define HFILE_H_INCLUDED
+#include "endian.h"
 #include <filesystem>
 #include <cstdio>
 #include <cstdint>
@@ -30,16 +31,18 @@ namespace HedgeLib::IO
 	{
 	protected:
 		std::FILE* fs = nullptr;
-		FileMode mode = ReadBinary;
 
-		void OpenNoClose(const std::filesystem::path filePath);
+		void OpenNoClose(const std::filesystem::path filePath, const FileMode mode);
 
 	public:
+		bool BigEndian = false;
+
 		constexpr File() = default;
 		inline File(const std::filesystem::path filePath,
-			const FileMode mode = ReadBinary) noexcept : mode(mode)
+			const FileMode mode = ReadBinary, bool bigEndian = false)
+			noexcept : BigEndian(bigEndian)
 		{
-			OpenNoClose(filePath);
+			OpenNoClose(filePath, mode);
 		}
 
 		inline ~File() noexcept
@@ -68,10 +71,34 @@ namespace HedgeLib::IO
 			return std::fread(buffer, elementSize, elementCount, fs);
 		}
 
+		template<typename T>
+		inline std::size_t Read(T* value, std::size_t elementCount = 1) const noexcept
+		{
+			std::size_t numRead = Read(value, sizeof(*value), elementCount);
+			if (BigEndian)
+				Endian::SwapRecursive(*value);
+
+			return numRead;
+		}
+
 		inline std::size_t Write(const void* buffer, std::size_t elementSize,
 			std::size_t elementCount) const noexcept
 		{
 			return std::fwrite(buffer, elementSize, elementCount, fs);
+		}
+
+		template<typename T>
+		inline std::size_t Write(T* value, std::size_t elementCount = 1) const noexcept
+		{
+			if (BigEndian)
+				Endian::SwapTwoWay(false, *value);
+
+			std::size_t numWritten = Write(value, sizeof(*value), elementCount);
+
+			if (BigEndian)
+				Endian::SwapTwoWay(true, *value);
+
+			return numWritten;
 		}
 
 		inline long Tell() const noexcept
@@ -87,7 +114,7 @@ namespace HedgeLib::IO
 		template<typename T>
 		inline void FixOffsetNoSeek(T offsetValue) const noexcept
 		{
-			std::fwrite(&offsetValue, sizeof(offsetValue), 1, fs);
+			Write(&offsetValue);
 		}
 
 		template<typename T>

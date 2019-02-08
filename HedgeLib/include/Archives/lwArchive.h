@@ -48,7 +48,7 @@ namespace HedgeLib::Archives
 		void FixOffsets(const bool swapEndianness = false)
 		{
 			if (swapEndianness)
-				EndianSwap();
+				EndianSwap(true);
 
 			if (!OffsetTableSize)
 				return;
@@ -62,7 +62,7 @@ namespace HedgeLib::Archives
 
 		inline void FinishWrite(const HedgeLib::IO::File& file,
 			long strTablePos, long offTablePos,
-			long startPos, long endPos) const
+			long startPos, long endPos)
 		{
 			// Fix Node Size
 			startPos += sizeof(HedgeLib::IO::BINA::DBINAV2Header);
@@ -70,28 +70,28 @@ namespace HedgeLib::Archives
 				endPos - startPos);
 
 			file.Seek(startPos + Header.SizeOffset);
-			file.Write(&nodeSize, sizeof(nodeSize), 1);
+			file.Write(&nodeSize);
 
 			// Fix File Data Size
-			file.Write(&FileDataSize, sizeof(FileDataSize), 1);
+			file.Write(&FileDataSize);
 
 			// Fix Extension Table Size
-			file.Write(&ExtensionTableSize, sizeof(ExtensionTableSize), 1);
+			file.Write(&ExtensionTableSize);
 
 			// Fix Proxy Table Size
-			file.Write(&ProxyTableSize, sizeof(ProxyTableSize), 1);
+			file.Write(&ProxyTableSize);
 
 			// Fix String Table Size
 			std::uint32_t strTableSize = static_cast<std::uint32_t>(
 				offTablePos - strTablePos);
 
-			file.Write(&strTableSize, sizeof(strTableSize), 1);
+			file.Write(&strTableSize);
 
 			// Fix Offset Table Size
 			std::uint32_t offTableSize = static_cast<std::uint32_t>(
 				endPos - offTablePos);
 
-			file.Write(&offTableSize, sizeof(offTableSize), 1);
+			file.Write(&offTableSize);
 		}
     };
 
@@ -139,9 +139,9 @@ namespace HedgeLib::Archives
         std::uint32_t Unknown2 = 0;
         DataFlags Flags = DATA_FLAGS_NONE;
 
-		inline const std::uint8_t* GetDataPtr() const
+		inline std::uint8_t* GetDataPtr()
 		{
-			return reinterpret_cast<const std::uint8_t*>(this + 1);
+			return reinterpret_cast<std::uint8_t*>(this + 1);
 		}
 
 		ENDIAN_SWAP(DataSize, Unknown1, Unknown2);
@@ -170,7 +170,62 @@ namespace HedgeLib::Archives
 		DPACxDataNode Header;
 		DPACxNodeTree<DPACxNodeTree<DPACDataEntry>> TypesTree;
 
-		ENDIAN_SWAP(TypesTree);
+		inline std::uint32_t* GetProxyTablePtr() const
+		{
+			return reinterpret_cast<std::uint32_t*>(
+				reinterpret_cast<std::uintptr_t>(&TypesTree) +
+				Header.ExtensionTableSize + Header.FileDataSize);
+		}
+
+		ENDIAN_SWAP_OBJECT(TypesTree);
+		CUSTOM_ENDIAN_SWAP_RECURSIVE_TWOWAY
+		{
+			if (isBigEndian)
+				TypesTree.EndianSwapRecursive(isBigEndian);
+
+			// Swap splits entry count
+			for (std::uint32_t i = 0; i < TypesTree.Nodes.Count(); ++i)
+			{
+				auto& typeNode = TypesTree.Nodes[i];
+				if (std::strcmp(typeNode.Name, "pac.d:ResPacDepend") != 0)
+					continue;
+
+				auto* fileTree = typeNode.Data.Get();
+				for (std::uint32_t i2 = 0; i2 < fileTree->Nodes.Count(); ++i2)
+				{
+					auto* dataPtr = (fileTree->Nodes[i2].Data.Get()->GetDataPtr());
+					HedgeLib::IO::Endian::Swap32(*(reinterpret_cast
+						<std::uint32_t*>(dataPtr) + 1));
+				}
+			}
+
+			if (!isBigEndian)
+				TypesTree.EndianSwapRecursive(isBigEndian);
+
+			// Swap Proxy Table Entries
+			if (Header.ProxyTableSize)
+			{
+				// Swap count
+				auto* proxyTable = GetProxyTablePtr();
+
+				if (isBigEndian)
+					HedgeLib::IO::Endian::Swap32(*proxyTable);
+
+				std::uint32_t count = *proxyTable;
+
+				if (!isBigEndian)
+					HedgeLib::IO::Endian::Swap32(*proxyTable);
+
+				proxyTable += 4;
+
+				// Swap entry indices
+				for (std::uint32_t i = 0; i < count; ++i)
+				{
+					HedgeLib::IO::Endian::Swap32(*proxyTable);
+					proxyTable += 3;
+				}
+			}
+		}
 	};
 
 	class LWArchive : public Archive

@@ -76,7 +76,30 @@ namespace HedgeLib::IO::Endian
 	constexpr bool HasEndianSwapFunction = is_detected_v<EndianSwap_t, T>;
 
 	template<typename T>
-	inline void SwapRecursive(T& value)
+	using EndianSwapTwoWay_t = decltype(std::declval<T&>().EndianSwap(true));
+
+	template<typename T>
+	constexpr bool HasEndianSwapTwoWayFunction =
+		is_detected_v<EndianSwapTwoWay_t, T>;
+
+	template<typename T>
+	using EndianSwapRecursive_t = decltype(std::declval
+		<T&>().EndianSwapRecursive());
+
+	template<typename T>
+	constexpr bool HasEndianSwapRecursiveFunction =
+		is_detected_v<EndianSwapRecursive_t, T>;
+
+	template<typename T>
+	using EndianSwapRecursiveTwoWay_t = decltype(std::declval
+		<T&>().EndianSwapRecursive(true));
+
+	template<typename T>
+	constexpr bool HasEndianSwapRecursiveTwoWayFunction =
+		is_detected_v<EndianSwapRecursiveTwoWay_t, T>;
+
+	template<typename T>
+	inline void Swap(T& value)
 	{
 		if constexpr (HasEndianSwapFunction<T>)
 		{
@@ -85,45 +108,85 @@ namespace HedgeLib::IO::Endian
 	}
 
 	template<>
-	inline void SwapRecursive<std::uint16_t>(std::uint16_t& value)
+	inline void Swap<std::uint16_t>(std::uint16_t& value)
 	{
 		Swap16(value);
 	}
 
 	template<>
-	inline void SwapRecursive<std::uint32_t>(std::uint32_t& value)
+	inline void Swap<std::uint32_t>(std::uint32_t& value)
 	{
 		Swap32(value);
 	}
 
 	template<>
-	inline void SwapRecursive<std::int32_t>(std::int32_t& value)
+	inline void Swap<std::int32_t>(std::int32_t& value)
 	{
 		Swap32(value);
 	}
 
 	template<>
-	inline void SwapRecursive<float>(float& value)
+	inline void Swap<float>(float& value)
 	{
 		Swap32(value);
 	}
 
 	template<>
-	inline void SwapRecursive<std::uint64_t>(std::uint64_t& value)
+	inline void Swap<std::uint64_t>(std::uint64_t& value)
 	{
 		Swap64(value);
 	}
 
 	template<>
-	inline void SwapRecursive<std::int64_t>(std::int64_t& value)
+	inline void Swap<std::int64_t>(std::int64_t& value)
 	{
 		Swap64(value);
 	}
 
 	template<>
-	inline void SwapRecursive<double>(double& value)
+	inline void Swap<double>(double& value)
 	{
 		Swap64(value);
+	}
+
+	template<typename T, typename... Args>
+	inline void Swap(T& value, Args&... args)
+	{
+		Swap(value);
+		Swap(args...);
+	}
+
+	template<typename T>
+	inline void SwapTwoWay(bool isBigEndian, T& value)
+	{
+		if constexpr (HasEndianSwapTwoWayFunction<T>)
+		{
+			value.EndianSwap(isBigEndian);
+		}
+		else
+		{
+			Swap(value);
+		}
+	}
+
+	template<typename T, typename... Args>
+	inline void SwapTwoWay(bool isBigEndian, T& value, Args&... args)
+	{
+		SwapTwoWay(isBigEndian, value);
+		SwapTwoWay(isBigEndian, args...);
+	}
+
+	template<typename T>
+	inline void SwapRecursive(T& value)
+	{
+		if constexpr (HasEndianSwapRecursiveFunction<T>)
+		{
+			value.EndianSwapRecursive();
+		}
+		else
+		{
+			Swap(value);
+		}
 	}
 
 	template<typename T, typename... Args>
@@ -131,6 +194,26 @@ namespace HedgeLib::IO::Endian
 	{
 		SwapRecursive(value);
 		SwapRecursive(args...);
+	}
+
+	template<typename T>
+	inline void SwapRecursiveTwoWay(bool isBigEndian, T& value)
+	{
+		if constexpr (HasEndianSwapRecursiveTwoWayFunction<T>)
+		{
+			value.EndianSwapRecursive(isBigEndian);
+		}
+		else
+		{
+			SwapRecursive(value);
+		}
+	}
+
+	template<typename T, typename... Args>
+	inline void SwapRecursiveTwoWay(bool isBigEndian, T& value, Args&... args)
+	{
+		SwapRecursiveTwoWay(isBigEndian, value);
+		SwapRecursiveTwoWay(isBigEndian, args...);
 	}
 }
 #endif
