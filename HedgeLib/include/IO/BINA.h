@@ -348,7 +348,7 @@ namespace HedgeLib::IO::BINA
 		}
 		else
 		{
-			HedgeLib::WriteObject(file, origin,
+			HedgeLib::Reflect::WriteObject(file, origin,
 				endPtr, eof, offsets, value);
 		}
 	}
@@ -378,11 +378,13 @@ namespace HedgeLib::IO::BINA
 	{
 		if constexpr (HasWriteChildrenBINAFunction<T>)
 		{
-			value.WriteChildrenBINA(file, origin, offsets, stringTable);
+			value.WriteChildrenBINA(file, origin,
+				offsets, stringTable);
 		}
 		else
 		{
-			WriteChildren(file, origin, offsets, value);
+			HedgeLib::Reflect::WriteChildren(
+				file, origin, offsets, value);
 		}
 	}
 

@@ -7,8 +7,6 @@
 #include <vector>
 #include <utility>
 
-namespace HedgeLib
-{
 #define CUSTOM_ENDIAN_SWAP inline void EndianSwap()
 #define CUSTOM_ENDIAN_SWAP_RECURSIVE inline void EndianSwapRecursive()
 #define CUSTOM_ENDIAN_SWAP_TWOWAY inline void EndianSwap(bool isBigEndian)
@@ -23,6 +21,8 @@ namespace HedgeLib
 #define ENDIAN_SWAP(...) ENDIAN_SWAP_OBJECT(__VA_ARGS__)\
 	ENDIAN_SWAP_RECURSIVE(__VA_ARGS__)
 
+namespace HedgeLib::Reflect
+{
 	template<typename T>
 	using Write_t = decltype(std::declval<T&>().Write(
 		HedgeLib::IO::File(), 0, nullptr));
@@ -93,7 +93,7 @@ namespace HedgeLib
 	const HedgeLib::IO::File& file, const long origin,\
 	HedgeLib::IO::OffsetTable* offsets) const
 
-#define CUSTOM_WRITE_OFFSETS(endPtr, eof, ...) HedgeLib::WriteRecursive(\
+#define CUSTOM_WRITE_OFFSETS(endPtr, eof, ...) HedgeLib::Reflect::WriteRecursive(\
 	file, origin, endPtr, eof, offsets, __VA_ARGS__)
 
 #define WRITE_OFFSETS(...) CUSTOM_WRITE_OFFSETS(\

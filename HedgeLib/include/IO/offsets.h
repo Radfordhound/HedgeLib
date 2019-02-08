@@ -263,7 +263,7 @@ namespace HedgeLib::IO
 		{
 			// Fix offset and write object pointed to by offset
 			FixOffsetRel(file, origin, endPtr, eof, offsets);
-			HedgeLib::WriteRecursive(file, origin, endPtr,
+			HedgeLib::Reflect::WriteRecursive(file, origin, endPtr,
 				eof, offsets, *(this->Get()));
 		}
 
@@ -383,12 +383,14 @@ namespace HedgeLib::IO
 			o.FixOffsetRel(file, origin, endPtr, eof, offsets);
 			for (CountType i = 0; i < count; ++i)
 			{
-				WriteObject(file, origin, endPtr, eof, offsets, (o.Get())[i]);
+				HedgeLib::Reflect::WriteObject(file, origin,
+					endPtr, eof, offsets, (o.Get())[i]);
 			}
 
 			for (CountType i = 0; i < count; ++i)
 			{
-				WriteChildren(file, origin, offsets, (o.Get())[i]);
+				HedgeLib::Reflect::WriteChildren(
+					file, origin, offsets, (o.Get())[i]);
 			}
 		}
 
