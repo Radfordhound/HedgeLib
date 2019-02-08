@@ -7,7 +7,7 @@
 
 namespace HedgeLib::IO
 {
-	constexpr const char* GetMode(const FileMode mode)
+	constexpr const char* GetFileOpenMode(const FileMode mode)
 	{
 		switch (mode)
 		{
@@ -40,7 +40,7 @@ namespace HedgeLib::IO
 		}
 	}
 
-	constexpr const wchar_t* GetModeW(const FileMode mode)
+	constexpr const wchar_t* GetFileOpenModeW(const FileMode mode)
 	{
 		switch (mode)
 		{
@@ -77,12 +77,12 @@ namespace HedgeLib::IO
 	{
 #ifdef _WIN32
 #ifdef UNICODE
-		if (_wfopen_s(&fs, filePath.wstring().c_str(), GetModeW(mode)))
+		if (_wfopen_s(&fs, filePath.wstring().c_str(), GetFileOpenModeW(mode)))
 #else
-		if (fopen_s(&fs, filePath.u8string().c_str(), GetMode(mode))
+		if (fopen_s(&fs, filePath.u8string().c_str(), GetFileOpenMode(mode))
 #endif
 #else
-		fs = std::fopen(filePath.u8string().c_str(), GetMode(mode));
+		fs = std::fopen(filePath.u8string().c_str(), GetFileOpenMode(mode));
 		if (!fs)
 #endif
 			throw std::runtime_error("Could not load the given file!");

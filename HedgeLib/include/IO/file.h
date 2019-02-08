@@ -24,8 +24,8 @@ namespace HedgeLib::IO
 		AppendUpdateText
 	};
 
-	constexpr const char* GetMode(const FileMode mode);
-	constexpr const wchar_t* GetModeW(const FileMode mode);
+	constexpr const char* GetFileOpenMode(const FileMode mode);
+	constexpr const wchar_t* GetFileOpenModeW(const FileMode mode);
 
 	using OffsetTable = std::vector<std::uint32_t>;
 
