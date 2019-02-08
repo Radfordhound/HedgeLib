@@ -229,7 +229,7 @@ namespace HedgeLib::IO::BINA
 			}
 		}
 
-		inline void FinishWrite(const HedgeLib::IO::File& file,
+		inline void FinishWrite(const File& file,
 			long strTablePos, long offTablePos,
 			long startPos, long endPos)
 		{
@@ -282,7 +282,7 @@ namespace HedgeLib::IO::BINA
 		}
 
 		template<typename OffsetType>
-		void Write(const HedgeLib::IO::File& file, const long origin) const noexcept
+		void Write(const File& file, const long origin) const noexcept
 		{
 			long eof = file.Tell();
 			for (auto& entry : entries)
@@ -323,23 +323,22 @@ namespace HedgeLib::IO::BINA
 
 	template<typename T>
 	using WriteChildrenBINA_t = decltype(std::declval<T&>().WriteChildrenBINA(
-		HedgeLib::IO::File(), 0, nullptr, nullptr));
+		File(), 0, nullptr, nullptr));
 
 	template<typename T>
 	constexpr bool HasWriteChildrenBINAFunction = is_detected_v<WriteChildrenBINA_t, T>;
 
 	template<typename T>
 	using WriteOffsetBINA_t = decltype(std::declval<T&>().WriteOffsetBINA(
-		HedgeLib::IO::File(), 0, 0, 0, nullptr, nullptr));
+		File(), 0, 0, 0, nullptr, nullptr));
 
 	template<typename T>
 	constexpr bool HasWriteOffsetBINAFunction = is_detected_v<WriteOffsetBINA_t, T>;
 
 	template<typename T>
-	inline void WriteObjectBINA(const HedgeLib::IO::File& file,
+	inline void WriteObjectBINA(const File& file,
 		const long origin, const std::uintptr_t endPtr, long eof,
-		HedgeLib::IO::OffsetTable* offsets,
-		BINAStringTable* stringTable, const T& value)
+		OffsetTable* offsets, BINAStringTable* stringTable, const T& value)
 	{
 		if constexpr (HasWriteOffsetBINAFunction<T>)
 		{
@@ -353,27 +352,27 @@ namespace HedgeLib::IO::BINA
 		}
 	}
 
-	inline void WriteObjectBINA(const HedgeLib::IO::File& file,
+	inline void WriteObjectBINA(const File& file,
 		const long origin, const std::uintptr_t endPtr, long eof,
-		HedgeLib::IO::OffsetTable* offsets,
-		BINAStringTable* stringTable, const StringOffset32& value)
+		OffsetTable* offsets, BINAStringTable* stringTable,
+		const StringOffset32& value)
 	{
 		AddStringRel<DataOffset32>(value, origin,
 			endPtr, eof, offsets, stringTable);
 	}
 
-	inline void WriteObjectBINA(const HedgeLib::IO::File& file,
+	inline void WriteObjectBINA(const File& file,
 		const long origin, const std::uintptr_t endPtr, long eof,
-		HedgeLib::IO::OffsetTable* offsets,
-		BINAStringTable* stringTable, const StringOffset64& value)
+		OffsetTable* offsets, BINAStringTable* stringTable,
+		const StringOffset64& value)
 	{
 		AddStringRel<DataOffset64>(value, origin,
 			endPtr, eof, offsets, stringTable);
 	}
 
 	template<typename T>
-	inline void WriteChildrenBINA(const HedgeLib::IO::File& file,
-		const long origin, HedgeLib::IO::OffsetTable* offsets,
+	inline void WriteChildrenBINA(const File& file,
+		const long origin, OffsetTable* offsets,
 		BINAStringTable* stringTable, const T& value)
 	{
 		if constexpr (HasWriteChildrenBINAFunction<T>)
@@ -389,20 +388,20 @@ namespace HedgeLib::IO::BINA
 	}
 
 	template<typename T>
-	inline void WriteRecursiveBINA(const HedgeLib::IO::File& file,
+	inline void WriteRecursiveBINA(const File& file,
 		const long origin, const std::uintptr_t endPtr, long eof,
-		HedgeLib::IO::OffsetTable* offsets,
-		BINAStringTable* stringTable, const T& value)
+		OffsetTable* offsets, BINAStringTable* stringTable,
+		const T& value)
 	{
 		WriteObjectBINA(file, origin, endPtr, eof, offsets, stringTable, value);
 		WriteChildrenBINA(file, origin, offsets, stringTable, value);
 	}
 
 	template<typename T, typename... Args>
-	inline void WriteRecursiveBINA(const HedgeLib::IO::File& file,
+	inline void WriteRecursiveBINA(const File& file,
 		const long origin, const std::uintptr_t endPtr, long eof,
-		HedgeLib::IO::OffsetTable* offsets,
-		BINAStringTable* stringTable, const T& value, Args&... args)
+		OffsetTable* offsets, BINAStringTable* stringTable,
+		const T& value, Args&... args)
 	{
 		WriteRecursiveBINA(file, origin, endPtr, eof, offsets, stringTable, value);
 		WriteRecursiveBINA(file, origin, endPtr, eof, offsets, stringTable, args...);
@@ -445,19 +444,18 @@ namespace HedgeLib::IO::BINA
 	using BINAString32 = BINAString<StringOffset32>;
 	using BINAString64 = BINAString<StringOffset64>;
 
-	void WriteOffsetsSorted(const HedgeLib::IO::File& file,
-		const HedgeLib::IO::OffsetTable& offsets) noexcept;
+	void WriteOffsetsSorted(const File& file,
+		const OffsetTable& offsets) noexcept;
 
-	inline void WriteOffsets(const HedgeLib::IO::File& file,
-		HedgeLib::IO::OffsetTable& offsets) noexcept
+	inline void WriteOffsets(const File& file,
+		OffsetTable& offsets) noexcept
 	{
 		std::sort(offsets.begin(), offsets.end());
 		WriteOffsetsSorted(file, offsets);
 	}
 
 	inline void FixString(const char* string, const long offsetPos,
-		HedgeLib::IO::OffsetTable& offsets,
-		BINAStringTable& stringTable) noexcept
+		OffsetTable& offsets, BINAStringTable& stringTable) noexcept
 	{
 		// Add to offsets table and string table
 		offsets.push_back(offsetPos);
@@ -465,22 +463,22 @@ namespace HedgeLib::IO::BINA
 	}
 
 	template<typename T>
-	inline void AddString(const HedgeLib::IO::File& file, const char* string,
-		HedgeLib::IO::OffsetTable& offsets, BINAStringTable& stringTable)
+	inline void AddString(const File& file, const char* string,
+		OffsetTable& offsets, BINAStringTable& stringTable)
 	{
 		T off = 0;
 		FixString(string, file.Tell(), offsets, stringTable);
 		file.Write(&off);
 	}
 
-	inline void AddString32(const HedgeLib::IO::File& file, const char* string,
-		HedgeLib::IO::OffsetTable& offsets, BINAStringTable& stringTable)
+	inline void AddString32(const File& file, const char* string,
+		OffsetTable& offsets, BINAStringTable& stringTable)
 	{
 		AddString<std::uint32_t>(file, string, offsets, stringTable);
 	}
 
-	inline void AddString64(const HedgeLib::IO::File& file, const char* str,
-		HedgeLib::IO::OffsetTable& offsets, BINAStringTable& stringTable)
+	inline void AddString64(const File& file, const char* str,
+		OffsetTable& offsets, BINAStringTable& stringTable)
 	{
 		AddString<std::uint64_t>(file, str, offsets, stringTable);
 	}
@@ -489,7 +487,7 @@ namespace HedgeLib::IO::BINA
 
 	//template<template<typename> class OffsetType>
 	//std::vector<NodePointer<BINAV2Node>> ReadNodesV2(
-	//	const HedgeLib::IO::File& file, const BINAV2Header& header)
+	//	const File& file, const BINAV2Header& header)
 	//{
 	//	std::vector<NodePointer<BINAV2Node>> nodes(static_cast
 	//		<const std::size_t>(header.NodeCount));
@@ -511,7 +509,7 @@ namespace HedgeLib::IO::BINA
 	//}
 
 	template<class DataType, template<typename> class OffsetType>
-	NodePointer<DataType> ReadV2(const HedgeLib::IO::File& file,
+	NodePointer<DataType> ReadV2(const File& file,
 		const DBINAV2Header& header)
 	{
 		// Find DATA Node, read it, then return a smart pointer to it
@@ -554,7 +552,7 @@ namespace HedgeLib::IO::BINA
 
 	//template<template<typename> class OffsetType>
 	//std::vector<NodePointer<BINAV2Node>> ReadNodes(
-	//	const HedgeLib::IO::File& file)
+	//	const File& file)
 	//{
 	//	// TODO: Autodetect BINA header type
 
@@ -566,7 +564,7 @@ namespace HedgeLib::IO::BINA
 	//}
 
 	template<class DataType, template<typename> class OffsetType>
-	NodePointer<DataType> Read(const HedgeLib::IO::File& file)
+	NodePointer<DataType> Read(const File& file)
 	{
 		// TODO: Autodetect BINA header type
 
@@ -584,18 +582,18 @@ namespace HedgeLib::IO::BINA
 	std::vector<NodePointer<BINAV2Node>> LoadNodes(
 		const std::filesystem::path filePath)
 	{
-		HedgeLib::IO::File file = HedgeLib::IO::File::OpenRead(filePath);
+		File file = File::OpenRead(filePath);
 		return ReadNodes<OffsetType>(file);
 	}*/
 
 	template<class DataType, template<typename> class OffsetType>
 	NodePointer<DataType> Load(const std::filesystem::path filePath)
 	{
-		HedgeLib::IO::File file = HedgeLib::IO::File::OpenRead(filePath);
+		File file = File::OpenRead(filePath);
 		return Read<DataType, OffsetType>(file);
 	}
 
-	inline void WriteHeaderV2(const HedgeLib::IO::File& file, DBINAV2Header& header)
+	inline void WriteHeaderV2(const File& file, DBINAV2Header& header)
 	{
 		// Write header
 		long startPos = file.Tell();
@@ -604,9 +602,9 @@ namespace HedgeLib::IO::BINA
 	}
 
 	template<typename OffsetType, typename DataNodeType>
-	void FinishWriteV2(const HedgeLib::IO::File& file, const long origin,
+	void FinishWriteV2(const File& file, const long origin,
 		DBINAV2Header& header, DataNodeType& dataNode,
-		HedgeLib::IO::OffsetTable& offsets, const BINAStringTable& stringTable)
+		OffsetTable& offsets, const BINAStringTable& stringTable)
 	{
 		// Write the string table
 		file.Pad();
@@ -635,14 +633,14 @@ namespace HedgeLib::IO::BINA
 	}
 
 	template<class DataType, typename OffsetType>
-	void WriteReflectiveV2(const HedgeLib::IO::File& file,
+	void WriteReflectiveV2(const File& file,
 		const DataType& data, DBINAV2Header& header)
 	{
 		// Write header
 		WriteHeaderV2(file, header);
 
 		// Write data node and its children
-		HedgeLib::IO::OffsetTable offsets;
+		OffsetTable offsets;
 		BINAStringTable stringTable;
 		const long origin = (header.FileSize + sizeof(header) + data.Header.Origin);
 
@@ -654,8 +652,7 @@ namespace HedgeLib::IO::BINA
 	}
 
 	template<class DataType, typename OffsetType>
-	void WriteReflectiveV2(const HedgeLib::IO::File& file,
-		const DataType& data)
+	void WriteReflectiveV2(const File& file, const DataType& data)
 	{
 		DBINAV2Header header = DBINAV2Header();
 		WriteReflectiveV2<DataType, OffsetType>(file, data, header);
@@ -665,7 +662,7 @@ namespace HedgeLib::IO::BINA
 	void SaveReflectiveV2(const std::filesystem::path filePath,
 		const DataType& data, const DBINAV2Header& header)
 	{
-		HedgeLib::IO::File file = HedgeLib::IO::File::OpenWrite(filePath);
+		File file = File::OpenWrite(filePath);
 		WriteReflectiveV2<DataType, OffsetType>(file, data, header);
 	}
 
@@ -673,7 +670,7 @@ namespace HedgeLib::IO::BINA
 	void SaveReflectiveV2(const std::filesystem::path filePath,
 		const DataType& data)
 	{
-		HedgeLib::IO::File file = HedgeLib::IO::File::OpenWrite(filePath);
+		File file = File::OpenWrite(filePath);
 		WriteReflectiveV2<DataType, OffsetType>(file, data);
 	}
 }

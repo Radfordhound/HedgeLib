@@ -6,8 +6,7 @@
 
 namespace HedgeLib::IO::BINA
 {
-	void WriteOffsetsSorted(const HedgeLib::IO::File& file,
-		const OffsetTable& offsets) noexcept
+	void WriteOffsetsSorted(const File& file, const OffsetTable& offsets) noexcept
 	{
 		std::uint32_t o, curOffset = 0;
 		for (auto& offset : offsets)

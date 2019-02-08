@@ -69,8 +69,7 @@ namespace HedgeLib::IO
 	}
 
 	template<typename HeaderType, typename T, typename deleter = NodeDeleter<T>>
-	NodePointer<T, deleter> ReadNode(const HedgeLib::IO::File& file,
-		const HeaderType& nodeHeader)
+	NodePointer<T, deleter> ReadNode(const File& file, const HeaderType& nodeHeader)
 	{
 		if (nodeHeader.Size() < sizeof(T))
 			throw std::runtime_error("Could not create node; invalid size!");
@@ -94,7 +93,7 @@ namespace HedgeLib::IO
 	}
 
 	template<typename HeaderType, typename T, typename deleter = NodeDeleter<T>>
-	NodePointer<T, deleter> ReadNode(const HedgeLib::IO::File& file)
+	NodePointer<T, deleter> ReadNode(const File& file)
 	{
 		HeaderType nodeHeader = {};
 		if (!file.Read(&nodeHeader, sizeof(nodeHeader), 1))

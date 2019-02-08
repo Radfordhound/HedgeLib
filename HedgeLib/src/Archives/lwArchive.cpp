@@ -23,12 +23,12 @@ namespace HedgeLib::Archives
 		// TODO
 	}
 
-	void LWArchive::Read(const HedgeLib::IO::File& file)
+	void LWArchive::Read(const File& file)
 	{
 		d = BINA::Read<DLWArchive, HedgeLib::IO::DataOffset32>(file);
 	}
 
-	void LWArchive::Write(const HedgeLib::IO::File& file)
+	void LWArchive::Write(const File& file)
 	{
 		// Generate DLWArchive if necessary
 		if (!d) GenerateDLWArchive();
