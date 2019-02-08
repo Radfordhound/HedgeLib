@@ -14,13 +14,13 @@ namespace HedgeLib::IO
 		std::array<std::uint8_t, 4> Data { 0, 0, 0, 0 };
 
 		constexpr DataSignature() = default;
-		constexpr DataSignature(const std::array<std::uint8_t, 4> v) : Data(v) {}
-		constexpr DataSignature(const std::uint32_t v) : Data({
+		constexpr DataSignature(const std::array<std::uint8_t, 4> v) noexcept : Data(v) {}
+		constexpr DataSignature(const std::uint32_t v) noexcept : Data({
 				static_cast<std::uint8_t>(v & 0xFF),
 				static_cast<std::uint8_t>((v & 0xFF00) >> 8),
 				static_cast<std::uint8_t>((v & 0xFF0000) >> 16),
 				static_cast<std::uint8_t>((v & 0xFF000000) >> 24)
-			}) {} // TODO: Big endian machine support
+			}) {}
 
 		constexpr DataSignature(const std::string_view v) : Data(ToArray(v)) {}
 		constexpr DataSignature(const char* v) : Data(ToArray(v)) {}
