@@ -34,8 +34,8 @@ namespace HedgeLib::Archives
 		if (!d) GenerateDLWArchive();
 
 		// Write header
-		std::vector<std::uint32_t> offsets;
-		std::vector<BINA::BINAStringTableEntry> stringTable;
+		OffsetTable offsets;
+		BINA::BINAStringTable stringTable;
 		const long origin = 0;
 
 		BINA::DBINAV2Header header = CREATE_PACxHeader();

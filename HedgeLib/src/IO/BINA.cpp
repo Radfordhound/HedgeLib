@@ -1,14 +1,14 @@
 #include "IO/BINA.h"
 #include "IO/file.h"
+#include "IO/offsets.h"
 #include <cstdint>
 #include <memory>
 
 namespace HedgeLib::IO::BINA
 {
 	void WriteOffsetsSorted(const HedgeLib::IO::File& file,
-		const std::vector<std::uint32_t>& offsets) noexcept
+		const OffsetTable& offsets) noexcept
 	{
-		// TODO: Big endian support
 		std::uint32_t o, curOffset = 0;
 		for (auto& offset : offsets)
 		{

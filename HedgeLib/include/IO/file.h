@@ -27,11 +27,12 @@ namespace HedgeLib::IO
 	constexpr const char* GetMode(const FileMode mode);
 	constexpr const wchar_t* GetModeW(const FileMode mode);
 
+	using OffsetTable = std::vector<std::uint32_t>;
+
 	class File
 	{
 	protected:
 		std::FILE* fs = nullptr;
-
 		void OpenNoClose(const std::filesystem::path filePath, const FileMode mode);
 
 	public:
@@ -146,7 +147,7 @@ namespace HedgeLib::IO
 
 		template<typename T>
 		inline void FixOffsetNoSeek(long offsetPos, T offsetValue,
-			std::vector<std::uint32_t>& offsets) const noexcept
+			OffsetTable& offsets) const noexcept
 		{
 			FixOffsetNoSeek<T>(offsetValue);
 			offsets.push_back(static_cast<std::uint32_t>(offsetPos));
@@ -154,7 +155,7 @@ namespace HedgeLib::IO
 
 		template<typename T>
 		inline void FixOffsetNoEOFSeek(long offsetPos, T offsetValue,
-			std::vector<std::uint32_t>& offsets) const noexcept
+			OffsetTable& offsets) const noexcept
 		{
 			FixOffsetNoEOFSeek<T>(offsetPos, offsetValue);
 			offsets.push_back(static_cast<std::uint32_t>(offsetPos));
@@ -162,15 +163,15 @@ namespace HedgeLib::IO
 
 		template<typename T>
 		inline void FixOffset(long offsetPos, T offsetValue,
-			std::vector<std::uint32_t>& offsets) const noexcept
+			OffsetTable& offsets) const noexcept
 		{
 			FixOffset<T>(offsetPos, offsetValue);
 			offsets.push_back(static_cast<std::uint32_t>(offsetPos));
 		}
 
 		template<typename T>
-		inline void FixOffsetEOF(long offsetPos, std::vector
-			<std::uint32_t>& offsets, long origin) const noexcept
+		inline void FixOffsetEOF(long offsetPos,
+			OffsetTable& offsets, long origin) const noexcept
 		{
 			FixOffsetEOF<T>(offsetPos, origin);
 			offsets.push_back(static_cast<std::uint32_t>(offsetPos));

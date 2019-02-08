@@ -47,7 +47,7 @@ namespace HedgeLib
 	template<typename T>
 	inline void WriteObject(const HedgeLib::IO::File& file,
 		const long origin, const std::uintptr_t endPtr, long eof,
-		std::vector<std::uint32_t>* offsets, const T& value)
+		HedgeLib::IO::OffsetTable* offsets, const T& value)
 	{
 		if constexpr (HasWriteOffsetFunction<T>)
 		{
@@ -61,7 +61,7 @@ namespace HedgeLib
 
 	template<typename T>
 	inline void WriteChildren(const HedgeLib::IO::File& file,
-		const long origin, std::vector<std::uint32_t>* offsets,
+		const long origin, HedgeLib::IO::OffsetTable* offsets,
 		const T& value)
 	{
 		if constexpr (HasWriteChildrenFunction<T>)
@@ -73,7 +73,7 @@ namespace HedgeLib
 	template<typename T>
 	inline void WriteRecursive(const HedgeLib::IO::File& file,
 		const long origin, const std::uintptr_t endPtr, long eof,
-		std::vector<std::uint32_t>* offsets, const T& value)
+		HedgeLib::IO::OffsetTable* offsets, const T& value)
 	{
 		WriteObject(file, origin, endPtr, eof, offsets, value);
 		WriteChildren(file, origin, offsets, value);
@@ -82,7 +82,7 @@ namespace HedgeLib
 	template<typename T, typename... Args>
 	inline void WriteRecursive(const HedgeLib::IO::File& file,
 		const long origin, const std::uintptr_t endPtr, long eof,
-		std::vector<std::uint32_t>* offsets,
+		HedgeLib::IO::OffsetTable* offsets,
 		const T& value, const Args&... args)
 	{
 		WriteRecursive(file, origin, endPtr, eof, offsets, value);
@@ -91,7 +91,7 @@ namespace HedgeLib
 
 #define CUSTOM_OFFSETS inline void WriteChildren(\
 	const HedgeLib::IO::File& file, const long origin,\
-	std::vector<std::uint32_t>* offsets) const
+	HedgeLib::IO::OffsetTable* offsets) const
 
 #define CUSTOM_WRITE_OFFSETS(endPtr, eof, ...) HedgeLib::WriteRecursive(\
 	file, origin, endPtr, eof, offsets, __VA_ARGS__)
