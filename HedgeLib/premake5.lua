@@ -26,6 +26,7 @@ project("HedgeLib")
 	-- Platform-Specifics
 	if target == "windows" then
 		defines("NOMINMAX")
+		buildoptions("/Zc:externConstexpr")
 	end
 	
 	local includeDirs = { "include" }

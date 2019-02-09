@@ -18,6 +18,8 @@ namespace HedgeLib::Archives
 {
 	// TODO: Clean this file up a bit and provide better documentation
 
+	constexpr std::array<char, 3> LWPACxVersion = { '2', '0', '1' };
+
 	void LWArchive::GenerateDLWArchive()
 	{
 		// TODO
@@ -30,16 +32,19 @@ namespace HedgeLib::Archives
 
 	void LWArchive::Write(const File& file)
 	{
+		auto header = CREATE_LWPACxHeader(file.BigEndian);
+		auto bf = BINA::BINAFile(file, header);
+		Write(bf, header);
+	}
+
+	void LWArchive::Write(BINA::BINAFile& file, BINA::DBINAV2Header& header)
+	{
 		// Generate DLWArchive if necessary
 		if (!d) GenerateDLWArchive();
 
 		// Write header
-		OffsetTable offsets;
-		BINA::BINAStringTable stringTable;
 		const long origin = 0;
-
-		BINA::DBINAV2Header header = CREATE_PACxHeader();
-		BINA::WriteHeaderV2(file, header);
+		//BINA::PrepareWriteV2(file, header);
 
 		// Write data node header and type tree
 		file.Write(d.get());
@@ -48,7 +53,7 @@ namespace HedgeLib::Archives
 
 		// Fix type tree offset
 		d->TypesTree.Nodes.FixOffsetRel(file, origin, reinterpret_cast
-			<std::uintptr_t>(d.get() + 1), eof, &offsets);
+			<std::uintptr_t>(d.get() + 1), eof, &file.Offsets);
 
 		// Write type nodes
 		auto* typeNodes = d->TypesTree.Nodes.Get();
@@ -63,10 +68,10 @@ namespace HedgeLib::Archives
 			auto& typeNode = d->TypesTree.Nodes[i];
 			auto* fileTree = typeNode.Data.Get();
 
-			BINA::FixString(typeNode.Name.Get(), offPos, offsets, stringTable);
+			file.FixString(typeNode.Name.Get(), offPos);
 			offPos += 4;
 
-			file.FixOffsetEOF<std::uint32_t>(offPos, offsets, origin);
+			file.FixOffsetEOF<std::uint32_t>(offPos, origin);
 			file.Write(fileTree);
 			offPos += 4;
 
@@ -89,7 +94,7 @@ namespace HedgeLib::Archives
 
 			offPos += 4;
 			file.FixOffset(offPos, static_cast
-				<std::uint32_t>(offPos + 4), offsets);
+				<std::uint32_t>(offPos + 4));
 
 			offPos += 4;
 
@@ -103,14 +108,14 @@ namespace HedgeLib::Archives
 				auto& fileNode = fileTree->Nodes[i2];
 				auto* fileDataEntry = fileNode.Data.Get();
 
-				BINA::FixString(fileNode.Name, offPos, offsets, stringTable);
+				file.FixString(fileNode.Name, offPos);
 				offPos += 4;
 
 				file.Pad(16);
 				eof = file.Tell();
 
 				file.FixOffset(offPos, static_cast
-					<std::uint32_t>(eof), offsets);
+					<std::uint32_t>(eof));
 
 				offPos += 4;
 
@@ -130,7 +135,7 @@ namespace HedgeLib::Archives
 					// Fix split entry table offset
 					splitPos = (splitEntryTablePos + sizeof(*splitEntryTable));
 					file.FixOffset(splitEntryTablePos, static_cast
-						<std::uint32_t>(splitPos), offsets);
+						<std::uint32_t>(splitPos));
 
 					// Write split entries
 					file.WriteNulls(splitEntryTable->SplitsCount *
@@ -155,8 +160,7 @@ namespace HedgeLib::Archives
 			for (std::uint32_t i = 0; i < splitEntryTable->SplitsCount; ++i)
 			{
 				// Get offset position
-				BINA::FixString(splitEntryTable->Splits[i].Name,
-					splitPos, offsets, stringTable);
+				file.FixString(splitEntryTable->Splits[i].Name, splitPos);
 				splitPos += sizeof(StringOffset32);
 			}
 		}
@@ -180,8 +184,8 @@ namespace HedgeLib::Archives
 				if (fileDataEntry->Flags != DATA_FLAGS_NO_DATA)
 					continue;
 
-				BINA::AddString32(file, typeNode.Name, offsets, stringTable);
-				BINA::AddString32(file, fileNode.Name, offsets, stringTable);
+				file.AddString32(typeNode.Name);
+				file.AddString32(fileNode.Name);
 
 				file.Write(&i2);
 				++proxyEntryCount;
@@ -198,7 +202,7 @@ namespace HedgeLib::Archives
 			<std::uint32_t>(proxyEntryTablePos + 8);
 
 		file.FixOffsetNoSeek(proxyEntryTablePos + 4,
-			proxyEntryPos, offsets);
+			proxyEntryPos);
 
 		file.Seek(eof);
 
@@ -215,8 +219,7 @@ namespace HedgeLib::Archives
 			eof - proxyEntryTablePos);
 
 		// Finish writing
-		BINA::FinishWriteV2<std::uint32_t, DPACxDataNode>(file,
-			origin, header, d->Header, offsets, stringTable);
+		file.FinishWrite<std::uint32_t>(header, d->Header, origin);
 	}
 
 	std::vector<std::filesystem::path> LWArchive::

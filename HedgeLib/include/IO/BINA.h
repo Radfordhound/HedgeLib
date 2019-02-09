@@ -6,6 +6,7 @@
 #include "file.h"
 #include "reflect.h"
 #include "endian.h"
+#include "Archives/pac.h"
 #include <stdexcept>
 #include <cstdint>
 #include <cstddef>
@@ -15,8 +16,14 @@
 #include <memory>
 #include <filesystem>
 #include <algorithm>
-#include <unordered_map>
+#include <map>
 #include <utility>
+
+namespace HedgeLib::Archives
+{
+	// Forward declarations
+	extern const std::array<char, 3> LWPACxVersion;
+}
 
 namespace HedgeLib::IO::BINA
 {
@@ -29,11 +36,20 @@ namespace HedgeLib::IO::BINA
 	static constexpr char BigEndianFlag = 'B';
 	static constexpr char LittleEndianFlag = 'L';
 
-	enum BINAOffsetTypes : std::uint8_t
+	enum BINAOffsetType : std::uint8_t
 	{
 		SixBit = 0x40,
 		FourteenBit = 0x80,
 		ThirtyBit = 0xC0
+	};
+
+	enum BINAHeaderType : std::uint8_t
+	{
+		HEADER_TYPE_UNKNOWN,
+		HEADER_TYPE_BINAV1,		// Used by '06 and Colors
+		HEADER_TYPE_BINAV2,		// Used by LW and Forces
+		HEADER_TYPE_PACxV2,		// Used by LW
+		HEADER_TYPE_PACxV3		// Used by Forces
 	};
 
 	struct DBINAV2Header
@@ -139,7 +155,7 @@ namespace HedgeLib::IO::BINA
 
 	template<template<typename> class OffsetType>
 	void FixOffsets(std::uint8_t* eof, std::uint32_t offsetTableLen,
-		std::uintptr_t origin, const bool swapEndianness = false)
+		std::uintptr_t origin, const bool swapEndianness = false) noexcept
 	{
 		auto d = reinterpret_cast<OffsetType<std::uint8_t>*>(origin);
 		std::uint8_t* o = reinterpret_cast<std::uint8_t*>(
@@ -209,7 +225,7 @@ namespace HedgeLib::IO::BINA
 		}
 
 		template<template<typename> class OffsetType>
-		void FixOffsets(const bool swapEndianness = false)
+		void FixOffsets(const bool swapEndianness = false) noexcept
 		{
 			if (swapEndianness)
 				EndianSwap(true);
@@ -263,7 +279,7 @@ namespace HedgeLib::IO::BINA
 
 	class BINAStringTable
 	{
-		std::unordered_map<const char*, std::vector<long>> entries;
+		std::map<const char*, std::vector<long>> entries;
 
 	public:
 		inline void Add(const char* string, const long offsetPos) noexcept
@@ -444,16 +460,6 @@ namespace HedgeLib::IO::BINA
 	using BINAString32 = BINAString<StringOffset32>;
 	using BINAString64 = BINAString<StringOffset64>;
 
-	void WriteOffsetsSorted(const File& file,
-		const OffsetTable& offsets) noexcept;
-
-	inline void WriteOffsets(const File& file,
-		OffsetTable& offsets) noexcept
-	{
-		std::sort(offsets.begin(), offsets.end());
-		WriteOffsetsSorted(file, offsets);
-	}
-
 	inline void FixString(const char* string, const long offsetPos,
 		OffsetTable& offsets, BINAStringTable& stringTable) noexcept
 	{
@@ -464,7 +470,7 @@ namespace HedgeLib::IO::BINA
 
 	template<typename T>
 	inline void AddString(const File& file, const char* string,
-		OffsetTable& offsets, BINAStringTable& stringTable)
+		OffsetTable& offsets, BINAStringTable& stringTable) noexcept
 	{
 		T off = 0;
 		FixString(string, file.Tell(), offsets, stringTable);
@@ -472,15 +478,25 @@ namespace HedgeLib::IO::BINA
 	}
 
 	inline void AddString32(const File& file, const char* string,
-		OffsetTable& offsets, BINAStringTable& stringTable)
+		OffsetTable& offsets, BINAStringTable& stringTable) noexcept
 	{
 		AddString<std::uint32_t>(file, string, offsets, stringTable);
 	}
 
-	inline void AddString64(const File& file, const char* str,
-		OffsetTable& offsets, BINAStringTable& stringTable)
+	inline void AddString64(const File& file, const char* string,
+		OffsetTable& offsets, BINAStringTable& stringTable) noexcept
 	{
-		AddString<std::uint64_t>(file, str, offsets, stringTable);
+		AddString<std::uint64_t>(file, string, offsets, stringTable);
+	}
+
+	void WriteOffsetsSorted(const File& file,
+		const OffsetTable& offsets) noexcept;
+
+	inline void WriteOffsets(const File& file,
+		OffsetTable& offsets) noexcept
+	{
+		std::sort(offsets.begin(), offsets.end());
+		WriteOffsetsSorted(file, offsets);
 	}
 
 	// TODO: Finish the ReadNodes functions somehow
@@ -550,6 +566,16 @@ namespace HedgeLib::IO::BINA
 		throw std::runtime_error("Could not find BINA DATA node!");
 	}
 
+	template<class DataType, template<typename> class OffsetType>
+	NodePointer<DataType> ReadV2(const File& file)
+	{
+		auto header = DBINAV2Header();
+		if (!file.Read(&header))
+			throw std::runtime_error("Could not read BINA header!");
+
+		return ReadV2<DataType, OffsetType>(file, header);
+	}
+
 	//template<template<typename> class OffsetType>
 	//std::vector<NodePointer<BINAV2Node>> ReadNodes(
 	//	const File& file)
@@ -563,19 +589,65 @@ namespace HedgeLib::IO::BINA
 	//	return ReadNodesV2<OffsetType>(file, header);
 	//}
 
+	inline BINAHeaderType GetHeaderType(const File& file) noexcept
+	{
+		// Read signature
+		DataSignature sig;
+		long startPos = file.Tell();
+
+		file.Read(&sig, sizeof(sig), 1);
+
+		// Get type based on signature
+		if (sig == BINASignature)
+		{
+			// BINA V2
+			file.Seek(startPos);
+			return HEADER_TYPE_BINAV1;
+		}
+		else if (sig == HedgeLib::Archives::PACxSignature)
+		{
+			// Which version of PACx is this?
+			std::array<char, 3> version;
+			file.Read(&version, sizeof(version), 1);
+			file.Seek(startPos);
+
+			// LW PACx
+			if (version == HedgeLib::Archives::LWPACxVersion)
+				return HEADER_TYPE_PACxV2;
+
+			// TODO: Forces PACx
+		}
+		else
+		{
+			// BINA V1
+			file.Seek(startPos);
+			return HEADER_TYPE_BINAV1;
+		}
+
+		return HEADER_TYPE_UNKNOWN;
+	}
+
 	template<class DataType, template<typename> class OffsetType>
 	NodePointer<DataType> Read(const File& file)
 	{
-		// TODO: Autodetect BINA header type
+		// Autodetect BINA header type
+		switch (GetHeaderType(file))
+		{
+		case HEADER_TYPE_BINAV1:
+			// TODO: BINA V1
+			throw std::logic_error("Cannot yet read BINAV1 Headers!");
 
-		auto header = DBINAV2Header();
-		if (!file.Read(&header))
-			throw std::runtime_error("Could not read BINA header!");
+		case HEADER_TYPE_BINAV2:
+		case HEADER_TYPE_PACxV2:
+			return ReadV2<DataType, OffsetType>(file);
 
-		if (header.EndianFlag == BigEndianFlag)
-			header.EndianSwap(true);
+		case HEADER_TYPE_PACxV3:
+			// TODO: Forces PACx
+			throw std::logic_error("Cannot yet read PACxV3 Headers!");
 
-		return ReadV2<DataType, OffsetType>(file, header);
+		default:
+			throw std::logic_error("Unknown header type!");
+		}
 	}
 
 	/*template<template<typename> class OffsetType>
@@ -593,7 +665,7 @@ namespace HedgeLib::IO::BINA
 		return Read<DataType, OffsetType>(file);
 	}
 
-	inline void WriteHeaderV2(const File& file, DBINAV2Header& header)
+	inline void PrepareWriteV2(const File& file, DBINAV2Header& header)
 	{
 		// Write header
 		long startPos = file.Tell();
@@ -602,9 +674,10 @@ namespace HedgeLib::IO::BINA
 	}
 
 	template<typename OffsetType, typename DataNodeType>
-	void FinishWriteV2(const File& file, const long origin,
-		DBINAV2Header& header, DataNodeType& dataNode,
-		OffsetTable& offsets, const BINAStringTable& stringTable)
+	void FinishWriteV2(const File& file, DBINAV2Header& header,
+		DataNodeType& dataNode, OffsetTable& offsets,
+		const BINAStringTable& stringTable,
+		const long origin = (sizeof(DBINAV2Header) + sizeof(DataNodeType))) noexcept
 	{
 		// Write the string table
 		file.Pad();
@@ -637,7 +710,7 @@ namespace HedgeLib::IO::BINA
 		const DataType& data, DBINAV2Header& header)
 	{
 		// Write header
-		WriteHeaderV2(file, header);
+		PrepareWriteV2(file, header);
 
 		// Write data node and its children
 		OffsetTable offsets;
@@ -647,8 +720,8 @@ namespace HedgeLib::IO::BINA
 		WriteRecursiveBINA(file, origin, 0, 0, &offsets, &stringTable, data);
 
 		// Finish writing
-		FinishWriteV2<OffsetType>(file, origin,
-			header, data.Header, offsets, stringTable);
+		FinishWriteV2<OffsetType>(file, header,
+			data.Header, offsets, stringTable, origin);
 	}
 
 	template<class DataType, typename OffsetType>
@@ -673,5 +746,66 @@ namespace HedgeLib::IO::BINA
 		File file = File::OpenWrite(filePath);
 		WriteReflectiveV2<DataType, OffsetType>(file, data);
 	}
+
+	class BINAFile : public FileWithOffsets
+	{
+	public:
+		BINAStringTable Strings;
+
+		inline BINAFile(const File& file) noexcept : FileWithOffsets(file) {}
+		inline BINAFile(const File& file, DBINAV2Header& header)
+			noexcept : FileWithOffsets(file)
+		{
+			PrepareWriteV2(file, header);
+		}
+
+		// TODO: Constructors for other header types
+
+		inline void FixString(const char* string,
+			const long offsetPos) noexcept
+		{
+			BINA::FixString(string, offsetPos, Offsets, Strings);
+		}
+
+		template<typename T>
+		inline void AddString(const char* string) noexcept
+		{
+			BINA::AddString<T>(*this, string, Offsets, Strings);
+		}
+
+		inline void AddString32(const char* string) noexcept
+		{
+			BINA::AddString32(*this, string, Offsets, Strings);
+		}
+
+		inline void AddString64(const char* string) noexcept
+		{
+			BINA::AddString64(*this, string, Offsets, Strings);
+		}
+
+		inline void WriteOffsetsSorted() const noexcept
+		{
+			BINA::WriteOffsetsSorted(*this, Offsets);
+		}
+
+		inline void WriteOffsets() noexcept
+		{
+			BINA::WriteOffsets(*this, Offsets);
+		}
+
+		template<typename OffsetType>
+		void WriteStrings(const long origin) const noexcept
+		{
+			Strings.Write<OffsetType>(*this, origin);
+		}
+
+		template<typename OffsetType, typename DataNodeType>
+		void FinishWrite(DBINAV2Header& header, DataNodeType& dataNode,
+			const long origin = (sizeof(DBINAV2Header) + sizeof(DataNodeType))) noexcept
+		{
+			BINA::FinishWriteV2<OffsetType, DataNodeType>(*this, header,
+				dataNode, Offsets, Strings, origin);
+		}
+	};
 }
 #endif

@@ -1,5 +1,6 @@
 #ifndef HLW_ARCHIVE_H_INCLUDED
 #define HLW_ARCHIVE_H_INCLUDED
+#include "pac.h"
 #include "archive.h"
 #include "IO/dataSignature.h"
 #include "IO/offsets.h"
@@ -15,11 +16,11 @@
 
 namespace HedgeLib::Archives
 {
-	static constexpr HedgeLib::IO::DataSignature PACxSignature = "PACx";
-	static constexpr std::array<char, 3> LWPACxVersion = { '2', '0', '1' };
+	extern const std::array<char, 3> LWPACxVersion;
 
-	#define CREATE_PACxHeader() HedgeLib::IO::BINA::DBINAV2Header(\
-		LWPACxVersion, HedgeLib::IO::BINA::LittleEndianFlag, PACxSignature);
+	#define CREATE_LWPACxHeader(isBigEndian) HedgeLib::IO::BINA::DBINAV2Header(\
+		LWPACxVersion, (isBigEndian) ? HedgeLib::IO::BINA::BigEndianFlag :\
+		HedgeLib::IO::BINA::LittleEndianFlag, PACxSignature)
 
     struct DPACxDataNode
     {
@@ -62,7 +63,7 @@ namespace HedgeLib::Archives
 
 		inline void FinishWrite(const HedgeLib::IO::File& file,
 			long strTablePos, long offTablePos,
-			long startPos, long endPos)
+			long startPos, long endPos) noexcept
 		{
 			// Fix Node Size
 			startPos += sizeof(HedgeLib::IO::BINA::DBINAV2Header);
@@ -244,6 +245,8 @@ namespace HedgeLib::Archives
 
 		void Read(const HedgeLib::IO::File& file) override;
 		void Write(const HedgeLib::IO::File& file) override;
+		void Write(HedgeLib::IO::BINA::BINAFile& file,
+			HedgeLib::IO::BINA::DBINAV2Header& header);
 
 		std::vector<std::filesystem::path> GetSplitList(
 			const std::filesystem::path filePath) override;

@@ -7,10 +7,11 @@
 #include <vector>
 #include <utility>
 
-#define CUSTOM_ENDIAN_SWAP inline void EndianSwap()
-#define CUSTOM_ENDIAN_SWAP_RECURSIVE inline void EndianSwapRecursive()
-#define CUSTOM_ENDIAN_SWAP_TWOWAY inline void EndianSwap(bool isBigEndian)
-#define CUSTOM_ENDIAN_SWAP_RECURSIVE_TWOWAY inline void EndianSwapRecursive(bool isBigEndian)
+#define CUSTOM_ENDIAN_SWAP inline void EndianSwap() noexcept
+#define CUSTOM_ENDIAN_SWAP_RECURSIVE inline void EndianSwapRecursive() noexcept
+#define CUSTOM_ENDIAN_SWAP_TWOWAY inline void EndianSwap(bool isBigEndian) noexcept
+#define CUSTOM_ENDIAN_SWAP_RECURSIVE_TWOWAY inline void EndianSwapRecursive(\
+	bool isBigEndian) noexcept
 
 #define ENDIAN_SWAP_OBJECT(...) CUSTOM_ENDIAN_SWAP_TWOWAY {\
 	HedgeLib::IO::Endian::SwapTwoWay(isBigEndian, __VA_ARGS__); }

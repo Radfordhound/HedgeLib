@@ -33,6 +33,8 @@ namespace HedgeLib::IO
 	{
 	protected:
 		std::FILE* fs = nullptr;
+		bool closeOnDestruct = true;
+
 		void OpenNoClose(const std::filesystem::path filePath, const FileMode mode);
 
 	public:
@@ -48,7 +50,8 @@ namespace HedgeLib::IO
 
 		inline ~File() noexcept
 		{
-			Close();
+			if (closeOnDestruct)
+				Close();
 		}
 
 		static File OpenRead(const std::filesystem::path filePath);
@@ -145,42 +148,42 @@ namespace HedgeLib::IO
 			return offsetValue;
 		}
 
-		template<typename T>
-		inline void FixOffsetNoSeek(long offsetPos, T offsetValue,
-			OffsetTable& offsets) const noexcept
-		{
-			FixOffsetNoSeek<T>(offsetValue);
-			offsets.push_back(static_cast<std::uint32_t>(offsetPos));
-		}
-
-		template<typename T>
-		inline void FixOffsetNoEOFSeek(long offsetPos, T offsetValue,
-			OffsetTable& offsets) const noexcept
-		{
-			FixOffsetNoEOFSeek<T>(offsetPos, offsetValue);
-			offsets.push_back(static_cast<std::uint32_t>(offsetPos));
-		}
-
-		template<typename T>
-		inline void FixOffset(long offsetPos, T offsetValue,
-			OffsetTable& offsets) const noexcept
-		{
-			FixOffset<T>(offsetPos, offsetValue);
-			offsets.push_back(static_cast<std::uint32_t>(offsetPos));
-		}
-
-		template<typename T>
-		inline void FixOffsetEOF(long offsetPos,
-			OffsetTable& offsets, long origin) const noexcept
-		{
-			FixOffsetEOF<T>(offsetPos, origin);
-			offsets.push_back(static_cast<std::uint32_t>(offsetPos));
-		}
-
 		void WriteNulls(std::size_t amount) const noexcept;
 		void AlignPosition(std::size_t stride = 4) const noexcept;
 		void Pad(std::size_t stride = 4) const noexcept;
 	};
+
+	template<typename T>
+	inline void FixOffsetNoSeek(const File& file, long offsetPos,
+		T offsetValue, OffsetTable& offsets) noexcept
+	{
+		file.FixOffsetNoSeek<T>(offsetValue);
+		offsets.push_back(static_cast<std::uint32_t>(offsetPos));
+	}
+
+	template<typename T>
+	inline void FixOffsetNoEOFSeek(const File& file, long offsetPos,
+		T offsetValue, OffsetTable& offsets) noexcept
+	{
+		file.FixOffsetNoEOFSeek<T>(offsetPos, offsetValue);
+		offsets.push_back(static_cast<std::uint32_t>(offsetPos));
+	}
+
+	template<typename T>
+	inline void FixOffset(const File& file, long offsetPos,
+		T offsetValue, OffsetTable& offsets) noexcept
+	{
+		file.FixOffset<T>(offsetPos, offsetValue);
+		offsets.push_back(static_cast<std::uint32_t>(offsetPos));
+	}
+
+	template<typename T>
+	inline void FixOffsetEOF(const File& file, long offsetPos,
+		long origin, OffsetTable& offsets) noexcept
+	{
+		file.FixOffsetEOF<T>(offsetPos, origin);
+		offsets.push_back(static_cast<std::uint32_t>(offsetPos));
+	}
 
 	inline File File::OpenRead(const std::filesystem::path filePath)
 	{

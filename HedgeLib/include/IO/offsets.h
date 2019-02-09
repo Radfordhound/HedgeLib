@@ -3,14 +3,50 @@
 #include "endian.h"
 #include "reflect.h"
 #include "file.h"
+#include <filesystem>
 #include <vector>
 #include <cstdint>
 #include <stdexcept>
 #include <cstddef>
+#include <utility>
 
 namespace HedgeLib::IO
 {
 	using OffsetTable = std::vector<std::uint32_t>;
+	class FileWithOffsets : public File
+	{
+	public:
+		OffsetTable Offsets;
+
+		inline FileWithOffsets(const File& file) noexcept : File(file)
+		{
+			closeOnDestruct = false;
+		}
+
+		template<typename T>
+		inline void FixOffsetNoSeek(long offsetPos, T offsetValue) noexcept
+		{
+			IO::FixOffsetNoSeek(*this, offsetPos, offsetValue, Offsets);
+		}
+
+		template<typename T>
+		inline void FixOffsetNoEOFSeek(long offsetPos, T offsetValue) noexcept
+		{
+			IO::FixOffsetNoEOFSeek(*this, offsetPos, offsetValue, Offsets);
+		}
+
+		template<typename T>
+		inline void FixOffset(long offsetPos, T offsetValue) noexcept
+		{
+			IO::FixOffset<T>(*this, offsetPos, offsetValue, Offsets);
+		}
+
+		template<typename T>
+		inline void FixOffsetEOF(long offsetPos, long origin) noexcept
+		{
+			IO::FixOffsetEOF<T>(*this, offsetPos, origin, Offsets);
+		}
+	};
 
 	template<typename OffsetType, typename DataType>
 	struct OffsetBase
@@ -250,7 +286,7 @@ namespace HedgeLib::IO
 			eof = file.Tell();
 
 			// Fix the offset
-			file.FixOffsetNoEOFSeek(offPos, static_cast
+			FixOffsetNoEOFSeek(file, offPos, static_cast
 				<OffsetType>(eof - origin), *offsets);
 
 			// Seek to end of file for future writing
