@@ -2,7 +2,6 @@
 #define HDLC_PARAMETER_H_INCLUDED
 #include "reflect.h"
 #include "IO/bina.h"
-#include "IO/offsets.h"
 #include <cstdint>
 
 namespace HedgeLib::RFL
@@ -15,7 +14,6 @@ namespace HedgeLib::RFL
 
 	struct DLCParameter
 	{
-		HedgeLib::IO::BINA::DBINAV2DataNode Header;
 		DLCSlot GadgetDatabase;
 		DLCSlot CustomizeBody;
 		DLCSlot CustomizeHead;
