@@ -54,8 +54,11 @@ namespace HedgeLib::IO
 				Close();
 		}
 
-		static File OpenRead(const std::filesystem::path filePath);
-		static File OpenWrite(const std::filesystem::path filePath);
+		static File OpenRead(const std::filesystem::path filePath,
+			bool bigEndian = false);
+
+		static File OpenWrite(const std::filesystem::path filePath,
+			bool bigEndian = false);
 
 		void Open(const std::filesystem::path filePath,
 			const FileMode mode = ReadBinary);
@@ -80,7 +83,7 @@ namespace HedgeLib::IO
 		{
 			std::size_t numRead = Read(value, sizeof(*value), elementCount);
 			if (BigEndian)
-				Endian::SwapRecursive(*value);
+				Endian::SwapRecursiveTwoWay(true, *value);
 
 			return numRead;
 		}
@@ -185,14 +188,14 @@ namespace HedgeLib::IO
 		offsets.push_back(static_cast<std::uint32_t>(offsetPos));
 	}
 
-	inline File File::OpenRead(const std::filesystem::path filePath)
+	inline File File::OpenRead(const std::filesystem::path filePath, bool bigEndian)
 	{
-		return File(filePath, ReadBinary);
+		return File(filePath, ReadBinary, bigEndian);
 	}
 
-	inline File File::OpenWrite(const std::filesystem::path filePath)
+	inline File File::OpenWrite(const std::filesystem::path filePath, bool bigEndian)
 	{
-		return File(filePath, WriteBinary);
+		return File(filePath, WriteBinary, bigEndian);
 	}
 }
 #endif
