@@ -1,5 +1,5 @@
 #include "Archives/lwArchive.h"
-#include "IO/BINA.h"
+#include "IO/bina.h"
 #include "IO/offsets.h"
 #include "IO/file.h"
 #include <vector>

@@ -5,7 +5,7 @@
 #include "IO/dataSignature.h"
 #include "IO/offsets.h"
 #include "IO/nodes.h"
-#include "IO/BINA.h"
+#include "IO/bina.h"
 #include "IO/file.h"
 #include <memory>
 #include <string_view>

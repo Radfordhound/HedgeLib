@@ -1,7 +1,7 @@
 #ifndef HDLC_PARAMETER_H_INCLUDED
 #define HDLC_PARAMETER_H_INCLUDED
 #include "reflect.h"
-#include "IO/BINA.h"
+#include "IO/bina.h"
 #include "IO/offsets.h"
 #include <cstdint>
 

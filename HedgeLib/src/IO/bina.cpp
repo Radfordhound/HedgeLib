@@ -1,4 +1,4 @@
-#include "IO/BINA.h"
+#include "IO/bina.h"
 #include "IO/file.h"
 #include "IO/offsets.h"
 #include <cstdint>
