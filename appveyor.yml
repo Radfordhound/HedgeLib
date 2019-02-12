@@ -1,6 +1,6 @@
 version: 0.0.{build}
 image:
-- Visual Studio 2017
+- Previous Visual Studio 2017
 - Ubuntu1804
 platform:
 - Win32
@@ -10,7 +10,7 @@ configuration: Release
 matrix:
   exclude:
     - platform: x86
-      image: Visual Studio 2017
+      image: Previous Visual Studio 2017
     - platform: Win32
       image: Ubuntu1804
 
@@ -18,7 +18,7 @@ for:
 -
   matrix:
     only:
-      - image: Visual Studio 2017
+      - image: Previous Visual Studio 2017
 
   install:
     - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha13/premake-5.0.0-alpha13-windows.zip", "C:\projects\hedgelib\premake.zip")
