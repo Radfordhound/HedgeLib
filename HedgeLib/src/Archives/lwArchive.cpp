@@ -27,7 +27,7 @@ namespace HedgeLib::Archives
 
 	void LWArchive::Read(const File& file)
 	{
-		d = BINA::Read<DLWArchive, HedgeLib::IO::DataOffset32>(file);
+		BINA::Read<DLWArchive, HedgeLib::IO::DataOffset32>(file, d);
 	}
 
 	void LWArchive::Write(const File& file)
@@ -47,13 +47,13 @@ namespace HedgeLib::Archives
 		//BINA::PrepareWriteV2(file, header);
 
 		// Write data node header and type tree
-		file.Write(d.get());
+		file.Write(d.Get());
 		long eof = file.Tell();
 		long extTablePos = (eof - sizeof(d->TypesTree));
 
 		// Fix type tree offset
 		d->TypesTree.Nodes.FixOffsetRel(file, origin, reinterpret_cast
-			<std::uintptr_t>(d.get() + 1), eof, &file.Offsets);
+			<std::uintptr_t>(d.Get() + 1), eof, &file.Offsets);
 
 		// Write type nodes
 		auto* typeNodes = d->TypesTree.Nodes.Get();
@@ -207,19 +207,19 @@ namespace HedgeLib::Archives
 		file.Seek(eof);
 
 		// Compute extension table size
-		d->Header.ExtensionTableSize = static_cast<std::uint32_t>(
+		d->ExtensionTableSize = static_cast<std::uint32_t>(
 			fileDataPos - extTablePos);
 
 		// Compute file data size
-		d->Header.FileDataSize = static_cast<std::uint32_t>(
+		d->FileDataSize = static_cast<std::uint32_t>(
 			proxyEntryTablePos - fileDataPos);
 
 		// Compute proxy entry table size
-		d->Header.ProxyTableSize = static_cast<std::uint32_t>(
+		d->ProxyTableSize = static_cast<std::uint32_t>(
 			eof - proxyEntryTablePos);
 
 		// Finish writing
-		file.FinishWrite<std::uint32_t>(header, d->Header, origin);
+		file.FinishWrite<std::uint32_t>(header, *d, origin);
 	}
 
 	std::vector<std::filesystem::path> LWArchive::
@@ -332,14 +332,14 @@ namespace HedgeLib::Archives
 		origin -= sizeof(HedgeLib::IO::BINA::DBINAV2Header);
 
 		auto offsets = BINA::GetOffsets<HedgeLib::IO::DataOffset32>(
-			stringTablePtr, d->Header.OffsetTableSize, origin);
+			stringTablePtr, d->OffsetTableSize, origin);
 
 		// Setup some variables for later
 		std::vector<std::uint32_t> fileOffsets;
 		std::size_t offsetIndex = 0;
 
-		stringTablePtr -= d->Header.OffsetTableSize;
-		stringTablePtr -= d->Header.StringTableSize;
+		stringTablePtr -= d->OffsetTableSize;
+		stringTablePtr -= d->StringTableSize;
 
 		// Loop through typesTree
         for (std::uint32_t i = 0; i < d->TypesTree.Nodes.Count(); ++i)
@@ -400,8 +400,8 @@ namespace HedgeLib::Archives
 					auto header = BINA::DBINAV2Header({ '2', '0', '0' });
 					f.Write(&header, sizeof(header), 1);
 
-					auto dataNode = BINA::DBINAV2DataNode();
-					f.Write(&dataNode, sizeof(dataNode), 1);
+					auto dataNode = BINA::DBINAV2DataNode<char>();
+					f.Write(&dataNode, 0x30, 1);
 				}
 
                 f.Write(dataPtr, static_cast<std::size_t>(dataEntry->DataSize), 1);
@@ -417,7 +417,7 @@ namespace HedgeLib::Archives
 					{
 						// Fix the offset
 						f.Seek((sizeof(BINA::DBINAV2Header) +
-							sizeof(BINA::DBINAV2DataNode)) + off);
+							BINA::DBINAV2DataNode<char>::Origin) + off);
 
 						std::uint8_t* offPtr = reinterpret_cast<const DataOffset32
 							<std::uint8_t>*>(dataPtr + off)->Get();
@@ -429,7 +429,7 @@ namespace HedgeLib::Archives
 							// ... if it is, fix the offset and write the string.
 							relOff = static_cast<std::uint32_t>(eof -
 								(sizeof(BINA::DBINAV2Header) +
-								sizeof(BINA::DBINAV2DataNode)));
+								BINA::DBINAV2DataNode<char>::Origin));
 
 							f.Write(&relOff, sizeof(relOff), 1);
 
@@ -464,7 +464,7 @@ namespace HedgeLib::Archives
 					// Node Size
 					eof -= sizeof(BINA::DBINAV2Header);
 					f.Seek((sizeof(BINA::DBINAV2Header) +
-						BINA::DBINAV2DataNode::SizeOffset));
+						BINA::DBINAV2DataNode<char>::SizeOffset));
 
 					f.Write(reinterpret_cast<std::uint32_t*>(&eof),
 						sizeof(std::uint32_t), 1);

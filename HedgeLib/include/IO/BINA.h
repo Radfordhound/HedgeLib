@@ -203,6 +203,7 @@ namespace HedgeLib::IO::BINA
 		}
 	}
 
+	template<typename T>
 	struct DBINAV2DataNode
 	{
 		static constexpr std::size_t PaddingSize = 0x18;
@@ -215,9 +216,9 @@ namespace HedgeLib::IO::BINA
 		std::uint32_t OffsetTableSize = 0;
 		std::uint16_t RelativeDataOffset = PaddingSize; // ?
 		std::array<std::uint8_t, PaddingSize> Padding {};
+		T Data;
 
-		ENDIAN_SWAP(StringTableSize,
-			OffsetTableSize, RelativeDataOffset);
+		ENDIAN_SWAP(Data);
 
 		constexpr std::uint32_t Size() const noexcept
 		{
@@ -228,12 +229,17 @@ namespace HedgeLib::IO::BINA
 		void FixOffsets(const bool swapEndianness = false) noexcept
 		{
 			if (swapEndianness)
-				EndianSwap(true);
+			{
+				HedgeLib::IO::Endian::SwapTwoWay(true,
+					StringTableSize, OffsetTableSize,
+					RelativeDataOffset);
+			}
 
-			std::uintptr_t ptr = reinterpret_cast<std::uintptr_t>(this);
+			std::intptr_t ptr = reinterpret_cast<std::intptr_t>(this);
 			if (StringTableSize)
 			{
-				StringTableOffset.Fix(ptr + sizeof(DBINAV2DataNode), swapEndianness);
+				StringTableOffset.Fix(static_cast<std::uintptr_t>(
+					ptr + Origin), swapEndianness);
 			}
 
 			if (OffsetTableSize)
@@ -241,7 +247,7 @@ namespace HedgeLib::IO::BINA
 				BINA::FixOffsets<OffsetType>(reinterpret_cast
 					<std::uint8_t*>(ptr + Header.Size()),
 					OffsetTableSize, static_cast<std::uintptr_t>(
-					static_cast<std::intptr_t>(ptr) + Origin), swapEndianness);
+						ptr + Origin), swapEndianness);
 			}
 		}
 
@@ -525,8 +531,8 @@ namespace HedgeLib::IO::BINA
 	//}
 
 	template<class DataType, template<typename> class OffsetType>
-	NodePointer<DataType> ReadV2(const File& file,
-		const DBINAV2Header& header)
+	void ReadV2(const File& file, const DBINAV2Header& header,
+		NodePointer<DataType>& data)
 	{
 		// Find DATA Node, read it, then return a smart pointer to it
 		DBINAV2NodeHeader nodeHeader = {};
@@ -542,18 +548,17 @@ namespace HedgeLib::IO::BINA
 					nodeHeader.EndianSwap(true);
 
 				// Read node and fix offsets
-				NodePointer<DataType> data = ReadNode<DBINAV2NodeHeader,
-					DataType>(file, nodeHeader);
+				data.ReadNode(file, nodeHeader);
 
 				// gcc errors unless we include ".template"
-				data->Header.template FixOffsets<OffsetType>(
+				data.Get()->template FixOffsets<OffsetType>(
 					header.EndianFlag == BigEndianFlag);
 
 				// Swap endianness of non-offsets if necessary
 				if (header.EndianFlag == BigEndianFlag)
-					HedgeLib::IO::Endian::SwapRecursiveTwoWay(true, *data.get());
+					HedgeLib::IO::Endian::SwapRecursiveTwoWay(true, *(data.Get()));
 
-				return data;
+				return;
 			}
 			else
 			{
@@ -567,13 +572,13 @@ namespace HedgeLib::IO::BINA
 	}
 
 	template<class DataType, template<typename> class OffsetType>
-	NodePointer<DataType> ReadV2(const File& file)
+	void ReadV2(const File& file, NodePointer<DataType>& data)
 	{
 		auto header = DBINAV2Header();
 		if (!file.Read(&header))
 			throw std::runtime_error("Could not read BINA header!");
 
-		return ReadV2<DataType, OffsetType>(file, header);
+		ReadV2<DataType, OffsetType>(file, header, data);
 	}
 
 	//template<template<typename> class OffsetType>
@@ -628,7 +633,7 @@ namespace HedgeLib::IO::BINA
 	}
 
 	template<class DataType, template<typename> class OffsetType>
-	NodePointer<DataType> Read(const File& file)
+	void Read(const File& file, NodePointer<DataType>& data)
 	{
 		// Autodetect BINA header type
 		switch (GetHeaderType(file))
@@ -639,7 +644,8 @@ namespace HedgeLib::IO::BINA
 
 		case HEADER_TYPE_BINAV2:
 		case HEADER_TYPE_PACxV2:
-			return ReadV2<DataType, OffsetType>(file);
+			ReadV2<DataType, OffsetType>(file, data);
+			return;
 
 		case HEADER_TYPE_PACxV3:
 			// TODO: Forces PACx
@@ -659,10 +665,10 @@ namespace HedgeLib::IO::BINA
 	}*/
 
 	template<class DataType, template<typename> class OffsetType>
-	NodePointer<DataType> Load(const std::filesystem::path filePath)
+	void Load(const std::filesystem::path filePath, NodePointer<DataType>& data)
 	{
 		File file = File::OpenRead(filePath);
-		return Read<DataType, OffsetType>(file);
+		Read<DataType, OffsetType>(file, data);
 	}
 
 	inline void PrepareWriteV2(const File& file, DBINAV2Header& header)
