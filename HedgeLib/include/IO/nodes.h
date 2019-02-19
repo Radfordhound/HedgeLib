@@ -6,6 +6,7 @@
 #include <memory>
 #include <type_traits>
 #include <stdexcept>
+#include <algorithm>
 #include <iostream> // TODO: REMOVE ME
 
 namespace HedgeLib::IO
@@ -16,7 +17,8 @@ namespace HedgeLib::IO
 		std::uint8_t* nodeMem = nullptr;
 		T* nodePtr = nullptr;
 
-		inline void ReadNode(const File& file, std::size_t size, std::size_t off)
+		inline void ReadNode(const File& file,
+			std::size_t size, std::size_t off)
 		{
 			if (size < sizeof(T))
 				throw std::runtime_error("Could not create node; invalid size!");

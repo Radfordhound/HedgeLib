@@ -530,7 +530,45 @@ namespace HedgeLib::IO::BINA
 	//	return nodes;
 	//}
 
-	template<class DataType, template<typename> class OffsetType>
+	inline BINAHeaderType GetHeaderType(const File& file) noexcept
+	{
+		// Read signature
+		DataSignature sig;
+		long startPos = file.Tell();
+
+		file.Read(&sig, sizeof(sig), 1);
+
+		// Get type based on signature
+		if (sig == BINASignature)
+		{
+			// BINA V2
+			file.Seek(startPos);
+			return HEADER_TYPE_BINAV1;
+		}
+		else if (sig == HedgeLib::Archives::PACxSignature)
+		{
+			// Which version of PACx is this?
+			std::array<char, 3> version;
+			file.Read(&version, sizeof(version), 1);
+			file.Seek(startPos);
+
+			// LW PACx
+			if (version == HedgeLib::Archives::LWPACxVersion)
+				return HEADER_TYPE_PACxV2;
+
+			// TODO: Forces PACx
+		}
+		else
+		{
+			// BINA V1
+			file.Seek(startPos);
+			return HEADER_TYPE_BINAV1;
+		}
+
+		return HEADER_TYPE_UNKNOWN;
+	}
+
+	template<typename DataType, template<typename> class OffsetType>
 	void ReadV2(const File& file, const DBINAV2Header& header,
 		NodePointer<DataType>& data)
 	{
@@ -571,7 +609,7 @@ namespace HedgeLib::IO::BINA
 		throw std::runtime_error("Could not find BINA DATA node!");
 	}
 
-	template<class DataType, template<typename> class OffsetType>
+	template<typename DataType, template<typename> class OffsetType>
 	void ReadV2(const File& file, NodePointer<DataType>& data)
 	{
 		auto header = DBINAV2Header();
@@ -581,79 +619,11 @@ namespace HedgeLib::IO::BINA
 		ReadV2<DataType, OffsetType>(file, header, data);
 	}
 
-	//template<template<typename> class OffsetType>
-	//std::vector<NodePointer<BINAV2Node>> ReadNodes(
-	//	const File& file)
-	//{
-	//	// TODO: Autodetect BINA header type
-
-	//	auto header = BINAV2Header();
-	//	if (!file.Read(&header, sizeof(header), 1))
-	//		throw std::runtime_error("Could not read BINA header!");
-
-	//	return ReadNodesV2<OffsetType>(file, header);
-	//}
-
-	inline BINAHeaderType GetHeaderType(const File& file) noexcept
+	template<typename DataType, template<typename> class OffsetType>
+	void LoadV2(const std::filesystem::path filePath, NodePointer<DataType>& data)
 	{
-		// Read signature
-		DataSignature sig;
-		long startPos = file.Tell();
-
-		file.Read(&sig, sizeof(sig), 1);
-
-		// Get type based on signature
-		if (sig == BINASignature)
-		{
-			// BINA V2
-			file.Seek(startPos);
-			return HEADER_TYPE_BINAV1;
-		}
-		else if (sig == HedgeLib::Archives::PACxSignature)
-		{
-			// Which version of PACx is this?
-			std::array<char, 3> version;
-			file.Read(&version, sizeof(version), 1);
-			file.Seek(startPos);
-
-			// LW PACx
-			if (version == HedgeLib::Archives::LWPACxVersion)
-				return HEADER_TYPE_PACxV2;
-
-			// TODO: Forces PACx
-		}
-		else
-		{
-			// BINA V1
-			file.Seek(startPos);
-			return HEADER_TYPE_BINAV1;
-		}
-
-		return HEADER_TYPE_UNKNOWN;
-	}
-
-	template<class DataType, template<typename> class OffsetType>
-	void Read(const File& file, NodePointer<DataType>& data)
-	{
-		// Autodetect BINA header type
-		switch (GetHeaderType(file))
-		{
-		case HEADER_TYPE_BINAV1:
-			// TODO: BINA V1
-			throw std::logic_error("Cannot yet read BINAV1 Headers!");
-
-		case HEADER_TYPE_BINAV2:
-		case HEADER_TYPE_PACxV2:
-			ReadV2<DataType, OffsetType>(file, data);
-			return;
-
-		case HEADER_TYPE_PACxV3:
-			// TODO: Forces PACx
-			throw std::logic_error("Cannot yet read PACxV3 Headers!");
-
-		default:
-			throw std::logic_error("Unknown header type!");
-		}
+		File file = File::OpenRead(filePath);
+		ReadV2<DataType, OffsetType>(file, data);
 	}
 
 	/*template<template<typename> class OffsetType>
@@ -663,13 +633,6 @@ namespace HedgeLib::IO::BINA
 		File file = File::OpenRead(filePath);
 		return ReadNodes<OffsetType>(file);
 	}*/
-
-	template<class DataType, template<typename> class OffsetType>
-	void Load(const std::filesystem::path filePath, NodePointer<DataType>& data)
-	{
-		File file = File::OpenRead(filePath);
-		Read<DataType, OffsetType>(file, data);
-	}
 
 	inline void PrepareWriteV2(const File& file, DBINAV2Header& header)
 	{
@@ -711,7 +674,7 @@ namespace HedgeLib::IO::BINA
 		file.Seek(endPos);
 	}
 
-	template<class DataType, typename OffsetType>
+	template<typename DataType, typename OffsetType>
 	void WriteReflectiveV2(const File& file,
 		const DataType& data, DBINAV2Header& header)
 	{
@@ -730,14 +693,14 @@ namespace HedgeLib::IO::BINA
 			data.Header, offsets, stringTable, origin);
 	}
 
-	template<class DataType, typename OffsetType>
+	template<typename DataType, typename OffsetType>
 	void WriteReflectiveV2(const File& file, const DataType& data)
 	{
 		DBINAV2Header header = DBINAV2Header();
 		WriteReflectiveV2<DataType, OffsetType>(file, data, header);
 	}
 
-	template<class DataType, typename OffsetType>
+	template<typename DataType, typename OffsetType>
 	void SaveReflectiveV2(const std::filesystem::path filePath,
 		const DataType& data, const DBINAV2Header& header)
 	{
@@ -745,7 +708,7 @@ namespace HedgeLib::IO::BINA
 		WriteReflectiveV2<DataType, OffsetType>(file, data, header);
 	}
 
-	template<class DataType, typename OffsetType>
+	template<typename DataType, typename OffsetType>
 	void SaveReflectiveV2(const std::filesystem::path filePath,
 		const DataType& data)
 	{

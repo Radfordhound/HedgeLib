@@ -83,7 +83,12 @@ namespace HedgeLib::IO
 		{
 			std::size_t numRead = Read(value, sizeof(*value), elementCount);
 			if (BigEndian)
-				Endian::SwapRecursiveTwoWay(true, *value);
+			{
+				for (size_t i = 0; i < elementCount; ++i)
+				{
+					Endian::SwapRecursiveTwoWay(true, value[i]);
+				}
+			}
 
 			return numRead;
 		}
@@ -98,12 +103,22 @@ namespace HedgeLib::IO
 		inline std::size_t Write(T* value, std::size_t elementCount = 1) const noexcept
 		{
 			if (BigEndian)
-				Endian::SwapTwoWay(false, *value);
+			{
+				for (size_t i = 0; i < elementCount; ++i)
+				{
+					Endian::SwapTwoWay(false, value[i]);
+				}
+			}
 
 			std::size_t numWritten = Write(value, sizeof(*value), elementCount);
 
 			if (BigEndian)
-				Endian::SwapTwoWay(true, *value);
+			{
+				for (size_t i = 0; i < elementCount; ++i)
+				{
+					Endian::SwapTwoWay(true, value[i]);
+				}
+			}
 
 			return numWritten;
 		}
