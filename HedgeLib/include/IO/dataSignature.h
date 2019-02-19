@@ -7,6 +7,23 @@
 
 namespace HedgeLib::IO
 {
+	namespace
+	{
+		inline constexpr std::array<std::uint8_t, 4>
+			ToArray(const std::string_view v)
+		{
+			if (v.size() < 4)
+				throw std::logic_error("DataSignatures must be >= 4 bytes long");
+
+			return {
+				static_cast<std::uint8_t>(v[0]),
+				static_cast<std::uint8_t>(v[1]),
+				static_cast<std::uint8_t>(v[2]),
+				static_cast<std::uint8_t>(v[3])
+			};
+		}
+	}
+
 	struct DataSignature
 	{
 		// We use an array of 4 bytes instead of a
@@ -28,21 +45,6 @@ namespace HedgeLib::IO
 		constexpr const std::uint8_t& operator[] (const int index) const noexcept
 		{
 			return Data[index];
-		}
-
-	private:
-		static inline constexpr std::array<std::uint8_t, 4>
-			ToArray(const std::string_view v)
-		{
-			if (v.size() < 4)
-				throw std::logic_error("DataSignatures must be >= 4 bytes long");
-
-			return {
-				static_cast<std::uint8_t>(v[0]),
-				static_cast<std::uint8_t>(v[1]),
-				static_cast<std::uint8_t>(v[2]),
-				static_cast<std::uint8_t>(v[3])
-			};
 		}
 	};
 
