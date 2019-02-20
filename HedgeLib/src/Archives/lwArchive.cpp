@@ -1,6 +1,6 @@
 #include "Archives/lwArchive.h"
 #include "IO/bina.h"
-#include "IO/offsets.h"
+#include "offsets.h"
 #include "IO/file.h"
 #include "IO/endian.h"
 #include <vector>
@@ -28,7 +28,7 @@ namespace HedgeLib::Archives
 
 	void LWArchive::Read(File& file)
 	{
-		BINA::ReadV2<DLWArchive, HedgeLib::IO::DataOffset32>(file, d);
+		BINA::ReadV2<DLWArchive, DataOffset32>(file, d);
 		isDataBigEndian = file.BigEndian;
 	}
 
@@ -342,7 +342,7 @@ namespace HedgeLib::Archives
 
 		origin -= sizeof(HedgeLib::IO::BINA::DBINAV2Header);
 
-		auto offsets = BINA::GetOffsets<HedgeLib::IO::DataOffset32>(
+		auto offsets = BINA::GetOffsets<DataOffset32>(
 			stringTablePtr, origin, d->OffsetTableSize);
 
 		// Setup some variables for later

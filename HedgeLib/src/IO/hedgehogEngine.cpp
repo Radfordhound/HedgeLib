@@ -1,5 +1,5 @@
 #include "IO/hedgehogEngine.h"
-#include "IO/offsets.h"
+#include "offsets.h"
 #include "IO/endian.h"
 #include <cstdint>
 

@@ -22,6 +22,11 @@
 #define ENDIAN_SWAP(...) ENDIAN_SWAP_OBJECT(__VA_ARGS__)\
 	ENDIAN_SWAP_RECURSIVE(__VA_ARGS__)
 
+namespace HedgeLib
+{
+	using OffsetTable = std::vector<std::uint32_t>;
+}
+
 namespace HedgeLib::Reflect
 {
 	template<typename T>
@@ -48,7 +53,7 @@ namespace HedgeLib::Reflect
 	template<typename T>
 	inline void WriteObject(const HedgeLib::IO::File& file,
 		const long origin, const std::uintptr_t endPtr, long eof,
-		HedgeLib::IO::OffsetTable* offsets, const T& value)
+		OffsetTable* offsets, const T& value)
 	{
 		if constexpr (HasWriteOffsetFunction<T>)
 		{
@@ -62,7 +67,7 @@ namespace HedgeLib::Reflect
 
 	template<typename T>
 	inline void WriteChildren(const HedgeLib::IO::File& file,
-		const long origin, HedgeLib::IO::OffsetTable* offsets,
+		const long origin, OffsetTable* offsets,
 		const T& value)
 	{
 		if constexpr (HasWriteChildrenFunction<T>)
@@ -74,7 +79,7 @@ namespace HedgeLib::Reflect
 	template<typename T>
 	inline void WriteRecursive(const HedgeLib::IO::File& file,
 		const long origin, const std::uintptr_t endPtr, long eof,
-		HedgeLib::IO::OffsetTable* offsets, const T& value)
+		OffsetTable* offsets, const T& value)
 	{
 		WriteObject(file, origin, endPtr, eof, offsets, value);
 		WriteChildren(file, origin, offsets, value);
@@ -83,7 +88,7 @@ namespace HedgeLib::Reflect
 	template<typename T, typename... Args>
 	inline void WriteRecursive(const HedgeLib::IO::File& file,
 		const long origin, const std::uintptr_t endPtr, long eof,
-		HedgeLib::IO::OffsetTable* offsets,
+		OffsetTable* offsets,
 		const T& value, const Args&... args)
 	{
 		WriteRecursive(file, origin, endPtr, eof, offsets, value);
@@ -92,7 +97,7 @@ namespace HedgeLib::Reflect
 
 #define CUSTOM_OFFSETS inline void WriteChildren(\
 	const HedgeLib::IO::File& file, const long origin,\
-	HedgeLib::IO::OffsetTable* offsets) const
+	OffsetTable* offsets) const
 
 #define CUSTOM_WRITE_OFFSETS(endPtr, eof, ...) HedgeLib::Reflect::WriteRecursive(\
 	file, origin, endPtr, eof, offsets, __VA_ARGS__)

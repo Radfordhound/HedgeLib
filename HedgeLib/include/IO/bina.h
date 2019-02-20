@@ -226,7 +226,7 @@ namespace HedgeLib::IO::BINA
 		static constexpr long Origin = 0x30;
 
 		DBINAV2NodeHeader Header = DATASignature;
-		DataOffset32<char> StringTableOffset = nullptr;
+		StringOffset32 StringTableOffset = nullptr;
 		std::uint32_t StringTableSize = 0;
 		std::uint32_t OffsetTableSize = 0;
 		std::uint16_t RelativeDataOffset = PaddingSize; // ?
@@ -345,7 +345,7 @@ namespace HedgeLib::IO::BINA
 	template<template<typename> class OffsetType>
 	inline void AddStringRel(const OffsetType<char>& stringOff,
 		const long origin, const std::uintptr_t endPtr, long eof,
-		HedgeLib::IO::OffsetTable* offsets, BINAStringTable* stringTable)
+		OffsetTable* offsets, BINAStringTable* stringTable)
 	{
 		// Get offset position
 		long stringOffsetPos = (eof - static_cast<long>((
@@ -446,7 +446,7 @@ namespace HedgeLib::IO::BINA
 
 #define CUSTOM_OFFSETS_BINA inline void WriteChildrenBINA(\
 	const HedgeLib::IO::File& file, const long origin,\
-	HedgeLib::IO::OffsetTable* offsets,\
+	OffsetTable* offsets,\
 	HedgeLib::IO::BINA::BINAStringTable* stringTable) const
 
 #define CUSTOM_WRITE_OFFSETS_BINA(endPtr, eof, ...) HedgeLib::IO::\

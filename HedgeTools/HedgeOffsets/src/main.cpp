@@ -1,10 +1,11 @@
 #include "IO/bina.h"
-#include "IO/offsets.h"
+#include "offsets.h"
 #include <iostream>
 #include <cstdlib>
 #include <cstdint>
 #include <filesystem>
 
+using namespace HedgeLib;
 using namespace HedgeLib::IO;
 
 bool ReadOffsets(const std::filesystem::path filePath,

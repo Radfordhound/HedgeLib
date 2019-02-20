@@ -1,4 +1,4 @@
-#include "IO/offsets.h"
+#include "offsets.h"
 #include "IO/endian.h"
 #include <optional>
 #include <vector>
@@ -6,7 +6,7 @@
 #include <cstddef>
 
 #ifdef x64
-namespace HedgeLib::IO::detail
+namespace HedgeLib::detail
 {
 	static std::vector<std::optional<std::uintptr_t>>
 		dataOffset32Ptrs = { std::nullopt };

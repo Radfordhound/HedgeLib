@@ -1,8 +1,8 @@
 #ifndef HOFFSETS_H_INCLUDED
 #define HOFFSETS_H_INCLUDED
-#include "endian.h"
+#include "IO/endian.h"
 #include "reflect.h"
-#include "file.h"
+#include "IO/file.h"
 #include <filesystem>
 #include <vector>
 #include <cstdint>
@@ -10,43 +10,47 @@
 #include <cstddef>
 #include <utility>
 
-namespace HedgeLib::IO
+namespace HedgeLib
 {
 	using OffsetTable = std::vector<std::uint32_t>;
-	class FileWithOffsets : public File
+
+	namespace IO
 	{
-	public:
-		OffsetTable Offsets;
-
-		inline FileWithOffsets(const File& file) noexcept : File(file)
+		class FileWithOffsets : public File
 		{
-			closeOnDestruct = false;
-		}
+		public:
+			OffsetTable Offsets;
 
-		template<typename T>
-		inline void FixOffsetNoSeek(long offsetPos, T offsetValue) noexcept
-		{
-			IO::FixOffsetNoSeek(*this, offsetPos, offsetValue, Offsets);
-		}
+			inline FileWithOffsets(const File& file) noexcept : File(file)
+			{
+				closeOnDestruct = false;
+			}
 
-		template<typename T>
-		inline void FixOffsetNoEOFSeek(long offsetPos, T offsetValue) noexcept
-		{
-			IO::FixOffsetNoEOFSeek(*this, offsetPos, offsetValue, Offsets);
-		}
+			template<typename T>
+			inline void FixOffsetNoSeek(long offsetPos, T offsetValue) noexcept
+			{
+				IO::FixOffsetNoSeek(*this, offsetPos, offsetValue, Offsets);
+			}
 
-		template<typename T>
-		inline void FixOffset(long offsetPos, T offsetValue) noexcept
-		{
-			IO::FixOffset<T>(*this, offsetPos, offsetValue, Offsets);
-		}
+			template<typename T>
+			inline void FixOffsetNoEOFSeek(long offsetPos, T offsetValue) noexcept
+			{
+				IO::FixOffsetNoEOFSeek(*this, offsetPos, offsetValue, Offsets);
+			}
 
-		template<typename T>
-		inline void FixOffsetEOF(long offsetPos, long origin) noexcept
-		{
-			IO::FixOffsetEOF<T>(*this, offsetPos, origin, Offsets);
-		}
-	};
+			template<typename T>
+			inline void FixOffset(long offsetPos, T offsetValue) noexcept
+			{
+				IO::FixOffset<T>(*this, offsetPos, offsetValue, Offsets);
+			}
+
+			template<typename T>
+			inline void FixOffsetEOF(long offsetPos, long origin) noexcept
+			{
+				IO::FixOffsetEOF<T>(*this, offsetPos, origin, Offsets);
+			}
+		};
+	}
 
 	template<typename OffsetType, typename DataType>
 	struct OffsetBase
@@ -152,7 +156,7 @@ namespace HedgeLib::IO
 
 		CUSTOM_ENDIAN_SWAP_RECURSIVE_TWOWAY
 		{
-			HedgeLib::IO::Endian::SwapRecursiveTwoWay(
+			IO::Endian::SwapRecursiveTwoWay(
 				isBigEndian, *(this->Get()));
 		}
 
@@ -160,7 +164,7 @@ namespace HedgeLib::IO
 			const bool swapEndianness = false) noexcept
 		{
 			if (swapEndianness)
-				HedgeLib::IO::Endian::Swap32(o);
+				IO::Endian::Swap32(o);
 
 #ifdef x86
 			o += origin;
@@ -205,7 +209,7 @@ namespace HedgeLib::IO
 
 		CUSTOM_ENDIAN_SWAP_RECURSIVE_TWOWAY
 		{
-			HedgeLib::IO::Endian::SwapRecursiveTwoWay(
+			IO::Endian::SwapRecursiveTwoWay(
 				isBigEndian, *(this->Get()));
 		}
 
@@ -213,7 +217,7 @@ namespace HedgeLib::IO
 			const bool swapEndianness = false) noexcept
 		{
 			if (swapEndianness)
-				HedgeLib::IO::Endian::Swap64(o);
+				IO::Endian::Swap64(o);
 
 			o += origin;
 		}
@@ -226,7 +230,7 @@ namespace HedgeLib::IO
 	};
 
 	// Foward-declarations for some BINA stuff
-	namespace BINA
+	namespace IO::BINA
 	{
 		class BINAStringTable;
 
@@ -275,7 +279,7 @@ namespace HedgeLib::IO
 			return (this->Get())[index];
 		}
 
-		inline void FixOffsetRel(const File& file,
+		inline void FixOffsetRel(const IO::File& file,
 			const long origin, const std::uintptr_t endPtr, long& eof,
 			OffsetTable* offsets) const
 		{
@@ -286,30 +290,30 @@ namespace HedgeLib::IO
 			eof = file.Tell();
 
 			// Fix the offset
-			FixOffsetNoEOFSeek(file, offPos, static_cast
+			IO::FixOffsetNoEOFSeek(file, offPos, static_cast
 				<OffsetType>(eof - origin), *offsets);
 
 			// Seek to end of file for future writing
 			file.Seek(eof);
 		}
 
-		inline void WriteOffset(const File& file,
+		inline void WriteOffset(const IO::File& file,
 			const long origin, const std::uintptr_t endPtr, long eof,
 			OffsetTable* offsets) const
 		{
 			// Fix offset and write object pointed to by offset
 			FixOffsetRel(file, origin, endPtr, eof, offsets);
-			HedgeLib::Reflect::WriteRecursive(file, origin, endPtr,
+			Reflect::WriteRecursive(file, origin, endPtr,
 				eof, offsets, *(this->Get()));
 		}
 
-		inline void WriteOffsetBINA(const File& file,
+		inline void WriteOffsetBINA(const IO::File& file,
 			const long origin, const std::uintptr_t endPtr, long eof,
-			OffsetTable* offsets, BINA::BINAStringTable* stringTable) const
+			OffsetTable* offsets, IO::BINA::BINAStringTable* stringTable) const
 		{
 			// Fix offset and write object pointed to by offset
 			FixOffsetRel(file, origin, endPtr, eof, offsets);
-			BINA::WriteRecursiveBINA(file, origin, endPtr,
+			IO::BINA::WriteRecursiveBINA(file, origin, endPtr,
 				eof, offsets, stringTable, *(this->Get()));
 		}
 	};
@@ -369,22 +373,22 @@ namespace HedgeLib::IO
 
 		CUSTOM_ENDIAN_SWAP
 		{
-			HedgeLib::IO::Endian::Swap(count);
+			IO::Endian::Swap(count);
 		}
 
 		CUSTOM_ENDIAN_SWAP_RECURSIVE_TWOWAY
 		{
 			if (isBigEndian)
-				HedgeLib::IO::Endian::Swap(count);
+				IO::Endian::Swap(count);
 
 			for (CountType i = 0; i < count; ++i)
 			{
-				HedgeLib::IO::Endian::SwapRecursiveTwoWay(
+				IO::Endian::SwapRecursiveTwoWay(
 					isBigEndian, operator[](static_cast<int>(i)));
 			}
 
 			if (!isBigEndian)
-				HedgeLib::IO::Endian::Swap(count);
+				IO::Endian::Swap(count);
 		}
 
 		constexpr void Fix(const std::uintptr_t origin,
@@ -405,45 +409,45 @@ namespace HedgeLib::IO
 			return o.template GetAs<CastedType>();
 		}
 
-		inline void FixOffsetRel(const File& file,
+		inline void FixOffsetRel(const IO::File& file,
 			const long origin, const std::uintptr_t endPtr, long& eof,
 			OffsetTable* offsets) const
 		{
 			o.FixOffsetRel(file, origin, endPtr, eof, offsets);
 		}
 
-		inline void WriteOffset(const File& file,
+		inline void WriteOffset(const IO::File& file,
 			const long origin, const std::uintptr_t endPtr, long eof,
 			OffsetTable* offsets) const
 		{
 			o.FixOffsetRel(file, origin, endPtr, eof, offsets);
 			for (CountType i = 0; i < count; ++i)
 			{
-				HedgeLib::Reflect::WriteObject(file, origin,
+				Reflect::WriteObject(file, origin,
 					endPtr, eof, offsets, (o.Get())[i]);
 			}
 
 			for (CountType i = 0; i < count; ++i)
 			{
-				HedgeLib::Reflect::WriteChildren(
+				Reflect::WriteChildren(
 					file, origin, offsets, (o.Get())[i]);
 			}
 		}
 
-		inline void WriteOffsetBINA(const File& file,
+		inline void WriteOffsetBINA(const IO::File& file,
 			const long origin, const std::uintptr_t endPtr, long eof,
-			OffsetTable* offsets, BINA::BINAStringTable* stringTable) const
+			OffsetTable* offsets, IO::BINA::BINAStringTable* stringTable) const
 		{
 			o.FixOffsetRel(file, origin, endPtr, eof, offsets);
 			for (CountType i = 0; i < count; ++i)
 			{
-				BINA::WriteObjectBINA(file, origin, endPtr, eof,
+				IO::BINA::WriteObjectBINA(file, origin, endPtr, eof,
 					offsets, stringTable, (o.Get())[i]);
 			}
 
 			for (CountType i = 0; i < count; ++i)
 			{
-				BINA::WriteChildrenBINA(file, origin, offsets,
+				IO::BINA::WriteChildrenBINA(file, origin, offsets,
 					stringTable, (o.Get())[i]);
 			}
 		}

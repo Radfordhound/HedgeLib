@@ -3,7 +3,7 @@
 #include "pac.h"
 #include "archive.h"
 #include "IO/dataSignature.h"
-#include "IO/offsets.h"
+#include "offsets.h"
 #include "IO/nodes.h"
 #include "IO/bina.h"
 #include "IO/file.h"
@@ -24,8 +24,8 @@ namespace HedgeLib::Archives
 
 	struct DPACProxyEntry
 	{
-		HedgeLib::IO::StringOffset32 Extension;
-		HedgeLib::IO::StringOffset32 Name;
+		StringOffset32 Extension;
+		StringOffset32 Name;
 		std::uint32_t Index;
 		
 		ENDIAN_SWAP(Index);
@@ -33,7 +33,7 @@ namespace HedgeLib::Archives
 
 	struct DPACProxyEntryTable
 	{
-		HedgeLib::IO::ArrOffset32<DPACProxyEntry> ProxyEntries;
+		ArrOffset32<DPACProxyEntry> ProxyEntries;
 		ENDIAN_SWAP(ProxyEntries);
 	};
 
@@ -86,9 +86,7 @@ namespace HedgeLib::Archives
 	template<typename DataType>
 	struct DPACxNodeTree
 	{
-		HedgeLib::IO::ArrOffset32<DPACxNode
-			<HedgeLib::IO::DataOffset32, DataType>> Nodes;
-
+		ArrOffset32<DPACxNode<DataOffset32, DataType>> Nodes;
 		ENDIAN_SWAP(Nodes);
 	};
 

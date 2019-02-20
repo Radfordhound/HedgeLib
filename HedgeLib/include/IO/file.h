@@ -6,6 +6,11 @@
 #include <cstdint>
 #include <vector>
 
+namespace HedgeLib
+{
+	using OffsetTable = std::vector<std::uint32_t>;
+}
+
 namespace HedgeLib::IO
 {
 	enum FileMode : std::uint8_t
@@ -26,8 +31,6 @@ namespace HedgeLib::IO
 
 	constexpr const char* GetFileOpenMode(const FileMode mode);
 	constexpr const wchar_t* GetFileOpenModeW(const FileMode mode);
-
-	using OffsetTable = std::vector<std::uint32_t>;
 
 	class File
 	{
