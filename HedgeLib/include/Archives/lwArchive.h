@@ -227,6 +227,8 @@ namespace HedgeLib::Archives
 	class LWArchive : public Archive
 	{
 		HedgeLib::IO::NodePointer<DLWArchive> d = nullptr;
+		bool isDataBigEndian = false;
+
 		void GenerateDLWArchive();
 
 	public:

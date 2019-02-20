@@ -218,7 +218,7 @@ namespace HedgeLib::IO::BINA
 		std::array<std::uint8_t, PaddingSize> Padding {};
 		T Data;
 
-		ENDIAN_SWAP(Data);
+		ENDIAN_SWAP(RelativeDataOffset, Data);
 
 		constexpr std::uint32_t Size() const noexcept
 		{
@@ -568,6 +568,12 @@ namespace HedgeLib::IO::BINA
 		return HEADER_TYPE_UNKNOWN;
 	}
 
+	inline void ReadHeaderV2(const File& file, DBINAV2Header& header)
+	{
+		if (!file.Read(&header))
+			throw std::runtime_error("Could not read BINA header!");
+	}
+
 	template<typename DataType, template<typename> class OffsetType>
 	void ReadV2(const File& file, const DBINAV2Header& header,
 		NodePointer<DataType>& data)
@@ -613,9 +619,7 @@ namespace HedgeLib::IO::BINA
 	void ReadV2(const File& file, NodePointer<DataType>& data)
 	{
 		auto header = DBINAV2Header();
-		if (!file.Read(&header))
-			throw std::runtime_error("Could not read BINA header!");
-
+		ReadHeaderV2(file, header);
 		ReadV2<DataType, OffsetType>(file, header, data);
 	}
 
@@ -636,6 +640,10 @@ namespace HedgeLib::IO::BINA
 
 	inline void PrepareWriteV2(const File& file, DBINAV2Header& header)
 	{
+		// Set endian flag
+		header.EndianFlag = (file.BigEndian) ?
+			BigEndianFlag : LittleEndianFlag;
+
 		// Write header
 		long startPos = file.Tell();
 		file.Write(&header);
