@@ -30,11 +30,19 @@ for:
     verbosity: minimal
   after_build:
     - ps: |
+        $projects = "HedgeEdit","HedgeLib","HedgeTools\HedgeArcPack","HedgeTools\HedgeOffsets"
+        $dir = "C:\projects\hedgelib"
         if ($env:PLATFORM -imatch "Win32") {
-          Rename-Item C:\projects\hedgelib\HedgeEdit\bin\x86 C:\projects\hedgelib\HedgeEdit\bin\Win32
-          Rename-Item C:\projects\hedgelib\HedgeLib\bin\x86 C:\projects\hedgelib\HedgeLib\bin\Win32
-          Rename-Item C:\projects\hedgelib\HedgeTools\HedgeArcPack\bin\x86 C:\projects\hedgelib\HedgeTools\HedgeArcPack\bin\Win32
-          Rename-Item C:\projects\hedgelib\HedgeTools\HedgeOffsets\bin\x86 C:\projects\hedgelib\HedgeTools\HedgeOffsets\bin\Win32
+          foreach ($project in $projects) {
+            Rename-Item $dir\$project\bin\x86 $dir\$project\bin\Win32
+          }
+        }
+        Copy-Item "$dir\hedgelib\include" -Destination "$dir\hedgelib\bin\$env:PLATFORM\Release\include" -Recurse
+        foreach ($project in $projects) {
+          robocopy /xc /xn /xo /nfl /njh /njs /ndl "$dir" "$dir\$project\bin\$env:PLATFORM\Release" License.txt
+          del $dir\$project\bin\$env:PLATFORM\Release\*.iobj
+          del $dir\$project\bin\$env:PLATFORM\Release\*.ipdb
+          del $dir\$project\bin\$env:PLATFORM\Release\*.pdb
         }
   artifacts:
     - path: HedgeEdit/bin/$(PLATFORM)/Release
@@ -58,6 +66,13 @@ for:
   build: off
   build_script:
     - sh: make CPP=g++-8 CXX=g++-8 LD=g++-8 config=release_$PLATFORM
+    - ps: |
+        $projects = "HedgeEdit","HedgeLib","HedgeTools/HedgeArcPack","HedgeTools/HedgeOffsets"
+        $dir = "/home/appveyor/projects/hedgelib"
+        Copy-Item "$dir/hedgelib/include" -Destination "$dir/hedgelib/bin/$env:PLATFORM/Release/include" -Recurse
+        foreach ($project in $projects) {
+          cp -n "$dir/License.txt" "$dir/$project/bin/$env:PLATFORM/Release/License.txt"
+        }
   artifacts:
     - path: HedgeLib/bin/$(PLATFORM)/Release
       name: HedgeLib
