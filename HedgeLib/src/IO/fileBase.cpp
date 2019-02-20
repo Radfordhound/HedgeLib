@@ -9,7 +9,8 @@ namespace HedgeLib::IO
 
 	void FileBase::Load(const std::filesystem::path filePath)
 	{
-		Read(File::OpenRead(filePath));
+		File f = File::OpenRead(filePath);
+		Read(f);
 	}
 
 	void FileBase::Read(File& file)
@@ -20,7 +21,8 @@ namespace HedgeLib::IO
 
 	void FileBase::Save(const std::filesystem::path filePath)
 	{
-		Write(File::OpenWrite(filePath));
+		File f = File::OpenWrite(filePath);
+		Write(f);
 	}
 
 	void FileBase::Write(File& file)
