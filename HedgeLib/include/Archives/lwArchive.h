@@ -240,8 +240,8 @@ namespace HedgeLib::Archives
 			std::default_delete<LWArchive>();
 		}
 
-		void Read(const HedgeLib::IO::File& file) override;
-		void Write(const HedgeLib::IO::File& file) override;
+		void Read(HedgeLib::IO::File& file) override;
+		void Write(HedgeLib::IO::File& file) override;
 		void Write(HedgeLib::IO::BINA::BINAFile& file,
 			HedgeLib::IO::BINA::DBINAV2Header& header);
 

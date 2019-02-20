@@ -157,13 +157,30 @@ namespace HedgeLib::IO::HedgehogEngine
 		ENDIAN_SWAP(Data);
 	};
 
-    inline HEngineHeaderType GetHeaderType(const DHEngineHeader& header) noexcept
-    {
-        // Check if header is a Mirage header or not
-        return (header.FileSize & MirageFlagsMask &&
-            header.DataType == MirageSignature) ?
-            HEADER_TYPE_MIRAGE : HEADER_TYPE_STANDARD;
-    }
+	inline HEngineHeaderType GetHeaderType(const DHEngineHeader& header) noexcept
+	{
+		// Check if header is a Mirage header or not
+		return (header.FileSize & MirageFlagsMask &&
+			header.DataType == MirageSignature) ?
+			HEADER_TYPE_MIRAGE : HEADER_TYPE_STANDARD;
+	}
+
+	inline HEngineHeaderType GetHeaderType(const File& file) noexcept
+	{
+		auto header = DHEngineHeader();
+		long startPos = file.Tell();
+
+		file.Read(&header);
+		file.Seek(startPos);
+
+		return GetHeaderType(header);
+	}
+
+	inline void ReadHeaderV2(const File& file, DHEngineHeader& header)
+	{
+		if (!file.Read(&header))
+			throw std::runtime_error("Could not read Hedgehog Engine header!");
+	}
 
 	template<class DataType>
 	void ReadStandard(const File& file, const DHEngineHeader& header,

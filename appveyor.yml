@@ -34,6 +34,7 @@ for:
           Rename-Item C:\projects\hedgelib\HedgeEdit\bin\x86 C:\projects\hedgelib\HedgeEdit\bin\Win32
           Rename-Item C:\projects\hedgelib\HedgeLib\bin\x86 C:\projects\hedgelib\HedgeLib\bin\Win32
           Rename-Item C:\projects\hedgelib\HedgeTools\HedgeArcPack\bin\x86 C:\projects\hedgelib\HedgeTools\HedgeArcPack\bin\Win32
+		  Rename-Item C:\projects\hedgelib\HedgeTools\HedgeOffsets\bin\x86 C:\projects\hedgelib\HedgeTools\HedgeOffsets\bin\Win32
         }
   artifacts:
     - path: HedgeEdit/bin/$(PLATFORM)/Release
@@ -42,6 +43,8 @@ for:
       name: HedgeLib
     - path: HedgeTools/HedgeArcPack/bin/$(PLATFORM)/Release
       name: HedgeArcPack
+	- path: HedgeTools/HedgeOffsets/bin/$(PLATFORM)/Release
+      name: HedgeOffsets
 -
   matrix:
     only:
@@ -60,3 +63,5 @@ for:
       name: HedgeLib
     - path: HedgeTools/HedgeArcPack/bin/$(PLATFORM)/Release
       name: HedgeArcPack
+	- path: HedgeTools/HedgeOffsets/bin/$(PLATFORM)/Release
+      name: HedgeOffsets

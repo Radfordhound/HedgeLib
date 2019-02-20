@@ -42,8 +42,8 @@ namespace HedgeLib::IO
 
 		constexpr File() = default;
 		inline File(const std::filesystem::path filePath,
-			const FileMode mode = ReadBinary, bool bigEndian = false)
-			noexcept : BigEndian(bigEndian)
+			const FileMode mode = ReadBinary,
+			bool bigEndian = false) : BigEndian(bigEndian)
 		{
 			OpenNoClose(filePath, mode);
 		}

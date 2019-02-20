@@ -100,8 +100,8 @@ namespace HedgeLib::IO::BINA
 	};
 
 	template<template<typename> class OffsetType>
-	OffsetTable GetOffsets(std::uint8_t* eof,
-		std::uint32_t offsetTableLen, std::uintptr_t origin)
+	OffsetTable GetOffsets(std::uint8_t* eof, std::uintptr_t origin,
+		std::uint32_t offsetTableLen) noexcept
 	{
 		OffsetTable offsets;
 		auto d = reinterpret_cast<OffsetType<std::uint8_t>*>(origin);
@@ -143,7 +143,7 @@ namespace HedgeLib::IO::BINA
 			}
 
 			default:
-				break;
+				return offsets;
 			}
 
 			offsets.push_back(static_cast<std::uint32_t>(
@@ -151,6 +151,21 @@ namespace HedgeLib::IO::BINA
 		}
 
 		return offsets;
+	}
+
+	template<template<typename> class OffsetType>
+	OffsetTable ReadOffsets(const File& file, std::uintptr_t origin,
+		std::uint32_t offsetTableLen) noexcept
+	{
+		// Read offset table
+		std::unique_ptr<std::uint8_t[]> offsetTable =
+			std::make_unique<std::uint8_t[]>(offsetTableLen);
+
+		file.Read(offsetTable.get(), offsetTableLen, 1);
+
+		// Convert to HedgeLib OffsetTable
+		std::uint8_t* eof = (offsetTable.get() + offsetTableLen);
+		return GetOffsets<OffsetType>(eof, origin, offsetTableLen);
 	}
 
 	template<template<typename> class OffsetType>
@@ -543,7 +558,7 @@ namespace HedgeLib::IO::BINA
 		{
 			// BINA V2
 			file.Seek(startPos);
-			return HEADER_TYPE_BINAV1;
+			return HEADER_TYPE_BINAV2;
 		}
 		else if (sig == HedgeLib::Archives::PACxSignature)
 		{
@@ -565,13 +580,18 @@ namespace HedgeLib::IO::BINA
 			return HEADER_TYPE_BINAV1;
 		}
 
+		file.Seek(startPos);
 		return HEADER_TYPE_UNKNOWN;
 	}
 
-	inline void ReadHeaderV2(const File& file, DBINAV2Header& header)
+	inline void ReadHeaderV2(File& file, DBINAV2Header& header)
 	{
 		if (!file.Read(&header))
 			throw std::runtime_error("Could not read BINA header!");
+
+		file.BigEndian = (header.EndianFlag == BigEndianFlag);
+		if (file.BigEndian)
+			header.EndianSwap(true);
 	}
 
 	template<typename DataType, template<typename> class OffsetType>
@@ -616,7 +636,7 @@ namespace HedgeLib::IO::BINA
 	}
 
 	template<typename DataType, template<typename> class OffsetType>
-	void ReadV2(const File& file, NodePointer<DataType>& data)
+	void ReadV2(File& file, NodePointer<DataType>& data)
 	{
 		auto header = DBINAV2Header();
 		ReadHeaderV2(file, header);

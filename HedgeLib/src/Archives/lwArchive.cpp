@@ -26,16 +26,13 @@ namespace HedgeLib::Archives
 		// TODO
 	}
 
-	void LWArchive::Read(const File& file)
+	void LWArchive::Read(File& file)
 	{
-		auto header = BINA::DBINAV2Header();
-		BINA::ReadHeaderV2(file, header);
-		BINA::ReadV2<DLWArchive, HedgeLib::IO::DataOffset32>(file, header, d);
-
-		isDataBigEndian = (header.EndianFlag == BINA::BigEndianFlag);
+		BINA::ReadV2<DLWArchive, HedgeLib::IO::DataOffset32>(file, d);
+		isDataBigEndian = file.BigEndian;
 	}
 
-	void LWArchive::Write(const File& file)
+	void LWArchive::Write(File& file)
 	{
 		auto header = CREATE_LWPACxHeader(file.BigEndian);
 		auto bf = BINA::BINAFile(file, header);
@@ -346,7 +343,7 @@ namespace HedgeLib::Archives
 		origin -= sizeof(HedgeLib::IO::BINA::DBINAV2Header);
 
 		auto offsets = BINA::GetOffsets<HedgeLib::IO::DataOffset32>(
-			stringTablePtr, d->OffsetTableSize, origin);
+			stringTablePtr, origin, d->OffsetTableSize);
 
 		// Setup some variables for later
 		std::vector<std::uint32_t> fileOffsets;

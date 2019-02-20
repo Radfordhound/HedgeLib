@@ -27,6 +27,8 @@ Right now this includes the following:
 
 - [Hedge Archive Packer](HedgeTools/HedgeArcPack)
   * A Command Line tool that allows quick and powerful editing of archiving formats from all games HedgeLib supports.
+- [Hedge Offsets](HedgeTools/HedgeOffsets)
+  * A Command Line tool that reads the offset table in BINA/Hedgehog Engine formats and prints each offset.
 
 # Building
 This repository uses [AppVeyor](https://www.appveyor.com/) to automatically build every commit!

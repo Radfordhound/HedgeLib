@@ -12,7 +12,7 @@ namespace HedgeLib::IO
 		Read(File::OpenRead(filePath));
 	}
 
-	void FileBase::Read(const File& file)
+	void FileBase::Read(File& file)
 	{
 		throw std::logic_error(
 			"Cannot call Read function; function not yet implemented!");
@@ -23,7 +23,7 @@ namespace HedgeLib::IO
 		Write(File::OpenWrite(filePath));
 	}
 
-	void FileBase::Write(const File& file)
+	void FileBase::Write(File& file)
 	{
 		throw std::logic_error(
 			"Cannot call Write function; function not yet implemented!");

@@ -11,9 +11,9 @@ namespace HedgeLib::IO
 		virtual ~FileBase() = 0;
 
 		virtual void Load(const std::filesystem::path filePath);
-		virtual void Read(const File& file);
+		virtual void Read(File& file);
 		virtual void Save(const std::filesystem::path filePath);
-		virtual void Write(const File& file);
+		virtual void Write(File& file);
 	};
 }
 #endif
