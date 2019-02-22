@@ -41,7 +41,6 @@ namespace HedgeLib::Archives
 	struct DPACSplitEntry
 	{
 		OffsetType<char> Name;
-		ENDIAN_SWAP(Name);
 	};
 
 	template<template<typename> class OffsetType>
@@ -50,7 +49,7 @@ namespace HedgeLib::Archives
 		OffsetType<DPACSplitEntry<OffsetType>> Splits;
 		std::uint32_t SplitsCount;
 
-		ENDIAN_SWAP(Splits, SplitsCount);
+		ENDIAN_SWAP(SplitsCount);
 	};
 
     enum DataFlags : std::uint8_t
@@ -80,7 +79,7 @@ namespace HedgeLib::Archives
 		OffsetType<char> Name;
 		OffsetType<DataType> Data;
 
-		ENDIAN_SWAP(Name, Data);
+		ENDIAN_SWAP(Data);
 	};
 
 	template<typename DataType>
