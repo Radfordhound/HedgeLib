@@ -274,7 +274,7 @@ namespace HedgeLib
 			return this->Get();
 		}
 
-		inline DataType& operator[] (const int index) const noexcept
+		inline DataType& operator[] (const std::size_t index) const noexcept
 		{
 			return (this->Get())[index];
 		}
@@ -356,7 +356,7 @@ namespace HedgeLib
 			return o.Get();
 		}
 
-		inline DataType& operator[] (const int index) const noexcept
+		inline DataType& operator[] (const std::size_t index) const noexcept
 		{
 			return (o.Get())[index];
 		}
@@ -384,7 +384,7 @@ namespace HedgeLib
 			for (CountType i = 0; i < count; ++i)
 			{
 				IO::Endian::SwapRecursiveTwoWay(
-					isBigEndian, operator[](static_cast<int>(i)));
+					isBigEndian, operator[](static_cast<std::size_t>(i)));
 			}
 
 			if (!isBigEndian)
