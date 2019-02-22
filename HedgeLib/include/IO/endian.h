@@ -23,6 +23,11 @@ namespace HedgeLib::IO::Endian
 #endif
 	}
 
+	inline void Swap16(std::int16_t& v)
+	{
+		Swap16(*reinterpret_cast<std::uint16_t*>(&v));
+	}
+
 	inline void Swap32(std::uint32_t& v)
 	{
 #ifdef _WIN32
@@ -109,6 +114,12 @@ namespace HedgeLib::IO::Endian
 
 	template<>
 	inline void Swap<std::uint16_t>(std::uint16_t& value)
+	{
+		Swap16(value);
+	}
+
+	template<>
+	inline void Swap<std::int16_t>(std::int16_t& value)
 	{
 		Swap16(value);
 	}
