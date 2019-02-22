@@ -9,6 +9,7 @@ namespace HedgeEdit::GFX
 	void Viewport::Init(UINT width, UINT height)
 	{
 		// Get D3D Instance
+		HRESULT result;
 		inst = GetD3DInstance();
 
 		// Create Swap Chain
@@ -26,8 +27,10 @@ namespace HedgeEdit::GFX
 			scd.SampleDesc.Count = 1;
 			scd.Windowed = TRUE;
 
-			if (inst->Factory()->CreateSwapChain(inst->Device(),
-				&scd, &swapChain) != S_OK)
+			result = inst->Factory()->CreateSwapChain(
+				inst->Device(), &scd, &swapChain);
+
+			if (FAILED(result))
 			{
 				// TODO: Fallback to DXGI 1.0 swap chain
 				throw std::runtime_error("Could not create DXGI 1.1 Swap Chain!");
@@ -36,9 +39,12 @@ namespace HedgeEdit::GFX
 
 		// Get a pointer to the back buffer
 		ID3D11Texture2D *pBackBuffer;
-		if (swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D),
-			(LPVOID*)&pBackBuffer) != S_OK)
+		result = swapChain->GetBuffer(0, __uuidof
+			(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
+
+		if (FAILED(result))
 		{
+			SAFE_RELEASE(swapChain);
 			throw std::runtime_error(
 				"Could not get back buffer from DXGI 1.1 Swap Chain!");
 		}
@@ -46,11 +52,12 @@ namespace HedgeEdit::GFX
 		// Create a Render Target View
 		{
 			// TODO: Make render target view descripton?
-			HRESULT r = inst->Device()->CreateRenderTargetView(
+			result = inst->Device()->CreateRenderTargetView(
 				pBackBuffer, NULL, &renderTargetView);
 
-			pBackBuffer->Release();
-			if (r != S_OK)
+			SAFE_RELEASE(pBackBuffer);
+
+			if (FAILED(result))
 			{
 				throw std::runtime_error(
 					"Could not create a Direct3D 11 Render Target View!");
