@@ -1,6 +1,6 @@
 #include "types.h"
 #include <Archives/lwArchive.h>
-#include <Archives/archive.h>
+#include <Archives/archiveBase.h>
 #include <filesystem>
 #include <string_view>
 #include <memory>
@@ -20,7 +20,7 @@ namespace HedgeArcPack
 		return ARC_TYPE_UNKNOWN;
 	}
 
-	std::unique_ptr<Archive> GetArchive(const std::filesystem::path filePath)
+	std::unique_ptr<ArchiveBase> GetArchive(const std::filesystem::path filePath)
 	{
 		switch (GetArchiveType(filePath.extension().u8string()))
 		{

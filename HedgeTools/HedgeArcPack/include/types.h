@@ -1,6 +1,6 @@
 #ifndef HAP_TYPES_H_INCLUDED
 #define HAP_TYPES_H_INCLUDED
-#include <Archives/archive.h>
+#include <Archives/archiveBase.h>
 #include <filesystem>
 #include <string_view>
 #include <memory>
@@ -19,7 +19,7 @@ namespace HedgeArcPack
 
 	constexpr ArchiveType GetArchiveType(const std::string_view ext);
 
-	std::unique_ptr<HedgeLib::Archives::Archive> GetArchive(
+	std::unique_ptr<HedgeLib::Archives::ArchiveBase> GetArchive(
 		const std::filesystem::path filePath);
 }
 #endif

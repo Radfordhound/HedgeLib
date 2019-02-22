@@ -1,12 +1,12 @@
-#ifndef HARCHIVE_H_INCLUDED
-#define HARCHIVE_H_INCLUDED
+#ifndef HARCHIVE_BASE_H_INCLUDED
+#define HARCHIVE_BASE_H_INCLUDED
 #include "IO/fileBase.h"
 #include <vector>
 #include <filesystem>
 
 namespace HedgeLib::Archives
 {
-	class Archive : public HedgeLib::IO::FileBase
+	class ArchiveBase : public HedgeLib::IO::FileBase
 	{
 	public:
 		virtual std::vector<std::filesystem::path> GetSplitList(

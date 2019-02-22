@@ -1,5 +1,5 @@
 #include "types.h"
-#include <Archives/archive.h>
+#include <Archives/archiveBase.h>
 #include <Archives/lwArchive.h>
 #include <filesystem>
 #include <cstdlib>

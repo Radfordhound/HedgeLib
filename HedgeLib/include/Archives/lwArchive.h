@@ -1,7 +1,7 @@
 #ifndef HLW_ARCHIVE_H_INCLUDED
 #define HLW_ARCHIVE_H_INCLUDED
 #include "pac.h"
-#include "archive.h"
+#include "archiveBase.h"
 #include "IO/dataSignature.h"
 #include "offsets.h"
 #include "IO/nodes.h"
@@ -222,7 +222,7 @@ namespace HedgeLib::Archives
 		}
 	};
 
-	class LWArchive : public Archive
+	class LWArchive : public ArchiveBase
 	{
 		HedgeLib::IO::NodePointer<DLWArchive> d = nullptr;
 		bool isDataBigEndian = false;
@@ -233,7 +233,7 @@ namespace HedgeLib::Archives
 		static constexpr std::string_view Extension = ".pac";
 
 		LWArchive() = default;
-		~LWArchive()
+		inline ~LWArchive()
 		{
 			std::default_delete<LWArchive>();
 		}
