@@ -1,6 +1,5 @@
 #ifndef HED3D_H_INCLUDED
 #define HED3D_H_INCLUDED
-#ifdef D3D
 #include <d3d11.h>
 #include <dxgi.h>
 
@@ -39,6 +38,9 @@ namespace HedgeEdit::GFX
 			return rs;
 		}
 	};
+
+	HedgeEdit::GFX::D3DInstance* GetD3DInst() noexcept;
+	HedgeEdit::GFX::D3DInstance* GetD3DInstance();
+	void InitD3D();
 }
-#endif
 #endif

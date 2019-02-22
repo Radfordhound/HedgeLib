@@ -9,9 +9,6 @@ project("HedgeEdit")
 	if target == "windows" then
 		defines("NOMINMAX")
 		files("app.manifest")
-
-		-- So implementing alternate graphics APIs is easier if we decide to later on.
-		defines("D3D")
 		links({ "d3d11", "DXGI" })
 	end
 	

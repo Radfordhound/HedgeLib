@@ -14,12 +14,10 @@ namespace HedgeEdit::UI
 		setAttribute(Qt::WA_NativeWindow);
 
 		// Create viewport
-#if D3D
 		vp = std::unique_ptr<Viewport>(new Viewport(
 			reinterpret_cast<HWND>(winId()),
 			static_cast<UINT>(width()),
 			static_cast<UINT>(height())));
-#endif
 
 		// Create render thread
 		renderThread = std::unique_ptr<ViewportRenderThread>(
@@ -43,7 +41,6 @@ namespace HedgeEdit::UI
 	{
 		if (e->type() == QEvent::WinIdChange)
 		{
-#ifdef D3D
 			// Check to ensure this doesn't happen while the constructor is still going
 			if (renderThread != nullptr)
 			{
@@ -52,7 +49,6 @@ namespace HedgeEdit::UI
 				vp->ChangeHWnd(reinterpret_cast<HWND>(winId()));
 				renderThread->ResumeRendering();
 			}
-#endif
 		}
 
 		return QWidget::event(e);

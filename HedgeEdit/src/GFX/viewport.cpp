@@ -1,29 +1,15 @@
 #include "viewport.h"
-#include "gfx.h"
-#ifdef D3D
 #include "d3d.h"
 #include <d3d11.h>
 #include <dxgi.h>
-#endif
 #include <stdexcept>
 
 namespace HedgeEdit::GFX
 {
-#ifdef D3D
-	Viewport::Viewport(HWND hWnd, UINT width, UINT height)
-	{
-		if (hWnd == NULL)
-			throw std::runtime_error("hWnd cannot be null!");
-
-		this->hWnd = hWnd;
-		Init(width, height);
-	}
-#endif
-
-#ifdef D3D
 	void Viewport::Init(UINT width, UINT height)
 	{
-		auto inst = GetD3DInst();
+		// Get D3D Instance
+		inst = GetD3DInstance();
 
 		// Create Swap Chain
 		{
@@ -102,6 +88,21 @@ namespace HedgeEdit::GFX
 		inst->Context()->RSSetViewports(1, &viewport);
 	}
 
+	Viewport::Viewport(HWND hWnd, UINT width, UINT height)
+	{
+		if (hWnd == NULL)
+			throw std::runtime_error("hWnd cannot be null!");
+
+		this->hWnd = hWnd;
+		Init(width, height);
+	}
+
+	Viewport::~Viewport()
+	{
+		SAFE_RELEASE(swapChain);
+		SAFE_RELEASE(renderTargetView);
+	}
+
 	void Viewport::Resize(FLOAT width, FLOAT height)
 	{
 		// Resize the viewport
@@ -111,27 +112,15 @@ namespace HedgeEdit::GFX
 		viewport.Width = width;
 		viewport.Height = height;
 
-		GetD3DInst()->Context()->RSSetViewports(1, &viewport);
+		inst->Context()->RSSetViewports(1, &viewport);
 
 		// TODO: This is bad lol redo this function like in original HedgeEdit pls
-	}
-#endif
-
-	Viewport::~Viewport()
-	{
-#ifdef D3D
-		SAFE_RELEASE(swapChain);
-		SAFE_RELEASE(renderTargetView);
-#endif
 	}
 
 	void Viewport::Render()
 	{
-#ifdef D3D
 		if (hWnd == NULL)
 			return;
-
-		auto inst = GetD3DInst();
 
 		// Clear the back buffer
 		inst->Context()->ClearRenderTargetView(
@@ -146,6 +135,5 @@ namespace HedgeEdit::GFX
 		// Swap the back buffer and front buffer
 		// TODO: Delay this properly
 		swapChain->Present(0, 0);
-#endif
 	}
 }

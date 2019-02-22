@@ -1,8 +1,8 @@
-#ifdef D3D
 #include "d3d.h"
 #include <d3d11.h>
 #include <dxgi.h>
 #include <stdexcept>
+#include <memory>
 
 namespace HedgeEdit::GFX
 {
@@ -54,5 +54,30 @@ namespace HedgeEdit::GFX
 		SAFE_RELEASE(context);
 		SAFE_RELEASE(device);
 	}
+
+	static std::unique_ptr<D3DInstance> inst = nullptr;
+
+	D3DInstance* GetD3DInst() noexcept
+	{
+		return inst.get();
+	}
+
+	D3DInstance* GetD3DInstance()
+	{
+		if (!inst)
+		{
+			throw std::runtime_error(
+				"D3D has not been initialized! Please call InitD3D() first.");
+		}
+		
+		return inst.get();
+	}
+
+	void InitD3D()
+	{
+		if (inst != nullptr)
+			return;
+
+		inst = std::unique_ptr<D3DInstance>(new D3DInstance());
+	}
 }
-#endif
