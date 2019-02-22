@@ -3,6 +3,7 @@
 #include "d3d.h"
 #include <d3d11.h>
 #include <dxgi.h>
+#include <array>
 
 namespace HedgeEdit::GFX
 {
@@ -17,7 +18,7 @@ namespace HedgeEdit::GFX
 
 	public:
 
-		FLOAT ClearColor[4] { 0, 0, 0, 0 };
+		std::array<FLOAT, 4> ClearColor{ 0, 0, 0, 0 };
 
 		Viewport(HWND hWnd, UINT width, UINT height);
 		~Viewport();

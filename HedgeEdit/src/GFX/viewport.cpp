@@ -131,7 +131,7 @@ namespace HedgeEdit::GFX
 
 		// Clear the back buffer
 		inst->Context()->ClearRenderTargetView(
-			renderTargetView, &ClearColor[0]);
+			renderTargetView, &(ClearColor[0]));
 
 		// TODO: Transparency Slots
 		inst->Context()->IASetPrimitiveTopology(
