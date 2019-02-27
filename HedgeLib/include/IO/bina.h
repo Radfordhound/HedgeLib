@@ -218,8 +218,7 @@ namespace HedgeLib::IO::BINA
 		}
 	}
 
-	template<typename T>
-	struct DBINAV2DataNode
+	struct DBINAV2DataNodeHeader
 	{
 		static constexpr std::size_t PaddingSize = 0x18;
 		static constexpr std::uintptr_t SizeOffset = DBINAV2NodeHeader::SizeOffset;
@@ -231,9 +230,8 @@ namespace HedgeLib::IO::BINA
 		std::uint32_t OffsetTableSize = 0;
 		std::uint16_t RelativeDataOffset = PaddingSize; // ?
 		std::array<std::uint8_t, PaddingSize> Padding {};
-		T Data;
 
-		ENDIAN_SWAP(RelativeDataOffset, Data);
+		ENDIAN_SWAP(RelativeDataOffset);
 
 		constexpr std::uint32_t Size() const noexcept
 		{
@@ -594,13 +592,16 @@ namespace HedgeLib::IO::BINA
 			header.EndianSwap(true);
 	}
 
-	template<template<typename> class OffsetType,
-		typename NodeHeaderType, typename DataType>
+	template<template<typename> class OffsetType, typename DataType,
+		typename NodeHeaderType = DBINAV2DataNodeHeader>
 	void ReadV2(const File& file, const DBINAV2Header& header,
 		NodePointer<DataType>& data)
 	{
 		// Find DATA Node, read it, then return a smart pointer to it
-		DBINAV2NodeHeader nodeHeader = {};
+		auto mem = std::make_unique<std::uint8_t[]>(sizeof(NodeHeaderType));
+		NodeHeaderType* dataNodeHeader = reinterpret_cast<NodeHeaderType*>(mem.get());
+		DBINAV2NodeHeader& nodeHeader = dataNodeHeader->Header;
+
 		for (std::uint16_t i = 0; i < header.NodeCount; ++i)
 		{
 			if (!file.Read(&nodeHeader, sizeof(nodeHeader), 1))
@@ -613,8 +614,12 @@ namespace HedgeLib::IO::BINA
 				if (bigEndian)
 					nodeHeader.EndianSwap(true);
 
+				// Read the rest of the data node header
+				file.Read((&nodeHeader + 1), sizeof(*dataNodeHeader) -
+					sizeof(nodeHeader), 1);
+
 				// Read node and fix offsets
-				data.ReadNode(file, nodeHeader);
+				data.ReadNode(file, *dataNodeHeader);
 				data.template FixOffsets<OffsetType, NodeHeaderType>(bigEndian);
 
 				// Swap endianness of non-offsets if necessary
@@ -634,21 +639,21 @@ namespace HedgeLib::IO::BINA
 		throw std::runtime_error("Could not find BINA DATA node!");
 	}
 
-	template<template<typename> class OffsetType,
-		typename NodeHeaderType, typename DataType>
+	template<template<typename> class OffsetType, typename DataType,
+		typename NodeHeaderType = DBINAV2DataNodeHeader>
 	void ReadV2(File& file, NodePointer<DataType>& data)
 	{
 		auto header = DBINAV2Header();
 		ReadHeaderV2(file, header);
-		ReadV2<OffsetType, NodeHeaderType, DataType>(file, header, data);
+		ReadV2<OffsetType, DataType, NodeHeaderType>(file, header, data);
 	}
 
-	template<template<typename> class OffsetType,
-		typename NodeHeaderType, typename DataType>
+	template<template<typename> class OffsetType, typename DataType,
+		typename NodeHeaderType = DBINAV2DataNodeHeader>
 	void LoadV2(const std::filesystem::path filePath, NodePointer<DataType>& data)
 	{
 		File file = File::OpenRead(filePath);
-		ReadV2<OffsetType, NodeHeaderType, DataType>(file, data);
+		ReadV2<OffsetType, DataType, NodeHeaderType>(file, data);
 	}
 
 	/*template<template<typename> class OffsetType>

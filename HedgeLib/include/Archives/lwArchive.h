@@ -103,7 +103,7 @@ namespace HedgeLib::Archives
 		static constexpr std::uintptr_t SizeOffset =
 			HedgeLib::IO::BINA::DBINAV2NodeHeader::SizeOffset;
 
-		static constexpr long Origin = -16;
+		static constexpr long Origin = 0;
 
 		constexpr std::uint32_t Size() const noexcept
 		{
@@ -126,8 +126,8 @@ namespace HedgeLib::Archives
 			std::uintptr_t ptr = reinterpret_cast<std::uintptr_t>(this);
 			HedgeLib::IO::BINA::FixOffsets<OffsetType>(
 				reinterpret_cast<std::uint8_t*>(ptr + Header.Size()),
-				OffsetTableSize, static_cast<std::uintptr_t>(
-					static_cast<std::intptr_t>(ptr) + Origin), swapEndianness);
+				OffsetTableSize, static_cast<std::uintptr_t>(ptr - 16),
+				swapEndianness);
 		}
 
 		inline void FinishWrite(const HedgeLib::IO::File& file,

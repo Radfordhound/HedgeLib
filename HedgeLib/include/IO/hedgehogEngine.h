@@ -42,13 +42,18 @@ namespace HedgeLib::IO::HedgehogEngine
 
     struct DHEngineDataNodeHeader
     {
-        static constexpr long Origin = 0x18;
-
         DHEngineHeader Header;
         std::uint32_t DataSize = 0;
         std::uint32_t DataOffset = 0;
         DataOffset32<std::uint32_t> OffsetTable = nullptr;
         std::uint32_t EOFOffset = 0; // Maybe supposed to be "next node offset"?
+
+		static constexpr long Origin = 0x18;
+
+		constexpr std::uint32_t Size() const noexcept
+		{
+			return Header.Size();
+		}
 
         constexpr DHEngineDataNodeHeader() = default;
 
@@ -124,6 +129,8 @@ namespace HedgeLib::IO::HedgehogEngine
         std::uint32_t Value = 0;
 		std::array<std::uint8_t, 8> NameData {};
 
+		static constexpr long Origin = 0x10;
+
         constexpr DMirageNode() = default;
 		constexpr DMirageNode(const std::string_view v) : NameData(ToArray(v)) {}
 		constexpr DMirageNode(const char* v) : NameData(ToArray(v)) {}
@@ -170,8 +177,15 @@ namespace HedgeLib::IO::HedgehogEngine
 	void ReadStandard(const File& file, const DHEngineHeader& header,
 		NodePointer<DataType>& data)
 	{
+		// Read data node header
+		DHEngineDataNodeHeader dataNodeHeader = {};
+		dataNodeHeader.Header = header;
+
+		file.Read((&dataNodeHeader.Header) + 1,
+			sizeof(dataNodeHeader) - sizeof(header), 1);
+
 		// Read node and fix offsets
-		data.ReadNode(file, header);
+		data.ReadNode(file, dataNodeHeader);
 		data.template FixOffsets<DataOffset32, DHEngineDataNodeHeader>(true);
 
 		// Swap endianness of non-offsets

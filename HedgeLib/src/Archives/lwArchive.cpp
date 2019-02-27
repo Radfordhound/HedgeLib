@@ -28,7 +28,7 @@ namespace HedgeLib::Archives
 
 	void LWArchive::Read(File& file)
 	{
-		BINA::ReadV2<DataOffset32, DLWArchive>(file, d);
+		BINA::ReadV2<DataOffset32, DLWArchive, DLWArchive>(file, d);
 		isDataBigEndian = file.BigEndian;
 	}
 
@@ -324,9 +324,9 @@ namespace HedgeLib::Archives
 			(f.BigEndian) ? BINA::BigEndianFlag :
 			BINA::LittleEndianFlag);
 
-		auto dataNode = BINA::DBINAV2DataNode<char>();
+		auto dataNode = BINA::DBINAV2DataNodeHeader();
 		if (f.BigEndian)
-			Endian::Swap16(dataNode.RelativeDataOffset);
+			dataNode.EndianSwap(f.BigEndian);
 
 		// If not dealing with a direct-loaded pac...
 		if (!d)
@@ -406,7 +406,7 @@ namespace HedgeLib::Archives
 				{
 					// Add BINA header/data node
 					f.Write(&header);
-					f.Write(&dataNode, 0x30, 1);
+					f.Write(&dataNode, sizeof(dataNode), 1);
 				}
 
                 f.Write(dataPtr, static_cast<std::size_t>(dataEntry->DataSize), 1);
@@ -422,7 +422,7 @@ namespace HedgeLib::Archives
 					{
 						// Fix the offset
 						f.Seek((sizeof(BINA::DBINAV2Header) +
-							BINA::DBINAV2DataNode<char>::Origin) + off);
+							BINA::DBINAV2DataNodeHeader::Origin) + off);
 
 						std::uint8_t* offPtr = reinterpret_cast<const DataOffset32
 							<std::uint8_t>*>(dataPtr + off)->Get();
@@ -434,7 +434,7 @@ namespace HedgeLib::Archives
 							// ... if it is, fix the offset and write the string.
 							relOff = static_cast<std::uint32_t>(eof -
 								(sizeof(BINA::DBINAV2Header) +
-								BINA::DBINAV2DataNode<char>::Origin));
+								BINA::DBINAV2DataNodeHeader::Origin));
 
 							f.Write(&relOff);
 
@@ -468,7 +468,7 @@ namespace HedgeLib::Archives
 					// Node Size
 					eof -= sizeof(BINA::DBINAV2Header);
 					f.Seek((sizeof(BINA::DBINAV2Header) +
-						BINA::DBINAV2DataNode<char>::SizeOffset));
+						BINA::DBINAV2DataNodeHeader::SizeOffset));
 
 					f.Write(reinterpret_cast<std::uint32_t*>(&eof));
 

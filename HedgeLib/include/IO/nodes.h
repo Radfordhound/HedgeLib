@@ -17,6 +17,15 @@ namespace HedgeLib::IO
 		std::unique_ptr<std::uint8_t[]> nodeMem = nullptr;
 		T* dataPtr = nullptr;
 
+	public:
+		inline NodePointer() noexcept
+		{
+			dataPtr = new T();
+		}
+
+		constexpr NodePointer(std::nullptr_t) noexcept :
+			nodeMem(nullptr), dataPtr(nullptr) {}
+
 		inline void ReadNode(const File& file,
 			std::size_t size, std::size_t off)
 		{
@@ -37,21 +46,9 @@ namespace HedgeLib::IO
 				throw std::runtime_error("Could not read node!");
 		}
 
-	public:
-		inline NodePointer() noexcept
-		{
-			dataPtr = new T();
-		}
-
-		constexpr NodePointer(std::nullptr_t) noexcept :
-			nodeMem(nullptr), dataPtr(nullptr) {}
-
 		template<typename HeaderType>
-		inline void ReadNode(const File& file, const HeaderType& nodeHeader)
+		inline void CopyHeader(const HeaderType& nodeHeader)
 		{
-			ReadNode(file, static_cast<std::size_t>(
-				nodeHeader.Size()), sizeof(nodeHeader));
-
 			// Copy nodeHeader into nodeMem
 			const std::uint8_t* nodeHeaderPtr = reinterpret_cast<
 				const std::uint8_t*>(&nodeHeader);
@@ -60,12 +57,29 @@ namespace HedgeLib::IO
 				sizeof(nodeHeader), nodeMem.get());
 		}
 
+		template<typename HeaderType>
+		inline void ReadNode(const File& file, const HeaderType& nodeHeader)
+		{
+			ReadNode(file, static_cast<std::size_t>(
+				nodeHeader.Size()), sizeof(nodeHeader));
+
+			CopyHeader(nodeHeader);
+			dataPtr = reinterpret_cast<T*>(nodeMem.get() +
+				nodeHeader.Origin);
+		}
+
 		template<template<typename> class OffsetType, typename HeaderType>
 		inline void FixOffsets(const bool swapEndianness = false)
 		{
 			// Fix offsets
 			HeaderType* headerPtr = reinterpret_cast<HeaderType*>(nodeMem.get());
 			headerPtr->template FixOffsets<OffsetType>(swapEndianness);
+		}
+
+		inline NodePointer(const File& file,
+			std::size_t size, std::size_t off)
+		{
+			ReadNode(file, size, off);
 		}
 
 		template<typename HeaderType>
