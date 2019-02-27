@@ -6,7 +6,7 @@
 
 namespace HedgeLib::Archives
 {
-	class ArchiveBase : public HedgeLib::IO::FileBase
+	class ArchiveBase : public IO::FileBase
 	{
 	public:
 		virtual std::vector<std::filesystem::path> GetSplitList(

@@ -594,7 +594,8 @@ namespace HedgeLib::IO::BINA
 			header.EndianSwap(true);
 	}
 
-	template<typename DataType, template<typename> class OffsetType>
+	template<template<typename> class OffsetType,
+		typename NodeHeaderType, typename DataType>
 	void ReadV2(const File& file, const DBINAV2Header& header,
 		NodePointer<DataType>& data)
 	{
@@ -608,18 +609,16 @@ namespace HedgeLib::IO::BINA
 			if (nodeHeader.Signature() == DATASignature)
 			{
 				// Swap endianness of header if necessary
-				if (header.EndianFlag == BigEndianFlag)
+				const bool bigEndian = (header.EndianFlag == BigEndianFlag);
+				if (bigEndian)
 					nodeHeader.EndianSwap(true);
 
 				// Read node and fix offsets
 				data.ReadNode(file, nodeHeader);
-
-				// gcc errors unless we include ".template"
-				data.Get()->template FixOffsets<OffsetType>(
-					header.EndianFlag == BigEndianFlag);
+				data.template FixOffsets<OffsetType, NodeHeaderType>(bigEndian);
 
 				// Swap endianness of non-offsets if necessary
-				if (header.EndianFlag == BigEndianFlag)
+				if (bigEndian)
 					HedgeLib::IO::Endian::SwapRecursiveTwoWay(true, *(data.Get()));
 
 				return;
@@ -635,19 +634,21 @@ namespace HedgeLib::IO::BINA
 		throw std::runtime_error("Could not find BINA DATA node!");
 	}
 
-	template<typename DataType, template<typename> class OffsetType>
+	template<template<typename> class OffsetType,
+		typename NodeHeaderType, typename DataType>
 	void ReadV2(File& file, NodePointer<DataType>& data)
 	{
 		auto header = DBINAV2Header();
 		ReadHeaderV2(file, header);
-		ReadV2<DataType, OffsetType>(file, header, data);
+		ReadV2<OffsetType, NodeHeaderType, DataType>(file, header, data);
 	}
 
-	template<typename DataType, template<typename> class OffsetType>
+	template<template<typename> class OffsetType,
+		typename NodeHeaderType, typename DataType>
 	void LoadV2(const std::filesystem::path filePath, NodePointer<DataType>& data)
 	{
 		File file = File::OpenRead(filePath);
-		ReadV2<DataType, OffsetType>(file, data);
+		ReadV2<OffsetType, NodeHeaderType, DataType>(file, data);
 	}
 
 	/*template<template<typename> class OffsetType>

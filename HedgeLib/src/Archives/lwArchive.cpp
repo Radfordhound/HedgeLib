@@ -28,7 +28,7 @@ namespace HedgeLib::Archives
 
 	void LWArchive::Read(File& file)
 	{
-		BINA::ReadV2<DLWArchive, DataOffset32>(file, d);
+		BINA::ReadV2<DataOffset32, DLWArchive>(file, d);
 		isDataBigEndian = file.BigEndian;
 	}
 

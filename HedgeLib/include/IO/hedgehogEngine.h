@@ -40,8 +40,7 @@ namespace HedgeLib::IO::HedgehogEngine
     void FixOffsets(std::uint32_t* offsetTable, std::uintptr_t origin,
         const bool swapEndianness = true) noexcept;
 
-    template<typename T>
-    struct DHEngineDataNode
+    struct DHEngineDataNodeHeader
     {
         static constexpr long Origin = 0x18;
 
@@ -50,12 +49,10 @@ namespace HedgeLib::IO::HedgehogEngine
         std::uint32_t DataOffset = 0;
         DataOffset32<std::uint32_t> OffsetTable = nullptr;
         std::uint32_t EOFOffset = 0; // Maybe supposed to be "next node offset"?
-        T Data;
 
-        constexpr DHEngineDataNode() = default;
+        constexpr DHEngineDataNodeHeader() = default;
 
-        ENDIAN_SWAP(Data);
-
+		template<template<typename> class OffsetType = DataOffset32>
         inline void FixOffsets(const bool swapEndianness = true) noexcept
         {
             if (swapEndianness)
@@ -144,19 +141,6 @@ namespace HedgeLib::IO::HedgehogEngine
 		}
     };
 
-	template<typename T>
-	struct DMirageDataNode
-	{
-		static constexpr long Origin = 0x10;
-
-		DMirageNode Header = DMirageNode(MirageContextsType);
-		T Data;
-
-		constexpr DMirageDataNode() = default;
-
-		ENDIAN_SWAP(Data);
-	};
-
 	inline HEngineHeaderType GetHeaderType(const DHEngineHeader& header) noexcept
 	{
 		// Check if header is a Mirage header or not
@@ -188,7 +172,7 @@ namespace HedgeLib::IO::HedgehogEngine
 	{
 		// Read node and fix offsets
 		data.ReadNode(file, header);
-		data.Get()->FixOffsets(true);
+		data.template FixOffsets<DataOffset32, DHEngineDataNodeHeader>(true);
 
 		// Swap endianness of non-offsets
 		HedgeLib::IO::Endian::SwapRecursiveTwoWay(
@@ -246,7 +230,7 @@ namespace HedgeLib::IO::HedgehogEngine
 		if (pos >= eof)
 			throw std::runtime_error("Could not find Mirage \"Contexts\" node!");
 
-		// Read node and fix offsets
+		// Read node
 		data.ReadNode(file, node);
 
 		// Read offset table
@@ -259,7 +243,7 @@ namespace HedgeLib::IO::HedgehogEngine
 
 		// Fix offsets in file
 		std::uintptr_t origin = (reinterpret_cast<std::uintptr_t>(
-			data.Get()) - (pos - (startPos + sizeof(DMirageNode))));
+			data.GetRawMemory()) - (pos - (startPos + sizeof(DMirageNode))));
 
 		FixOffsets(offsetTable.get(),
 			mirageHeader.OffsetTableCount, origin);

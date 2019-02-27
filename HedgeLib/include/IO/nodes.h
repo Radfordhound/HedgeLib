@@ -14,8 +14,8 @@ namespace HedgeLib::IO
 	template<typename T>
 	class NodePointer
 	{
-		std::uint8_t* nodeMem = nullptr;
-		T* nodePtr = nullptr;
+		std::unique_ptr<std::uint8_t[]> nodeMem = nullptr;
+		T* dataPtr = nullptr;
 
 		inline void ReadNode(const File& file,
 			std::size_t size, std::size_t off)
@@ -26,35 +26,25 @@ namespace HedgeLib::IO
 			std::cout << "[ReadNode: Reading " << size << " bytes]" << std::endl;
 
 			// Delete if necessary
-			if (!nodeMem && nodePtr)
-				delete nodePtr;
+			if (!nodeMem && dataPtr)
+				delete dataPtr;
 
 			// Read data into nodeMem
-			nodeMem = new std::uint8_t[size];
-			nodePtr = reinterpret_cast<T*>(nodeMem + off);
+			nodeMem = std::make_unique<std::uint8_t[]>(size);
+			dataPtr = reinterpret_cast<T*>(nodeMem.get() + off);
 
-			if (!file.Read(nodePtr, size - off, 1))
-			{
-				delete[] nodeMem;
+			if (!file.Read(dataPtr, size - off, 1))
 				throw std::runtime_error("Could not read node!");
-			}
-
-			nodePtr = reinterpret_cast<T*>(nodeMem);
 		}
 
 	public:
 		inline NodePointer() noexcept
 		{
-			nodePtr = new T();
+			dataPtr = new T();
 		}
 
 		constexpr NodePointer(std::nullptr_t) noexcept :
-			nodeMem(nullptr), nodePtr(nullptr) {}
-
-		inline void ReadNode(const File& file, std::size_t size)
-		{
-			ReadNode(file, size, 0);
-		}
+			nodeMem(nullptr), dataPtr(nullptr) {}
 
 		template<typename HeaderType>
 		inline void ReadNode(const File& file, const HeaderType& nodeHeader)
@@ -67,12 +57,15 @@ namespace HedgeLib::IO
 				const std::uint8_t*>(&nodeHeader);
 
 			std::copy(nodeHeaderPtr, nodeHeaderPtr +
-				sizeof(nodeHeader), &nodeMem[0]);
+				sizeof(nodeHeader), nodeMem.get());
 		}
 
-		inline NodePointer(const File& file, std::size_t size)
+		template<template<typename> class OffsetType, typename HeaderType>
+		inline void FixOffsets(const bool swapEndianness = false)
 		{
-			ReadNode(file, size);
+			// Fix offsets
+			HeaderType* headerPtr = reinterpret_cast<HeaderType*>(nodeMem.get());
+			headerPtr->template FixOffsets<OffsetType>(swapEndianness);
 		}
 
 		template<typename HeaderType>
@@ -84,13 +77,18 @@ namespace HedgeLib::IO
 		inline ~NodePointer() noexcept
 		{
 			std::cout << "[~NodePointer()]" << std::endl;
-			if (!nodeMem && nodePtr)
-				delete nodePtr;
+			if (!nodeMem && dataPtr)
+				delete dataPtr;
 		}
 
 		inline T* Get() const noexcept
 		{
-			return nodePtr;
+			return dataPtr;
+		}
+
+		inline std::uint8_t* GetRawMemory() const noexcept
+		{
+			return nodeMem.get();
 		}
 
 		inline operator T*() const noexcept
