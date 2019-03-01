@@ -7,7 +7,6 @@
 #include "IO/nodes.h"
 #include "IO/bina.h"
 #include "IO/file.h"
-#include <memory>
 #include <string_view>
 #include <cstdint>
 #include <array>
@@ -231,11 +230,8 @@ namespace HedgeLib::Archives
 	public:
 		static constexpr std::string_view Extension = ".pac";
 
-		LWArchive() = default;
-		inline ~LWArchive()
-		{
-			std::default_delete<LWArchive>();
-		}
+		inline LWArchive() = default;
+		inline ~LWArchive() override = default;
 
 		void Read(HedgeLib::IO::File& file) override;
 		void Write(HedgeLib::IO::File& file) override;
