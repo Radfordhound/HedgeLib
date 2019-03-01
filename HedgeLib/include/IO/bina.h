@@ -27,8 +27,8 @@ namespace HedgeLib::Archives
 
 namespace HedgeLib::IO::BINA
 {
-	static constexpr DataSignature BINASignature = "BINA";
-	static constexpr DataSignature DATASignature = "DATA";
+	static constexpr DataSignature32 BINASignature = "BINA";
+	static constexpr DataSignature32 DATASignature = "DATA";
 
 	static constexpr std::array<char, 3> ForcesVersion = { '2', '1', '0' };
 	static constexpr std::array<char, 3> LWVersion = { '2', '0', '0' };
@@ -54,7 +54,7 @@ namespace HedgeLib::IO::BINA
 
 	struct DBINAV2Header
 	{
-		DataSignature Signature = BINASignature;
+		DataSignature32 Signature = BINASignature;
 		std::array<char, 3> Version = ForcesVersion;
 		char EndianFlag = LittleEndianFlag;
 		std::uint32_t FileSize = 0;
@@ -64,7 +64,7 @@ namespace HedgeLib::IO::BINA
 		constexpr DBINAV2Header() = default;
 		constexpr DBINAV2Header(const std::array<char, 3> version,
 			const char endianFlag = LittleEndianFlag,
-			DataSignature signature = BINASignature) noexcept :
+			DataSignature32 signature = BINASignature) noexcept :
 			Version(version), EndianFlag(endianFlag), Signature(signature) {}
 
 		ENDIAN_SWAP(FileSize, NodeCount);
@@ -76,19 +76,19 @@ namespace HedgeLib::IO::BINA
 	struct DBINAV2NodeHeader final
 	{
 	private:
-		DataSignature signature;
+		DataSignature32 signature;
 		std::uint32_t size = 0;
 
 	public:
 		DBINAV2NodeHeader() = default;
-		constexpr DBINAV2NodeHeader(const DataSignature signature)
+		constexpr DBINAV2NodeHeader(const DataSignature32 signature)
 			noexcept : signature(signature), size(0) {}
 
 		ENDIAN_SWAP(size);
 
 		static constexpr std::uintptr_t SizeOffset = (sizeof(signature));
 
-		constexpr DataSignature Signature() const noexcept
+		constexpr DataSignature32 Signature() const noexcept
 		{
 			return signature;
 		}
@@ -546,7 +546,7 @@ namespace HedgeLib::IO::BINA
 	inline BINAHeaderType GetHeaderType(const File& file) noexcept
 	{
 		// Read signature
-		DataSignature sig;
+		DataSignature32 sig;
 		long startPos = file.Tell();
 
 		file.Read(&sig, sizeof(sig), 1);
