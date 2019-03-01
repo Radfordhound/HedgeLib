@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <stdexcept>
 #include <memory>
+#include <string>
 
 namespace HedgeLib::IO
 {
@@ -102,6 +103,28 @@ namespace HedgeLib::IO
 			std::make_unique<std::uint8_t[]>(amount);
 
 		Write(nulls.get(), amount, 1);
+	}
+
+	void File::ReadWString(std::wstring& str) const noexcept
+	{
+		wchar_t c;
+		while (Read(&c, sizeof(c), 1))
+		{
+			str += c;
+			if (c == L'\0')
+				return;
+		}
+	}
+
+	void File::ReadString(std::string& str) const noexcept
+	{
+		char c;
+		while (Read(&c, sizeof(c), 1))
+		{
+			str += c;
+			if (c == '\0')
+				return;
+		}
 	}
 
 #define GetPadAmount(stride) if (stride < 1) return; \

@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstdint>
 #include <vector>
+#include <string>
 
 namespace HedgeLib
 {
@@ -96,6 +97,135 @@ namespace HedgeLib::IO
 			return numRead;
 		}
 
+		template<typename T>
+		inline std::size_t ReadNoSwap(T* value, std::size_t elementCount = 1) const noexcept
+		{
+			return Read(value, sizeof(*value), elementCount);
+		}
+
+		inline std::uint8_t ReadByte() const noexcept
+		{
+			std::uint8_t v;
+			Read(&v, sizeof(v), 1);
+			return v;
+		}
+
+		inline std::int8_t ReadSByte() const noexcept
+		{
+			std::int8_t v;
+			Read(&v, sizeof(v), 1);
+			return v;
+		}
+
+		inline std::uint16_t ReadUInt16() const noexcept
+		{
+			std::uint16_t v;
+			Read(&v);
+			return v;
+		}
+
+		inline std::uint16_t ReadUShort() const noexcept
+		{
+			return ReadUInt16();
+		}
+
+		inline std::int16_t ReadInt16() const noexcept
+		{
+			std::int16_t v;
+			Read(&v);
+			return v;
+		}
+
+		inline std::int16_t ReadShort() const noexcept
+		{
+			return ReadInt16();
+		}
+
+		inline std::uint32_t ReadUInt32() const noexcept
+		{
+			std::uint32_t v;
+			Read(&v);
+			return v;
+		}
+
+		inline std::uint32_t ReadUInt() const noexcept
+		{
+			return ReadUInt32();
+		}
+
+		inline std::int32_t ReadInt32() const noexcept
+		{
+			std::int32_t v;
+			Read(&v);
+			return v;
+		}
+
+		inline std::int32_t ReadInt() const noexcept
+		{
+			return ReadInt32();
+		}
+
+		inline float ReadSingle() const noexcept
+		{
+			float v;
+			Read(&v);
+			return v;
+		}
+
+		inline float ReadFloat() const noexcept
+		{
+			return ReadSingle();
+		}
+
+		inline std::uint64_t ReadUInt64() const noexcept
+		{
+			std::uint64_t v;
+			Read(&v);
+			return v;
+		}
+
+		inline std::uint64_t ReadULong() const noexcept
+		{
+			return ReadUInt64();
+		}
+
+		inline std::int64_t ReadInt64() const noexcept
+		{
+			std::int64_t v;
+			Read(&v);
+			return v;
+		}
+
+		inline std::int64_t ReadLong() const noexcept
+		{
+			return ReadInt64();
+		}
+
+		inline double ReadDouble() const noexcept
+		{
+			double v;
+			Read(&v);
+			return v;
+		}
+
+		void ReadWString(std::wstring& str) const noexcept;
+
+		inline std::wstring ReadWString() const noexcept
+		{
+			std::wstring str;
+			ReadWString(str);
+			return str;
+		}
+
+		void ReadString(std::string& str) const noexcept;
+
+		inline std::string ReadString()
+		{
+			std::string str;
+			ReadString(str);
+			return str;
+		}
+
 		inline std::size_t Write(const void* buffer, std::size_t elementSize,
 			std::size_t elementCount) const noexcept
 		{
@@ -124,6 +254,12 @@ namespace HedgeLib::IO
 			}
 
 			return numWritten;
+		}
+
+		template<typename T>
+		inline std::size_t WriteNoSwap(T* value, std::size_t elementCount = 1) const noexcept
+		{
+			return Write(value, sizeof(*value), elementCount);
 		}
 
 		inline long Tell() const noexcept
