@@ -95,7 +95,7 @@ namespace HedgeLib::IO
 		OpenNoClose(filePath, mode);
 	}
 
-	void File::WriteNulls(const std::size_t amount) const noexcept
+	void File::WriteNulls(std::size_t amount) const noexcept
 	{
 		if (amount < 1) return;
 
@@ -127,22 +127,27 @@ namespace HedgeLib::IO
 		}
 	}
 
-#define GetPadAmount(stride) if (stride < 1) return; \
-	long padAmount = 0; \
-	while ((Tell() + padAmount) % stride != 0) \
-	{ \
-		++padAmount; \
+	void File::Align(long stride) const noexcept
+	{
+		if (stride < 2)
+			return;
+
+		--stride;
+
+		// TODO: Add an overflow check? Idk seems pointless here since
+		// ftell() returns a signed long anyway.
+
+		Seek((Tell() + stride) & ~stride);
 	}
 
-	void File::AlignPosition(std::size_t stride) const noexcept
+	void File::Pad(long stride) const noexcept
 	{
-		GetPadAmount(stride);
-		Seek(padAmount, SEEK_CUR);
-	}
+		if (stride < 2)
+			return;
 
-	void File::Pad(std::size_t stride) const noexcept
-	{
-		GetPadAmount(stride);
-		WriteNulls(padAmount);
+		long pos = Tell();
+		--stride;
+
+		WriteNulls(((pos + stride) & ~stride) - pos);
 	}
 }

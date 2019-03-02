@@ -306,8 +306,8 @@ namespace HedgeLib::IO
 		}
 
 		void WriteNulls(std::size_t amount) const noexcept;
-		void AlignPosition(std::size_t stride = 4) const noexcept;
-		void Pad(std::size_t stride = 4) const noexcept;
+		void Align(long stride = 4) const noexcept;
+		void Pad(long stride = 4) const noexcept;
 	};
 
 	template<typename T>
