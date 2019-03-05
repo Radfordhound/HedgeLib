@@ -1,6 +1,6 @@
-#include "IO/hedgehogEngine.h"
-#include "offsets.h"
-#include "IO/endian.h"
+#include "IO/HedgehogEngine.h"
+#include "Offsets.h"
+#include "IO/Endian.h"
 #include <cstdint>
 
 namespace HedgeLib::IO::HedgehogEngine

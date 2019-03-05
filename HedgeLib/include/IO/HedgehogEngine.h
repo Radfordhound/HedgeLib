@@ -1,9 +1,9 @@
 #ifndef HHEDGEHOG_ENGINE_H_INCLUDED
 #define HHEDGEHOG_ENGINE_H_INCLUDED
-#include "offsets.h"
-#include "reflect.h"
-#include "endian.h"
-#include "nodes.h"
+#include "Offsets.h"
+#include "Reflect.h"
+#include "Endian.h"
+#include "Nodes.h"
 #include <cstdint>
 #include <stdexcept>
 #include <array>

@@ -1,6 +1,6 @@
 #ifndef HPAC_H_INCLUDED
 #define HPAC_H_INCLUDED
-#include "IO/dataSignature.h"
+#include "IO/DataSignature.h"
 
 namespace HedgeLib::Archives
 {

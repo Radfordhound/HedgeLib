@@ -1,6 +1,6 @@
 #ifndef HFILEBASE_H_INCLUDED
 #define HFILEBASE_H_INCLUDED
-#include "file.h"
+#include "File.h"
 #include <filesystem>
 
 namespace HedgeLib::IO

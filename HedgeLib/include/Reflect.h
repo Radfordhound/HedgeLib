@@ -1,8 +1,8 @@
 #ifndef HREFLECT_H_INCLUDED
 #define HREFLECT_H_INCLUDED
-#include "helpers.h"
-#include "IO/endian.h"
-#include "IO/file.h"
+#include "Helpers.h"
+#include "IO/Endian.h"
+#include "IO/File.h"
 #include <cstdint>
 #include <vector>
 #include <utility>

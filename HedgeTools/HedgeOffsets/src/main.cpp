@@ -1,5 +1,5 @@
-#include "IO/bina.h"
-#include "offsets.h"
+#include "IO/BINA.h"
+#include "Offsets.h"
 #include <iostream>
 #include <cstdlib>
 #include <cstdint>

@@ -1,8 +1,8 @@
-#include "Archives/lwArchive.h"
-#include "IO/bina.h"
-#include "offsets.h"
-#include "IO/file.h"
-#include "IO/endian.h"
+#include "Archives/LWArchive.h"
+#include "IO/BINA.h"
+#include "Offsets.h"
+#include "IO/File.h"
+#include "IO/Endian.h"
 #include <vector>
 #include <algorithm>
 #include <iomanip>

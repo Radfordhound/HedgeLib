@@ -1,6 +1,6 @@
 #ifndef HAP_TYPES_H_INCLUDED
 #define HAP_TYPES_H_INCLUDED
-#include <Archives/archiveBase.h>
+#include <Archives/ArchiveBase.h>
 #include <filesystem>
 #include <string_view>
 #include <memory>

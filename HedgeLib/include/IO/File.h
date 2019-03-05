@@ -1,6 +1,6 @@
 #ifndef HFILE_H_INCLUDED
 #define HFILE_H_INCLUDED
-#include "endian.h"
+#include "Endian.h"
 #include <filesystem>
 #include <cstdio>
 #include <cstdint>

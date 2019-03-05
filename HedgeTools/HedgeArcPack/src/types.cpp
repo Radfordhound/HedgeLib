@@ -1,6 +1,6 @@
 #include "types.h"
-#include <Archives/lwArchive.h>
-#include <Archives/archiveBase.h>
+#include <Archives/LWArchive.h>
+#include <Archives/ArchiveBase.h>
 #include <filesystem>
 #include <string_view>
 #include <memory>

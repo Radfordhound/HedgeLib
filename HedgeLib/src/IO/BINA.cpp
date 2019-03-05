@@ -1,6 +1,6 @@
-#include "IO/bina.h"
-#include "IO/file.h"
-#include "offsets.h"
+#include "IO/BINA.h"
+#include "IO/File.h"
+#include "Offsets.h"
 #include <cstdint>
 #include <memory>
 

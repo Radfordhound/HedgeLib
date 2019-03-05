@@ -1,8 +1,8 @@
 #ifndef HOFFSETS_H_INCLUDED
 #define HOFFSETS_H_INCLUDED
-#include "IO/endian.h"
-#include "reflect.h"
-#include "IO/file.h"
+#include "IO/Endian.h"
+#include "Reflect.h"
+#include "IO/File.h"
 #include <filesystem>
 #include <vector>
 #include <cstdint>

@@ -1,5 +1,5 @@
-#include "offsets.h"
-#include "IO/endian.h"
+#include "Offsets.h"
+#include "IO/Endian.h"
 #include <optional>
 #include <vector>
 #include <cstdint>
