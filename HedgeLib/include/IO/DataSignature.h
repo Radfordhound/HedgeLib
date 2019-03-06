@@ -1,5 +1,4 @@
-#ifndef HSIGNATURE_H_INCLUDED
-#define HSIGNATURE_H_INCLUDED
+#pragma once
 #include <cstdint>
 #include <string_view>
 #include <array>
@@ -120,4 +119,3 @@ namespace HedgeLib::IO
 		return !(a == b);
 	}
 }
-#endif

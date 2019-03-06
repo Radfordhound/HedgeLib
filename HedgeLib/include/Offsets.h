@@ -1,5 +1,4 @@
-#ifndef HOFFSETS_H_INCLUDED
-#define HOFFSETS_H_INCLUDED
+#pragma once
 #include "IO/Endian.h"
 #include "Reflect.h"
 #include "IO/File.h"
@@ -459,4 +458,3 @@ namespace HedgeLib
 	template<typename DataType, typename CountType = std::uint64_t>
 	using ArrOffset64 = ArrOffset<std::uint64_t, DataType, CountType>;
 }
-#endif

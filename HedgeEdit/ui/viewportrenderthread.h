@@ -1,5 +1,4 @@
-#ifndef HEVIEWPORTRENDERTHREAD_H_INCLUDED
-#define HEVIEWPORTRENDERTHREAD_H_INCLUDED
+#pragma once
 #include "../src/GFX/viewport.h"
 #include <QThread>
 
@@ -43,4 +42,3 @@ namespace HedgeEdit::UI
 		void run() override;
 	};
 }
-#endif

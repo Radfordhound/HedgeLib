@@ -1,5 +1,4 @@
-#ifndef HEVIEWPORT_H_INCLUDED
-#define HEVIEWPORT_H_INCLUDED
+#pragma once
 #include "d3d.h"
 #include <d3d11.h>
 #include <dxgi.h>
@@ -33,4 +32,3 @@ namespace HedgeEdit::GFX
 		void Render();
 	};
 }
-#endif

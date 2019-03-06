@@ -1,5 +1,4 @@
-#ifndef HBINA_H_INCLUDED
-#define HBINA_H_INCLUDED
+#pragma once
 #include "Nodes.h"
 #include "DataSignature.h"
 #include "Offsets.h"
@@ -811,4 +810,3 @@ namespace HedgeLib::IO::BINA
 		}
 	};
 }
-#endif

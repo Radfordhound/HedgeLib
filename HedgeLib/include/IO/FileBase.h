@@ -1,5 +1,4 @@
-#ifndef HFILEBASE_H_INCLUDED
-#define HFILEBASE_H_INCLUDED
+#pragma once
 #include "File.h"
 #include <filesystem>
 
@@ -16,4 +15,3 @@ namespace HedgeLib::IO
 		virtual void Write(File& file);
 	};
 }
-#endif

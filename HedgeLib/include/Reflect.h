@@ -1,5 +1,4 @@
-#ifndef HREFLECT_H_INCLUDED
-#define HREFLECT_H_INCLUDED
+#pragma once
 #include "Helpers.h"
 #include "IO/Endian.h"
 #include "IO/File.h"
@@ -110,4 +109,3 @@ namespace HedgeLib::Reflect
 		WRITE_OFFSETS(__VA_ARGS__);\
 	}
 }
-#endif

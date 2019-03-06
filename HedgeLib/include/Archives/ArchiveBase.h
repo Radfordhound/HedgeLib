@@ -1,5 +1,4 @@
-#ifndef HARCHIVE_BASE_H_INCLUDED
-#define HARCHIVE_BASE_H_INCLUDED
+#pragma once
 #include "IO/FileBase.h"
 #include <vector>
 #include <filesystem>
@@ -15,4 +14,3 @@ namespace HedgeLib::Archives
 		virtual void Extract(const std::filesystem::path dir) = 0;
 	};
 }
-#endif

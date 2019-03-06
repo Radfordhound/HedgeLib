@@ -1,6 +1,5 @@
-#ifndef HOBJ_AURA_TRAIN_PARAMETER_H_INCLUDED
-#define HOBJ_AURA_TRAIN_PARAMETER_H_INCLUDED
-#include "reflect.h"
+#pragma once
+#include "Reflect.h"
 
 namespace HedgeLib::RFL
 {
@@ -12,4 +11,3 @@ namespace HedgeLib::RFL
 		ENDIAN_SWAP(frontDistance, effectInterval);
 	};
 }
-#endif

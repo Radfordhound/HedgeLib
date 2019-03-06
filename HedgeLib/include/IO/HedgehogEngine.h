@@ -1,5 +1,4 @@
-#ifndef HHEDGEHOG_ENGINE_H_INCLUDED
-#define HHEDGEHOG_ENGINE_H_INCLUDED
+#pragma once
 #include "Offsets.h"
 #include "Reflect.h"
 #include "Endian.h"
@@ -285,4 +284,3 @@ namespace HedgeLib::IO::HedgehogEngine
 		ReadMirage(file, data);
 	}
 }
-#endif

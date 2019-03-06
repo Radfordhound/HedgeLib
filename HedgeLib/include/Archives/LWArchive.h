@@ -1,5 +1,4 @@
-#ifndef HLW_ARCHIVE_H_INCLUDED
-#define HLW_ARCHIVE_H_INCLUDED
+#pragma once
 #include "PAC.h"
 #include "ArchiveBase.h"
 #include "IO/DataSignature.h"
@@ -244,4 +243,3 @@ namespace HedgeLib::Archives
 		void Extract(const std::filesystem::path dir) override;
 	};
 }
-#endif

@@ -1,5 +1,4 @@
-#ifndef HENDIAN_H_INCLUDED
-#define HENDIAN_H_INCLUDED
+#pragma once
 #include "Helpers.h"
 #include <utility>
 #include <cstdint>
@@ -227,4 +226,3 @@ namespace HedgeLib::IO::Endian
 		SwapRecursiveTwoWay(isBigEndian, args...);
 	}
 }
-#endif

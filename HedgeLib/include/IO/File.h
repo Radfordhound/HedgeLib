@@ -1,5 +1,4 @@
-#ifndef HFILE_H_INCLUDED
-#define HFILE_H_INCLUDED
+#pragma once
 #include "Endian.h"
 #include <filesystem>
 #include <cstdio>
@@ -352,4 +351,3 @@ namespace HedgeLib::IO
 		return File(filePath, WriteBinary, bigEndian);
 	}
 }
-#endif

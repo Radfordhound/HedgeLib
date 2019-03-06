@@ -1,5 +1,4 @@
-#ifndef HHELPERS_H_INCLUDED
-#define HHELPERS_H_INCLUDED
+#pragma once
 #include <type_traits>
 
 namespace HedgeLib
@@ -40,4 +39,3 @@ namespace HedgeLib
 	template<template<class...> class Op, class... Args>
 	constexpr bool is_detected_v = is_detected<Op, Args...>::value;
 }
-#endif

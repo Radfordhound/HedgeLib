@@ -1,5 +1,4 @@
-#ifndef HEVIEWPORTWIDGET_H_INCLUDED
-#define HEVIEWPORTWIDGET_H_INCLUDED
+#pragma once
 
 #include "../src/GFX/viewport.h"
 #include "viewportrenderthread.h"
@@ -25,5 +24,3 @@ namespace HedgeEdit::UI
 		void resizeEvent(QResizeEvent* e) override;
 	};
 }
-
-#endif

@@ -1,7 +1,6 @@
-#ifndef HDLC_PARAMETER_H_INCLUDED
-#define HDLC_PARAMETER_H_INCLUDED
-#include "reflect.h"
-#include "IO/bina.h"
+#pragma once
+#include "Reflect.h"
+#include "IO/BINA.h"
 #include <cstdint>
 
 namespace HedgeLib::RFL
@@ -33,4 +32,3 @@ namespace HedgeLib::RFL
 		OFFSETS_BINA(MiscPac, StgMissionLua);
 	};
 }
-#endif

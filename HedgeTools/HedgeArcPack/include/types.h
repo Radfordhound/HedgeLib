@@ -1,5 +1,4 @@
-#ifndef HAP_TYPES_H_INCLUDED
-#define HAP_TYPES_H_INCLUDED
+#pragma once
 #include <Archives/ArchiveBase.h>
 #include <filesystem>
 #include <string_view>
@@ -22,4 +21,3 @@ namespace HedgeArcPack
 	std::unique_ptr<HedgeLib::Archives::ArchiveBase> GetArchive(
 		const std::filesystem::path filePath);
 }
-#endif

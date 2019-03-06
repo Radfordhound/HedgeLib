@@ -1,5 +1,4 @@
-#ifndef HNODES_H_INCLUDED
-#define HNODES_H_INCLUDED
+#pragma once
 #include "File.h"
 #include <cstdint>
 #include <cstddef>
@@ -126,4 +125,3 @@ namespace HedgeLib::IO
 		}
 	};
 }
-#endif
