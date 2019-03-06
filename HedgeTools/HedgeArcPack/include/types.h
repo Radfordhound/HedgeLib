@@ -1,5 +1,5 @@
 #pragma once
-#include <Archives/ArchiveBase.h>
+#include <Archives/IArchive.h>
 #include <filesystem>
 #include <string_view>
 #include <memory>
@@ -18,6 +18,6 @@ namespace HedgeArcPack
 
 	constexpr ArchiveType GetArchiveType(const std::string_view ext);
 
-	std::unique_ptr<HedgeLib::Archives::ArchiveBase> GetArchive(
+	std::unique_ptr<HedgeLib::Archives::IArchive> GetArchive(
 		const std::filesystem::path filePath);
 }

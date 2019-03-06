@@ -1,6 +1,6 @@
 #pragma once
 #include "PAC.h"
-#include "ArchiveBase.h"
+#include "IArchive.h"
 #include "IO/DataSignature.h"
 #include "Offsets.h"
 #include "IO/Nodes.h"
@@ -219,7 +219,7 @@ namespace HedgeLib::Archives
 		}
 	};
 
-	class LWArchive : public ArchiveBase
+	class LWArchive : public IArchive
 	{
 		HedgeLib::IO::NodePointer<DLWArchive> d = nullptr;
 		bool isDataBigEndian = false;

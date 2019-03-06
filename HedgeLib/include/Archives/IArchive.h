@@ -1,11 +1,11 @@
 #pragma once
-#include "IO/FileBase.h"
+#include "IO/IFileFormat.h"
 #include <vector>
 #include <filesystem>
 
 namespace HedgeLib::Archives
 {
-	class ArchiveBase : public IO::FileBase
+	class IArchive : public IO::IFileFormat
 	{
 	public:
 		virtual std::vector<std::filesystem::path> GetSplitList(

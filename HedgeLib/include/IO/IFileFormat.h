@@ -4,10 +4,10 @@
 
 namespace HedgeLib::IO
 {
-	class FileBase
+	class IFileFormat
 	{
 	public:
-		virtual ~FileBase() = 0;
+		virtual ~IFileFormat() = 0;
 
 		virtual void Load(const std::filesystem::path filePath);
 		virtual void Read(File& file);
