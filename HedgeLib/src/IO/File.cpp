@@ -110,9 +110,10 @@ namespace HedgeLib::IO
 		wchar_t c;
 		while (Read(&c, sizeof(c), 1))
 		{
-			str += c;
 			if (c == L'\0')
 				return;
+
+            str += c;
 		}
 	}
 
@@ -121,9 +122,10 @@ namespace HedgeLib::IO
 		char c;
 		while (Read(&c, sizeof(c), 1))
 		{
-			str += c;
 			if (c == '\0')
 				return;
+
+            str += c;
 		}
 	}
 
