@@ -91,6 +91,11 @@ namespace HedgeLib::IO
 		{
 			return Data[index];
 		}
+
+        constexpr operator const char*() const noexcept
+        {
+            return reinterpret_cast<const char*>(&Data[0]);
+        }
 	};
 
 	constexpr bool operator== (const DataSignature32& a, const DataSignature32& b) noexcept

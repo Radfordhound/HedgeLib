@@ -3,10 +3,11 @@
 #include "Reflect.h"
 #include "Endian.h"
 #include "Nodes.h"
+#include "DataSignature.h"
 #include <cstdint>
 #include <stdexcept>
 #include <array>
-#include <string_view>
+#include <cstring>
 #include <memory>
 
 namespace HedgeLib::IO::HedgehogEngine
@@ -81,7 +82,7 @@ namespace HedgeLib::IO::HedgehogEngine
     static constexpr std::uint32_t MirageFlagsMask = 0xE0000000;
     static constexpr std::uint32_t MirageSizeMask  = 0x1FFFFFFF;
     static constexpr std::uint32_t MirageSignature = 0x0133054A;
-	static constexpr std::string_view MirageContextsType = "Contexts";
+	static constexpr auto MirageContextsType = "Contexts";
 
     struct DMirageHeader
     {
@@ -101,45 +102,18 @@ namespace HedgeLib::IO::HedgehogEngine
         IsRootNode = 4
     };
 
-	namespace
-	{
-		inline constexpr std::array<std::uint8_t, 8>
-			ToArray(const std::string_view v)
-		{
-			if (v.size() < 8)
-				throw std::logic_error("DMirageNode name must be >= 8 bytes long");
-
-			return {
-				static_cast<std::uint8_t>(v[0]),
-				static_cast<std::uint8_t>(v[1]),
-				static_cast<std::uint8_t>(v[2]),
-				static_cast<std::uint8_t>(v[3]),
-				static_cast<std::uint8_t>(v[4]),
-				static_cast<std::uint8_t>(v[5]),
-				static_cast<std::uint8_t>(v[6]),
-				static_cast<std::uint8_t>(v[7])
-			};
-		}
-	}
-
     struct DMirageNode
     {
         std::uint32_t NodeSize = 0;
         std::uint32_t Value = 0;
-		std::array<std::uint8_t, 8> NameData {};
+        DataSignature64 Name;
 
 		static constexpr long Origin = 0x10;
 
         constexpr DMirageNode() = default;
-		constexpr DMirageNode(const std::string_view v) : NameData(ToArray(v)) {}
-		constexpr DMirageNode(const char* v) : NameData(ToArray(v)) {}
+		constexpr DMirageNode(const DataSignature64 name) : Name(name) {}
 
         ENDIAN_SWAP(NodeSize, Value);
-
-		inline char* Name()
-		{
-			return reinterpret_cast<char*>(&NameData[0]);
-		}
 
 		constexpr std::uint32_t Size() const noexcept
 		{
@@ -231,11 +205,8 @@ namespace HedgeLib::IO::HedgehogEngine
 		while (pos < eof)
 		{
 			file.Read(&node);
-			if (MirageContextsType.compare(0,
-				std::string_view::npos, node.Name(), 8) == 0)
-			{
-				break; // We found it!
-			}
+			if (std::strncmp(node.Name, MirageContextsType, 8) == 0)
+                break; // We found it!
 
 			pos += sizeof(node);
 		}

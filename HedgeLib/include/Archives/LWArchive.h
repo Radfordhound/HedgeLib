@@ -227,7 +227,7 @@ namespace HedgeLib::Archives
 		void GenerateDLWArchive();
 
 	public:
-		static constexpr std::string_view Extension = ".pac";
+		static constexpr auto Extension = ".pac";
 
 		inline LWArchive() = default;
 		inline ~LWArchive() override = default;
