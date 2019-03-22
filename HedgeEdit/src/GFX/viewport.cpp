@@ -2,15 +2,16 @@
 #include "d3d.h"
 #include <d3d11.h>
 #include <dxgi.h>
+#include <DirectXMath.h>
 #include <stdexcept>
 
 namespace HedgeEdit::GFX
 {
 	void Viewport::Init(UINT width, UINT height)
 	{
-		// Get D3D Instance
+		// Get D3D Context
 		HRESULT result;
-		inst = GetD3DInstance();
+        context = device.D3DContext();
 
 		// Create Swap Chain
 		{
@@ -27,8 +28,8 @@ namespace HedgeEdit::GFX
 			scd.SampleDesc.Count = 1;
 			scd.Windowed = TRUE;
 
-			result = inst->Factory()->CreateSwapChain(
-				inst->Device(), &scd, &swapChain);
+			result = device.D3DFactory()->CreateSwapChain(
+                device.D3DDevice(), &scd, &swapChain);
 
 			if (FAILED(result))
 			{
@@ -52,7 +53,7 @@ namespace HedgeEdit::GFX
 		// Create a Render Target View
 		{
 			// TODO: Make render target view descripton?
-			result = inst->Device()->CreateRenderTargetView(
+			result = device.D3DDevice()->CreateRenderTargetView(
 				pBackBuffer, NULL, &renderTargetView);
 
 			SAFE_RELEASE(pBackBuffer);
@@ -68,22 +69,23 @@ namespace HedgeEdit::GFX
 		// TODO
 
 		// Set the Render Target
-		// TODO: Set Deptch Stencil View
-		inst->Context()->OMSetRenderTargets(1, &renderTargetView, NULL);
+		// TODO: Set Depth Stencil View
+		context->OMSetRenderTargets(1, &renderTargetView, NULL);
 
 		// Setup Vector3s
-		/*camPos = DirectX::XMVectorSet(-5, 0, 0, 0);
-		camForward = DirectX::XMVectorSet(1, 0, 0, 0);
-		camUp = DirectX::XMVectorSet(0, 1, 0, 0);*/
+		camPos = DirectX::XMVectorSet(0, 0, 5, 0);
 		// TODO: Do I need to set camRot?
+		camUp = DirectX::XMVectorSet(0, 1, 0, 0);
+		camForward = DirectX::XMVectorSet(0, 0, -1, 0);
 
 		// Setup Matrices
-		/*UpdateViewMatrix();
+		UpdateViewMatrix();
 		proj = DirectX::XMMatrixPerspectiveFovRH(
-			DirectX::XMConvertToRadians(40.0f),
-			1280 / (float)720, 0.1f, 100000.0f);
+			DirectX::XMConvertToRadians(FOV),
+			(width / static_cast<float>(height)),
+			NearDistance, FarDistance);
 
-		UpdateViewProjMatrix();*/
+		UpdateViewProjMatrix();
 
 		// Set the Viewport
 		D3D11_VIEWPORT viewport = {};
@@ -92,10 +94,11 @@ namespace HedgeEdit::GFX
 		viewport.Width = static_cast<FLOAT>(width);
 		viewport.Height = static_cast<FLOAT>(height);
 
-		inst->Context()->RSSetViewports(1, &viewport);
+		context->RSSetViewports(1, &viewport);
 	}
 
-	Viewport::Viewport(HWND hWnd, UINT width, UINT height)
+	Viewport::Viewport(Device& device, HWND hWnd,
+        UINT width, UINT height) : device(device)
 	{
 		if (hWnd == NULL)
 			throw std::runtime_error("hWnd cannot be null!");
@@ -104,7 +107,7 @@ namespace HedgeEdit::GFX
 		Init(width, height);
 	}
 
-	Viewport::~Viewport()
+	Viewport::~Viewport() noexcept
 	{
 		SAFE_RELEASE(swapChain);
 		SAFE_RELEASE(renderTargetView);
@@ -119,7 +122,7 @@ namespace HedgeEdit::GFX
 		viewport.Width = width;
 		viewport.Height = height;
 
-		inst->Context()->RSSetViewports(1, &viewport);
+        context->RSSetViewports(1, &viewport);
 
 		// TODO: This is bad lol redo this function like in original HedgeEdit pls
 	}
@@ -130,11 +133,11 @@ namespace HedgeEdit::GFX
 			return;
 
 		// Clear the back buffer
-		inst->Context()->ClearRenderTargetView(
+		context->ClearRenderTargetView(
 			renderTargetView, &(ClearColor[0]));
 
 		// TODO: Transparency Slots
-		inst->Context()->IASetPrimitiveTopology(
+        context->IASetPrimitiveTopology(
 			D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		// TODO

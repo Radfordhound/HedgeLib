@@ -1,4 +1,5 @@
 #include "viewportwidget.h"
+#include "../src/main.h"
 #include "../src/GFX/viewport.h"
 #include <QEvent>
 #include <QThread>
@@ -15,6 +16,7 @@ namespace HedgeEdit::UI
 
 		// Create viewport
 		vp = std::unique_ptr<Viewport>(new Viewport(
+            GetDevice(),
 			reinterpret_cast<HWND>(winId()),
 			static_cast<UINT>(width()),
 			static_cast<UINT>(height())));
