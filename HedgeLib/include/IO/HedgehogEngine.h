@@ -12,19 +12,19 @@
 
 namespace HedgeLib::IO::HedgehogEngine
 {
-    enum HEngineHeaderType : std::uint8_t
+    enum HHHeaderType : std::uint8_t
     {
         HEADER_TYPE_UNKNOWN,
         HEADER_TYPE_STANDARD, // Used by all Hedgehog Engine games
         HEADER_TYPE_MIRAGE    // Used by LW and Forces
     };
 
-    struct DHEngineHeader
+    struct DHHHeader
     {
         std::uint32_t FileSize = 0;
         std::uint32_t DataType = 0;
 
-        constexpr DHEngineHeader() = default;
+        constexpr DHHHeader() = default;
 
         ENDIAN_SWAP(FileSize, DataType);
 
@@ -40,9 +40,9 @@ namespace HedgeLib::IO::HedgehogEngine
     void FixOffsets(std::uint32_t* offsetTable, std::uintptr_t origin,
         const bool swapEndianness = true) noexcept;
 
-    struct DHEngineDataNodeHeader
+    struct DHHDataNodeHeader
     {
-        DHEngineHeader Header;
+        DHHHeader Header;
         std::uint32_t DataSize = 0;
         std::uint32_t DataOffset = 0;
         DataOffset32<std::uint32_t> OffsetTable = nullptr;
@@ -55,7 +55,7 @@ namespace HedgeLib::IO::HedgehogEngine
 			return Header.Size();
 		}
 
-        constexpr DHEngineDataNodeHeader() = default;
+        constexpr DHHDataNodeHeader() = default;
 
 		template<template<typename> class OffsetType = DataOffset32>
         inline void FixOffsets(const bool swapEndianness = true) noexcept
@@ -86,7 +86,7 @@ namespace HedgeLib::IO::HedgehogEngine
 
     struct DMirageHeader
     {
-        DHEngineHeader Header;
+        DHHHeader Header;
 		std::uint32_t OffsetTableOffset = 0;
         std::uint32_t OffsetTableCount = 0;
 
@@ -121,7 +121,7 @@ namespace HedgeLib::IO::HedgehogEngine
 		}
     };
 
-	inline HEngineHeaderType GetHeaderType(const DHEngineHeader& header) noexcept
+	inline HHHeaderType GetHeaderType(const DHHHeader& header) noexcept
 	{
 		// Check if header is a Mirage header or not
 		return (header.FileSize & MirageFlagsMask &&
@@ -129,9 +129,9 @@ namespace HedgeLib::IO::HedgehogEngine
 			HEADER_TYPE_MIRAGE : HEADER_TYPE_STANDARD;
 	}
 
-	inline HEngineHeaderType GetHeaderType(const File& file) noexcept
+	inline HHHeaderType GetHeaderType(const File& file) noexcept
 	{
-		auto header = DHEngineHeader();
+		auto header = DHHHeader();
 		long startPos = file.Tell();
 
 		file.Read(&header);
@@ -140,18 +140,18 @@ namespace HedgeLib::IO::HedgehogEngine
 		return GetHeaderType(header);
 	}
 
-	inline void ReadHeaderV2(const File& file, DHEngineHeader& header)
+	inline void ReadHeaderV2(const File& file, DHHHeader& header)
 	{
 		if (!file.Read(&header))
 			throw std::runtime_error("Could not read Hedgehog Engine header!");
 	}
 
 	template<class DataType>
-	void ReadStandard(const File& file, const DHEngineHeader& header,
+	void ReadStandard(const File& file, const DHHHeader& header,
 		NodePointer<DataType>& data)
 	{
 		// Read data node header
-		DHEngineDataNodeHeader dataNodeHeader = {};
+		DHHDataNodeHeader dataNodeHeader = {};
 		dataNodeHeader.Header = header;
 
 		file.Read((&dataNodeHeader.Header) + 1,
@@ -159,7 +159,7 @@ namespace HedgeLib::IO::HedgehogEngine
 
 		// Read node and fix offsets
 		data.ReadNode(file, dataNodeHeader);
-		data.template FixOffsets<DataOffset32, DHEngineDataNodeHeader>(true);
+		data.template FixOffsets<DataOffset32, DHHDataNodeHeader>(true);
 
 		// Swap endianness of non-offsets
 		HedgeLib::IO::Endian::SwapRecursiveTwoWay(
@@ -169,7 +169,7 @@ namespace HedgeLib::IO::HedgehogEngine
 	template<class DataType>
 	void ReadStandard(const File& file, NodePointer<DataType>& data)
 	{
-		auto header = DHEngineHeader();
+		auto header = DHHHeader();
 		if (!file.Read(&header))
 			throw std::runtime_error("Could not read Hedgehog Engine header!");
 
@@ -185,7 +185,7 @@ namespace HedgeLib::IO::HedgehogEngine
 	}
 
 	template<class DataType>
-	void ReadMirage(const File& file, const DHEngineHeader& header,
+	void ReadMirage(const File& file, const DHHHeader& header,
 		NodePointer<DataType>& data)
 	{
 		// Read DMirageHeader
@@ -193,7 +193,7 @@ namespace HedgeLib::IO::HedgehogEngine
 		DMirageHeader mirageHeader{};
 		file.Read(&mirageHeader.OffsetTableOffset, 2);
 
-		// Copy DHEngineHeader into DMirageHeader
+		// Copy DHHHeader into DMirageHeader
 		mirageHeader.Header = header;
 
 		// Recurse through nodes until we find "Contexts"
@@ -240,7 +240,7 @@ namespace HedgeLib::IO::HedgehogEngine
 	template<class DataType>
 	void ReadMirage(const File& file, NodePointer<DataType>& data)
 	{
-		auto header = DHEngineHeader();
+		auto header = DHHHeader();
 		if (!file.Read(&header))
 			throw std::runtime_error("Could not read Hedgehog Engine header!");
 

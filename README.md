@@ -8,11 +8,15 @@ HedgeLib is a C++17 library [under the MIT license](License.txt) that aims to ma
 
 Right now it supports the following:
 
+### Hedgehog Engine
+- Reading Models.
+- Reading "Mirage" headers.
+
 ### Sonic Lost World
 - Reading Archives.
 
 ### Other
-- Reading/Writing BINA headers/footers.
+- Reading/Writing BINA headers/string tables/offset tables.
 
 ## HedgeEdit
 A level editor built with DirectX/Qt designed to carry much of the same
