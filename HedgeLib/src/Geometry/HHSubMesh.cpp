@@ -8,51 +8,51 @@
 
 namespace HedgeLib::Geometry
 {
-	HHSubMesh::HHSubMesh() : subMesh(nullptr),
-		data(new SubMesh()) {}
+    HHSubMesh::HHSubMesh() : subMesh(nullptr),
+        data(new SubMesh()) {}
 
-	HHSubMesh::HHSubMesh(const DHHSubMesh* subMesh) :
-		subMesh(subMesh), data(nullptr) {}
+    HHSubMesh::HHSubMesh(const DHHSubMesh* subMesh) :
+        subMesh(subMesh), data(nullptr) {}
 
-	const char* HHSubMesh::MaterialName() const noexcept
-	{
-		return (Direct()) ? subMesh->MaterialName.Get() :
-			data->MaterialName.c_str();
-	}
+    const char* HHSubMesh::MaterialName() const noexcept
+    {
+        return (Direct()) ? subMesh->MaterialName.Get() :
+            data->MaterialName.c_str();
+    }
 
-	std::size_t HHSubMesh::FaceCount() const noexcept
-	{
-		return (Direct()) ? static_cast<std::size_t>(
-			subMesh->Faces.Count()) : data->Faces.size();
-	}
+    std::size_t HHSubMesh::FaceCount() const noexcept
+    {
+        return (Direct()) ? static_cast<std::size_t>(
+            subMesh->Faces.Count()) : data->Faces.size();
+    }
 
-	std::uint16_t* HHSubMesh::Faces() const noexcept
-	{
-		return (Direct()) ? subMesh->Faces.Get() : data->Faces.data();
-	}
+    std::uint16_t* HHSubMesh::Faces() const noexcept
+    {
+        return (Direct()) ? subMesh->Faces.Get() : data->Faces.data();
+    }
 
-	std::size_t HHSubMesh::VertexCount() const noexcept
-	{
-		return (Direct()) ? static_cast<std::size_t>(
-			subMesh->VertexCount) : data->VertexCount;
-	}
+    std::size_t HHSubMesh::VertexCount() const noexcept
+    {
+        return (Direct()) ? static_cast<std::size_t>(
+            subMesh->VertexCount) : data->VertexCount;
+    }
 
-	std::size_t HHSubMesh::VertexSize() const noexcept
-	{
-		return (Direct()) ? static_cast<std::size_t>(
-			subMesh->VertexSize) : data->VertexSize;
-	}
+    std::size_t HHSubMesh::VertexSize() const noexcept
+    {
+        return (Direct()) ? static_cast<std::size_t>(
+            subMesh->VertexSize) : data->VertexSize;
+    }
 
-	std::uint8_t* HHSubMesh::Vertices() const noexcept
-	{
-		return (Direct()) ? subMesh->Vertices.Get() :
-			data->Vertices.get();
-	}
+    std::uint8_t* HHSubMesh::Vertices() const noexcept
+    {
+        return (Direct()) ? subMesh->Vertices.Get() :
+            data->Vertices.get();
+    }
 
-	std::size_t HHSubMesh::VertexElementCount() const noexcept
-	{
-		if (Direct())
-		{
+    std::size_t HHSubMesh::VertexElementCount() const noexcept
+    {
+        if (Direct())
+        {
             DHHVertexElement* elements = subMesh->VertexElements.Get();
             std::size_t count = 0;
 
@@ -61,22 +61,22 @@ namespace HedgeLib::Geometry
                 ++count;
             }
 
-			return count;
-		}
-		else
-		{
-			return data->VertexFormat.size();
-		}
-	}
+            return count;
+        }
+        else
+        {
+            return data->VertexFormat.size();
+        }
+    }
 
     std::unique_ptr<VertexElement[]> HHSubMesh::VertexFormat() const noexcept
-	{
+    {
         std::size_t count = VertexElementCount();
         std::unique_ptr<VertexElement[]> format =
             std::make_unique<VertexElement[]>(count);
 
-		if (Direct())
-		{
+        if (Direct())
+        {
             // Convert to a HedgeLib VertexFormat
             DHHVertexElement* elements = subMesh->VertexElements.Get();
             for (std::size_t i = 0; i < count; ++i)
@@ -149,38 +149,38 @@ namespace HedgeLib::Geometry
                     break;
                 }
             }
-		}
-		else
-		{
+        }
+        else
+        {
             // Create a copy of the vertex format
             VertexElement* elements = data->VertexFormat.data();
             std::copy(elements, elements + count, format.get());
-		}
+        }
 
         return format;
-	}
+    }
 
-	void HHSubMesh::SetMaterialName(const std::string_view name)
-	{
-		// TODO
-	}
+    void HHSubMesh::SetMaterialName(const std::string_view name)
+    {
+        // TODO
+    }
 
-	void HHSubMesh::SetFaces(const std::uint16_t* faces,
-		const std::size_t faceCount)
-	{
-		// TODO
-	}
+    void HHSubMesh::SetFaces(const std::uint16_t* faces,
+        const std::size_t faceCount)
+    {
+        // TODO
+    }
 
-	void HHSubMesh::SetVertices(const std::uint8_t* vertices,
-		const std::size_t vertexCount)
-	{
-		// TODO
-	}
+    void HHSubMesh::SetVertices(const std::uint8_t* vertices,
+        const std::size_t vertexCount)
+    {
+        // TODO
+    }
 
-	void HHSubMesh::SetVertexFormat(
-		const Geometry::VertexElement* elements,
-		const std::size_t elementCount)
-	{
-		// TODO
-	}
+    void HHSubMesh::SetVertexFormat(
+        const Geometry::VertexElement* elements,
+        const std::size_t elementCount)
+    {
+        // TODO
+    }
 }

@@ -5,15 +5,15 @@
 
 namespace HedgeEdit::UI
 {
-	class PropertiesPanel : public QWidget, public Ui_PropertiesPanel
-	{
-		Q_OBJECT
+    class PropertiesPanel : public QWidget, public Ui_PropertiesPanel
+    {
+        Q_OBJECT
 
-	public:
-		explicit PropertiesPanel(QWidget* parent = nullptr);
+    public:
+        explicit PropertiesPanel(QWidget* parent = nullptr);
 
-	protected:
-		QSize sizeHint() const override;
-		void closeEvent(QCloseEvent* e) override;
-	};
+    protected:
+        QSize sizeHint() const override;
+        void closeEvent(QCloseEvent* e) override;
+    };
 }

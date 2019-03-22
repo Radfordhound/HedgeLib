@@ -5,12 +5,12 @@
 
 namespace HedgeLib::Archives
 {
-	class IArchive : public IO::IFileFormat
-	{
-	public:
-		virtual std::vector<std::filesystem::path> GetSplitList(
-			std::filesystem::path filePath) = 0;
+    class IArchive : public IO::IFileFormat
+    {
+    public:
+        virtual std::vector<std::filesystem::path> GetSplitList(
+            std::filesystem::path filePath) = 0;
 
-		virtual void Extract(const std::filesystem::path dir) = 0;
-	};
+        virtual void Extract(const std::filesystem::path dir) = 0;
+    };
 }

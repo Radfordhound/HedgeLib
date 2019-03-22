@@ -10,21 +10,21 @@ using namespace HedgeArcPack;
 
 int main(int argc, char* argv[])
 {
-	std::cout << "Extracting..." << std::endl;
+    std::cout << "Extracting..." << std::endl;
 
-	// TODO: Actual arguments
-	std::filesystem::path filePath = argv[1]; 
-	auto arc = GetArchive(filePath);
-	arc->Load(filePath);
-	arc->Extract("out");
+    // TODO: Actual arguments
+    std::filesystem::path filePath = argv[1]; 
+    auto arc = GetArchive(filePath);
+    arc->Load(filePath);
+    arc->Extract("out");
 
-	auto splitList = arc->GetSplitList(filePath);
-	for (auto& splitPath : splitList)
-	{
-		arc->Load(splitPath);
-		arc->Extract("out");
-	}
+    auto splitList = arc->GetSplitList(filePath);
+    for (auto& splitPath : splitList)
+    {
+        arc->Load(splitPath);
+        arc->Extract("out");
+    }
 
-	std::cout << "Done!" << std::endl;
-	return EXIT_SUCCESS;
+    std::cout << "Done!" << std::endl;
+    return EXIT_SUCCESS;
 }

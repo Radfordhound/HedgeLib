@@ -73,65 +73,65 @@ namespace HedgeLib::Geometry
         ENDIAN_SWAP(Meshes, Skeleton);
     };
 
-	class HHModelBase : public IModel
-	{
-	protected:
-		std::vector<std::unique_ptr<IMesh>> meshes;
+    class HHModelBase : public IModel
+    {
+    protected:
+        std::vector<std::unique_ptr<IMesh>> meshes;
 
-		void ConvertMeshes(const ArrOffset32
-			<DataOffset32<DHHMesh>>& meshes) noexcept;
+        void ConvertMeshes(const ArrOffset32
+            <DataOffset32<DHHMesh>>& meshes) noexcept;
 
-	public:
+    public:
         inline std::size_t MeshCount() const noexcept override
         {
             return meshes.size();
         }
 
-		inline const std::unique_ptr<IMesh>* Meshes() const noexcept override
+        inline const std::unique_ptr<IMesh>* Meshes() const noexcept override
         {
             return meshes.data();
         }
 
-		// TODO: Setters and such
-	};
+        // TODO: Setters and such
+    };
 
-	class HHTerrainModel : public HHModelBase
-	{
-		IO::NodePointer<DHHTerrainModel> terrainModel;
+    class HHTerrainModel : public HHModelBase
+    {
+        IO::NodePointer<DHHTerrainModel> terrainModel;
 
-		inline bool Direct() const noexcept
-		{
-			return (terrainModel != nullptr);
-		}
+        inline bool Direct() const noexcept
+        {
+            return (terrainModel != nullptr);
+        }
 
-	public:
-		inline HHTerrainModel() = default;
-		//HHTerrainModel(const DHHTerrainModel* terrainModel);
+    public:
+        inline HHTerrainModel() = default;
+        //HHTerrainModel(const DHHTerrainModel* terrainModel);
 
-		inline ~HHTerrainModel() override = default;
-		// TODO: Setters and such
+        inline ~HHTerrainModel() override = default;
+        // TODO: Setters and such
 
-		void Read(IO::File& file) override;
-		void Write(IO::File& file) override;
-	};
+        void Read(IO::File& file) override;
+        void Write(IO::File& file) override;
+    };
 
-	class HHSkeletalModel : public HHModelBase
-	{
-		IO::NodePointer<DHHSkeletalModel> skeletalModel;
+    class HHSkeletalModel : public HHModelBase
+    {
+        IO::NodePointer<DHHSkeletalModel> skeletalModel;
 
-		inline bool Direct() const noexcept
-		{
-			return (skeletalModel != nullptr);
-		}
+        inline bool Direct() const noexcept
+        {
+            return (skeletalModel != nullptr);
+        }
 
-	public:
-		inline HHSkeletalModel() = default;
-		//HHSkeletalModel(const DHHSkeletalModel* skeletalModel);
+    public:
+        inline HHSkeletalModel() = default;
+        //HHSkeletalModel(const DHHSkeletalModel* skeletalModel);
 
-		inline ~HHSkeletalModel() override = default;
-		// TODO: Setters and such
+        inline ~HHSkeletalModel() override = default;
+        // TODO: Setters and such
 
-		void Read(IO::File& file) override;
-		void Write(IO::File& file) override;
-	};
+        void Read(IO::File& file) override;
+        void Write(IO::File& file) override;
+    };
 }

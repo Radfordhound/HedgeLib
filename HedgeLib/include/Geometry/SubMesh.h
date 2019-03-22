@@ -8,12 +8,12 @@
 
 namespace HedgeLib::Geometry
 {
-	struct SubMesh
-	{
-		std::string MaterialName;
-		std::vector<std::uint16_t> Faces;
-		std::unique_ptr<std::uint8_t[]> Vertices;
-		std::size_t VertexCount, VertexSize;
-		std::vector<VertexElement> VertexFormat;
-	};
+    struct SubMesh
+    {
+        std::string MaterialName;
+        std::vector<std::uint16_t> Faces;
+        std::unique_ptr<std::uint8_t[]> Vertices;
+        std::size_t VertexCount, VertexSize;
+        std::vector<VertexElement> VertexFormat;
+    };
 }

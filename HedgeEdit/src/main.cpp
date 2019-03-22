@@ -36,15 +36,15 @@ int main(int argc, char *argv[])
 {
     using namespace HedgeEdit;
     QApplication a(argc, argv);
-	QApplication::setStyle(QStyleFactory::create("WindowsVista"));
+    QApplication::setStyle(QStyleFactory::create("WindowsVista"));
 
-	QMessageBox Msgbox;
-	Msgbox.setText(QApplication::style()->metaObject()->className());
-	Msgbox.exec();
+    QMessageBox Msgbox;
+    Msgbox.setText(QApplication::style()->metaObject()->className());
+    Msgbox.exec();
 
     InitD3D();
 
-	UI::MainWindow w;
+    UI::MainWindow w;
     w.show();
 
     return a.exec();

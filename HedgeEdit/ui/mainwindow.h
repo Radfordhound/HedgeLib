@@ -5,19 +5,19 @@
 
 namespace HedgeEdit::UI
 {
-	class MainWindow : public QMainWindow, public Ui_MainWindow
-	{
-		Q_OBJECT
+    class MainWindow : public QMainWindow, public Ui_MainWindow
+    {
+        Q_OBJECT
 
-	public:
-		explicit MainWindow(QWidget* parent = nullptr);
-		~MainWindow();
+    public:
+        explicit MainWindow(QWidget* parent = nullptr);
+        ~MainWindow();
 
-	public slots:
-		void PropertiesClosed();
-		void DebugEnableDarkTheme();
-		// TODO
-	};
+    public slots:
+        void PropertiesClosed();
+        void DebugEnableDarkTheme();
+        // TODO
+    };
 
-	extern MainWindow* MainInstance;
+    extern MainWindow* MainInstance;
 }

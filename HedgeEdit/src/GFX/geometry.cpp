@@ -209,8 +209,8 @@ namespace HedgeEdit::GFX
         }
     }
 
-	void Geometry::Create(Device& device, const ISubMesh* subMesh)
-	{
+    void Geometry::Create(Device& device, const ISubMesh* subMesh)
+    {
         switch (device.RenderMode())
         {
         case RENDER_MODE_HH2:
@@ -221,7 +221,7 @@ namespace HedgeEdit::GFX
             // TODO
             break;
         }
-	}
+    }
 
     void Geometry::Bind(ID3D11DeviceContext* context) const
     {
@@ -230,8 +230,8 @@ namespace HedgeEdit::GFX
         context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R16_UINT, 0);
     }
 
-	void Geometry::Draw(ID3D11DeviceContext* context) const
-	{
+    void Geometry::Draw(ID3D11DeviceContext* context) const
+    {
         context->DrawIndexed(faceCount, 0, 0);
-	}
+    }
 }

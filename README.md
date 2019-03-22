@@ -58,8 +58,8 @@ For example, if you installed Qt to "E:/Qt/5.12.0":
 -- Change the following strings to whatever you want before generating
 -- project files with premake to change where dependencies are located.
 return {
-	QtDir32 = "E:/Qt/5.12.0/msvc2017",
-	QtDir64 = "E:/Qt/5.12.0/msvc2017_64"
+    QtDir32 = "E:/Qt/5.12.0/msvc2017",
+    QtDir64 = "E:/Qt/5.12.0/msvc2017_64"
 }
 ```
 

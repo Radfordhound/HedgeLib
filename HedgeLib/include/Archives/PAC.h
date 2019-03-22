@@ -3,5 +3,5 @@
 
 namespace HedgeLib::Archives
 {
-	static constexpr IO::DataSignature32 PACxSignature = "PACx";
+    static constexpr IO::DataSignature32 PACxSignature = "PACx";
 }
