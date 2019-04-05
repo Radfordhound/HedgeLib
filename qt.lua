@@ -50,9 +50,7 @@ function FinalizeQt(architectures, configs, binDir)
 	
 	-- Default bin dir
 	if binDir == nil then
-		binDir = "bin/"
-	else
-		binDir = FixPath(binDir)
+		binDir = "bin"
 	end
 	
 	-- Set configuration filters
@@ -79,8 +77,7 @@ function FinalizeQt(architectures, configs, binDir)
 			})
 			
 			-- Get project directory
-			local pDir = FixPath(binDir ..
-				FixPath(av.Dir) .. FixPath(cv.Dir))
+			local pDir = JoinPaths(binDir, av.Dir, cv.Dir)
 			
 			-- Get suffix
 			local suffixQt = ""
@@ -89,35 +86,34 @@ function FinalizeQt(architectures, configs, binDir)
 			end
 			
 			-- Set post-build commands
-			if target == "windows" then
+			if Target == "windows" then
 				-- Copy Qt Modules
 				local cmds = { "@echo off", "echo Copying Qt Modules..." }
 				for k, v in pairs(modulesQt) do
 					local name = modulesQtPrefix .. qt.modules[v].name .. suffixQt
-					local srcDst =
-						av.QtDir .. "bin/" .. name .. ".dll\" \"" ..
-						pDir .. name .. ".dll\" >NUL"
-						
-					srcDst = string.gsub(srcDst, "/", "\\")
-					cmds[#cmds + 1] = "copy /y \"" .. srcDst
+                    local src = JoinPaths(av.QtDir, "bin", name .. ".dll")
+                    local dst = JoinPaths(pDir, name .. ".dll")
+
+					cmds[#cmds + 1] = "copy /y \"" .. src .. "\" \"" ..
+                        dst .. "\" >NUL"
 				end
 				
 				-- Copy Qt Platform DLLs
+                local platformsDir = JoinPaths(pDir, "platforms")
 				cmds[#cmds + 1] = "echo Copying Qt Platform DLLs..."
-				cmds[#cmds + 1] = "if not exist \"" .. pDir ..
-					"platforms\" mkdir \"" .. pDir .. "platforms\""
+				cmds[#cmds + 1] = "if not exist \"" .. platformsDir ..
+                    "\" mkdir \"" .. platformsDir .. "\""
 				
 				for k, v in pairs(platformsQt) do
 					local name = v .. suffixQt
-					local srcDst =
-						av.QtDir .. "plugins/platforms/" .. name .. ".dll\" \"" ..
-						pDir .. "platforms/" .. name .. ".dll\" >NUL"
-						
-					srcDst = string.gsub(srcDst, "/", "\\")
-					cmds[#cmds + 1] = "copy /y \"" .. srcDst
+                    local src = JoinPaths(av.QtDir, "plugins", "platforms", name .. ".dll")
+                    local dst = JoinPaths(platformsDir, name .. ".dll")
+
+					cmds[#cmds + 1] = "copy /y \"" .. src .. "\" \"" ..
+                        dst .. "\" >NUL"
 				end
 			
-				links(av.QtDir .. "lib/qtmain" .. suffixQt)
+				links(JoinPaths(av.QtDir, "lib", "qtmain" .. suffixQt))
 				postbuildcommands(cmds)
 			else
 				-- TODO

@@ -45,27 +45,18 @@ As such, you don't have to manually build any of the tools/libraries in this rep
 If you do wish to manually build, however, simply download and install the following (if you don't have them already):
 - [Visual Studio 2017 (or later).](https://www.visualstudio.com/downloads/)
 - [Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk) (for DirectX use in HedgeEdit; can be downloaded from Visual Studio).
-- [Qt.](https://www.qt.io/download)
+- [Qt.](https://www.qt.io/download) (for HedgeEdit/HedgeTools with UIs; not required for just building HedgeLib).
 
 Then clone the repository and follow the following steps:
 
 1: Download [Premake 5](https://premake.github.io/download.html#v5) and extract premake5.exe to the directory you cloned HedgeLib to.
 
-2: If you installed Qt anywhere other than the default directory ("C:/Qt/5.12.0") open HedgeEdit/depends.lua and change the two paths located there.
-For example, if you installed Qt to "E:/Qt/5.12.0":
-
-```lua
--- Change the following strings to whatever you want before generating
--- project files with premake to change where dependencies are located.
-return {
-    QtDir32 = "E:/Qt/5.12.0/msvc2017",
-    QtDir64 = "E:/Qt/5.12.0/msvc2017_64"
-}
-```
-
-3: Open a cmd window in the folder you cloned HedgeLib to and run the following command:
+2: Open a cmd window in the folder you cloned HedgeLib to and run the following command:
 ```
 premake5 vs2017
 ```
+
+3: If prompted, enter the location of your installed Qt 32-bit and 64-bit binaries for your target platform (e.g. C:\Qt\5.12.0\msvc2017 & C:\Qt\5.12.0\msvc2017_64).
+A depends.lua file will be generated so you don't have to do this step again (feel free to modify this file - you can also simply make a depends.lua manually).
 
 4: Open the HedgeLib.sln file that Premake generated in Visual Studio and hit "Build".

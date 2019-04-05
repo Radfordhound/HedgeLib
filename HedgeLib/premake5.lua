@@ -12,8 +12,8 @@ project("HedgeLib")
 		default = "static",
 		allowed =
 		{
-			{ "static", "Build HedgeLib as a shared library (e.g. .DLL)." },
-			{ "shared", "Build HedgeLib as a static library (e.g. .lib)." }
+			{ "shared", "Build HedgeLib as a shared library (e.g. .DLL)." },
+			{ "static", "Build HedgeLib as a static library (e.g. .lib)." }
 		}
 	})
 	
@@ -24,7 +24,7 @@ project("HedgeLib")
 	end
 	
 	-- Platform-Specifics
-	if target == "windows" then
+	if Target == "windows" then
 		defines("NOMINMAX")
 		buildoptions("/Zc:externConstexpr")
 	end

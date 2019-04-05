@@ -6,14 +6,14 @@ project("HedgeEdit")
 	links("HedgeLib")
 	
 	-- Platform-Specifics
-	if target == "windows" then
+	if Target == "windows" then
 		defines("NOMINMAX")
 		files("app.manifest")
 		links({ "d3d11", "DXGI" })
 	end
 	
 	-- Dependencies
-	local deps = LoadDependsLua("depends.lua")
+	local deps = GetDepends("depends.lua")
 	includedirs({ "ui", "../HedgeLib/include" })
 	files({ "src/**.cpp", "src/**.h", "ui/**.cpp",
 		"ui/**.h", "ui/**.ui", "ui/**.qrc" })

@@ -8,7 +8,7 @@ project("HedgeOffsets")
 	includedirs({ "../../HedgeLib/include" })
 	
 	-- Platform-Specifics
-	if target == "windows" then
+	if Target == "windows" then
 		defines("NOMINMAX")
 	end
 	
