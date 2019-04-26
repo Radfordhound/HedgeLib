@@ -49,16 +49,66 @@ namespace HedgeLib
         /// <returns>Pitch, Yaw, Roll ordered Euler Angles which represents the given Quaternion.</returns>
         public static Vector3 ToEulerAngles(this Quaternion q, bool inRadians = false)
         {
-            // Based on code from arukibree's LibGens-SonicGLvl-LostWorld fork
-            float wsxs = q.W * q.W - q.X * q.X;
-            float ys = q.Y * q.Y, zs = q.Z * q.Z;
+            float fTx = q.X + q.X;
+            float fTy = q.Y + q.Y;
+            float fTz = q.Z + q.Z;
+            float fTwx = fTx * q.W;
+            float fTwy = fTy * q.W;
+            float fTwz = fTz * q.W;
+            float fTxx = fTx * q.X;
+            float fTxy = fTy * q.X;
+            float fTxz = fTz * q.X;
+            float fTyy = fTy * q.Y;
+            float fTyz = fTz * q.Y;
+            float fTzz = fTz * q.Y;
 
-            return GetVect(
-                Math.Asin(-2 * (q.Y * q.Z - q.W * q.X)),
-                Math.Atan2(2 * (q.X * q.Z + q.W * q.Y), wsxs - ys + zs),
-                Math.Atan2(2 * (q.X * q.Y + q.W * q.Z), wsxs + ys - zs));
+            float m00 = 1.0f - (fTyy + fTzz);
+            float m01 = fTxy - fTwz;
+            float m02 = fTxz + fTwy;
+            float m10 = fTxy + fTwz;
+            float m11 = 1.0f - (fTxx + fTzz);
+            float m12 = fTyz - fTwx;
+            float m20 = fTxz - fTwy;
+            float m21 = fTyz + fTwx;
+            float m22 = 1.0f - (fTxx + fTyy);
 
-            // Sub-Methods
+            float rfPAngle;
+            float rfYAngle;
+            float rfRAngle;
+
+            float HALF_PI = (float)(Math.PI / 2);
+
+            //toEulerAnglesYXZ
+            rfPAngle = (float)Math.Asin(-m12);
+            if (rfPAngle < HALF_PI)
+            {
+                if (rfPAngle > -HALF_PI)
+                {
+                    rfYAngle = (float)Math.Atan2(m02, m22);
+                    rfRAngle = (float)Math.Atan2(m10, m11);
+                }
+                else
+                {
+                    float fRmY = (float)Math.Atan2(-m01, m00);
+                    rfRAngle = 0.0f;
+                    rfYAngle = rfRAngle - fRmY;
+                }
+            }
+            else
+            {
+                float fRpY = (float)Math.Atan2(-m01, m00);
+                rfRAngle = 0.0f;
+                rfYAngle = fRpY - rfRAngle;
+            }
+            if (float.IsNaN(rfRAngle))
+                rfRAngle = 0;
+            if (float.IsNaN(rfYAngle))
+                rfYAngle = 0;
+            if (float.IsNaN(rfPAngle))
+                rfPAngle = 0;
+
+            return GetVect(rfPAngle, rfYAngle, rfRAngle);
+
             Vector3 GetVect(double x, double y, double z)
             {
                 return (inRadians) ?
