@@ -6,6 +6,11 @@ project("HedgeOffsets")
 	links("HedgeLib")
 	
 	includedirs({ "../../HedgeLib/include" })
+
+    -- Static or Shared
+    if LibType == "shared" then
+        defines("HEDGELIB_DLL")
+    end
 	
 	-- Platform-Specifics
 	if Target == "windows" then

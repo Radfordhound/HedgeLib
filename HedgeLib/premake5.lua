@@ -4,23 +4,11 @@ project("HedgeLib")
 	targetdir("bin/%{cfg.platform}/%{cfg.buildcfg}")
 	
 	-- Options
-	newoption(
-	{
-		trigger = "type",
-		value = "LibraryType",
-		description = "What type of library to build HedgeLib as.",
-		default = "static",
-		allowed =
-		{
-			{ "shared", "Build HedgeLib as a shared library (e.g. .DLL)." },
-			{ "static", "Build HedgeLib as a static library (e.g. .lib)." }
-		}
-	})
-	
-	if _OPTIONS["type"] == "static" then
+	if LibType == "static" then
 		kind("StaticLib")
 	else
 		kind("SharedLib")
+        defines({ "HL_DLL", "HL_DLL_EXPORTS" })
 	end
 	
 	-- Platform-Specifics

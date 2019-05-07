@@ -1,74 +1,95 @@
-#include "Offsets.h"
-#include "IO/Endian.h"
-#include <optional>
-#include <vector>
-#include <cstdint>
-#include <cstddef>
+#include "HedgeLib/Direct/Offsets.h"
+#include "HedgeLib/Managed/Offsets.h"
+#include <cstdlib>
+
+struct hl_OffsetTable* hl_CreateOffsetTable()
+{
+    return new hl_OffsetTable();
+}
+
+long* hl_GetOffsetsPtr(struct hl_OffsetTable* offTable)
+{
+    return offTable->data();
+}
+
+size_t hl_GetOffsetCount(const struct hl_OffsetTable* offTable)
+{
+    return offTable->size();
+}
+
+void hl_GetOffsets(struct hl_OffsetTable* offTable,
+    long** offsets, size_t* count)
+{
+    *offsets = offTable->data();
+    *count = offTable->size();
+}
+
+void hl_DestroyOffsetTable(struct hl_OffsetTable* offTable)
+{
+    delete offTable;
+}
 
 #ifdef x64
-namespace HedgeLib::detail
+std::vector<uintptr_t> ptrs = { 0 };
+static std::vector<bool> ptrFlags = { false };
+static size_t nextFreeIndex = 1;
+
+uintptr_t hl_x64GetAbsPtr32(hl_DataOff32 index)
 {
-    static std::vector<std::optional<std::uintptr_t>>
-        dataOffset32Ptrs = { std::nullopt };
+    return ptrs[index];
+}
 
-    static std::size_t nextFreeIndex = 1;
-
-    std::uint32_t Addx64Pointer(const std::uintptr_t ptr) noexcept
+hl_DataOff32 hl_x64AddAbsPtr32(uintptr_t ptr)
+{
+    hl_DataOff32 index = static_cast<hl_DataOff32>(nextFreeIndex);
+    if (nextFreeIndex == ptrs.size())
     {
-        if (nextFreeIndex == dataOffset32Ptrs.size())
-        {
-            // No "free" (unused) spots available; Add pointer
-            dataOffset32Ptrs.push_back(ptr);
-            ++nextFreeIndex;
-            return static_cast<std::uint32_t>(
-                dataOffset32Ptrs.size() - 1);
-        }
-        else
-        {
-            // Set pointer
-            std::uint32_t i = static_cast<std::uint32_t>(nextFreeIndex);
-            dataOffset32Ptrs[nextFreeIndex] = ptr;
+        // No "free" (unused) spots available; Add pointer
+        ptrs.push_back(ptr);
+        ptrFlags.push_back(true);
+        ++nextFreeIndex;
+    }
+    else
+    {
+        // Set pointer
+        ptrs[nextFreeIndex] = ptr;
+        ptrFlags[nextFreeIndex] = true;
 
-            // Determine next free index
-            while (++nextFreeIndex < dataOffset32Ptrs.size())
-            {
-                if (!dataOffset32Ptrs[nextFreeIndex].has_value())
-                    break;
-            }
-
-            return i;
+        // Determine next free index
+        while (++nextFreeIndex < ptrs.size())
+        {
+            if (!ptrFlags[nextFreeIndex])
+                break;
         }
     }
 
-    std::uintptr_t Getx64Pointer(const std::uint32_t index) noexcept
+    return index;
+}
+
+void hl_x64SetAbsPtr32(hl_DataOff32 index, uintptr_t ptr)
+{
+    ptrs[index] = ptr;
+}
+
+void hl_x64RemoveAbsPtr32(hl_DataOff32 index)
+{
+    if (index == 0)
+        return;
+
+    if (index == (ptrs.size() - 1) &&
+        nextFreeIndex == ptrs.size())
     {
-        return (index == 0) ? 0 : dataOffset32Ptrs[index].value();
+        ptrs.pop_back();
+        ptrFlags.pop_back();
+
+        --nextFreeIndex;
     }
-
-    void Setx64Pointer(const std::uint32_t index,
-        const std::uintptr_t ptr) noexcept
+    else
     {
-        dataOffset32Ptrs[index] = ptr;
-    }
-
-    void Removex64Pointer(const std::uint32_t index) noexcept
-    {
-        if (index == 0)
-            return;
-
-        if (index == (dataOffset32Ptrs.size() - 1) &&
-            nextFreeIndex == dataOffset32Ptrs.size())
+        ptrFlags[index] = false;
+        if (index < nextFreeIndex)
         {
-            dataOffset32Ptrs.pop_back();
-            --nextFreeIndex;
-        }
-        else
-        {
-            dataOffset32Ptrs[index] = std::nullopt;
-            if (index < nextFreeIndex)
-            {
-                nextFreeIndex = index;
-            }
+            nextFreeIndex = index;
         }
     }
 }

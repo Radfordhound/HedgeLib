@@ -51,6 +51,9 @@ workspace("HedgeLib")
 	dofile("qt.lua")
 	qt = premake.extensions.qt
 	
+    -- Get some options
+    include("options.lua")
+
 	-- Include Projects
 	include("HedgeLib")
 	

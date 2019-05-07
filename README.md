@@ -4,9 +4,13 @@
 
 **IMPORTANT:** All code committed to this repository, preferably, should follow [these style guidelines](https://github.com/Radfordhound/HedgeLib/wiki/Code-Style).
 
-HedgeLib is a C++17 library [under the MIT license](License.txt) that aims to make modding games in the Sonic the Hedgehog franchise easier, similar to [Dario's excellent "LibGens".](https://github.com/DarioSamo/libgens-sonicglvl)
+HedgeLib is a C/C++ library [under the MIT license](License.txt) that aims to make modding games in the Sonic the Hedgehog franchise easier, similar to [Dario's excellent "LibGens".](https://github.com/DarioSamo/libgens-sonicglvl)
 
-Right now it supports the following:
+HedgeLib is a single library, but it's made up of two parts:
+- "Direct" stuff, which is low-level and fully C99-compatible. Can also be used to create bindings for other languages.
+- "Managed" stuff, which is high-level and designed for C++17. **If using C++17, it's HIGHLY recommended to use this stuff**, as it's literally doing things just like the Direct stuff, except it's all WAY easier to use.
+
+Right now, HedgeLib supports the following:
 
 ### Hedgehog Engine
 - Reading Models.
@@ -45,7 +49,7 @@ As such, you don't have to manually build any of the tools/libraries in this rep
 If you do wish to manually build, however, simply download and install the following (if you don't have them already):
 - [Visual Studio 2017 (or later).](https://www.visualstudio.com/downloads/)
 - [Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk) (for DirectX use in HedgeEdit; can be downloaded from Visual Studio).
-- [Qt.](https://www.qt.io/download) (for HedgeEdit/HedgeTools with UIs; not required for just building HedgeLib).
+- [Qt.](https://www.qt.io/download) (for HedgeEdit/HedgeTools with UIs; **not required for just building HedgeLib and tools without UIs**).
 
 Then clone the repository and follow the following steps:
 
@@ -57,6 +61,6 @@ premake5 vs2017
 ```
 
 3: If prompted, enter the location of your installed Qt 32-bit and 64-bit binaries for your target platform (e.g. C:\Qt\5.12.0\msvc2017 & C:\Qt\5.12.0\msvc2017_64).
-A depends.lua file will be generated so you don't have to do this step again (feel free to modify this file - you can also simply make a depends.lua manually).
+A depends.lua file will be generated so you don't have to do this step again. Feel free to modify this file! You can also make a depends.lua manually and skip this step.
 
 4: Open the HedgeLib.sln file that Premake generated in Visual Studio and hit "Build".

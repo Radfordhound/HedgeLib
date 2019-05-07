@@ -4,6 +4,11 @@ project("HedgeEdit")
 	targetdir("bin/%{cfg.platform}/%{cfg.buildcfg}")
 	kind("WindowedApp")
 	links("HedgeLib")
+
+    -- Static or Shared
+    if LibType == "shared" then
+        defines("HEDGELIB_DLL")
+    end
 	
 	-- Platform-Specifics
 	if Target == "windows" then
