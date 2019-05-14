@@ -1,22 +1,36 @@
 #pragma once
 #include "Pointers.h"
+#include <variant>
 
 namespace HedgeLib
 {
     template<typename T, template<typename> typename P,
-        template<typename> typename PGetter = SPointerGetter>
+        template<typename> typename PGetter>
     class ParentObject
     {
     protected:
-        P<T> ptr = nullptr;
+        //P<T> ptr = nullptr;
+        std::variant<P<T>, std::unique_ptr<T>> ptr;
+
+        inline bool IsCustomPtr() const noexcept
+        {
+            return std::holds_alternative<P<T>>(ptr);
+        }
 
     public:
-        inline ParentObject() = default;
+        // TODO: Should we use new instead of malloc?
+        // Are there any instances where we need C code to clean this up?
+        inline ParentObject() : ptr(std::unique_ptr<T>(new T())) {}
+            /*ptr(static_cast<T*>(
+            std::malloc(sizeof(T)))) {};*/
+
         inline ParentObject(T* ptr) : ptr(ptr) {}
 
         inline T* Get() const noexcept
         {
-            return PGetter<T>()(ptr.get());
+            return IsCustomPtr() ?
+                PGetter<T>()(std::get<P<T>>(ptr).get()) : // Get custom pointer
+                std::get<std::unique_ptr<T>>(ptr).get();  // Get normal pointer
         }
 
         inline void EndianSwap()
@@ -38,14 +52,19 @@ namespace HedgeLib
         bool deletePtr = false;
 
     public:
-        inline ChildObject() : ptr(std::malloc(sizeof(T))),
-            deletePtr(true) {};
+        // TODO: Should we use new instead of malloc?
+        // Are there any instances where we need C code to clean this up?
+        inline ChildObject() :
+            ptr(new T()),
+            //ptr(static_cast<T*>(std::malloc(sizeof(T)))),
+            deletePtr(true) {}
 
         inline ChildObject(T* ptr) : ptr(ptr) {}
 
         inline ~ChildObject()
         {
-            if (deletePtr) std::free(ptr);
+            if (deletePtr) delete ptr;
+            //if (deletePtr) std::free(ptr);
         }
 
         inline T* Get() const noexcept

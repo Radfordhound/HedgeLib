@@ -27,7 +27,8 @@ namespace HedgeLib::IO
 
         inline HL_RESULT Write(File& file) override
         {
-            // TODO
+            Get()->Write(file.Get());
+            // TODO: Should we even return an HL_RESULT?
             return HL_SUCCESS;
         }
     };
