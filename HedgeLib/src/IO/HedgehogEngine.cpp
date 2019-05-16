@@ -102,14 +102,14 @@ enum HL_RESULT hl_HHRead(FILE* file, void** blob)
     uint32_t offCount;
     void* data;
 
-    if (isMirage)
+    if (isMirage) // Mirage Header
     {
         // TODO
         offTable = nullptr;
         offCount = 0;
         data = nullptr;
     }
-    else
+    else // Standard Header
     {
         // Endian-swap standard header
         hl_DHHStandardHeader* header = static_cast
@@ -146,27 +146,31 @@ enum HL_RESULT hl_HHLoad(const char* path, void** blob)
 
 void hl_HHStartWriteStandard(FILE* file, uint32_t version)
 {
+    File f = File(file, true);
     hl_DHHStandardHeader header = {};
     header.Header.Version = version;
     header.DataOffset = sizeof(hl_DHHStandardHeader);
 
-    fwrite(&header, sizeof(header), 1, file);
+    f.Write(&header);
 }
 
 void hl_HHWriteOffsetTableStandard(FILE* file,
     const struct hl_OffsetTable* offTable)
 {
     File f = File(file, true);
+    f.Origin = 0x18; // TODO
 
     // Write offset count
-    size_t offCount = offTable->size();
+    uint32_t offCount = static_cast<uint32_t>(offTable->size());
     f.Write(&offCount);
 
     // Write offsets
     uint32_t off;
     for (size_t i = 0; i < offTable->size(); ++i)
     {
-        off = static_cast<long>(offTable->data()[i]);
+        off = static_cast<uint32_t>(
+            offTable->data()[i] - f.Origin);
+
         f.Write(&off);
     }
 }
@@ -177,20 +181,20 @@ void hl_HHFinishWriteStandard(FILE* file, long headerPos,
     File f = File(file, true);
 
     // Write offset table
-    long offTablePos = f.Tell();
+    uint32_t offTablePos = static_cast<uint32_t>(f.Tell());
     hl_HHWriteOffsetTableStandard(file, offTable);
 
     // TODO: Write EOF thing if told to
 
     // Fill-in file size
-    long fileSize = f.Tell();
+    uint32_t fileSize = static_cast<uint32_t>(f.Tell());
     f.JumpTo(headerPos);
 
     f.Write(&fileSize);
     f.JumpAhead(4);
 
     // Fill-in data size
-    long dataSize = (fileSize - offTablePos -
+    uint32_t dataSize = (offTablePos -
         sizeof(hl_DHHStandardHeader));
 
     f.Write(&dataSize);
