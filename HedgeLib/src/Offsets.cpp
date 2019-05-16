@@ -7,6 +7,11 @@ struct hl_OffsetTable* hl_CreateOffsetTable()
     return new hl_OffsetTable();
 }
 
+void hl_AddOffset(struct hl_OffsetTable* offTable, long offset)
+{
+    offTable->push_back(offset);
+}
+
 long* hl_GetOffsetsPtr(struct hl_OffsetTable* offTable)
 {
     return offTable->data();
