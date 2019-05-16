@@ -21,7 +21,7 @@ namespace HedgeLib
         inline void operator()(T* ptr)
         {
             std::cout << "finna free" << std::endl; // TODO: REMOVE ME
-            hl_HHFree(ptr);
+            hl_HHFreeBlob(ptr);
             std::cout << "freed" << std::endl; // TODO: REMOVE ME
         }
     };

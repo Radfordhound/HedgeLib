@@ -202,7 +202,7 @@ void hl_HHFinishWriteStandard(FILE* file, long headerPos,
     // TODO: Fill-in EOF position if told to
 }
 
-void hl_HHFree(void* blob)
+void hl_HHFreeBlob(void* blob)
 {
 #ifdef x64
     // Get offset table

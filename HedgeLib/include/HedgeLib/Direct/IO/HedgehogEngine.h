@@ -99,7 +99,7 @@ HL_API void hl_HHWriteOffsetTableStandard(FILE* file,
 HL_API void hl_HHFinishWriteStandard(FILE* file, long headerPos,
     bool writeEOFThing, const struct hl_OffsetTable* offTable);
 
-HL_API void hl_HHFree(void* blob);
+HL_API void hl_HHFreeBlob(void* blob);
 
 #ifdef __cplusplus
 }
