@@ -3,8 +3,6 @@
 #include "Endian.h"
 #include <stdint.h>
 #include <stddef.h>
-#include <type_traits> // TODO
-#include <iostream> // TODO
 
 #ifdef __cplusplus
 extern "C" {
@@ -257,8 +255,6 @@ namespace HedgeLib
             return HL_GETPTR64(T, off);
         }
     };
-
-    constexpr static bool isPOD = std::is_pod<DataOffset32<int>>::value; // TODO
 
 #ifdef x64
     inline void x64AddAbsPtrs32(hl_DataOff32& value)
