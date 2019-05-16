@@ -61,6 +61,7 @@ struct hl_ArrOff64
 struct hl_OffsetTable;
 
 HL_API struct hl_OffsetTable* hl_CreateOffsetTable();
+HL_API void hl_AddOffset(struct hl_OffsetTable* offTable, long offset);
 HL_API long* hl_GetOffsetsPtr(struct hl_OffsetTable* offTable);
 HL_API size_t hl_GetOffsetCount(const struct hl_OffsetTable* offTable);
 HL_API void hl_GetOffsets(struct hl_OffsetTable* offTable,
@@ -331,3 +332,19 @@ namespace HedgeLib
 #define HL_DECL_X64_OFFSETS(type)
 #define HL_IMPL_X64_OFFSETS(type)
 #endif
+
+// Size asserts
+#ifdef x64
+HL_STATIC_ASSERT_SIZE(uintptr_t, 8);
+HL_STATIC_ASSERT_SIZE(void*, 8);
+HL_STATIC_ASSERT_SIZE(int*, 8);
+#elif x86
+HL_STATIC_ASSERT_SIZE(uintptr_t, 4);
+HL_STATIC_ASSERT_SIZE(void*, 4);
+HL_STATIC_ASSERT_SIZE(int*, 4);
+#endif
+
+HL_STATIC_ASSERT_SIZE(HL_OFF32(void), 4);
+HL_STATIC_ASSERT_SIZE(HL_OFF32(int), 4);
+HL_STATIC_ASSERT_SIZE(HL_OFF64(void), 8);
+HL_STATIC_ASSERT_SIZE(HL_OFF64(int), 8);
