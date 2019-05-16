@@ -20,14 +20,15 @@ namespace HedgeLib::IO
         {
             void* blob;
             HL_RESULT result = hl_HHRead(file.Get(), &blob);
-            ptr = HHPointer<T>(static_cast<T*>(blob));
-            Get()->EndianSwapRecursive(true);
+            this->ptr = HHPointer<T>(static_cast<T*>(blob));
+            this->Get()->EndianSwapRecursive(true);
             return result;
         }
 
         inline HL_RESULT Write(File& file) override
         {
-            Get()->Write(file.Get());
+            hl_OffsetTable offTable;
+            this->Get()->Write(file.Get(), &offTable);
             // TODO: Should we even return an HL_RESULT?
             return HL_SUCCESS;
         }
