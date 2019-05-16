@@ -314,7 +314,7 @@ namespace HedgeLib::IO
 
         inline int JumpBehind(long amount) const noexcept
         {
-            return std::fseek(fs, amount, SEEK_CUR);
+            return std::fseek(fs, -amount, SEEK_CUR);
         }
 
         inline void Align(long stride = 4) const
