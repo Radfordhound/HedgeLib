@@ -73,7 +73,7 @@ HL_API void hl_DestroyOffsetTable(struct hl_OffsetTable* offTable);
 #ifdef x86
 #define HL_GETPTR32(type, off) ((type*)((uintptr_t)off))
 #define HL_ADDPTR32(ptr) (hl_DataOff32)((uintptr_t)ptr)
-#define HL_MODIFYPTR32(off, ptr) off = HL_ADDPTR32(ptr)
+#define HL_SETPTR32(off, ptr) off = HL_ADDPTR32(ptr)
 #define HL_REMOVEPTR32(off)
 #define HL_DECL_X64_ADD_OFFSETS(type)
 #define HL_DECL_X64_REMOVE_OFFSETS(type)
@@ -89,10 +89,9 @@ HL_API hl_DataOff32 hl_x64AddAbsPtr32(uintptr_t ptr);
 HL_API void hl_x64SetAbsPtr32(hl_DataOff32 index, uintptr_t ptr);
 HL_API void hl_x64RemoveAbsPtr32(hl_DataOff32 index);
 
-// TODO: Change these names like HL_GET_PTR32 to be more consistent with the other macros
 #define HL_GETPTR32(type, off) ((type*)hl_x64GetAbsPtr32(off))
 #define HL_ADDPTR32(ptr) hl_x64AddAbsPtr32((uintptr_t)ptr)
-#define HL_MODIFYPTR32(off, ptr) hl_x64SetAbsPtr32(off, (uintptr_t)ptr)
+#define HL_SETPTR32(off, ptr) hl_x64SetAbsPtr32(off, (uintptr_t)ptr)
 #define HL_REMOVEPTR32(off) hl_x64RemoveAbsPtr32(off)
 
 #define HL_DECL_X64_ADD_OFFSETS(type) HL_API void type##_x64AddOffsets(struct type* v)
@@ -110,7 +109,7 @@ HL_API void hl_x64RemoveAbsPtr32(hl_DataOff32 index);
 
 #define HL_GETPTR64(type, off) ((type*)((uintptr_t)off))
 #define HL_GETOFF64(ptr) ((hl_DataOff64)((uintptr_t)ptr))
-#define HL_MODIFYPTR64(off, ptr) off = HL_GETOFF64(ptr)
+#define HL_SETPTR64(off, ptr) off = HL_GETOFF64(ptr)
 
 #define HL_GETVAL32(type, off) *HL_GETPTR32(type, off)
 #define HL_GETVAL64(type, off) *HL_GETPTR64(type, off)
@@ -154,14 +153,14 @@ HL_API void hl_x64RemoveAbsPtr32(hl_DataOff32 index);
 
 #define HL_CREATE_ARR32(type, arr, count) { type* hl_internal_ptr;\
     HL_CREATE_ARR(type, hl_internal_ptr, count);\
-    HL_MODIFYPTR32(arr.Offset, hl_internal_ptr); arr.Count = count; }
+    HL_SETPTR32(arr.Offset, hl_internal_ptr); arr.Count = count; }
 
 #define HL_DESTROY_ARR32(type, arr) { type* hl_internal_ptr = HL_GETPTR32(type, arr.Offset);\
     HL_DESTROY_ARR(type, hl_internal_ptr, arr.Count); }
 
 #define HL_CREATE_ARR64(type, arr, count) { type* hl_internal_ptr;\
     HL_CREATE_ARR(type, hl_internal_ptr, count);\
-    HL_MODIFYPTR64(arr.Offset, hl_internal_ptr); arr.Count = count; }
+    HL_SETPTR64(arr.Offset, hl_internal_ptr); arr.Count = count; }
 
 #define HL_DESTROY_ARR64(type, arr) { type* hl_internal_ptr = HL_GETPTR64(type, arr.Offset);\
     HL_DESTROY_ARR(type, hl_internal_ptr, arr.Count); }
@@ -187,16 +186,6 @@ namespace HedgeLib
         constexpr DataOffset32() = default;
         constexpr DataOffset32(hl_DataOff32 off) : off(off) {}
 
-//        inline DataOffset32(T* ptr) :
-//#ifdef x64
-//            off(hl_x64AddAbsPtr32(reinterpret_cast<uintptr_t>(ptr)))
-//#elif x86
-//            off(static_cast<hl_DataOff32>(reinterpret_cast<uintptr_t>(ptr)))
-//#endif
-//        {
-//            std::cout << "created offset" << std::endl; // TODO: REMOVE ME
-//        }
-
         inline T* Get()
         {
             return HL_GETPTR32(T, off);
@@ -204,7 +193,7 @@ namespace HedgeLib
 
         inline void Set(uintptr_t ptr)
         {
-            HL_MODIFYPTR32(off, ptr);
+            HL_SETPTR32(off, ptr);
         }
 
         inline operator hl_DataOff32&()
@@ -245,7 +234,7 @@ namespace HedgeLib
 
         inline void Set(uintptr_t ptr)
         {
-            HL_MODIFYPTR64(off, ptr);
+            HL_SETPTR64(off, ptr);
         }
 
         inline operator hl_DataOff64&()
