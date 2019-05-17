@@ -19,16 +19,16 @@ namespace HedgeLib::IO
         inline HL_RESULT Read(File& file) override
         {
             void* blob;
-            HL_RESULT result = hl_HHRead(file.Get(), &blob);
+            HL_RESULT result = hl_HHRead(&file, &blob);
             this->ptr = HHPointer<T>(static_cast<T*>(blob));
             this->Get()->EndianSwapRecursive(true);
             return result;
         }
 
-        inline HL_RESULT Write(File& file) override
+        inline HL_RESULT Write(const File& file) override
         {
             hl_OffsetTable offTable;
-            this->Get()->Write(file.Get(), &offTable);
+            this->Get()->Write(file, offTable);
             // TODO: Should we even return an HL_RESULT?
             return HL_SUCCESS;
         }

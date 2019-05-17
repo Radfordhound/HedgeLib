@@ -7,386 +7,501 @@
 #include <string>
 #include <filesystem>
 
-// TODO: Make all Direct File functions take a pointer
-// to an hl_File instead, which is just this.
-
-namespace HedgeLib::IO
+struct hl_File
 {
-    class File
+protected:
+    std::FILE* f = nullptr;
+    bool closeOnDestruct = false; // This is set to true when OpenNoClose is called
+
+    HL_API HL_RESULT OpenNoClose(const std::filesystem::path filePath,
+        const HL_FILEMODE mode);
+
+    constexpr static int GetSeekOrigin(const HL_SEEK_ORIGIN origin)
     {
-    protected:
-        std::FILE* fs = nullptr;
-        bool closeOnDestruct = false; // Set to true when OpenNoClose is called
-
-        HL_API HL_RESULT OpenNoClose(const std::filesystem::path filePath,
-            const HL_FILEMODE mode);
-
-    public:
-        bool BigEndian = false;
-        long Origin = 0;
-
-        constexpr File() = default;
-        inline File(std::FILE* file, bool bigEndian = false) :
-            fs(file), BigEndian(bigEndian) {}
-
-        inline File(const std::filesystem::path filePath,
-            const HL_FILEMODE mode = HL_FILEMODE_READ_BINARY,
-            bool bigEndian = false) : BigEndian(bigEndian)
+        switch (origin)
         {
-            OpenNoClose(filePath, mode);
+        case HL_SEEK_CUR:
+            return SEEK_CUR;
+
+        case HL_SEEK_END:
+            return SEEK_END;
+
+        default:
+            return SEEK_SET;
+        }
+    }
+
+public:
+    bool DoEndianSwap = false;
+    long Origin = 0;
+
+    constexpr hl_File() = default;
+    inline hl_File(std::FILE* file, bool swap = false, long origin = 0) :
+        f(file), DoEndianSwap(swap), Origin(origin) {}
+
+    inline hl_File(const std::filesystem::path filePath,
+        const HL_FILEMODE mode = HL_FILEMODE_READ_BINARY,
+        bool swap = false, long origin = 0) :
+        DoEndianSwap(swap), Origin(origin)
+    {
+        OpenNoClose(filePath, mode);
+    }
+
+    HL_API static HL_RESULT GetSize(const std::filesystem::path filePath, std::size_t& size);
+
+    inline static hl_File OpenRead(const std::filesystem::path filePath,
+        bool swap = false, long origin = 0)
+    {
+        return hl_File(filePath, HL_FILEMODE_READ_BINARY, swap);
+    }
+
+    inline static hl_File OpenWrite(const std::filesystem::path filePath,
+        bool swap = false, long origin = 0)
+    {
+        return hl_File(filePath, HL_FILEMODE_WRITE_BINARY, swap);
+    }
+
+    HL_API HL_RESULT Close();
+
+    inline ~hl_File()
+    {
+        if (closeOnDestruct) Close();
+    }
+
+    inline std::FILE* Get() const noexcept
+    {
+        return f;
+    }
+
+    inline operator std::FILE* () const noexcept
+    {
+        return f;
+    }
+
+    inline bool IsOpen() const noexcept
+    {
+        return (f != nullptr);
+    }
+
+    inline HL_RESULT Open(const std::filesystem::path filePath,
+        const HL_FILEMODE mode = HL_FILEMODE_READ_BINARY)
+    {
+        Close();
+        return OpenNoClose(filePath, mode);
+    }
+
+    inline std::size_t ReadBytes(void* buffer, std::size_t elementSize,
+        std::size_t elementCount) const
+    {
+        return std::fread(buffer, elementSize, elementCount, f);
+    }
+
+    inline HL_RESULT ReadBytes(void* buffer, std::size_t count) const
+    {
+        HL_RESULT result = HL_SUCCESS;
+        if (!ReadBytes(buffer, count, 1))
+        {
+            // TODO: Better errors
+            if (ferror(f)) result = HL_ERROR_UNKNOWN;
+            if (feof(f)) result = HL_ERROR_UNKNOWN;
         }
 
-        HL_API static std::size_t GetSize(const std::filesystem::path filePath);
+        return result;
+    }
 
-        inline static File OpenRead(const std::filesystem::path filePath,
-            bool bigEndian = false)
+    template<typename T>
+    inline HL_RESULT ReadNoSwap(T& value) const
+    {
+        return ReadBytes(&value, sizeof(T));
+    }
+
+    template<typename T>
+    inline std::size_t ReadNoSwap(T* value,
+        std::size_t elementCount) const
+    {
+        return ReadBytes(value, sizeof(T), elementCount);
+    }
+
+    template<typename T>
+    inline HL_RESULT Read(T& value) const
+    {
+        using namespace HedgeLib;
+
+        // Read data
+        HL_RESULT result = ReadNoSwap(value);
+
+        // Swap endianness if necessary
+        if constexpr (sizeof(T) > 1)
         {
-            return File(filePath, HL_FILEMODE_READ_BINARY, bigEndian);
+            if (DoEndianSwap)
+            {
+                Endian::SwapRecursive(true, value);
+            }
         }
 
-        inline static File OpenWrite(const std::filesystem::path filePath,
-            bool bigEndian = false)
+        return result;
+    }
+
+    template<typename T>
+    inline std::size_t Read(T* value, std::size_t elementCount) const
+    {
+        using namespace HedgeLib;
+
+        // Read data
+        std::size_t numRead = ReadNoSwap(value, elementCount);
+
+        // Swap endianness if necessary
+        if constexpr (sizeof(T) > 1)
         {
-            return File(filePath, HL_FILEMODE_WRITE_BINARY, bigEndian);
-        }
-
-        inline void Close()
-        {
-            hl_FileClose(fs);
-            fs = nullptr;
-        }
-
-        inline ~File()
-        {
-            if (closeOnDestruct) Close();
-        }
-
-        inline std::FILE* Get() const noexcept
-        {
-            return fs;
-        }
-
-        inline void Open(const std::filesystem::path filePath,
-            const HL_FILEMODE mode = HL_FILEMODE_READ_BINARY)
-        {
-            Close();
-            OpenNoClose(filePath, mode);
-        }
-
-        inline std::size_t ReadBytes(void* buffer, std::size_t elementSize,
-            std::size_t elementCount) const
-        {
-            return std::fread(buffer, elementSize, elementCount, fs);
-        }
-
-        template<typename T>
-        inline std::size_t ReadNoSwap(T* value,
-            std::size_t elementCount = 1) const
-        {
-            return ReadBytes(value, sizeof(*value), elementCount);
-        }
-
-        template<typename T>
-        inline std::size_t Read(T* value) const
-        {
-            // Read data
-            std::size_t numRead = ReadNoSwap(value);
-
-            // Swap endianness if necessary
-            if (BigEndian)
-                Endian::SwapRecursive(true, *value);
-
-            return numRead;
-        }
-
-        template<typename T>
-        inline std::size_t Read(T* value, std::size_t elementCount) const
-        {
-            // Read data
-            std::size_t numRead = ReadNoSwap(value, elementCount);
-
-            // Swap endianness if necessary
-            if (BigEndian)
+            if (DoEndianSwap && numRead > 0)
             {
                 for (size_t i = 0; i < elementCount; ++i)
                 {
                     Endian::SwapRecursive(true, value[i]);
                 }
             }
-
-            return numRead;
         }
 
-        inline std::uint8_t ReadUInt8() const
+        return numRead;
+    }
+
+    inline std::uint8_t ReadUInt8() const
+    {
+        std::uint8_t v;
+        return (HL_OK(Read(v))) ? v : 0U;
+    }
+
+    inline std::uint8_t ReadByte() const
+    {
+        return ReadUInt8();
+    }
+
+    inline std::int8_t ReadInt8() const
+    {
+        std::int8_t v;
+        return (HL_OK(Read(v))) ? v : 0;
+    }
+
+    inline std::int8_t ReadSByte() const
+    {
+        return ReadInt8();
+    }
+
+    inline std::uint16_t ReadUInt16() const
+    {
+        std::uint16_t v;
+        return (HL_OK(Read(v))) ? v : 0U;
+    }
+
+    inline std::uint16_t ReadUShort() const
+    {
+        return ReadUInt16();
+    }
+
+    inline std::int16_t ReadInt16() const
+    {
+        std::int16_t v;
+        return (HL_OK(Read(v))) ? v : 0;
+    }
+
+    inline std::int16_t ReadShort() const
+    {
+        return ReadInt16();
+    }
+
+    inline std::uint32_t ReadUInt32() const
+    {
+        std::uint32_t v;
+        return (HL_OK(Read(v))) ? v : 0U;
+    }
+
+    inline std::uint32_t ReadUInt() const
+    {
+        return ReadUInt32();
+    }
+
+    inline std::int32_t ReadInt32() const
+    {
+        std::int32_t v;
+        return (HL_OK(Read(v))) ? v : 0;
+    }
+
+    inline std::int32_t ReadInt() const
+    {
+        return ReadInt32();
+    }
+
+    inline float ReadSingle() const
+    {
+        float v;
+        return (HL_OK(Read(v))) ? v : 0.0f;
+    }
+
+    inline float ReadFloat() const
+    {
+        return ReadSingle();
+    }
+
+    inline std::uint64_t ReadUInt64() const
+    {
+        std::uint64_t v;
+        return (HL_OK(Read(v))) ? v : 0U;
+    }
+
+    inline std::uint64_t ReadULong() const
+    {
+        return ReadUInt64();
+    }
+
+    inline std::int64_t ReadInt64() const
+    {
+        std::int64_t v;
+        return (HL_OK(Read(v))) ? v : 0U;
+    }
+
+    inline std::int64_t ReadLong() const
+    {
+        return ReadInt64();
+    }
+
+    inline double ReadDouble() const
+    {
+        double v;
+        return (HL_OK(Read(v))) ? v : 0.0;
+    }
+
+    HL_API HL_RESULT ReadString(std::string& str) const;
+
+    inline std::string ReadString() const
+    {
+        std::string str;
+        return (HL_OK(ReadString(str))) ? str : std::string();
+    }
+
+    HL_API HL_RESULT ReadWString(std::wstring& str) const;
+
+    inline std::wstring ReadWString() const
+    {
+        std::wstring str;
+        return (HL_OK(ReadWString(str))) ? str : std::wstring();
+    }
+
+    inline std::size_t WriteBytes(const void* buffer, std::size_t elementSize,
+        std::size_t elementCount) const
+    {
+        return std::fwrite(buffer, elementSize, elementCount, f);
+    }
+
+    inline HL_RESULT WriteBytes(const void* buffer, std::size_t count) const
+    {
+        HL_RESULT result = HL_SUCCESS;
+        if (!WriteBytes(buffer, count, 1))
         {
-            return hl_FileReadUInt8(fs);
+            // TODO: Better errors
+            if (ferror(f)) result = HL_ERROR_UNKNOWN;
         }
 
-        inline std::uint8_t ReadByte() const
+        return result;
+    }
+
+    template<typename T>
+    inline HL_RESULT WriteNoSwap(const T& value) const
+    {
+        return WriteBytes(&value, sizeof(T));
+    }
+
+    template<typename T>
+    inline std::size_t WriteNoSwap(const T* value,
+        std::size_t elementCount) const
+    {
+        return WriteBytes(value, sizeof(T), elementCount);
+    }
+
+    template<typename T>
+    inline HL_RESULT Write(T& value) const
+    {
+        using namespace HedgeLib;
+
+        // Swap endianness for writing
+        if constexpr (sizeof(T) > 1)
         {
-            return hl_FileReadUInt8(fs);
+            if (DoEndianSwap)
+            {
+                Endian::Swap(value);
+            }
         }
 
-        inline std::int8_t ReadInt8() const
+        // Write data
+        HL_RESULT result = WriteNoSwap(value);
+
+        // Swap endianness back to what it was
+        if constexpr (sizeof(T) > 1)
         {
-            return hl_FileReadInt8(fs);
+            if (DoEndianSwap)
+            {
+                Endian::Swap(value);
+            }
         }
 
-        inline std::int8_t ReadSByte() const
+        return result;
+    }
+
+    template<typename T>
+    inline std::size_t Write(T* value, std::size_t elementCount) const
+    {
+        using namespace HedgeLib;
+
+        // Swap endianness for writing
+        if constexpr (sizeof(T) > 1)
         {
-            return hl_FileReadInt8(fs);
-        }
-
-        inline std::uint16_t ReadUInt16() const
-        {
-            return hl_FileReadUInt16(fs, BigEndian);
-        }
-
-        inline std::uint16_t ReadUShort() const
-        {
-            return hl_FileReadUInt16(fs, BigEndian);
-        }
-
-        inline std::int16_t ReadInt16() const
-        {
-            return hl_FileReadInt16(fs, BigEndian);
-        }
-
-        inline std::int16_t ReadShort() const
-        {
-            return hl_FileReadInt16(fs, BigEndian);
-        }
-
-        inline std::uint32_t ReadUInt32() const
-        {
-            return hl_FileReadUInt32(fs, BigEndian);
-        }
-
-        inline std::uint32_t ReadUInt() const
-        {
-            return hl_FileReadUInt32(fs, BigEndian);
-        }
-
-        inline std::int32_t ReadInt32() const
-        {
-            return hl_FileReadInt32(fs, BigEndian);
-        }
-
-        inline std::int32_t ReadInt() const
-        {
-            return hl_FileReadInt32(fs, BigEndian);
-        }
-
-        inline float ReadSingle() const
-        {
-            return hl_FileReadFloat(fs, BigEndian);
-        }
-
-        inline float ReadFloat() const
-        {
-            return hl_FileReadFloat(fs, BigEndian);
-        }
-
-        inline std::uint64_t ReadUInt64() const
-        {
-            return hl_FileReadUInt64(fs, BigEndian);
-        }
-
-        inline std::uint64_t ReadULong() const
-        {
-            return hl_FileReadUInt64(fs, BigEndian);
-        }
-
-        inline std::int64_t ReadInt64() const
-        {
-            return hl_FileReadInt64(fs, BigEndian);
-        }
-
-        inline std::int64_t ReadLong() const
-        {
-            return hl_FileReadInt64(fs, BigEndian);
-        }
-
-        inline double ReadDouble() const
-        {
-            return hl_FileReadDouble(fs, BigEndian);
-        }
-
-        HL_API void ReadString(std::string& str) const;
-
-        inline std::string ReadString() const
-        {
-            std::string str;
-            ReadString(str);
-            return str;
-        }
-
-        HL_API void ReadWString(std::wstring& str) const;
-
-        inline std::wstring ReadWString() const
-        {
-            std::wstring str;
-            ReadWString(str);
-            return str;
-        }
-
-        inline void WriteNulls(std::size_t amount) const
-        {
-            hl_FileWriteNulls(fs, amount);
-        }
-
-        inline std::size_t WriteBytes(const void* buffer, std::size_t elementSize,
-            std::size_t elementCount) const
-        {
-            return std::fwrite(buffer, elementSize, elementCount, fs);
-        }
-
-        template<typename T>
-        inline std::size_t WriteNoSwap(const T* value,
-            std::size_t elementCount = 1) const
-        {
-            return WriteBytes(value, sizeof(*value), elementCount);
-        }
-
-        template<typename T>
-        inline std::size_t Write(T* value) const
-        {
-            // Make big-endian
-            if (BigEndian) Endian::Swap(*value);
-
-            // Write data
-            std::size_t numWritten = WriteBytes(value,
-                sizeof(*value), 1);
-
-            // Make little-endian again
-            if (BigEndian) Endian::Swap(*value);
-
-            return numWritten;
-        }
-
-        template<typename T>
-        inline std::size_t Write(T* value, std::size_t elementCount) const
-        {
-            // Make little-endian
-            if (BigEndian)
+            if (DoEndianSwap)
             {
                 for (size_t i = 0; i < elementCount; ++i)
                 {
                     Endian::Swap(value[i]);
                 }
             }
+        }
 
-            // Write data
-            std::size_t numWritten = WriteBytes(value,
-                sizeof(*value), elementCount);
+        // Write data
+        std::size_t numWritten = WriteNoSwap(value, elementCount);
 
-            // Make big-endian again
-            if (BigEndian)
+        // Swap endianness back to what it was
+        if constexpr (sizeof(T) > 1)
+        {
+            if (DoEndianSwap)
             {
                 for (size_t i = 0; i < elementCount; ++i)
                 {
                     Endian::Swap(value[i]);
                 }
             }
-
-            return numWritten;
         }
 
-        inline long Tell() const noexcept
-        {
-            return std::ftell(fs);
-        }
+        return numWritten;
+    }
 
-        inline int Seek(long offset, int origin = SEEK_SET) const noexcept
-        {
-            return std::fseek(fs, offset, origin);
-        }
+    inline HL_RESULT WriteNull() const
+    {
+        std::uint8_t v = 0;
+        return WriteNoSwap(v);
+    }
 
-        inline int JumpTo(long pos) const noexcept
-        {
-            return std::fseek(fs, pos, SEEK_SET);
-        }
+    HL_API HL_RESULT WriteNulls(std::size_t amount) const;
 
-        inline int JumpAhead(long amount) const noexcept
-        {
-            return std::fseek(fs, amount, SEEK_CUR);
-        }
+    // TODO: 64-bit position support
+    inline long Tell() const noexcept
+    {
+        return std::ftell(f);
+    }
 
-        inline int JumpBehind(long amount) const noexcept
-        {
-            return std::fseek(fs, -amount, SEEK_CUR);
-        }
+    // TODO: 64-bit position support
+    inline int Seek(long offset, HL_SEEK_ORIGIN origin = HL_SEEK_CUR) const noexcept
+    {
+        return std::fseek(f, offset, GetSeekOrigin(origin));
+    }
 
-        inline void Align(long stride = 4) const
-        {
-            hl_FileAlign(fs, stride);
-        }
+    // TODO: 64-bit position support
+    inline int JumpTo(long pos) const noexcept
+    {
+        return Seek(pos, HL_SEEK_SET);
+    }
 
-        inline void Pad(long stride = 4) const
-        {
-            hl_FilePad(fs, stride);
-        }
+    // TODO: 64-bit position support
+    inline int JumpAhead(long amount) const noexcept
+    {
+        return Seek(amount, HL_SEEK_CUR);
+    }
 
-        template<typename OffsetType>
-        inline void FixOffset(long offPos, long offValue,
-            hl_OffsetTable& offTable) const
-        {
-            // Jump to offset
-            long filePos = Tell();
-            JumpTo(offPos);
+    // TODO: 64-bit position support
+    inline int JumpBehind(long amount) const noexcept
+    {
+        return Seek(-amount, HL_SEEK_CUR);
+    }
 
-            // Fix offset
-            OffsetType off = (static_cast<OffsetType>(
-                offValue) - Origin);
-            Write(&off);
+    // TODO: 64-bit position support
+    inline int Align(long stride = 4) const
+    {
+        if (stride-- < 2) return 0;
+        return JumpTo((Tell() + stride) & ~stride);
+    }
 
-            // Add position of fixed offset to table
-            offTable.push_back(offPos);
-            JumpTo(filePos);
-        }
+    // TODO: 64-bit position support
+    inline HL_RESULT Pad(long stride = 4) const
+    {
+        if (stride-- < 2) return HL_SUCCESS;
 
-        inline void FixOffset32(long offPos, long offValue,
-            hl_OffsetTable& offTable) const
-        {
-            FixOffset<uint32_t>(offPos, offValue, offTable);
-        }
+        long pos = Tell();
+        unsigned long ustride = static_cast<unsigned long>(stride);
 
-        inline void FixOffset64(long offPos, long offValue,
-            hl_OffsetTable& offTable) const
-        {
-            FixOffset<uint64_t>(offPos, offValue, offTable);
-        }
+        return WriteNulls(static_cast<size_t>(
+            ((pos + ustride) & ~ustride)) - pos);
+    }
 
-        template<typename OffsetType>
-        inline void FixOffsetRel(long relOffPos, long relOffValue,
-            hl_OffsetTable& offTable) const
-        {
-            // Jump to offset
-            long filePos = Tell();
-            relOffPos += filePos; // relOffPos now contains an absolute position
-            JumpTo(relOffPos);
+    template<typename OffsetType>
+    inline void FixOffset(long offPos, long offValue,
+        hl_OffsetTable& offTable) const
+    {
+        // Jump to offset
+        long filePos = Tell();
+        JumpTo(offPos);
 
-            // Fix offset
-            OffsetType off = ((static_cast<OffsetType>(
-                filePos) + relOffValue) - Origin);
+        // Fix offset
+        OffsetType off = (static_cast<OffsetType>(
+            offValue) - Origin);
+        Write(off);
 
-            Write(&off);
+        // Add position of fixed offset to table
+        offTable.push_back(offPos);
+        JumpTo(filePos);
+    }
 
-            // Add position of fixed offset to table
-            offTable.push_back(relOffPos);
-            JumpTo(filePos);
-        }
+    inline void FixOffset32(long offPos, long offValue,
+        hl_OffsetTable & offTable) const
+    {
+        FixOffset<uint32_t>(offPos, offValue, offTable);
+    }
 
-        inline void FixOffsetRel32(long relOffPos, long relOffValue,
-            hl_OffsetTable& offTable) const
-        {
-            FixOffsetRel<uint32_t>(relOffPos, relOffValue, offTable);
-        }
+    inline void FixOffset64(long offPos, long offValue,
+        hl_OffsetTable & offTable) const
+    {
+        FixOffset<uint64_t>(offPos, offValue, offTable);
+    }
 
-        inline void FixOffsetRel64(long relOffPos, long relOffValue,
-            hl_OffsetTable& offTable) const
-        {
-            FixOffsetRel<uint64_t>(relOffPos, relOffValue, offTable);
-        }
-    };
+    template<typename OffsetType>
+    inline void FixOffsetRel(long relOffPos, long relOffValue,
+        hl_OffsetTable & offTable) const
+    {
+        // Jump to offset
+        long filePos = Tell();
+        relOffPos += filePos; // relOffPos now contains an absolute position
+        JumpTo(relOffPos);
+
+        // Fix offset
+        OffsetType off = ((static_cast<OffsetType>(
+            filePos) + relOffValue) - Origin);
+
+        Write(off);
+
+        // Add position of fixed offset to table
+        offTable.push_back(relOffPos);
+        JumpTo(filePos);
+    }
+
+    inline void FixOffsetRel32(long relOffPos, long relOffValue,
+        hl_OffsetTable & offTable) const
+    {
+        FixOffsetRel<uint32_t>(relOffPos, relOffValue, offTable);
+    }
+
+    inline void FixOffsetRel64(long relOffPos, long relOffValue,
+        hl_OffsetTable & offTable) const
+    {
+        FixOffsetRel<uint64_t>(relOffPos, relOffValue, offTable);
+    }
+};
+
+namespace HedgeLib::IO
+{
+    using File = hl_File;
 }

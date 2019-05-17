@@ -1,9 +1,7 @@
 #pragma once
-#include "../HedgeLib.h"
+#include "File.h"
 #include "../Offsets.h"
 #include "../Endian.h"
-#include "../Errors.h"
-#include <stdio.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -81,7 +79,7 @@ inline void* hl_HHGetData(void* blob)
     return hl_HHStandardGetData(blob);
 }
 
-HL_API enum HL_RESULT hl_HHRead(FILE* file, void** blob);
+HL_API enum HL_RESULT hl_HHRead(struct hl_File* file, void** blob);
 
 /// <summary>
 /// Loads a file in the standard Hedgehog Engine node format.
@@ -92,11 +90,11 @@ HL_API enum HL_RESULT hl_HHRead(FILE* file, void** blob);
 /// <returns>TODO</returns>
 HL_API enum HL_RESULT hl_HHLoad(const char* path, void** blob);
 
-HL_API void hl_HHStartWriteStandard(FILE* file, uint32_t version);
-HL_API void hl_HHWriteOffsetTableStandard(FILE* file,
+HL_API enum HL_RESULT hl_HHStartWriteStandard(struct hl_File* file, uint32_t version);
+HL_API enum HL_RESULT hl_HHWriteOffsetTableStandard(const struct hl_File* file,
     const struct hl_OffsetTable* offTable);
 
-HL_API void hl_HHFinishWriteStandard(FILE* file, long headerPos,
+HL_API enum HL_RESULT hl_HHFinishWriteStandard(const struct hl_File* file, long headerPos,
     bool writeEOFThing, const struct hl_OffsetTable* offTable);
 
 HL_API void hl_HHFreeBlob(void* blob);
