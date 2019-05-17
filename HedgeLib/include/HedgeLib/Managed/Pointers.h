@@ -15,26 +15,24 @@ namespace HedgeLib
         }
     };
 
-    template<typename T>
-    struct HHPointerDeleter
+    struct HHBlobDeleter
     {
-        inline void operator()(T* ptr)
+        inline void operator()(void* blob)
         {
             std::cout << "finna free" << std::endl; // TODO: REMOVE ME
-            hl_HHFreeBlob(ptr);
+            hl_HHFreeBlob(blob);
             std::cout << "freed" << std::endl; // TODO: REMOVE ME
         }
     };
 
     template<typename T>
-    struct HHPointerGetter
+    struct HHBlobGetter
     {
-        inline T* operator()(void* ptr)
+        inline T* operator()(void* blob)
         {
-            return static_cast<T*>(hl_HHGetData(ptr));
+            return static_cast<T*>(hl_HHGetData(blob));
         }
     };
 
-    template<typename T>
-    using HHPointer = std::unique_ptr<T, HHPointerDeleter<T>>;
+    using HHBlobPointer = std::unique_ptr<void, HHBlobDeleter>;
 }
