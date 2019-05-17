@@ -147,11 +147,11 @@ enum HL_RESULT hl_HHRead(struct hl_File* file, void** blob)
     return HL_SUCCESS;
 }
 
-enum HL_RESULT hl_HHLoad(const char* path, void** blob)
+enum HL_RESULT hl_HHLoad(const char* filePath, void** blob)
 {
     // TODO: Do stuff here instead of just calling hl_HHRead so you
     // can optimize-out the need to read the file size and backtrack.
-    File file = File::OpenRead(path, true);
+    File file = File::OpenRead(std::filesystem::u8path(filePath), true);
     return hl_HHRead(&file, blob);
 }
 

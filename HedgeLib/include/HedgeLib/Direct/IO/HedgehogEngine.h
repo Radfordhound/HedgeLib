@@ -88,7 +88,7 @@ HL_API enum HL_RESULT hl_HHRead(struct hl_File* file, void** blob);
 /// <param name="path">Absolute path to the file.</param>
 /// <param name="blob">Address of the pointer which will point to the loaded data.</param>
 /// <returns>TODO</returns>
-HL_API enum HL_RESULT hl_HHLoad(const char* path, void** blob);
+HL_API enum HL_RESULT hl_HHLoad(const char* filePath, void** blob);
 
 HL_API enum HL_RESULT hl_HHStartWriteStandard(struct hl_File* file, uint32_t version);
 HL_API enum HL_RESULT hl_HHWriteOffsetTableStandard(const struct hl_File* file,

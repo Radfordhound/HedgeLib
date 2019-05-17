@@ -81,7 +81,7 @@ HL_RESULT hl_File::OpenNoClose(const std::filesystem::path filePath,
 {
 #ifdef _WIN32
     // Windows-specific wide file open
-    if (_wfopen_s(&f, filePath.wstring().c_str(), GetFileOpenModeW(mode)))
+    if (_wfopen_s(&f, filePath.c_str(), GetFileOpenModeW(mode)))
     {
         // TODO: Return better error
         f = nullptr; // TODO: Is this necessary?
@@ -89,7 +89,7 @@ HL_RESULT hl_File::OpenNoClose(const std::filesystem::path filePath,
     }
 #else
     // UTF-8 fopen
-    if (!(f = std::fopen(filePath.u8string().c_str(), GetFileOpenMode(mode))))
+    if (!(f = std::fopen(filePath.c_str(), GetFileOpenMode(mode))))
     {
         // TODO: Return better error
         return HL_ERROR_UNKNOWN;
@@ -248,22 +248,7 @@ enum HL_RESULT hl_FileGetSize(const char* filePath, size_t* size)
 
 struct hl_File* hl_FileOpen(const char* filePath, const enum HL_FILEMODE mode)
 {
-    // TODO: Will this work to convert UTF-8 strings on windows??
-    return new hl_File(filePath, mode);
-
-//#ifdef _WIN32
-//    // TODO: Error checking
-//    // TODO: Is this correct?
-//    int wSize = MultiByteToWideChar(CP_UTF8, 0, filePath, -1, nullptr, 0);
-//    std::unique_ptr<wchar_t[]> wFilePath = std::make_unique<wchar_t[]>(
-//        static_cast<std::size_t>(wSize));
-//
-//    MultiByteToWideChar(CP_UTF8, 0, filePath, -1, wFilePath.get(), wSize);
-//
-//    return hl_FileOpenWide(wFilePath.get(), mode);
-//#else
-//    return std::fopen(filePath, GetFileOpenMode(mode));
-//#endif
+    return new hl_File(std::filesystem::u8path(filePath), mode);
 }
 
 struct hl_File* hl_FileInit(FILE* file, bool doSwap, long origin)
