@@ -52,13 +52,13 @@ public:
     inline static hl_File OpenRead(const std::filesystem::path filePath,
         bool swap = false, long origin = 0)
     {
-        return hl_File(filePath, HL_FILEMODE_READ_BINARY, swap);
+        return hl_File(filePath, HL_FILEMODE_READ_BINARY, swap, origin);
     }
 
     inline static hl_File OpenWrite(const std::filesystem::path filePath,
         bool swap = false, long origin = 0)
     {
-        return hl_File(filePath, HL_FILEMODE_WRITE_BINARY, swap);
+        return hl_File(filePath, HL_FILEMODE_WRITE_BINARY, swap, origin);
     }
 
     HL_API HL_RESULT Close();
