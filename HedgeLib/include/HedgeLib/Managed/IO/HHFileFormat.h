@@ -31,12 +31,56 @@ namespace HedgeLib::IO
             return result;
         }
 
-        inline HL_RESULT Write(const File& file) override
+        inline HL_RESULT StartWriteStandard(File& file, std::uint32_t version)
         {
-            OffsetTable offTable;
+            return hl_HHStartWriteStandard(&file, 1);
+        }
+
+        inline HL_RESULT FinishWriteStandard(const File& file,
+            const OffsetTable& offTable, long headerPos = 0,
+            bool writeEOFThing = false)
+        {
+            return hl_HHFinishWriteStandard(&file, headerPos,
+                writeEOFThing, &offTable);
+        }
+
+        inline HL_RESULT Write(const File& file, OffsetTable& offTable)
+        {
             this->Get()->Write(file, offTable);
-            // TODO: Should we even return an HL_RESULT?
+            // TODO: Make Write return an HL_RESULT
             return HL_SUCCESS;
+        }
+
+        inline HL_RESULT WriteStandard(File& file, std::uint32_t version,
+            bool writeEOFThing = false)
+        {
+            // Start writing
+            long headerPos = file.Tell();
+            HL_RESULT result = StartWriteStandard(file, version);
+            if (HL_FAILED(result)) return result;
+
+            // Write data node
+            OffsetTable offTable;
+            result = Write(file, offTable);
+            if (HL_FAILED(result)) return result;
+
+            // Finish writing
+            result = FinishWriteStandard(file, offTable,
+                headerPos, writeEOFThing);
+
+            return result;
+        }
+
+        inline HL_RESULT Write(File& file) override
+        {
+            return WriteStandard(file, 5);
+        }
+
+        inline HL_RESULT SaveStandard(const std::filesystem::path filePath,
+            std::uint32_t version, bool writeEOFThing = false)
+        {
+            File f = File::OpenWrite(filePath);
+            return WriteStandard(f, version, writeEOFThing);
         }
     };
 }

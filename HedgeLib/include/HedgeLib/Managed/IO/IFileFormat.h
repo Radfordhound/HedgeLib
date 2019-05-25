@@ -13,6 +13,6 @@ namespace HedgeLib::IO
         virtual HL_RESULT Load(const std::filesystem::path filePath);
         virtual HL_RESULT Read(File& file) = 0;
         virtual HL_RESULT Save(const std::filesystem::path filePath);
-        virtual HL_RESULT Write(const File& file) = 0;
+        virtual HL_RESULT Write(File& file) = 0;
     };
 }
