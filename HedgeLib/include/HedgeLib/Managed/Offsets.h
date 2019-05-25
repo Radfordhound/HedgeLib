@@ -34,10 +34,11 @@ namespace HedgeLib
             baseAddress) + offset);
     }
 
-    // TODO: Embed DirectType within T??
-    template<typename T, typename DirectType>
+    template<typename T>
     class Array
     {
+        using DirectType = typename T::DirectType;
+
         DirectType* direct;
         T* managed;
         std::size_t count;

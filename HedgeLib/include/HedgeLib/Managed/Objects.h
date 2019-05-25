@@ -20,6 +20,8 @@ namespace HedgeLib
         }
 
     public:
+        using DirectType = T;
+
         inline ParentObject() : ptr(std::unique_ptr<T>(new T()))
         {
 #ifdef x64
@@ -74,6 +76,8 @@ namespace HedgeLib
         bool deletePtr = false;
 
     public:
+        using DirectType = T;
+
         inline ChildObject() :
             ptr(new T()),
             deletePtr(true)
