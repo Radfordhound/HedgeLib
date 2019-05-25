@@ -440,7 +440,7 @@ public:
 
     template<typename OffsetType>
     inline void FixOffset(long offPos, long offValue,
-        hl_OffsetTable& offTable) const
+        HedgeLib::OffsetTable& offTable) const
     {
         // Jump to offset
         long filePos = Tell();
@@ -457,20 +457,20 @@ public:
     }
 
     inline void FixOffset32(long offPos, long offValue,
-        hl_OffsetTable & offTable) const
+        HedgeLib::OffsetTable& offTable) const
     {
         FixOffset<uint32_t>(offPos, offValue, offTable);
     }
 
     inline void FixOffset64(long offPos, long offValue,
-        hl_OffsetTable & offTable) const
+        HedgeLib::OffsetTable& offTable) const
     {
         FixOffset<uint64_t>(offPos, offValue, offTable);
     }
 
     template<typename OffsetType>
     inline void FixOffsetRel(long relOffPos, long relOffValue,
-        hl_OffsetTable & offTable) const
+        HedgeLib::OffsetTable& offTable) const
     {
         // Jump to offset
         long filePos = Tell();
@@ -489,13 +489,13 @@ public:
     }
 
     inline void FixOffsetRel32(long relOffPos, long relOffValue,
-        hl_OffsetTable & offTable) const
+        HedgeLib::OffsetTable& offTable) const
     {
         FixOffsetRel<uint32_t>(relOffPos, relOffValue, offTable);
     }
 
     inline void FixOffsetRel64(long relOffPos, long relOffValue,
-        hl_OffsetTable & offTable) const
+        HedgeLib::OffsetTable& offTable) const
     {
         FixOffsetRel<uint64_t>(relOffPos, relOffValue, offTable);
     }

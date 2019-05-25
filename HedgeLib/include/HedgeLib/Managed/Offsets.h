@@ -9,6 +9,8 @@ struct hl_OffsetTable : public std::vector<long>
 
 namespace HedgeLib
 {
+    using OffsetTable = hl_OffsetTable;
+
     template<typename T, typename OffsetType>
     inline T* GetAbs(void* baseAddress, OffsetType offset)
     {

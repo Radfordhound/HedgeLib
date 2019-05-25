@@ -33,7 +33,7 @@ namespace HedgeLib::IO
 
         inline HL_RESULT Write(const File& file) override
         {
-            hl_OffsetTable offTable;
+            OffsetTable offTable;
             this->Get()->Write(file, offTable);
             // TODO: Should we even return an HL_RESULT?
             return HL_SUCCESS;
