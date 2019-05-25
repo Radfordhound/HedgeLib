@@ -99,11 +99,22 @@ HL_STATIC_ASSERT_SIZE(double, 8);
 #define HL_IMPL_ENDIAN_SWAP_RECURSIVE(type, v, be) \
     void HL_ENDIAN_SWAP_RECURSIVE_NAME(type)(struct type* v, bool be)
 
+#define HL_INLN_ENDIAN_SWAP(type, v) \
+    inline HL_IMPL_ENDIAN_SWAP(type, v)
+
+#define HL_INLN_ENDIAN_SWAP_RECURSIVE(type, v, be) \
+    inline HL_IMPL_ENDIAN_SWAP_RECURSIVE(type, v, be)
+
 #ifdef __cplusplus
 #define HL_DECL_ENDIAN_SWAP_CPP() HL_API void EndianSwap()
 
 #define HL_DECL_ENDIAN_SWAP_RECURSIVE_CPP() \
     HL_API void EndianSwapRecursive(bool isBigEndian)
+
+#define HL_INLN_ENDIAN_SWAP_CPP() inline void EndianSwap()
+
+#define HL_INLN_ENDIAN_SWAP_RECURSIVE_CPP() \
+    inline void EndianSwapRecursive(bool isBigEndian)
 
 #define HL_IMPL_ENDIAN_SWAP_CPP(type) \
     void type::EndianSwap() { HL_ENDIAN_SWAP(type, this); }
@@ -114,6 +125,8 @@ HL_STATIC_ASSERT_SIZE(double, 8);
 #else
 #define HL_DECL_ENDIAN_SWAP_CPP()
 #define HL_DECL_ENDIAN_SWAP_RECURSIVE_CPP()
+#define HL_INLN_ENDIAN_SWAP_CPP()
+#define HL_INLN_ENDIAN_SWAP_RECURSIVE_CPP()
 #define HL_IMPL_ENDIAN_SWAP_CPP(type)
 #define HL_IMPL_ENDIAN_SWAP_RECURSIVE_CPP(type)
 #endif
