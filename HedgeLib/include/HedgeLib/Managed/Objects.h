@@ -2,6 +2,7 @@
 #include "Pointers.h"
 #include "Helpers.h"
 #include <variant>
+#include <utility>
 
 namespace HedgeLib
 {
@@ -88,13 +89,48 @@ namespace HedgeLib
     public:
         inline ChildObject() :
             ptr(new T()),
-            deletePtr(true) {}
+            deletePtr(true)
+        {
+#ifdef x64
+            // Add 32-bit absolute pointers if necessary
+            if constexpr (Hasx64AddAbsPtrs32Function<T>)
+            {
+                ptr->x64AddAbsPtrs32();
+            }
+#endif
+        }
 
         inline ChildObject(T* ptr) : ptr(ptr) {}
 
+        inline ChildObject(const ChildObject<T>& o) = default;
+        inline ChildObject(ChildObject<T>&& o) noexcept = default;
+
+        inline ChildObject& operator=(const ChildObject<T>& o)
+        {
+            return *this = ChildObject<T>(o);
+        }
+
+        inline ChildObject& operator=(ChildObject<T>&& o) noexcept
+        {
+            std::swap(ptr, o.ptr);
+            std::swap(deletePtr, o.deletePtr);
+            return *this;
+        }
+
         inline ~ChildObject()
         {
-            if (deletePtr) delete ptr;
+            if (deletePtr)
+            {
+#ifdef x64
+                // Remove 32-bit absolute pointers if necessary
+                if constexpr (Hasx64RemoveAbsPtrs32Function<T>)
+                {
+                    ptr->x64RemoveAbsPtrs32();
+                }
+#endif
+
+                delete ptr;
+            }
         }
 
         inline T* Get() const noexcept
