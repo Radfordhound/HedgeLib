@@ -172,6 +172,8 @@ HL_API void hl_x64RemoveAbsPtr32(hl_DataOff32 index);
 #else
 }
 
+#include "HedgeLib/Managed/Endian.h"
+
 namespace HedgeLib
 {
     // C++ DataOffset template classes
@@ -213,6 +215,11 @@ namespace HedgeLib
         {
             return HL_GETPTR32(T, off);
         }
+
+        HL_INLN_ENDIAN_SWAP_RECURSIVE_CPP()
+        {
+            Swap(*Get());
+        }
     };
 
     template<typename T>
@@ -253,6 +260,11 @@ namespace HedgeLib
         inline T* operator->() const
         {
             return HL_GETPTR64(T, off);
+        }
+
+        HL_INLN_ENDIAN_SWAP_RECURSIVE_CPP()
+        {
+            Swap(*Get());
         }
     };
 
