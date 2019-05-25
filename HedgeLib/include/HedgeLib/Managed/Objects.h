@@ -1,4 +1,5 @@
 #pragma once
+#include "Offsets.h"
 #include "Pointers.h"
 #include "Helpers.h"
 #include <variant>
@@ -6,20 +7,6 @@
 
 namespace HedgeLib
 {
-#ifdef x64
-    template<typename T>
-    using x64AddAbsPtrs32_t = decltype(std::declval<T&>().x64AddAbsPtrs32());
-
-    template<typename T>
-    constexpr bool Hasx64AddAbsPtrs32Function = is_detected_v<x64AddAbsPtrs32_t, T>;
-
-    template<typename T>
-    using x64RemoveAbsPtrs32_t = decltype(std::declval<T&>().x64RemoveAbsPtrs32());
-
-    template<typename T>
-    constexpr bool Hasx64RemoveAbsPtrs32Function = is_detected_v<x64RemoveAbsPtrs32_t, T>;
-#endif
-
     template<typename T, typename P,
         template<typename> typename PGetter>
     class ParentObject
