@@ -218,7 +218,7 @@ namespace HedgeLib
 
         HL_INLN_ENDIAN_SWAP_RECURSIVE_CPP()
         {
-            Swap(*Get());
+            SwapRecursive(isBigEndian, *Get());
         }
     };
 
@@ -264,7 +264,7 @@ namespace HedgeLib
 
         HL_INLN_ENDIAN_SWAP_RECURSIVE_CPP()
         {
-            Swap(*Get());
+            SwapRecursive(isBigEndian, *Get());
         }
     };
 
