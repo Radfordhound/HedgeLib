@@ -186,6 +186,11 @@ namespace HedgeLib
         constexpr DataOffset32() = default;
         constexpr DataOffset32(hl_DataOff32 off) : off(off) {}
 
+        inline const T* Get()
+        {
+            return HL_GETPTR32(const T, off);
+        }
+
         inline T* Get()
         {
             return HL_GETPTR32(T, off);
@@ -196,22 +201,42 @@ namespace HedgeLib
             HL_SETPTR32(off, ptr);
         }
 
+        inline operator const hl_DataOff32&() const
+        {
+            return off;
+        }
+
         inline operator hl_DataOff32&()
         {
             return off;
         }
 
-        inline operator T*() const
+        inline operator const T*() const
+        {
+            return HL_GETPTR32(const T, off);
+        }
+
+        inline operator T*()
         {
             return HL_GETPTR32(T, off);
         }
 
-        inline T* operator*() const
+        inline const T* operator*() const
+        {
+            return HL_GETPTR32(const T, off);
+        }
+
+        inline T* operator*()
         {
             return HL_GETPTR32(T, off);
         }
 
-        inline T* operator->() const
+        inline const T* operator->() const
+        {
+            return HL_GETPTR32(const T, off);
+        }
+
+        inline T* operator->()
         {
             return HL_GETPTR32(T, off);
         }
@@ -232,6 +257,11 @@ namespace HedgeLib
         constexpr DataOffset64(hl_DataOff64 off) : off(off) {}
         inline DataOffset64(T* ptr) : off(HL_GETOFF64(ptr)) {}
 
+        inline const T* Get() const
+        {
+            return HL_GETPTR64(const T, off);
+        }
+
         inline T* Get()
         {
             return HL_GETPTR64(T, off);
@@ -242,22 +272,42 @@ namespace HedgeLib
             HL_SETPTR64(off, ptr);
         }
 
+        inline operator const hl_DataOff64&() const
+        {
+            return off;
+        }
+
         inline operator hl_DataOff64&()
         {
             return off;
         }
 
-        inline operator T* () const
+        inline operator const T* () const
+        {
+            return HL_GETPTR64(const T, off);
+        }
+
+        inline operator T* ()
         {
             return HL_GETPTR64(T, off);
         }
 
-        inline T* operator*() const
+        inline const T* operator*() const
+        {
+            return HL_GETPTR64(const T, off);
+        }
+
+        inline T* operator*()
         {
             return HL_GETPTR64(T, off);
         }
 
-        inline T* operator->() const
+        inline const T* operator->() const
+        {
+            return HL_GETPTR64(const T, off);
+        }
+
+        inline T* operator->()
         {
             return HL_GETPTR64(T, off);
         }
