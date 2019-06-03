@@ -5,14 +5,14 @@
 
 namespace HedgeLib::IO
 {
-    class HL_API IFileFormat
+    class IFileFormat
     {
     public:
         virtual ~IFileFormat() = 0;
 
-        virtual HL_RESULT Load(const std::filesystem::path filePath);
+        HL_API virtual HL_RESULT Load(const std::filesystem::path filePath);
         virtual HL_RESULT Read(File& file) = 0;
-        virtual HL_RESULT Save(const std::filesystem::path filePath);
+        HL_API virtual HL_RESULT Save(const std::filesystem::path filePath);
         virtual HL_RESULT Write(File& file) = 0;
     };
 }
