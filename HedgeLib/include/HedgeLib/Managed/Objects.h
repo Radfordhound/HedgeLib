@@ -108,7 +108,7 @@ namespace HedgeLib
             return *this;
         }
 
-        inline ~ChildObject()
+        inline virtual ~ChildObject()
         {
             if (deletePtr)
             {
