@@ -186,14 +186,14 @@ namespace HedgeLib
         constexpr DataOffset32() = default;
         constexpr DataOffset32(hl_DataOff32 off) : off(off) {}
 
-        inline const T* Get()
-        {
-            return HL_GETPTR32(const T, off);
-        }
-
         inline T* Get()
         {
             return HL_GETPTR32(T, off);
+        }
+
+        inline const T* Get()
+        {
+            return HL_GETPTR32(const T, off);
         }
 
         inline void Set(uintptr_t ptr)
@@ -201,9 +201,14 @@ namespace HedgeLib
             HL_SETPTR32(off, ptr);
         }
 
-        inline operator const hl_DataOff32&() const
+        inline void Set(T* ptr)
         {
-            return off;
+            Set(reinterpret_cast<uintptr_t>(ptr));
+        }
+
+        inline void Set(const T* ptr)
+        {
+            Set(reinterpret_cast<uintptr_t>(ptr));
         }
 
         inline operator hl_DataOff32&()
@@ -211,9 +216,9 @@ namespace HedgeLib
             return off;
         }
 
-        inline operator const T*() const
+        inline operator const hl_DataOff32& () const
         {
-            return HL_GETPTR32(const T, off);
+            return off;
         }
 
         inline operator T*()
@@ -221,7 +226,7 @@ namespace HedgeLib
             return HL_GETPTR32(T, off);
         }
 
-        inline const T* operator*() const
+        inline operator const T* () const
         {
             return HL_GETPTR32(const T, off);
         }
@@ -231,7 +236,7 @@ namespace HedgeLib
             return HL_GETPTR32(T, off);
         }
 
-        inline const T* operator->() const
+        inline const T* operator*() const
         {
             return HL_GETPTR32(const T, off);
         }
@@ -239,6 +244,11 @@ namespace HedgeLib
         inline T* operator->()
         {
             return HL_GETPTR32(T, off);
+        }
+
+        inline const T* operator->() const
+        {
+            return HL_GETPTR32(const T, off);
         }
 
         HL_INLN_ENDIAN_SWAP_RECURSIVE_CPP()
@@ -257,14 +267,14 @@ namespace HedgeLib
         constexpr DataOffset64(hl_DataOff64 off) : off(off) {}
         inline DataOffset64(T* ptr) : off(HL_GETOFF64(ptr)) {}
 
-        inline const T* Get() const
-        {
-            return HL_GETPTR64(const T, off);
-        }
-
         inline T* Get()
         {
             return HL_GETPTR64(T, off);
+        }
+
+        inline const T* Get() const
+        {
+            return HL_GETPTR64(const T, off);
         }
 
         inline void Set(uintptr_t ptr)
@@ -272,9 +282,14 @@ namespace HedgeLib
             HL_SETPTR64(off, ptr);
         }
 
-        inline operator const hl_DataOff64&() const
+        inline void Set(T* ptr)
         {
-            return off;
+            Set(reinterpret_cast<uintptr_t>(ptr));
+        }
+
+        inline void Set(const T* ptr)
+        {
+            Set(reinterpret_cast<uintptr_t>(ptr));
         }
 
         inline operator hl_DataOff64&()
@@ -282,9 +297,9 @@ namespace HedgeLib
             return off;
         }
 
-        inline operator const T* () const
+        inline operator const hl_DataOff64& () const
         {
-            return HL_GETPTR64(const T, off);
+            return off;
         }
 
         inline operator T* ()
@@ -292,7 +307,7 @@ namespace HedgeLib
             return HL_GETPTR64(T, off);
         }
 
-        inline const T* operator*() const
+        inline operator const T* () const
         {
             return HL_GETPTR64(const T, off);
         }
@@ -302,7 +317,7 @@ namespace HedgeLib
             return HL_GETPTR64(T, off);
         }
 
-        inline const T* operator->() const
+        inline const T* operator*() const
         {
             return HL_GETPTR64(const T, off);
         }
@@ -310,6 +325,11 @@ namespace HedgeLib
         inline T* operator->()
         {
             return HL_GETPTR64(T, off);
+        }
+
+        inline const T* operator->() const
+        {
+            return HL_GETPTR64(const T, off);
         }
 
         HL_INLN_ENDIAN_SWAP_RECURSIVE_CPP()
