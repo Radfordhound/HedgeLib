@@ -191,7 +191,7 @@ namespace HedgeLib
             return HL_GETPTR32(T, off);
         }
 
-        inline const T* Get()
+        inline const T* Get() const
         {
             return HL_GETPTR32(const T, off);
         }
