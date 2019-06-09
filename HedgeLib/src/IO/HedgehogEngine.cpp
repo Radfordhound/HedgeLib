@@ -1,6 +1,7 @@
 #include "HedgeLib/IO/HedgehogEngine.h"
 #include "HedgeLib/IO/File.h"
 #include "HedgeLib/Offsets.h"
+#include "../INBlob.h"
 
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHHeader);
 HL_IMPL_ENDIAN_SWAP(hl_DHHHeader, v)
@@ -50,19 +51,38 @@ void hl_HHFixOffsets(uint32_t* offTable,
     }
 }
 
-void* hl_HHMirageGetDataNode(const void* blob)
+void* hl_HHMirageGetDataNode(const struct hl_Blob* blob)
 {
     // TODO
     return nullptr;
 }
 
-void* hl_HHMirageGetData(void* blob)
+void* hl_HHStandardGetData(struct hl_Blob* blob)
+{
+    hl_DHHStandardHeader* header = blob->GetData<hl_DHHStandardHeader>();
+    return HL_GETABSV(header, header->DataOffset);
+}
+
+void* hl_HHMirageGetData(struct hl_Blob* blob)
 {
     // TODO
     return nullptr;
 }
 
-enum HL_RESULT hl_HHRead(struct hl_File* file, void** blob)
+void* hl_HHGetData(struct hl_Blob* blob)
+{
+    // Mirage Header
+    if (hl_HHDetectHeaderType(blob->GetData<const
+        hl_DHHHeader>()) == HL_HHHEADER_TYPE_MIRAGE)
+    {
+        return hl_HHMirageGetData(blob);
+    }
+
+    // Standard Header
+    return hl_HHStandardGetData(blob);
+}
+
+enum HL_RESULT hl_HHRead(struct hl_File* file, struct hl_Blob** blob)
 {
     HL_RESULT result;
     file->DoEndianSwap = true;
@@ -95,9 +115,10 @@ enum HL_RESULT hl_HHRead(struct hl_File* file, void** blob)
     }
 
     // Read entire file
-    void* fileData = std::malloc(fileSize);
-    if (!fileData) return HL_ERROR_OUT_OF_MEMORY;
+    *blob = hl_CreateBlob(HL_BLOB_TYPE_HEDGEHOG_ENGINE, fileSize);
+    if (!(*blob)) return HL_ERROR_OUT_OF_MEMORY;
 
+    void* fileData = (*blob)->GetData<void>();
     result = file->ReadBytes(fileData, fileSize);
     if (HL_FAILED(result)) return result;
 
@@ -134,13 +155,10 @@ enum HL_RESULT hl_HHRead(struct hl_File* file, void** blob)
 
     // Fix offsets
     hl_HHFixOffsets(offTable, offCount, data);
-
-    // Set blob pointer and return
-    *blob = fileData;
     return HL_SUCCESS;
 }
 
-enum HL_RESULT hl_HHLoad(const char* filePath, void** blob)
+enum HL_RESULT hl_HHLoad(const char* filePath, struct hl_Blob** blob)
 {
     // TODO: Do stuff here instead of just calling hl_HHRead so you
     // can optimize-out the need to read the file size and backtrack.
@@ -231,7 +249,7 @@ enum HL_RESULT hl_HHFinishWriteStandard(const struct hl_File* file, long headerP
     return result;
 }
 
-void hl_HHFreeBlob(void* blob)
+void hl_HHFreeBlob(struct hl_Blob* blob)
 {
 #ifdef x64
     // Get offset table
@@ -241,8 +259,8 @@ void hl_HHFreeBlob(void* blob)
 
     if (!blob) return;
 
-    if (hl_HHDetectHeaderType(static_cast<hl_DHHHeader*>(
-        blob)) == HL_HHHEADER_TYPE_MIRAGE)
+    if (hl_HHDetectHeaderType(blob->GetData<
+        hl_DHHHeader>()) == HL_HHHEADER_TYPE_MIRAGE)
     {
         // TODO
         offCount = 0;
@@ -252,17 +270,17 @@ void hl_HHFreeBlob(void* blob)
     else
     {
         // Get offset table pointer
-        hl_DHHStandardHeader* header = static_cast
-            <hl_DHHStandardHeader*>(blob);
+        hl_DHHStandardHeader* header = blob->GetData
+            <hl_DHHStandardHeader>();
 
         offTable = hl_GetAbs<std::uint32_t>(
-            blob, header->OffsetTableOffset);
+            header, header->OffsetTableOffset);
 
         // Get offset table count
         offCount = *offTable++;
 
         // Get data
-        data = hl_GetAbs<void>(blob, header->DataOffset);
+        data = hl_GetAbs<void>(header, header->DataOffset);
     }
 
     // Free all offsets using data in offset table

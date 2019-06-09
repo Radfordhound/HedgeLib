@@ -56,30 +56,12 @@ HL_API void hl_HHFixOffsets(uint32_t* offTable,
     uint32_t offCount, void* data);
 
 // TODO: hl_HHMirageGetNode function
-HL_API void* hl_HHMirageGetDataNode(const void* blob);
+HL_API void* hl_HHMirageGetDataNode(const struct hl_Blob* blob);
 
-inline void* hl_HHStandardGetData(void* blob)
-{
-    hl_DHHStandardHeader* header = (hl_DHHStandardHeader*)blob;
-    return HL_GETABSV(blob, header->DataOffset);
-}
-
-HL_API void* hl_HHMirageGetData(void* blob);
-
-inline void* hl_HHGetData(void* blob)
-{
-    // Mirage Header
-    if (hl_HHDetectHeaderType((const struct hl_DHHHeader*)
-        blob) == HL_HHHEADER_TYPE_MIRAGE)
-    {
-        return hl_HHMirageGetData(blob);
-    }
-
-    // Standard Header
-    return hl_HHStandardGetData(blob);
-}
-
-HL_API enum HL_RESULT hl_HHRead(struct hl_File* file, void** blob);
+HL_API void* hl_HHStandardGetData(struct hl_Blob* blob);
+HL_API void* hl_HHMirageGetData(struct hl_Blob* blob);
+HL_API void* hl_HHGetData(struct hl_Blob* blob);
+HL_API enum HL_RESULT hl_HHRead(struct hl_File* file, struct hl_Blob** blob);
 
 /// <summary>
 /// Loads a file in the standard Hedgehog Engine node format.
@@ -88,7 +70,7 @@ HL_API enum HL_RESULT hl_HHRead(struct hl_File* file, void** blob);
 /// <param name="path">Absolute path to the file.</param>
 /// <param name="blob">Address of the pointer which will point to the loaded data.</param>
 /// <returns>TODO</returns>
-HL_API enum HL_RESULT hl_HHLoad(const char* filePath, void** blob);
+HL_API enum HL_RESULT hl_HHLoad(const char* filePath, struct hl_Blob** blob);
 
 HL_API enum HL_RESULT hl_HHStartWriteStandard(struct hl_File* file, uint32_t version);
 HL_API enum HL_RESULT hl_HHWriteOffsetTableStandard(const struct hl_File* file,
@@ -97,8 +79,26 @@ HL_API enum HL_RESULT hl_HHWriteOffsetTableStandard(const struct hl_File* file,
 HL_API enum HL_RESULT hl_HHFinishWriteStandard(const struct hl_File* file, long headerPos,
     bool writeEOFThing, const hl_OffsetTable* offTable);
 
-HL_API void hl_HHFreeBlob(void* blob);
+HL_API void hl_HHFreeBlob(struct hl_Blob* blob);
 
 #ifdef __cplusplus
+}
+
+template<typename T>
+inline T* hl_HHStandardGetData(struct hl_Blob* blob)
+{
+    return static_cast<T*>(hl_HHStandardGetData(blob));
+}
+
+template<typename T>
+inline T* hl_HHMirageGetData(struct hl_Blob* blob)
+{
+    return static_cast<T*>(hl_HHMirageGetData(blob));
+}
+
+template<typename T>
+inline T* hl_HHGetData(struct hl_Blob* blob)
+{
+    return static_cast<T*>(hl_HHGetData(blob));
 }
 #endif
