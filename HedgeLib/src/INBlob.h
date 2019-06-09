@@ -16,13 +16,13 @@ struct hl_Blob
     }
 };
 
-constexpr static std::size_t hl_BlobHeaderSize = sizeof(HL_BLOB_TYPE);
+constexpr static std::size_t hl_INBlobHeaderSize = sizeof(HL_BLOB_TYPE);
 
-inline hl_Blob* hl_CreateBlob(HL_BLOB_TYPE type, std::size_t size)
+inline hl_Blob* hl_INCreateBlob(HL_BLOB_TYPE type, std::size_t size)
 {
     // Create blob with extra room for type
     hl_Blob* blob = static_cast<hl_Blob*>(
-        std::malloc(hl_BlobHeaderSize + size));
+        std::malloc(hl_INBlobHeaderSize + size));
 
     // Out of memory check
     if (!blob) return nullptr;
