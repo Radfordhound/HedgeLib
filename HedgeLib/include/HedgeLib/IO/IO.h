@@ -7,10 +7,10 @@
 #define HL_WRITE(type, file, ptr, offTable) HL_WRITE_NAME(type)(file, ptr, offTable)
 
 #define HL_DECL_WRITE(type) HL_API void HL_WRITE_NAME(type)(const struct hl_File* file, \
-    struct type* ptr, struct hl_OffsetTable* offTable)
+    struct type* ptr, hl_OffsetTable* offTable)
 
 #define HL_IMPL_WRITE(type, file, ptr, offTable) void HL_WRITE_NAME(type)(\
-    const struct hl_File* file, struct type* ptr, struct hl_OffsetTable* offTable)
+    const struct hl_File* file, struct type* ptr, hl_OffsetTable* offTable)
 
 #ifdef __cplusplus
 #define HL_DECL_WRITE_CPP() HL_API void Write(\

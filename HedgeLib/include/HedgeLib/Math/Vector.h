@@ -2,6 +2,10 @@
 #include "../Endian.h"
 #include "../IO/IO.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct hl_Vector2
 {
     float X;
@@ -91,3 +95,7 @@ struct hl_Vector4
 
 HL_DECL_ENDIAN_SWAP(hl_Vector4);
 HL_DECL_WRITE(hl_Vector4);
+
+#ifdef __cplusplus
+}
+#endif

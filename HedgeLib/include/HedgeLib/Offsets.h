@@ -1,10 +1,16 @@
 #pragma once
 #include "HedgeLib.h"
-#include "Endian.h"
+#include "Errors.h"
 #include <stdint.h>
 #include <stddef.h>
 
 #ifdef __cplusplus
+#include <vector>
+
+// hl_SwapRecursive forward declaration
+template<typename T>
+void hl_SwapRecursive(bool isBigEndian, T& value);
+
 extern "C" {
 #endif
 
@@ -25,47 +31,22 @@ struct hl_ArrOff64
     hl_DataOff64 Offset;
 };
 
-#define HL_ENDIAN_SWAP_ARR32(type, v, be, swapCall) {\
-    if (be) hl_SwapUint32(&(v.Count));\
-\
-    type* ptr = HL_GETPTR32(type, v.Offset);\
-    for (uint32_t i = 0; i < v.Count; ++i)\
-    {\
-        swapCall;\
-    }\
-\
-    if (!be) hl_SwapUint32(&(v.Count));\
-}
-
-#define HL_ENDIAN_SWAP_ARR64(type, v, be, swapCall) {\
-    if (be) hl_SwapUint64(&(v.Count));\
-\
-    type* ptr = HL_GETPTR64(type, v.Offset);\
-    for (uint64_t i = 0; i < v.Count; ++i)\
-    {\
-        swapCall;\
-    }\
-\
-    if (!be) hl_SwapUint64(&(v.Count));\
-}
-
-#define HL_ENDIAN_SWAP_ARR32_RECURSIVE(type, v, be) HL_ENDIAN_SWAP_ARR32(\
-    type, v, be, HL_ENDIAN_SWAP_RECURSIVE(type, v, be))
-
-#define HL_ENDIAN_SWAP_ARR64_RECURSIVE(type, v, be) HL_ENDIAN_SWAP_ARR64(\
-    type, v, be, HL_ENDIAN_SWAP_RECURSIVE(type, v, be))
-
 // Offset Table
-struct hl_OffsetTable;
+#ifdef __cplusplus
+using hl_OffsetTable = std::vector<long>;
+#else
+struct hl_OffsetTable; // TODO: Is this line needed?
+typedef struct hl_OffsetTable hl_OffsetTable;
+#endif
 
-HL_API struct hl_OffsetTable* hl_CreateOffsetTable();
-HL_API void hl_AddOffset(struct hl_OffsetTable* offTable, long offset);
-HL_API long* hl_GetOffsetsPtr(struct hl_OffsetTable* offTable);
-HL_API size_t hl_GetOffsetCount(const struct hl_OffsetTable* offTable);
-HL_API void hl_GetOffsets(struct hl_OffsetTable* offTable,
+HL_API hl_OffsetTable* hl_CreateOffsetTable();
+HL_API void hl_AddOffset(hl_OffsetTable* offTable, long offset);
+HL_API long* hl_GetOffsetsPtr(hl_OffsetTable* offTable);
+HL_API size_t hl_GetOffsetCount(const hl_OffsetTable* offTable);
+HL_API void hl_GetOffsets(hl_OffsetTable* offTable,
     long** offsets, size_t* count);
 
-HL_API void hl_DestroyOffsetTable(struct hl_OffsetTable* offTable);
+HL_API void hl_DestroyOffsetTable(hl_OffsetTable* offTable);
 
 // Get/Set Macros & x64 Macros
 #ifdef x86
@@ -172,206 +153,208 @@ HL_API void hl_x64RemoveAbsPtr32(hl_DataOff32 index);
 #else
 }
 
-#include "HedgeLib/Managed/Endian.h"
-
-namespace HedgeLib
+template<typename T, typename OffsetType>
+inline T* hl_GetAbs(void* baseAddress, OffsetType offset)
 {
-    // C++ DataOffset template classes
-    template<typename T>
-    class DataOffset32
+    return reinterpret_cast<T*>(static_cast<uint8_t*>(
+        baseAddress) + offset);
+}
+
+// C++ DataOffset template classes
+template<typename T>
+class hl_DataOffset32
+{
+    hl_DataOff32 off;
+
+public:
+    constexpr hl_DataOffset32() = default;
+    constexpr hl_DataOffset32(hl_DataOff32 off) : off(off) {}
+
+    inline T* Get()
     {
-        hl_DataOff32 off;
+        return HL_GETPTR32(T, off);
+    }
 
-    public:
-        constexpr DataOffset32() = default;
-        constexpr DataOffset32(hl_DataOff32 off) : off(off) {}
-
-        inline T* Get()
-        {
-            return HL_GETPTR32(T, off);
-        }
-
-        inline const T* Get() const
-        {
-            return HL_GETPTR32(const T, off);
-        }
-
-        inline void Set(uintptr_t ptr)
-        {
-            HL_SETPTR32(off, ptr);
-        }
-
-        inline void Set(T* ptr)
-        {
-            Set(reinterpret_cast<uintptr_t>(ptr));
-        }
-
-        inline void Set(const T* ptr)
-        {
-            Set(reinterpret_cast<uintptr_t>(ptr));
-        }
-
-        inline operator hl_DataOff32&()
-        {
-            return off;
-        }
-
-        inline operator const hl_DataOff32& () const
-        {
-            return off;
-        }
-
-        inline operator T*()
-        {
-            return HL_GETPTR32(T, off);
-        }
-
-        inline operator const T* () const
-        {
-            return HL_GETPTR32(const T, off);
-        }
-
-        inline T* operator*()
-        {
-            return HL_GETPTR32(T, off);
-        }
-
-        inline const T* operator*() const
-        {
-            return HL_GETPTR32(const T, off);
-        }
-
-        inline T* operator->()
-        {
-            return HL_GETPTR32(T, off);
-        }
-
-        inline const T* operator->() const
-        {
-            return HL_GETPTR32(const T, off);
-        }
-
-        HL_INLN_ENDIAN_SWAP_RECURSIVE_CPP()
-        {
-            SwapRecursive(isBigEndian, *Get());
-        }
-    };
-
-    template<typename T>
-    class DataOffset64
+    inline const T* Get() const
     {
-        hl_DataOff64 off;
+        return HL_GETPTR32(const T, off);
+    }
 
-    public:
-        constexpr DataOffset64() = default;
-        constexpr DataOffset64(hl_DataOff64 off) : off(off) {}
-        inline DataOffset64(T* ptr) : off(HL_GETOFF64(ptr)) {}
+    inline void Set(uintptr_t ptr)
+    {
+        HL_SETPTR32(off, ptr);
+    }
 
-        inline T* Get()
-        {
-            return HL_GETPTR64(T, off);
-        }
+    inline void Set(T* ptr)
+    {
+        Set(reinterpret_cast<uintptr_t>(ptr));
+    }
 
-        inline const T* Get() const
-        {
-            return HL_GETPTR64(const T, off);
-        }
+    inline void Set(const T* ptr)
+    {
+        Set(reinterpret_cast<uintptr_t>(ptr));
+    }
 
-        inline void Set(uintptr_t ptr)
-        {
-            HL_SETPTR64(off, ptr);
-        }
+    inline operator hl_DataOff32&()
+    {
+        return off;
+    }
 
-        inline void Set(T* ptr)
-        {
-            Set(reinterpret_cast<uintptr_t>(ptr));
-        }
+    inline operator const hl_DataOff32& () const
+    {
+        return off;
+    }
 
-        inline void Set(const T* ptr)
-        {
-            Set(reinterpret_cast<uintptr_t>(ptr));
-        }
+    inline operator T*()
+    {
+        return HL_GETPTR32(T, off);
+    }
 
-        inline operator hl_DataOff64&()
-        {
-            return off;
-        }
+    inline operator const T* () const
+    {
+        return HL_GETPTR32(const T, off);
+    }
 
-        inline operator const hl_DataOff64& () const
-        {
-            return off;
-        }
+    inline T* operator*()
+    {
+        return HL_GETPTR32(T, off);
+    }
 
-        inline operator T* ()
-        {
-            return HL_GETPTR64(T, off);
-        }
+    inline const T* operator*() const
+    {
+        return HL_GETPTR32(const T, off);
+    }
 
-        inline operator const T* () const
-        {
-            return HL_GETPTR64(const T, off);
-        }
+    inline T* operator->()
+    {
+        return HL_GETPTR32(T, off);
+    }
 
-        inline T* operator*()
-        {
-            return HL_GETPTR64(T, off);
-        }
+    inline const T* operator->() const
+    {
+        return HL_GETPTR32(const T, off);
+    }
 
-        inline const T* operator*() const
-        {
-            return HL_GETPTR64(const T, off);
-        }
+    inline void EndianSwapRecursive(bool isBigEndian)
+    {
+        hl_SwapRecursive(isBigEndian, *HL_GETPTR32(T, off));
+    }
+};
 
-        inline T* operator->()
-        {
-            return HL_GETPTR64(T, off);
-        }
+template<typename T>
+class hl_DataOffset64
+{
+    hl_DataOff64 off;
 
-        inline const T* operator->() const
-        {
-            return HL_GETPTR64(const T, off);
-        }
+public:
+    constexpr hl_DataOffset64() = default;
+    constexpr hl_DataOffset64(hl_DataOff64 off) : off(off) {}
+    inline hl_DataOffset64(T* ptr) : off(HL_GETOFF64(ptr)) {}
 
-        HL_INLN_ENDIAN_SWAP_RECURSIVE_CPP()
-        {
-            SwapRecursive(isBigEndian, *Get());
-        }
-    };
+    inline T* Get()
+    {
+        return HL_GETPTR64(T, off);
+    }
+
+    inline const T* Get() const
+    {
+        return HL_GETPTR64(const T, off);
+    }
+
+    inline void Set(uintptr_t ptr)
+    {
+        HL_SETPTR64(off, ptr);
+    }
+
+    inline void Set(T* ptr)
+    {
+        Set(reinterpret_cast<uintptr_t>(ptr));
+    }
+
+    inline void Set(const T* ptr)
+    {
+        Set(reinterpret_cast<uintptr_t>(ptr));
+    }
+
+    inline operator hl_DataOff64&()
+    {
+        return off;
+    }
+
+    inline operator const hl_DataOff64& () const
+    {
+        return off;
+    }
+
+    inline operator T* ()
+    {
+        return HL_GETPTR64(T, off);
+    }
+
+    inline operator const T* () const
+    {
+        return HL_GETPTR64(const T, off);
+    }
+
+    inline T* operator*()
+    {
+        return HL_GETPTR64(T, off);
+    }
+
+    inline const T* operator*() const
+    {
+        return HL_GETPTR64(const T, off);
+    }
+
+    inline T* operator->()
+    {
+        return HL_GETPTR64(T, off);
+    }
+
+    inline const T* operator->() const
+    {
+        return HL_GETPTR64(const T, off);
+    }
+
+    inline void EndianSwapRecursive(bool isBigEndian)
+    {
+        hl_SwapRecursive(isBigEndian, *Get());
+    }
+};
 
 #ifdef x64
-    inline void x64AddAbsPtrs32(hl_DataOff32& value)
-    {
-        value = hl_x64AddAbsPtr32(0);
-    }
+inline void hl_x64AddAbsPtrs32(hl_DataOff32& value)
+{
+    value = hl_x64AddAbsPtr32(0);
+}
 
-    template<typename... Args>
-    inline void x64AddAbsPtrs32(hl_DataOff32& value, Args& ... args)
-    {
-        x64AddAbsPtrs32(value);
-        x64AddAbsPtrs32(args...);
-    }
+template<typename... Args>
+inline void hl_x64AddAbsPtrs32(hl_DataOff32& value, Args& ... args)
+{
+    hl_x64AddAbsPtrs32(value);
+    hl_x64AddAbsPtrs32(args...);
+}
 
-    inline void x64RemoveAbsPtrs32(hl_DataOff32 value)
-    {
-        hl_x64RemoveAbsPtr32(value);
-    }
+inline void hl_x64RemoveAbsPtrs32(hl_DataOff32 value)
+{
+    hl_x64RemoveAbsPtr32(value);
+}
 
-    template<typename... Args>
-    inline void x64RemoveAbsPtrs32(hl_DataOff32 value, Args& ... args)
-    {
-        x64RemoveAbsPtrs32(value);
-        x64RemoveAbsPtrs32(args...);
-    }
+template<typename... Args>
+inline void hl_x64RemoveAbsPtrs32(hl_DataOff32 value, Args& ... args)
+{
+    hl_x64RemoveAbsPtrs32(value);
+    hl_x64RemoveAbsPtrs32(args...);
+}
 #endif
 
 // C++ Offset/Array Macros
-#define HL_OFF32(type) HedgeLib::DataOffset32<type>
-#define HL_OFF64(type) HedgeLib::DataOffset64<type>
+#define HL_OFF32(type) hl_DataOffset32<type>
+#define HL_OFF64(type) hl_DataOffset64<type>
 
 // TODO: Use template in C++ variant?
 #define HL_ARR32(type) hl_ArrOff32
 #define HL_ARR64(type) hl_ArrOff64
-}
 #endif
 
 // String macros
@@ -381,10 +364,10 @@ namespace HedgeLib
 // C++ x64 macros
 #if defined(x64) && defined(__cplusplus)
 #define HL_INLN_X64_ADD_OFFSETS_CPP(...) inline void x64AddAbsPtrs32() { \
-    HedgeLib::x64AddAbsPtrs32(__VA_ARGS__); }
+    hl_x64AddAbsPtrs32(__VA_ARGS__); }
 
 #define HL_INLN_X64_REMOVE_OFFSETS_CPP(...) inline void x64RemoveAbsPtrs32() { \
-    HedgeLib::x64RemoveAbsPtrs32(__VA_ARGS__); }
+    hl_x64RemoveAbsPtrs32(__VA_ARGS__); }
 
 #define HL_INLN_X64_OFFSETS_CPP(...) HL_INLN_X64_ADD_OFFSETS_CPP(__VA_ARGS__) \
     HL_INLN_X64_REMOVE_OFFSETS_CPP(__VA_ARGS__)

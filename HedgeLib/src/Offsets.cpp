@@ -1,35 +1,33 @@
-#include "HedgeLib/Direct/Offsets.h"
-#include "HedgeLib/Managed/Offsets.h"
-#include <cstdlib>
+#include "HedgeLib/Offsets.h"
 
-struct hl_OffsetTable* hl_CreateOffsetTable()
+hl_OffsetTable* hl_CreateOffsetTable()
 {
     return new hl_OffsetTable();
 }
 
-void hl_AddOffset(struct hl_OffsetTable* offTable, long offset)
+void hl_AddOffset(hl_OffsetTable* offTable, long offset)
 {
     offTable->push_back(offset);
 }
 
-long* hl_GetOffsetsPtr(struct hl_OffsetTable* offTable)
+long* hl_GetOffsetsPtr(hl_OffsetTable* offTable)
 {
     return offTable->data();
 }
 
-size_t hl_GetOffsetCount(const struct hl_OffsetTable* offTable)
+size_t hl_GetOffsetCount(const hl_OffsetTable* offTable)
 {
     return offTable->size();
 }
 
-void hl_GetOffsets(struct hl_OffsetTable* offTable,
+void hl_GetOffsets(hl_OffsetTable* offTable,
     long** offsets, size_t* count)
 {
     *offsets = offTable->data();
     *count = offTable->size();
 }
 
-void hl_DestroyOffsetTable(struct hl_OffsetTable* offTable)
+void hl_DestroyOffsetTable(hl_OffsetTable* offTable)
 {
     delete offTable;
 }

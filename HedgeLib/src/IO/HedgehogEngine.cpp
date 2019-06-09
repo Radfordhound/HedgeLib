@@ -1,14 +1,8 @@
-#include "HedgeLib/Direct/IO/HedgehogEngine.h"
-#include "HedgeLib/Managed/IO/File.h"
-#include "HedgeLib/Managed/Offsets.h"
-#include <cstdlib>
-#include <cstddef>
-
-using namespace HedgeLib;
-using namespace HedgeLib::IO;
+#include "HedgeLib/IO/HedgehogEngine.h"
+#include "HedgeLib/IO/File.h"
+#include "HedgeLib/Offsets.h"
 
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHHeader);
-
 HL_IMPL_ENDIAN_SWAP(hl_DHHHeader, v)
 {
     hl_SwapUInt32(&v->FileSize);
@@ -16,7 +10,6 @@ HL_IMPL_ENDIAN_SWAP(hl_DHHHeader, v)
 }
 
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHStandardHeader);
-
 HL_IMPL_ENDIAN_SWAP(hl_DHHStandardHeader, v)
 {
     HL_ENDIAN_SWAP(hl_DHHHeader, &v->Header);
@@ -37,7 +30,7 @@ void hl_HHFixOffsets(uint32_t* offTable,
 
         // Get position of next offset
         // (Data Pointer + Current entry in offset table)
-        offPtr = GetAbs<hl_DataOff32>(data, offTable[i]);
+        offPtr = hl_GetAbs<hl_DataOff32>(data, offTable[i]);
 
         if (offPtr == 0) continue; // null pointers should remain null
 
@@ -129,14 +122,14 @@ enum HL_RESULT hl_HHRead(struct hl_File* file, void** blob)
         HL_ENDIAN_SWAP(hl_DHHStandardHeader, header);
 
         // Get offset table
-        offTable = GetAbs<uint32_t>(
+        offTable = hl_GetAbs<uint32_t>(
             fileData, header->OffsetTableOffset);
 
         hl_SwapUInt32(offTable);
         offCount = *offTable++;
 
         // Get data pointer
-        data = GetAbs<void>(fileData, header->DataOffset);
+        data = hl_GetAbs<void>(fileData, header->DataOffset);
     }
 
     // Fix offsets
@@ -151,7 +144,7 @@ enum HL_RESULT hl_HHLoad(const char* filePath, void** blob)
 {
     // TODO: Do stuff here instead of just calling hl_HHRead so you
     // can optimize-out the need to read the file size and backtrack.
-    File file = File::OpenRead(std::filesystem::u8path(filePath), true);
+    hl_File file = hl_File::OpenRead(std::filesystem::u8path(filePath), true);
     return hl_HHRead(&file, blob);
 }
 
@@ -176,7 +169,7 @@ enum HL_RESULT hl_HHStartWriteStandard(struct hl_File* file, uint32_t version)
 }
 
 enum HL_RESULT hl_HHWriteOffsetTableStandard(const struct hl_File* file,
-    const struct hl_OffsetTable* offTable)
+    const hl_OffsetTable* offTable)
 {
     // Write offset count
     uint32_t offCount = static_cast<uint32_t>(offTable->size());
@@ -200,7 +193,7 @@ enum HL_RESULT hl_HHWriteOffsetTableStandard(const struct hl_File* file,
 }
 
 enum HL_RESULT hl_HHFinishWriteStandard(const struct hl_File* file, long headerPos,
-    bool writeEOFThing, const struct hl_OffsetTable* offTable)
+    bool writeEOFThing, const hl_OffsetTable* offTable)
 {
     // Write offset table
     uint32_t offTablePos = static_cast<uint32_t>(file->Tell());
@@ -262,20 +255,20 @@ void hl_HHFreeBlob(void* blob)
         hl_DHHStandardHeader* header = static_cast
             <hl_DHHStandardHeader*>(blob);
 
-        offTable = GetAbs<std::uint32_t>(
+        offTable = hl_GetAbs<std::uint32_t>(
             blob, header->OffsetTableOffset);
 
         // Get offset table count
         offCount = *offTable++;
 
         // Get data
-        data = GetAbs<void>(blob, header->DataOffset);
+        data = hl_GetAbs<void>(blob, header->DataOffset);
     }
 
     // Free all offsets using data in offset table
     for (uint32_t i = 0; i < offCount; ++i)
     {
-        hl_x64RemoveAbsPtr32(*GetAbs<hl_DataOff32>(
+        hl_x64RemoveAbsPtr32(*hl_GetAbs<hl_DataOff32>(
             data, offTable[i]));
     }
 #endif

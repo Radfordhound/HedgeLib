@@ -1,8 +1,6 @@
-#include "HedgeLib/Direct/IO/File.h"
-#include "HedgeLib/Managed/IO/File.h"
+#include "HedgeLib/IO/File.h"
 #include <array>
 #include <memory>
-#include <cstdlib>
 #include <algorithm>
 
 #ifdef _WIN32
@@ -228,7 +226,7 @@ HL_RESULT hl_File::WriteNulls(std::size_t amount) const
 enum HL_RESULT hl_FileGetSize(const char* filePath, size_t* size)
 {
     // TODO: nullptr check?
-    return HedgeLib::IO::File::GetSize(filePath, *size);
+    return hl_File::GetSize(filePath, *size);
 }
 
 //FILE* hl_FileOpenASCII(const char* filePath, const enum HL_FILEMODE mode)

@@ -2,6 +2,10 @@
 #include "../Endian.h"
 #include "../IO/IO.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct hl_AABB
 {
     float StartX;
@@ -38,3 +42,7 @@ struct hl_AABB
 
 HL_DECL_ENDIAN_SWAP(hl_AABB);
 HL_DECL_WRITE(hl_AABB);
+
+#ifdef __cplusplus
+}
+#endif

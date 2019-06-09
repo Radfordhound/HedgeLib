@@ -92,10 +92,10 @@ HL_API enum HL_RESULT hl_HHLoad(const char* filePath, void** blob);
 
 HL_API enum HL_RESULT hl_HHStartWriteStandard(struct hl_File* file, uint32_t version);
 HL_API enum HL_RESULT hl_HHWriteOffsetTableStandard(const struct hl_File* file,
-    const struct hl_OffsetTable* offTable);
+    const hl_OffsetTable* offTable);
 
 HL_API enum HL_RESULT hl_HHFinishWriteStandard(const struct hl_File* file, long headerPos,
-    bool writeEOFThing, const struct hl_OffsetTable* offTable);
+    bool writeEOFThing, const hl_OffsetTable* offTable);
 
 HL_API void hl_HHFreeBlob(void* blob);
 
