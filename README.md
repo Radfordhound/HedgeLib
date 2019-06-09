@@ -6,9 +6,7 @@
 
 HedgeLib is a C/C++ library [under the MIT license](License.txt) that aims to make modding games in the Sonic the Hedgehog franchise easier, similar to [Dario's excellent "LibGens".](https://github.com/DarioSamo/libgens-sonicglvl)
 
-HedgeLib is a single library, but it's made up of two parts:
-- "Direct" stuff, which is low-level and fully C99-compatible. Can also be used to create bindings for other languages.
-- "Managed" stuff, which is high-level and designed for C++17. **If using C++17, it's HIGHLY recommended to use this stuff**, as it's literally doing things just like the Direct stuff, except it's all WAY easier to use.
+HedgeLib is fully C99-compatible, but also contains C++17-specific "extensions". This makes it possible to create bindings for other languages without sacrificing C++ usability. 
 
 Right now, HedgeLib supports the following:
 
