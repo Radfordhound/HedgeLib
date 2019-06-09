@@ -1,4 +1,15 @@
 #include "HedgeLib/Offsets.h"
+#include "HedgeLib/Endian.h"
+
+void hl_FixOffset32(uint32_t* off, const void* data)
+{
+    hl_FixOffset(off, data);
+}
+
+void hl_FixOffset64(uint64_t* off, const void* data)
+{
+    hl_FixOffset(off, data);
+}
 
 hl_OffsetTable* hl_CreateOffsetTable()
 {
@@ -97,3 +108,45 @@ void hl_x64RemoveAbsPtr32(hl_DataOff32 index)
     }
 }
 #endif
+
+void hl_FixOffset(uint32_t* off, const void* data)
+{
+    // Null pointers should remain null
+    if (*off == 0)
+    {
+#ifdef x64
+        *off = hl_x64AddAbsPtr32(0);
+#endif
+        return;
+    }
+
+    // Endian swap offset
+    hl_SwapUInt32(off);
+
+    // Get absolute pointer
+    uintptr_t absPtr = (reinterpret_cast
+        <uintptr_t>(data) + *off);
+
+    // Fix offset
+#ifdef x86
+    *off = static_cast<uint32_t>(absPtr);
+#elif x64
+    *off = hl_x64AddAbsPtr32(absPtr);
+#endif
+}
+
+void hl_FixOffset(uint64_t* off, const void* data)
+{
+    // Null pointers should remain null
+    if (*off == 0) return;
+
+    // Endian swap offset
+    hl_SwapUInt64(off);
+
+    // Get absolute pointer
+    uintptr_t absPtr = (reinterpret_cast
+        <uintptr_t>(data) + *off);
+
+    // Fix offset
+    *off = static_cast<uint64_t>(absPtr);
+}

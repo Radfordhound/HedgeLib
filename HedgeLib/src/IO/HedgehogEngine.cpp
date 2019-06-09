@@ -33,21 +33,8 @@ void hl_HHFixOffsets(uint32_t* offTable,
         // (Data Pointer + Current entry in offset table)
         offPtr = hl_GetAbs<hl_DataOff32>(data, offTable[i]);
 
-        if (offPtr == 0) continue; // null pointers should remain null
-
-        // Endian swap offset
-        hl_SwapUInt32(offPtr);
-
-        // Get absolute pointer
-        uintptr_t absPtr = (reinterpret_cast
-            <uintptr_t>(data) + *offPtr);
-
         // Fix offset
-#ifdef x86
-        *offPtr = static_cast<hl_DataOff32>(absPtr);
-#elif x64
-        *offPtr = hl_x64AddAbsPtr32(absPtr);
-#endif
+        hl_FixOffset(offPtr, data);
     }
 }
 
@@ -107,11 +94,11 @@ enum HL_RESULT hl_HHRead(struct hl_File* file, struct hl_Blob** blob)
             fileSize &= HL_HHMIRAGE_SIZE_MASK;
         }
 
-        hl_FileJumpBehind(file, 8);
+        file->JumpBehind(8);
     }
     else
     {
-        hl_FileJumpBehind(file, 4);
+        file->JumpBehind(4);
     }
 
     // Read entire file
