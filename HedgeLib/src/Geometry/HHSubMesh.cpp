@@ -1,186 +1,137 @@
-#include "Geometry/HHSubMesh.h"
-#include "Geometry/SubMesh.h"
-#include <string_view>
-#include <cstdint>
-#include <cstddef>
-#include <memory>
-#include <algorithm>
+#include "HedgeLib/Geometry/HHSubMesh.h"
+#include "HedgeLib/IO/HedgehogEngine.h"
+#include "HedgeLib/IO/File.h"
+#include "HedgeLib/Math/Vector.h"
 
-namespace HedgeLib::Geometry
+// hl_DHHTextureUnit
+HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHTextureUnit);
+HL_IMPL_WRITE_CPP(hl_DHHTextureUnit);
+
+HL_IMPL_ENDIAN_SWAP(hl_DHHTextureUnit, v)
 {
-    HHSubMesh::HHSubMesh() : subMesh(nullptr),
-        data(new SubMesh()) {}
+    hl_Swap(v->ID);
+}
 
-    HHSubMesh::HHSubMesh(const DHHSubMesh* subMesh) :
-        subMesh(subMesh), data(nullptr) {}
+HL_IMPL_WRITE(hl_DHHTextureUnit, file, ptr, offTable)
+{
+    // TODO
+}
 
-    const char* HHSubMesh::MaterialName() const noexcept
+// hl_DHHVertexElement
+HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHVertexElement);
+HL_IMPL_WRITE_CPP(hl_DHHVertexElement);
+
+HL_IMPL_ENDIAN_SWAP(hl_DHHVertexElement, v)
+{
+    hl_Swap(v->Offset);
+    hl_Swap(reinterpret_cast<std::uint32_t&>(v->Format));
+    hl_Swap(reinterpret_cast<std::uint16_t&>(v->Type));
+}
+
+HL_IMPL_WRITE(hl_DHHVertexElement, file, ptr, offTable)
+{
+    file->Write(*ptr);
+}
+
+// hl_DHHSubMesh
+HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHSubMesh);
+HL_IMPL_ENDIAN_SWAP_RECURSIVE_CPP(hl_DHHSubMesh);
+HL_IMPL_WRITE_CPP(hl_DHHSubMesh);
+HL_IMPL_X64_OFFSETS(hl_DHHSubMesh);
+
+HL_IMPL_ENDIAN_SWAP(hl_DHHSubMesh, v)
+{
+    hl_Swap(v->Faces);
+    hl_Swap(v->VertexCount);
+    hl_Swap(v->VertexSize);
+    hl_Swap(v->Bones);
+    hl_Swap(v->TextureUnits);
+}
+
+HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHSubMesh, v, be)
+{
+    if (be)
     {
-        return (Direct()) ? subMesh->MaterialName.Get() :
-            data->MaterialName.c_str();
+        hl_SwapRecursive<std::uint16_t>(be, v->Faces);
+        hl_Swap(v->VertexCount);
+        hl_Swap(v->VertexSize);
+        hl_Swap(v->Bones);
+        hl_SwapRecursive<HL_OFF32(hl_DHHTextureUnit)>(
+            be, v->TextureUnits);
     }
 
-    std::size_t HHSubMesh::FaceCount() const noexcept
+    // Swap vertex elements
+    int i = 0;
+    do
     {
-        return (Direct()) ? static_cast<std::size_t>(
-            subMesh->Faces.Count()) : data->Faces.size();
-    }
+        if (be) v->VertexElements[i].EndianSwap();
 
-    std::uint16_t* HHSubMesh::Faces() const noexcept
-    {
-        return (Direct()) ? subMesh->Faces.Get() : data->Faces.data();
-    }
+        // Swap vertex data
+        std::uint8_t* vertices = v->Vertices.Get();
+        std::uint8_t* data;
 
-    std::size_t HHSubMesh::VertexCount() const noexcept
-    {
-        return (Direct()) ? static_cast<std::size_t>(
-            subMesh->VertexCount) : data->VertexCount;
-    }
-
-    std::size_t HHSubMesh::VertexSize() const noexcept
-    {
-        return (Direct()) ? static_cast<std::size_t>(
-            subMesh->VertexSize) : data->VertexSize;
-    }
-
-    std::uint8_t* HHSubMesh::Vertices() const noexcept
-    {
-        return (Direct()) ? subMesh->Vertices.Get() :
-            data->Vertices.get();
-    }
-
-    std::size_t HHSubMesh::VertexElementCount() const noexcept
-    {
-        if (Direct())
+        for (std::uint32_t i2 = 0; i2 < v->VertexCount; ++i2)
         {
-            DHHVertexElement* elements = subMesh->VertexElements.Get();
-            std::size_t count = 0;
+            // Get pointer to next piece of data
+            data = (vertices + (static_cast<std::uintptr_t>(i2) *
+                v->VertexSize) + v->VertexElements[i].Offset);
 
-            while (elements[count].Format != HE_VERTEX_FORMAT_LAST_ENTRY)
+            // Figure out what type of data it is and swap its endianness
+            switch (v->VertexElements[i].Format)
             {
-                ++count;
+            case HL_HHVERTEX_FORMAT_VECTOR2:
+            {
+                reinterpret_cast<hl_Vector2*>(data)->EndianSwap();
+                break;
             }
 
-            return count;
-        }
-        else
-        {
-            return data->VertexFormat.size();
-        }
-    }
-
-    std::unique_ptr<VertexElement[]> HHSubMesh::VertexFormat() const noexcept
-    {
-        std::size_t count = VertexElementCount();
-        std::unique_ptr<VertexElement[]> format =
-            std::make_unique<VertexElement[]>(count);
-
-        if (Direct())
-        {
-            // Convert to a HedgeLib VertexFormat
-            DHHVertexElement* elements = subMesh->VertexElements.Get();
-            for (std::size_t i = 0; i < count; ++i)
+            case HL_HHVERTEX_FORMAT_VECTOR3:
             {
-                format[i].Index = elements[i].Index;
-                format[i].Offset = elements[i].Offset;
-                
-                // Convert format
-                switch (elements[i].Format)
-                {
-                case HE_VERTEX_FORMAT_INDEX_BYTE:
-                case HE_VERTEX_FORMAT_INDEX: // TODO: Is this right?
-                    format[i].Format = VERTEX_FORMAT_BYTE4;
-                    break;
-                case HE_VERTEX_FORMAT_VECTOR2:
-                    format[i].Format = VERTEX_FORMAT_VECTOR2;
-                    break;
-                case HE_VERTEX_FORMAT_VECTOR2_HALF:
-                    format[i].Format = VERTEX_FORMAT_VECTOR2_HALF;
-                    break;
-                case HE_VERTEX_FORMAT_VECTOR3:
-                    format[i].Format = VERTEX_FORMAT_VECTOR3;
-                    break;
-                case HE_VERTEX_FORMAT_VECTOR3_HH1:
-                    format[i].Format = VERTEX_FORMAT_VECTOR3_HH1;
-                    break;
-                case HE_VERTEX_FORMAT_VECTOR3_HH2:
-                    format[i].Format = VERTEX_FORMAT_VECTOR3_HH2;
-                    break;
-                case HE_VERTEX_FORMAT_VECTOR4:
-                    format[i].Format = VERTEX_FORMAT_VECTOR4;
-                    break;
-                case HE_VERTEX_FORMAT_VECTOR4_BYTE:
-                    format[i].Format = VERTEX_FORMAT_VECTOR4_BYTE;
-                    break;
-                default:
-                    format[i].Format = VERTEX_FORMAT_UNKNOWN;
-                    break;
-                }
+                reinterpret_cast<hl_Vector3*>(data)->EndianSwap();
+                break;
+            }
 
-                // Convert type
-                switch (elements[i].Type)
+            case HL_HHVERTEX_FORMAT_VECTOR4:
+            {
+                reinterpret_cast<hl_Vector4*>(data)->EndianSwap();
+                break;
+            }
+
+            case HL_HHVERTEX_FORMAT_VECTOR4_BYTE:
+            {
+                if (v->VertexElements[i].Type == HL_HHVERTEX_TYPE_COLOR)
                 {
-                case HE_VERTEX_TYPE_POSITION:
-                    format[i].Type = VERTEX_TYPE_POSITION;
-                    break;
-                case HE_VERTEX_TYPE_BONE_WEIGHT:
-                    format[i].Type = VERTEX_TYPE_BLEND_WEIGHT;
-                    break;
-                case HE_VERTEX_TYPE_BONE_INDEX:
-                    format[i].Type = VERTEX_TYPE_BLEND_INDICES;
-                    break;
-                case HE_VERTEX_TYPE_NORMAL:
-                    format[i].Type = VERTEX_TYPE_NORMAL;
-                    break;
-                case HE_VERTEX_TYPE_UV:
-                    format[i].Type = VERTEX_TYPE_TEXCOORD;
-                    break;
-                case HE_VERTEX_TYPE_TANGENT:
-                    format[i].Type = VERTEX_TYPE_TANGENT;
-                    break;
-                case HE_VERTEX_TYPE_BINORMAL:
-                    format[i].Type = VERTEX_TYPE_BINORMAL;
-                    break;
-                case HE_VERTEX_TYPE_COLOR:
-                    format[i].Type = VERTEX_TYPE_COLOR;
-                    break;
-                default:
-                    format[i].Type = VERTEX_TYPE_UNKNOWN;
-                    break;
+                    // ABGR -> RGBA
+                    // TODO: Is this correct?? Are Vector4_Bytes actually just uints
+                    // that get reversed like this due to endianness? If so, do bone
+                    // weights actually need to be swapped too??
+
+                    std::uint32_t* d = reinterpret_cast<std::uint32_t*>(data);
+                    hl_Swap(*d);
                 }
+                break;
+            }
+
+            // TODO: Swap all other necessary types
             }
         }
-        else
-        {
-            // Create a copy of the vertex format
-            VertexElement* elements = data->VertexFormat.data();
-            std::copy(elements, elements + count, format.get());
-        }
 
-        return format;
+        if (!be) v->VertexElements[i].EndianSwap();
     }
+    while (v->VertexElements[i++].Format != HL_HHVERTEX_FORMAT_LAST_ENTRY);
 
-    void HHSubMesh::SetMaterialName(const std::string_view name)
+    if (!be)
     {
-        // TODO
+        hl_SwapRecursive<std::uint16_t>(be, v->Faces);
+        hl_Swap(v->VertexCount);
+        hl_Swap(v->VertexSize);
+        hl_Swap(v->Bones);
+        hl_SwapRecursive<HL_OFF32(hl_DHHTextureUnit)>(
+            be, v->TextureUnits);
     }
+}
 
-    void HHSubMesh::SetFaces(const std::uint16_t* faces,
-        const std::size_t faceCount)
-    {
-        // TODO
-    }
-
-    void HHSubMesh::SetVertices(const std::uint8_t* vertices,
-        const std::size_t vertexCount)
-    {
-        // TODO
-    }
-
-    void HHSubMesh::SetVertexFormat(
-        const Geometry::VertexElement* elements,
-        const std::size_t elementCount)
-    {
-        // TODO
-    }
+HL_IMPL_WRITE(hl_DHHSubMesh, file, ptr, offTable)
+{
+    // TODO
 }
