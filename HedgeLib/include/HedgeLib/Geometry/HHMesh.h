@@ -35,7 +35,7 @@ struct hl_DHHMesh
     hl_DHHSubMeshSlot Solid;
     hl_DHHSubMeshSlot Transparent;
     hl_DHHSubMeshSlot Boolean;
-    hl_DHHSpecialSubMeshSlot Special;
+    struct hl_DHHSpecialSubMeshSlot Special;
 
     HL_INLN_X64_OFFSETS_CPP(Solid.Offset, Transparent.Offset, Boolean.Offset,
         Special.Types, Special.SubMeshCounts, Special.SubMeshes);
