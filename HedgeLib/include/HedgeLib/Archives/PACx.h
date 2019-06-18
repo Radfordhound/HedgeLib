@@ -25,6 +25,9 @@ struct hl_DPACxV2DataNode
 HL_STATIC_ASSERT_SIZE(hl_DPACxV2DataNode, 0x20);
 HL_DECL_ENDIAN_SWAP(hl_DPACxV2DataNode);
 
+struct hl_Blob;
+HL_API void hl_ExtractPACxArchive(const struct hl_Blob* blob, const char* dir);
+
 #ifdef __cplusplus
 }
 #endif
