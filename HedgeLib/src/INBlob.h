@@ -14,6 +14,12 @@ struct hl_Blob
     {
         return reinterpret_cast<T*>(&Data);
     }
+
+    template<typename T>
+    inline const T* GetData() const
+    {
+        return reinterpret_cast<const T*>(&Data);
+    }
 };
 
 constexpr static std::size_t hl_INBlobHeaderSize = sizeof(HL_BLOB_TYPE);

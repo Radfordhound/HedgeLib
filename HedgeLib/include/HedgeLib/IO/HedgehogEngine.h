@@ -91,14 +91,35 @@ inline T* hl_HHStandardGetData(struct hl_Blob* blob)
 }
 
 template<typename T>
+inline const T* hl_HHStandardGetData(const struct hl_Blob* blob)
+{
+    return static_cast<T*>(hl_HHStandardGetData(
+        const_cast<hl_Blob*>(blob)));
+}
+
+template<typename T>
 inline T* hl_HHMirageGetData(struct hl_Blob* blob)
 {
     return static_cast<T*>(hl_HHMirageGetData(blob));
 }
 
 template<typename T>
+inline const T* hl_HHMirageGetData(const struct hl_Blob* blob)
+{
+    return static_cast<const T*>(hl_HHMirageGetData(
+        const_cast<hl_Blob*>(blob)));
+}
+
+template<typename T>
 inline T* hl_HHGetData(struct hl_Blob* blob)
 {
     return static_cast<T*>(hl_HHGetData(blob));
+}
+
+template<typename T>
+inline const T* hl_HHGetData(const struct hl_Blob* blob)
+{
+    return static_cast<const T*>(hl_HHGetData(
+        const_cast<hl_Blob*>(blob)));
 }
 #endif
