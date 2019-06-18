@@ -8,7 +8,8 @@ extern "C" {
 enum HL_BLOB_TYPE
 {
     HL_BLOB_TYPE_UNKNOWN = 0,
-    HL_BLOB_TYPE_HEDGEHOG_ENGINE
+    HL_BLOB_TYPE_HEDGEHOG_ENGINE,
+    HL_BLOB_TYPE_BINA
 };
 
 struct hl_Blob;
