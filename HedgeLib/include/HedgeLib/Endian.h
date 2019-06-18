@@ -25,12 +25,12 @@ inline void hl_SwapUInt16(uint16_t* v)
 #endif
 }
 
-inline void hl_SwapInt16(int16_t * v)
+inline void hl_SwapInt16(int16_t* v)
 {
     hl_SwapUInt16((uint16_t*)v);
 }
 
-inline void hl_SwapUInt32(uint32_t * v)
+inline void hl_SwapUInt32(uint32_t* v)
 {
 #ifdef _WIN32
     * v = _byteswap_ulong(*v);
@@ -43,7 +43,7 @@ inline void hl_SwapUInt32(uint32_t * v)
 #endif
 }
 
-inline void hl_SwapInt32(int32_t * v)
+inline void hl_SwapInt32(int32_t* v)
 {
     hl_SwapUInt32((uint32_t*)v);
 }
@@ -55,7 +55,7 @@ inline void hl_SwapFloat(float* v)
 
 HL_STATIC_ASSERT_SIZE(float, 4);
 
-inline void hl_SwapUInt64(uint64_t * v)
+inline void hl_SwapUInt64(uint64_t* v)
 {
 #ifdef _WIN32
     * v = _byteswap_uint64(*v);
@@ -71,7 +71,7 @@ inline void hl_SwapUInt64(uint64_t * v)
 #endif
 }
 
-inline void hl_SwapInt64(int64_t * v)
+inline void hl_SwapInt64(int64_t* v)
 {
     hl_SwapUInt64((uint64_t*)v);
 }

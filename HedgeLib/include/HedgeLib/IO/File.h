@@ -131,7 +131,6 @@ public:
     bool DoEndianSwap = false;
     long Origin = 0;
 
-    constexpr hl_File() = default;
     inline hl_File(std::FILE* file, bool swap = false, long origin = 0) :
         f(file), DoEndianSwap(swap), Origin(origin) {}
 
@@ -219,7 +218,7 @@ public:
     }
 
     template<typename T>
-    inline HL_RESULT Read(T & value) const
+    inline HL_RESULT Read(T& value) const
     {
         // Read data
         HL_RESULT result = ReadNoSwap(value);
