@@ -211,7 +211,7 @@ enum HL_RESULT hl_HHFinishWriteStandard(const struct hl_File* file, long headerP
     // TODO: Write EOF thing if told to
 
     // Fill-in file size
-    uint32_t fileSize = static_cast<uint32_t>(file->Tell());
+    uint32_t fileSize = static_cast<uint32_t>(file->Tell()) - headerPos;
     file->JumpTo(headerPos);
 
     result = file->Write(fileSize);
