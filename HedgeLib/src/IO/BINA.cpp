@@ -3,6 +3,9 @@
 #include "HedgeLib/IO/File.h"
 #include "../INBlob.h"
 #include <type_traits>
+#include <memory>
+#include <cstring>
+#include <algorithm>
 
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DBINAV2Header);
 HL_IMPL_ENDIAN_SWAP(hl_DBINAV2Header, v)
@@ -234,6 +237,201 @@ enum HL_RESULT hl_BINALoad(const char* filePath, struct hl_Blob** blob)
     // can optimize-out the need to read the file size and backtrack.
     hl_File file = hl_File::OpenRead(std::filesystem::u8path(filePath));
     return hl_BINARead(&file, blob);
+}
+
+enum HL_RESULT hl_BINAWriteStringTable(const struct hl_File* file,
+    const hl_StringTable* strTable, hl_OffsetTable* offTable)
+{
+    // TODO: Error checking
+
+    const hl_StringTableEntry* data = strTable->data();
+    std::unique_ptr<bool[]> skip = std::make_unique<bool[]>(strTable->size());
+    long pos;
+
+    for (size_t i = 0; i < strTable->size(); ++i)
+    {
+        if (skip[i]) continue;
+
+        // Write string
+        pos = file->Tell();
+        size_t len = std::strlen(data[i].String);
+        file->WriteBytes(data[i].String, len + 1);
+
+        // Fix offset
+        // TODO: 64-bit offsets for Forces
+        file->FixOffset32(data[i].OffPosition, pos, *offTable);
+
+        for (size_t i2 = (i + 1); i2 < strTable->size(); ++i2)
+        {
+            if (data[i].String == data[i2].String || std::strcmp(
+                data[i].String, data[i2].String) == 0)
+            {
+                // TODO: 64-bit offsets for Forces
+                file->FixOffset32(data[i2].OffPosition, pos, *offTable);
+                skip[i2] = true;
+            }
+        }
+    }
+
+    file->Pad();
+    return HL_SUCCESS;
+}
+
+enum HL_RESULT hl_BINAWriteOffsetTableSorted(const struct hl_File* file,
+    const hl_OffsetTable* offTable)
+{
+    HL_RESULT result = HL_SUCCESS;
+    uint32_t o, curOffset = 0;
+
+    for (auto& offset : *offTable)
+    {
+        o = ((offset - curOffset) >> 2);
+        if (o > 0x3FFFFFFF)
+        {
+            // TODO: Return better error
+            return HL_ERROR_UNKNOWN;
+        }
+        else if (o > 0x3FFF)
+        {
+            o <<= 24;
+            o |= HL_BINA_THIRTY_BIT;
+            result = file->Write(o);
+        }
+        else if (o > 0x3F)
+        {
+            o <<= 8;
+            o |= HL_BINA_FOURTEEN_BIT;
+            result = file->WriteBytes(&o, 2);
+        }
+        else
+        {
+            o |= HL_BINA_SIX_BIT;
+            result = file->WriteBytes(&o, 1);
+        }
+
+        curOffset = offset;
+        if (HL_FAILED(result)) return result;
+    }
+
+    file->Pad();
+    return result;
+}
+
+enum HL_RESULT hl_BINAWriteOffsetTable(const struct hl_File* file,
+    hl_OffsetTable* offTable)
+{
+    std::sort(offTable->begin(), offTable->end());
+    return hl_BINAWriteOffsetTableSorted(file, offTable);
+}
+
+enum HL_RESULT hl_BINAStartWriteV2(struct hl_File* file, bool bigEndian, bool x64Offsets)
+{
+    // Create "empty" header
+    hl_DBINAV2Header header = {};
+    header.Signature = HL_BINA_SIGNATURE;
+    header.Version[0] = 0x32;                       // 2
+    header.Version[1] = (x64Offsets) ? 0x31 : 0x30; // 1 or 0
+    header.Version[2] = 0x30;                       // 0
+
+    header.EndianFlag = (bigEndian) ?
+        HL_BINA_BE_FLAG : HL_BINA_LE_FLAG;
+
+    // Write header
+    file->DoEndianSwap = bigEndian;
+    return file->Write(header);
+}
+
+enum HL_RESULT hl_BINAStartWriteV2DataNode(struct hl_File* file)
+{
+    // Create "empty" data node
+    hl_DBINAV2DataNode dataNode = {};
+    dataNode.Header.Signature = HL_BINA_V2_DATA_NODE_SIGNATURE;
+    dataNode.RelativeDataOffset = sizeof(hl_DBINAV2DataNode);
+
+    // Write data node
+    file->DoEndianSwap = true;
+    HL_RESULT result = file->Write(dataNode);
+    if (HL_FAILED(result)) return result;
+
+    // Write padding
+    // (Since dataNode just so happens to be the exact size
+    // of the padding we need to write, we use it here)
+    dataNode.Header.Signature = 0;
+    dataNode.RelativeDataOffset = 0;
+
+    result = file->WriteNoSwap(dataNode);
+
+    // Set origin
+    if (HL_OK(result))
+    {
+        file->Origin = file->Tell();
+    }
+    
+    return result;
+}
+
+enum HL_RESULT hl_BINAFinishWriteV2DataNode(const struct hl_File* file,
+    long nodePos, hl_OffsetTable* offTable, const hl_StringTable* strTable)
+{
+    // Write string table
+    HL_RESULT result = file->Pad();
+    if (HL_FAILED(result)) return result;
+
+    uint32_t strTablePos = static_cast<uint32_t>(file->Tell());
+    if (nodePos >= static_cast<long>(strTablePos))
+        return HL_ERROR_UNKNOWN; // TODO: Return a better error
+
+    result = hl_BINAWriteStringTable(file, strTable, offTable);
+    if (HL_FAILED(result)) return result;
+
+    // Write offset table
+    uint32_t offTablePos = static_cast<uint32_t>(file->Tell());
+    result = hl_BINAWriteOffsetTable(file, offTable);
+    if (HL_FAILED(result)) return result;
+
+    // Fill-in node size
+    uint32_t eof = static_cast<uint32_t>(file->Tell());
+    uint32_t nodeSize = (eof - nodePos);
+    file->JumpTo(nodePos + 4);
+
+    result = file->Write(nodeSize);
+    if (HL_FAILED(result)) return result;
+
+    // Fill-in string table offset
+    uint32_t strTableSize = (offTablePos - strTablePos);
+    strTablePos -= static_cast<uint32_t>(file->Origin);
+
+    result = file->Write(strTablePos);
+    if (HL_FAILED(result)) return result;
+
+    // Fill-in string table size
+    result = file->Write(strTableSize);
+    if (HL_FAILED(result)) return result;
+
+    // Fill-in offset table size
+    uint32_t offTableSize = (eof - offTablePos);
+    result = file->Write(offTableSize);
+
+    return result;
+}
+
+enum HL_RESULT hl_BINAFinishWriteV2(const struct hl_File* file,
+    long headerPos, uint16_t nodeCount)
+{
+    // Fill-in file size
+    uint32_t fileSize = static_cast<uint32_t>(file->Tell());
+    if (headerPos >= static_cast<long>(fileSize))
+        return HL_ERROR_UNKNOWN; // TODO: Return a better error
+
+    fileSize -= headerPos;
+    file->JumpTo(headerPos + 8);
+
+    HL_RESULT result = file->Write(fileSize);
+    if (HL_FAILED(result)) return result;
+
+    // Fill-in node count
+    result = file->Write(nodeCount);
+    return result;
 }
 
 void* hl_BINAGetData(struct hl_Blob* blob)

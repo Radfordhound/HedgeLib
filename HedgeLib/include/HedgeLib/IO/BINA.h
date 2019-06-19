@@ -2,6 +2,7 @@
 #include "../HedgeLib.h"
 #include "../Errors.h"
 #include "../Endian.h"
+#include "../StringTable.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,7 +51,7 @@ HL_DECL_ENDIAN_SWAP(hl_DBINAV2Node);
 
 struct hl_DBINAV2DataNode
 {
-    struct hl_DBINAV2Node Header;    // Contains general information on this node.
+    struct hl_DBINAV2Node Header;   // Contains general information on this node.
     HL_STR32 StringTable;           // Offset to the beginning of the string table.
     uint32_t StringTableSize;       // The size of the string table in bytes, including padding.
     uint32_t OffsetTableSize;       // The size of the offset table in bytes, including padding.
@@ -70,6 +71,22 @@ HL_API enum HL_RESULT hl_BINAReadV1(struct hl_File* file, struct hl_Blob** blob)
 HL_API enum HL_RESULT hl_BINAReadV2(struct hl_File* file, struct hl_Blob** blob);
 HL_API enum HL_RESULT hl_BINARead(struct hl_File* file, struct hl_Blob** blob);
 HL_API enum HL_RESULT hl_BINALoad(const char* filePath, struct hl_Blob** blob);
+
+HL_API enum HL_RESULT hl_BINAWriteStringTable(const struct hl_File* file,
+    const hl_StringTable* strTable, hl_OffsetTable* offTable);
+HL_API enum HL_RESULT hl_BINAWriteOffsetTableSorted(const struct hl_File* file,
+    const hl_OffsetTable* offTable);
+HL_API enum HL_RESULT hl_BINAWriteOffsetTable(const struct hl_File* file,
+    hl_OffsetTable* offTable);
+
+HL_API enum HL_RESULT hl_BINAStartWriteV2(struct hl_File* file, bool bigEndian, bool x64Offsets);
+HL_API enum HL_RESULT hl_BINAStartWriteV2DataNode(struct hl_File* file);
+
+HL_API enum HL_RESULT hl_BINAFinishWriteV2DataNode(const struct hl_File* file,
+    long nodePos, hl_OffsetTable* offTable, const hl_StringTable* strTable);
+
+HL_API enum HL_RESULT hl_BINAFinishWriteV2(const struct hl_File* file,
+    long headerPos, uint16_t nodeCount);
 
 HL_API void* hl_BINAGetData(struct hl_Blob* blob);
 HL_API void hl_BINAFreeBlob(struct hl_Blob* blob);
