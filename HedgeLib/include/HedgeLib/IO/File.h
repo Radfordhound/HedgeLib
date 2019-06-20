@@ -1,5 +1,6 @@
 #pragma once
 #include "../HedgeLib.h"
+#include "../Array.h"
 #include "../Errors.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -15,6 +16,8 @@ extern "C" {
 #else
 #include <stdbool.h>
 #endif
+
+HL_API struct hl_PtrArray hl_GetFilesInDirectory(const char* dir, size_t* fileCount);
 
 enum HL_FILEMODE
 {
@@ -38,8 +41,6 @@ enum HL_SEEK_ORIGIN
     HL_SEEK_CUR,
     HL_SEEK_END
 };
-
-struct hl_File;
 
 HL_API enum HL_RESULT hl_FileGetSize(const char* filePath, size_t* size);
 HL_API struct hl_File* hl_FileOpen(const char* filePath, const enum HL_FILEMODE mode);

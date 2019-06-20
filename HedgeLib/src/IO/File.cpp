@@ -2,10 +2,46 @@
 #include <array>
 #include <memory>
 #include <algorithm>
+#include <cstdlib>
 
 #ifdef _WIN32
 #include <Windows.h>
 #endif
+
+struct hl_PtrArray hl_GetFilesInDirectory(const char* dir, size_t* fileCount)
+{
+    // Get file count
+    if (!fileCount) return { 0, nullptr };
+    *fileCount = 0;
+
+    for (const auto& entry : std::filesystem::directory_iterator(dir))
+    {
+        if (!entry.is_regular_file()) continue;
+        ++(*fileCount);
+    }
+
+    // Get file names
+    if (!(*fileCount)) return { 0, nullptr };
+
+    hl_PtrArray arr = hl_CreatePtrArray(*fileCount);
+    size_t i = 0;
+
+    for (const auto& entry : std::filesystem::directory_iterator(dir))
+    {
+        if (!entry.is_regular_file()) continue;
+
+        std::string filePath = entry.path().generic_u8string();
+        size_t filePathLen = filePath.length();
+
+        arr.Data[i] = std::malloc(sizeof(char) * (filePathLen + 1));
+        filePath.copy(static_cast<char*>(arr.Data[i]), filePathLen);
+        static_cast<char*>(arr.Data[i])[filePathLen] = '\0';
+
+        ++i;
+    }
+
+    return arr;
+}
 
 constexpr const char* GetFileOpenMode(const HL_FILEMODE mode)
 {
