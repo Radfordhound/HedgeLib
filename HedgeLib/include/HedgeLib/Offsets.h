@@ -101,53 +101,69 @@ HL_API void hl_x64RemoveAbsPtr32(hl_DataOff32 index);
 #define HL_GETABS(type, baseAddress, offset) ((type*)((uint8_t*)baseAddress + offset))
 #define HL_GETABSV(baseAddress, offset) HL_GETABS(void, baseAddress, offset)
 
-#define HL_INIT_OBJECT(type, v) HL_X64_ADD_OFFSETS(type, v)
-#define HL_CLEANUP_OBJECT(type, v) HL_X64_REMOVE_OFFSETS(type, v)
-#define HL_CREATE_OBJECT(type, v) v = (type*)malloc(sizeof(type)); HL_INIT_OBJECT(type, v)
-#define HL_DESTROY_OBJECT(type, v) HL_CLEANUP_OBJECT(type, v); free(v)
+#define HL_CREATE_OBJECT(type, v) v = (type*)malloc(sizeof(type))
+#define HL_DESTROY_OBJECT(type, v) free(v)
 
-#define HL_INIT_ARR(type, v, count) HL_X64_ADD_OFFSETS_ARR(type, v, count)
-#define HL_CREATE_ARR(type, v, count) v = (type*)malloc(sizeof(type) * count);\
-    HL_INIT_ARR(type, v, count)
+#define HL_CREATE_ARR(type, v, count) v = (type*)malloc(sizeof(type) * count)
+#define HL_DESTROY_ARR(v) free(v)
 
-#define HL_DESTROY_ARR(type, v, count) HL_X64_REMOVE_OFFSETS_ARR(type, v, count); free(v)
+#define HL_INIT_OBJECT32P(type, ptr) HL_X64_ADD_OFFSETS(type, ptr)
+#define HL_INIT_OBJECT32(type, off) HL_INIT_OBJECT32P(type, HL_GETPTR32(type, off))
 
-#define HL_INIT_OBJECT32(type, off) HL_INIT_OBJECT(type, HL_GETPTR32(type, off))
+#define HL_CREATE_OBJECT32P(type, ptr) HL_CREATE_OBJECT(type, ptr);\
+    HL_INIT_OBJECT32P(type, ptr)
+
 #define HL_CREATE_OBJECT32(type, off) { type* hl_internal_ptr;\
-    HL_CREATE_OBJECT(type, hl_internal_ptr);\
+    HL_CREATE_OBJECT32P(type, hl_internal_ptr);\
     off = HL_ADDPTR32(hl_internal_ptr); }
 
-#define HL_DESTROY_OBJECT32(type, off) { type* hl_internal_ptr = HL_GETPTR32(type, off);\
-    HL_DESTROY_OBJECT(type, hl_internal_ptr); }
+#define HL_CLEANUP_OBJECT32P(type, ptr) HL_X64_REMOVE_OFFSETS(type, ptr)
+#define HL_CLEANUP_OBJECT32(type, off) HL_X64_REMOVE_OFFSETS(type, HL_GETPTR32(type, off))
 
-#define HL_INIT_OBJECT64(type, off) HL_INIT_OBJECT(type, HL_GETPTR64(type, off))
-#define HL_CREATE_OBJECT64(type, off) HL_CREATE_OBJECT(type, HL_GETPTR64(off))
-#define HL_DESTROY_OBJECT64(type, off) HL_DESTROY_OBJECT(type, HL_GETPTR64(type, off))
+#define HL_DESTROY_OBJECT32P(type, ptr) HL_CLEANUP_OBJECT32P(type, ptr);\
+    HL_DESTROY_OBJECT(type, ptr)
+
+#define HL_DESTROY_OBJECT32(type, off) { type* hl_internal_ptr = HL_GETPTR32(type, off);\
+    HL_DESTROY_OBJECT32P(type, hl_internal_ptr); }
+
+#define HL_CREATE_OBJECT64P(type, ptr) HL_CREATE_OBJECT(type, ptr)
+#define HL_CREATE_OBJECT64(type, off) HL_CREATE_OBJECT64P(type, HL_GETPTR64(off))
+#define HL_DESTROY_OBJECT64P(type, ptr) HL_DESTROY_OBJECT(type, ptr)
+#define HL_DESTROY_OBJECT64(type, off) HL_DESTROY_OBJECT64P(type, HL_GETPTR64(type, off))
 
 #ifdef x86
+#define HL_INIT_ARR32P(type, ptr, arr)
 #define HL_INIT_ARR32(type, arr)
-#define HL_INIT_ARR64(type, arr)
 #elif x64
+#define HL_INIT_ARR32P(type, ptr, arr) HL_X64_ADD_OFFSETS_ARR(type, ptr, arr.Count)
 #define HL_INIT_ARR32(type, arr) { type* hl_internal_ptr = HL_GETPTR32(type, arr.Offset);\
-    HL_INIT_ARR(type, hl_internal_ptr, arr.Count); }
-
-#define HL_INIT_ARR64(type, arr) { type* hl_internal_ptr = HL_GETPTR64(type, arr.Offset);\
-    HL_INIT_ARR(type, hl_internal_ptr, arr.Count); }
+    HL_INIT_ARR32P(type, hl_internal_ptr, arr); }
 #endif
 
+#define HL_CREATE_ARR32P(type, ptr, arr, count) \
+    HL_CREATE_ARR(type, ptr, count);\
+    HL_X64_ADD_OFFSETS_ARR(type, ptr, count);\
+    HL_SETPTR32(arr.Offset, ptr); arr.Count = (uint32_t)count
+
 #define HL_CREATE_ARR32(type, arr, count) { type* hl_internal_ptr;\
-    HL_CREATE_ARR(type, hl_internal_ptr, count);\
-    HL_SETPTR32(arr.Offset, hl_internal_ptr); arr.Count = count; }
+    HL_CREATE_ARR32P(type, hl_internal_ptr, arr, count); }
+
+#define HL_DESTROY_ARR32P(type, ptr, arr) \
+    HL_X64_REMOVE_OFFSETS_ARR(type, ptr, arr.Count);\
+    HL_DESTROY_ARR(ptr)
 
 #define HL_DESTROY_ARR32(type, arr) { type* hl_internal_ptr = HL_GETPTR32(type, arr.Offset);\
-    HL_DESTROY_ARR(type, hl_internal_ptr, arr.Count); }
+    HL_DESTROY_ARR32P(type, hl_internal_ptr, arr); }
+
+#define HL_CREATE_ARR64P(type, ptr, arr, count) \
+    HL_CREATE_ARR(type, ptr, count);\
+    HL_SETPTR64(arr.Offset, ptr); arr.Count = (uint64_t)count
 
 #define HL_CREATE_ARR64(type, arr, count) { type* hl_internal_ptr;\
-    HL_CREATE_ARR(type, hl_internal_ptr, count);\
-    HL_SETPTR64(arr.Offset, hl_internal_ptr); arr.Count = count; }
+    HL_CREATE_ARR64P(type, hl_internal_ptr, arr, count); }
 
-#define HL_DESTROY_ARR64(type, arr) { type* hl_internal_ptr = HL_GETPTR64(type, arr.Offset);\
-    HL_DESTROY_ARR(type, hl_internal_ptr, arr.Count); }
+#define HL_DESTROY_ARR64P(type, arr) HL_DESTROY_ARR(arr)
+#define HL_DESTROY_ARR64(type, arr) HL_DESTROY_ARR64P(type, HL_GETPTR64(type, arr.Offset))
 
 #ifndef __cplusplus
 // C Offset/Array Macros
