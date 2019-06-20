@@ -5,7 +5,7 @@
 HL_IMPL_ENDIAN_SWAP_CPP(hl_Matrix4x4);
 HL_IMPL_WRITE_CPP(hl_Matrix4x4);
 
-HL_IMPL_ENDIAN_SWAP(hl_Matrix4x4, v)
+HL_IMPL_ENDIAN_SWAP(hl_Matrix4x4)
 {
     hl_SwapFloat(&v->M11);
     hl_SwapFloat(&v->M12);
@@ -28,7 +28,7 @@ HL_IMPL_ENDIAN_SWAP(hl_Matrix4x4, v)
     hl_SwapFloat(&v->M44);
 }
 
-HL_IMPL_WRITE(hl_Matrix4x4, file, ptr, offTable)
+HL_IMPL_WRITE(hl_Matrix4x4)
 {
     file->Write(*ptr);
 }

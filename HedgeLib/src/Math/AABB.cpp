@@ -3,12 +3,12 @@
 
 // hl_AABB
 HL_IMPL_WRITE_CPP(hl_AABB);
-HL_IMPL_ENDIAN_SWAP(hl_AABB, v)
+HL_IMPL_ENDIAN_SWAP(hl_AABB)
 {
     v->EndianSwap();
 }
 
-HL_IMPL_WRITE(hl_AABB, file, ptr, offTable)
+HL_IMPL_WRITE(hl_AABB)
 {
     file->Write(*ptr);
 }

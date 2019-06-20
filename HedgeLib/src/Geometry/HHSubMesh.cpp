@@ -7,12 +7,12 @@
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHTextureUnit);
 HL_IMPL_WRITE_CPP(hl_DHHTextureUnit);
 
-HL_IMPL_ENDIAN_SWAP(hl_DHHTextureUnit, v)
+HL_IMPL_ENDIAN_SWAP(hl_DHHTextureUnit)
 {
     hl_Swap(v->ID);
 }
 
-HL_IMPL_WRITE(hl_DHHTextureUnit, file, ptr, offTable)
+HL_IMPL_WRITE(hl_DHHTextureUnit)
 {
     // TODO
 }
@@ -21,14 +21,14 @@ HL_IMPL_WRITE(hl_DHHTextureUnit, file, ptr, offTable)
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHVertexElement);
 HL_IMPL_WRITE_CPP(hl_DHHVertexElement);
 
-HL_IMPL_ENDIAN_SWAP(hl_DHHVertexElement, v)
+HL_IMPL_ENDIAN_SWAP(hl_DHHVertexElement)
 {
     hl_Swap(v->Offset);
     hl_Swap(reinterpret_cast<std::uint32_t&>(v->Format));
     hl_Swap(reinterpret_cast<std::uint16_t&>(v->Type));
 }
 
-HL_IMPL_WRITE(hl_DHHVertexElement, file, ptr, offTable)
+HL_IMPL_WRITE(hl_DHHVertexElement)
 {
     file->Write(*ptr);
 }
@@ -39,7 +39,7 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE_CPP(hl_DHHSubMesh);
 HL_IMPL_WRITE_CPP(hl_DHHSubMesh);
 HL_IMPL_X64_OFFSETS(hl_DHHSubMesh);
 
-HL_IMPL_ENDIAN_SWAP(hl_DHHSubMesh, v)
+HL_IMPL_ENDIAN_SWAP(hl_DHHSubMesh)
 {
     hl_Swap(v->Faces);
     hl_Swap(v->VertexCount);
@@ -48,7 +48,7 @@ HL_IMPL_ENDIAN_SWAP(hl_DHHSubMesh, v)
     hl_Swap(v->TextureUnits);
 }
 
-HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHSubMesh, v, be)
+HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHSubMesh)
 {
     if (be)
     {
@@ -131,7 +131,7 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHSubMesh, v, be)
     }
 }
 
-HL_IMPL_WRITE(hl_DHHSubMesh, file, ptr, offTable)
+HL_IMPL_WRITE(hl_DHHSubMesh)
 {
     // TODO
 }

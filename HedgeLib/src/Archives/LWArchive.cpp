@@ -1,5 +1,6 @@
 #include "HedgeLib/Archives/LWArchive.h"
 #include "HedgeLib/Archives/PACx.h"
+#include "HedgeLib/IO/File.h"
 #include <string>
 #include <cstring>
 
@@ -8,12 +9,12 @@ HL_IMPL_ENDIAN_SWAP_CPP(hl_DPACProxyEntry);
 HL_IMPL_WRITE_CPP(hl_DPACProxyEntry);
 HL_IMPL_X64_OFFSETS(hl_DPACProxyEntry);
 
-HL_IMPL_ENDIAN_SWAP(hl_DPACProxyEntry, v)
+HL_IMPL_ENDIAN_SWAP(hl_DPACProxyEntry)
 {
     hl_Swap(v->Index);
 }
 
-HL_IMPL_WRITE(hl_DPACProxyEntry, file, ptr, offTable)
+HL_IMPL_WRITE(hl_DPACProxyEntry)
 {
     // TODO
 }
@@ -23,12 +24,12 @@ HL_IMPL_ENDIAN_SWAP_CPP(hl_DPACSplitTable);
 HL_IMPL_WRITE_CPP(hl_DPACSplitTable);
 HL_IMPL_X64_OFFSETS(hl_DPACSplitTable);
 
-HL_IMPL_ENDIAN_SWAP(hl_DPACSplitTable, v)
+HL_IMPL_ENDIAN_SWAP(hl_DPACSplitTable)
 {
     hl_Swap(v->SplitCount);
 }
 
-HL_IMPL_WRITE(hl_DPACSplitTable, file, ptr, offTable)
+HL_IMPL_WRITE(hl_DPACSplitTable)
 {
     // TODO
 }
@@ -37,14 +38,14 @@ HL_IMPL_WRITE(hl_DPACSplitTable, file, ptr, offTable)
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DPACDataEntry);
 HL_IMPL_WRITE_CPP(hl_DPACDataEntry);
 
-HL_IMPL_ENDIAN_SWAP(hl_DPACDataEntry, v)
+HL_IMPL_ENDIAN_SWAP(hl_DPACDataEntry)
 {
     hl_Swap(v->DataSize);
     hl_Swap(v->Unknown1);
     hl_Swap(v->Unknown2);
 }
 
-HL_IMPL_WRITE(hl_DPACDataEntry, file, ptr, offTable)
+HL_IMPL_WRITE(hl_DPACDataEntry)
 {
     // TODO
 }
@@ -53,7 +54,7 @@ HL_IMPL_WRITE(hl_DPACDataEntry, file, ptr, offTable)
 HL_IMPL_WRITE_CPP(hl_DPACNode);
 HL_IMPL_X64_OFFSETS(hl_DPACNode);
 
-HL_IMPL_WRITE(hl_DPACNode, file, ptr, offTable)
+HL_IMPL_WRITE(hl_DPACNode)
 {
     // TODO
 }
@@ -64,13 +65,13 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE_CPP(hl_DLWArchive);
 HL_IMPL_WRITE_CPP(hl_DLWArchive);
 HL_IMPL_X64_OFFSETS(hl_DLWArchive);
 
-HL_IMPL_ENDIAN_SWAP(hl_DLWArchive, v)
+HL_IMPL_ENDIAN_SWAP(hl_DLWArchive)
 {
     v->Header.EndianSwap();
     hl_Swap(v->TypeTree);
 }
 
-HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DLWArchive, v, be)
+HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DLWArchive)
 {
     // Swap type tree and all of its children
     if (be) hl_Swap(v->TypeTree);
@@ -123,7 +124,7 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DLWArchive, v, be)
     }
 }
 
-HL_IMPL_WRITE(hl_DLWArchive, file, ptr, offTable)
+HL_IMPL_WRITE(hl_DLWArchive)
 {
     // Prepare data node header
     hl_StringTable strTable;

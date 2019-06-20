@@ -1,6 +1,7 @@
 #include "HedgeLib/Geometry/HHMesh.h"
 #include "HedgeLib/Geometry/HHSubMesh.h"
 #include "HedgeLib/Endian.h"
+#include "HedgeLib/IO/File.h"
 
 // hl_DHHSpecialSubMeshSlot
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHSpecialSubMeshSlot);
@@ -8,12 +9,12 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE_CPP(hl_DHHSpecialSubMeshSlot);
 HL_IMPL_WRITE_CPP(hl_DHHSpecialSubMeshSlot);
 HL_IMPL_X64_OFFSETS(hl_DHHSpecialSubMeshSlot);
 
-HL_IMPL_ENDIAN_SWAP(hl_DHHSpecialSubMeshSlot, v)
+HL_IMPL_ENDIAN_SWAP(hl_DHHSpecialSubMeshSlot)
 {
     hl_Swap(v->Count);
 }
 
-HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHSpecialSubMeshSlot, v, be)
+HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHSpecialSubMeshSlot)
 {
     if (be) hl_Swap(v->Count);
 
@@ -35,7 +36,7 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHSpecialSubMeshSlot, v, be)
     if (!be) hl_Swap(v->Count);
 }
 
-HL_IMPL_WRITE(hl_DHHSpecialSubMeshSlot, file, ptr, offTable)
+HL_IMPL_WRITE(hl_DHHSpecialSubMeshSlot)
 {
     // TODO
 }
@@ -46,7 +47,7 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE_CPP(hl_DHHMesh);
 HL_IMPL_WRITE_CPP(hl_DHHMesh);
 HL_IMPL_X64_OFFSETS(hl_DHHMesh);
 
-HL_IMPL_ENDIAN_SWAP(hl_DHHMesh, v)
+HL_IMPL_ENDIAN_SWAP(hl_DHHMesh)
 {
     hl_Swap(v->Solid);
     hl_Swap(v->Transparent);
@@ -54,7 +55,7 @@ HL_IMPL_ENDIAN_SWAP(hl_DHHMesh, v)
     v->Special.EndianSwap();
 }
 
-HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHMesh, v, be)
+HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHMesh)
 {
     hl_SwapRecursive<HL_OFF32(hl_DHHSubMesh)>(be, v->Solid);
     hl_SwapRecursive<HL_OFF32(hl_DHHSubMesh)>(be, v->Transparent);
@@ -62,7 +63,7 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHMesh, v, be)
     v->Special.EndianSwapRecursive(be);
 }
 
-HL_IMPL_WRITE(hl_DHHMesh, file, ptr, offTable)
+HL_IMPL_WRITE(hl_DHHMesh)
 {
     // TODO
 }

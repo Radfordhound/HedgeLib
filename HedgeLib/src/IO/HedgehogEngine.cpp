@@ -4,14 +4,14 @@
 #include "../INBlob.h"
 
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHHeader);
-HL_IMPL_ENDIAN_SWAP(hl_DHHHeader, v)
+HL_IMPL_ENDIAN_SWAP(hl_DHHHeader)
 {
     hl_SwapUInt32(&v->FileSize);
     hl_SwapUInt32(&v->Version);
 }
 
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHStandardHeader);
-HL_IMPL_ENDIAN_SWAP(hl_DHHStandardHeader, v)
+HL_IMPL_ENDIAN_SWAP(hl_DHHStandardHeader)
 {
     HL_ENDIAN_SWAP(hl_DHHHeader, &v->Header);
     hl_SwapUInt32(&v->DataSize);

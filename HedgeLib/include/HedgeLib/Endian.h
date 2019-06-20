@@ -95,17 +95,17 @@ HL_STATIC_ASSERT_SIZE(double, 8);
 #define HL_DECL_ENDIAN_SWAP_RECURSIVE(type) \
     HL_API void HL_ENDIAN_SWAP_RECURSIVE_NAME(type)(struct type* v, bool be);
 
-#define HL_IMPL_ENDIAN_SWAP(type, v) \
+#define HL_IMPL_ENDIAN_SWAP(type) \
     void HL_ENDIAN_SWAP_NAME(type)(struct type* v)
 
-#define HL_IMPL_ENDIAN_SWAP_RECURSIVE(type, v, be) \
+#define HL_IMPL_ENDIAN_SWAP_RECURSIVE(type) \
     void HL_ENDIAN_SWAP_RECURSIVE_NAME(type)(struct type* v, bool be)
 
-#define HL_INLN_ENDIAN_SWAP(type, v) \
-    inline HL_IMPL_ENDIAN_SWAP(type, v)
+#define HL_INLN_ENDIAN_SWAP(type) \
+    inline HL_IMPL_ENDIAN_SWAP(type)
 
-#define HL_INLN_ENDIAN_SWAP_RECURSIVE(type, v, be) \
-    inline HL_IMPL_ENDIAN_SWAP_RECURSIVE(type, v, be)
+#define HL_INLN_ENDIAN_SWAP_RECURSIVE(type) \
+    inline HL_IMPL_ENDIAN_SWAP_RECURSIVE(type)
 
 #define HL_ENDIAN_SWAP_ARR32(type, v, be, swapCall) {\
     if (be) hl_SwapUint32(&(v.Count));\

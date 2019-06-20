@@ -8,20 +8,20 @@
 #include <algorithm>
 
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DBINAV2Header);
-HL_IMPL_ENDIAN_SWAP(hl_DBINAV2Header, v)
+HL_IMPL_ENDIAN_SWAP(hl_DBINAV2Header)
 {
     hl_Swap(v->FileSize);
     hl_Swap(v->NodeCount);
 }
 
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DBINAV2Node);
-HL_IMPL_ENDIAN_SWAP(hl_DBINAV2Node, v)
+HL_IMPL_ENDIAN_SWAP(hl_DBINAV2Node)
 {
     hl_Swap(v->Size);
 }
 
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DBINAV2DataNode);
-HL_IMPL_ENDIAN_SWAP(hl_DBINAV2DataNode, v)
+HL_IMPL_ENDIAN_SWAP(hl_DBINAV2DataNode)
 {
     v->Header.EndianSwap();
     hl_Swap(v->StringTableSize);

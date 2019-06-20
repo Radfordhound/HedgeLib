@@ -3,6 +3,7 @@
 #include "HedgeLib/Math/AABB.h"
 #include "HedgeLib/Math/Matrix.h"
 #include "HedgeLib/Endian.h"
+#include "HedgeLib/IO/File.h"
 
 // hl_DHHTerrainModel
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHTerrainModel);
@@ -10,19 +11,19 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE_CPP(hl_DHHTerrainModel);
 HL_IMPL_WRITE_CPP(hl_DHHTerrainModel);
 HL_IMPL_X64_OFFSETS(hl_DHHTerrainModel);
 
-HL_IMPL_ENDIAN_SWAP(hl_DHHTerrainModel, v)
+HL_IMPL_ENDIAN_SWAP(hl_DHHTerrainModel)
 {
     hl_Swap(v->Meshes);
     hl_Swap(v->Flags);
 }
 
-HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHTerrainModel, v, be)
+HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHTerrainModel)
 {
     hl_SwapRecursive<HL_OFF32(hl_DHHMesh)>(be, v->Meshes);
     hl_Swap(v->Flags);
 }
 
-HL_IMPL_WRITE(hl_DHHTerrainModel, file, ptr, offTable)
+HL_IMPL_WRITE(hl_DHHTerrainModel)
 {
     // TODO
 }
@@ -32,12 +33,12 @@ HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHBone);
 HL_IMPL_WRITE_CPP(hl_DHHBone);
 HL_IMPL_X64_OFFSETS(hl_DHHBone);
 
-HL_IMPL_ENDIAN_SWAP(hl_DHHBone, v)
+HL_IMPL_ENDIAN_SWAP(hl_DHHBone)
 {
     hl_Swap(v->Index);
 }
 
-HL_IMPL_WRITE(hl_DHHBone, file, ptr, offTable)
+HL_IMPL_WRITE(hl_DHHBone)
 {
     // TODO
 }
@@ -48,13 +49,13 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE_CPP(hl_DHHSkeleton);
 HL_IMPL_WRITE_CPP(hl_DHHSkeleton);
 HL_IMPL_X64_OFFSETS(hl_DHHSkeleton);
 
-HL_IMPL_ENDIAN_SWAP(hl_DHHSkeleton, v)
+HL_IMPL_ENDIAN_SWAP(hl_DHHSkeleton)
 {
     hl_Swap(v->UnknownCount);
     hl_Swap(v->BoneCount);
 }
 
-HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHSkeleton, v, be)
+HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHSkeleton)
 {
     if (be)
     {
@@ -79,7 +80,7 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHSkeleton, v, be)
     }
 }
 
-HL_IMPL_WRITE(hl_DHHSkeleton, file, ptr, offTable)
+HL_IMPL_WRITE(hl_DHHSkeleton)
 {
     // TODO
 }
@@ -90,19 +91,19 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE_CPP(hl_DHHSkeletalModel);
 HL_IMPL_WRITE_CPP(hl_DHHSkeletalModel);
 HL_IMPL_X64_OFFSETS(hl_DHHSkeletalModel);
 
-HL_IMPL_ENDIAN_SWAP(hl_DHHSkeletalModel, v)
+HL_IMPL_ENDIAN_SWAP(hl_DHHSkeletalModel)
 {
     hl_Swap(v->Meshes);
     v->Skeleton.EndianSwap();
 }
 
-HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHSkeletalModel, v, be)
+HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHSkeletalModel)
 {
     hl_SwapRecursive<HL_OFF32(hl_DHHMesh)>(be, v->Meshes);
     v->Skeleton.EndianSwapRecursive(be);
 }
 
-HL_IMPL_WRITE(hl_DHHSkeletalModel, file, ptr, offTable)
+HL_IMPL_WRITE(hl_DHHSkeletalModel)
 {
     // TODO
 }
