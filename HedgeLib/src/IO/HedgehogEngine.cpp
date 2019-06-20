@@ -34,7 +34,7 @@ void hl_HHFixOffsets(uint32_t* offTable,
         offPtr = hl_GetAbs<hl_DataOff32>(data, offTable[i]);
 
         // Fix offset
-        hl_FixOffset(offPtr, data);
+        hl_FixOffset(offPtr, data, true);
     }
 }
 

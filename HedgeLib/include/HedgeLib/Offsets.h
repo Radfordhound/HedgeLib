@@ -12,14 +12,16 @@ template<typename T>
 void hl_SwapRecursive(bool isBigEndian, T& value);
 
 extern "C" {
+#else
+#include <stdbool.h>
 #endif
 
 // Offsets
 typedef uint32_t hl_DataOff32;
 typedef uint64_t hl_DataOff64;
 
-HL_API void hl_FixOffset32(uint32_t* off, const void* data);
-HL_API void hl_FixOffset64(uint64_t* off, const void* data);
+HL_API void hl_FixOffset32(uint32_t* off, const void* data, bool isBigEndian);
+HL_API void hl_FixOffset64(uint64_t* off, const void* data, bool isBigEndian);
 
 // Arrays
 struct hl_ArrOff32
@@ -351,8 +353,15 @@ inline void hl_x64RemoveAbsPtrs32(hl_DataOff32 value, Args& ... args)
 }
 #endif
 
-HL_API void hl_FixOffset(uint32_t* off, const void* data);
-HL_API void hl_FixOffset(uint64_t* off, const void* data);
+inline void hl_FixOffset(uint32_t* off, const void* data, bool isBigEndian)
+{
+    hl_FixOffset32(off, data, isBigEndian);
+}
+
+inline void hl_FixOffset(uint64_t* off, const void* data, bool isBigEndian)
+{
+    hl_FixOffset64(off, data, isBigEndian);
+}
 
 // C++ Offset/Array Macros
 #define HL_OFF32(type) hl_DataOffset32<type>

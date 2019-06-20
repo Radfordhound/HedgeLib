@@ -30,7 +30,8 @@ HL_IMPL_ENDIAN_SWAP(hl_DBINAV2DataNode)
 }
 
 template<typename OffsetType>
-void hl_BINAFixOffsets(const uint8_t* offTable, uint32_t size, void* data)
+void hl_INBINAFixOffsets(const uint8_t* offTable,
+    uint32_t size, void* data, bool isBigEndian)
 {
     // currentOffset has to be uint32_t* instead of
     // OffsetType* for proper pointer arithmetic
@@ -73,18 +74,21 @@ void hl_BINAFixOffsets(const uint8_t* offTable, uint32_t size, void* data)
         }
 
         // Fix offset
-        hl_FixOffset(reinterpret_cast<OffsetType*>(currentOffset), data);
+        hl_FixOffset(reinterpret_cast<OffsetType*>(
+            currentOffset), data, isBigEndian);
     }
 }
 
-void hl_BINAFixOffsets32(const uint8_t* offTable, uint32_t size, void* data)
+void hl_BINAFixOffsets32(const uint8_t* offTable, uint32_t size,
+    void* data, bool isBigEndian)
 {
-    hl_BINAFixOffsets<uint32_t>(offTable, size, data);
+    hl_INBINAFixOffsets<uint32_t>(offTable, size, data, isBigEndian);
 }
 
-void hl_BINAFixOffsets64(const uint8_t* offTable, uint32_t size, void* data)
+void hl_BINAFixOffsets64(const uint8_t* offTable, uint32_t size,
+    void* data, bool isBigEndian)
 {
-    hl_BINAFixOffsets<uint64_t>(offTable, size, data);
+    hl_INBINAFixOffsets<uint64_t>(offTable, size, data, isBigEndian);
 }
 
 enum HL_RESULT hl_BINAReadV1(struct hl_File* file, struct hl_Blob** blob)
@@ -94,12 +98,12 @@ enum HL_RESULT hl_BINAReadV1(struct hl_File* file, struct hl_Blob** blob)
 }
 
 template<typename DataNodeType>
-void hl_INFixBINAV2DataNode(uint8_t*& nodes, hl_DBINAV2Header& header)
+void hl_INFixBINAV2DataNode(uint8_t*& nodes, hl_DBINAV2Header& header, bool bigEndian)
 {
     // TODO
     // Endian-swap DATA node
     DataNodeType* node = reinterpret_cast<DataNodeType*>(nodes);
-    node->EndianSwap();
+    if (bigEndian) node->EndianSwap();
 
     // Get data pointer
     uint8_t* data = reinterpret_cast<uint8_t*>(node + 1);
@@ -126,22 +130,22 @@ void hl_INFixBINAV2DataNode(uint8_t*& nodes, hl_DBINAV2Header& header)
     {
         if (header.Version[0] == 0x33)
         {
-            hl_BINAFixOffsets64(offTable, node->OffsetTableSize, data);
+            hl_BINAFixOffsets64(offTable, node->OffsetTableSize, data, bigEndian);
         }
         else
         {
-            hl_BINAFixOffsets32(offTable, node->OffsetTableSize, data);
+            hl_BINAFixOffsets32(offTable, node->OffsetTableSize, data, bigEndian);
         }
     }
     else
     {
         if (header.Version[1] == 0x31)
         {
-            hl_BINAFixOffsets64(offTable, node->OffsetTableSize, data);
+            hl_BINAFixOffsets64(offTable, node->OffsetTableSize, data, bigEndian);
         }
         else
         {
-            hl_BINAFixOffsets32(offTable, node->OffsetTableSize, data);
+            hl_BINAFixOffsets32(offTable, node->OffsetTableSize, data, bigEndian);
         }
     }
 
@@ -191,17 +195,19 @@ enum HL_RESULT hl_BINAReadV2(struct hl_File* file, struct hl_Blob** blob)
             // Endian-swap DATA node
             if (pacx)
             {
-                hl_INFixBINAV2DataNode<hl_DPACxV2DataNode>(nodes, header);
+                hl_INFixBINAV2DataNode<hl_DPACxV2DataNode>(
+                    nodes, header, file->DoEndianSwap);
             }
             else
             {
-                hl_INFixBINAV2DataNode<hl_DBINAV2DataNode>(nodes, header);
+                hl_INFixBINAV2DataNode<hl_DBINAV2DataNode>(
+                    nodes, header, file->DoEndianSwap);
             }
             break;
         }
 
         default:
-            node->EndianSwap();
+            if (file->DoEndianSwap) node->EndianSwap();
             break;
         }
 

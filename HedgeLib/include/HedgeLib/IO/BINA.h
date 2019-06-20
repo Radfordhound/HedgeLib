@@ -6,6 +6,8 @@
 
 #ifdef __cplusplus
 extern "C" {
+#else
+#include <stdbool.h>
 #endif
 
 #define HL_BINA_SIGNATURE                   0x414E4942
@@ -64,8 +66,11 @@ struct hl_DBINAV2DataNode
 HL_STATIC_ASSERT_SIZE(hl_DBINAV2DataNode, 0x18);
 HL_DECL_ENDIAN_SWAP(hl_DBINAV2DataNode);
 
-HL_API void hl_BINAFixOffsets32(const uint8_t* offTable, uint32_t size, void* data);
-HL_API void hl_BINAFixOffsets64(const uint8_t* offTable, uint32_t size, void* data);
+HL_API void hl_BINAFixOffsets32(const uint8_t* offTable, uint32_t size,
+    void* data, bool isBigEndian);
+
+HL_API void hl_BINAFixOffsets64(const uint8_t* offTable, uint32_t size,
+    void* data, bool isBigEndian);
 
 HL_API enum HL_RESULT hl_BINAReadV1(struct hl_File* file, struct hl_Blob** blob);
 HL_API enum HL_RESULT hl_BINAReadV2(struct hl_File* file, struct hl_Blob** blob);
