@@ -4,6 +4,8 @@
 #include <string>
 #include <cstring>
 
+static const char* const pacSplitType = "pac.d:ResPacDepend";
+
 // hl_DPACProxyEntry
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DPACProxyEntry);
 HL_IMPL_X64_OFFSETS(hl_DPACProxyEntry);
@@ -56,7 +58,7 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DLWArchive)
     {
         // Check if file tree is split table
         bool isSplitTable = (std::strcmp(typeNodes[i].Name,
-            "pac.d:ResPacDepend") == 0);
+            pacSplitType) == 0);
 
         // Get file tree from type node
         HL_ARR32(hl_DPACNode)* fileTree = HL_GETPTR32(
@@ -166,8 +168,8 @@ HL_IMPL_WRITE(hl_DLWArchive)
         hl_DPACNode* fileNodes = HL_GETPTR32(
             hl_DPACNode, fileTree->Offset);
 
-        bool isSplitsList = (std::strcmp(typeNodes[i].Name,
-            "pac.d:ResPacDepend") == 0);
+        bool isSplitsList = (std::strcmp(
+            typeNodes[i].Name, pacSplitType) == 0);
 
         for (uint32_t i2 = 0; i2 < fileTree->Count; ++i2)
         {
@@ -315,22 +317,22 @@ HL_IMPL_WRITE(hl_DLWArchive)
 
 void hl_ExtractLWArchive(const struct hl_Blob* blob, const char* dir)
 {
+    // Create directory for file extraction
     std::filesystem::path fdir = dir;
     std::filesystem::create_directory(fdir);
 
+    // Iterate through type tree
     const hl_DLWArchive* arc = hl_BINAGetData<hl_DLWArchive>(blob);
     hl_DPACNode* typeNodes = HL_GETPTR32(
         hl_DPACNode, arc->TypeTree.Offset);
 
     for (uint32_t i = 0; i < arc->TypeTree.Count; ++i)
     {
-        HL_ARR32(hl_DPACNode)* fileTree = HL_GETPTR32(
-            HL_ARR32(hl_DPACNode), typeNodes[i].Data);
-
-        hl_DPACNode* fileNodes = HL_GETPTR32(
-            hl_DPACNode, fileTree->Offset);
-
+        // Get extension
         char* ext = HL_GETPTR32(char, typeNodes[i].Name);
+        if (std::strcmp(ext, pacSplitType) == 0)
+            continue; // Skip split table
+
         uintptr_t colonPos = reinterpret_cast<uintptr_t>(
             std::strchr(ext, (int)':'));
 
@@ -343,6 +345,14 @@ void hl_ExtractLWArchive(const struct hl_Blob* blob, const char* dir)
         size_t extLen = static_cast<size_t>(
             colonPos - reinterpret_cast<uintptr_t>(ext));
 
+        // Get file tree
+        HL_ARR32(hl_DPACNode)* fileTree = HL_GETPTR32(
+            HL_ARR32(hl_DPACNode), typeNodes[i].Data);
+
+        hl_DPACNode* fileNodes = HL_GETPTR32(
+            hl_DPACNode, fileTree->Offset);
+
+        // Iterate through file nodes
         for (uint32_t i2 = 0; i2 < fileTree->Count; ++i2)
         {
             hl_DPACDataEntry* dataEntry = HL_GETPTR32(
