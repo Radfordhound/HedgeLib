@@ -7,6 +7,23 @@ extern "C" {
 
 #define HL_PACX_SIGNATURE           0x78434150
 
+struct hl_PACxSupportedExtension
+{
+    const char* const Extension;    // An extension supported by the format (e.g. ".dds")
+    const size_t PACxDataType;      // The associated PACx Data Type (e.g. "ResTexture")
+};
+
+HL_API extern const struct hl_PACxSupportedExtension hl_PACxV2SupportedExtensions[];
+HL_API extern const size_t hl_PACxV2SupportedExtensionCount;
+
+HL_API extern const size_t hl_PACxV2SplitTypes[];
+HL_API extern const size_t hl_PACxV2SplitTypesCount;
+
+HL_API extern const char* const hl_PACxDataTypes[];
+HL_API extern const size_t hl_PACxDataTypeCount;
+
+HL_API extern const char* const hl_PACxRawDataType;
+
 struct hl_DPACxV2DataNode
 {
     struct hl_DBINAV2Node Header;   // Contains general information on this node.
