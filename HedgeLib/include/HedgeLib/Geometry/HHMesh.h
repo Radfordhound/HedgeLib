@@ -22,13 +22,13 @@ struct hl_DHHSpecialSubMeshSlot
 
     HL_DECL_ENDIAN_SWAP_CPP();
     HL_DECL_ENDIAN_SWAP_RECURSIVE_CPP();
-    HL_DECL_WRITE_CPP();
+    HL_DECL_WRITEO_CPP();
 };
 
 HL_DECL_X64_OFFSETS(hl_DHHSpecialSubMeshSlot);
 HL_DECL_ENDIAN_SWAP(hl_DHHSpecialSubMeshSlot);
 HL_DECL_ENDIAN_SWAP_RECURSIVE(hl_DHHSpecialSubMeshSlot);
-HL_DECL_WRITE(hl_DHHSpecialSubMeshSlot);
+HL_DECL_WRITEO(hl_DHHSpecialSubMeshSlot);
 
 struct hl_DHHMesh
 {
@@ -42,13 +42,13 @@ struct hl_DHHMesh
 
     HL_DECL_ENDIAN_SWAP_CPP();
     HL_DECL_ENDIAN_SWAP_RECURSIVE_CPP();
-    HL_DECL_WRITE_CPP();
+    HL_DECL_WRITEO_CPP();
 };
 
 HL_DECL_X64_OFFSETS(hl_DHHMesh);
 HL_DECL_ENDIAN_SWAP(hl_DHHMesh);
 HL_DECL_ENDIAN_SWAP_RECURSIVE(hl_DHHMesh);
-HL_DECL_WRITE(hl_DHHMesh);
+HL_DECL_WRITEO(hl_DHHMesh);
 
 #ifdef __cplusplus
 }

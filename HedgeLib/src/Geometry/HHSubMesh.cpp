@@ -5,14 +5,14 @@
 
 // hl_DHHTextureUnit
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHTextureUnit);
-HL_IMPL_WRITE_CPP(hl_DHHTextureUnit);
+HL_IMPL_WRITEO_CPP(hl_DHHTextureUnit);
 
 HL_IMPL_ENDIAN_SWAP(hl_DHHTextureUnit)
 {
     hl_Swap(v->ID);
 }
 
-HL_IMPL_WRITE(hl_DHHTextureUnit)
+HL_IMPL_WRITEO(hl_DHHTextureUnit)
 {
     // TODO
 }
@@ -36,7 +36,7 @@ HL_IMPL_WRITE(hl_DHHVertexElement)
 // hl_DHHSubMesh
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHSubMesh);
 HL_IMPL_ENDIAN_SWAP_RECURSIVE_CPP(hl_DHHSubMesh);
-HL_IMPL_WRITE_CPP(hl_DHHSubMesh);
+HL_IMPL_WRITEO_CPP(hl_DHHSubMesh);
 HL_IMPL_X64_OFFSETS(hl_DHHSubMesh);
 
 HL_IMPL_ENDIAN_SWAP(hl_DHHSubMesh)
@@ -131,7 +131,7 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHSubMesh)
     }
 }
 
-HL_IMPL_WRITE(hl_DHHSubMesh)
+HL_IMPL_WRITEO(hl_DHHSubMesh)
 {
     // TODO
 }

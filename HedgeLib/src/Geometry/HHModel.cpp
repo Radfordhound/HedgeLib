@@ -8,7 +8,7 @@
 // hl_DHHTerrainModel
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHTerrainModel);
 HL_IMPL_ENDIAN_SWAP_RECURSIVE_CPP(hl_DHHTerrainModel);
-HL_IMPL_WRITE_CPP(hl_DHHTerrainModel);
+HL_IMPL_WRITEO_CPP(hl_DHHTerrainModel);
 HL_IMPL_X64_OFFSETS(hl_DHHTerrainModel);
 
 HL_IMPL_ENDIAN_SWAP(hl_DHHTerrainModel)
@@ -23,14 +23,14 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHTerrainModel)
     hl_Swap(v->Flags);
 }
 
-HL_IMPL_WRITE(hl_DHHTerrainModel)
+HL_IMPL_WRITEO(hl_DHHTerrainModel)
 {
     // TODO
 }
 
 // hl_DHHBone
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHBone);
-HL_IMPL_WRITE_CPP(hl_DHHBone);
+HL_IMPL_WRITEO_CPP(hl_DHHBone);
 HL_IMPL_X64_OFFSETS(hl_DHHBone);
 
 HL_IMPL_ENDIAN_SWAP(hl_DHHBone)
@@ -38,7 +38,7 @@ HL_IMPL_ENDIAN_SWAP(hl_DHHBone)
     hl_Swap(v->Index);
 }
 
-HL_IMPL_WRITE(hl_DHHBone)
+HL_IMPL_WRITEO(hl_DHHBone)
 {
     // TODO
 }
@@ -46,7 +46,7 @@ HL_IMPL_WRITE(hl_DHHBone)
 // hl_DHHSkeleton
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHSkeleton);
 HL_IMPL_ENDIAN_SWAP_RECURSIVE_CPP(hl_DHHSkeleton);
-HL_IMPL_WRITE_CPP(hl_DHHSkeleton);
+HL_IMPL_WRITEO_CPP(hl_DHHSkeleton);
 HL_IMPL_X64_OFFSETS(hl_DHHSkeleton);
 
 HL_IMPL_ENDIAN_SWAP(hl_DHHSkeleton)
@@ -80,7 +80,7 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHSkeleton)
     }
 }
 
-HL_IMPL_WRITE(hl_DHHSkeleton)
+HL_IMPL_WRITEO(hl_DHHSkeleton)
 {
     // TODO
 }
@@ -88,7 +88,7 @@ HL_IMPL_WRITE(hl_DHHSkeleton)
 // hl_DHHSkeletalModel
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHSkeletalModel);
 HL_IMPL_ENDIAN_SWAP_RECURSIVE_CPP(hl_DHHSkeletalModel);
-HL_IMPL_WRITE_CPP(hl_DHHSkeletalModel);
+HL_IMPL_WRITEO_CPP(hl_DHHSkeletalModel);
 HL_IMPL_X64_OFFSETS(hl_DHHSkeletalModel);
 
 HL_IMPL_ENDIAN_SWAP(hl_DHHSkeletalModel)
@@ -103,7 +103,7 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHSkeletalModel)
     v->Skeleton.EndianSwapRecursive(be);
 }
 
-HL_IMPL_WRITE(hl_DHHSkeletalModel)
+HL_IMPL_WRITEO(hl_DHHSkeletalModel)
 {
     // TODO
 }

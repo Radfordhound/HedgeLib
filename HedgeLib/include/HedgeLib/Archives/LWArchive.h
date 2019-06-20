@@ -16,12 +16,10 @@ struct hl_DPACProxyEntry
 
     HL_INLN_X64_OFFSETS_CPP(Extension, Name);
     HL_DECL_ENDIAN_SWAP_CPP();
-    HL_DECL_WRITE_CPP();
 };
 
 HL_DECL_X64_OFFSETS(hl_DPACProxyEntry);
 HL_DECL_ENDIAN_SWAP(hl_DPACProxyEntry);
-HL_DECL_WRITE(hl_DPACProxyEntry);
 
 typedef HL_ARR32(hl_DPACProxyEntry) hl_DPACProxyEntryTable;
 
@@ -32,12 +30,10 @@ struct hl_DPACSplitTable
 
     HL_INLN_X64_OFFSETS_CPP(Splits);
     HL_DECL_ENDIAN_SWAP_CPP();
-    HL_DECL_WRITE_CPP();
 };
 
 HL_DECL_X64_OFFSETS(hl_DPACSplitTable);
 HL_DECL_ENDIAN_SWAP(hl_DPACSplitTable);
-HL_DECL_WRITE(hl_DPACSplitTable);
 
 enum HL_PACX_DATA_FLAGS : uint8_t
 {
@@ -53,11 +49,9 @@ struct hl_DPACDataEntry
     enum HL_PACX_DATA_FLAGS Flags;
 
     HL_DECL_ENDIAN_SWAP_CPP();
-    HL_DECL_WRITE_CPP();
 };
 
 HL_DECL_ENDIAN_SWAP(hl_DPACDataEntry);
-HL_DECL_WRITE(hl_DPACDataEntry);
 
 struct hl_DPACNode
 {
@@ -65,11 +59,11 @@ struct hl_DPACNode
     HL_OFF32(uint8_t) Data;
 
     HL_INLN_X64_OFFSETS_CPP(Name, Data);
-    HL_DECL_WRITE_CPP();
+    HL_DECL_WRITEO_CPP();
 };
 
 HL_DECL_X64_OFFSETS(hl_DPACNode);
-HL_DECL_WRITE(hl_DPACNode);
+HL_DECL_WRITEO(hl_DPACNode);
 
 struct hl_DLWArchive
 {

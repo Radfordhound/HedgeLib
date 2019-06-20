@@ -19,13 +19,13 @@ struct hl_DHHTerrainModel
 
     HL_DECL_ENDIAN_SWAP_CPP();
     HL_DECL_ENDIAN_SWAP_RECURSIVE_CPP();
-    HL_DECL_WRITE_CPP();
+    HL_DECL_WRITEO_CPP();
 };
 
 HL_DECL_X64_OFFSETS(hl_DHHTerrainModel);
 HL_DECL_ENDIAN_SWAP(hl_DHHTerrainModel);
 HL_DECL_ENDIAN_SWAP_RECURSIVE(hl_DHHTerrainModel);
-HL_DECL_WRITE(hl_DHHTerrainModel);
+HL_DECL_WRITEO(hl_DHHTerrainModel);
 
 struct hl_DHHBone
 {
@@ -35,12 +35,12 @@ struct hl_DHHBone
     HL_INLN_X64_OFFSETS_CPP(Name);
 
     HL_DECL_ENDIAN_SWAP_CPP();
-    HL_DECL_WRITE_CPP();
+    HL_DECL_WRITEO_CPP();
 };
 
 HL_DECL_X64_OFFSETS(hl_DHHBone);
 HL_DECL_ENDIAN_SWAP(hl_DHHBone);
-HL_DECL_WRITE(hl_DHHBone);
+HL_DECL_WRITEO(hl_DHHBone);
 
 struct hl_Matrix4x4;
 struct hl_AABB;
@@ -61,13 +61,13 @@ struct hl_DHHSkeleton
 
     HL_DECL_ENDIAN_SWAP_CPP();
     HL_DECL_ENDIAN_SWAP_RECURSIVE_CPP();
-    HL_DECL_WRITE_CPP();
+    HL_DECL_WRITEO_CPP();
 };
 
 HL_DECL_X64_OFFSETS(hl_DHHSkeleton);
 HL_DECL_ENDIAN_SWAP(hl_DHHSkeleton);
 HL_DECL_ENDIAN_SWAP_RECURSIVE(hl_DHHSkeleton);
-HL_DECL_WRITE(hl_DHHSkeleton);
+HL_DECL_WRITEO(hl_DHHSkeleton);
 
 struct hl_DHHSkeletalModel
 {
@@ -80,13 +80,13 @@ struct hl_DHHSkeletalModel
 
     HL_DECL_ENDIAN_SWAP_CPP();
     HL_DECL_ENDIAN_SWAP_RECURSIVE_CPP();
-    HL_DECL_WRITE_CPP();
+    HL_DECL_WRITEO_CPP();
 };
 
 HL_DECL_X64_OFFSETS(hl_DHHSkeletalModel);
 HL_DECL_ENDIAN_SWAP(hl_DHHSkeletalModel);
 HL_DECL_ENDIAN_SWAP_RECURSIVE(hl_DHHSkeletalModel);
-HL_DECL_WRITE(hl_DHHSkeletalModel);
+HL_DECL_WRITEO(hl_DHHSkeletalModel);
 
 #ifdef __cplusplus
 }

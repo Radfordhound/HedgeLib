@@ -14,11 +14,11 @@ struct hl_DHHTextureUnit
     uint32_t ID; // TODO: Why does this look like it's little endian? Is this actually a byte??
 
     HL_DECL_ENDIAN_SWAP_CPP();
-    HL_DECL_WRITE_CPP();
+    HL_DECL_WRITEO_CPP();
 };
 
 HL_DECL_ENDIAN_SWAP(hl_DHHTextureUnit);
-HL_DECL_WRITE(hl_DHHTextureUnit);
+HL_DECL_WRITEO(hl_DHHTextureUnit);
 
 enum HL_HHVERTEX_DATA_FORMAT : uint32_t
 {
@@ -80,13 +80,13 @@ struct hl_DHHSubMesh
 
     HL_DECL_ENDIAN_SWAP_CPP();
     HL_DECL_ENDIAN_SWAP_RECURSIVE_CPP();
-    HL_DECL_WRITE_CPP();
+    HL_DECL_WRITEO_CPP();
 };
 
 HL_DECL_X64_OFFSETS(hl_DHHSubMesh);
 HL_DECL_ENDIAN_SWAP(hl_DHHSubMesh);
 HL_DECL_ENDIAN_SWAP_RECURSIVE(hl_DHHSubMesh);
-HL_DECL_WRITE(hl_DHHSubMesh);
+HL_DECL_WRITEO(hl_DHHSubMesh);
 
 #ifdef __cplusplus
 }

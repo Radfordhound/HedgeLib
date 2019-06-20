@@ -6,7 +6,6 @@
 
 // hl_DPACProxyEntry
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DPACProxyEntry);
-HL_IMPL_WRITE_CPP(hl_DPACProxyEntry);
 HL_IMPL_X64_OFFSETS(hl_DPACProxyEntry);
 
 HL_IMPL_ENDIAN_SWAP(hl_DPACProxyEntry)
@@ -14,14 +13,8 @@ HL_IMPL_ENDIAN_SWAP(hl_DPACProxyEntry)
     hl_Swap(v->Index);
 }
 
-HL_IMPL_WRITE(hl_DPACProxyEntry)
-{
-    // TODO
-}
-
 // hl_DPACSplitTable
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DPACSplitTable);
-HL_IMPL_WRITE_CPP(hl_DPACSplitTable);
 HL_IMPL_X64_OFFSETS(hl_DPACSplitTable);
 
 HL_IMPL_ENDIAN_SWAP(hl_DPACSplitTable)
@@ -29,15 +22,8 @@ HL_IMPL_ENDIAN_SWAP(hl_DPACSplitTable)
     hl_Swap(v->SplitCount);
 }
 
-HL_IMPL_WRITE(hl_DPACSplitTable)
-{
-    // TODO
-}
-
 // hl_DPACDataEntry
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DPACDataEntry);
-HL_IMPL_WRITE_CPP(hl_DPACDataEntry);
-
 HL_IMPL_ENDIAN_SWAP(hl_DPACDataEntry)
 {
     hl_Swap(v->DataSize);
@@ -45,19 +31,8 @@ HL_IMPL_ENDIAN_SWAP(hl_DPACDataEntry)
     hl_Swap(v->Unknown2);
 }
 
-HL_IMPL_WRITE(hl_DPACDataEntry)
-{
-    // TODO
-}
-
 // hl_DPACNode
-HL_IMPL_WRITE_CPP(hl_DPACNode);
 HL_IMPL_X64_OFFSETS(hl_DPACNode);
-
-HL_IMPL_WRITE(hl_DPACNode)
-{
-    // TODO
-}
 
 // hl_DLWArchive
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DLWArchive);
@@ -127,6 +102,7 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DLWArchive)
 HL_IMPL_WRITE(hl_DLWArchive)
 {
     // Prepare data node header
+    hl_OffsetTable offTable;
     hl_StringTable strTable;
     long nodePos = file->Tell();
 
@@ -140,7 +116,7 @@ HL_IMPL_WRITE(hl_DLWArchive)
     long treesPos = (nodePos + sizeof(hl_DPACxV2DataNode));
 
     // Fix type tree offset
-    file->FixOffsetRel32(-4, 0, *offTable);
+    file->FixOffsetRel32(-4, 0, offTable);
 
     // Write type nodes
     hl_DPACNode* typeNodes = HL_GETPTR32(
@@ -159,7 +135,7 @@ HL_IMPL_WRITE(hl_DLWArchive)
         hl_AddString(&strTable, typeNodes[i].Name, offPos);
         offPos += 4;
 
-        file->FixOffset32(offPos, file->Tell(), *offTable);
+        file->FixOffset32(offPos, file->Tell(), offTable);
         file->Write(*fileTree);
         offPos += 4;
 
@@ -183,7 +159,7 @@ HL_IMPL_WRITE(hl_DLWArchive)
             HL_ARR32(hl_DPACNode), typeNodes[i].Data);
 
         offPos += 4;
-        file->FixOffset32(offPos, offPos + 4, *offTable);
+        file->FixOffset32(offPos, offPos + 4, offTable);
         offPos += 4;
 
         // Write file data and fix file node offset
@@ -205,7 +181,7 @@ HL_IMPL_WRITE(hl_DLWArchive)
             file->Pad(16);
             eof = file->Tell();
 
-            file->FixOffset32(offPos, eof, *offTable);
+            file->FixOffset32(offPos, eof, offTable);
             offPos += 4;
 
             // Write data entry
@@ -222,7 +198,7 @@ HL_IMPL_WRITE(hl_DLWArchive)
 
                 // Fix split entry table offset
                 splitPos = (splitTablePos + sizeof(*splitTable));
-                file->FixOffset32(splitTablePos, splitPos, *offTable);
+                file->FixOffset32(splitTablePos, splitPos, offTable);
 
                 // Write split entries
                 file->WriteNulls(splitTable->SplitCount * sizeof(HL_STR32));
@@ -262,7 +238,7 @@ HL_IMPL_WRITE(hl_DLWArchive)
         offPos = (proxyEntryTablePos + 4);
 
         file->Write(proxyEntryTable);
-        file->FixOffset32(offPos, offPos + 4, *offTable);
+        file->FixOffset32(offPos, offPos + 4, offTable);
         offPos += 4;
 
         // Write proxy entries
@@ -296,11 +272,11 @@ HL_IMPL_WRITE(hl_DLWArchive)
 
     // Write string table
     uint32_t strTablePos = static_cast<uint32_t>(file->Tell());
-    hl_BINAWriteStringTable(file, &strTable, offTable);
+    hl_BINAWriteStringTable(file, &strTable, &offTable);
 
     // Write offset table
     uint32_t offTablePos = static_cast<uint32_t>(file->Tell());
-    hl_BINAWriteOffsetTable(file, offTable);
+    hl_BINAWriteOffsetTable(file, &offTable);
 
     // Fill-in node size
     eof = file->Tell();

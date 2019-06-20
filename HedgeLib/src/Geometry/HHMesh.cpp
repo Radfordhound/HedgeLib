@@ -6,7 +6,7 @@
 // hl_DHHSpecialSubMeshSlot
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHSpecialSubMeshSlot);
 HL_IMPL_ENDIAN_SWAP_RECURSIVE_CPP(hl_DHHSpecialSubMeshSlot);
-HL_IMPL_WRITE_CPP(hl_DHHSpecialSubMeshSlot);
+HL_IMPL_WRITEO_CPP(hl_DHHSpecialSubMeshSlot);
 HL_IMPL_X64_OFFSETS(hl_DHHSpecialSubMeshSlot);
 
 HL_IMPL_ENDIAN_SWAP(hl_DHHSpecialSubMeshSlot)
@@ -36,7 +36,7 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHSpecialSubMeshSlot)
     if (!be) hl_Swap(v->Count);
 }
 
-HL_IMPL_WRITE(hl_DHHSpecialSubMeshSlot)
+HL_IMPL_WRITEO(hl_DHHSpecialSubMeshSlot)
 {
     // TODO
 }
@@ -44,7 +44,7 @@ HL_IMPL_WRITE(hl_DHHSpecialSubMeshSlot)
 // hl_DHHMesh
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHMesh);
 HL_IMPL_ENDIAN_SWAP_RECURSIVE_CPP(hl_DHHMesh);
-HL_IMPL_WRITE_CPP(hl_DHHMesh);
+HL_IMPL_WRITEO_CPP(hl_DHHMesh);
 HL_IMPL_X64_OFFSETS(hl_DHHMesh);
 
 HL_IMPL_ENDIAN_SWAP(hl_DHHMesh)
@@ -63,7 +63,7 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHMesh)
     v->Special.EndianSwapRecursive(be);
 }
 
-HL_IMPL_WRITE(hl_DHHMesh)
+HL_IMPL_WRITEO(hl_DHHMesh)
 {
     // TODO
 }
