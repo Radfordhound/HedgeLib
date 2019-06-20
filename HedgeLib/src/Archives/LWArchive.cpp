@@ -1,8 +1,9 @@
 #include "HedgeLib/Archives/LWArchive.h"
 #include "HedgeLib/Archives/PACx.h"
 #include "HedgeLib/IO/File.h"
-#include <string>
 #include <cstring>
+#include <algorithm>
+#include <cstdlib>
 
 static const char* const pacSplitType = "pac.d:ResPacDepend";
 
@@ -361,15 +362,25 @@ void hl_ExtractLWArchive(const struct hl_Blob* blob, const char* dir)
             if (dataEntry->Flags & HL_PACX_DATA_FLAGS_NO_DATA)
                 continue;
 
-            std::string fileName = std::string(
-                HL_GETPTR32(char, fileNodes[i2].Name));
+            // Get file name
+            char* name = HL_GETPTR32(char, fileNodes[i2].Name);
+            size_t nameLen = std::strlen(name);
 
-            fileName += '.';
-            fileName.append(ext, extLen);
+            char* fileName = static_cast<char*>(
+                std::malloc(nameLen + extLen + 2));
+
+            std::copy(name, name + nameLen, fileName);              // chr_Sonic
+            fileName[nameLen] = '.';                                // .
+            std::copy(ext, ext + extLen, fileName + nameLen + 1);   // model
+            fileName[nameLen + extLen + 1] = '\0';                  // \0
+
+            // Get file path
+            std::filesystem::path filePath = (fdir / fileName);
+            std::free(fileName);
 
             // Write data to file
             uint8_t* data = reinterpret_cast<uint8_t*>(dataEntry + 1);
-            hl_File file = hl_File::OpenWrite(fdir / fileName);
+            hl_File file = hl_File::OpenWrite(filePath);
 
             // TODO: BINA CRAP
 
