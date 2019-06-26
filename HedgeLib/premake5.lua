@@ -26,7 +26,7 @@ project("HedgeLib")
 		flags("MultiProcessorCompile")
 	
 	-- GCC C++ 17 Filesystem support
-	filter("toolset:gcc")
+	filter("toolset:gcc or clang")
 		links("stdc++fs")
 
 	-- Debug Configuration
