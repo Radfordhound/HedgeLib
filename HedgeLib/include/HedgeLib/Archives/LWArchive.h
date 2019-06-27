@@ -85,6 +85,10 @@ HL_DECL_WRITE(hl_DLWArchive);
 
 HL_API void hl_ExtractLWArchive(const struct hl_Blob* blob, const char* dir);
 
+// TODO: Should this return an HL_RESULT?
+HL_API void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t fileCount,
+    const char* dir, const char* name, uint32_t splitLimit, bool bigEndian);
+
 #ifdef __cplusplus
 }
 #endif
