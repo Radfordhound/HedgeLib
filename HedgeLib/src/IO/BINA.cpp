@@ -160,7 +160,7 @@ enum HL_RESULT hl_BINAReadV2(struct hl_File* file, struct hl_Blob** blob)
     hl_DBINAV2Header header;
     file->ReadNoSwap(header);
     
-    if (file->DoEndianSwap = (header.EndianFlag == HL_BINA_BE_FLAG))
+    if ((file->DoEndianSwap = (header.EndianFlag == HL_BINA_BE_FLAG)))
     {
         header.EndianSwap();
     }
@@ -299,14 +299,14 @@ enum HL_RESULT hl_BINAWriteOffsetTableSorted(const struct hl_File* file,
         }
         else if (o > 0x3FFF)
         {
-            o <<= 24;
-            o |= HL_BINA_THIRTY_BIT;
-            result = file->Write(o);
+            o |= (HL_BINA_THIRTY_BIT << 24);
+            hl_SwapUInt32(&o);
+            result = file->WriteNoSwap(o);
         }
         else if (o > 0x3F)
         {
-            o <<= 8;
-            o |= HL_BINA_FOURTEEN_BIT;
+            o |= (HL_BINA_FOURTEEN_BIT << 8);
+            hl_SwapUInt16(reinterpret_cast<uint16_t*>(&o));
             result = file->WriteBytes(&o, 2);
         }
         else
