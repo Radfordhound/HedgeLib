@@ -6,6 +6,8 @@ extern "C" {
 #endif
 
 #define HL_PACX_SIGNATURE           0x78434150
+#define HL_PACX_DEFAULT_SPLIT_LIMIT 0xA037A0
+#define HL_PACX_EXTENSION           ".pac"
 
 struct hl_PACxSupportedExtension
 {
@@ -21,8 +23,6 @@ HL_API extern const size_t hl_PACxV2SplitTypesCount;
 
 HL_API extern const char* const hl_PACxDataTypes[];
 HL_API extern const size_t hl_PACxDataTypeCount;
-
-HL_API extern const char* const hl_PACxRawDataType;
 
 struct hl_DPACxV2DataNode
 {

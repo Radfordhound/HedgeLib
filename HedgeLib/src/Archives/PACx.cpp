@@ -7,59 +7,59 @@ const struct hl_PACxSupportedExtension hl_PACxV2SupportedExtensions[] =
 {
     // Organized based on frequency information determined via a custom analyzation program
     // High Frequency
-    { "dds", 56 },
-    { "material", 21 },
-    { "model", 32 },
-    { "uv-anim", 6 },
-    { "skl.hkx", 47 },
-    { "anm.hkx", 4 },
-    { "terrain-model", 28 },
+    { "dds", 57 },
+    { "material", 22 },
+    { "model", 33 },
+    { "uv-anim", 7 },
+    { "skl.hkx", 48 },
+    { "anm.hkx", 5 },
+    { "terrain-model", 29 },
     
     // Average Frequency
-    { "swif", 50 },
-    { "effect", 16 },
-    { "mat-anim", 3 },
-    { "anm", 10 },
-    { "phy.hkx", 17 },
-    { "terrain-instanceinfo", 27 },
-    { "lua", 18 },
-    { "hhd", 12 },
-    { "light", 19 },
-    { "path2.bin", 49 },
-    { "lft", 20 },
+    { "swif", 51 },
+    { "effect", 17 },
+    { "mat-anim", 4 },
+    { "anm", 11 },
+    { "phy.hkx", 18 },
+    { "terrain-instanceinfo", 28 },
+    { "lua", 19 },
+    { "hhd", 13 },
+    { "light", 20 },
+    { "path2.bin", 50 },
+    { "lft", 21 },
 
     // Low frequency
-    { "shadow-model", 45 },
-    { "gism", 15 },
-    { "fxcol.bin", 14 },
-    { "xtb2", 60 },
-    { "model-instanceinfo", 33 },
-    { "svcol.bin", 51 },
-    { "vis-anim", 7 },
-    { "voxel.bin", 59 },
-    { "score", 43 },
-    { "nextra.bin", 34 },
-    { "gsh", 25 },
-    { "shader-list", 26 },
-    { "bfttf", 8 },
-    { "pixelshader", 22 },
-    { "wpu", 23 },
-    { "wvu", 30 },
-    { "fpo", 23 },
-    { "psparam", 24 },
-    { "vertexshader", 29 },
-    { "ttf", 57 },
-    { "vsparam", 31 },
-    { "vpo", 30 },
-    { "path.bin", 48 },
-    { "pac.d", 36 }
+    { "shadow-model", 46 },
+    { "gism", 16 },
+    { "fxcol.bin", 15 },
+    { "xtb2", 61 },
+    { "model-instanceinfo", 34 },
+    { "svcol.bin", 52 },
+    { "vis-anim", 8 },
+    { "voxel.bin", 60 },
+    { "score", 44 },
+    { "nextra.bin", 35 },
+    { "gsh", 26 },
+    { "shader-list", 27 },
+    { "bfttf", 9 },
+    { "pixelshader", 23 },
+    { "wpu", 24 },
+    { "wvu", 31 },
+    { "fpo", 24 },
+    { "psparam", 25 },
+    { "vertexshader", 30 },
+    { "ttf", 58 },
+    { "vsparam", 32 },
+    { "vpo", 31 },
+    { "path.bin", 49 },
+    { "pac.d", 37 }
 };
 
 const size_t hl_PACxV2SupportedExtensionCount = 42;
 
 const size_t hl_PACxV2SplitTypes[] =
 {
-    21, 28, 32, 6, 56, 3, 7
+    22, 29, 33, 7, 57, 4, 8
 };
 
 const size_t hl_PACxV2SplitTypesCount = 7;
@@ -67,72 +67,74 @@ const size_t hl_PACxV2SplitTypesCount = 7;
 // Credit to Skyth for parts of this list
 const char* const hl_PACxDataTypes[] = 
 {
-    // Organized alphabetically
-    "ResAnimator",                      // 0
-    "ResAnimCameraContainer",           // 1
-    "ResAnimLightContainer",            // 2
-    "ResAnimMaterial",                  // 3
-    "ResAnimSkeleton",                  // 4
-    "ResAnimTexPat",                    // 5
-    "ResAnimTexSrt",                    // 6
-    "ResAnimVis",                       // 7
-    "ResBFTTFData",                     // 8
-    "ResBitmapFont",                    // 9
-    "ResCharAnimScript",                // 10
-    "ResCodeTable",                     // 11
-    "ResCustomData",                    // 12
-    "ResCyanEffect",                    // 13
-    "ResFxColFile",                     // 14
-    "ResGismoConfig",                   // 15
-    "ResGrifEffect",                    // 16
-    "ResHavokMesh",                     // 17
-    "ResLuaData",                       // 18
-    "ResMirageLight",                   // 19
-    "ResMirageLightField",              // 20
-    "ResMirageMaterial",                // 21
-    "ResMiragePixelShader",             // 22
-    "ResMiragePixelShaderCode",         // 23
-    "ResMiragePixelShaderParameter",    // 24
-    "ResMirageResSM4ShaderContainer",   // 25
-    "ResMirageShaderList",              // 26
-    "ResMirageTerrainInstanceInfo",     // 27
-    "ResMirageTerrainModel",            // 28
-    "ResMirageVertexShader",            // 29
-    "ResMirageVertexShaderCode",        // 30
-    "ResMirageVertexShaderParameter",   // 31
-    "ResModel",                         // 32
-    "ResModelInstanceInfo",             // 33
-    "ResNameExtra",                     // 34
-    "ResObjectWorld",                   // 35
-    "ResPacDepend",                     // 36
-    "ResParticleLocation",              // 37
-    "ResProbe",                         // 38
-    "ResRawData",                       // 39
-    "ResReflection",                    // 40
-    "ResScalableFontSet",               // 41
-    "ResScene",                         // 42
-    "ResScoreTable",                    // 43
-    "ResShaderList",                    // 44
-    "ResShadowModel",                   // 45
-    "ResSHLightField",                  // 46
-    "ResSkeleton",                      // 47
-    "ResSplinePath",                    // 48
-    "ResSplinePath2",                   // 49
-    "ResSurfRideProject",               // 50
-    "ResSvCol",                         // 51
-    "ResTerrainGrassInfo",              // 52
-    "ResText",                          // 53
-    "ResTextMeta",                      // 54
-    "ResTextProject",                   // 55
-    "ResTexture",                       // 56
-    "ResTTFData",                       // 57
-    "ResVibration",                     // 58
-    "ResVoxelContainer",                // 59
-    "ResXTB2Data"                       // 60
+    // RawData == 0 as a fallback
+    "ResRawData",                       // 0
+
+    // The rest are organized alphabetically
+    "ResAnimator",                      // 1
+    "ResAnimCameraContainer",           // 2
+    "ResAnimLightContainer",            // 3
+    "ResAnimMaterial",                  // 4
+    "ResAnimSkeleton",                  // 5
+    "ResAnimTexPat",                    // 6
+    "ResAnimTexSrt",                    // 7
+    "ResAnimVis",                       // 8
+    "ResBFTTFData",                     // 9
+    "ResBitmapFont",                    // 10
+    "ResCharAnimScript",                // 11
+    "ResCodeTable",                     // 12
+    "ResCustomData",                    // 13
+    "ResCyanEffect",                    // 14
+    "ResFxColFile",                     // 15
+    "ResGismoConfig",                   // 16
+    "ResGrifEffect",                    // 17
+    "ResHavokMesh",                     // 18
+    "ResLuaData",                       // 19
+    "ResMirageLight",                   // 20
+    "ResMirageLightField",              // 21
+    "ResMirageMaterial",                // 22
+    "ResMiragePixelShader",             // 23
+    "ResMiragePixelShaderCode",         // 24
+    "ResMiragePixelShaderParameter",    // 25
+    "ResMirageResSM4ShaderContainer",   // 26
+    "ResMirageShaderList",              // 27
+    "ResMirageTerrainInstanceInfo",     // 28
+    "ResMirageTerrainModel",            // 29
+    "ResMirageVertexShader",            // 30
+    "ResMirageVertexShaderCode",        // 31
+    "ResMirageVertexShaderParameter",   // 32
+    "ResModel",                         // 33
+    "ResModelInstanceInfo",             // 34
+    "ResNameExtra",                     // 35
+    "ResObjectWorld",                   // 36
+    "ResPacDepend",                     // 37
+    "ResParticleLocation",              // 38
+    "ResProbe",                         // 39
+    "ResRawData",                       // 40
+    "ResReflection",                    // 41
+    "ResScalableFontSet",               // 42
+    "ResScene",                         // 43
+    "ResScoreTable",                    // 44
+    "ResShaderList",                    // 45
+    "ResShadowModel",                   // 46
+    "ResSHLightField",                  // 47
+    "ResSkeleton",                      // 48
+    "ResSplinePath",                    // 49
+    "ResSplinePath2",                   // 50
+    "ResSurfRideProject",               // 51
+    "ResSvCol",                         // 52
+    "ResTerrainGrassInfo",              // 53
+    "ResText",                          // 54
+    "ResTextMeta",                      // 55
+    "ResTextProject",                   // 56
+    "ResTexture",                       // 57
+    "ResTTFData",                       // 58
+    "ResVibration",                     // 59
+    "ResVoxelContainer",                // 60
+    "ResXTB2Data"                       // 61
 };
 
-const size_t hl_PACxDataTypeCount = 61;
-const char* const hl_PACxRawDataType = "ResRawData";
+const size_t hl_PACxDataTypeCount = 62;
 
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DPACxV2DataNode);
 HL_IMPL_ENDIAN_SWAP(hl_DPACxV2DataNode)
