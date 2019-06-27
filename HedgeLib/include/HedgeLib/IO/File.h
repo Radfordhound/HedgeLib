@@ -206,13 +206,13 @@ public:
     }
 
     template<typename T>
-    inline HL_RESULT ReadNoSwap(T & value) const
+    inline HL_RESULT ReadNoSwap(T& value) const
     {
         return ReadBytes(&value, sizeof(T));
     }
 
     template<typename T>
-    inline size_t ReadNoSwap(T * value,
+    inline size_t ReadNoSwap(T* value,
         size_t elementCount) const
     {
         return ReadBytes(value, sizeof(T), elementCount);
@@ -237,7 +237,7 @@ public:
     }
 
     template<typename T>
-    inline size_t Read(T * value, size_t elementCount) const
+    inline size_t Read(T* value, size_t elementCount) const
     {
         // Read data
         size_t numRead = ReadNoSwap(value, elementCount);
@@ -362,7 +362,7 @@ public:
         return (HL_OK(Read(v))) ? v : 0.0;
     }
 
-    HL_API HL_RESULT ReadString(std::string & str) const;
+    HL_API HL_RESULT ReadString(std::string& str) const;
 
     inline std::string ReadString() const
     {
@@ -370,7 +370,7 @@ public:
         return (HL_OK(ReadString(str))) ? str : std::string();
     }
 
-    HL_API HL_RESULT ReadWString(std::wstring & str) const;
+    HL_API HL_RESULT ReadWString(std::wstring& str) const;
 
     inline std::wstring ReadWString() const
     {
@@ -397,20 +397,20 @@ public:
     }
 
     template<typename T>
-    inline HL_RESULT WriteNoSwap(const T & value) const
+    inline HL_RESULT WriteNoSwap(const T& value) const
     {
         return WriteBytes(&value, sizeof(T));
     }
 
     template<typename T>
-    inline size_t WriteNoSwap(const T * value,
+    inline size_t WriteNoSwap(const T* value,
         size_t elementCount) const
     {
         return WriteBytes(value, sizeof(T), elementCount);
     }
 
     template<typename T>
-    inline HL_RESULT Write(T & value) const
+    inline HL_RESULT Write(T& value) const
     {
         // Swap endianness for writing
         if constexpr (sizeof(T) > 1)
@@ -437,7 +437,7 @@ public:
     }
 
     template<typename T>
-    inline size_t Write(T * value, size_t elementCount) const
+    inline size_t Write(T* value, size_t elementCount) const
     {
         // Swap endianness for writing
         if constexpr (sizeof(T) > 1)
