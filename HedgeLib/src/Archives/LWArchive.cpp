@@ -213,7 +213,7 @@ HL_IMPL_WRITE(hl_DLWArchive)
             // Write file data
             else if (dataEntry->Flags != HL_PACX_DATA_FLAGS_NO_DATA)
             {
-                file->WriteBytes(++dataEntry, dataEntry->DataSize);
+                file->WriteBytes(dataEntry + 1, dataEntry->DataSize);
                 // TODO: Merge BINA offsets/string table from file data into PACx if needed
             }
             else
