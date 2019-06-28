@@ -3,12 +3,12 @@
 #include "HedgeLib/IO/BINA.h"
 #include "INBlob.h"
 
-enum HL_BLOB_TYPE hl_GetType(struct hl_Blob* blob)
+enum HL_BLOB_TYPE hl_GetType(const struct hl_Blob* blob)
 {
     return blob->Type;
 }
 
-void* hl_GetData(struct hl_Blob* blob)
+const void* hl_GetData(const struct hl_Blob* blob)
 {
     switch (blob->Type)
     {

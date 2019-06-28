@@ -93,7 +93,7 @@ HL_API enum HL_RESULT hl_BINAFinishWriteV2DataNode(const struct hl_File* file,
 HL_API enum HL_RESULT hl_BINAFinishWriteV2(const struct hl_File* file,
     long headerPos, uint16_t nodeCount);
 
-HL_API void* hl_BINAGetData(struct hl_Blob* blob);
+HL_API const void* hl_BINAGetData(const struct hl_Blob* blob);
 HL_API void hl_BINAFreeBlob(struct hl_Blob* blob);
 
 #ifdef __cplusplus
@@ -102,13 +102,13 @@ HL_API void hl_BINAFreeBlob(struct hl_Blob* blob);
 template<typename T>
 inline T* hl_BINAGetData(struct hl_Blob* blob)
 {
-    return static_cast<T*>(hl_BINAGetData(blob));
+    return const_cast<T*>(static_cast<const T*>(
+        hl_BINAGetData(blob)));
 }
 
 template<typename T>
 inline const T* hl_BINAGetData(const struct hl_Blob* blob)
 {
-    return static_cast<const T*>(hl_BINAGetData(
-        const_cast<hl_Blob*>(blob)));
+    return static_cast<const T*>(hl_BINAGetData(blob));
 }
 #endif

@@ -38,28 +38,30 @@ void hl_HHFixOffsets(uint32_t* offTable,
     }
 }
 
-void* hl_HHMirageGetDataNode(const struct hl_Blob* blob)
+const void* hl_HHMirageGetDataNode(const struct hl_Blob* blob)
 {
     // TODO
     return nullptr;
 }
 
-void* hl_HHStandardGetData(struct hl_Blob* blob)
+const void* hl_HHStandardGetData(const struct hl_Blob* blob)
 {
-    hl_DHHStandardHeader* header = blob->GetData<hl_DHHStandardHeader>();
+    const hl_DHHStandardHeader* header =
+        blob->GetData<hl_DHHStandardHeader>();
+
     return HL_GETABSV(header, header->DataOffset);
 }
 
-void* hl_HHMirageGetData(struct hl_Blob* blob)
+const void* hl_HHMirageGetData(const struct hl_Blob* blob)
 {
     // TODO
     return nullptr;
 }
 
-void* hl_HHGetData(struct hl_Blob* blob)
+const void* hl_HHGetData(const struct hl_Blob* blob)
 {
     // Mirage Header
-    if (hl_HHDetectHeaderType(blob->GetData<const
+    if (hl_HHDetectHeaderType(blob->GetData<
         hl_DHHHeader>()) == HL_HHHEADER_TYPE_MIRAGE)
     {
         return hl_HHMirageGetData(blob);

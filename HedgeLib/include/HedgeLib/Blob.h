@@ -14,8 +14,8 @@ enum HL_BLOB_TYPE
 
 struct hl_Blob;
 
-HL_API enum HL_BLOB_TYPE hl_GetType(struct hl_Blob* blob);
-HL_API void* hl_GetData(struct hl_Blob* blob);
+HL_API enum HL_BLOB_TYPE hl_GetType(const struct hl_Blob* blob);
+HL_API const void* hl_GetData(const struct hl_Blob* blob);
 HL_API void hl_FreeBlob(struct hl_Blob* blob);
 
 #ifdef __cplusplus
@@ -24,6 +24,13 @@ HL_API void hl_FreeBlob(struct hl_Blob* blob);
 template<typename T>
 inline T* hl_GetData(struct hl_Blob* blob)
 {
-    return static_cast<T*>(hl_GetData(blob));
+    return const_cast<T*>(static_cast<const T*>(
+        hl_GetData(blob)));
+}
+
+template<typename T>
+inline const T* hl_GetData(const struct hl_Blob* blob)
+{
+    return static_cast<const T*>(hl_GetData(blob));
 }
 #endif

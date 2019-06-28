@@ -56,11 +56,11 @@ HL_API void hl_HHFixOffsets(uint32_t* offTable,
     uint32_t offCount, void* data);
 
 // TODO: hl_HHMirageGetNode function
-HL_API void* hl_HHMirageGetDataNode(const struct hl_Blob* blob);
+HL_API const void* hl_HHMirageGetDataNode(const struct hl_Blob* blob);
 
-HL_API void* hl_HHStandardGetData(struct hl_Blob* blob);
-HL_API void* hl_HHMirageGetData(struct hl_Blob* blob);
-HL_API void* hl_HHGetData(struct hl_Blob* blob);
+HL_API const void* hl_HHStandardGetData(const struct hl_Blob* blob);
+HL_API const void* hl_HHMirageGetData(const struct hl_Blob* blob);
+HL_API const void* hl_HHGetData(const struct hl_Blob* blob);
 HL_API enum HL_RESULT hl_HHRead(struct hl_File* file, struct hl_Blob** blob);
 
 /// <summary>
@@ -87,39 +87,39 @@ HL_API void hl_HHFreeBlob(struct hl_Blob* blob);
 template<typename T>
 inline T* hl_HHStandardGetData(struct hl_Blob* blob)
 {
-    return static_cast<T*>(hl_HHStandardGetData(blob));
+    return const_cast<T*>(static_cast<const T*>(
+        hl_HHStandardGetData(blob)));
 }
 
 template<typename T>
 inline const T* hl_HHStandardGetData(const struct hl_Blob* blob)
 {
-    return static_cast<T*>(hl_HHStandardGetData(
-        const_cast<hl_Blob*>(blob)));
+    return static_cast<const T*>(hl_HHStandardGetData(blob));
 }
 
 template<typename T>
 inline T* hl_HHMirageGetData(struct hl_Blob* blob)
 {
-    return static_cast<T*>(hl_HHMirageGetData(blob));
+    return const_cast<T*>(static_cast<const T*>(
+        hl_HHMirageGetData(blob)));
 }
 
 template<typename T>
 inline const T* hl_HHMirageGetData(const struct hl_Blob* blob)
 {
-    return static_cast<const T*>(hl_HHMirageGetData(
-        const_cast<hl_Blob*>(blob)));
+    return static_cast<const T*>(hl_HHMirageGetData(blob));
 }
 
 template<typename T>
 inline T* hl_HHGetData(struct hl_Blob* blob)
 {
-    return static_cast<T*>(hl_HHGetData(blob));
+    return const_cast<T*>(static_cast<const T*>(
+        hl_HHGetData(blob)));
 }
 
 template<typename T>
 inline const T* hl_HHGetData(const struct hl_Blob* blob)
 {
-    return static_cast<const T*>(hl_HHGetData(
-        const_cast<hl_Blob*>(blob)));
+    return static_cast<const T*>(hl_HHGetData(blob));
 }
 #endif

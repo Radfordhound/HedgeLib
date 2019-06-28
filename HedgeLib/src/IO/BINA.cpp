@@ -440,8 +440,9 @@ enum HL_RESULT hl_BINAFinishWriteV2(const struct hl_File* file,
     return result;
 }
 
-void* hl_BINAGetData(struct hl_Blob* blob)
+const void* hl_BINAGetData(const struct hl_Blob* blob)
 {
+    if (!blob) return nullptr;
     switch (*blob->GetData<uint32_t>())
     {
     case HL_BINA_SIGNATURE:
@@ -449,15 +450,17 @@ void* hl_BINAGetData(struct hl_Blob* blob)
     {
         // TODO: Forces PACx Support
         uint16_t nodeCount = blob->GetData<hl_DBINAV2Header>()->NodeCount;
-        uint8_t* nodes = (&blob->Data + sizeof(hl_DBINAV2Header));
+        const uint8_t* nodes = (&blob->Data + sizeof(hl_DBINAV2Header));
 
         for (uint16_t i = 0; i < nodeCount; ++i)
         {
-            hl_DBINAV2Node* node = reinterpret_cast<hl_DBINAV2Node*>(nodes);
+            const hl_DBINAV2Node* node = reinterpret_cast
+                <const hl_DBINAV2Node*>(nodes);
+
             switch (node->Signature)
             {
             case HL_BINA_V2_DATA_NODE_SIGNATURE:
-                return reinterpret_cast<hl_DBINAV2DataNode*>(node);
+                return node;
 
             default:
                 nodes += node->Size;
@@ -482,21 +485,22 @@ void hl_BINAFreeBlob(struct hl_Blob* blob)
 {
 #ifdef x64
     // Get BINA Data Node
-    if (!blob) return;
-    void* data = hl_BINAGetData(blob);
+    const void* data = hl_BINAGetData(blob);
+    if (!data) return;
 
     // Get offset table size and pointer
-    std::uint8_t* offTable;
+    const uint8_t* offTable;
     uint32_t offTableSize;
 
     switch (*blob->GetData<uint32_t>())
     {
     case HL_BINA_SIGNATURE:
     {
-        hl_DBINAV2DataNode* dataNode = static_cast<hl_DBINAV2DataNode*>(data);
-        offTableSize = dataNode->OffsetTableSize;
+        const hl_DBINAV2DataNode* dataNode = static_cast
+            <const hl_DBINAV2DataNode*>(data);
 
-        offTable = (static_cast<uint8_t*>(data) +
+        offTableSize = dataNode->OffsetTableSize;
+        offTable = (static_cast<const uint8_t*>(data) +
             dataNode->Header.Size - offTableSize);
         break;
     }
@@ -504,10 +508,11 @@ void hl_BINAFreeBlob(struct hl_Blob* blob)
     case HL_PACX_SIGNATURE:
     {
         // TODO: Forces PACx Support
-        hl_DPACxV2DataNode* dataNode = static_cast<hl_DPACxV2DataNode*>(data);
-        offTableSize = dataNode->OffsetTableSize;
+        const hl_DPACxV2DataNode* dataNode = static_cast
+            <const hl_DPACxV2DataNode*>(data);
 
-        offTable = (static_cast<uint8_t*>(data) +
+        offTableSize = dataNode->OffsetTableSize;
+        offTable = (static_cast<const uint8_t*>(data) +
             dataNode->Header.Size - offTableSize);
 
         data = &blob->Data;
@@ -522,7 +527,9 @@ void hl_BINAFreeBlob(struct hl_Blob* blob)
     }
 
     // Free all offsets using data in offset table
-    uint32_t* currentOffset = static_cast<uint32_t*>(data);
+    const uint32_t* currentOffset = static_cast
+        <const uint32_t*>(data);
+
     for (uint32_t i = 0; i < offTableSize; ++i)
     {
         // Get position of next offset based on offset type
