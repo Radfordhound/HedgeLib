@@ -54,7 +54,7 @@ HL_DECL_ENDIAN_SWAP(hl_DBINAV2Node);
 struct hl_DBINAV2DataNode
 {
     struct hl_DBINAV2Node Header;   // Contains general information on this node.
-    HL_STR32 StringTable;           // Offset to the beginning of the string table.
+    uint32_t StringTable;           // Offset to the beginning of the string table.
     uint32_t StringTableSize;       // The size of the string table in bytes, including padding.
     uint32_t OffsetTableSize;       // The size of the offset table in bytes, including padding.
     uint16_t RelativeDataOffset;    // The offset to the data relative to the end of this struct.
@@ -93,10 +93,39 @@ HL_API enum HL_RESULT hl_BINAFinishWriteV2DataNode(const struct hl_File* file,
 HL_API enum HL_RESULT hl_BINAFinishWriteV2(const struct hl_File* file,
     long headerPos, uint16_t nodeCount);
 
+HL_API bool hl_BINAIsBigEndianV2(const struct hl_Blob* blob);
+HL_API bool hl_BINAIsBigEndian(const struct hl_Blob* blob);
+
+HL_API const struct hl_DBINAV2DataNode* hl_BINAGetDataNodeV2(
+    const struct hl_Blob* blob);
+
+HL_API const void* hl_BINAGetDataNode(const struct hl_Blob* blob);
+HL_API const void* hl_BINAGetDataV2(const struct hl_Blob* blob);
 HL_API const void* hl_BINAGetData(const struct hl_Blob* blob);
+
+HL_API const uint8_t* hl_BINAGetOffsetTableV2(const struct hl_Blob* blob,
+    uint32_t* offTableSize);
+
+HL_API const uint8_t* hl_BINAGetOffsetTable(const struct hl_Blob* blob,
+    uint32_t* offTableSize);
+
+HL_API bool hl_BINANextOffset(const uint8_t** offTable, const uint32_t** curOff);
 HL_API void hl_BINAFreeBlob(struct hl_Blob* blob);
 
 #ifdef __cplusplus
+}
+
+template<typename T>
+inline T* hl_BINAGetDataV2(struct hl_Blob* blob)
+{
+    return const_cast<T*>(static_cast<const T*>(
+        hl_BINAGetDataV2(blob)));
+}
+
+template<typename T>
+inline const T* hl_BINAGetDataV2(const struct hl_Blob* blob)
+{
+    return static_cast<const T*>(hl_BINAGetDataV2(blob));
 }
 
 template<typename T>

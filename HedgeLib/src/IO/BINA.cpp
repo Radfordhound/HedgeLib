@@ -29,47 +29,60 @@ HL_IMPL_ENDIAN_SWAP(hl_DBINAV2DataNode)
     hl_Swap(v->RelativeDataOffset);
 }
 
+bool hl_BINANextOffset(const uint8_t** offTable, const uint32_t** curOff)
+{
+    // Get position of next offset based on offset type
+    switch (*(*offTable) & HL_BINA_OFFSET_SIZE_MASK)
+    {
+    case HL_BINA_SIX_BIT:
+        *curOff += (*(*offTable) & HL_BINA_OFFSET_DATA_MASK);
+        break;
+
+    case HL_BINA_FOURTEEN_BIT:
+    {
+        uint16_t o = static_cast<uint16_t>(*(*offTable) &
+            HL_BINA_OFFSET_DATA_MASK) << 8;
+
+        o |= *(++(*offTable));
+        *curOff += o;
+        break;
+    }
+
+    case HL_BINA_THIRTY_BIT:
+    {
+        uint32_t o = static_cast<uint32_t>(*(*offTable) &
+            HL_BINA_OFFSET_DATA_MASK) << 24;
+
+        o |= *(++(*offTable)) << 16;
+        o |= *(++(*offTable)) << 8;
+        o |= *(++(*offTable));
+
+        *curOff += o;
+        break;
+    }
+
+    default:
+        return false;
+    }
+
+    // Increment offset table pointer
+    ++(*offTable);
+    return true;
+}
+
 template<typename OffsetType>
 void hl_INBINAFixOffsets(const uint8_t* offTable,
-    uint32_t size, void* data, bool isBigEndian)
+    const uint8_t* eof, void* data, bool isBigEndian)
 {
     // currentOffset has to be uint32_t* instead of
     // OffsetType* for proper pointer arithmetic
     uint32_t* currentOffset = static_cast<uint32_t*>(data);
-
-    for (uint32_t i = 0; i < size; ++i)
+    while (offTable < eof)
     {
-        // Get position of next offset based on offset type
-        switch (offTable[i] & HL_BINA_OFFSET_SIZE_MASK)
+        // Get next offset
+        if (!hl_BINANextOffset(&offTable, const_cast
+            <const uint32_t**>(&currentOffset)))
         {
-        case HL_BINA_SIX_BIT:
-            currentOffset += (offTable[i] & HL_BINA_OFFSET_DATA_MASK);
-            break;
-
-        case HL_BINA_FOURTEEN_BIT:
-        {
-            uint16_t o = static_cast<uint16_t>(offTable[i] &
-                HL_BINA_OFFSET_DATA_MASK) << 8;
-
-            o |= offTable[++i];
-            currentOffset += o;
-            break;
-        }
-
-        case HL_BINA_THIRTY_BIT:
-        {
-            uint32_t o = static_cast<uint32_t>(offTable[i] &
-                HL_BINA_OFFSET_DATA_MASK) << 24;
-
-            o |= offTable[++i] << 16;
-            o |= offTable[++i] << 8;
-            o |= offTable[++i];
-
-            currentOffset += o;
-            break;
-        }
-
-        default:
             return;
         }
 
@@ -82,13 +95,15 @@ void hl_INBINAFixOffsets(const uint8_t* offTable,
 void hl_BINAFixOffsets32(const uint8_t* offTable, uint32_t size,
     void* data, bool isBigEndian)
 {
-    hl_INBINAFixOffsets<uint32_t>(offTable, size, data, isBigEndian);
+    const uint8_t* eof = (offTable + size);
+    hl_INBINAFixOffsets<uint32_t>(offTable, eof, data, isBigEndian);
 }
 
 void hl_BINAFixOffsets64(const uint8_t* offTable, uint32_t size,
     void* data, bool isBigEndian)
 {
-    hl_INBINAFixOffsets<uint64_t>(offTable, size, data, isBigEndian);
+    const uint8_t* eof = (offTable + size);
+    hl_INBINAFixOffsets<uint64_t>(offTable, eof, data, isBigEndian);
 }
 
 enum HL_RESULT hl_BINAReadV1(struct hl_File* file, struct hl_Blob** blob)
@@ -126,26 +141,31 @@ void hl_INFixBINAV2DataNode(uint8_t*& nodes, hl_DBINAV2Header& header, bool bigE
     // Fix offsets
     // TODO: Can we actually reliably use this check to determine if this is a 64-bit file?
     // TODO: Is there a nicer way we can write this without losing the constexpr optimization?
+    const uint8_t* eof = (offTable + node->OffsetTableSize);
     if constexpr (pacx)
     {
         if (header.Version[0] == 0x33)
         {
-            hl_BINAFixOffsets64(offTable, node->OffsetTableSize, data, bigEndian);
+            hl_INBINAFixOffsets<uint64_t>(offTable,
+                eof, data, bigEndian);
         }
         else
         {
-            hl_BINAFixOffsets32(offTable, node->OffsetTableSize, data, bigEndian);
+            hl_INBINAFixOffsets<uint32_t>(offTable,
+                eof, data, bigEndian);
         }
     }
     else
     {
         if (header.Version[1] == 0x31)
         {
-            hl_BINAFixOffsets64(offTable, node->OffsetTableSize, data, bigEndian);
+            hl_INBINAFixOffsets<uint64_t>(offTable,
+                eof, data, bigEndian);
         }
         else
         {
-            hl_BINAFixOffsets32(offTable, node->OffsetTableSize, data, bigEndian);
+            hl_INBINAFixOffsets<uint32_t>(offTable,
+                eof, data, bigEndian);
         }
     }
 
@@ -287,7 +307,7 @@ enum HL_RESULT hl_BINAWriteOffsetTableSorted(const struct hl_File* file,
     const hl_OffsetTable* offTable)
 {
     HL_RESULT result = HL_SUCCESS;
-    uint32_t o, curOffset = 0;
+    uint32_t o, curOffset = static_cast<uint32_t>(file->Origin);
 
     for (auto& offset : *offTable)
     {
@@ -355,16 +375,15 @@ enum HL_RESULT hl_BINAStartWriteV2DataNode(struct hl_File* file)
     dataNode.RelativeDataOffset = sizeof(hl_DBINAV2DataNode);
 
     // Write data node
-    file->DoEndianSwap = true;
+    //file->DoEndianSwap = true;
     HL_RESULT result = file->Write(dataNode);
     if (HL_FAILED(result)) return result;
 
     // Write padding
-    // (Since dataNode just so happens to be the exact size
-    // of the padding we need to write, we use it here)
+    // HACK: dataNode just-so-happens to be the exact size
+    // of the padding we need to write, so we use it here
     dataNode.Header.Signature = 0;
     dataNode.RelativeDataOffset = 0;
-
     result = file->WriteNoSwap(dataNode);
 
     // Set origin
@@ -418,6 +437,7 @@ enum HL_RESULT hl_BINAFinishWriteV2DataNode(const struct hl_File* file,
     uint32_t offTableSize = (eof - offTablePos);
     result = file->Write(offTableSize);
 
+    file->JumpTo(eof);
     return result;
 }
 
@@ -440,35 +460,80 @@ enum HL_RESULT hl_BINAFinishWriteV2(const struct hl_File* file,
     return result;
 }
 
-const void* hl_BINAGetData(const struct hl_Blob* blob)
+bool hl_INBINAIsBigEndianV2(const void* blobData)
 {
-    if (!blob) return nullptr;
+    return (static_cast<const hl_DBINAV2Header*>(
+        blobData)->EndianFlag == HL_BINA_BE_FLAG);
+}
+
+bool hl_BINAIsBigEndianV2(const struct hl_Blob* blob)
+{
+    if (!blob) return false;
+    return hl_INBINAIsBigEndianV2(&blob->Data);
+}
+
+bool hl_BINAIsBigEndian(const struct hl_Blob* blob)
+{
+    if (!blob) return false;
     switch (*blob->GetData<uint32_t>())
     {
     case HL_BINA_SIGNATURE:
     case HL_PACX_SIGNATURE:
     {
-        // TODO: Forces PACx Support
-        uint16_t nodeCount = blob->GetData<hl_DBINAV2Header>()->NodeCount;
-        const uint8_t* nodes = (&blob->Data + sizeof(hl_DBINAV2Header));
+        return hl_INBINAIsBigEndianV2(&blob->Data);
+    }
 
-        for (uint16_t i = 0; i < nodeCount; ++i)
+    default:
+    {
+        // TODO: BINA V1 Support
+        return true;
+    }
+    }
+}
+
+const hl_DBINAV2DataNode* hl_INBINAGetDataNodeV2(const void* blobData)
+{
+    uint16_t nodeCount = static_cast<const
+        hl_DBINAV2Header*>(blobData)->NodeCount;
+
+    const uint8_t* nodes = (static_cast<const uint8_t*>(
+        blobData) + sizeof(hl_DBINAV2Header));
+
+    for (uint16_t i = 0; i < nodeCount; ++i)
+    {
+        const hl_DBINAV2Node* node = reinterpret_cast
+            <const hl_DBINAV2Node*>(nodes);
+
+        switch (node->Signature)
         {
-            const hl_DBINAV2Node* node = reinterpret_cast
-                <const hl_DBINAV2Node*>(nodes);
+        case HL_BINA_V2_DATA_NODE_SIGNATURE:
+            return reinterpret_cast<const hl_DBINAV2DataNode*>(node);
 
-            switch (node->Signature)
-            {
-            case HL_BINA_V2_DATA_NODE_SIGNATURE:
-                return node;
-
-            default:
-                nodes += node->Size;
-                break;
-            }
+        default:
+            nodes += node->Size;
+            break;
         }
+    }
 
-        break;
+    return nullptr;
+}
+
+const struct hl_DBINAV2DataNode* hl_BINAGetDataNodeV2(
+    const struct hl_Blob* blob)
+{
+    if (!blob) return nullptr;
+    return hl_INBINAGetDataNodeV2(&blob->Data);
+}
+
+const void* hl_INBINAGetDataNode(const void* blobData)
+{
+    switch (*static_cast<const uint32_t*>(blobData))
+    {
+    case HL_BINA_SIGNATURE:
+    case HL_PACX_SIGNATURE:
+    {
+        // TODO: Forces PACx Support
+        return hl_INBINAGetDataNodeV2(blobData);
     }
 
     default:
@@ -481,41 +546,148 @@ const void* hl_BINAGetData(const struct hl_Blob* blob)
     return nullptr;
 }
 
-void hl_BINAFreeBlob(struct hl_Blob* blob)
+const void* hl_BINAGetDataNode(const struct hl_Blob* blob)
 {
-#ifdef x64
-    // Get BINA Data Node
-    const void* data = hl_BINAGetData(blob);
-    if (!data) return;
+    if (!blob) return nullptr;
+    return hl_INBINAGetDataNode(&blob->Data);
+}
 
-    // Get offset table size and pointer
-    const uint8_t* offTable;
-    uint32_t offTableSize;
+const void* hl_INBINAGetDataV2(const hl_DBINAV2DataNode* dataNode)
+{
+    return (reinterpret_cast<const uint8_t*>(dataNode + 1) +
+        dataNode->RelativeDataOffset);
+}
 
-    switch (*blob->GetData<uint32_t>())
+const void* hl_INBINAGetDataV2(const void* blobData)
+{
+    const hl_DBINAV2DataNode* dataNode = hl_INBINAGetDataNodeV2(blobData);
+    if (!dataNode) return nullptr;
+    return hl_INBINAGetDataV2(dataNode);
+}
+
+const void* hl_BINAGetDataV2(const struct hl_Blob* blob)
+{
+    if (!blob) return nullptr;
+    return hl_INBINAGetDataV2(&blob->Data);
+}
+
+const void* hl_INBINAGetData(const void* blobData)
+{
+    switch (*static_cast<const uint32_t*>(blobData))
     {
     case HL_BINA_SIGNATURE:
     {
-        const hl_DBINAV2DataNode* dataNode = static_cast
-            <const hl_DBINAV2DataNode*>(data);
-
-        offTableSize = dataNode->OffsetTableSize;
-        offTable = (static_cast<const uint8_t*>(data) +
-            dataNode->Header.Size - offTableSize);
-        break;
+        return hl_INBINAGetDataV2(blobData);
     }
 
     case HL_PACX_SIGNATURE:
     {
         // TODO: Forces PACx Support
-        const hl_DPACxV2DataNode* dataNode = static_cast
-            <const hl_DPACxV2DataNode*>(data);
+        return hl_INBINAGetDataNodeV2(blobData);
+    }
 
-        offTableSize = dataNode->OffsetTableSize;
-        offTable = (static_cast<const uint8_t*>(data) +
-            dataNode->Header.Size - offTableSize);
+    default:
+    {
+        // TODO: BINA V1 Support
+        break;
+    }
+    }
 
-        data = &blob->Data;
+    return nullptr;
+}
+
+const void* hl_BINAGetData(const struct hl_Blob* blob)
+{
+    if (!blob) return nullptr;
+    return hl_INBINAGetData(&blob->Data);
+}
+
+template<typename DataNodeType>
+const uint8_t* hl_INBINAGetOffsetTable(
+    const DataNodeType* dataNode, uint32_t* offTableSize)
+{
+    *offTableSize = dataNode->OffsetTableSize;
+    return (reinterpret_cast<const uint8_t*>(dataNode) +
+        dataNode->Header.Size - *offTableSize);
+}
+
+const uint8_t* hl_INBINAGetOffsetTableV2(const void* blobData,
+    uint32_t* offTableSize)
+{
+    const hl_DBINAV2DataNode* dataNode = hl_INBINAGetDataNodeV2(blobData);
+    if (!dataNode) return nullptr;
+
+    return hl_INBINAGetOffsetTable(dataNode, offTableSize);
+}
+
+const uint8_t* hl_BINAGetOffsetTableV2(const struct hl_Blob* blob,
+    uint32_t* offTableSize)
+{
+    if (!blob || !offTableSize) return nullptr;
+    return hl_INBINAGetOffsetTableV2(blob, offTableSize);
+}
+
+const uint8_t* hl_INBINAGetOffsetTable(const void* blobData,
+    const void* dataNode, uint32_t* offTableSize)
+{
+    switch (*static_cast<const uint32_t*>(blobData))
+    {
+    case HL_BINA_SIGNATURE:
+        return hl_INBINAGetOffsetTable(static_cast
+            <const hl_DBINAV2DataNode*>(dataNode), offTableSize);
+
+    case HL_PACX_SIGNATURE:
+        return hl_INBINAGetOffsetTable(static_cast
+            <const hl_DPACxV2DataNode*>(dataNode), offTableSize);
+
+    default:
+        // TODO: BINA V1 Support
+        return nullptr;
+    }
+}
+
+const uint8_t* hl_BINAGetOffsetTable(const struct hl_Blob* blob,
+    uint32_t* offTableSize)
+{
+    if (!offTableSize) return nullptr;
+
+    const void* dataNode = hl_BINAGetDataNode(blob);
+    if (!dataNode) return nullptr;
+
+    return hl_INBINAGetOffsetTable(&blob->Data, dataNode, offTableSize);
+}
+
+void hl_BINAFreeBlob(struct hl_Blob* blob)
+{
+#ifdef x64
+    if (!blob) return;
+
+    // Get offset table pointer and size
+    uint32_t offTableSize;
+    const uint8_t* offTable;
+    const uint32_t* currentOffset;
+
+    switch (*blob->GetData<uint32_t>())
+    {
+    case HL_BINA_SIGNATURE:
+    {
+        const hl_DBINAV2DataNode* dataNode = hl_INBINAGetDataNodeV2(&blob->Data);
+        if (!dataNode) return;
+        offTable = hl_INBINAGetOffsetTable(dataNode, &offTableSize);
+
+        currentOffset = static_cast<const uint32_t*>(hl_INBINAGetDataV2(dataNode));
+        if (!currentOffset) return;
+        break;
+    }
+
+    case HL_PACX_SIGNATURE:
+    {
+        const hl_DPACxV2DataNode* dataNode = reinterpret_cast
+            <const hl_DPACxV2DataNode*>(hl_INBINAGetDataNodeV2(&blob->Data));
+
+        if (!dataNode) return;
+        offTable = hl_INBINAGetOffsetTable(dataNode, &offTableSize);
+        currentOffset = reinterpret_cast<const uint32_t*>(&blob->Data);
         break;
     }
 
@@ -526,10 +698,9 @@ void hl_BINAFreeBlob(struct hl_Blob* blob)
     }
     }
 
-    // Free all offsets using data in offset table
-    const uint32_t* currentOffset = static_cast
-        <const uint32_t*>(data);
+    if (!offTable) return;
 
+    // Free all offsets using data in offset table
     for (uint32_t i = 0; i < offTableSize; ++i)
     {
         // Get position of next offset based on offset type
