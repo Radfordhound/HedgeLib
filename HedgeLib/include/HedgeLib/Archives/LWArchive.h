@@ -83,6 +83,7 @@ HL_DECL_ENDIAN_SWAP(hl_DLWArchive);
 HL_DECL_ENDIAN_SWAP_RECURSIVE(hl_DLWArchive);
 HL_DECL_WRITE(hl_DLWArchive);
 
+HL_API const char** hl_LWArchiveGetSplits(const struct hl_Blob* blob, size_t* splitCount);
 HL_API void hl_ExtractLWArchive(const struct hl_Blob* blob, const char* dir);
 
 // TODO: Should this return an HL_RESULT?

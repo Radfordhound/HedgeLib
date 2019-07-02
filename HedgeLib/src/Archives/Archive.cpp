@@ -4,6 +4,25 @@
 #include <cstring>
 #include <cstdlib>
 
+const char** hl_ArchiveGetSplits(const struct hl_Blob* blob, size_t* splitCount)
+{
+    switch (blob->Type)
+    {
+    // .ar/.pfd (Unleashed/Generations)
+    case HL_BLOB_TYPE_HEDGEHOG_ENGINE:
+        // TODO: AR Support
+        return nullptr;
+
+    // .pac (LW/Forces)
+    case HL_BLOB_TYPE_BINA:
+        return hl_PACxArchiveGetSplits(blob, splitCount);
+
+    default:
+        // TODO: Should we return an error or something??
+        return nullptr;
+    }
+}
+
 void hl_ExtractArchive(const struct hl_Blob* blob, const char* dir)
 {
     switch (blob->Type)

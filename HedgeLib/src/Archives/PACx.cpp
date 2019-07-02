@@ -181,6 +181,26 @@ enum HL_RESULT hl_PACxFinishWriteV2(const struct hl_File* file, long headerPos)
     return file->Write(fileSize);;
 }
 
+const char** hl_PACxArchiveGetSplits(const struct hl_Blob* blob, size_t* splitCount)
+{
+    switch (blob->GetData<hl_DBINAV2Header>()->Version[0])
+    {
+    // Lost World
+    case 0x32:
+        return hl_LWArchiveGetSplits(blob, splitCount);
+
+    // Forces
+    case 0x33:
+        // TODO: Forces Archives
+        //return hl_ForcesArchiveGetSplits(blob, splitCount);
+        return nullptr;
+
+    default:
+        // TODO: Return an error??
+        return nullptr;
+    }
+}
+
 void hl_ExtractPACxArchive(const struct hl_Blob* blob, const char* dir)
 {
     switch (blob->GetData<hl_DBINAV2Header>()->Version[0])

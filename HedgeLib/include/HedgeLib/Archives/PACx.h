@@ -45,6 +45,7 @@ HL_DECL_ENDIAN_SWAP(hl_DPACxV2DataNode);
 HL_API enum HL_RESULT hl_PACxStartWriteV2(struct hl_File* file, bool bigEndian);
 HL_API enum HL_RESULT hl_PACxFinishWriteV2(const struct hl_File* file, long headerPos);
 
+HL_API const char** hl_PACxArchiveGetSplits(const struct hl_Blob* blob, size_t* splitCount);
 HL_API void hl_ExtractPACxArchive(const struct hl_Blob* blob, const char* dir);
 
 #ifdef __cplusplus

@@ -14,6 +14,8 @@ struct hl_ArchiveFileEntry
     const void* Data;   // Points to the file path if Size == 0, or the file's data if Size != 0.
 };
 
+HL_API const char** hl_ArchiveGetSplits(const struct hl_Blob* blob, size_t* splitCount);
+
 // TODO: Should this return an HL_RESULT?
 HL_API void hl_ExtractArchive(const struct hl_Blob* blob, const char* dir);
 HL_API void hl_CreateArchiveFileEntry(const char* filePath,

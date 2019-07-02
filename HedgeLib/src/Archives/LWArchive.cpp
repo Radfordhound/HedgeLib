@@ -319,6 +319,60 @@ HL_IMPL_WRITE(hl_DLWArchive)
     file->JumpTo(eof);
 }
 
+const char** hl_LWArchiveGetSplits(const struct hl_Blob* blob, size_t* splitCount)
+{
+    // Get BINA Data Node
+    const hl_DPACxV2DataNode* dataNode = reinterpret_cast
+        <const hl_DPACxV2DataNode*>(hl_BINAGetDataNodeV2(blob));
+
+    if (!dataNode) return nullptr;
+
+    // Get the archive and type tree
+    const hl_DLWArchive* arc = reinterpret_cast<
+        const hl_DLWArchive*>(dataNode);
+
+    hl_DPACNode* typeNodes = HL_GETPTR32(
+        hl_DPACNode, arc->TypeTree.Offset);
+
+    for (uint32_t i = 0; i < arc->TypeTree.Count; ++i)
+    {
+        // Skip types that aren't split trees
+        if (std::strcmp(typeNodes[i].Name, pacSplitType) != 0)
+            continue;
+
+        // Get file nodes
+        HL_ARR32(hl_DPACNode)* fileTree = HL_GETPTR32(
+            HL_ARR32(hl_DPACNode), typeNodes[i].Data);
+
+        hl_DPACNode* fileNodes = HL_GETPTR32(
+            hl_DPACNode, fileTree->Offset);
+
+        for (uint32_t i2 = 0; i2 < fileTree->Count; ++i2)
+        {
+            // Get data entry
+            hl_DPACDataEntry* dataEntry = HL_GETPTR32(
+                hl_DPACDataEntry, fileNodes[i2].Data);
+
+            hl_DPACSplitTable* splitTable = reinterpret_cast<
+                hl_DPACSplitTable*>(++dataEntry);
+
+            // Generate splits list
+            const char** splits = static_cast<const char**>(std::malloc(
+                sizeof(char*) * splitTable->SplitCount));
+
+            for (uint32_t i3 = 0; i3 < splitTable->SplitCount; ++i3)
+            {
+                splits[i3] = splitTable->Splits[i3];
+            }
+
+            *splitCount = static_cast<size_t>(splitTable->SplitCount);
+            return splits;
+        }
+    }
+
+    return nullptr;
+}
+
 void hl_ExtractLWArchive(const struct hl_Blob* blob, const char* dir)
 {
     // Create directory for file extraction
