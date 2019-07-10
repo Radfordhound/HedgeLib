@@ -562,7 +562,12 @@ const void* hl_INBINAGetDataV2(const hl_DBINAV2DataNode* dataNode)
 const void* hl_BINAGetDataV2(const struct hl_Blob* blob)
 {
     if (!blob) return nullptr;
-    return hl_INBINAGetDataV2(&blob->Data);
+    if (*blob->GetData<uint32_t>() == HL_BINA_SIGNATURE)
+    {
+        return hl_INBINAGetDataV2(&blob->Data);
+    }
+
+    return hl_INBINAGetDataNodeV2(&blob->Data);
 }
 
 const void* hl_INBINAGetData(const void* blobData)
