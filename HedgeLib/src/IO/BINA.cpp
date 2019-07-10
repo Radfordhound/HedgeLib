@@ -1,4 +1,5 @@
 #include "HedgeLib/IO/BINA.h"
+#include "INBINA.h"
 #include "HedgeLib/Archives/PACx.h"
 #include "HedgeLib/IO/File.h"
 #include "../INBlob.h"
@@ -558,13 +559,6 @@ const void* hl_INBINAGetDataV2(const hl_DBINAV2DataNode* dataNode)
         dataNode->RelativeDataOffset);
 }
 
-const void* hl_INBINAGetDataV2(const void* blobData)
-{
-    const hl_DBINAV2DataNode* dataNode = hl_INBINAGetDataNodeV2(blobData);
-    if (!dataNode) return nullptr;
-    return hl_INBINAGetDataV2(dataNode);
-}
-
 const void* hl_BINAGetDataV2(const struct hl_Blob* blob)
 {
     if (!blob) return nullptr;
@@ -609,15 +603,6 @@ const uint8_t* hl_INBINAGetOffsetTable(
     *offTableSize = dataNode->OffsetTableSize;
     return (reinterpret_cast<const uint8_t*>(dataNode) +
         dataNode->Header.Size - *offTableSize);
-}
-
-const uint8_t* hl_INBINAGetOffsetTableV2(const void* blobData,
-    uint32_t* offTableSize)
-{
-    const hl_DBINAV2DataNode* dataNode = hl_INBINAGetDataNodeV2(blobData);
-    if (!dataNode) return nullptr;
-
-    return hl_INBINAGetOffsetTable(dataNode, offTableSize);
 }
 
 const uint8_t* hl_BINAGetOffsetTableV2(const struct hl_Blob* blob,
