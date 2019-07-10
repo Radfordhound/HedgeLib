@@ -7,19 +7,19 @@ const struct hl_PACxSupportedExtension hl_PACxV2SupportedExtensions[] =
 {
     // Organized based on frequency information determined via a custom analyzation program
     // High Frequency
-    { "dds", 57 },
-    { "material", 22 },
-    { "model", 33 },
-    { "uv-anim", 7 },
+    { "dds", 57, HL_PACX_EXT_FLAGS_MIXED_TYPE },
+    { "material", 22, HL_PACX_EXT_FLAGS_SPLIT_TYPE },
+    { "model", 33, HL_PACX_EXT_FLAGS_SPLIT_TYPE },
+    { "uv-anim", 7, HL_PACX_EXT_FLAGS_MIXED_TYPE },
     { "skl.hkx", 48 },
     { "anm.hkx", 5 },
-    { "terrain-model", 29 },
+    { "terrain-model", 29, HL_PACX_EXT_FLAGS_SPLIT_TYPE },
     
     // Average Frequency
     { "swif", 51 },
     { "effect", 17 },
-    { "mat-anim", 4 },
-    { "anm", 11 },
+    { "mat-anim", 4, HL_PACX_EXT_FLAGS_MIXED_TYPE },
+    { "anm", 11, HL_PACX_EXT_FLAGS_BINA },
     { "phy.hkx", 18 },
     { "terrain-instanceinfo", 28 },
     { "lua", 19 },
@@ -30,14 +30,14 @@ const struct hl_PACxSupportedExtension hl_PACxV2SupportedExtensions[] =
 
     // Low frequency
     { "shadow-model", 46 },
-    { "gism", 16 },
+    { "gism", 16, HL_PACX_EXT_FLAGS_BINA },
     { "fxcol.bin", 15 },
     { "xtb2", 61 },
     { "model-instanceinfo", 34 },
     { "svcol.bin", 52 },
-    { "vis-anim", 8 },
+    { "vis-anim", 8, HL_PACX_EXT_FLAGS_MIXED_TYPE }, // TODO: Should these be merged with global offset/string tables??
     { "voxel.bin", 60 },
-    { "score", 44 },
+    { "score", 44, HL_PACX_EXT_FLAGS_BINA },
     { "nextra.bin", 35 },
     { "gsh", 26 },
     { "shader-list", 27 },
@@ -56,13 +56,6 @@ const struct hl_PACxSupportedExtension hl_PACxV2SupportedExtensions[] =
 };
 
 const size_t hl_PACxV2SupportedExtensionCount = 42;
-
-const size_t hl_PACxV2SplitTypes[] =
-{
-    22, 29, 33, 7, 57, 4, 8
-};
-
-const size_t hl_PACxV2SplitTypesCount = 7;
 
 // Credit to Skyth for parts of this list
 const char* const hl_PACxDataTypes[] = 

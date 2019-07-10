@@ -2,6 +2,8 @@
 #include "HedgeLib/Archives/PACx.h"
 #include "HedgeLib/Archives/Archive.h"
 #include "HedgeLib/IO/File.h"
+#include "../IO/INBINA.h"
+#include "../INBlob.h"
 #include <cstring>
 #include <algorithm>
 #include <cstdlib>
@@ -105,6 +107,95 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DLWArchive)
     }
 }
 
+void hl_INLWArchiveWriteDataEntry(const hl_File& file,
+    hl_DPACDataEntry& dataEntry, const void* fileData,
+    bool noMerge, hl_OffsetTable& offTable, hl_StringTable& strTable)
+{
+    // Merge BINA offsets and string tables if this is a BINA file
+    if (!noMerge && *static_cast<const uint32_t*>(fileData) == HL_BINA_SIGNATURE)
+    {
+        bool isBigEndian = hl_INBINAIsBigEndianV2(fileData);
+        const hl_DBINAV2DataNode* dataNode = static_cast<
+            const hl_DBINAV2DataNode*>(hl_INBINAGetDataNodeV2(fileData));
+
+        if (!dataNode) return;
+
+        uint32_t dataNodeSize = dataNode->Header.Size;
+        uint32_t offTableSize = dataNode->OffsetTableSize;
+
+        if (isBigEndian) hl_Swap(dataNodeSize);
+        if (isBigEndian) hl_Swap(offTableSize);
+
+        const uint8_t* offsetTable = (reinterpret_cast<
+            const uint8_t*>(dataNode) +
+            dataNodeSize - offTableSize);
+
+        const uint8_t* eof = (offsetTable + offTableSize);
+        uint16_t relDataOff = dataNode->RelativeDataOffset;
+        if (isBigEndian) hl_Swap(relDataOff);
+
+        const uint8_t* data = (reinterpret_cast<const uint8_t*>(
+            dataNode + 1) + relDataOff);
+
+        // HACK: Use string table offset as data size
+        dataEntry.DataSize = dataNode->StringTable;
+        if (isBigEndian) hl_Swap(dataEntry.DataSize);
+
+        // Write data entry
+        file.Write(dataEntry);
+
+        // Write data
+        const long pos = file.Tell();
+        file.WriteBytes(data, dataEntry.DataSize);
+
+        uint32_t* currentOffset = reinterpret_cast<
+            uint32_t*>(const_cast<uint8_t*>(data));
+
+        long offPos = pos;
+        char* stringTable = const_cast<char*>(reinterpret_cast<
+            const char*>(data + dataEntry.DataSize));
+
+        while (offsetTable < eof)
+        {
+            // Get next offset
+            if (!hl_BINANextOffset(&offsetTable, const_cast
+                <const uint32_t**>(&currentOffset)))
+            {
+                return;
+            }
+
+            // Endian swap offset
+            if (isBigEndian) hl_SwapUInt32(currentOffset);
+
+            // Add offset to global offset table
+            offPos = (pos + static_cast<long>(reinterpret_cast
+                <const uint8_t*>(currentOffset) - data));
+
+            char* off = const_cast<char*>(reinterpret_cast
+                <const char*>(data + *currentOffset));
+
+            if (off >= stringTable)
+            {
+                // Add offset to the global string table
+                strTable.push_back({ off, offPos });
+            }
+            else
+            {
+                file.FixOffset32(offPos, pos + static_cast
+                    <long>(*currentOffset), offTable);
+            }
+        }
+    }
+    else
+    {
+        // Write data entry
+        file.Write(dataEntry);
+
+        // Write data
+        file.WriteBytes(fileData, dataEntry.DataSize);
+    }
+}
+
 HL_IMPL_WRITE(hl_DLWArchive)
 {
     // Prepare data node header
@@ -190,9 +281,6 @@ HL_IMPL_WRITE(hl_DLWArchive)
             file->FixOffset32(offPos, eof, offTable);
             offPos += 4;
 
-            // Write data entry
-            file->Write(*dataEntry);
-
             // Write split entry table
             if (isSplitsList)
             {
@@ -216,12 +304,14 @@ HL_IMPL_WRITE(hl_DLWArchive)
             // Write file data
             else if (dataEntry->Flags != HL_PACX_DATA_FLAGS_NO_DATA)
             {
-                file->WriteBytes(dataEntry + 1, dataEntry->DataSize);
-                // TODO: Merge BINA offsets/string table from file data into PACx if needed
+                // TODO: Don't merge if necessary
+                hl_INLWArchiveWriteDataEntry(*file, *dataEntry,
+                    dataEntry + 1, false, offTable, strTable);
             }
             else
             {
                 ++proxyEntryTable.Count;
+                file->Write(*dataEntry);
             }
         }
     }
@@ -378,19 +468,63 @@ void hl_ExtractLWArchive(const struct hl_Blob* blob, const char* dir)
     // Create directory for file extraction
     std::filesystem::path fdir = dir;
     std::filesystem::create_directory(fdir);
+    
+    // Get BINA Data Node
+    const hl_DPACxV2DataNode* dataNode = reinterpret_cast
+        <const hl_DPACxV2DataNode*>(hl_BINAGetDataNodeV2(blob));
+
+    if (!dataNode) return;
+
+    // Get BINA Offset Table
+    uint32_t offsetTableSize;
+    const uint8_t* offsetTable = hl_INBINAGetOffsetTable(
+        dataNode, &offsetTableSize);
+
+    if (!offsetTable) return;
+
+    // Find out if it's possible for there to be any BINA files in this archive
+    const hl_DLWArchive* arc = reinterpret_cast<const hl_DLWArchive*>(dataNode);
+    const uint8_t* dataEntries = (reinterpret_cast<const uint8_t*>(
+        &arc->TypeTree) + arc->Header.TreesSize);
+
+    const uint32_t* proxyEntries;
+    const uint8_t* stringTable, *eof = (offsetTable + offsetTableSize);
+    const uint32_t* currentOffset = blob->GetData<uint32_t>();
+    bool isBigEndian = hl_BINAIsBigEndian(blob);
+    bool couldHaveBINAFiles = false;
+
+    while (offsetTable < eof)
+    {
+        // Get next offset and break if we've reached the end of the table
+        if (!hl_BINANextOffset(&offsetTable, &currentOffset)) break;
+
+        // If an offset is located past the data entries a BINA file might be present
+        if (reinterpret_cast<const uint8_t*>(currentOffset) >= dataEntries)
+        {
+            proxyEntries = reinterpret_cast<const uint32_t*>(
+                dataEntries + arc->Header.DataEntriesSize);
+
+            if (currentOffset < proxyEntries)
+            {
+                couldHaveBINAFiles = true;
+                stringTable = (reinterpret_cast<const uint8_t*>(
+                    proxyEntries) + arc->Header.ProxyTableSize);
+            }
+            break;
+        }
+    }
 
     // Iterate through type tree
-    const hl_DLWArchive* arc = hl_BINAGetData<hl_DLWArchive>(blob);
     hl_DPACNode* typeNodes = HL_GETPTR32(
         hl_DPACNode, arc->TypeTree.Offset);
 
     for (uint32_t i = 0; i < arc->TypeTree.Count; ++i)
     {
-        // Get extension
+        // Skip split tables
         char* ext = HL_GETPTR32(char, typeNodes[i].Name);
-        if (std::strcmp(ext, pacSplitType) == 0)
-            continue; // Skip split table
+        if (std::strcmp(ext, pacSplitType) == 0) continue;
 
+        // Get extension
         uintptr_t colonPos = reinterpret_cast<uintptr_t>(
             std::strchr(ext, (int)':'));
 
@@ -437,11 +571,96 @@ void hl_ExtractLWArchive(const struct hl_Blob* blob, const char* dir)
 
             // Write data to file
             uint8_t* data = reinterpret_cast<uint8_t*>(dataEntry + 1);
-            hl_File file = hl_File::OpenWrite(filePath);
+            hl_File file = hl_File::OpenWrite(filePath, isBigEndian);
 
-            // TODO: BINA CRAP
+            // Determine if this is a BINA file
+            uint8_t* dataEnd;
+            bool isBINAFile = false;
 
+            if (couldHaveBINAFiles)
+            {
+                if (reinterpret_cast<const uint8_t*>(currentOffset) < data)
+                {
+                    while (offsetTable < eof)
+                    {
+                        // Get next offset and break if we've reached the end of the table
+                        if (!hl_BINANextOffset(&offsetTable, &currentOffset) ||
+                            reinterpret_cast<const uint8_t*>(currentOffset) >= data)
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                if (reinterpret_cast<const uint8_t*>(currentOffset) >= data)
+                {
+                    dataEnd = (data + dataEntry->DataSize);
+                    if (reinterpret_cast<const uint8_t*>(
+                        currentOffset) < dataEnd)
+                    {
+                        // Write BINA Header and DATA Node
+                        isBINAFile = true;
+                        hl_BINAStartWriteV2(&file, isBigEndian, false);
+                        hl_BINAStartWriteV2DataNode(&file);
+                    }
+                }
+            }
+
+            // Write file data
             file.WriteBytes(data, dataEntry->DataSize);
+
+            // If this is a BINA file, fix its offsets
+            if (isBINAFile)
+            {
+                hl_OffsetTable offTable;
+                hl_StringTable strTable;
+
+                while (offsetTable <= eof)
+                {
+                    // Get the position of the current offset within the new file
+                    const long offPos = (0x40 + static_cast<long>(
+                        reinterpret_cast<uintptr_t>(currentOffset) -
+                        reinterpret_cast<uintptr_t>(data)));
+
+                    // Find out whether the current offset is a string or not
+                    const uint8_t* off = HL_GETPTR32(
+                        const uint8_t, *currentOffset);
+
+                    if (off > stringTable)
+                    {
+                        // Add offset to the file's string table
+                        strTable.push_back({ const_cast<char*>(
+                            reinterpret_cast<const char*>(off)), offPos });
+                    }
+                    else
+                    {
+                        // Add offset to the file's offset table
+                        file.FixOffset32(offPos, (0x40 + static_cast<long>(
+                            reinterpret_cast<uintptr_t>(off) -
+                            reinterpret_cast<uintptr_t>(data))), offTable);
+                    }
+
+                    // Get next offset and break if we've reached the end of the table
+                    if (offsetTable == eof || !hl_BINANextOffset(
+                        &offsetTable, &currentOffset)) break;
+
+                    // Break if this offset is not part of this file's data
+                    if (reinterpret_cast<const uint8_t*>(
+                        currentOffset) >= dataEnd)
+                    {
+                        if (currentOffset >= proxyEntries)
+                        {
+                            couldHaveBINAFiles = false;
+                        }
+                        break;
+                    }
+                }
+
+                // Finish BINA file
+                hl_BINAFinishWriteV2DataNode(&file, 16, &offTable, &strTable);
+                hl_BINAFinishWriteV2(&file, 0, 1);
+            }
+            
             file.Close();
         }
     }
@@ -452,6 +671,7 @@ struct hl_INTypeMetadata
     const char* DataType;       // The extension + PACx data type (e.g. dds:ResTexture)
     uint8_t FirstSplitIndex;    // The first split this type appears in. 0 if not a split type
     uint8_t LastSplitIndex;     // The last split this type appears in. 0 if not a split type
+    bool NoMerge;               // Whether to never merge file offset/string tables with global
 };
 
 struct hl_INFileMetadata
@@ -567,7 +787,7 @@ void hl_INCreateLWArchive(hl_File& file,
         std::free(fileTree);
 
         // Write split tree if necessary
-        if (!splitIndex && !wroteSplitTable)
+        if (!splitIndex && splitsCount && !wroteSplitTable)
         {
             // Fix type offset
             hl_AddString(&strTable, const_cast<char*>(
@@ -597,6 +817,36 @@ void hl_INCreateLWArchive(hl_File& file,
         }
     }
 
+    // Get file data buffer size
+    size_t dataBufferSize = 0;
+    for (size_t i = 0; i < typeCount; ++i)
+    {
+        // Skip if type has no data or is not present in this split
+        if (types[i].FirstSplitIndex > splitIndex ||
+            splitIndex > types[i].LastSplitIndex) continue;
+
+        for (size_t i2 = 0; i2 < fileCount; ++i2)
+        {
+            // Skip file if not present in this split, not of current
+            // type, or doesn't need to be in data buffer
+            if (splitIndex != metadata[i2].SplitIndex || files[i2].Size ||
+                metadata[i2].TypeIndex != i || !metadata[i2].Size) continue;
+
+            dataBufferSize += metadata[i2].Size;
+        }
+    }
+
+    // Generate data buffer if necessary
+    uint8_t* dataBuffer = nullptr;
+    uint8_t* curDataPtr;
+
+    if (dataBufferSize)
+    {
+        dataBuffer = static_cast<uint8_t*>(
+            std::malloc(dataBufferSize));
+        curDataPtr = dataBuffer;
+    }
+
     // Write data entries
     HL_ARR32(hl_DPACNode) proxyEntryTable = {};
     long dataEntriesPos = offPos, eof, splitsPos;
@@ -615,8 +865,6 @@ void hl_INCreateLWArchive(hl_File& file,
             if ((splitIndex && splitIndex != metadata[i2].SplitIndex) ||
                 metadata[i2].TypeIndex != i || !metadata[i2].Size) continue;
 
-            // Fix file node
-            // TODO: Move this stuff into its own function please
             // Fix file name
             hl_AddString(&strTable, const_cast<char*>(
                 metadata[i2].Name), offPos);
@@ -635,15 +883,13 @@ void hl_INCreateLWArchive(hl_File& file,
                 HL_PACX_DATA_FLAGS_NO_DATA :
                 HL_PACX_DATA_FLAGS_NONE;
 
-            // Write data entry
-            file.Write(dataEntry);
-
-            // Write file data
+            // Get data
+            const void* data;
             if (dataEntry.Flags != HL_PACX_DATA_FLAGS_NO_DATA)
             {
                 if (files[i2].Size)
                 {
-                    file.WriteBytes(files[i2].Data, files[i2].Size);
+                    data = files[i2].Data;
                 }
                 else
                 {
@@ -651,25 +897,26 @@ void hl_INCreateLWArchive(hl_File& file,
                     hl_File dataFile = hl_File::OpenRead(
                         static_cast<const char*>(files[i2].Data));
 
-                    void* data = std::malloc(dataEntry.DataSize);
-                    dataFile.ReadBytes(data, dataEntry.DataSize);
-                    file.WriteBytes(data, dataEntry.DataSize);
-
-                    std::free(data);
+                    dataFile.ReadBytes(curDataPtr, metadata[i2].Size);
+                    data = curDataPtr;
+                    curDataPtr += metadata[i2].Size;
                     dataFile.Close();
                 }
 
-                // TODO: Merge BINA offsets/string table from file data into PACx if needed
+                // Write file and data entry
+                hl_INLWArchiveWriteDataEntry(file, dataEntry, data,
+                    types[i].NoMerge, offTable, strTable);
             }
             else
             {
                 ++proxyEntryTable.Count;
+                file.Write(dataEntry);
             }
         }
 
         // Write split entry table if necessary
         offPos += 8;
-        if (!splitIndex && !wroteSplitTable)
+        if (!splitIndex && splitsCount && !wroteSplitTable)
         {
             // Fix file name
             hl_AddString(&strTable, pacNames, offPos);
@@ -732,7 +979,9 @@ void hl_INCreateLWArchive(hl_File& file,
     }
 
     // Write proxy entry table
+    file.Pad(16);
     long proxyEntryTablePos = file.Tell();
+
     if (proxyEntryTable.Count)
     {
         // Write table
@@ -772,6 +1021,9 @@ void hl_INCreateLWArchive(hl_File& file,
     // Write string table
     uint32_t strTablePos = static_cast<uint32_t>(file.Tell());
     hl_BINAWriteStringTable(&file, &strTable, &offTable);
+
+    // Free data buffer
+    std::free(dataBuffer);
 
     // Write offset table
     uint32_t offTablePos = static_cast<uint32_t>(file.Tell());
@@ -921,7 +1173,7 @@ void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t fileCoun
             {
                 // Set type info
                 type = &hl_PACxV2SupportedExtensions[i2];
-                metadata[i].PACxExtIndex = static_cast<uint8_t>(i2);
+                metadata[i].PACxExtIndex = static_cast<uint8_t>(i2 + 1);
 
                 // Skip .pac.d files if user tries to pack those
                 if (type->PACxDataType == 37) // ResPacDepend
@@ -953,27 +1205,26 @@ void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t fileCoun
             // Check if this is a split type
             if (splitLimit)
             {
-                for (size_t i2 = 0; i2 < hl_PACxV2SplitTypesCount; ++i2)
+                if (type->Flags & HL_PACX_EXT_FLAGS_MIXED_TYPE)
                 {
-                    if (type->PACxDataType == hl_PACxV2SplitTypes[i2])
-                    {
-                        // Increase split data entries size
-                        size_t splitDataEntrySize = (
-                            sizeof(hl_DPACDataEntry) + metadata[i].Size);
-                        
-                        splitDataEntriesSize += splitDataEntrySize;
-                        
-                        // Make new split if necessary
-                        if (!splitCount) ++splitCount;
-                        else if (splitDataEntriesSize > splitLimit)
-                        {
-                            splitDataEntriesSize = splitDataEntrySize;
-                            ++splitCount;
-                        }
+                    // Increase split data entries size
+                    size_t splitDataEntrySize = (
+                        sizeof(hl_DPACDataEntry) + metadata[i].Size);
 
-                        metadata[i].SplitIndex = splitCount;
-                        break;
+                    splitDataEntriesSize += splitDataEntrySize;
+
+                    // Make new split if necessary
+                    if (!splitCount && type->Flags & HL_PACX_EXT_FLAGS_SPLIT_TYPE)
+                    {
+                        ++splitCount;
                     }
+                    else if (splitDataEntriesSize > splitLimit)
+                    {
+                        splitDataEntriesSize = splitDataEntrySize;
+                        ++splitCount;
+                    }
+
+                    metadata[i].SplitIndex = splitCount;
                 }
             }
         }
@@ -991,11 +1242,14 @@ void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t fileCoun
             {
                 if (ext2)
                 {
-                    if (lext[extLen2] != std::tolower(
-                        ext2[extLen2]) || ++extLen2 > extLen)
+                    if (extLen2 >= extLen || lext[extLen2] !=
+                        std::tolower(ext2[extLen2]))
                     {
+                        ++extLen2;
                         break;
                     }
+
+                    ++extLen2;
                 }
                 else if (files[i2].Name[i3] == '.')
                 {
@@ -1087,7 +1341,6 @@ void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t fileCoun
             types[typeCount].DataType = curStrPtr;
             types[typeCount].FirstSplitIndex = metadata[i].SplitIndex;
             types[typeCount].LastSplitIndex = metadata[i].SplitIndex;
-            ++typeCount;
 
             // Copy extension if type has one
             const hl_PACxSupportedExtension* pacExt;
@@ -1098,9 +1351,10 @@ void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t fileCoun
                 if (metadata[i].PACxExtIndex)
                 {
                     pacExt = &hl_PACxV2SupportedExtensions[
-                        metadata[i].PACxExtIndex];
+                        metadata[i].PACxExtIndex - 1];
 
                     ext = pacExt->Extension;
+                    types[typeCount].NoMerge = (pacExt->Flags & HL_PACX_EXT_FLAGS_BINA);
                 }
                 else
                 {
@@ -1125,6 +1379,9 @@ void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t fileCoun
             {
                 metadata[i].TypeIndex = typeCount;
             }
+
+            // Increase type count
+            ++typeCount;
 
             // Copy PACx data type if the type has one
             if (metadata[i].PACxExtIndex)
@@ -1155,6 +1412,12 @@ void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t fileCoun
         else if (metadata[i].SplitIndex > types[metadata[i].TypeIndex].LastSplitIndex)
         {
             types[metadata[i].TypeIndex].LastSplitIndex = metadata[i].SplitIndex;
+        }
+
+        // Increase first split count for types we have dealt with before if necessary
+        else if (metadata[i].SplitIndex < types[metadata[i].TypeIndex].FirstSplitIndex)
+        {
+            types[metadata[i].TypeIndex].FirstSplitIndex = metadata[i].SplitIndex;
         }
 
         // Copy file name to string table without extension

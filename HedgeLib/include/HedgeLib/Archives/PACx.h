@@ -9,17 +9,22 @@ extern "C" {
 #define HL_PACX_DEFAULT_SPLIT_LIMIT 0xA037A0
 #define HL_PACX_EXTENSION           ".pac"
 
+enum hl_PACxExtensionFlags : uint8_t
+{
+    HL_PACX_EXT_FLAGS_SPLIT_TYPE = 1,   // Whether this type can appear in split PACs
+    HL_PACX_EXT_FLAGS_MIXED_TYPE = 3,   // Whether this type can appear in all PACs
+    HL_PACX_EXT_FLAGS_BINA = 4          // Whether this type contains BINA data
+};
+
 struct hl_PACxSupportedExtension
 {
-    const char* const Extension;    // An extension supported by the format (e.g. ".dds")
-    const size_t PACxDataType;      // The associated PACx Data Type (e.g. "ResTexture")
+    const char* const Extension;            // An extension supported by the format (e.g. ".dds")
+    const uint16_t PACxDataType;            // The associated PACx Data Type (e.g. "ResTexture")
+    const enum hl_PACxExtensionFlags Flags; // States various properties of this extension
 };
 
 HL_API extern const struct hl_PACxSupportedExtension hl_PACxV2SupportedExtensions[];
 HL_API extern const size_t hl_PACxV2SupportedExtensionCount;
-
-HL_API extern const size_t hl_PACxV2SplitTypes[];
-HL_API extern const size_t hl_PACxV2SplitTypesCount;
 
 HL_API extern const char* const hl_PACxDataTypes[];
 HL_API extern const size_t hl_PACxDataTypeCount;
