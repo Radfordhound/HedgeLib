@@ -11,6 +11,7 @@
 #include <cctype>
 
 static const char* const pacSplitType = "pac.d:ResPacDepend";
+static const char* const pacPackMetadata = "PACPACK_METADATA";
 
 // hl_DPACProxyEntry
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DPACProxyEntry);
@@ -109,91 +110,185 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DLWArchive)
 
 void hl_INLWArchiveWriteDataEntry(const hl_File& file,
     hl_DPACDataEntry& dataEntry, const void* fileData,
-    bool noMerge, hl_OffsetTable& offTable, hl_StringTable& strTable)
+    bool noMerge, hl_OffsetTable& offTable,
+    hl_StringTable& strTable)
 {
     // Merge BINA offsets and string tables if this is a BINA file
-    if (!noMerge && *static_cast<const uint32_t*>(fileData) == HL_BINA_SIGNATURE)
+    if (!noMerge)
     {
-        bool isBigEndian = hl_INBINAIsBigEndianV2(fileData);
-        const hl_DBINAV2DataNode* dataNode = static_cast<
-            const hl_DBINAV2DataNode*>(hl_INBINAGetDataNodeV2(fileData));
-
-        if (!dataNode) return;
-
-        uint32_t dataNodeSize = dataNode->Header.Size;
-        uint32_t offTableSize = dataNode->OffsetTableSize;
-
-        if (isBigEndian) hl_Swap(dataNodeSize);
-        if (isBigEndian) hl_Swap(offTableSize);
-
-        const uint8_t* offsetTable = (reinterpret_cast<
-            const uint8_t*>(dataNode) +
-            dataNodeSize - offTableSize);
-
-        const uint8_t* eof = (offsetTable + offTableSize);
-        uint16_t relDataOff = dataNode->RelativeDataOffset;
-        if (isBigEndian) hl_Swap(relDataOff);
-
-        const uint8_t* data = (reinterpret_cast<const uint8_t*>(
-            dataNode + 1) + relDataOff);
-
-        // HACK: Use string table offset as data size
-        dataEntry.DataSize = dataNode->StringTable;
-        if (isBigEndian) hl_Swap(dataEntry.DataSize);
-
-        // Write data entry
-        file.Write(dataEntry);
-
-        // Write data
-        const long pos = file.Tell();
-        file.WriteBytes(data, dataEntry.DataSize);
-
-        uint32_t* currentOffset = reinterpret_cast<
-            uint32_t*>(const_cast<uint8_t*>(data));
-
-        long offPos = pos;
-        char* stringTable = const_cast<char*>(reinterpret_cast<
-            const char*>(data + dataEntry.DataSize));
-
-        while (offsetTable < eof)
+        // File has a BINA signature
+        if (*static_cast<const uint32_t*>(fileData) == HL_BINA_SIGNATURE)
         {
-            // Get next offset
-            if (!hl_BINANextOffset(&offsetTable, const_cast
-                <const uint32_t**>(&currentOffset)))
+            bool isBigEndian = hl_INBINAIsBigEndianV2(fileData);
+            const hl_DBINAV2DataNode* dataNode = static_cast<
+                const hl_DBINAV2DataNode*>(hl_INBINAGetDataNodeV2(fileData));
+
+            if (!dataNode) return;
+
+            uint32_t dataNodeSize = dataNode->Header.Size;
+            uint32_t offTableSize = dataNode->OffsetTableSize;
+
+            if (isBigEndian) hl_Swap(dataNodeSize);
+            if (isBigEndian) hl_Swap(offTableSize);
+
+            const uint8_t* offsetTable = (reinterpret_cast<
+                const uint8_t*>(dataNode) +
+                dataNodeSize - offTableSize);
+
+            const uint8_t* eof = (offsetTable + offTableSize);
+            uint16_t relDataOff = dataNode->RelativeDataOffset;
+            if (isBigEndian) hl_Swap(relDataOff);
+
+            const uint8_t* data = (reinterpret_cast<const uint8_t*>(
+                dataNode + 1) + relDataOff);
+
+            // HACK: Use string table offset as data size
+            dataEntry.DataSize = dataNode->StringTable;
+            if (isBigEndian) hl_Swap(dataEntry.DataSize);
+
+            // Write data entry
+            file.Write(dataEntry);
+
+            // Write data
+            const long pos = file.Tell();
+            file.WriteBytes(data, dataEntry.DataSize);
+
+            uint32_t* currentOffset = reinterpret_cast<
+                uint32_t*>(const_cast<uint8_t*>(data));
+
+            long offPos = pos;
+            char* stringTable = const_cast<char*>(reinterpret_cast<
+                const char*>(data + dataEntry.DataSize));
+
+            while (offsetTable < eof)
             {
+                // Get next offset
+                if (!hl_BINANextOffset(&offsetTable, const_cast
+                    <const uint32_t**>(&currentOffset)))
+                {
+                    return;
+                }
+
+                // Endian swap offset
+                if (isBigEndian) hl_SwapUInt32(currentOffset);
+
+                // Add offset to global offset table
+                offPos = (pos + static_cast<long>(reinterpret_cast
+                    <const uint8_t*>(currentOffset) - data));
+
+                char* off = const_cast<char*>(reinterpret_cast
+                    <const char*>(data + *currentOffset));
+
+                if (off >= stringTable)
+                {
+                    // Add offset to the global string table
+                    strTable.push_back({ off, offPos });
+                }
+                else
+                {
+                    file.FixOffset32(offPos, pos + static_cast
+                        <long>(*currentOffset), offTable);
+                }
+            }
+
+            return;
+        }
+
+        // File has no BINA signature; search for
+        // PACPACK_METADATA for PacPack compatibility
+        else
+        {
+            // Search for PacPack metadata
+            const uint8_t* data = static_cast<const uint8_t*>(fileData);
+            const uint8_t* curDataPtr = (data + dataEntry.DataSize) -
+                0x14; // minimum PACPACK_METADATA size
+
+            bool hasMetadata = false;
+            while (curDataPtr > data)
+            {
+                // Check for PACPACK_METADATA string
+                if (std::strncmp(reinterpret_cast<const char*>(curDataPtr),
+                    pacPackMetadata, 0x10) == 0)
+                {
+                    hasMetadata = true;
+                    break;
+                }
+
+                --curDataPtr;
+            }
+            
+            // Merge offsets
+            if (hasMetadata)
+            {
+                // Get new data size
+                dataEntry.DataSize = static_cast<uint32_t>(
+                    reinterpret_cast<uintptr_t>(curDataPtr) -
+                    reinterpret_cast<uintptr_t>(data));
+
+                // Write data entry
+                file.Write(dataEntry);
+
+                // Write data
+                const long pos = file.Tell();
+                file.WriteBytes(data, dataEntry.DataSize);
+
+                // Get offset table pointer
+                const uint32_t* curOffPtr = reinterpret_cast<const uint32_t*>(
+                    curDataPtr + 0x10);
+
+                // Get offset count
+                uint32_t offCount = *curOffPtr++;
+                if (!offCount) return;
+
+                // Determine endianness using offCount since it's not mentioned in metadata
+                bool isBigEndian = *reinterpret_cast<const uint16_t*>(curDataPtr + 0x10) <
+                    *reinterpret_cast<const uint16_t*>(curDataPtr + 0x12);
+
+                if (isBigEndian) hl_Swap(offCount);
+
+                // Get string table pointer
+                long offPos = pos;
+                const uint32_t* stringTable = (curOffPtr + offCount);
+
+                // Merge/fix offsets
+                while (curOffPtr < stringTable)
+                {
+                    // Get next offset
+                    uint32_t curOff = *curOffPtr++;
+                    if (isBigEndian) hl_SwapUInt32(&curOff);
+
+                    // Add offset to global offset table
+                    offPos = (pos + static_cast<long>(curOff));
+
+                    curOff = *reinterpret_cast<const uint32_t*>(data + curOff);
+                    if (isBigEndian) hl_SwapUInt32(&curOff);
+
+                    const uint32_t* off = reinterpret_cast<const uint32_t*>(
+                        data + curOff);
+
+                    if (off >= stringTable)
+                    {
+                        // Add offset to the global string table
+                        strTable.push_back({ const_cast<char*>(
+                            reinterpret_cast<const char*>(off)), offPos });
+                    }
+                    else
+                    {
+                        file.FixOffset32(offPos, pos + static_cast
+                            <long>(curOff), offTable);
+                    }
+                }
+
                 return;
-            }
-
-            // Endian swap offset
-            if (isBigEndian) hl_SwapUInt32(currentOffset);
-
-            // Add offset to global offset table
-            offPos = (pos + static_cast<long>(reinterpret_cast
-                <const uint8_t*>(currentOffset) - data));
-
-            char* off = const_cast<char*>(reinterpret_cast
-                <const char*>(data + *currentOffset));
-
-            if (off >= stringTable)
-            {
-                // Add offset to the global string table
-                strTable.push_back({ off, offPos });
-            }
-            else
-            {
-                file.FixOffset32(offPos, pos + static_cast
-                    <long>(*currentOffset), offTable);
             }
         }
     }
-    else
-    {
-        // Write data entry
-        file.Write(dataEntry);
 
-        // Write data
-        file.WriteBytes(fileData, dataEntry.DataSize);
-    }
+    // Write data entry
+    file.Write(dataEntry);
+
+    // Write data
+    file.WriteBytes(fileData, dataEntry.DataSize);
 }
 
 HL_IMPL_WRITE(hl_DLWArchive)
@@ -671,7 +766,7 @@ struct hl_INTypeMetadata
     const char* DataType;       // The extension + PACx data type (e.g. dds:ResTexture)
     uint8_t FirstSplitIndex;    // The first split this type appears in. 0 if not a split type
     uint8_t LastSplitIndex;     // The last split this type appears in. 0 if not a split type
-    bool NoMerge;               // Whether to never merge file offset/string tables with global
+    bool NoMerge;               // Whether this file's tables should be merged with global data
 };
 
 struct hl_INFileMetadata
@@ -1354,7 +1449,8 @@ void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t fileCoun
                         metadata[i].PACxExtIndex - 1];
 
                     ext = pacExt->Extension;
-                    types[typeCount].NoMerge = (pacExt->Flags & HL_PACX_EXT_FLAGS_BINA);
+                    types[typeCount].NoMerge = !(pacExt->Flags &
+                        HL_PACX_EXT_FLAGS_BINA);
                 }
                 else
                 {

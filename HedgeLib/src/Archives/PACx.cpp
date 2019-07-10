@@ -17,28 +17,28 @@ const struct hl_PACxSupportedExtension hl_PACxV2SupportedExtensions[] =
     
     // Average Frequency
     { "swif", 51 },
-    { "effect", 17 },
+    { "effect", 17, HL_PACX_EXT_FLAGS_BINA },
     { "mat-anim", 4, HL_PACX_EXT_FLAGS_MIXED_TYPE },
-    { "anm", 11, HL_PACX_EXT_FLAGS_BINA },
+    { "anm", 11 },
     { "phy.hkx", 18 },
     { "terrain-instanceinfo", 28 },
     { "lua", 19 },
     { "hhd", 13 },
     { "light", 20 },
-    { "path2.bin", 50 },
+    { "path2.bin", 50, HL_PACX_EXT_FLAGS_BINA },
     { "lft", 21 },
 
     // Low frequency
-    { "shadow-model", 46 },
-    { "gism", 16, HL_PACX_EXT_FLAGS_BINA },
-    { "fxcol.bin", 15 },
-    { "xtb2", 61 },
-    { "model-instanceinfo", 34 },
-    { "svcol.bin", 52 },
-    { "vis-anim", 8, HL_PACX_EXT_FLAGS_MIXED_TYPE }, // TODO: Should these be merged with global offset/string tables??
-    { "voxel.bin", 60 },
-    { "score", 44, HL_PACX_EXT_FLAGS_BINA },
-    { "nextra.bin", 35 },
+    { "shadow-model", 46, HL_PACX_EXT_FLAGS_BINA },
+    { "gism", 16 },
+    { "fxcol.bin", 15, HL_PACX_EXT_FLAGS_BINA },
+    { "xtb2", 61, HL_PACX_EXT_FLAGS_BINA },
+    { "model-instanceinfo", 34, HL_PACX_EXT_FLAGS_BINA },
+    { "svcol.bin", 52, HL_PACX_EXT_FLAGS_BINA },
+    { "vis-anim", 8, HL_PACX_EXT_FLAGS_MIXED_TYPE },
+    { "voxel.bin", 60 }, // TODO: Should these be merged??
+    { "score", 44 },
+    { "nextra.bin", 35, HL_PACX_EXT_FLAGS_BINA },
     { "gsh", 26 },
     { "shader-list", 27 },
     { "bfttf", 9 },
@@ -51,7 +51,7 @@ const struct hl_PACxSupportedExtension hl_PACxV2SupportedExtensions[] =
     { "ttf", 58 },
     { "vsparam", 32 },
     { "vpo", 31 },
-    { "path.bin", 49 },
+    { "path.bin", 49, HL_PACX_EXT_FLAGS_BINA },
     { "pac.d", 37 }
 };
 
