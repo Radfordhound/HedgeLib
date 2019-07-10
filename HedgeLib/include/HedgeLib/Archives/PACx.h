@@ -7,7 +7,8 @@ extern "C" {
 
 #define HL_PACX_SIGNATURE           0x78434150
 #define HL_PACX_DEFAULT_SPLIT_LIMIT 0xA037A0
-#define HL_PACX_EXTENSION           ".pac"
+
+extern const char* const hl_PACxExtension;
 
 enum hl_PACxExtensionFlags : uint8_t
 {

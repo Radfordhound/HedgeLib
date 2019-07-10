@@ -12,7 +12,8 @@ extern "C" {
 #define HL_HHMIRAGE_FLAGS_MASK 0xE0000000U
 #define HL_HHMIRAGE_SIZE_MASK 0x1FFFFFFFU
 #define HL_HHMIRAGE_SIGNATURE 0x0133054AU
-#define HL_HHMIRAGE_TYPE_CONTEXTS "Contexts"
+
+extern const char* const hl_HHMirageTypeContexts;
 
 enum HL_HHHeaderType
 {

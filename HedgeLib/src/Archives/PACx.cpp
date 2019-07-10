@@ -3,6 +3,8 @@
 #include "HedgeLib/IO/File.h"
 #include "../INBlob.h"
 
+const char* const hl_PACxExtension = ".pac";
+
 const struct hl_PACxSupportedExtension hl_PACxV2SupportedExtensions[] =
 {
     // Organized based on frequency information determined via a custom analyzation program

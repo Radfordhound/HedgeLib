@@ -1541,7 +1541,7 @@ void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t fileCoun
         // Copy split names
         for (uint8_t i = 0; i < splitCount; ++i)
         {
-            std::sprintf(curStrPtr, "%s%s.%02d", name, HL_PACX_EXTENSION, i);
+            std::sprintf(curStrPtr, "%s%s.%02d", name, hl_PACxExtension, i);
             curStrPtr += (nameLen + 7);
         }
     }
@@ -1556,7 +1556,7 @@ void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t fileCoun
 
     // Write Root PAC
     std::filesystem::path fpath = fdir / name;
-    fpath += HL_PACX_EXTENSION;
+    fpath += hl_PACxExtension;
 
     hl_File file = hl_File::OpenWrite(fpath, bigEndian);
     hl_INCreateLWArchive(file, files, metadata.get(), fileCount,

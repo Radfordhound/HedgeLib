@@ -3,6 +3,8 @@
 #include "HedgeLib/Offsets.h"
 #include "../INBlob.h"
 
+const char* const hl_HHMirageTypeContexts = "Contexts";
+
 HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHHeader);
 HL_IMPL_ENDIAN_SWAP(hl_DHHHeader)
 {
