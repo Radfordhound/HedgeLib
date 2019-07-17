@@ -44,7 +44,10 @@ As such, you don't have to manually build any of the tools/libraries in this rep
 - [Latest (development) builds](https://ci.appveyor.com/project/Radfordhound/hedgelib)
 
 ## Manually building
-If you do wish to manually build, however, simply download and install the following (if you don't have them already):
+If you do wish to manually build, however, simply follow the following instructions:
+
+### Windows
+Download and install the following (if you don't have them already):
 - [Visual Studio 2017 (or later).](https://www.visualstudio.com/downloads/)
 - [Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk) (for DirectX use in HedgeEdit; can be downloaded from Visual Studio).
 - [Qt.](https://www.qt.io/download) (for HedgeEdit/HedgeTools with UIs; **not required for just building HedgeLib and tools without UIs**).
@@ -58,7 +61,31 @@ Then clone the repository and follow the following steps:
 premake5 vs2017
 ```
 
+If using Visual Studio 2019, simply replace ```vs2017``` with ```vs2019```.
+
 3: If prompted, enter the location of your installed Qt 32-bit and 64-bit binaries for your target platform (e.g. C:\Qt\5.12.0\msvc2017 & C:\Qt\5.12.0\msvc2017_64).
 A depends.lua file will be generated so you don't have to do this step again. Feel free to modify this file! You can also make a depends.lua manually and skip this step.
 
 4: Open the HedgeLib.sln file that Premake generated in Visual Studio and hit "Build".
+
+### Linux
+Assuming you already have GCC 8 (or later), simply:
+
+1: Download [Premake 5](https://premake.github.io/download.html#v5) and extract premake5 to the directory you cloned HedgeLib to.
+
+2: Open a terminal in the folder you cloned HedgeLib to and run the following command:
+```
+./premake5 gmake2
+```
+
+3: Run the following command:
+```
+make config=debug_x64
+```
+
+To build with a different configuration, simply replace ```debug_x64``` with any of the following options:
+
+- debug_x86     (Debug build for x86 Architecture)
+- debug_x64     (Debug build for x64 Architecture)
+- release_x86   (Release build for x86 Architecture)
+- release_x64   (Release build for x64 Architecture)
