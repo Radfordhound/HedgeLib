@@ -5,7 +5,7 @@ project("HedgeArcPack")
 	kind("ConsoleApp")
 	links("HedgeLib")
 	
-	includedirs({ "../../HedgeLib/include", "include" })
+	includedirs({ "../../HedgeLib/include" })
 
     -- Static or Shared
     if LibType == "shared" then
@@ -17,7 +17,7 @@ project("HedgeArcPack")
 		defines("NOMINMAX")
 	end
 	
-	files({ "src/**.cpp", "src/**.h", "include/**.h" })
+	files({ "src/**.cpp", "src/**.h" })
 	
 	-- MSC Optimization
 	filter("toolset:msc")
