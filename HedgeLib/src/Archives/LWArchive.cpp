@@ -561,7 +561,9 @@ const char** hl_LWArchiveGetSplits(const struct hl_Blob* blob, size_t* splitCoun
 void hl_ExtractLWArchive(const struct hl_Blob* blob, const char* dir)
 {
     // Create directory for file extraction
-    std::filesystem::path fdir = dir;
+    if (!dir) return;
+    // TODO: Create directory without std::filesystem
+    std::filesystem::path fdir = std::filesystem::u8path(dir);
     std::filesystem::create_directory(fdir);
     
     // Get BINA Data Node
@@ -1552,7 +1554,7 @@ void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t fileCoun
 
     // Create directory
     std::filesystem::path fdir = std::filesystem::u8path(dir);
-    std::filesystem::create_directory(fdir);
+    if (!fdir.empty()) std::filesystem::create_directory(fdir);
 
     // Write Root PAC
     std::filesystem::path fpath = fdir / name;
