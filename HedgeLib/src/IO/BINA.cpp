@@ -601,15 +601,6 @@ const void* hl_BINAGetData(const struct hl_Blob* blob)
     return hl_INBINAGetData(&blob->Data);
 }
 
-template<typename DataNodeType>
-const uint8_t* hl_INBINAGetOffsetTable(
-    const DataNodeType* dataNode, uint32_t* offTableSize)
-{
-    *offTableSize = dataNode->OffsetTableSize;
-    return (reinterpret_cast<const uint8_t*>(dataNode) +
-        dataNode->Header.Size - *offTableSize);
-}
-
 const uint8_t* hl_BINAGetOffsetTableV2(const struct hl_Blob* blob,
     uint32_t* offTableSize)
 {

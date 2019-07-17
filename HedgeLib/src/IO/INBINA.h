@@ -28,7 +28,12 @@ const void* hl_INBINAGetData(const void* blobData);
 
 template<typename DataNodeType>
 const uint8_t* hl_INBINAGetOffsetTable(
-    const DataNodeType* dataNode, uint32_t* offTableSize);
+    const DataNodeType* dataNode, uint32_t* offTableSize)
+{
+    *offTableSize = dataNode->OffsetTableSize;
+    return (reinterpret_cast<const uint8_t*>(dataNode) +
+        dataNode->Header.Size - *offTableSize);
+}
 
 inline const uint8_t* hl_INBINAGetOffsetTableV2(const void* blobData,
     uint32_t* offTableSize)
