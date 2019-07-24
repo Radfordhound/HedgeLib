@@ -5,7 +5,7 @@ using System;
 using HedgeLib.Exceptions;
 using System.Text;
 
-namespace ForcesSCFNTConverter
+namespace HedgeSCFNTConverter
 {
     public class Program
     {
@@ -107,8 +107,8 @@ namespace ForcesSCFNTConverter
 
         public static void ShowHelp()
         {
-            Console.WriteLine("ForcesSCFNTConverter input [output]");
-            Console.WriteLine("By: Slashiee, SuperSonic16 and Sajid");
+            Console.WriteLine("HedgeSCFNTConverter input [output]");
+            Console.WriteLine("By: M&M, SuperSonic16 and Sajid");
 
             Console.WriteLine();
             Console.WriteLine("Arguments (arguments surrounded by square brackets are optional):");
