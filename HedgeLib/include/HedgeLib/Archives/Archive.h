@@ -1,6 +1,7 @@
 #pragma once
 #include "../HedgeLib.h"
 #include "../Array.h"
+#include "../Errors.h"
 #include <stddef.h>
 
 #ifdef __cplusplus
@@ -11,22 +12,18 @@ extern "C" {
 
 enum hl_ArchiveType
 {
+    // These values were picked such that you can safely do
+    // (type & HL_ARC_TYPE_ONE) or (type & HL_ARC_TYPE_PACX)
     HL_ARC_TYPE_UNKNOWN = 0,
-    HL_ARC_TYPE_HEROES,         // .one files from Heroes/Shadow the Hedgehog
-    HL_ARC_TYPE_STORYBOOK,      // .one files from Secret Rings/Black Knight
-    HL_ARC_TYPE_HEDGEHOG,       // .ar/.pfd files from Unleashed/Generations
-    HL_ARC_TYPE_PACX_V2,        // .pac files from Lost World
-    HL_ARC_TYPE_PACX_V3         // .pac files from Forces
+    HL_ARC_TYPE_ONE = 1,            // .one files
+    HL_ARC_TYPE_HEROES = 5,         // .one files from Heroes/Shadow the Hedgehog
+    HL_ARC_TYPE_STORYBOOK = 9,      // .one files from Secret Rings/Black Knight
+    HL_ARC_TYPE_S06 = 8,            // .arc files from Sonic '06
+    HL_ARC_TYPE_HEDGEHOG = 4,       // .ar/.pfd files from Unleashed/Generations
+    HL_ARC_TYPE_PACX = 2,           // .pac files
+    HL_ARC_TYPE_PACX_V2 = 6,        // .pac files from Lost World
+    HL_ARC_TYPE_PACX_V3 = 10        // .pac files from Forces
 };
-
-HL_API enum hl_ArchiveType hl_GetArchiveTypeExt(const char* ext);
-HL_API bool hl_GetArchiveType(const char* filePath, enum hl_ArchiveType* type);
-HL_API char* hl_GetRootArchivePath(const char* filePath);
-HL_API struct hl_Blob* hl_LoadArchiveOfType(
-    const char* filePath, enum hl_ArchiveType type);
-
-HL_API struct hl_Blob* hl_LoadArchive(const char* filePath);
-HL_API struct hl_Blob* hl_LoadRootArchive(const char* filePath);
 
 struct hl_ArchiveFileEntry
 {
@@ -35,10 +32,25 @@ struct hl_ArchiveFileEntry
     const void* Data;   // Points to the file path if Size == 0, or the file's data if Size != 0.
 };
 
-HL_API const char** hl_ArchiveGetSplits(const struct hl_Blob* blob, size_t* splitCount);
+HL_API bool hl_GetArchiveIsSplitExt(const char* ext);
+HL_API bool hl_GetArchiveIsSplit(const char* filePath);
+HL_API enum hl_ArchiveType hl_GetArchiveTypeExt(const char* ext);
+HL_API bool hl_GetArchiveType(const char* filePath, enum hl_ArchiveType* type);
+HL_API enum HL_RESULT hl_GetRootArchivePath(const char* splitPath, char** rootPath);
+HL_API struct hl_Blob* hl_LoadArchiveOfType(
+    const char* filePath, enum hl_ArchiveType type);
+
+HL_API struct hl_Blob* hl_LoadArchive(const char* filePath);
+HL_API struct hl_Blob* hl_LoadRootArchive(const char* filePath);
+
+HL_API size_t hl_GetArchiveSplitCountRoot(const char* rootPath);
+HL_API size_t hl_GetArchiveSplitCount(const char* filePath);
 
 // TODO: Should this return an HL_RESULT?
 HL_API void hl_ExtractArchive(const struct hl_Blob* blob, const char* dir);
+HL_API void hl_ExtractArchivesOfType(const char* filePath,
+    const char* dir, enum hl_ArchiveType type);
+
 HL_API void hl_ExtractArchives(const char* filePath, const char* dir);
 
 HL_API void hl_CreateArchiveFileEntry(const char* filePath,
