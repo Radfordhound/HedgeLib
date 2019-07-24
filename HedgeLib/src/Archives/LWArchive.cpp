@@ -2,8 +2,10 @@
 #include "HedgeLib/Archives/PACx.h"
 #include "HedgeLib/Archives/Archive.h"
 #include "HedgeLib/IO/File.h"
+#include "../IO/INPath.h"
 #include "../IO/INBINA.h"
 #include "../INBlob.h"
+#include <filesystem>
 #include <cstring>
 #include <algorithm>
 #include <cstdlib>
@@ -663,12 +665,13 @@ void hl_ExtractLWArchive(const struct hl_Blob* blob, const char* dir)
             fileName[nameLen + extLen + 1] = '\0';                  // \0
 
             // Get file path
+            // TODO: Convert SHIFT-JIS names to UTF-8
             std::filesystem::path filePath = (fdir / fileName);
             std::free(fileName);
 
             // Write data to file
             uint8_t* data = reinterpret_cast<uint8_t*>(dataEntry + 1);
-            hl_File file = hl_File::OpenWrite(filePath, isBigEndian);
+            hl_File file = hl_File::OpenWrite(filePath.c_str(), isBigEndian);
 
             // Determine if this is a BINA file
             uint8_t* dataEnd;
@@ -1560,7 +1563,7 @@ void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t fileCoun
     std::filesystem::path fpath = fdir / name;
     fpath += hl_PACxExtension;
 
-    hl_File file = hl_File::OpenWrite(fpath, bigEndian);
+    hl_File file = hl_File::OpenWrite(fpath.c_str(), bigEndian);
     hl_INCreateLWArchive(file, files, metadata.get(), fileCount,
         types.get(), typeCount, pacNames, nameLen, 0, splitCount);
 
@@ -1579,7 +1582,7 @@ void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t fileCoun
             splitName += (nameLen + 7);
 
             // Write split PAC
-            hl_File splitFile = hl_File::OpenWrite(splitPath, bigEndian);
+            hl_File splitFile = hl_File::OpenWrite(splitPath.c_str(), bigEndian);
             hl_INCreateLWArchive(splitFile, files, metadata.get(), fileCount,
                 types.get(), typeCount, pacNames, nameLen, ++i, splitCount);
 

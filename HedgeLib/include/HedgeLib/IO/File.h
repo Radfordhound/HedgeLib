@@ -10,7 +10,6 @@
 #ifdef __cplusplus
 #include "../Endian.h"
 #include <string>
-#include <filesystem>
 
 extern "C" {
 #else
@@ -18,6 +17,7 @@ extern "C" {
 #endif
 
 HL_API struct hl_PtrArray hl_GetFilesInDirectory(const char* dir, size_t* fileCount);
+HL_API enum HL_RESULT hl_FileGetSize(const char* filePath, size_t* size);
 
 enum HL_FILEMODE
 {
@@ -42,7 +42,6 @@ enum HL_SEEK_ORIGIN
     HL_SEEK_END
 };
 
-HL_API enum HL_RESULT hl_FileGetSize(const char* filePath, size_t* size);
 HL_API struct hl_File* hl_FileOpen(const char* filePath, const enum HL_FILEMODE mode);
 
 inline struct hl_File* hl_FileOpenRead(const char* filePath)
@@ -110,7 +109,12 @@ protected:
     std::FILE* f = nullptr;
     bool closeOnDestruct = false; // This is set to true when OpenNoClose is called
 
-    HL_API HL_RESULT OpenNoClose(const std::filesystem::path filePath,
+#ifdef _WIN32
+    HL_API HL_RESULT OpenNoClose(const wchar_t* filePath,
+        const HL_FILEMODE mode);
+#endif
+
+    HL_API HL_RESULT OpenNoClose(const char* filePath,
         const HL_FILEMODE mode);
 
     constexpr static int GetSeekOrigin(const HL_SEEK_ORIGIN origin)
@@ -135,7 +139,17 @@ public:
     inline hl_File(std::FILE* file, bool swap = false, long origin = 0) :
         f(file), DoEndianSwap(swap), Origin(origin) {}
 
-    inline hl_File(const std::filesystem::path filePath,
+#ifdef _WIN32
+    inline hl_File(const wchar_t* filePath,
+        const HL_FILEMODE mode = HL_FILEMODE_READ_BINARY,
+        bool swap = false, long origin = 0) :
+        DoEndianSwap(swap), Origin(origin)
+    {
+        OpenNoClose(filePath, mode);
+    }
+#endif
+
+    inline hl_File(const char* filePath,
         const HL_FILEMODE mode = HL_FILEMODE_READ_BINARY,
         bool swap = false, long origin = 0) :
         DoEndianSwap(swap), Origin(origin)
@@ -143,15 +157,29 @@ public:
         OpenNoClose(filePath, mode);
     }
 
-    HL_API static HL_RESULT GetSize(const std::filesystem::path filePath, size_t& size);
+    HL_API static HL_RESULT GetSize(const char* filePath, size_t& size);
 
-    inline static hl_File OpenRead(const std::filesystem::path filePath,
+#ifdef _WIN32
+    inline static hl_File OpenRead(const wchar_t* filePath,
         bool swap = false, long origin = 0)
     {
         return hl_File(filePath, HL_FILEMODE_READ_BINARY, swap, origin);
     }
 
-    inline static hl_File OpenWrite(const std::filesystem::path filePath,
+    inline static hl_File OpenWrite(const wchar_t* filePath,
+        bool swap = false, long origin = 0)
+    {
+        return hl_File(filePath, HL_FILEMODE_WRITE_BINARY, swap, origin);
+    }
+#endif
+
+    inline static hl_File OpenRead(const char* filePath,
+        bool swap = false, long origin = 0)
+    {
+        return hl_File(filePath, HL_FILEMODE_READ_BINARY, swap, origin);
+    }
+
+    inline static hl_File OpenWrite(const char* filePath,
         bool swap = false, long origin = 0)
     {
         return hl_File(filePath, HL_FILEMODE_WRITE_BINARY, swap, origin);
@@ -179,7 +207,16 @@ public:
         return (f != nullptr);
     }
 
-    inline HL_RESULT Open(const std::filesystem::path filePath,
+#ifdef _WIN32
+    inline HL_RESULT Open(const wchar_t* filePath,
+        const HL_FILEMODE mode = HL_FILEMODE_READ_BINARY)
+    {
+        Close();
+        return OpenNoClose(filePath, mode);
+    }
+#endif
+
+    inline HL_RESULT Open(const char* filePath,
         const HL_FILEMODE mode = HL_FILEMODE_READ_BINARY)
     {
         Close();

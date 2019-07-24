@@ -3,6 +3,7 @@
 #include "HedgeLib/Archives/PACx.h"
 #include "HedgeLib/IO/File.h"
 #include "../INBlob.h"
+#include "../INString.h"
 #include <type_traits>
 #include <memory>
 #include <cstring>
@@ -258,12 +259,28 @@ enum HL_RESULT hl_BINARead(struct hl_File* file, struct hl_Blob** blob)
     }
 }
 
-enum HL_RESULT hl_BINALoad(const char* filePath, struct hl_Blob** blob)
+HL_RESULT hl_INBINALoad(const hl_INNativeStr filePath, struct hl_Blob** blob)
 {
     // TODO: Do stuff here instead of just calling hl_HHRead so you
     // can optimize-out the need to read the file size and backtrack.
-    hl_File file = hl_File::OpenRead(std::filesystem::u8path(filePath));
+    hl_File file = hl_File::OpenRead(filePath);
     return hl_BINARead(&file, blob);
+}
+
+enum HL_RESULT hl_BINALoad(const char* filePath, struct hl_Blob** blob)
+{
+#ifdef _WIN32
+    // Convert UTF-8 path to wide UTF-16 path
+    hl_INNativeStr nativePath;
+    HL_RESULT result = hl_INWin32StringConvertToNative(filePath, &nativePath);
+    if (HL_FAILED(result)) return result;
+
+    result = hl_INBINALoad(nativePath, blob);
+    std::free(nativePath);
+    return result;
+#else
+    return hl_INBINALoad(filePath, blob);
+#endif
 }
 
 enum HL_RESULT hl_BINAWriteStringTable(const struct hl_File* file,

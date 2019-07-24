@@ -153,7 +153,7 @@ enum HL_RESULT hl_HHLoad(const char* filePath, struct hl_Blob** blob)
 {
     // TODO: Do stuff here instead of just calling hl_HHRead so you
     // can optimize-out the need to read the file size and backtrack.
-    hl_File file = hl_File::OpenRead(std::filesystem::u8path(filePath), true);
+    hl_File file = hl_File::OpenRead(filePath, true);
     return hl_HHRead(&file, blob);
 }
 
