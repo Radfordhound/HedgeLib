@@ -304,9 +304,7 @@ int main(int argc, char* argv[])
     if (mode == HAP_MODE_EXTRACT)
     {
         std::cout << "Extracting..." << std::endl;
-
-        // TODO: Use type specified by type flag
-        hl_ExtractArchives(input, outputDir); // TODO: Check result
+        hl_ExtractArchivesOfType(input, outputDir, type); // TODO: Check result
     }
 
     // Pack archive from directory
