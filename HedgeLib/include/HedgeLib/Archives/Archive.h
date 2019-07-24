@@ -16,13 +16,17 @@ enum hl_ArchiveType
     // (type & HL_ARC_TYPE_ONE) or (type & HL_ARC_TYPE_PACX)
     HL_ARC_TYPE_UNKNOWN = 0,
     HL_ARC_TYPE_ONE = 1,            // .one files
-    HL_ARC_TYPE_HEROES = 5,         // .one files from Heroes/Shadow the Hedgehog
-    HL_ARC_TYPE_STORYBOOK = 9,      // .one files from Secret Rings/Black Knight
-    HL_ARC_TYPE_S06 = 8,            // .arc files from Sonic '06
-    HL_ARC_TYPE_HEDGEHOG = 4,       // .ar/.pfd files from Unleashed/Generations
     HL_ARC_TYPE_PACX = 2,           // .pac files
-    HL_ARC_TYPE_PACX_V2 = 6,        // .pac files from Lost World
-    HL_ARC_TYPE_PACX_V3 = 10        // .pac files from Forces
+
+    HL_ARC_TYPE_HEROES = 17,        // .one files from Heroes/Shadow the Hedgehog
+    HL_ARC_TYPE_S06 = 16,           // .arc files from Sonic '06
+    HL_ARC_TYPE_STORYBOOK = 33,     // .one files from Secret Rings/Black Knight
+    HL_ARC_TYPE_HEDGEHOG = 32,      // .ar/.pfd files from Unleashed/Generations
+    HL_ARC_TYPE_COLORS = 48,        // .arc files from Sonic Colors
+    HL_ARC_TYPE_PACX_V2 = 18,       // .pac files from Lost World
+    HL_ARC_TYPE_PACX_V3 = 34,       // .pac files from Forces
+    HL_ARC_TYPE_TSR = 64,           // .cpu.sp2/.gpu.sp2 files from TSR
+    HL_ARC_TYPE_PACX_V4 = 50        // .pac files from Tokyo 2020
 };
 
 struct hl_ArchiveFileEntry
