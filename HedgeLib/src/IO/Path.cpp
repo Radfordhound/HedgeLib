@@ -1,4 +1,5 @@
 #include "INPath.h"
+#include "../INString.h"
 #include "HedgeLib/IO/Path.h"
 #include "HedgeLib/String.h"
 #include <cstring>
@@ -8,9 +9,11 @@
 
 #ifdef _WIN32
 #include <Windows.h>
+#else
+#include <unistd.h>
 #endif
 
-const char hl_PathNativeSeparator =
+const char hl_NativePathSeparator =
 #ifdef _WIN32
 '\\';
 #else
@@ -149,21 +152,15 @@ const char* hl_PathGetExtsPtrName(const char* fileName)
 
 const char* hl_PathGetExtPtr(const char* filePath)
 {
-    // Get file name pointer
-    filePath = hl_PathGetNamePtr(filePath);
-    if (!*filePath) return filePath;
-
     // Return extension pointer
+    filePath = hl_PathGetNamePtr(filePath);
     return hl_INPathGetExtPtrName<false>(filePath);
 }
 
 const char* hl_PathGetExtsPtr(const char* filePath)
 {
-    // Get file name pointer
-    filePath = hl_PathGetNamePtr(filePath);
-    if (!*filePath) return filePath;
-
     // Return extension pointer
+    filePath = hl_PathGetNamePtr(filePath);
     return hl_INPathGetExtPtrName<true>(filePath);
 }
 
@@ -313,7 +310,7 @@ HL_RESULT hl_INPathCombine(const char* path1,
     std::copy(path1, path1 + path1Len, *result);
     if (addSlash)
     {
-        (*result)[path1Len - 1] = hl_PathNativeSeparator;
+        (*result)[path1Len - 1] = hl_NativePathSeparator;
     }
 
     // Copy path2 and return
@@ -359,4 +356,36 @@ enum HL_RESULT hl_PathRemoveExts(const char* filePath, char** pathNoExts)
 {
     if (!filePath || !pathNoExts) return HL_ERROR_UNKNOWN;
     return hl_INPathRemoveExt<true>(filePath, pathNoExts);
+}
+
+bool hl_INPathExists(const hl_INNativeStr path)
+{
+#ifdef _WIN32
+    return (GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES);
+#else
+    return (access(path, F_OK) != -1);
+#endif
+}
+
+bool hl_PathExists(const char* path)
+{
+    if (!path) return false;
+
+#ifdef _WIN32
+    // Convert path from UTF-8 to a native (UTF-16) path
+    hl_INNativeStr nativePath;
+    if (HL_FAILED(hl_INStringConvertUTF8ToUTF16(path,
+        reinterpret_cast<uint16_t**>(&nativePath))))
+    {
+        return false;
+    }
+
+    // Check if path exists
+    bool exists = hl_INPathExists(nativePath);
+    std::free(nativePath);
+    return exists;
+#else
+    // Check if path exists
+    return hl_INPathExists(path);
+#endif
 }

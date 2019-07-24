@@ -1,6 +1,5 @@
 #pragma once
-#include "HedgeLib/Errors.h"
-#include <stddef.h>
+#include "../INString.h"
 
 const char* hl_INPathGetNamePtr(const char* path);
 
@@ -28,3 +27,5 @@ HL_RESULT hl_INPathCombine(const char* path1,
 
 template<bool multiExt = true>
 HL_RESULT hl_INPathRemoveExt(const char* filePath, char** pathNoExt);
+
+bool hl_INPathExists(const hl_INNativeStr path);
