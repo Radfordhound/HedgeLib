@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("ForcesSCFNTConverter")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("HedgeSCFNTConverter")]
+[assembly: AssemblyDescription("A Command Line tool that allows for conversion of OTF or TTF files into a SCFNT format.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("ForcesSCFNTConverter")]
+[assembly: AssemblyProduct("HedgeSCFNTConverter")]
 [assembly: AssemblyCopyright("Copyright ©  2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

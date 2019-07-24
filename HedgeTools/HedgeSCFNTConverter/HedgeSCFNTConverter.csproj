@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{9EB0D514-2E5D-4440-B416-7D4DD4559A11}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>ForcesSCFNTConverter</RootNamespace>
-    <AssemblyName>ForcesSCFNTConverter</AssemblyName>
+    <RootNamespace>HedgeSCFNTConverter</RootNamespace>
+    <AssemblyName>HedgeSCFNTConverter</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
