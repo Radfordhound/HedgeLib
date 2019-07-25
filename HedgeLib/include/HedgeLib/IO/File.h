@@ -42,8 +42,20 @@ enum HL_SEEK_ORIGIN
     HL_SEEK_END
 };
 
-HL_API struct hl_File* hl_FileOpen(const char* filePath, const enum HL_FILEMODE mode);
+#ifdef _WIN32
+HL_API struct hl_File* hl_FileOpenW(const wchar_t* filePath, const enum HL_FILEMODE mode);
+inline struct hl_File* hl_FileOpenReadW(const wchar_t* filePath)
+{
+    return hl_FileOpenW(filePath, HL_FILEMODE_READ_BINARY);
+}
 
+inline struct hl_File* hl_FileOpenWriteW(const wchar_t* filePath)
+{
+    return hl_FileOpenW(filePath, HL_FILEMODE_WRITE_BINARY);
+}
+#endif
+
+HL_API struct hl_File* hl_FileOpen(const char* filePath, const enum HL_FILEMODE mode);
 inline struct hl_File* hl_FileOpenRead(const char* filePath)
 {
     return hl_FileOpen(filePath, HL_FILEMODE_READ_BINARY);
@@ -136,6 +148,7 @@ public:
     bool DoEndianSwap = false;
     long Origin = 0;
 
+    inline hl_File() = default;
     inline hl_File(std::FILE* file, bool swap = false, long origin = 0) :
         f(file), DoEndianSwap(swap), Origin(origin) {}
 
@@ -158,33 +171,6 @@ public:
     }
 
     HL_API static HL_RESULT GetSize(const char* filePath, size_t& size);
-
-#ifdef _WIN32
-    inline static hl_File OpenRead(const wchar_t* filePath,
-        bool swap = false, long origin = 0)
-    {
-        return hl_File(filePath, HL_FILEMODE_READ_BINARY, swap, origin);
-    }
-
-    inline static hl_File OpenWrite(const wchar_t* filePath,
-        bool swap = false, long origin = 0)
-    {
-        return hl_File(filePath, HL_FILEMODE_WRITE_BINARY, swap, origin);
-    }
-#endif
-
-    inline static hl_File OpenRead(const char* filePath,
-        bool swap = false, long origin = 0)
-    {
-        return hl_File(filePath, HL_FILEMODE_READ_BINARY, swap, origin);
-    }
-
-    inline static hl_File OpenWrite(const char* filePath,
-        bool swap = false, long origin = 0)
-    {
-        return hl_File(filePath, HL_FILEMODE_WRITE_BINARY, swap, origin);
-    }
-
     HL_API HL_RESULT Close();
 
     inline ~hl_File()
@@ -209,18 +195,52 @@ public:
 
 #ifdef _WIN32
     inline HL_RESULT Open(const wchar_t* filePath,
-        const HL_FILEMODE mode = HL_FILEMODE_READ_BINARY)
+        const HL_FILEMODE mode = HL_FILEMODE_READ_BINARY,
+        bool swap = false, long origin = 0)
     {
+        DoEndianSwap = swap;
+        Origin = origin;
+
         Close();
         return OpenNoClose(filePath, mode);
     }
 #endif
 
     inline HL_RESULT Open(const char* filePath,
-        const HL_FILEMODE mode = HL_FILEMODE_READ_BINARY)
+        const HL_FILEMODE mode = HL_FILEMODE_READ_BINARY,
+        bool swap = false, long origin = 0)
     {
+        DoEndianSwap = swap;
+        Origin = origin;
+
         Close();
         return OpenNoClose(filePath, mode);
+    }
+
+#ifdef _WIN32
+    inline HL_RESULT OpenRead(const wchar_t* filePath,
+        bool swap = false, long origin = 0)
+    {
+        return Open(filePath, HL_FILEMODE_READ_BINARY, swap, origin);
+    }
+
+    inline HL_RESULT OpenWrite(const wchar_t* filePath,
+        bool swap = false, long origin = 0)
+    {
+        return Open(filePath, HL_FILEMODE_WRITE_BINARY, swap, origin);
+    }
+#endif
+
+    inline HL_RESULT OpenRead(const char* filePath,
+        bool swap = false, long origin = 0)
+    {
+        return Open(filePath, HL_FILEMODE_READ_BINARY, swap, origin);
+    }
+
+    inline HL_RESULT OpenWrite(const char* filePath,
+        bool swap = false, long origin = 0)
+    {
+        return Open(filePath, HL_FILEMODE_WRITE_BINARY, swap, origin);
     }
 
     inline size_t ReadBytes(void* buffer, size_t elementSize,

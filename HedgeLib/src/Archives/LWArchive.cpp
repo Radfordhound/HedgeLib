@@ -614,6 +614,7 @@ void hl_ExtractLWArchive(const struct hl_Blob* blob, const char* dir)
     }
 
     // Iterate through type tree
+    hl_File file;
     hl_DPACNode* typeNodes = HL_GETPTR32(
         hl_DPACNode, arc->TypeTree.Offset);
 
@@ -671,7 +672,7 @@ void hl_ExtractLWArchive(const struct hl_Blob* blob, const char* dir)
 
             // Write data to file
             uint8_t* data = reinterpret_cast<uint8_t*>(dataEntry + 1);
-            hl_File file = hl_File::OpenWrite(filePath.c_str(), isBigEndian);
+            file.OpenWrite(filePath.c_str(), isBigEndian);
 
             // Determine if this is a BINA file
             uint8_t* dataEnd;
@@ -994,7 +995,7 @@ void hl_INCreateLWArchive(hl_File& file,
                 else
                 {
                     // Read file and write data to PAC
-                    hl_File dataFile = hl_File::OpenRead(
+                    hl_File dataFile = hl_File(
                         static_cast<const char*>(files[i2].Data));
 
                     dataFile.ReadBytes(curDataPtr, metadata[i2].Size);
@@ -1563,7 +1564,7 @@ void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t fileCoun
     std::filesystem::path fpath = fdir / name;
     fpath += hl_PACxExtension;
 
-    hl_File file = hl_File::OpenWrite(fpath.c_str(), bigEndian);
+    hl_File file = hl_File(fpath.c_str(), HL_FILEMODE_WRITE_BINARY, bigEndian);
     hl_INCreateLWArchive(file, files, metadata.get(), fileCount,
         types.get(), typeCount, pacNames, nameLen, 0, splitCount);
 
@@ -1582,11 +1583,11 @@ void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t fileCoun
             splitName += (nameLen + 7);
 
             // Write split PAC
-            hl_File splitFile = hl_File::OpenWrite(splitPath.c_str(), bigEndian);
-            hl_INCreateLWArchive(splitFile, files, metadata.get(), fileCount,
+            file.OpenWrite(splitPath.c_str(), bigEndian);
+            hl_INCreateLWArchive(file, files, metadata.get(), fileCount,
                 types.get(), typeCount, pacNames, nameLen, ++i, splitCount);
 
-            splitFile.Close();
+            file.Close();
         }
     }
 

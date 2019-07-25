@@ -51,6 +51,13 @@ enum HL_RESULT hl_FileGetSize(const char* filePath, size_t* size)
     return hl_File::GetSize(filePath, *size);
 }
 
+#ifdef _WIN32
+struct hl_File* hl_FileOpenW(const wchar_t* filePath, const enum HL_FILEMODE mode)
+{
+    return new hl_File(filePath, mode);
+}
+#endif
+
 struct hl_File* hl_FileOpen(const char* filePath, const enum HL_FILEMODE mode)
 {
     return new hl_File(filePath, mode);
