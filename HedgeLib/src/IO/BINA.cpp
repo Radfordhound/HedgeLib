@@ -191,7 +191,7 @@ enum HL_RESULT hl_BINAReadV2(struct hl_File* file, struct hl_Blob** blob)
     bool pacx = (header.Signature == HL_PACX_SIGNATURE);
 
     // Create blob using information from header
-    *blob = hl_INCreateBlob(HL_BLOB_TYPE_BINA, header.FileSize);
+    *blob = hl_INCreateBlob(header.FileSize, HL_BLOB_FORMAT_BINA);
     if (!(*blob)) return HL_ERROR_OUT_OF_MEMORY;
 
     // Copy header into blob

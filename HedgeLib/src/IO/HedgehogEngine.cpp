@@ -106,7 +106,7 @@ enum HL_RESULT hl_HHRead(struct hl_File* file, struct hl_Blob** blob)
     }
 
     // Read entire file
-    *blob = hl_INCreateBlob(HL_BLOB_TYPE_HEDGEHOG_ENGINE, fileSize);
+    *blob = hl_INCreateBlob(fileSize, HL_BLOB_FORMAT_HEDGEHOG_ENGINE);
     if (!(*blob)) return HL_ERROR_OUT_OF_MEMORY;
 
     void* fileData = (*blob)->GetData<void>();

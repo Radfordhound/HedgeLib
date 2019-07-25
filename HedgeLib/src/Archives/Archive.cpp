@@ -169,6 +169,7 @@ struct hl_Blob* hl_INLoadArchiveOfType(
         hl_INBINALoad(filePath, &blob); // TODO: Error check
         
     HL_PACX_V2:
+        blob->Type = static_cast<uint16_t>(HL_ARC_TYPE_PACX_V2);
         if (hl_BINAIsBigEndian(blob))
         {
             hl_DLWArchive* arc = hl_BINAGetDataV2<hl_DLWArchive>(blob);
@@ -398,30 +399,53 @@ size_t hl_GetArchiveSplitCount(const char* filePath)
 
 void hl_ExtractArchive(const struct hl_Blob* blob, const char* dir)
 {
-    if (!blob) return;
+    if (!blob) return; // TODO: Return error
     switch (blob->Type)
     {
     // .ar/.pfd (Unleashed/Generations)
-    case HL_BLOB_TYPE_HEDGEHOG_ENGINE:
+    case HL_ARC_TYPE_HEDGEHOG:
         // TODO: AR Support
         break;
 
-    // .pac (LW/Forces)
-    case HL_BLOB_TYPE_BINA:
+    // .pac (LW/Forces/Tokyo 2020)
+    case HL_ARC_TYPE_PACX:
         hl_ExtractPACxArchive(blob, dir);
         break;
 
-    default:
-        // TODO: Should we return an error or something??
+    // .pac V2 (LW)
+    case HL_ARC_TYPE_PACX_V2:
+        hl_ExtractLWArchive(blob, dir);
+        break;
+
+    // .pac V3 (Forces)
+    case HL_ARC_TYPE_PACX_V3:
+        // TODO: Forces Archives
+        //hl_ExtractForcesArchive(blob, dir);
+        break;
+
+    // .pac V4 (Tokyo 2020)
+    case HL_ARC_TYPE_PACX_V4:
+        // TODO: Tokyo 2020 Archives
+        //hl_ExtractTokyoArchive(blob, dir);
         break;
     }
+
+    // Attempt to auto-detect archive type
+    if (blob->Format == HL_BLOB_FORMAT_BINA)
+    {
+        // Attempt to extract BINA file as a pac
+        hl_ExtractPACxArchive(blob, dir);
+        return;
+    }
+
+    // TODO: Return error
 }
 
 void hl_INExtractArchivesOfTypeRoot(const char* rootPath,
     const char* dir, hl_ArchiveType type)
 {
     // Extract root
-    hl_Blob* arc = hl_INLoadArchiveOfType(rootPath, type);
+    hl_Blob* arc = hl_INLoadArchiveOfType(rootPath, type); // TODO: Nullptr check
     hl_ExtractArchive(arc, dir);
 
     // Extract splits
