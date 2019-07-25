@@ -45,6 +45,14 @@ struct hl_PtrArray hl_GetFilesInDirectory(const char* dir, size_t* fileCount)
     return arr;
 }
 
+#ifdef _WIN32
+enum HL_RESULT hl_FileGetSizeW(const wchar_t* filePath, size_t* size)
+{
+    // TODO: nullptr check?
+    return hl_File::GetSize(filePath, *size);
+}
+#endif
+
 enum HL_RESULT hl_FileGetSize(const char* filePath, size_t* size)
 {
     // TODO: nullptr check?
@@ -354,7 +362,22 @@ HL_RESULT hl_File::OpenNoClose(const char* filePath,
 #endif
 }
 
-HL_RESULT hl_File::GetSize(const char* filePath, std::size_t& size)
+#ifdef _WIN32
+HL_RESULT hl_File::GetSize(const wchar_t* filePath, size_t& size)
+{
+    // TODO: Rework this function to not use the C++17 filesystem stuff to avoid copies
+    // TODO: Error handling
+    std::error_code ec;
+    std::uintmax_t s = std::filesystem::file_size(
+        std::filesystem::path(filePath), ec);
+
+    // TODO: Check if s can fit within a size_t
+    size = static_cast<size_t>(s);
+    return HL_SUCCESS;
+}
+#endif
+
+HL_RESULT hl_File::GetSize(const char* filePath, size_t& size)
 {
     // TODO: Rework this function to not use the C++17 filesystem stuff to avoid copies
     // TODO: Error handling
@@ -363,7 +386,7 @@ HL_RESULT hl_File::GetSize(const char* filePath, std::size_t& size)
         std::filesystem::u8path(filePath), ec);
 
     // TODO: Check if s can fit within a size_t
-    size = static_cast<std::size_t>(s);
+    size = static_cast<size_t>(s);
     return HL_SUCCESS;
 }
 

@@ -17,6 +17,11 @@ extern "C" {
 #endif
 
 HL_API struct hl_PtrArray hl_GetFilesInDirectory(const char* dir, size_t* fileCount);
+
+#ifdef _WIN32
+HL_API enum HL_RESULT hl_FileGetSizeW(const wchar_t* filePath, size_t* size);
+#endif
+
 HL_API enum HL_RESULT hl_FileGetSize(const char* filePath, size_t* size);
 
 enum HL_FILEMODE
@@ -169,6 +174,10 @@ public:
     {
         OpenNoClose(filePath, mode);
     }
+
+#ifdef _WIN32
+    HL_API static HL_RESULT GetSize(const wchar_t* filePath, size_t& size);
+#endif
 
     HL_API static HL_RESULT GetSize(const char* filePath, size_t& size);
     HL_API HL_RESULT Close();
