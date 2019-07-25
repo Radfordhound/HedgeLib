@@ -432,9 +432,17 @@ void hl_INExtractArchivesOfTypeRoot(const char* rootPath,
         hl_Blob* splitArc;
         char* rootDir, *splitPath;
         const char** splits = hl_PACxArchiveGetSplits(arc, &splitCount);
-        hl_INPathGetParent(rootPath, &rootDir); // TODO: Error check
+
+        if (!splits)
+        {
+            // There are no splits to extract
+            hl_FreeBlob(arc);
+            return;
+        }
 
         // Extract splits
+        hl_INPathGetParent(rootPath, &rootDir); // TODO: Error check
+
         for (size_t i = 0; i < splitCount; ++i)
         {
             // Get split path
