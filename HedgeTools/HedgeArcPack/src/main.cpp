@@ -27,8 +27,8 @@ enum HAP_MODES
 void PrintArchiveTypes(const char* prefix = " ")
 {
     /*std::cout << prefix << "heroes/shadow\t\t(Heroes/Shadow the Hedgehog .one files)" << std::endl;
-    std::cout << prefix << "sb/storybook\t\t(Secret Rings/Black Knight .one files)" << std::endl;
-    std::cout << prefix << "unleashed/gens/ar/pfd\t(Unleashed/Generations .ar/.pfd files)" << std::endl;*/
+    std::cout << prefix << "sb/storybook\t\t(Secret Rings/Black Knight .one files)" << std::endl;*/
+    std::cout << prefix << "unleashed/gens/ar/pfd\t(Unleashed/Generations .ar/.pfd files)" << std::endl;
     std::cout << prefix << "lw/lost world/pacv2\t(Lost World .pac files)" << std::endl;
     //std::cout << prefix << "forces/pacv3\t\t(Forces .pac files)" << std::endl;
 }
@@ -97,14 +97,14 @@ hl_ArchiveType GetArchiveType(const char* type)
     //    return HL_ARC_TYPE_STORYBOOK;
     //}
 
-    //// Unleashed/Generations .ar/.pfd files
-    //if (hl_StringsEqualASCII(type, "unleashed") ||
-    //    hl_StringsEqualASCII(type, "gens") ||
-    //    hl_StringsEqualASCII(type, "ar") ||
-    //    hl_StringsEqualASCII(type, "pfd"))
-    //{
-    //    return HL_ARC_TYPE_HEDGEHOG;
-    //}
+    // Unleashed/Generations .ar/.pfd files
+    if (hl_StringsEqualASCII(type, "unleashed") ||
+        hl_StringsEqualASCII(type, "gens") ||
+        hl_StringsEqualASCII(type, "ar") ||
+        hl_StringsEqualASCII(type, "pfd"))
+    {
+        return HL_ARC_TYPE_HEDGEHOG;
+    }
 
     // Lost World .pac files
     if (hl_StringsEqualASCII(type, "lw") ||
