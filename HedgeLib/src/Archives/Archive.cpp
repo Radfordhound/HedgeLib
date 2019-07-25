@@ -1,5 +1,6 @@
 #include "HedgeLib/Archives/Archive.h"
 #include "HedgeLib/Archives/PACx.h"
+#include "HedgeLib/Archives/HHArchive.h"
 #include "HedgeLib/Archives/LWArchive.h"
 #include "HedgeLib/IO/Path.h"
 #include "HedgeLib/String.h"
@@ -10,6 +11,9 @@
 #include <cctype>
 #include <cstring>
 #include <algorithm>
+
+enum HL_RESULT hl_INLoadHHArchive(
+    const hl_INNativeStr filePath, struct hl_Blob** blob);
 
 bool hl_INGetArchiveIsSplitExt(const char* ext)
 {
@@ -34,7 +38,14 @@ bool hl_GetArchiveIsSplit(const char* filePath)
 
 enum hl_ArchiveType hl_INGetArchiveTypeExt(const char* ext)
 {
-    // Lost World
+    // Hedgehog Engine
+    if (hl_StringsEqualASCII(ext, hl_ARExtension) ||
+        hl_StringsEqualASCII(ext, hl_PFDExtension))
+    {
+        return HL_ARC_TYPE_HEDGEHOG;
+    }
+
+    // PACx
     if (hl_StringsEqualASCII(ext, hl_PACxExtension))
     {
         return HL_ARC_TYPE_PACX;
@@ -77,11 +88,10 @@ bool hl_INGetArchiveType(const char* filePath, enum hl_ArchiveType* type)
                     *type = (pacxV3) ? HL_ARC_TYPE_PACX_V3 :
                         HL_ARC_TYPE_PACX_V2;
                 }
-                // TODO: Add Hedgehog Engine Archive support and un-comment this
-                //else if (HL_TOLOWERASCII(*ext) == hl_ARExtension[i--])  // r
-                //{
-                //    type = HL_ARC_TYPE_HEDGEHOG;
-                //}
+                else if (HL_TOLOWERASCII(*ext) == hl_ARExtension[i--])  // r
+                {
+                    *type = HL_ARC_TYPE_HEDGEHOG;
+                }
                 else break;
                 continue;
             }
@@ -96,12 +106,11 @@ bool hl_INGetArchiveType(const char* filePath, enum hl_ArchiveType* type)
                     continue;
                 }
             }
-            // TODO: Add Hedgehog Engine Archive support and un-comment this
-            //else if (HL_TOLOWERASCII(*ext) == hl_ARExtension[i--] &&    // a
-            //    *ext == hl_ARExtension[i])                              // .
-            //{
-            //    break;
-            //}
+            else if (HL_TOLOWERASCII(*ext) == hl_ARExtension[i--] &&    // a
+                *(--ext) == hl_ARExtension[i])                              // .
+            {
+                break;
+            }
 
             // The extension is invalid
             *type = HL_ARC_TYPE_UNKNOWN;
@@ -140,6 +149,13 @@ struct hl_Blob* hl_INLoadArchiveOfType(
     hl_Blob* blob;
     switch (type)
     {
+    // Unleashed/Generations
+    case HL_ARC_TYPE_HEDGEHOG:
+    {
+        hl_INLoadHHArchive(filePath, &blob); // TODO: Error check
+        return blob;
+    }
+
     // Unknown PACx
     case HL_ARC_TYPE_PACX:
     {
@@ -404,7 +420,7 @@ void hl_ExtractArchive(const struct hl_Blob* blob, const char* dir)
     {
     // .ar/.pfd (Unleashed/Generations)
     case HL_ARC_TYPE_HEDGEHOG:
-        // TODO: AR Support
+        hl_ExtractHHArchive(blob, dir); // TODO: Error check
         break;
 
     // .pac (LW/Forces/Tokyo 2020)
@@ -444,14 +460,39 @@ void hl_ExtractArchive(const struct hl_Blob* blob, const char* dir)
 void hl_INExtractArchivesOfTypeRoot(const char* rootPath,
     const char* dir, hl_ArchiveType type)
 {
+    // Get size of paths
+    size_t rootPathLen = (std::strlen(rootPath) + 1);
+    size_t splitPathLen = (rootPathLen + 3);
+
+    // Create native path buffer
+    hl_INNativeStr nativePath = HL_INCREATE_NATIVE_STR(splitPathLen);
+
+#ifdef _WIN32
+    // Convert root path to UTF-16 and copy into split path buffer
+    hl_INStringConvertUTF8ToUTF16NoAlloc(rootPath,
+        reinterpret_cast<uint16_t*>(nativePath)); // TODO: Error check
+#else
+    // Copy root path into split path buffer
+    std::copy(rootPath, rootPath + rootPathLen, nativePath);
+#endif
+
     // Extract root
-    hl_Blob* arc = hl_INLoadArchiveOfType(rootPath, type); // TODO: Nullptr check
-    hl_ExtractArchive(arc, dir);
+    hl_Blob* arc;
+    bool rootExists = hl_INPathExists(nativePath);
+
+    if (rootExists)
+    {
+        arc = hl_INLoadArchiveOfType(rootPath, type); // TODO: Nullptr check
+        hl_ExtractArchive(arc, dir);
+    }
 
     // Extract splits
     size_t splitCount;
     if (type & HL_ARC_TYPE_PACX)
     {
+        // Free native path
+        std::free(nativePath);
+
         // Get splits list from data in root PAC
         hl_Blob* splitArc;
         char* rootDir, *splitPath;
@@ -486,41 +527,25 @@ void hl_INExtractArchivesOfTypeRoot(const char* rootPath,
     else
     {
         // Free root archive
-        hl_FreeBlob(arc);
+        if (rootExists) hl_FreeBlob(arc);
 
-        // Get size of paths
-        size_t rootPathLen = (std::strlen(rootPath) + 1);
-        size_t splitPathLen = (rootPathLen + 3);
-
-        // Create split path buffer
-        hl_INNativeStr splitPath = HL_INCREATE_NATIVE_STR(splitPathLen);
-
-#ifdef _WIN32
-        // Convert root path to UTF-16 and copy into split path buffer
-        hl_INStringConvertUTF8ToUTF16NoAlloc(rootPath,
-            reinterpret_cast<uint16_t*>(splitPath)); // TODO: Error check
-#else
-        // Copy root path into split path buffer
-        std::copy(rootPath, rootPath + rootPathLen, splitPath);
-#endif
-
-        // Change split path extension
-        splitPath[rootPathLen - 1] = HL_INNATIVE_TEXT('.');
-        splitPath[rootPathLen]     = HL_INNATIVE_TEXT('0');
-        splitPath[rootPathLen + 1] = HL_INNATIVE_TEXT('0');
-        splitPath[rootPathLen + 2] = HL_INNATIVE_TEXT('\0');
+        // Add split extension to native path
+        nativePath[rootPathLen - 1] = HL_INNATIVE_TEXT('.');
+        nativePath[rootPathLen]     = HL_INNATIVE_TEXT('0');
+        nativePath[rootPathLen + 1] = HL_INNATIVE_TEXT('0');
+        nativePath[rootPathLen + 2] = HL_INNATIVE_TEXT('\0');
 
         // Get the split count
         size_t maxSplitIndex = 99;
-        hl_INNativeStr splitCharPtr = (splitPath + rootPathLen + 1);
+        hl_INNativeStr splitCharPtr = (nativePath + rootPathLen + 1);
 
         for (size_t i = 0; i <= 99; ++i)
         {
             // Check if this split exists
-            if (!hl_INPathExists(splitPath)) break;
+            if (!hl_INPathExists(nativePath)) break;
 
             // Extract split
-            arc = hl_INLoadArchiveOfType(splitPath, type);
+            arc = hl_INLoadArchiveOfType(nativePath, type);
             hl_ExtractArchive(arc, dir);
             hl_FreeBlob(arc);
 
@@ -528,7 +553,7 @@ void hl_INExtractArchivesOfTypeRoot(const char* rootPath,
             if (!hl_INArchiveNextSplit(splitCharPtr, false)) break;
         }
 
-        std::free(splitPath);
+        std::free(nativePath);
     }
 }
 
