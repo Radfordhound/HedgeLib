@@ -9,7 +9,10 @@ project("HedgeArcPack")
 
     -- Static or Shared
     if LibType == "shared" then
-        defines("HEDGELIB_DLL")
+        defines("HL_DLL")
+        if Target == "windows" then
+            postbuildcommands("copy /Y \"$(SolutionDir)HedgeLib\\bin\\$(Platform)\\$(Configuration)\\HedgeLib.dll\" \"$(TargetDir)HedgeLib.dll\" >NUL")
+        end
     end
 	
 	-- Platform-Specifics

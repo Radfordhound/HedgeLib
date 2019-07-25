@@ -7,7 +7,9 @@ project("HedgeEdit")
 
     -- Static or Shared
     if LibType == "shared" then
-        defines("HEDGELIB_DLL")
+        defines("HL_DLL")
+        postbuildcommands("copy /Y \"$(ProjectDir)License.txt\" \"$(TargetDir)\License.txt\" >NUL")
+        postbuildcommands("copy /Y \"$(SolutionDir)HedgeLib\\bin\\$(Platform)\\$(Configuration)\\HedgeLib.dll\" \"$(TargetDir)HedgeLib.dll\" >NUL")
     end
 	
 	-- Platform-Specifics
@@ -53,16 +55,3 @@ project("HedgeEdit")
 		defines("x64")
 		
 	FinalizeQtDefault(deps.QtDir32, deps.QtDir64)
-
-	-- Copy License
-	filter({ "configurations:Debug*", "platforms:x86" })
-		postbuildcommands("copy /y License.txt bin\\x86\\Debug\\License.txt >NUL")
-
-	filter({ "configurations:Debug*", "platforms:x64" })
-		postbuildcommands("copy /y License.txt bin\\x64\\Debug\\License.txt >NUL")
-
-	filter({ "configurations:Release*", "platforms:x86" })
-		postbuildcommands("copy /y License.txt bin\\x86\\Release\\License.txt >NUL")
-
-	filter({ "configurations:Release*", "platforms:x64" })
-		postbuildcommands("copy /y License.txt bin\\x64\\Release\\License.txt >NUL")
