@@ -12,7 +12,7 @@ extern const char* const hl_PFDExtension;
 struct hl_DHHArchiveHeader
 {
     uint32_t FileSize;          // HedgeLib stores the file size here when loading; in the file this is always 0.
-    uint32_t FileEntriesOffset; // Offset to the first file entry.
+    uint32_t FileEntriesOffset; // Offset to the first file entry? The game doesn't seem to use it?
     uint32_t Unknown2;          // Always 0x14?
     uint32_t PadAmount;         // The amount the file has been (or should be) padded to before each file is written.
 };

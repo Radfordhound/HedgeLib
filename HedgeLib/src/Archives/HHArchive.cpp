@@ -72,7 +72,7 @@ enum HL_RESULT hl_ExtractHHArchive(const struct hl_Blob* blob, const char* dir)
     if (!header->FileSize) return HL_ERROR_UNKNOWN;
 
     // Get current position and end position
-    const uint8_t* curPos = (blob->GetData<uint8_t>() + header->FileEntriesOffset);
+    const uint8_t* curPos = (blob->GetData<uint8_t>() + sizeof(*header));
     const uint8_t* endPos = (blob->GetData<uint8_t>() + header->FileSize);
 
     // Extract files
