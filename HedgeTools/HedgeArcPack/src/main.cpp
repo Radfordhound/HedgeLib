@@ -1,3 +1,4 @@
+#include <HedgeLib/Archives/HHArchive.h>
 #include <HedgeLib/Archives/LWArchive.h>
 #include <HedgeLib/Archives/Archive.h>
 #include <HedgeLib/IO/Path.h>
@@ -9,7 +10,7 @@
 #include <iostream>
 #include <chrono> // TODO: Should we print the elapsed time at all?
 
-static const char* const versionString = "0.1 (ALPHA)";
+static const char* const versionString = "0.15 (ALPHA)";
 static const char* const errorInvalidFlags = "Invalid/Unsupported flags.";
 static const char* const errorTooManyModes = "Only one mode may be specified at a time.";
 static const char* const errorTooManyArguments = "Too many arguments were given.";
@@ -318,7 +319,15 @@ int main(int argc, char* argv[])
         hl_ArchiveFileEntry* entries = hl_CreateArchiveFileEntriesArr(&files);
 
         // Pack archive
-        if (type == HL_ARC_TYPE_PACX_V2)
+        HL_RESULT result; // TODO: Check this
+        if (type == HL_ARC_TYPE_HEDGEHOG)
+        {
+            result = hl_CreateHHArchive(entries, fileCount, outputDir, outputName,
+                static_cast<uint32_t>((customSplitLimit) ?
+                    splitLimit : HL_PACX_DEFAULT_SPLIT_LIMIT), 0x10,
+                HL_HHARCHIVE_TYPE_UNCOMPRESSED);
+        }
+        else if (type == HL_ARC_TYPE_PACX_V2)
         {
             hl_CreateLWArchive(entries, fileCount, outputDir, outputName,
                 static_cast<uint32_t>((customSplitLimit) ?
