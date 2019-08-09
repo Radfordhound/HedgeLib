@@ -267,38 +267,27 @@ bool hl_PathIsDirectory(const char* path)
     return hl_INPathIsDirectory(path);
 }
 
+void hl_INPathCombineNoAlloc(const char* path1, const char* path2,
+    size_t path1Len, size_t path2Len, char* buffer, bool addSlash)
+{
+    // Copy path1 and append slash if necessary
+    std::copy(path1, path1 + path1Len, buffer);
+    if (addSlash) buffer[path1Len - 1] = hl_NativePathSeparator;
+
+    // Copy path2
+    std::copy(path2, path2 + path2Len, buffer + path1Len);
+}
+
 HL_RESULT hl_INPathCombine(const char* path1,
     const char* path2, char** result)
 {
-    // TODO: Handle cases where path2 begins with a slash (e.g. combining "C:\test" and "\dir")
-
     // Determine path lengths
     size_t path1Len = std::strlen(path1);
     size_t path2Len = std::strlen(path2);
-    bool addSlash;
 
     // Check if we need to append a slash to the end of path1
-    if (path1Len)
-    {
-        if (
-#ifdef _WIN32
-            // Paths on POSIX systems allow backslashes in file names
-            path1[path1Len - 1] == '\\' ||
-#endif
-            path1[path1Len - 1] == '/')
-        {
-            addSlash = false;
-        }
-        else
-        {
-            addSlash = true;
-            ++path1Len;
-        }
-    }
-    else
-    {
-        addSlash = false;
-    }
+    bool addSlash = hl_INPathCombineNeedsSlash(path1, path2, path1Len);
+    if (addSlash) ++path1Len;
 
     // Malloc buffer large enough to hold result
     *result = static_cast<char*>(std::malloc(
@@ -306,22 +295,17 @@ HL_RESULT hl_INPathCombine(const char* path1,
 
     if (!*result) return HL_ERROR_OUT_OF_MEMORY;
 
-    // Copy path1 and append slash if necessary
-    std::copy(path1, path1 + path1Len, *result);
-    if (addSlash)
-    {
-        (*result)[path1Len - 1] = hl_NativePathSeparator;
-    }
+    // Combine paths and return
+    hl_INPathCombineNoAlloc(path1, path2, path1Len,
+        path2Len, *result, addSlash);
 
-    // Copy path2 and return
-    std::copy(path2, path2 + path2Len, *result + path1Len);
     return HL_SUCCESS;
 }
 
 enum HL_RESULT hl_PathCombine(const char* path1,
     const char* path2, char** result)
 {
-    if (!path1 || !path2 || !result)
+    if (!path1 || !path2 || !result || (!*path1 && !*path2))
         return HL_ERROR_UNKNOWN;
 
     return hl_INPathCombine(path1, path2, result);
@@ -374,11 +358,8 @@ bool hl_PathExists(const char* path)
 #ifdef _WIN32
     // Convert path from UTF-8 to a native (UTF-16) path
     hl_INNativeStr nativePath;
-    if (HL_FAILED(hl_INStringConvertUTF8ToUTF16(path,
-        reinterpret_cast<uint16_t**>(&nativePath))))
-    {
-        return false;
-    }
+    if (HL_FAILED(hl_INWin32StringConvertToNative(path,
+        &nativePath))) return false;
 
     // Check if path exists
     bool exists = hl_INPathExists(nativePath);
@@ -388,4 +369,42 @@ bool hl_PathExists(const char* path)
     // Check if path exists
     return hl_INPathExists(path);
 #endif
+}
+
+enum HL_RESULT hl_INPathCreateDirectory(const hl_INNativeStr path)
+{
+#ifdef _WIN32
+    BOOL r = CreateDirectoryW(path, nullptr);
+    if (!r && GetLastError() != ERROR_ALREADY_EXISTS)
+    {
+        return HL_ERROR_UNKNOWN; // TODO: Return a more helpful error
+    }
+#else
+    // TODO: Proper support for non-Windows platforms
+    std::filesystem::create_directory(
+        std::filesystem::u8path(path));
+#endif
+
+    return HL_SUCCESS;
+}
+
+enum HL_RESULT hl_PathCreateDirectory(const char* path)
+{
+    if (!path || !*path) return HL_ERROR_UNKNOWN;
+
+#ifdef _WIN32
+    // Convert UTF-8 path to wide UTF-16 path
+    hl_INNativeStr nativePath;
+    HL_RESULT result = hl_INWin32StringConvertToNative(path, &nativePath);
+    if (HL_FAILED(result)) return result;
+
+    // Create directory
+    result = hl_INPathCreateDirectory(nativePath);
+    std::free(nativePath);
+    return result;
+#else
+    return hl_INPathCreateDirectory(path);
+#endif
+
+    return HL_SUCCESS;
 }

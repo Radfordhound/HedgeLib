@@ -38,6 +38,7 @@ HL_API enum HL_RESULT hl_PathRemoveExt(const char* filePath, char** pathNoExt);
 HL_API enum HL_RESULT hl_PathRemoveExts(const char* filePath, char** pathNoExts);
 
 HL_API bool hl_PathExists(const char* path);
+HL_API enum HL_RESULT hl_PathCreateDirectory(const char* path);
 
 #ifndef __cplusplus
 }
