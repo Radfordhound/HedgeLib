@@ -3,7 +3,7 @@
 #include "HedgeLib/Errors.h"
 #include <stdint.h>
 
-#ifndef __cplusplus
+#ifdef __cplusplus
 extern "C" {
 #else
 #include <stdbool.h>
@@ -16,6 +16,6 @@ HL_API bool hl_StringsEqualASCII(const char* str1, const char* str2);
 HL_API enum HL_RESULT hl_StringConvertUTF8ToUTF16(
     const char* u8str, uint16_t** u16str);
 
-#ifndef __cplusplus
+#ifdef __cplusplus
 }
 #endif
