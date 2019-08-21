@@ -8,7 +8,13 @@ extern "C" {
 #define HL_PACX_SIGNATURE           0x78434150
 #define HL_PACX_DEFAULT_SPLIT_LIMIT 0xA037A0
 
-extern const char* const hl_PACxExtension;
+HL_API extern const char* const hl_PACxExtension;
+
+#ifdef _WIN32
+HL_API extern const hl_NativeStr const hl_PACxExtensionNative;
+#else
+#define hl_PACxExtensionNative hl_PACxExtension
+#endif
 
 enum hl_PACxExtensionFlags : uint8_t
 {
@@ -52,8 +58,21 @@ HL_API enum HL_RESULT hl_PACxStartWriteV2(struct hl_File* file, bool bigEndian);
 HL_API enum HL_RESULT hl_PACxFinishWriteV2(const struct hl_File* file, long headerPos);
 
 HL_API const char** hl_PACxArchiveGetSplits(const struct hl_Blob* blob, size_t* splitCount);
-HL_API void hl_ExtractPACxArchive(const struct hl_Blob* blob, const char* dir);
+HL_API enum HL_RESULT hl_ExtractPACxArchive(
+    const struct hl_Blob* blob, const char* dir);
+
+HL_API enum HL_RESULT hl_ExtractPACxArchiveNative(
+    const struct hl_Blob* blob, const hl_NativeStr dir);
 
 #ifdef __cplusplus
 }
+
+// Windows-specific overloads
+#ifdef _WIN32
+inline HL_RESULT hl_ExtractPACxArchive(
+    const struct hl_Blob* blob, const hl_NativeStr dir)
+{
+    return hl_ExtractPACxArchiveNative(blob, dir);
+}
+#endif
 #endif

@@ -5,6 +5,10 @@
 
 const char* const hl_PACxExtension = ".pac";
 
+#ifdef _WIN32
+const hl_NativeStr const hl_PACxExtensionNative = L".pac";
+#endif
+
 const struct hl_PACxSupportedExtension hl_PACxV2SupportedExtensions[] =
 {
     // Organized based on frequency information determined via a custom analyzation program
@@ -196,23 +200,32 @@ const char** hl_PACxArchiveGetSplits(const struct hl_Blob* blob, size_t* splitCo
     }
 }
 
-void hl_ExtractPACxArchive(const struct hl_Blob* blob, const char* dir)
+template<typename char_t>
+HL_RESULT hl_INExtractPACxArchive(const hl_Blob* blob, const char_t* dir)
 {
     switch (blob->GetData<hl_DBINAV2Header>()->Version[0])
     {
     // Lost World
     case 0x32:
-        hl_ExtractLWArchive(blob, dir);
-        break;
+        return hl_ExtractLWArchive(blob, dir);
 
     // Forces
     case 0x33:
         // TODO: Forces Archives
-        //hl_ExtractForcesArchive(blob, dir);
-        break;
-
-    default:
-        // TODO: Return an error??
+        //return hl_ExtractForcesArchive(blob, dir);
         break;
     }
+
+    return HL_ERROR_UNKNOWN;
+}
+
+enum HL_RESULT hl_ExtractPACxArchive(const struct hl_Blob* blob, const char* dir)
+{
+    return hl_INExtractPACxArchive(blob, dir);
+}
+
+enum HL_RESULT hl_ExtractPACxArchiveNative(
+    const struct hl_Blob* blob, const hl_NativeStr dir)
+{
+    return hl_INExtractPACxArchive(blob, dir);
 }

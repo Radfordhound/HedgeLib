@@ -85,39 +85,39 @@ int Error(const char* message)
 hl_ArchiveType GetArchiveType(const char* type)
 {
     //// Heroes/Shadow the Hedgehog .one files
-    //if (hl_StringsEqualASCII(type, "heroes") ||
-    //    hl_StringsEqualASCII(type, "shadow"))
+    //if (hl_StringsEqualInvASCII(type, "heroes") ||
+    //    hl_StringsEqualInvASCII(type, "shadow"))
     //{
     //    return HL_ARC_TYPE_HEROES;
     //}
 
     //// Secret Rings/Black Knight .one files
-    //if (hl_StringsEqualASCII(type, "sb") ||
-    //    hl_StringsEqualASCII(type, "storybook"))
+    //if (hl_StringsEqualInvASCII(type, "sb") ||
+    //    hl_StringsEqualInvASCII(type, "storybook"))
     //{
     //    return HL_ARC_TYPE_STORYBOOK;
     //}
 
     // Unleashed/Generations .ar/.pfd files
-    if (hl_StringsEqualASCII(type, "unleashed") ||
-        hl_StringsEqualASCII(type, "gens") ||
-        hl_StringsEqualASCII(type, "ar") ||
-        hl_StringsEqualASCII(type, "pfd"))
+    if (hl_StringsEqualInvASCII(type, "unleashed") ||
+        hl_StringsEqualInvASCII(type, "gens") ||
+        hl_StringsEqualInvASCII(type, "ar") ||
+        hl_StringsEqualInvASCII(type, "pfd"))
     {
         return HL_ARC_TYPE_HEDGEHOG;
     }
 
     // Lost World .pac files
-    if (hl_StringsEqualASCII(type, "lw") ||
-        hl_StringsEqualASCII(type, "lost world") ||
-        hl_StringsEqualASCII(type, "pacv2"))
+    if (hl_StringsEqualInvASCII(type, "lw") ||
+        hl_StringsEqualInvASCII(type, "lost world") ||
+        hl_StringsEqualInvASCII(type, "pacv2"))
     {
         return HL_ARC_TYPE_PACX_V2;
     }
 
     //// Forces .pac files
-    //if (hl_StringsEqualASCII(type, "forces") ||
-    //    hl_StringsEqualASCII(type, "pacv3"))
+    //if (hl_StringsEqualInvASCII(type, "forces") ||
+    //    hl_StringsEqualInvASCII(type, "pacv3"))
     //{
     //    return HL_ARC_TYPE_PACX_V3;
     //}

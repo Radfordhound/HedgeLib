@@ -12,7 +12,7 @@ template<typename DataNodeType>
 void hl_INFixBINAV2DataNode(uint8_t*& nodes,
     hl_DBINAV2Header& header, bool bigEndian);
 
-enum HL_RESULT hl_INBINALoad(const hl_INNativeStr filePath, struct hl_Blob** blob);
+HL_RESULT hl_INBINALoad(const hl_NativeStr filePath, struct hl_Blob** blob);
 bool hl_INBINAIsBigEndianV2(const void* blobData);
 const hl_DBINAV2DataNode* hl_INBINAGetDataNodeV2(const void* blobData);
 const void* hl_INBINAGetDataNode(const void* blobData);

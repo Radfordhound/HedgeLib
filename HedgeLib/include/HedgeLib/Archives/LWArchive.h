@@ -84,7 +84,9 @@ HL_DECL_ENDIAN_SWAP_RECURSIVE(hl_DLWArchive);
 HL_DECL_WRITE(hl_DLWArchive);
 
 HL_API const char** hl_LWArchiveGetSplits(const struct hl_Blob* blob, size_t* splitCount);
-HL_API void hl_ExtractLWArchive(const struct hl_Blob* blob, const char* dir);
+HL_API enum HL_RESULT hl_ExtractLWArchive(const struct hl_Blob* blob, const char* dir);
+HL_API enum HL_RESULT hl_ExtractLWArchiveNative(
+    const struct hl_Blob* blob, const hl_NativeStr dir);
 
 // TODO: Should this return an HL_RESULT?
 HL_API void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t fileCount,
@@ -92,4 +94,13 @@ HL_API void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t f
 
 #ifdef __cplusplus
 }
+
+// Windows-specific overloads
+#ifdef _WIN32
+inline HL_RESULT hl_ExtractLWArchive(
+    const struct hl_Blob* blob, const hl_NativeStr dir)
+{
+    return hl_ExtractLWArchiveNative(blob, dir);
+}
+#endif
 #endif

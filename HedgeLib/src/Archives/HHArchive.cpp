@@ -5,17 +5,20 @@
 #include "../IO/INPath.h"
 #include "../INString.h"
 #include "../INBlob.h"
-#include <filesystem>
 #include <cstring>
 
 const char* const hl_ARExtension = ".ar";
 const char* const hl_PFDExtension = ".pfd";
 const char* const hl_ARLSignature = "ARL2";
 
-bool hl_INArchiveNextSplit(hl_INNativeStr splitCharPtr, bool pacv3);
+#ifdef _WIN32
+const hl_NativeStr const hl_ARExtensionNative = L".ar";
+const hl_NativeStr const hl_PFDExtensionNative = L".pfd";
+#endif
 
-HL_RESULT hl_INLoadHHArchive(const hl_INNativeStr filePath,
-    struct hl_Blob** blob)
+bool hl_INArchiveNextSplit(hl_NativeStr splitCharPtr, bool pacv3);
+
+HL_RESULT hl_INLoadHHArchive(const hl_NativeStr filePath, hl_Blob** blob)
 {
     // Get the file's size
     size_t fileSize;
@@ -49,28 +52,22 @@ enum HL_RESULT hl_LoadHHArchive(const char* filePath, struct hl_Blob** blob)
 {
     if (!filePath) return HL_ERROR_UNKNOWN;
 
-#ifdef _WIN32
-    // Convert UTF-8 path to wide UTF-16 path
-    hl_INNativeStr nativePath;
-    HL_RESULT result = hl_INWin32StringConvertToNative(filePath, &nativePath);
-    if (HL_FAILED(result)) return result;
-
-    result = hl_INLoadHHArchive(nativePath, blob);
-    std::free(nativePath);
-    return result;
-#else
-    return hl_INLoadHHArchive(filePath, blob);
-#endif
+    HL_INSTRING_NATIVE_CALL(filePath,
+        hl_INLoadHHArchive(nativeStr, blob));
 }
 
-enum HL_RESULT hl_ExtractHHArchive(const struct hl_Blob* blob, const char* dir)
+enum HL_RESULT hl_LoadHHArchiveNative(
+    const hl_NativeStr filePath, struct hl_Blob** blob)
+{
+    if (!filePath) return HL_ERROR_UNKNOWN;
+    return hl_INLoadHHArchive(filePath, blob);
+}
+
+HL_RESULT hl_INExtractHHArchive(const hl_Blob* blob, const hl_NativeStr dir)
 {
     // Create directory for file extraction
-    if (!blob || !dir) return HL_ERROR_UNKNOWN;
-
-    // TODO: Create directory without std::filesystem
-    std::filesystem::path fdir = std::filesystem::u8path(dir);
-    std::filesystem::create_directory(fdir);
+    HL_RESULT result = hl_INPathCreateDirectory(dir);
+    if (HL_FAILED(result)) return result;
 
     // Check if file size was set by hl_INLoadHHArchive
     const hl_DHHArchiveHeader* header = blob->GetData<hl_DHHArchiveHeader>();
@@ -82,7 +79,7 @@ enum HL_RESULT hl_ExtractHHArchive(const struct hl_Blob* blob, const char* dir)
 
     // Extract files
     hl_File file;
-    char* filePath;
+    hl_NativeStr filePath;
 
     while (curPos < endPos)
     {
@@ -90,8 +87,8 @@ enum HL_RESULT hl_ExtractHHArchive(const struct hl_Blob* blob, const char* dir)
             <const hl_DHHArchiveFileEntry*>(curPos);
 
         // Get file path
-        HL_RESULT result = hl_INPathCombine(dir,
-            reinterpret_cast<const char*>(fileEntry + 1), &filePath);
+        result = hl_PathCombine(dir, reinterpret_cast<const char*>(
+            fileEntry + 1), &filePath);
 
         if (HL_FAILED(result)) return result;
 
@@ -107,11 +104,25 @@ enum HL_RESULT hl_ExtractHHArchive(const struct hl_Blob* blob, const char* dir)
 
         // Go to next file entry
         curPos += fileEntry->EntrySize;
-        std::free(filePath);
+        free(filePath);
         file.Close();
     }
 
     return HL_SUCCESS;
+}
+
+enum HL_RESULT hl_ExtractHHArchive(
+    const struct hl_Blob* blob, const char* dir)
+{
+    if (!blob || !dir) return HL_ERROR_UNKNOWN;
+    HL_INSTRING_NATIVE_CALL(dir, hl_INExtractHHArchive(blob, nativeStr));
+}
+
+enum HL_RESULT hl_ExtractHHArchiveNative(
+    const struct hl_Blob* blob, const hl_NativeStr dir)
+{
+    if (!blob || !dir) return HL_ERROR_UNKNOWN;
+    return hl_INExtractHHArchive(blob, dir);
 }
 
 HL_RESULT hl_INCreateHHArchive(const hl_File& file, const hl_File* arl,
@@ -201,18 +212,18 @@ HL_RESULT hl_INCreateHHArchive(const hl_File& file, const hl_File* arl,
             hl_File dataFile = hl_File(
                 static_cast<const char*>(files[fileIndex].Data));
 
-            void* data = std::malloc(fileSize);
+            void* data = malloc(fileSize);
             result = dataFile.ReadBytes(data, fileSize);
             if (HL_FAILED(result))
             {
-                std::free(data);
+                free(data);
                 return result;
             }
 
             result = dataFile.Close();
             if (HL_FAILED(result))
             {
-                std::free(data);
+                free(data);
                 return result;
             }
 
@@ -229,7 +240,7 @@ HL_RESULT hl_INCreateHHArchive(const hl_File& file, const hl_File* arl,
         // Free file data if necessary
         if (!files[fileIndex].Size)
         {
-            std::free(const_cast<void*>(fileData));
+            free(const_cast<void*>(fileData));
         }
 
         // If we failed to write the data earlier, return
@@ -260,7 +271,7 @@ enum HL_RESULT hl_CreateHHArchive(const struct hl_ArchiveFileEntry* files,
     if (addSlash) ++dirLen;
 
     // Malloc buffer large enough to hold all paths
-    char* filePath = static_cast<char*>(std::malloc(
+    char* filePath = static_cast<char*>(malloc(
         dirLen + ++nameLen + 6));
 
     if (!filePath) return HL_ERROR_OUT_OF_MEMORY;
@@ -280,18 +291,18 @@ enum HL_RESULT hl_CreateHHArchive(const struct hl_ArchiveFileEntry* files,
     filePath[dirLen + ++nameLen] = '\0';
 
     // Get native path
-    hl_INNativeStr nativePath;
+    hl_NativeStr nativePath;
 
 #ifdef _WIN32
     // Figure out the amount of characters in the UTF-8 string
-    size_t strLen = hl_INStringGetReqUTF16CharCountUTF8(filePath);
+    size_t strLen = hl_INStringGetReqUTF16BufferCountUTF8(filePath);
 
     // Convert path from UTF-8 to a native (UTF-16) path
     result = hl_INStringConvertUTF8ToUTF16(filePath,
         reinterpret_cast<uint16_t**>(&nativePath), strLen);
 
     // Free UTF-8 path and return if native path was improperly converted
-    std::free(filePath);
+    free(filePath);
     if (HL_FAILED(result)) return result;    
 #else
     // No conversion is necessary on POSIX systems which support UTF-8
@@ -320,7 +331,7 @@ enum HL_RESULT hl_CreateHHArchive(const struct hl_ArchiveFileEntry* files,
         nativePath[strLen - 2] = '0';
         nativePath[strLen - 1] = '\0';
 
-        hl_INNativeStr splitCharPtr = (nativePath + (strLen - 2));
+        hl_NativeStr splitCharPtr = (nativePath + (strLen - 2));
 
         // Generate splits
         bool withinSplitLimit = true;
@@ -333,7 +344,7 @@ enum HL_RESULT hl_CreateHHArchive(const struct hl_ArchiveFileEntry* files,
 
             if (HL_FAILED(result))
             {
-                std::free(nativePath);
+                free(nativePath);
                 return result;
             }
 
@@ -346,7 +357,7 @@ enum HL_RESULT hl_CreateHHArchive(const struct hl_ArchiveFileEntry* files,
         // ERROR: We've surpassed 99 splits
         if (!withinSplitLimit)
         {
-            std::free(nativePath);
+            free(nativePath);
             return HL_ERROR_UNKNOWN;
         }
     }
@@ -361,7 +372,7 @@ enum HL_RESULT hl_CreateHHArchive(const struct hl_ArchiveFileEntry* files,
         result = arl.Write(len);
         if (HL_FAILED(result))
         {
-            std::free(nativePath);
+            free(nativePath);
             return result;
         }
 
@@ -369,7 +380,7 @@ enum HL_RESULT hl_CreateHHArchive(const struct hl_ArchiveFileEntry* files,
         result = arl.WriteBytes(files[fileIndex].Name, fileNameLen);
         if (HL_FAILED(result))
         {
-            std::free(nativePath);
+            free(nativePath);
             return result;
         }
     }
@@ -379,6 +390,6 @@ enum HL_RESULT hl_CreateHHArchive(const struct hl_ArchiveFileEntry* files,
     arl.Write(splitCount);
 
     // Free native path and return
-    std::free(nativePath);
+    free(nativePath);
     return HL_SUCCESS;
 }

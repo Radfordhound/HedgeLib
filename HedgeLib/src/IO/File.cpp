@@ -1,9 +1,8 @@
 #include "HedgeLib/IO/File.h"
-#include "INPath.h"
+#include "../INString.h"
 #include <array>
 #include <memory>
 #include <algorithm>
-#include <cstdlib>
 #include <filesystem>
 
 #ifdef _WIN32
@@ -35,7 +34,7 @@ struct hl_PtrArray hl_GetFilesInDirectory(const char* dir, size_t* fileCount)
         std::string filePath = entry.path().generic_u8string();
         size_t filePathLen = filePath.length();
 
-        arr.Data[i] = std::malloc(sizeof(char) * (filePathLen + 1));
+        arr.Data[i] = malloc(sizeof(char) * (filePathLen + 1));
         filePath.copy(static_cast<char*>(arr.Data[i]), filePathLen);
         static_cast<char*>(arr.Data[i])[filePathLen] = '\0';
 
@@ -45,28 +44,25 @@ struct hl_PtrArray hl_GetFilesInDirectory(const char* dir, size_t* fileCount)
     return arr;
 }
 
-#ifdef _WIN32
-enum HL_RESULT hl_FileGetSizeW(const wchar_t* filePath, size_t* size)
-{
-    // TODO: nullptr check?
-    return hl_File::GetSize(filePath, *size);
-}
-#endif
-
 enum HL_RESULT hl_FileGetSize(const char* filePath, size_t* size)
 {
-    // TODO: nullptr check?
+    if (!size) return HL_ERROR_UNKNOWN;
     return hl_File::GetSize(filePath, *size);
 }
 
-#ifdef _WIN32
-struct hl_File* hl_FileOpenW(const wchar_t* filePath, const enum HL_FILEMODE mode)
+enum HL_RESULT hl_FileGetSizeNative(const hl_NativeStr filePath, size_t* size)
+{
+    if (!size) return HL_ERROR_UNKNOWN;
+    return hl_File::GetSize(filePath, *size);
+}
+
+struct hl_File* hl_FileOpen(const char* filePath, const enum HL_FILEMODE mode)
 {
     return new hl_File(filePath, mode);
 }
-#endif
 
-struct hl_File* hl_FileOpen(const char* filePath, const enum HL_FILEMODE mode)
+struct hl_File* hl_FileOpenNative(
+    const hl_NativeStr filePath, const enum HL_FILEMODE mode)
 {
     return new hl_File(filePath, mode);
 }
@@ -176,7 +172,7 @@ char* hl_FileReadString(const struct hl_File* file)
     if (HL_FAILED(file->ReadString(str))) return nullptr;
 
     // Convert to C string
-    char* cstr = static_cast<char*>(std::malloc(
+    char* cstr = static_cast<char*>(malloc(
         sizeof(char) * (str.size() + 1)));
 
     std::copy(str.begin(), str.end(), cstr);
@@ -192,7 +188,7 @@ wchar_t* hl_FileReadWString(const struct hl_File* file)
     if (HL_FAILED(file->ReadWString(str))) return nullptr;
 
     // Convert to C string
-    wchar_t* cstr = static_cast<wchar_t*>(std::malloc(
+    wchar_t* cstr = static_cast<wchar_t*>(malloc(
         sizeof(wchar_t) * (str.size() + 1)));
 
     std::copy(str.begin(), str.end(), cstr);
@@ -319,10 +315,12 @@ constexpr const wchar_t* GetFileOpenModeW(const HL_FILEMODE mode)
     }
 }
 
-#ifdef _WIN32
-HL_RESULT hl_File::OpenNoClose(const wchar_t* filePath,
+HL_RESULT hl_File::OpenNoCloseNative(const hl_NativeStr filePath,
     const HL_FILEMODE mode)
 {
+    if (!filePath) return HL_ERROR_UNKNOWN;
+
+#ifdef _WIN32
     // Windows-specific wide file open
     if (_wfopen_s(&f, filePath, GetFileOpenModeW(mode)))
     {
@@ -330,25 +328,6 @@ HL_RESULT hl_File::OpenNoClose(const wchar_t* filePath,
         f = nullptr; // TODO: Is this necessary? (I think not)
         return HL_ERROR_UNKNOWN;
     }
-
-    closeOnDestruct = true;
-    return HL_SUCCESS;
-}
-#endif
-
-HL_RESULT hl_File::OpenNoClose(const char* filePath,
-    const HL_FILEMODE mode)
-{
-#ifdef _WIN32
-    // Convert UTF-8 path to wide UTF-16 path
-    hl_INNativeStr nativePath;
-    HL_RESULT result = hl_INWin32StringConvertToNative(filePath, &nativePath);
-    if (HL_FAILED(result)) return result;
-
-    // Open file
-    result = hl_File::OpenNoClose(nativePath, mode);
-    std::free(nativePath);
-    return result;
 #else
     // UTF-8 fopen
     if (!(f = std::fopen(filePath, GetFileOpenMode(mode))))
@@ -356,15 +335,30 @@ HL_RESULT hl_File::OpenNoClose(const char* filePath,
         // TODO: Return better error
         return HL_ERROR_UNKNOWN;
     }
+#endif
 
     closeOnDestruct = true;
     return HL_SUCCESS;
+}
+
+HL_RESULT hl_File::OpenNoClose(const char* filePath,
+    const HL_FILEMODE mode)
+{
+#ifdef _WIN32
+    // Only necessary on Windows since we're about to convert filePath to UTF-16;
+    // on other platforms the check in OpenNoCloseNative is sufficient.
+    if (!filePath) return HL_ERROR_UNKNOWN;
 #endif
+
+    HL_INSTRING_NATIVE_CALL(filePath,
+        OpenNoCloseNative(nativeStr, mode));
 }
 
 #ifdef _WIN32
-HL_RESULT hl_File::GetSize(const wchar_t* filePath, size_t& size)
+HL_RESULT hl_File::GetSize(const hl_NativeStr filePath, size_t& size)
 {
+    if (!filePath) return HL_ERROR_UNKNOWN;
+
     // TODO: Rework this function to not use the C++17 filesystem stuff to avoid copies
     // TODO: Error handling
     std::error_code ec;
@@ -379,6 +373,8 @@ HL_RESULT hl_File::GetSize(const wchar_t* filePath, size_t& size)
 
 HL_RESULT hl_File::GetSize(const char* filePath, size_t& size)
 {
+    if (!filePath) return HL_ERROR_UNKNOWN;
+
     // TODO: Rework this function to not use the C++17 filesystem stuff to avoid copies
     // TODO: Error handling
     std::error_code ec;

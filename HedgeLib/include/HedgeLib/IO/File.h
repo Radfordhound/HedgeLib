@@ -1,10 +1,7 @@
 #pragma once
-#include "../HedgeLib.h"
+#include "../String.h"
 #include "../Array.h"
-#include "../Errors.h"
-#include <stdint.h>
 #include <stdio.h>
-#include <stddef.h>
 #include <wchar.h>
 
 #ifdef __cplusplus
@@ -12,17 +9,12 @@
 #include <string>
 
 extern "C" {
-#else
-#include <stdbool.h>
 #endif
 
 HL_API struct hl_PtrArray hl_GetFilesInDirectory(const char* dir, size_t* fileCount);
 
-#ifdef _WIN32
-HL_API enum HL_RESULT hl_FileGetSizeW(const wchar_t* filePath, size_t* size);
-#endif
-
 HL_API enum HL_RESULT hl_FileGetSize(const char* filePath, size_t* size);
+HL_API enum HL_RESULT hl_FileGetSizeNative(const hl_NativeStr filePath, size_t* size);
 
 enum HL_FILEMODE
 {
@@ -47,28 +39,30 @@ enum HL_SEEK_ORIGIN
     HL_SEEK_END
 };
 
-#ifdef _WIN32
-HL_API struct hl_File* hl_FileOpenW(const wchar_t* filePath, const enum HL_FILEMODE mode);
-inline struct hl_File* hl_FileOpenReadW(const wchar_t* filePath)
-{
-    return hl_FileOpenW(filePath, HL_FILEMODE_READ_BINARY);
-}
+HL_API struct hl_File* hl_FileOpen(
+    const char* filePath, const enum HL_FILEMODE mode);
 
-inline struct hl_File* hl_FileOpenWriteW(const wchar_t* filePath)
-{
-    return hl_FileOpenW(filePath, HL_FILEMODE_WRITE_BINARY);
-}
-#endif
+HL_API struct hl_File* hl_FileOpenNative(
+    const hl_NativeStr filePath, const enum HL_FILEMODE mode);
 
-HL_API struct hl_File* hl_FileOpen(const char* filePath, const enum HL_FILEMODE mode);
 inline struct hl_File* hl_FileOpenRead(const char* filePath)
 {
     return hl_FileOpen(filePath, HL_FILEMODE_READ_BINARY);
 }
 
+inline struct hl_File* hl_FileOpenReadNative(const hl_NativeStr filePath)
+{
+    return hl_FileOpenNative(filePath, HL_FILEMODE_READ_BINARY);
+}
+
 inline struct hl_File* hl_FileOpenWrite(const char* filePath)
 {
     return hl_FileOpen(filePath, HL_FILEMODE_WRITE_BINARY);
+}
+
+inline struct hl_File* hl_FileOpenWriteNative(const hl_NativeStr filePath)
+{
+    return hl_FileOpenNative(filePath, HL_FILEMODE_WRITE_BINARY);
 }
 
 HL_API struct hl_File* hl_FileInit(FILE* file, bool doSwap, long origin);
@@ -119,20 +113,41 @@ HL_API enum HL_RESULT hl_FilePad(const struct hl_File* file, long stride);
 #ifdef __cplusplus
 }
 
+// Windows-specific overloads
+#ifdef _WIN32
+inline HL_RESULT hl_FileGetSize(const hl_NativeStr filePath, size_t* size)
+{
+    return hl_FileGetSizeNative(filePath, size);
+}
+
+inline hl_File* hl_FileOpen(const hl_NativeStr filePath, const HL_FILEMODE mode)
+{
+    return hl_FileOpenNative(filePath, mode);
+}
+
+inline hl_File* hl_FileOpenRead(const hl_NativeStr filePath)
+{
+    return hl_FileOpenNative(filePath, HL_FILEMODE_READ_BINARY);
+}
+
+inline hl_File* hl_FileOpenWrite(const hl_NativeStr filePath)
+{
+    return hl_FileOpenNative(filePath, HL_FILEMODE_WRITE_BINARY);
+}
+#endif
+
 // C++ specific
 struct hl_File
 {
 protected:
     std::FILE* f = nullptr;
-    bool closeOnDestruct = false; // This is set to true when OpenNoClose is called
+    bool closeOnDestruct = false; // This is set to true when OpenNoCloseNative is called
 
-#ifdef _WIN32
-    HL_API HL_RESULT OpenNoClose(const wchar_t* filePath,
-        const HL_FILEMODE mode);
-#endif
+    HL_API HL_RESULT OpenNoClose(
+        const char* filePath, const HL_FILEMODE mode);
 
-    HL_API HL_RESULT OpenNoClose(const char* filePath,
-        const HL_FILEMODE mode);
+    HL_API HL_RESULT OpenNoCloseNative(
+        const hl_NativeStr filePath, const HL_FILEMODE mode);
 
     constexpr static int GetSeekOrigin(const HL_SEEK_ORIGIN origin)
     {
@@ -158,12 +173,12 @@ public:
         f(file), DoEndianSwap(swap), Origin(origin) {}
 
 #ifdef _WIN32
-    inline hl_File(const wchar_t* filePath,
+    inline hl_File(const hl_NativeStr filePath,
         const HL_FILEMODE mode = HL_FILEMODE_READ_BINARY,
         bool swap = false, long origin = 0) :
         DoEndianSwap(swap), Origin(origin)
     {
-        OpenNoClose(filePath, mode);
+        OpenNoCloseNative(filePath, mode);
     }
 #endif
 
@@ -176,7 +191,7 @@ public:
     }
 
 #ifdef _WIN32
-    HL_API static HL_RESULT GetSize(const wchar_t* filePath, size_t& size);
+    HL_API static HL_RESULT GetSize(const hl_NativeStr filePath, size_t& size);
 #endif
 
     HL_API static HL_RESULT GetSize(const char* filePath, size_t& size);
@@ -203,7 +218,7 @@ public:
     }
 
 #ifdef _WIN32
-    inline HL_RESULT Open(const wchar_t* filePath,
+    inline HL_RESULT Open(const hl_NativeStr filePath,
         const HL_FILEMODE mode = HL_FILEMODE_READ_BINARY,
         bool swap = false, long origin = 0)
     {
@@ -211,7 +226,7 @@ public:
         Origin = origin;
 
         Close();
-        return OpenNoClose(filePath, mode);
+        return OpenNoCloseNative(filePath, mode);
     }
 #endif
 
@@ -227,13 +242,13 @@ public:
     }
 
 #ifdef _WIN32
-    inline HL_RESULT OpenRead(const wchar_t* filePath,
+    inline HL_RESULT OpenRead(const hl_NativeStr filePath,
         bool swap = false, long origin = 0)
     {
         return Open(filePath, HL_FILEMODE_READ_BINARY, swap, origin);
     }
 
-    inline HL_RESULT OpenWrite(const wchar_t* filePath,
+    inline HL_RESULT OpenWrite(const hl_NativeStr filePath,
         bool swap = false, long origin = 0)
     {
         return Open(filePath, HL_FILEMODE_WRITE_BINARY, swap, origin);

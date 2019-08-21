@@ -1,13 +1,10 @@
 #pragma once
-#include "../HedgeLib.h"
-#include "../Errors.h"
+#include "../String.h"
 #include "../Endian.h"
 #include "../StringTable.h"
 
 #ifdef __cplusplus
 extern "C" {
-#else
-#include <stdbool.h>
 #endif
 
 #define HL_BINA_SIGNATURE                   0x414E4942
@@ -76,6 +73,8 @@ HL_API enum HL_RESULT hl_BINAReadV1(struct hl_File* file, struct hl_Blob** blob)
 HL_API enum HL_RESULT hl_BINAReadV2(struct hl_File* file, struct hl_Blob** blob);
 HL_API enum HL_RESULT hl_BINARead(struct hl_File* file, struct hl_Blob** blob);
 HL_API enum HL_RESULT hl_BINALoad(const char* filePath, struct hl_Blob** blob);
+HL_API enum HL_RESULT hl_BINALoadNative(
+    const hl_NativeStr filePath, struct hl_Blob** blob);
 
 HL_API enum HL_RESULT hl_BINAWriteStringTable(const struct hl_File* file,
     const hl_StringTable* strTable, hl_OffsetTable* offTable);

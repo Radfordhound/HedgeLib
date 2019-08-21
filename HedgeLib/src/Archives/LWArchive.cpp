@@ -2,6 +2,7 @@
 #include "HedgeLib/Archives/PACx.h"
 #include "HedgeLib/Archives/Archive.h"
 #include "HedgeLib/IO/File.h"
+#include "HedgeLib/IO/Path.h"
 #include "../IO/INPath.h"
 #include "../IO/INBINA.h"
 #include "../INBlob.h"
@@ -560,26 +561,24 @@ const char** hl_LWArchiveGetSplits(const struct hl_Blob* blob, size_t* splitCoun
     return nullptr;
 }
 
-void hl_ExtractLWArchive(const struct hl_Blob* blob, const char* dir)
+HL_RESULT hl_INExtractLWArchive(const hl_Blob* blob, const hl_NativeStr dir)
 {
     // Create directory for file extraction
-    if (!dir) return;
-    // TODO: Create directory without std::filesystem
-    std::filesystem::path fdir = std::filesystem::u8path(dir);
-    std::filesystem::create_directory(fdir);
+    HL_RESULT result = hl_PathCreateDirectory(dir);
+    if (HL_FAILED(result)) return result;
     
     // Get BINA Data Node
     const hl_DPACxV2DataNode* dataNode = reinterpret_cast
         <const hl_DPACxV2DataNode*>(hl_BINAGetDataNodeV2(blob));
 
-    if (!dataNode) return;
+    if (!dataNode) return HL_ERROR_UNKNOWN;
 
     // Get BINA Offset Table
     uint32_t offsetTableSize;
     const uint8_t* offsetTable = hl_INBINAGetOffsetTable(
         dataNode, &offsetTableSize);
 
-    if (!offsetTable) return;
+    if (!offsetTable) return HL_ERROR_UNKNOWN;
 
     // Find out if it's possible for there to be any BINA files in this archive
     const hl_DLWArchive* arc = reinterpret_cast<const hl_DLWArchive*>(dataNode);
@@ -613,11 +612,49 @@ void hl_ExtractLWArchive(const struct hl_Blob* blob, const char* dir)
         }
     }
 
-    // Iterate through type tree
-    hl_File file;
+    // Determine file path buffer size
+    size_t dirLen = hl_StrLenNative(dir);
+    bool addSlash = hl_INPathCombineNeedsSlash1(dir, dirLen);
+    if (addSlash) ++dirLen;
+
+    size_t maxNameLen = 0;
     hl_DPACNode* typeNodes = HL_GETPTR32(
         hl_DPACNode, arc->TypeTree.Offset);
 
+    for (uint32_t i = 0; i < arc->TypeTree.Count; ++i)
+    {
+        // I believe it's more performant to just allocate some extra bytes
+        // (enough bytes to hold full type name rather than just extension)
+        // than it is to find the : in the string every time and compare
+        // type to split type every time.
+        size_t extLen = std::strlen(typeNodes[i].Name.Get());
+
+        // Get file tree
+        HL_ARR32(hl_DPACNode)* fileTree = HL_GETPTR32(
+            HL_ARR32(hl_DPACNode), typeNodes[i].Data);
+
+        hl_DPACNode* fileNodes = HL_GETPTR32(
+            hl_DPACNode, fileTree->Offset);
+
+        // Iterate through file nodes
+        for (uint32_t i2 = 0; i2 < fileTree->Count; ++i2)
+        {
+            size_t len = (extLen + std::strlen(fileNodes[i2].Name.Get()));
+            if (len > maxNameLen) maxNameLen = len;
+        }
+    }
+
+    // Create file path buffer and copy directory into it
+    hl_NativeStr filePath = HL_CREATE_NATIVE_STR(dirLen + maxNameLen + 2);
+    if (!filePath) return HL_ERROR_OUT_OF_MEMORY;
+
+    std::copy(dir, dir + dirLen, filePath);
+    if (addSlash) filePath[dirLen - 1] = HL_PATH_SEPARATOR_NATIVE;
+
+    hl_NativeStr fileName = (filePath + dirLen);
+
+    // Iterate through type tree
+    hl_File file;
     for (uint32_t i = 0; i < arc->TypeTree.Count; ++i)
     {
         // Skip split tables
@@ -657,22 +694,44 @@ void hl_ExtractLWArchive(const struct hl_Blob* blob, const char* dir)
             char* name = HL_GETPTR32(char, fileNodes[i2].Name);
             size_t nameLen = std::strlen(name);
 
-            char* fileName = static_cast<char*>(
-                std::malloc(nameLen + extLen + 2));
+            // TODO: Convert SHIFT-JIS names to UTF-8
 
+#ifdef _WIN32
+            // Convert file name to UTF-16 and copy
+            result = hl_INStringConvertUTF8ToUTF16NoAlloc(name,
+                reinterpret_cast<uint16_t*>(fileName),
+                nameLen * sizeof(hl_NativeChar), nameLen);
+
+            if (HL_FAILED(result))
+            {
+                free(filePath);
+                return result;
+            }
+
+            // Convert extension to UTF-16 and copy
+            fileName[nameLen] = L'.';
+            result = hl_INStringConvertUTF8ToUTF16NoAlloc(ext,
+                reinterpret_cast<uint16_t*>(fileName + nameLen + 1),
+                extLen * sizeof(hl_NativeChar), extLen);
+
+            if (HL_FAILED(result))
+            {
+                free(filePath);
+                return result;
+            }
+
+            fileName[nameLen + extLen + 1] = L'\0';
+#else
+            // Copy file name and extension
             std::copy(name, name + nameLen, fileName);              // chr_Sonic
             fileName[nameLen] = '.';                                // .
             std::copy(ext, ext + extLen, fileName + nameLen + 1);   // model
             fileName[nameLen + extLen + 1] = '\0';                  // \0
-
-            // Get file path
-            // TODO: Convert SHIFT-JIS names to UTF-8
-            std::filesystem::path filePath = (fdir / fileName);
-            std::free(fileName);
+#endif
 
             // Write data to file
             uint8_t* data = reinterpret_cast<uint8_t*>(dataEntry + 1);
-            file.OpenWrite(filePath.c_str(), isBigEndian);
+            file.OpenWrite(filePath, isBigEndian);
 
             // Determine if this is a BINA file
             uint8_t* dataEnd;
@@ -765,6 +824,22 @@ void hl_ExtractLWArchive(const struct hl_Blob* blob, const char* dir)
             file.Close();
         }
     }
+
+    std::free(filePath);
+    return HL_SUCCESS;
+}
+
+enum HL_RESULT hl_ExtractLWArchive(const struct hl_Blob* blob, const char* dir)
+{
+    if (!dir) return HL_ERROR_UNKNOWN;
+    HL_INSTRING_NATIVE_CALL(dir,
+        hl_INExtractLWArchive(blob, nativeStr));
+}
+
+enum HL_RESULT hl_ExtractLWArchiveNative(const struct hl_Blob* blob, const hl_NativeStr dir)
+{
+    if (!dir) return HL_ERROR_UNKNOWN;
+    return hl_INExtractLWArchive(blob, dir);
 }
 
 struct hl_INTypeMetadata

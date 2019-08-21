@@ -259,7 +259,7 @@ enum HL_RESULT hl_BINARead(struct hl_File* file, struct hl_Blob** blob)
     }
 }
 
-HL_RESULT hl_INBINALoad(const hl_INNativeStr filePath, struct hl_Blob** blob)
+HL_RESULT hl_INBINALoad(const hl_NativeStr filePath, struct hl_Blob** blob)
 {
     // TODO: Do stuff here instead of just calling hl_HHRead so you
     // can optimize-out the need to read the file size and backtrack.
@@ -269,18 +269,14 @@ HL_RESULT hl_INBINALoad(const hl_INNativeStr filePath, struct hl_Blob** blob)
 
 enum HL_RESULT hl_BINALoad(const char* filePath, struct hl_Blob** blob)
 {
-#ifdef _WIN32
-    // Convert UTF-8 path to wide UTF-16 path
-    hl_INNativeStr nativePath;
-    HL_RESULT result = hl_INWin32StringConvertToNative(filePath, &nativePath);
-    if (HL_FAILED(result)) return result;
+    if (!filePath || !blob) return HL_ERROR_UNKNOWN;
+    HL_INSTRING_NATIVE_CALL(filePath, hl_INBINALoad(nativeStr, blob));
+}
 
-    result = hl_INBINALoad(nativePath, blob);
-    std::free(nativePath);
-    return result;
-#else
+enum HL_RESULT hl_BINALoadNative(const hl_NativeStr filePath, struct hl_Blob** blob)
+{
+    if (!filePath || !blob) return HL_ERROR_UNKNOWN;
     return hl_INBINALoad(filePath, blob);
-#endif
 }
 
 enum HL_RESULT hl_BINAWriteStringTable(const struct hl_File* file,
