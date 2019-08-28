@@ -51,9 +51,11 @@ HL_API bool hl_StringsEqualInvASCII(const char* str1, const char* str2);
 HL_API bool hl_StringsEqualInvASCIINative(
     const hl_NativeStr str1, const hl_NativeStr str2);
 
-HL_API size_t hl_StringGetReqUTF16BufferCountUTF8(const char* str, size_t len);
+HL_API size_t hl_StringGetReqUTF16BufferCountUTF8(
+    const char* str, size_t HL_DEFARG(len, 0));
 
-inline size_t hl_StringGetReqNativeBufferCountUTF8(const char* str, size_t len)
+inline size_t hl_StringGetReqNativeBufferCountUTF8(
+    const char* str, size_t HL_DEFARG(len, 0))
 {
 #ifdef _WIN32
     return hl_StringGetReqUTF16BufferCountUTF8(str, len);
@@ -62,9 +64,11 @@ inline size_t hl_StringGetReqNativeBufferCountUTF8(const char* str, size_t len)
 #endif
 }
 
-HL_API size_t hl_StringGetReqUTF8BufferCountUTF16(const uint16_t* str, size_t len);
+HL_API size_t hl_StringGetReqUTF8BufferCountUTF16(
+    const uint16_t* str, size_t HL_DEFARG(len, 0));
 
-inline size_t hl_StringGetReqNativeBufferCountUTF16(const uint16_t* str, size_t len)
+inline size_t hl_StringGetReqNativeBufferCountUTF16(
+    const uint16_t* str, size_t HL_DEFARG(len, 0))
 {
 #ifdef _WIN32
     return (len) ? (wcslen(reinterpret_cast<const wchar_t*>(str)) + 1) : len;
@@ -83,18 +87,10 @@ inline bool hl_StringsEqualNative(const hl_NativeStr str1, const hl_NativeStr st
 }
 
 HL_API enum HL_RESULT hl_StringConvertUTF8ToUTF16(
-    const char* u8str, uint16_t** u16str, size_t u8bufLen
-#ifdef __cplusplus
-    = 0
-#endif
-);
+    const char* u8str, uint16_t** u16str, size_t HL_DEFARG(u8bufLen, 0));
 
 HL_API enum HL_RESULT hl_StringConvertUTF8ToNative(
-    const char* u8str, hl_NativeStr* nativeStr, size_t u8bufLen
-#ifdef __cplusplus
-    = 0
-#endif
-);
+    const char* u8str, hl_NativeStr* nativeStr, size_t HL_DEFARG(u8bufLen, 0));
 
 HL_API enum HL_RESULT hl_NativeStrBiggerCopy(const hl_NativeStr str,
     size_t extraLen, hl_NativeStr* newStr);

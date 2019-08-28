@@ -29,3 +29,9 @@
 #define HL_API
 #define HL_LOCAL
 #endif
+
+#ifdef __cplusplus
+#define HL_DEFARG(argName, defValue) argName = defValue
+#else
+#define HL_DEFARG(argName, defValue) argName
+#endif
