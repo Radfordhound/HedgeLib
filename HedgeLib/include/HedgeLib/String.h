@@ -58,7 +58,18 @@ inline size_t hl_StringGetReqNativeBufferCountUTF8(const char* str, size_t len)
 #ifdef _WIN32
     return hl_StringGetReqUTF16BufferCountUTF8(str, len);
 #else
-    return strlen(str) + 1;
+    return (len) ? len : (strlen(str) + 1);
+#endif
+}
+
+HL_API size_t hl_StringGetReqUTF8BufferCountUTF16(const uint16_t* str, size_t len);
+
+inline size_t hl_StringGetReqNativeBufferCountUTF16(const uint16_t* str, size_t len)
+{
+#ifdef _WIN32
+    return (len) ? (wcslen(reinterpret_cast<const wchar_t*>(str)) + 1) : len;
+#else
+    return hl_StringGetReqUTF8BufferCountUTF16(str, len);
 #endif
 }
 

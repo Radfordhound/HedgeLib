@@ -22,6 +22,17 @@ bool hl_INStringsEqualInvASCII(const str1_t* str1, const str2_t* str2);
 
 size_t hl_INStringGetReqUTF16BufferCountUTF8(const char* str, size_t len = 0);
 
+inline size_t hl_INStringGetReqNativeBufferCountUTF8(const char* str, size_t len = 0)
+{
+#ifdef _WIN32
+    return hl_INStringGetReqUTF16BufferCountUTF8(str, len);
+#else
+    return strlen(str) + 1;
+#endif
+}
+
+size_t hl_INStringGetReqUTF8BufferCountUTF16(const uint16_t* str, size_t len = 0);
+
 HL_RESULT hl_INStringConvertUTF8ToUTF16NoAlloc(const char* u8str,
     uint16_t* u16str, size_t u16bufLen, size_t u8bufLen);
 

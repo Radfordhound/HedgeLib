@@ -70,7 +70,27 @@ size_t hl_INStringGetReqUTF16BufferCountUTF8(const char* str, size_t len)
 
 size_t hl_StringGetReqUTF16BufferCountUTF8(const char* str, size_t len)
 {
-    return (str) ? hl_INStringGetReqUTF16BufferCountUTF8(str) : 0;
+    return (str) ? hl_INStringGetReqUTF16BufferCountUTF8(str, len) : 0;
+}
+
+size_t hl_INStringGetReqUTF8BufferCountUTF16(const uint16_t* str, size_t len)
+{
+#ifdef _WIN32
+    // Figure out the amount of characters in the UTF-16 string
+    int strLen = WideCharToMultiByte(CP_UTF8, 0,
+        reinterpret_cast<const wchar_t*>(str), (len == 0) ?
+        -1 : static_cast<int>(len), nullptr, 0, NULL, NULL);
+
+    return static_cast<size_t>(strLen);
+#endif
+
+    // TODO: Support for non-Windows platforms
+    return 0;
+}
+
+size_t hl_StringGetReqUTF8BufferCountUTF16(const uint16_t* str, size_t len)
+{
+    return (str) ? hl_INStringGetReqUTF8BufferCountUTF16(str, len) : 0;
 }
 
 HL_RESULT hl_INStringConvertUTF8ToUTF16NoAlloc(const char* u8str,
