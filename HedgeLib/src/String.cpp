@@ -68,6 +68,11 @@ size_t hl_INStringGetReqUTF16BufferCountUTF8(const char* str, size_t len)
     return 0;
 }
 
+size_t hl_StringGetReqUTF16BufferCountUTF8(const char* str, size_t len)
+{
+    return (str) ? hl_INStringGetReqUTF16BufferCountUTF8(str) : 0;
+}
+
 HL_RESULT hl_INStringConvertUTF8ToUTF16NoAlloc(const char* u8str,
     uint16_t* u16str, size_t u16bufLen, size_t u8bufLen)
 {

@@ -51,6 +51,8 @@ HL_API bool hl_StringsEqualInvASCII(const char* str1, const char* str2);
 HL_API bool hl_StringsEqualInvASCIINative(
     const hl_NativeStr str1, const hl_NativeStr str2);
 
+HL_API size_t hl_StringGetReqUTF16BufferCountUTF8(const char* str, size_t len);
+
 inline bool hl_StringsEqualNative(const hl_NativeStr str1, const hl_NativeStr str2)
 {
 #ifdef _WIN32
