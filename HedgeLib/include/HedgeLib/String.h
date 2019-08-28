@@ -53,6 +53,15 @@ HL_API bool hl_StringsEqualInvASCIINative(
 
 HL_API size_t hl_StringGetReqUTF16BufferCountUTF8(const char* str, size_t len);
 
+inline size_t hl_StringGetReqNativeBufferCountUTF8(const char* str, size_t len)
+{
+#ifdef _WIN32
+    return hl_StringGetReqUTF16BufferCountUTF8(str, len);
+#else
+    return strlen(str) + 1;
+#endif
+}
+
 inline bool hl_StringsEqualNative(const hl_NativeStr str1, const hl_NativeStr str2)
 {
 #ifdef _WIN32
