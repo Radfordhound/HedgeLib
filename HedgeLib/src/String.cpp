@@ -170,4 +170,3 @@ enum HL_RESULT hl_StringConvertUTF8ToNative(const char* u8str,
     if (!u8str || !nativeStr) return HL_ERROR_UNKNOWN;
     return hl_INStringConvertUTF8ToNative(u8str, nativeStr, u8bufLen);
 }
-}
