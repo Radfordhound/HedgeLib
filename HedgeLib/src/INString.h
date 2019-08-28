@@ -47,3 +47,18 @@ HL_RESULT hl_INStringConvertUTF8ToUTF16(const char* u8str,
 
 HL_RESULT hl_INStringConvertUTF8ToNative(const char* u8str,
     hl_NativeStr* nativeStr, size_t u8bufLen = 0);
+
+HL_RESULT hl_INStringConvertUTF16ToUTF8NoAlloc(const uint16_t* u16str,
+    char* u8str, size_t u8bufLen, size_t u16bufLen);
+
+HL_RESULT hl_INStringConvertUTF16ToUTF8NoAlloc(
+    const uint16_t* u16str, char* u8str, size_t u16bufLen);
+
+HL_RESULT hl_INStringConvertUTF16ToUTF8(const uint16_t* u16str,
+    char** u8str, size_t u8bufLen, size_t u16bufLen);
+
+HL_RESULT hl_INStringConvertUTF16ToUTF8(const uint16_t* u16str,
+    char** u8str, size_t u16bufLen);
+
+HL_RESULT hl_INStringConvertUTF16ToNative(const uint16_t* u16str,
+    hl_NativeStr* nativeStr, size_t u16bufLen = 0);

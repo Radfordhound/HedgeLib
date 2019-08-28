@@ -92,6 +92,12 @@ HL_API enum HL_RESULT hl_StringConvertUTF8ToUTF16(
 HL_API enum HL_RESULT hl_StringConvertUTF8ToNative(
     const char* u8str, hl_NativeStr* nativeStr, size_t HL_DEFARG(u8bufLen, 0));
 
+HL_API enum HL_RESULT hl_StringConvertUTF16ToUTF8(
+    const uint16_t* u16str, char** u8str, size_t HL_DEFARG(u16bufLen, 0));
+
+HL_API enum HL_RESULT hl_StringConvertUTF16ToNative(
+    const uint16_t* u16str, hl_NativeStr* nativeStr, size_t HL_DEFARG(u16bufLen, 0));
+
 HL_API enum HL_RESULT hl_NativeStrBiggerCopy(const hl_NativeStr str,
     size_t extraLen, hl_NativeStr* newStr);
 

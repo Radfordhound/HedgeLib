@@ -178,13 +178,13 @@ HL_RESULT hl_INStringConvertUTF8ToNative(const char* u8str,
         reinterpret_cast<uint16_t**>(nativeStr), u8bufLen);
 #else
     // Allocate a buffer big enough to hold a copy of the string
-    if (u8bufLen == 0) u8bufLen = strlen(u8str);
-    *nativeStr = static_cast<hl_NativeChar*>(malloc(u8bufLen + 1));
+    if (u8bufLen == 0) u8bufLen = (strlen(u8str) + 1);
+    *nativeStr = static_cast<hl_NativeStr>(malloc(u8bufLen));
 
     if (!*nativeStr) return HL_ERROR_OUT_OF_MEMORY;
 
     // Copy the string
-    std::copy(u8str, u8str + u8bufLen + 1, *nativeStr);
+    std::copy(u8str, u8str + u8bufLen, *nativeStr);
     return HL_SUCCESS;
 #endif
 }
@@ -194,4 +194,108 @@ enum HL_RESULT hl_StringConvertUTF8ToNative(const char* u8str,
 {
     if (!u8str || !nativeStr) return HL_ERROR_UNKNOWN;
     return hl_INStringConvertUTF8ToNative(u8str, nativeStr, u8bufLen);
+}
+
+HL_RESULT hl_INStringConvertUTF16ToUTF8NoAlloc(const uint16_t* u16str,
+    char* u8str, size_t u8bufLen, size_t u16bufLen)
+{
+#ifdef _WIN32
+    // Convert the UTF-16 string to UTF-8 and store it in the buffer
+    WideCharToMultiByte(CP_UTF8, 0, reinterpret_cast<const wchar_t*>(u16str),
+        (u16bufLen == 0) ? -1 : static_cast<int>(u16bufLen),
+        u8str, static_cast<int>(u8bufLen), NULL, NULL); // TODO: Error checking?
+#endif
+
+    // TODO: Support for non-Windows platforms
+
+    return HL_SUCCESS;
+}
+
+HL_RESULT hl_INStringConvertUTF16ToUTF8NoAlloc(
+    const uint16_t* u16str, char* u8str, size_t u16bufLen)
+{
+#ifdef _WIN32
+    // Determine the size of the buffer required to hold the string's UTF-8 equivalent
+    size_t u8bufLen = hl_INStringGetReqUTF8BufferCountUTF16(u16str);
+
+    // Convert to UTF-8
+    return hl_INStringConvertUTF16ToUTF8NoAlloc(u16str,
+        u8str, u8bufLen, u16bufLen);
+#endif
+
+    // TODO: Support for non-Windows platforms
+
+    return HL_SUCCESS;
+}
+
+HL_RESULT hl_INStringConvertUTF16ToUTF8(const uint16_t* u16str,
+    char** u8str, size_t u8bufLen, size_t u16bufLen)
+{
+#ifdef _WIN32
+    // Allocate a buffer big enough to hold the UTF-8 string
+    *u8str = static_cast<char*>(malloc(u8bufLen));
+    if (!*u8str) return HL_ERROR_OUT_OF_MEMORY;
+
+    // Convert to UTF-8
+    return hl_INStringConvertUTF16ToUTF8NoAlloc(
+        u16str, *u8str, u8bufLen, u16bufLen);
+#endif
+
+    // TODO: Support for non-Windows platforms
+
+    return HL_SUCCESS;
+}
+
+HL_RESULT hl_INStringConvertUTF16ToUTF8(const uint16_t* u16str,
+    char** u8str, size_t u16bufLen)
+{
+#ifdef _WIN32
+    // Determine the size of the buffer required to hold the string's UTF-8 equivalent
+    size_t u8bufLen = hl_INStringGetReqUTF8BufferCountUTF16(u16str);
+
+    // Convert to UTF-8
+    return hl_INStringConvertUTF16ToUTF8(
+        u16str, u8str, u8bufLen, u16bufLen);
+#endif
+
+    // TODO: Support for non-Windows platforms
+
+    return HL_SUCCESS;
+}
+
+enum HL_RESULT hl_StringConvertUTF16ToUTF8(
+    const uint16_t* u16str, char** u8str, size_t u16bufLen)
+{
+    if (!u16str || !u8str) return HL_ERROR_UNKNOWN;
+    return hl_INStringConvertUTF16ToUTF8(u16str, u8str, u16bufLen);
+}
+
+HL_RESULT hl_INStringConvertUTF16ToNative(
+    const uint16_t* u16str, hl_NativeStr* nativeStr, size_t u16bufLen)
+{
+#ifdef _WIN32
+    // Allocate a buffer big enough to hold a copy of the string
+    if (u16bufLen == 0)
+    {
+        u16bufLen = (wcslen(
+            reinterpret_cast<const wchar_t*>(u16str)) + 1);
+    }
+
+    *nativeStr = static_cast<hl_NativeStr>(malloc(u16bufLen));
+    if (!*nativeStr) return HL_ERROR_OUT_OF_MEMORY;
+
+    // Copy the string
+    std::copy(u16str, u16str + u16bufLen + 1, *nativeStr);
+    return HL_SUCCESS;
+#else
+    return hl_INStringConvertUTF16ToUTF8(
+        u16str, nativeStr, u16bufLen);
+#endif
+}
+
+enum HL_RESULT hl_StringConvertUTF16ToNative(
+    const uint16_t* u16str, hl_NativeStr* nativeStr, size_t u16bufLen)
+{
+    if (!u16str || !nativeStr) return HL_ERROR_UNKNOWN;
+    return hl_INStringConvertUTF16ToNative(u16str, nativeStr, u16bufLen);
 }
