@@ -17,6 +17,11 @@ return err;\
 const hl_NativeStr nativeStr = str; return funcCall;
 #endif
 
+void hl_INStringEncodeCodepointUTF8(uint32_t cp, char*& u8str);
+void hl_INStringEncodeCodepointUTF16(uint32_t cp, uint16_t*& u16str);
+uint32_t hl_INStringDecodeCodepointUTF8(const char*& u8str);
+uint32_t hl_INStringDecodeCodepointUTF16(const uint16_t*& u16str);
+
 template<typename str1_t, typename str2_t>
 bool hl_INStringsEqualInvASCII(const str1_t* str1, const str2_t* str2);
 

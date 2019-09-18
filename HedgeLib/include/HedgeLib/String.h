@@ -33,6 +33,18 @@ HL_API extern const hl_NativeStr const hl_EmptyStringNative;
 #define hl_EmptyStringNative hl_EmptyString
 #endif
 
+HL_API size_t hl_StringEncodeCodepointUTF8(
+    char* u8str, uint32_t codepoint);
+
+HL_API size_t hl_StringEncodeCodepointUTF16(
+    uint16_t* u16str, uint32_t codepoint);
+
+HL_API size_t hl_StringDecodeCodepointUTF8(
+    const char* u8str, uint32_t* codepoint);
+
+HL_API size_t hl_StringDecodeCodepointUTF16(
+    const uint16_t* u16str, uint32_t* codepoint);
+
 inline size_t hl_StrLen(const char* str)
 {
     return strlen(str);
@@ -50,6 +62,22 @@ inline size_t hl_StrLenNative(const hl_NativeStr str)
 HL_API bool hl_StringsEqualInvASCII(const char* str1, const char* str2);
 HL_API bool hl_StringsEqualInvASCIINative(
     const hl_NativeStr str1, const hl_NativeStr str2);
+
+inline size_t hl_StringGetReqUTF8UnitCount(uint32_t cp)
+{
+    // Return the amount of code units required to store the given
+    // codepoint, or 3 if the codepoint is invalid. (Invalid characters
+    // are replaced with 0xFFFD which requires 3 units to encode)
+    return (cp < 0x80) ? 1 : (cp < 0x800) ? 2 :
+        (cp < 0x10000) ? 3 : (cp < 0x110000) ? 4 : 3;
+}
+
+inline size_t hl_StringGetReqUTF16UnitCount(uint32_t cp)
+{
+    // Return 2 if the given codepoint is not in the BMP, otherwise 1.
+    // (Invalid characters are replaced with 0xFFFD which is in the BMP)
+    return (cp >= 0x10000 && cp < 0x110000) ? 2 : 1;
+}
 
 HL_API size_t hl_StringGetReqUTF16BufferCountUTF8(
     const char* str, size_t HL_DEFARG(len, 0));
