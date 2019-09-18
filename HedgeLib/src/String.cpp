@@ -114,7 +114,8 @@ HL_RESULT hl_INStringConvertUTF8ToUTF16NoAlloc(
 {
 #ifdef _WIN32
     // Determine the size of the buffer required to hold the string's UTF-16 equivalent
-    size_t u16bufLen = hl_INStringGetReqUTF16BufferCountUTF8(u8str);
+    size_t u16bufLen = hl_INStringGetReqUTF16BufferCountUTF8(
+        u8str, u8bufLen);
 
     // Convert to UTF-16
     return hl_INStringConvertUTF8ToUTF16NoAlloc(u8str,
@@ -151,7 +152,8 @@ HL_RESULT hl_INStringConvertUTF8ToUTF16(const char* u8str,
 {
 #ifdef _WIN32
     // Determine the size of the buffer required to hold the string's UTF-16 equivalent
-    size_t u16bufLen = hl_INStringGetReqUTF16BufferCountUTF8(u8str);
+    size_t u16bufLen = hl_INStringGetReqUTF16BufferCountUTF8(
+        u8str, u8bufLen);
 
     // Convert to UTF-16
     return hl_INStringConvertUTF8ToUTF16(
@@ -216,7 +218,8 @@ HL_RESULT hl_INStringConvertUTF16ToUTF8NoAlloc(
 {
 #ifdef _WIN32
     // Determine the size of the buffer required to hold the string's UTF-8 equivalent
-    size_t u8bufLen = hl_INStringGetReqUTF8BufferCountUTF16(u16str);
+    size_t u8bufLen = hl_INStringGetReqUTF8BufferCountUTF16(
+        u16str, u16bufLen);
 
     // Convert to UTF-8
     return hl_INStringConvertUTF16ToUTF8NoAlloc(u16str,
@@ -251,7 +254,8 @@ HL_RESULT hl_INStringConvertUTF16ToUTF8(const uint16_t* u16str,
 {
 #ifdef _WIN32
     // Determine the size of the buffer required to hold the string's UTF-8 equivalent
-    size_t u8bufLen = hl_INStringGetReqUTF8BufferCountUTF16(u16str);
+    size_t u8bufLen = hl_INStringGetReqUTF8BufferCountUTF16(
+        u16str, u16bufLen);
 
     // Convert to UTF-8
     return hl_INStringConvertUTF16ToUTF8(
