@@ -38,6 +38,14 @@ inline size_t hl_INStringGetReqNativeBufferCountUTF8(const char* str, size_t len
 
 size_t hl_INStringGetReqUTF8BufferCountUTF16(const uint16_t* str, size_t len = 0);
 
+template<typename char_t>
+size_t hl_INStringGetReqUnicodeBufferCountCP932(
+    const char* str, size_t len);
+
+template<typename char_t>
+size_t hl_INStringGetReqCP932BufferCountUnicode(
+    const char_t* str, size_t len);
+
 HL_RESULT hl_INStringConvertUTF8ToUTF16NoAlloc(const char* u8str,
     uint16_t* u16str, size_t u16bufLen, size_t u8bufLen);
 
@@ -49,6 +57,22 @@ HL_RESULT hl_INStringConvertUTF8ToUTF16(const char* u8str,
 
 HL_RESULT hl_INStringConvertUTF8ToUTF16(const char* u8str,
     uint16_t** u16str, size_t u8bufLen);
+
+template<typename char_t>
+HL_RESULT hl_INStringConvertUnicodeToCP932NoAlloc(
+    const char_t* ustr, char* cp932str, size_t ubufLen);
+
+HL_RESULT hl_INStringConvertUTF8ToCP932(const char* u8str,
+    char** cp932str, size_t cp932bufLen, size_t u8bufLen);
+
+HL_RESULT hl_INStringConvertUTF8ToCP932(const char* u8str,
+    char** cp932str, size_t u8bufLen);
+
+HL_RESULT hl_INStringConvertUTF16ToCP932(const uint16_t* u16str,
+    char** cp932str, size_t cp932bufLen, size_t u16bufLen);
+
+HL_RESULT hl_INStringConvertUTF16ToCP932(const uint16_t* u16str,
+    char** cp932str, size_t u16bufLen);
 
 HL_RESULT hl_INStringConvertUTF8ToNative(const char* u8str,
     hl_NativeStr* nativeStr, size_t u8bufLen = 0);
@@ -67,3 +91,22 @@ HL_RESULT hl_INStringConvertUTF16ToUTF8(const uint16_t* u16str,
 
 HL_RESULT hl_INStringConvertUTF16ToNative(const uint16_t* u16str,
     hl_NativeStr* nativeStr, size_t u16bufLen = 0);
+
+template<typename char_t>
+HL_RESULT hl_INStringConvertCP932ToUnicodeNoAlloc(
+    const char* cp932str, char_t* ustr, size_t cp932bufLen);
+
+HL_RESULT hl_INStringConvertCP932ToUTF8(const char* cp932str,
+    char** u8str, size_t u8bufLen, size_t cp932bufLen);
+
+HL_RESULT hl_INStringConvertCP932ToUTF8(const char* cp932str,
+    char** u8str, size_t cp932bufLen);
+
+HL_RESULT hl_INStringConvertCP932ToUTF16(const char* cp932str,
+    uint16_t** u16str, size_t u16bufLen, size_t cp932bufLen);
+
+HL_RESULT hl_INStringConvertCP932ToUTF16(const char* cp932str,
+    uint16_t** u16str, size_t cp932bufLen);
+
+HL_RESULT hl_INStringConvertCP932ToNative(
+    const char* cp932str, hl_NativeStr* nativeStr, size_t cp932bufLen);

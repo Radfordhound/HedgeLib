@@ -95,6 +95,18 @@ inline size_t hl_StringGetReqNativeBufferCountUTF8(
 HL_API size_t hl_StringGetReqUTF8BufferCountUTF16(
     const uint16_t* str, size_t HL_DEFARG(len, 0));
 
+HL_API size_t hl_StringGetReqUTF8BufferCountCP932(
+    const char* str, size_t HL_DEFARG(len, 0));
+
+HL_API size_t hl_StringGetReqUTF16BufferCountCP932(
+    const char* str, size_t HL_DEFARG(len, 0));
+
+HL_API size_t hl_StringGetReqCP932BufferCountUTF8(
+    const char* str, size_t HL_DEFARG(len, 0));
+
+HL_API size_t hl_StringGetReqCP932BufferCountUTF16(
+    const uint16_t* str, size_t HL_DEFARG(len, 0));
+
 inline size_t hl_StringGetReqNativeBufferCountUTF16(
     const uint16_t* str, size_t HL_DEFARG(len, 0))
 {
@@ -117,6 +129,12 @@ inline bool hl_StringsEqualNative(const hl_NativeStr str1, const hl_NativeStr st
 HL_API enum HL_RESULT hl_StringConvertUTF8ToUTF16(
     const char* u8str, uint16_t** u16str, size_t HL_DEFARG(u8bufLen, 0));
 
+HL_API enum HL_RESULT hl_StringConvertUTF8ToCP932(
+    const char* u8str, char** cp932str, size_t HL_DEFARG(u8bufLen, 0));
+
+HL_API enum HL_RESULT hl_StringConvertUTF16ToCP932(
+    const uint16_t* u16str, char** cp932str, size_t HL_DEFARG(u16bufLen, 0));
+
 HL_API enum HL_RESULT hl_StringConvertUTF8ToNative(
     const char* u8str, hl_NativeStr* nativeStr, size_t HL_DEFARG(u8bufLen, 0));
 
@@ -125,6 +143,15 @@ HL_API enum HL_RESULT hl_StringConvertUTF16ToUTF8(
 
 HL_API enum HL_RESULT hl_StringConvertUTF16ToNative(
     const uint16_t* u16str, hl_NativeStr* nativeStr, size_t HL_DEFARG(u16bufLen, 0));
+
+HL_API enum HL_RESULT hl_StringConvertCP932ToUTF8(
+    const char* cp932str, char** u8str, size_t HL_DEFARG(cp932bufLen, 0));
+
+HL_API enum HL_RESULT hl_StringConvertCP932ToUTF16(
+    const char* cp932str, uint16_t** u16str, size_t HL_DEFARG(cp932bufLen, 0));
+
+HL_API enum HL_RESULT hl_StringConvertCP932ToNative(
+    const char* cp932str, hl_NativeStr* nativeStr, size_t HL_DEFARG(cp932bufLen, 0));
 
 HL_API enum HL_RESULT hl_NativeStrBiggerCopy(const hl_NativeStr str,
     size_t extraLen, hl_NativeStr* newStr);
