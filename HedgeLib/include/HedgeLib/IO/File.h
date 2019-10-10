@@ -11,8 +11,6 @@
 extern "C" {
 #endif
 
-HL_API struct hl_PtrArray hl_GetFilesInDirectory(const char* dir, size_t* fileCount);
-
 HL_API enum HL_RESULT hl_FileGetSize(const char* filePath, size_t* size);
 HL_API enum HL_RESULT hl_FileGetSizeNative(const hl_NativeStr filePath, size_t* size);
 

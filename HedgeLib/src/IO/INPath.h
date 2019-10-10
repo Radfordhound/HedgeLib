@@ -71,3 +71,6 @@ HL_RESULT hl_INPathRemoveExt(const char_t* filePath, char_t** pathNoExt);
 
 bool hl_INPathExists(const hl_NativeStr path);
 HL_RESULT hl_INPathCreateDirectory(const hl_NativeStr path);
+
+HL_RESULT hl_INPathGetFileCount(const hl_NativeStr dir,
+    bool recursive, size_t* fileCount, size_t* bufSize = nullptr);

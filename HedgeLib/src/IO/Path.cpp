@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <cerrno>
+#include <sys/types.h>
+#include <dirent.h>
 #endif
 
 template<typename char_t>
@@ -561,6 +563,379 @@ enum HL_RESULT hl_PathCreateDirectoryNative(const hl_NativeStr path)
 {
     if (!path || !*path) return HL_ERROR_UNKNOWN;
     return hl_INPathCreateDirectory(path);
+}
+
+HL_RESULT hl_INPathGetFileCount(const hl_NativeStr dir,
+    bool recursive, size_t* fileCount, size_t* bufSize)
+{
+    size_t dirLen = hl_StrLenNative(dir);
+
+#ifdef _WIN32
+    // Adjust the path for usage in the FindFile functions
+    // (The Win32 API is the messiest thing I swear)
+    size_t dirLen = hl_StrLenNative(dir);
+    hl_NativeStr fdir = static_cast<hl_NativeStr>(malloc(
+        (dirLen + 7) * sizeof(hl_NativeChar)));
+    //(dirLen && dir[dirLen - 2] == L'\\') ? 5 : 6));
+
+    if (!fdir) return HL_ERROR_OUT_OF_MEMORY;
+
+    // look at this crap
+    // If we don't prefix the path with \\?\ windows limits path length to 260 characters
+    fdir[0] = L'\\';
+    fdir[1] = L'\\';
+    fdir[2] = L'?';
+    fdir[3] = L'\\';
+
+    // Copy the actual path
+    std::copy(dir, dir + dirLen, fdir + 4);
+
+    // We also have to append \* since otherwise windows will just give
+    // us the directory rather than files *IN* the directory
+    fdir[dirLen + 4] = L'\\';
+    fdir[dirLen + 5] = L'*';
+    fdir[dirLen + 6] = L'\0';
+
+    // Find the first file in the directory
+    WIN32_FIND_DATAW fd;
+    HANDLE h = FindFirstFileW(fdir, &fd);
+    free(fdir);
+
+    if (h == INVALID_HANDLE_VALUE) return HL_ERROR_UNKNOWN;
+
+    // Loop through subsequent files in directory
+    do
+    {
+#else
+    // Open the directory
+    DIR* d = opendir(dir);
+    if (!d) return HL_ERROR_UNKNOWN; // TODO: Use errno to get a more helpful error
+
+    // Loop through subsequent files in directory
+    struct dirent* e;
+    while (e = readdir(d))
+    {
+#endif
+        // Get file name
+        hl_NativeStr fileName;
+
+#ifdef _WIN32
+        // TODO: Is cFileName always null-terminated?
+        fileName = fd.cFileName;
+#else
+        fileName = e->d_name;
+#endif
+
+        // Directories
+#ifdef _WIN32
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+#else
+        if (e->d_type == DT_DIR)
+#endif
+        {
+            // Skip . and .. (necessary to avoid infinite recursion)
+            if (hl_StringsEqualNative(fileName, HL_NATIVE_TEXT(".")) ||
+                hl_StringsEqualNative(fileName, HL_NATIVE_TEXT("..")))
+                continue;
+
+            if (recursive)
+            {
+                // Recurse through subdirectories
+                hl_NativeStr subDir;
+                HL_RESULT result = hl_INPathCombine(dir, fileName, &subDir);
+                if (HL_FAILED(result)) return HL_ERROR_OUT_OF_MEMORY;
+
+                result = hl_INPathGetFileCount(subDir, recursive,
+                    fileCount, bufSize);
+
+                free(subDir);
+                if (HL_FAILED(result)) return result;
+            }
+        }
+
+        // Files
+        // TODO: Handle special cases
+#ifdef _WIN32
+        else if (fd.dwFileAttributes == FILE_ATTRIBUTE_NORMAL)
+#else
+        else if (e->d_type == DT_REG)
+#endif
+        {
+            // Increase file count
+            ++(*fileCount);
+
+            // Increase buffer size if necessary
+            if (bufSize)
+            {
+                // TODO: Is cFileName always null-terminated??
+                *bufSize += (dirLen + hl_StrLenNative(fileName) + 1);
+                if (hl_INPathCombineNeedsSlash(dir, fileName, dirLen)) ++(*bufSize);
+            }
+        }
+    }
+#ifdef _WIN32
+    while (FindNextFileW(h, &fd));
+
+    // TODO: Use GetLastError to ensure we've just reached the last file and no error occured.
+
+    // Close the directory
+    FindClose(h); // TODO: Check result?
+#else
+    // Close the directory
+    closedir(d); // TODO: Check result?
+#endif
+
+    return HL_SUCCESS;
+}
+
+HL_RESULT hl_PathGetFileCount(const char* dir,
+    bool recursive, size_t* fileCount)
+{
+    if (!dir || !fileCount) return HL_ERROR_UNKNOWN;
+
+    *fileCount = 0;
+    HL_INSTRING_NATIVE_CALL(dir, hl_INPathGetFileCount(nativeStr,
+        recursive, fileCount));
+}
+
+HL_RESULT hl_PathGetFileCountNative(const hl_NativeStr dir,
+    bool recursive, size_t* fileCount)
+{
+    if (!dir || !fileCount) return HL_ERROR_UNKNOWN;
+
+    *fileCount = 0;
+    return hl_INPathGetFileCount(dir,
+        recursive, fileCount);
+}
+
+HL_RESULT hl_INPathGetFilesInDirectoryNoAlloc(const hl_NativeStr dir,
+    bool recursive, size_t fileCount, hl_NativeStr*& fileNamePtrs,
+    hl_NativeStr& fileNames)
+{
+    size_t dirLen = hl_StrLenNative(dir);
+
+#ifdef _WIN32
+    // Adjust the path for usage in the FindFile functions
+    // (The Win32 API is the messiest thing I swear)
+    hl_NativeStr fdir = static_cast<hl_NativeStr>(malloc(
+        (dirLen + 7) * sizeof(hl_NativeChar)));
+    //(dirLen && dir[dirLen - 2] == L'\\') ? 5 : 6));
+
+    if (!fdir) return HL_ERROR_OUT_OF_MEMORY;
+
+    // look at this crap
+    // If we don't prefix the path with \\?\ windows limits path length to 260 characters
+    fdir[0] = L'\\';
+    fdir[1] = L'\\';
+    fdir[2] = L'?';
+    fdir[3] = L'\\';
+
+    // Copy the actual path
+    std::copy(dir, dir + dirLen, fdir + 4);
+
+    // We also have to append \* since otherwise windows will just give
+    // us the directory rather than files *IN* the directory
+    fdir[dirLen + 4] = L'\\';
+    fdir[dirLen + 5] = L'*';
+    fdir[dirLen + 6] = L'\0';
+
+    // Find the first file in the directory
+    WIN32_FIND_DATAW fd;
+    HANDLE h = FindFirstFileW(fdir, &fd);
+    free(fdir);
+
+    if (h == INVALID_HANDLE_VALUE) return HL_ERROR_UNKNOWN;
+
+    // Loop through subsequent files in directory
+    do
+    {
+#else
+    // Open the directory
+    DIR* d = opendir(dir);
+    if (!d) return HL_ERROR_UNKNOWN; // TODO: Use errno to get a more helpful error
+
+    // Loop through subsequent files in directory
+    struct dirent* e;
+    while (e = readdir(d))
+    {
+#endif
+        // Get file name
+        hl_NativeStr fileName;
+
+#ifdef _WIN32
+        // TODO: Is cFileName always null-terminated?
+        fileName = fd.cFileName;
+#else
+        fileName = e->d_name;
+#endif
+
+        // Directories
+#ifdef _WIN32
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+#else
+        if (e->d_type == DT_DIR)
+#endif
+        {
+            // Skip . and .. (necessary to avoid infinite recursion)
+            if (hl_StringsEqualNative(fileName, HL_NATIVE_TEXT(".")) ||
+                hl_StringsEqualNative(fileName, HL_NATIVE_TEXT("..")))
+                continue;
+
+            if (recursive)
+            {
+                // Recurse through subdirectories
+                hl_NativeStr subDir;
+                HL_RESULT result = hl_INPathCombine(dir, fileName, &subDir);
+                if (HL_FAILED(result)) return HL_ERROR_OUT_OF_MEMORY;
+
+                result = hl_INPathGetFilesInDirectoryNoAlloc(subDir,
+                    recursive, fileCount, fileNamePtrs, fileNames);
+
+                free(subDir);
+                if (HL_FAILED(result)) return result;
+            }
+        }
+
+        // Files
+        // TODO: Handle special cases
+#ifdef _WIN32
+        else if (fd.dwFileAttributes == FILE_ATTRIBUTE_NORMAL)
+#else
+        else if (e->d_type == DT_REG)
+#endif
+        {
+            // Copy file name
+            size_t nameLen = (hl_StrLenNative(fileName) + 1);
+            bool addSlash = hl_INPathCombineNeedsSlash(dir, fileName, dirLen);
+
+            hl_INPathCombineNoAlloc(dir, fileName, (addSlash) ?
+                dirLen + 1 : dirLen, nameLen, fileNames, addSlash);
+            
+            // Set name pointer
+            *fileNamePtrs = fileNames;
+            ++fileNamePtrs;
+            fileNames += (dirLen + nameLen);
+            if (addSlash) ++fileNames;
+        }
+    }
+#ifdef _WIN32
+    while (FindNextFileW(h, &fd));
+
+    // TODO: Use GetLastError to ensure we've just reached the last file and no error occured.
+
+    // Close the directory
+    FindClose(h); // TODO: Check result?
+#else
+    // Close the directory
+    closedir(d); // TODO: Check result?
+#endif
+
+    return HL_SUCCESS;
+}
+
+HL_RESULT hl_INPathGetFilesInDirectory(const hl_NativeStr dir,
+    bool recursive, size_t* fileCount, hl_NativeStr** files)
+{
+    // Get file count and buffer size
+    size_t bufSize = 0;
+    *fileCount = 0;
+
+    HL_RESULT result = hl_INPathGetFileCount(dir,
+        recursive, fileCount, &bufSize);
+
+    // Allocate buffer to hold file names and pointers to file names
+    *files = static_cast<hl_NativeStr*>(malloc(
+        (*fileCount * sizeof(hl_NativeStr)) +
+        (bufSize * sizeof(hl_NativeChar))));
+
+    if (!*files) return HL_ERROR_OUT_OF_MEMORY;
+
+    // Get file names and return
+    hl_NativeStr* fileNamePtrs = *files;
+    hl_NativeStr fileNames = reinterpret_cast<hl_NativeStr>(
+        *files + *fileCount);
+
+    result = hl_INPathGetFilesInDirectoryNoAlloc(dir, recursive,
+        *fileCount, fileNamePtrs, fileNames);
+
+    if (HL_FAILED(result))
+    {
+        free(*files);
+        return result;
+    }
+
+    return HL_SUCCESS;
+}
+
+HL_RESULT hl_PathGetFilesInDirectory(const char* dir,
+    bool recursive, size_t* fileCount, char*** files)
+{
+    if (!dir || !fileCount || !files) return HL_ERROR_UNKNOWN;
+    
+#ifdef _WIN32
+    // Converts dir to UTF-16
+    hl_NativeStr nativeDir;
+    HL_RESULT result = hl_INStringConvertUTF8ToNative(dir, &nativeDir);
+    if (HL_FAILED(result)) return result;
+
+    // Get files in the given directory as UTF-16 paths
+    hl_NativeStr* nativeFiles;
+    result = hl_INPathGetFilesInDirectory(
+        nativeDir, recursive, fileCount, &nativeFiles);
+
+    free(nativeDir);
+    if (HL_FAILED(result)) return result;
+
+    // Get size of UTF-8 path buffer
+    size_t bufSize = (*fileCount * sizeof(char*));
+    for (size_t i = 0; i < *fileCount; ++i)
+    {
+        bufSize += hl_INStringGetReqUTF8BufferCountUTF16(
+            reinterpret_cast<const uint16_t*>(nativeFiles[i]));
+    }
+
+    // Convert UTF-16 file paths to UTF-8 and return
+    *files = static_cast<char**>(malloc(bufSize));
+    if (!*files)
+    {
+        free(nativeFiles);
+        return HL_ERROR_OUT_OF_MEMORY;
+    }
+
+    char* fileNames = reinterpret_cast<char*>(*files + *fileCount);
+    for (size_t i = 0; i < *fileCount; ++i)
+    {
+        size_t u8bufLen = hl_INStringGetReqUTF8BufferCountUTF16(
+            reinterpret_cast<const uint16_t*>(nativeFiles[i]), 0);
+
+        result = hl_INStringConvertUTF16ToUTF8NoAlloc(
+            reinterpret_cast<const uint16_t*>(nativeFiles[i]),
+            fileNames, u8bufLen, 0);
+
+        if (HL_FAILED(result))
+        {
+            free(nativeFiles);
+            free(*files);
+            return result;
+        }
+
+        (*files)[i] = fileNames;
+        fileNames += u8bufLen;
+    }
+
+    free(nativeFiles);
+    return HL_SUCCESS;
+#else
+    // Get files in the given directory and return
+    return hl_INPathGetFilesInDirectory(dir, recursive, fileCount, files);
+#endif
+}
+
+HL_RESULT hl_PathGetFilesInDirectoryNative(const hl_NativeStr dir,
+    bool recursive, size_t* fileCount, hl_NativeStr** files)
+{
+    if (!dir || !fileCount) return HL_ERROR_UNKNOWN;
+    return hl_INPathGetFilesInDirectory(dir, recursive, fileCount, files);
 }
 
 // Windows-specific overloads

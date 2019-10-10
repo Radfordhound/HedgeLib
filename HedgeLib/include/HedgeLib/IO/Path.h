@@ -88,6 +88,18 @@ HL_API bool hl_PathExistsNative(const hl_NativeStr path);
 HL_API enum HL_RESULT hl_PathCreateDirectory(const char* path);
 HL_API enum HL_RESULT hl_PathCreateDirectoryNative(const hl_NativeStr path);
 
+HL_API HL_RESULT hl_PathGetFileCount(const char* dir,
+    bool recursive, size_t* fileCount);
+
+HL_API HL_RESULT hl_PathGetFileCountNative(const hl_NativeStr dir,
+    bool recursive, size_t* fileCount);
+
+HL_API HL_RESULT hl_PathGetFilesInDirectory(const char* dir,
+    bool recursive, size_t* fileCount, char*** files);
+
+HL_API HL_RESULT hl_PathGetFilesInDirectoryNative(const hl_NativeStr dir,
+    bool recursive, size_t* fileCount, hl_NativeStr** files);
+
 #ifdef __cplusplus
 }
 
