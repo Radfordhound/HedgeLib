@@ -157,9 +157,6 @@ HL_API HL_RESULT hl_StringJoin(const char* str1, const char* str2, char** result
 HL_API HL_RESULT hl_StringJoinNative(const hl_NativeStr str1,
     const hl_NativeStr str2, hl_NativeStr* result);
 
-HL_API enum HL_RESULT hl_NativeStrBiggerCopy(const hl_NativeStr str,
-    size_t extraLen, hl_NativeStr* newStr);
-
 #ifdef __cplusplus
 }
 
