@@ -982,3 +982,36 @@ enum HL_RESULT hl_StringConvertCP932ToNative(
     if (!cp932str || !nativeStr) return HL_ERROR_UNKNOWN;
     return hl_INStringConvertCP932ToNative(cp932str, nativeStr, cp932bufLen);
 }
+
+template<typename char_t>
+HL_RESULT hl_INStringJoin(const char_t* str1,
+    const char_t* str2, char_t** result)
+{
+    // Get lengths of strings
+    size_t strLen1 = hl_StrLen(str1);
+    size_t strLen2 = (hl_StrLen(str2) + 1);
+
+    // Allocate buffer big enough to hold both strings combined
+    *result = static_cast<char_t*>(malloc(
+        (strLen1 + strLen2) * sizeof(char_t)));
+
+    if (!*result) return HL_ERROR_OUT_OF_MEMORY;
+
+    // Copy both strings into new buffer
+    std::copy(str1, str1 + strLen1, *result);
+    std::copy(str2, str2 + strLen2, *result + strLen1);
+    return HL_SUCCESS;
+}
+
+HL_RESULT hl_StringJoin(const char* str1, const char* str2, char** result)
+{
+    if (!str1 || !str2 || !result) return HL_ERROR_UNKNOWN;
+    return hl_INStringJoin(str1, str2, result);
+}
+
+HL_RESULT hl_StringJoinNative(const hl_NativeStr str1,
+    const hl_NativeStr str2, hl_NativeStr* result)
+{
+    if (!str1 || !str2 || !result) return HL_ERROR_UNKNOWN;
+    return hl_INStringJoin(str1, str2, result);
+}
