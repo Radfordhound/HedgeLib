@@ -3,10 +3,10 @@
 #include "HedgeLib/Archives/Archive.h"
 #include "HedgeLib/IO/File.h"
 #include "HedgeLib/IO/Path.h"
+#include "INArchive.h"
 #include "../IO/INPath.h"
 #include "../IO/INBINA.h"
 #include "../INBlob.h"
-#include <filesystem>
 #include <cstring>
 #include <algorithm>
 #include <cstdlib>
@@ -1244,9 +1244,25 @@ void hl_INCreateLWArchive(hl_File& file,
     hl_PACxFinishWriteV2(&file, 0);
 }
 
-void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t fileCount,
-    const char* dir, const char* name, uint32_t splitLimit, bool bigEndian)
+HL_RESULT hl_INCreateLWArchives(const struct hl_ArchiveFileEntry* files, size_t fileCount,
+    const hl_NativeStr filePath, uint32_t splitLimit, bool bigEndian)
 {
+    // Get pointer to file name
+    HL_RESULT result;
+    const hl_NativeStr fileNamePtr = hl_INPathGetNamePtr(filePath);
+
+#ifdef _WIN32
+    // Convert file name from UTF-16 to UTF-8 on Windows
+    char* fileName;
+    result = hl_INStringConvertUTF16ToUTF8(
+        reinterpret_cast<const uint16_t*>(fileNamePtr),
+        &fileName, 0);
+
+    if (HL_FAILED(result)) return result;
+#else
+    const char* fileName = fileNamePtr;
+#endif
+
     // Generate file metadata
     uint16_t typeCount = 0;
     size_t strTableLen = 0, splitDataEntriesSize = 0;
@@ -1269,9 +1285,10 @@ void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t fileCoun
         else
         {
             // File entry contains a filepath; get the size of the given file
-            // TODO: Error checking
-            hl_FileGetSize(static_cast<const char*>(
+            result = hl_FileGetSize(static_cast<const char*>(
                 files[i].Data), &metadata[i].Size);
+
+            if (HL_FAILED(result)) return result;
         }
     }
 
@@ -1480,11 +1497,18 @@ void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t fileCoun
     }
 
     // Increase string table size for PAC names if necessary
-    size_t nameLen;
+    size_t nameLen, extLen;
+    const char* ext;
+
     if (splitCount)
     {
-        nameLen = (std::strlen(name) + 1);
-        strTableLen += (nameLen + ((nameLen + 7) * splitCount));
+        // Get length of the file name (without the extension) and the splits
+        ext = hl_INPathGetExtPtrName(fileName);
+        nameLen = ((ext - fileName) + 1);
+        extLen = std::strlen(ext);
+
+        strTableLen += (nameLen + ((nameLen +
+            extLen + 3) * splitCount));
     }
     else
     {
@@ -1616,56 +1640,97 @@ void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t fileCoun
         pacNames = curStrPtr;
 
         // Copy root pac name
-        std::strcpy(curStrPtr, name);
+        std::strcpy(curStrPtr, fileName);
         curStrPtr += nameLen;
 
         // Copy split names
         for (uint8_t i = 0; i < splitCount; ++i)
         {
-            std::sprintf(curStrPtr, "%s%s.%02d", name, hl_PACxExtension, i);
-            curStrPtr += (nameLen + 7);
+            // TODO: Optimize-out this sprintf
+            std::sprintf(curStrPtr, "%s.%02d", fileName, i);
+            curStrPtr += (nameLen + extLen + 3);
         }
+
+#ifdef _WIN32
+        // Free UTF-8 version of filename on Windows
+        std::free(fileName);
+#endif
     }
     else
     {
-        pacNames = const_cast<char*>(name);
+        pacNames = const_cast<char*>(fileName);
     }
 
     // Create directory
-    std::filesystem::path fdir = std::filesystem::u8path(dir);
-    if (!fdir.empty()) std::filesystem::create_directory(fdir);
+    hl_NativeStr dir;
+    result = hl_INPathGetParent(filePath, fileNamePtr, &dir);
 
-    // Write Root PAC
-    std::filesystem::path fpath = fdir / name;
-    fpath += hl_PACxExtension;
+    if (HL_FAILED(result))
+    {
+        std::free(strTableData);
+        return result;
+    }
 
-    hl_File file = hl_File(fpath.c_str(), HL_FILEMODE_WRITE_BINARY, bigEndian);
+    result = hl_INPathCreateDirectory(dir);
+    std::free(dir);
+
+    hl_File file = hl_File(filePath, HL_FILEMODE_WRITE_BINARY, bigEndian);
     hl_INCreateLWArchive(file, files, metadata.get(), fileCount,
         types.get(), typeCount, pacNames, nameLen, 0, splitCount);
-
-    file.Close();
 
     // Write split PACs
     if (splitCount)
     {
-        char* splitName = (pacNames + nameLen);
+        // Get split path
+        size_t splitPathLen = (hl_StrLenNative(filePath));
+        hl_NativeStr splitPath = HL_CREATE_NATIVE_STR(splitPathLen + 4);
+        std::copy(filePath, filePath + splitPathLen, splitPath);
+
+        hl_NativeStr splitCharPtr = (splitPath + splitPathLen++);
+        *splitCharPtr++ = HL_NATIVE_TEXT('.');
+        *splitCharPtr++ = HL_NATIVE_TEXT('0');
+        *splitCharPtr = HL_NATIVE_TEXT('0');
+        *(splitCharPtr + 1) = HL_NATIVE_TEXT('\0');
+
+        // Write splits
         for (uint8_t i = 0; i < splitCount;)
         {
-           // Get split path
-            std::filesystem::path splitPath = (fdir /
-                std::filesystem::u8path(splitName));
-
-            splitName += (nameLen + 7);
-
             // Write split PAC
-            file.OpenWrite(splitPath.c_str(), bigEndian);
+            file.OpenWrite(splitPath, bigEndian);
             hl_INCreateLWArchive(file, files, metadata.get(), fileCount,
                 types.get(), typeCount, pacNames, nameLen, ++i, splitCount);
 
-            file.Close();
+            // Get next split path
+            if (!hl_INArchiveNextSplit<false>(splitCharPtr))
+            {
+                // TODO: Free splitPath and strTableData and return error instead?
+                break;
+            }
         }
+
+        // Free split path
+        std::free(splitPath);
     }
 
     // Free data
     std::free(strTableData);
+    return HL_SUCCESS;
+}
+
+enum HL_RESULT hl_CreateLWArchives(const struct hl_ArchiveFileEntry* files,
+    size_t fileCount, const char* filePath, uint32_t splitLimit, bool bigEndian)
+{
+    if (!files || !filePath || !*filePath) return HL_ERROR_UNKNOWN;
+    
+    HL_INSTRING_NATIVE_CALL(filePath, hl_INCreateLWArchives(
+        files, fileCount, nativeStr, splitLimit, bigEndian));
+}
+
+enum HL_RESULT hl_CreateLWArchivesNative(const struct hl_ArchiveFileEntry* files,
+    size_t fileCount, const hl_NativeStr filePath, uint32_t splitLimit, bool bigEndian)
+{
+    if (!files || !filePath || !*filePath) return HL_ERROR_UNKNOWN;
+
+    return hl_INCreateLWArchives(files, fileCount,
+        filePath, splitLimit, bigEndian);
 }

@@ -88,9 +88,11 @@ HL_API enum HL_RESULT hl_ExtractLWArchive(const struct hl_Blob* blob, const char
 HL_API enum HL_RESULT hl_ExtractLWArchiveNative(
     const struct hl_Blob* blob, const hl_NativeStr dir);
 
-// TODO: Should this return an HL_RESULT?
-HL_API void hl_CreateLWArchive(const struct hl_ArchiveFileEntry* files, size_t fileCount,
-    const char* dir, const char* name, uint32_t splitLimit, bool bigEndian);
+HL_API enum HL_RESULT hl_CreateLWArchives(const struct hl_ArchiveFileEntry* files,
+    size_t fileCount, const char* filePath, uint32_t splitLimit, bool bigEndian);
+
+HL_API enum HL_RESULT hl_CreateLWArchivesNative(const struct hl_ArchiveFileEntry* files,
+    size_t fileCount, const hl_NativeStr filePath, uint32_t splitLimit, bool bigEndian);
 
 #ifdef __cplusplus
 }
@@ -101,6 +103,13 @@ inline HL_RESULT hl_ExtractLWArchive(
     const struct hl_Blob* blob, const hl_NativeStr dir)
 {
     return hl_ExtractLWArchiveNative(blob, dir);
+}
+
+inline HL_RESULT hl_CreateLWArchives(const struct hl_ArchiveFileEntry* files,
+    size_t fileCount, const hl_NativeStr filePath, uint32_t splitLimit, bool bigEndian)
+{
+    return hl_CreateLWArchivesNative(files, fileCount,
+        filePath, splitLimit, bigEndian);
 }
 #endif
 #endif
