@@ -23,6 +23,10 @@ template<typename char_t>
 HL_RESULT hl_INPathGetStem(const char_t* path, char_t** stem);
 
 template<typename char_t>
+HL_RESULT hl_INPathGetParent(const char_t* path,
+    const char_t* fileName, char_t** parent);
+
+template<typename char_t>
 HL_RESULT hl_INPathGetParent(const char_t* path, char_t** parent);
 
 bool hl_INPathIsDirectory(const hl_NativeStr path);

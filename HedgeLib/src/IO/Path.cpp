@@ -316,15 +316,13 @@ enum HL_RESULT hl_PathGetStemNative(const hl_NativeStr path, hl_NativeStr* stem)
 }
 
 template<typename char_t>
-HL_RESULT hl_INPathGetParent(const char_t* path, char_t** parent)
+HL_RESULT hl_INPathGetParent(const char_t* path,
+    const char_t* fileName, char_t** parent)
 {
-    // Get name pointer
-    const char_t* fileName = hl_INPathGetNamePtr(path);
-
     // Get parent length
     size_t parentLen = static_cast<size_t>(fileName - path);
     if (parentLen < 2) ++parentLen;
-    
+
     // Malloc buffer large enough to hold stem
     *parent = static_cast<char_t*>(malloc(
         parentLen * sizeof(char_t)));
@@ -336,6 +334,22 @@ HL_RESULT hl_INPathGetParent(const char_t* path, char_t** parent)
     (*parent)[parentLen - 1] = static_cast<char_t>('\0');
     return HL_SUCCESS;
 }
+
+template<typename char_t>
+HL_RESULT hl_INPathGetParent(const char_t* path, char_t** parent)
+{
+    // Get name pointer
+    const char_t* fileName = hl_INPathGetNamePtr(path);
+
+    // Return parent
+    return hl_INPathGetParent(path, fileName, parent);
+}
+
+template HL_RESULT hl_INPathGetParent<char>(const char* path, char** parent);
+#ifdef _WIN32
+template HL_RESULT hl_INPathGetParent<hl_NativeChar>(
+    const hl_NativeChar* path, hl_NativeChar** parent);
+#endif
 
 enum HL_RESULT hl_PathGetParent(const char* path, char** parent)
 {
@@ -573,7 +587,6 @@ HL_RESULT hl_INPathGetFileCount(const hl_NativeStr dir,
 #ifdef _WIN32
     // Adjust the path for usage in the FindFile functions
     // (The Win32 API is the messiest thing I swear)
-    size_t dirLen = hl_StrLenNative(dir);
     hl_NativeStr fdir = static_cast<hl_NativeStr>(malloc(
         (dirLen + 7) * sizeof(hl_NativeChar)));
     //(dirLen && dir[dirLen - 2] == L'\\') ? 5 : 6));
