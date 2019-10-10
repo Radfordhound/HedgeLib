@@ -59,6 +59,21 @@ inline size_t hl_StrLenNative(const hl_NativeStr str)
 #endif
 }
 
+inline char* hl_StringCopy(const char* src, char* dst)
+{
+    return strcpy(dst, src);
+}
+
+inline hl_NativeStr hl_StringCopyNative(
+    const hl_NativeStr src, hl_NativeStr dst)
+{
+#ifdef _WIN32
+    return wcscpy(dst, src);
+#else
+    return strcpy(dst, src);
+#endif
+}
+
 HL_API bool hl_StringsEqualInvASCII(const char* str1, const char* str2);
 HL_API bool hl_StringsEqualInvASCIINative(
     const hl_NativeStr str1, const hl_NativeStr str2);
@@ -165,6 +180,11 @@ HL_API HL_RESULT hl_StringJoinNative(const hl_NativeStr str1,
 inline size_t hl_StrLen(const hl_NativeStr str)
 {
     return wcslen(str);
+}
+
+inline hl_NativeStr hl_StringCopy(const hl_NativeStr src, hl_NativeStr dst)
+{
+    return wcscpy(dst, src);
 }
 
 inline bool hl_StringsEqualInvASCII(
