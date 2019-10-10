@@ -1,5 +1,4 @@
 #pragma once
-#include "../Array.h"
 #include "../String.h"
 
 #ifdef __cplusplus
@@ -97,13 +96,6 @@ inline void hl_CreateArchiveFileEntryData(size_t dataSize,
 
 HL_API struct hl_ArchiveFileEntry* hl_CreateArchiveFileEntries(
     const char** files, size_t fileCount);
-
-inline struct hl_ArchiveFileEntry* hl_CreateArchiveFileEntriesArr(
-    struct hl_PtrArray* arr)
-{
-    return hl_CreateArchiveFileEntries(
-        (const char**)arr->Data, arr->Count);
-}
 
 #ifdef __cplusplus
 }

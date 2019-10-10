@@ -1,6 +1,5 @@
 #pragma once
 #include "../String.h"
-#include "../Array.h"
 #include <stdio.h>
 #include <wchar.h>
 
