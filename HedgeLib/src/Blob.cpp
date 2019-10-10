@@ -5,7 +5,7 @@
 
 enum HL_BLOB_FORMAT hl_BlobGetFormat(const struct hl_Blob* blob)
 {
-    return blob->Format;
+    return static_cast<enum HL_BLOB_FORMAT>(blob->Format);
 }
 
 const void* hl_BlobGetData(const struct hl_Blob* blob)

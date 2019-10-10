@@ -15,7 +15,7 @@ extern "C" {
 #define HL_BINA_OFFSET_SIZE_MASK    0xC0
 #define HL_BINA_OFFSET_DATA_MASK    0x3F
 
-enum HL_BINA_OFFSET_SIZE : uint8_t
+enum HL_BINA_OFFSET_SIZE
 {
     HL_BINA_SIX_BIT         = 0x40,
     HL_BINA_FOURTEEN_BIT    = 0x80,

@@ -16,7 +16,7 @@ HL_API extern const hl_NativeStr const hl_PACxExtensionNative;
 #define hl_PACxExtensionNative hl_PACxExtension
 #endif
 
-enum hl_PACxExtensionFlags : uint8_t
+enum hl_PACxExtensionFlags
 {
     HL_PACX_EXT_FLAGS_SPLIT_TYPE = 1,   // Whether this type can appear in split PACs
     HL_PACX_EXT_FLAGS_MIXED_TYPE = 3,   // Whether this type can appear in all PACs
@@ -25,9 +25,9 @@ enum hl_PACxExtensionFlags : uint8_t
 
 struct hl_PACxSupportedExtension
 {
-    const char* const Extension;            // An extension supported by the format (e.g. ".dds")
-    const uint16_t PACxDataType;            // The associated PACx Data Type (e.g. "ResTexture")
-    const enum hl_PACxExtensionFlags Flags; // States various properties of this extension
+    const char* const Extension;        // An extension supported by the format (e.g. ".dds")
+    const uint16_t PACxDataType;        // The associated PACx Data Type (e.g. "ResTexture")
+    const uint8_t Flags;                // States various properties of this extension
 };
 
 HL_API extern const struct hl_PACxSupportedExtension hl_PACxV2SupportedExtensions[];

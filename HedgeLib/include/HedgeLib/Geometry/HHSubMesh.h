@@ -1,8 +1,6 @@
 #pragma once
-#include "../Offsets.h"
 #include "../Endian.h"
 #include "../IO/IO.h"
-#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -20,7 +18,7 @@ struct hl_DHHTextureUnit
 HL_DECL_ENDIAN_SWAP(hl_DHHTextureUnit);
 HL_DECL_WRITEO(hl_DHHTextureUnit);
 
-enum HL_HHVERTEX_DATA_FORMAT : uint32_t
+enum HL_HHVERTEX_DATA_FORMAT
 {
     HL_HHVERTEX_FORMAT_UNKNOWN = 0,
     // TODO: Index_Byte might actually just be a uint as BLENDINDICES semantic in HLSL is a uint
@@ -37,7 +35,6 @@ enum HL_HHVERTEX_DATA_FORMAT : uint32_t
     HL_HHVERTEX_FORMAT_LAST_ENTRY = 0xFFFFFFFF
 };
 
-enum HL_HHVERTEX_DATA_TYPE : uint16_t
 {
     HL_HHVERTEX_TYPE_POSITION = 0,
     HL_HHVERTEX_TYPE_BONE_WEIGHT = 1,
@@ -52,8 +49,8 @@ enum HL_HHVERTEX_DATA_TYPE : uint16_t
 struct hl_DHHVertexElement
 {
     uint32_t Offset;
-    enum HL_HHVERTEX_DATA_FORMAT Format;
-    enum HL_HHVERTEX_DATA_TYPE Type;
+    uint32_t Format;
+    uint16_t Type;
     uint8_t Index;
     uint8_t Padding;
 

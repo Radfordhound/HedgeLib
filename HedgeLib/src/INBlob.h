@@ -5,9 +5,9 @@
 
 struct hl_Blob
 {
-    HL_BLOB_FORMAT Format;  // The general format of the data contained within the blob. (e.g. BINA)
-    uint16_t Type;          // The specific type of the data contained within the blob. (e.g. LW .pac)
-    uint8_t Data;           // The first byte of data. Do &Data to get data pointer.
+    uint16_t Format;    // The general format of the data contained within the blob. (e.g. BINA)
+    uint16_t Type;      // The specific type of the data contained within the blob. (e.g. LW .pac)
+    uint8_t Data;       // The first byte of data. Do &Data to get data pointer.
 
     template<typename T>
     inline T* GetData()

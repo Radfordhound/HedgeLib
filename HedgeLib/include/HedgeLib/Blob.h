@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-enum HL_BLOB_FORMAT : uint16_t
+enum HL_BLOB_FORMAT
 {
     HL_BLOB_FORMAT_UNKNOWN = 0,
     HL_BLOB_FORMAT_HEDGEHOG_ENGINE,

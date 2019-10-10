@@ -35,7 +35,7 @@ struct hl_DPACSplitTable
 HL_DECL_X64_OFFSETS(hl_DPACSplitTable);
 HL_DECL_ENDIAN_SWAP(hl_DPACSplitTable);
 
-enum HL_PACX_DATA_FLAGS : uint8_t
+enum HL_PACX_DATA_FLAGS
 {
     HL_PACX_DATA_FLAGS_NONE     = 0,
     HL_PACX_DATA_FLAGS_NO_DATA  = 0x80      // Indicates that this entry contains no data
@@ -46,7 +46,7 @@ struct hl_DPACDataEntry
     uint32_t DataSize;
     uint32_t Unknown1;
     uint32_t Unknown2;
-    enum HL_PACX_DATA_FLAGS Flags;
+    uint8_t Flags;
 
     HL_DECL_ENDIAN_SWAP_CPP();
 };
