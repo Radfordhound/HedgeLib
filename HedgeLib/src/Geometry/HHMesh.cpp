@@ -1,29 +1,24 @@
 #include "HedgeLib/Geometry/HHMesh.h"
 #include "HedgeLib/Geometry/HHSubMesh.h"
-#include "HedgeLib/Endian.h"
-#include "HedgeLib/IO/File.h"
 
-// hl_DHHSpecialSubMeshSlot
-HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHSpecialSubMeshSlot);
-HL_IMPL_ENDIAN_SWAP_RECURSIVE_CPP(hl_DHHSpecialSubMeshSlot);
-HL_IMPL_WRITEO_CPP(hl_DHHSpecialSubMeshSlot);
-HL_IMPL_X64_OFFSETS(hl_DHHSpecialSubMeshSlot);
+HL_IMPL_ENDIAN_SWAP_CPP(hl_HHSpecialSubMeshSlot);
+HL_IMPL_ENDIAN_SWAP_RECURSIVE_CPP(hl_HHSpecialSubMeshSlot);
 
-HL_IMPL_ENDIAN_SWAP(hl_DHHSpecialSubMeshSlot)
+HL_IMPL_ENDIAN_SWAP(hl_HHSpecialSubMeshSlot)
 {
     hl_Swap(v->Count);
 }
 
-HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHSpecialSubMeshSlot)
+HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_HHSpecialSubMeshSlot)
 {
     if (be) hl_Swap(v->Count);
 
-    // Swap SubMeshCounts/SubMeshes
-    for (std::uint32_t i = 0; i < v->Count; ++i)
+    // Swap submesh counts and submeshes
+    for (uint32_t i = 0; i < v->Count; ++i)
     {
         if (be) hl_Swap(*(v->SubMeshCounts[i].Get()));
 
-        // Swap SubMeshes
+        // Swap submeshes
         uint32_t subMeshCount = *(v->SubMeshCounts[i].Get());
         for (uint32_t i2 = 0; i2 < subMeshCount; ++i2)
         {
@@ -36,18 +31,10 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHSpecialSubMeshSlot)
     if (!be) hl_Swap(v->Count);
 }
 
-HL_IMPL_WRITEO(hl_DHHSpecialSubMeshSlot)
-{
-    // TODO
-}
+HL_IMPL_ENDIAN_SWAP_CPP(hl_HHMesh);
+HL_IMPL_ENDIAN_SWAP_RECURSIVE_CPP(hl_HHMesh);
 
-// hl_DHHMesh
-HL_IMPL_ENDIAN_SWAP_CPP(hl_DHHMesh);
-HL_IMPL_ENDIAN_SWAP_RECURSIVE_CPP(hl_DHHMesh);
-HL_IMPL_WRITEO_CPP(hl_DHHMesh);
-HL_IMPL_X64_OFFSETS(hl_DHHMesh);
-
-HL_IMPL_ENDIAN_SWAP(hl_DHHMesh)
+HL_IMPL_ENDIAN_SWAP(hl_HHMesh)
 {
     hl_Swap(v->Solid);
     hl_Swap(v->Transparent);
@@ -55,15 +42,10 @@ HL_IMPL_ENDIAN_SWAP(hl_DHHMesh)
     v->Special.EndianSwap();
 }
 
-HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_DHHMesh)
+HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_HHMesh)
 {
-    hl_SwapRecursive<HL_OFF32(hl_DHHSubMesh)>(be, v->Solid);
-    hl_SwapRecursive<HL_OFF32(hl_DHHSubMesh)>(be, v->Transparent);
-    hl_SwapRecursive<HL_OFF32(hl_DHHSubMesh)>(be, v->Boolean);
+    hl_SwapRecursive(be, v->Solid);
+    hl_SwapRecursive(be, v->Transparent);
+    hl_SwapRecursive(be, v->Boolean);
     v->Special.EndianSwapRecursive(be);
-}
-
-HL_IMPL_WRITEO(hl_DHHMesh)
-{
-    // TODO
 }

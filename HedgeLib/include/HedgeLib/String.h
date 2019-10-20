@@ -1,6 +1,6 @@
 #pragma once
 #include "HedgeLib.h"
-#include "Errors.h"
+#include "Result.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,6 +9,9 @@
 extern "C" {
 #else
 #include <stdbool.h>
+#ifdef _WIN32
+#include <wchar.h>
+#endif
 #endif
 
 #ifdef _WIN32
@@ -19,8 +22,7 @@ typedef char hl_NativeChar;
 #define HL_NATIVE_TEXT(str) str
 #endif
 
-#define hl_NativeStr hl_NativeChar*
-#define HL_CREATE_NATIVE_STR(len) ((hl_NativeStr)\
+#define HL_CREATE_NATIVE_STR(len) ((hl_NativeChar*)\
     malloc((len) * sizeof(hl_NativeChar)))
 
 #define HL_TOLOWERASCII(c) ((c >= '[' || c <= '@') ? c : (c + 32))
@@ -28,7 +30,7 @@ typedef char hl_NativeChar;
 HL_API extern const char* const hl_EmptyString;
 
 #ifdef _WIN32
-HL_API extern const hl_NativeStr const hl_EmptyStringNative;
+HL_API extern const hl_NativeChar* const hl_EmptyStringNative;
 #else
 #define hl_EmptyStringNative hl_EmptyString
 #endif
@@ -50,7 +52,7 @@ inline size_t hl_StrLen(const char* str)
     return strlen(str);
 }
 
-inline size_t hl_StrLenNative(const hl_NativeStr str)
+inline size_t hl_StrLenNative(const hl_NativeChar* str)
 {
 #ifdef _WIN32
     return wcslen(str);
@@ -64,8 +66,8 @@ inline char* hl_StringCopy(const char* src, char* dst)
     return strcpy(dst, src);
 }
 
-inline hl_NativeStr hl_StringCopyNative(
-    const hl_NativeStr src, hl_NativeStr dst)
+inline hl_NativeChar* hl_StringCopyNative(
+    const hl_NativeChar* src, hl_NativeChar* dst)
 {
 #ifdef _WIN32
     return wcscpy(dst, src);
@@ -76,7 +78,7 @@ inline hl_NativeStr hl_StringCopyNative(
 
 HL_API bool hl_StringsEqualInvASCII(const char* str1, const char* str2);
 HL_API bool hl_StringsEqualInvASCIINative(
-    const hl_NativeStr str1, const hl_NativeStr str2);
+    const hl_NativeChar* str1, const hl_NativeChar* str2);
 
 inline size_t hl_StringGetReqUTF8UnitCount(uint32_t cp)
 {
@@ -132,7 +134,7 @@ inline size_t hl_StringGetReqNativeBufferCountUTF16(
 #endif
 }
 
-inline bool hl_StringsEqualNative(const hl_NativeStr str1, const hl_NativeStr str2)
+inline bool hl_StringsEqualNative(const hl_NativeChar* str1, const hl_NativeChar* str2)
 {
 #ifdef _WIN32
     return !wcscmp(str1, str2);
@@ -151,13 +153,13 @@ HL_API enum HL_RESULT hl_StringConvertUTF16ToCP932(
     const uint16_t* u16str, char** cp932str, size_t HL_DEFARG(u16bufLen, 0));
 
 HL_API enum HL_RESULT hl_StringConvertUTF8ToNative(
-    const char* u8str, hl_NativeStr* nativeStr, size_t HL_DEFARG(u8bufLen, 0));
+    const char* u8str, hl_NativeChar** nativeStr, size_t HL_DEFARG(u8bufLen, 0));
 
 HL_API enum HL_RESULT hl_StringConvertUTF16ToUTF8(
     const uint16_t* u16str, char** u8str, size_t HL_DEFARG(u16bufLen, 0));
 
 HL_API enum HL_RESULT hl_StringConvertUTF16ToNative(
-    const uint16_t* u16str, hl_NativeStr* nativeStr, size_t HL_DEFARG(u16bufLen, 0));
+    const uint16_t* u16str, hl_NativeChar** nativeStr, size_t HL_DEFARG(u16bufLen, 0));
 
 HL_API enum HL_RESULT hl_StringConvertCP932ToUTF8(
     const char* cp932str, char** u8str, size_t HL_DEFARG(cp932bufLen, 0));
@@ -166,29 +168,34 @@ HL_API enum HL_RESULT hl_StringConvertCP932ToUTF16(
     const char* cp932str, uint16_t** u16str, size_t HL_DEFARG(cp932bufLen, 0));
 
 HL_API enum HL_RESULT hl_StringConvertCP932ToNative(
-    const char* cp932str, hl_NativeStr* nativeStr, size_t HL_DEFARG(cp932bufLen, 0));
+    const char* cp932str, hl_NativeChar** nativeStr, size_t HL_DEFARG(cp932bufLen, 0));
 
 HL_API HL_RESULT hl_StringJoin(const char* str1, const char* str2, char** result);
-HL_API HL_RESULT hl_StringJoinNative(const hl_NativeStr str1,
-    const hl_NativeStr str2, hl_NativeStr* result);
+HL_API HL_RESULT hl_StringJoinNative(const hl_NativeChar* str1,
+    const hl_NativeChar* str2, hl_NativeChar** result);
 
 #ifdef __cplusplus
 }
 
+#include "Memory.h"
+
+using hl_CStrPtr = hl_CPtr<char>;
+using hl_NStrPtr = hl_CPtr<hl_NativeChar>;
+
 // Windows-specific overloads
 #ifdef _WIN32
-inline size_t hl_StrLen(const hl_NativeStr str)
+inline size_t hl_StrLen(const hl_NativeChar* str)
 {
     return wcslen(str);
 }
 
-inline hl_NativeStr hl_StringCopy(const hl_NativeStr src, hl_NativeStr dst)
+inline hl_NativeChar* hl_StringCopy(const hl_NativeChar* src, hl_NativeChar* dst)
 {
     return wcscpy(dst, src);
 }
 
 inline bool hl_StringsEqualInvASCII(
-    const hl_NativeStr str1, const hl_NativeStr str2)
+    const hl_NativeChar* str1, const hl_NativeChar* str2)
 {
     return hl_StringsEqualInvASCIINative(str1, str2);
 }

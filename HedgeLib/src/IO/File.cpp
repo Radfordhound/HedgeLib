@@ -1,360 +1,325 @@
 #include "HedgeLib/IO/File.h"
 #include "../INString.h"
 #include <array>
-#include <memory>
 #include <algorithm>
-#include <filesystem>
+#include <new>
 
 #ifdef _WIN32
 #include <Windows.h>
 #endif
 
-enum HL_RESULT hl_FileGetSize(const char* filePath, size_t* size)
+constexpr const hl_NativeChar* hl_INFileGetOpenMode(const HL_FILE_MODE mode)
 {
-    if (!size) return HL_ERROR_UNKNOWN;
-    return hl_File::GetSize(filePath, *size);
+    switch (mode)
+    {
+    case HL_FILE_MODE_READ_BINARY:
+        return HL_NATIVE_TEXT("rb");
+    case HL_FILE_MODE_WRITE_BINARY:
+        return HL_NATIVE_TEXT("wb");
+    case HL_FILE_MODE_APPEND_BINARY:
+        return HL_NATIVE_TEXT("ab");
+    case HL_FILE_MODE_READ_UPDATE_BINARY:
+        return HL_NATIVE_TEXT("r+b");
+    case HL_FILE_MODE_WRITE_UPDATE_BINARY:
+        return HL_NATIVE_TEXT("w+b");
+    case HL_FILE_MODE_APPEND_UPDATE_BINARY:
+        return HL_NATIVE_TEXT("a+b");
+    case HL_FILE_MODE_READ_TEXT:
+        return HL_NATIVE_TEXT("r");
+    case HL_FILE_MODE_WRITE_TEXT:
+        return HL_NATIVE_TEXT("w");
+    case HL_FILE_MODE_APPEND_TEXT:
+        return HL_NATIVE_TEXT("a");
+    case HL_FILE_MODE_READ_UPDATE_TEXT:
+        return HL_NATIVE_TEXT("r+");
+    case HL_FILE_MODE_WRITE_UPDATE_TEXT:
+        return HL_NATIVE_TEXT("w+");
+    case HL_FILE_MODE_APPEND_UPDATE_TEXT:
+        return HL_NATIVE_TEXT("a+");
+    default:
+        return nullptr;
+    }
 }
 
-enum HL_RESULT hl_FileGetSizeNative(const hl_NativeStr filePath, size_t* size)
+hl_File* hl_FileOpen(const char* filePath, HL_FILE_MODE mode)
 {
-    if (!size) return HL_ERROR_UNKNOWN;
-    return hl_File::GetSize(filePath, *size);
+    hl_File* f = new (std::nothrow) hl_File();
+    if (!f || !f->OpenRead(filePath)) return nullptr;
+    return f;
 }
 
-struct hl_File* hl_FileOpen(const char* filePath, const enum HL_FILEMODE mode)
+hl_File* hl_FileOpenNative(const hl_NativeChar* filePath, HL_FILE_MODE mode)
 {
-    return new hl_File(filePath, mode);
+    hl_File* f = new (std::nothrow) hl_File();
+    if (!f || !f->OpenReadNative(filePath)) return nullptr;
+    return f;
 }
 
-struct hl_File* hl_FileOpenNative(
-    const hl_NativeStr filePath, const enum HL_FILEMODE mode)
+hl_File* hl_FileInit(FILE* file, bool doSwap, long origin)
 {
-    return new hl_File(filePath, mode);
+    return new (std::nothrow) hl_File(file, doSwap, origin);
 }
 
-struct hl_File* hl_FileInit(FILE* file, bool doSwap, long origin)
-{
-    return new hl_File(file, doSwap, origin);
-}
-
-enum HL_RESULT hl_FileClose(struct hl_File* file)
+HL_RESULT hl_FileClose(struct hl_File* file)
 {
     HL_RESULT result = file->Close();
     delete file;
     return result;
 }
 
-void hl_FileSetDoSwap(struct hl_File* file, bool doSwap)
+void hl_FileSetDoEndianSwap(hl_File* file, bool doSwap)
 {
     file->DoEndianSwap = doSwap;
 }
 
-void hl_FileSetOrigin(struct hl_File* file, long origin)
+void hl_FileSetOrigin(hl_File* file, long origin)
 {
     file->Origin = origin;
 }
 
-FILE* hl_FileGetPtr(const struct hl_File* file)
+const FILE* hl_FileGetPtr(const hl_File* file)
 {
     return file->Get();
 }
 
-bool hl_FileGetDoSwap(const struct hl_File* file)
+bool hl_FileGetDoEndianSwap(const hl_File* file)
 {
     return file->DoEndianSwap;
 }
 
-long hl_FileGetOrigin(const struct hl_File* file)
+long hl_FileGetOrigin(const hl_File* file)
 {
     return file->Origin;
 }
 
-enum HL_RESULT hl_FileRead(const struct hl_File* file, void* buffer, size_t size)
+HL_RESULT hl_FileRead(const hl_File* file, void* buffer, size_t size)
 {
+    if (!file) return HL_ERROR_INVALID_ARGS;
     return file->ReadBytes(buffer, size);
 }
 
 size_t hl_FileReadArr(const struct hl_File* file, void* buffer,
     size_t elementSize, size_t elementCount)
 {
+    if (!file) return HL_ERROR_INVALID_ARGS;
     return file->ReadBytes(buffer, elementSize, elementCount);
 }
 
-uint8_t hl_FileReadUInt8(const struct hl_File* file)
+HL_RESULT hl_FileReadUInt8(const hl_File* file, uint8_t* v)
 {
-    return file->ReadUInt8();
+    if (!file || !v) return HL_ERROR_INVALID_ARGS;
+    return file->Read(*v);
 }
 
-int8_t hl_FileReadInt8(const struct hl_File* file)
+HL_RESULT hl_FileReadInt8(const hl_File* file, int8_t* v)
 {
-    return file->ReadInt8();
+    if (!file || !v) return HL_ERROR_INVALID_ARGS;
+    return file->Read(*v);
 }
 
-uint16_t hl_FileReadUInt16(const struct hl_File* file)
+HL_RESULT hl_FileReadUInt16(const hl_File* file, uint16_t* v)
 {
-    return file->ReadUInt16();
+    if (!file || !v) return HL_ERROR_INVALID_ARGS;
+    return file->Read(*v);
 }
 
-int16_t hl_FileReadInt16(const struct hl_File* file)
+HL_RESULT hl_FileReadInt16(const hl_File* file, int16_t* v)
 {
-    return file->ReadInt16();
+    if (!file || !v) return HL_ERROR_INVALID_ARGS;
+    return file->Read(*v);
 }
 
-uint32_t hl_FileReadUInt32(const struct hl_File* file)
+HL_RESULT hl_FileReadUInt32(const hl_File* file, uint32_t* v)
 {
-    return file->ReadUInt32();
+    if (!file || !v) return HL_ERROR_INVALID_ARGS;
+    return file->Read(*v);
 }
 
-int32_t hl_FileReadInt32(const struct hl_File* file)
+HL_RESULT hl_FileReadInt32(const hl_File* file, int32_t* v)
 {
-    return file->ReadInt32();
+    if (!file || !v) return HL_ERROR_INVALID_ARGS;
+    return file->Read(*v);
 }
 
-float hl_FileReadFloat(const struct hl_File* file)
+HL_RESULT hl_FileReadFloat(const hl_File* file, float* v)
 {
-    return file->ReadFloat();
+    if (!file || !v) return HL_ERROR_INVALID_ARGS;
+    return file->Read(*v);
 }
 
-uint64_t hl_FileReadUInt64(const struct hl_File* file)
+HL_RESULT hl_FileReadUInt64(const hl_File* file, uint64_t* v)
 {
-    return file->ReadUInt64();
+    if (!file || !v) return HL_ERROR_INVALID_ARGS;
+    return file->Read(*v);
 }
 
-int64_t hl_FileReadInt64(const struct hl_File* file)
+HL_RESULT hl_FileReadInt64(const hl_File* file, int64_t* v)
 {
-    return file->ReadInt64();
+    if (!file || !v) return HL_ERROR_INVALID_ARGS;
+    return file->Read(*v);
 }
 
-double hl_FileReadDouble(const struct hl_File* file)
+HL_RESULT hl_FileReadDouble(const hl_File* file, double* v)
 {
-    return file->ReadDouble();
+    if (!file || !v) return HL_ERROR_INVALID_ARGS;
+    return file->Read(*v);
 }
 
-char* hl_FileReadString(const struct hl_File* file)
+HL_RESULT hl_FileReadString(const hl_File* file, char** str)
 {
+    if (!file || !str) return HL_ERROR_INVALID_ARGS;
+
     // Read string
-    std::string str;
-    if (HL_FAILED(file->ReadString(str))) return nullptr;
+    HL_RESULT result;
+    std::string s;
+    result = file->ReadString(s);
+
+    if (HL_FAILED(result)) return result;
 
     // Convert to C string
-    char* cstr = static_cast<char*>(malloc(
-        sizeof(char) * (str.size() + 1)));
+    *str = static_cast<char*>(malloc(
+        sizeof(char) * (s.size() + 1)));
 
-    std::copy(str.begin(), str.end(), cstr);
-    cstr[str.size()] = '\0';
+    if (!*str) return HL_ERROR_OUT_OF_MEMORY;
 
-    return cstr;
-}
+    std::copy(s.begin(), s.end(), *str);
+    (*str)[s.size()] = '\0';
 
-wchar_t* hl_FileReadWString(const struct hl_File* file)
-{
-    // Read string
-    std::wstring str;
-    if (HL_FAILED(file->ReadWString(str))) return nullptr;
-
-    // Convert to C string
-    wchar_t* cstr = static_cast<wchar_t*>(malloc(
-        sizeof(wchar_t) * (str.size() + 1)));
-
-    std::copy(str.begin(), str.end(), cstr);
-    cstr[str.size()] = L'\0';
-
-    return cstr;
-}
-
-enum HL_RESULT hl_FileWrite(const struct hl_File* file,
-    const void* buffer, size_t size)
-{
-    return file->WriteBytes(buffer, size);
-}
-
-size_t hl_FileWriteArr(const struct hl_File* file,
-    const void* buffer, size_t elementSize, size_t elementCount)
-{
-    return file->WriteBytes(buffer, elementSize, elementCount);
-}
-
-enum HL_RESULT hl_FileWriteNulls(const struct hl_File* file, size_t amount)
-{
-    return file->WriteNulls(amount);
-}
-
-long hl_FileTell(const struct hl_File* file)
-{
-    return file->Tell();
-}
-
-int hl_FileSeek(const struct hl_File* file, long offset, enum HL_SEEK_ORIGIN origin)
-{
-    return file->Seek(offset, origin);
-}
-
-int hl_FileJumpTo(const struct hl_File* file, long pos)
-{
-    return file->JumpTo(pos);
-}
-
-int hl_FileJumpAhead(const struct hl_File* file, long amount)
-{
-    return file->JumpAhead(amount);
-}
-
-int hl_FileJumpBehind(const struct hl_File* file, long amount)
-{
-    return file->JumpBehind(amount);
-}
-
-int hl_FileAlign(const struct hl_File* file, long stride)
-{
-    return file->Align(stride);
-}
-
-enum HL_RESULT hl_FilePad(const struct hl_File* file, long stride)
-{
-    return file->Pad(stride);
-}
-
-constexpr const char* GetFileOpenMode(const HL_FILEMODE mode)
-{
-    switch (mode)
-    {
-    case HL_FILEMODE_READ_BINARY:
-        return "rb";
-    case HL_FILEMODE_WRITE_BINARY:
-        return "wb";
-    case HL_FILEMODE_APPEND_BINARY:
-        return "ab";
-    case HL_FILEMODE_READ_UPDATE_BINARY:
-        return "r+b";
-    case HL_FILEMODE_WRITE_UPDATE_BINARY:
-        return "w+b";
-    case HL_FILEMODE_APPEND_UPDATE_BINARY:
-        return "a+b";
-    case HL_FILEMODE_READ_TEXT:
-        return "r";
-    case HL_FILEMODE_WRITE_TEXT:
-        return "w";
-    case HL_FILEMODE_APPEND_TEXT:
-        return "a";
-    case HL_FILEMODE_READ_UPDATE_TEXT:
-        return "r+";
-    case HL_FILEMODE_WRITE_UPDATE_TEXT:
-        return "w+";
-    case HL_FILEMODE_APPEND_UPDATE_TEXT:
-        return "a+";
-    default:
-        return nullptr;
-    }
-}
-
-constexpr const wchar_t* GetFileOpenModeW(const HL_FILEMODE mode)
-{
-    switch (mode)
-    {
-    case HL_FILEMODE_READ_BINARY:
-        return L"rb";
-    case HL_FILEMODE_WRITE_BINARY:
-        return L"wb";
-    case HL_FILEMODE_APPEND_BINARY:
-        return L"ab";
-    case HL_FILEMODE_READ_UPDATE_BINARY:
-        return L"r+b";
-    case HL_FILEMODE_WRITE_UPDATE_BINARY:
-        return L"w+b";
-    case HL_FILEMODE_APPEND_UPDATE_BINARY:
-        return L"a+b";
-    case HL_FILEMODE_READ_TEXT:
-        return L"r";
-    case HL_FILEMODE_WRITE_TEXT:
-        return L"w";
-    case HL_FILEMODE_APPEND_TEXT:
-        return L"a";
-    case HL_FILEMODE_READ_UPDATE_TEXT:
-        return L"r+";
-    case HL_FILEMODE_WRITE_UPDATE_TEXT:
-        return L"w+";
-    case HL_FILEMODE_APPEND_UPDATE_TEXT:
-        return L"a+";
-    default:
-        return nullptr;
-    }
-}
-
-HL_RESULT hl_File::OpenNoCloseNative(const hl_NativeStr filePath,
-    const HL_FILEMODE mode)
-{
-    if (!filePath) return HL_ERROR_UNKNOWN;
-
-#ifdef _WIN32
-    // Windows-specific wide file open
-    if (_wfopen_s(&f, filePath, GetFileOpenModeW(mode)))
-    {
-        // TODO: Return better error
-        f = nullptr; // TODO: Is this necessary? (I think not)
-        return HL_ERROR_UNKNOWN;
-    }
-#else
-    // UTF-8 fopen
-    if (!(f = std::fopen(filePath, GetFileOpenMode(mode))))
-    {
-        // TODO: Return better error
-        return HL_ERROR_UNKNOWN;
-    }
-#endif
-
-    closeOnDestruct = true;
     return HL_SUCCESS;
 }
 
-HL_RESULT hl_File::OpenNoClose(const char* filePath,
-    const HL_FILEMODE mode)
+HL_RESULT hl_FileReadStringUTF16(const hl_File* file, uint16_t** str)
+{
+    if (!file || !str) return HL_ERROR_INVALID_ARGS;
+
+    // Read string
+    HL_RESULT result;
+    std::u16string s;
+    result = file->ReadStringUTF16(s);
+
+    if (HL_FAILED(result)) return result;
+
+    // Convert to C string
+    *str = static_cast<uint16_t*>(malloc(
+        sizeof(uint16_t) * (s.size() + 1)));
+
+    if (!*str) return HL_ERROR_OUT_OF_MEMORY;
+
+    std::copy(s.begin(), s.end(), *str);
+    (*str)[s.size()] = 0;
+
+    return HL_SUCCESS;
+}
+
+HL_RESULT hl_FileWrite(const struct hl_File* file,
+    const void* buffer, size_t size)
+{
+    if (!file) return HL_ERROR_INVALID_ARGS;
+    return file->WriteBytes(buffer, size);
+}
+
+size_t hl_FileWriteArr(const hl_File* file,
+    const void* buffer, size_t elementSize, size_t elementCount)
+{
+    if (!file) return HL_ERROR_INVALID_ARGS;
+    return file->WriteBytes(buffer, elementSize, elementCount);
+}
+
+HL_RESULT hl_FileWriteNull(const hl_File* file)
+{
+    if (!file) return HL_ERROR_INVALID_ARGS;
+    return file->WriteNull();
+}
+
+HL_RESULT hl_FileWriteNulls(const hl_File* file, size_t amount)
+{
+    if (!file) return HL_ERROR_INVALID_ARGS;
+    return file->WriteNulls(amount);
+}
+
+long hl_FileTell(const hl_File* file)
+{
+    if (!file) return -1L;
+    return file->Tell();
+}
+
+HL_RESULT hl_FileSeek(const hl_File* file, long offset, HL_SEEK_ORIGIN origin)
+{
+    if (!file) return HL_ERROR_INVALID_ARGS;
+    return file->Seek(offset, origin);
+}
+
+HL_RESULT hl_FileJumpTo(const hl_File* file, long pos)
+{
+    if (!file) return HL_ERROR_INVALID_ARGS;
+    return file->JumpTo(pos);
+}
+
+HL_RESULT hl_FileJumpAhead(const hl_File* file, long amount)
+{
+    if (!file) return HL_ERROR_INVALID_ARGS;
+    return file->JumpAhead(amount);
+}
+
+HL_RESULT hl_FileJumpBehind(const hl_File* file, long amount)
+{
+    if (!file) return HL_ERROR_INVALID_ARGS;
+    return file->JumpBehind(amount);
+}
+
+HL_RESULT hl_FileAlign(const hl_File* file, unsigned long stride)
+{
+    if (!file) return HL_ERROR_INVALID_ARGS;
+    return file->Align(stride);
+}
+
+HL_RESULT hl_FilePad(const hl_File* file, unsigned long stride)
+{
+    if (!file) return HL_ERROR_INVALID_ARGS;
+    return file->Pad(stride);
+}
+
+HL_RESULT hl_File::OpenNoClose(const char* filePath, HL_FILE_MODE mode)
 {
 #ifdef _WIN32
     // Only necessary on Windows since we're about to convert filePath to UTF-16;
     // on other platforms the check in OpenNoCloseNative is sufficient.
-    if (!filePath) return HL_ERROR_UNKNOWN;
+    if (!filePath) return HL_ERROR_INVALID_ARGS;
 #endif
 
     HL_INSTRING_NATIVE_CALL(filePath,
         OpenNoCloseNative(nativeStr, mode));
 }
 
-#ifdef _WIN32
-HL_RESULT hl_File::GetSize(const hl_NativeStr filePath, size_t& size)
+HL_RESULT hl_File::OpenNoCloseNative(
+    const hl_NativeChar* filePath, HL_FILE_MODE mode)
 {
-    if (!filePath) return HL_ERROR_UNKNOWN;
+    if (!filePath) return HL_ERROR_INVALID_ARGS;
 
-    // TODO: Rework this function to not use the C++17 filesystem stuff to avoid copies
-    // TODO: Error handling
-    std::error_code ec;
-    std::uintmax_t s = std::filesystem::file_size(
-        std::filesystem::path(filePath), ec);
-
-    // TODO: Check if s can fit within a size_t
-    size = static_cast<size_t>(s);
-    return HL_SUCCESS;
-}
+#ifdef _WIN32
+    // Windows-specific UTF-16 file open
+    if (_wfopen_s(&f, filePath, hl_INFileGetOpenMode(mode)))
+    {
+        // TODO: Return better error
+        return HL_ERROR_UNKNOWN;
+    }
+#else
+    // UTF-8 fopen
+    if (!(f = fopen(filePath, hl_INFileGetOpenMode(mode))))
+    {
+        // TODO: Return better error
+        return HL_ERROR_UNKNOWN;
+    }
 #endif
 
-HL_RESULT hl_File::GetSize(const char* filePath, size_t& size)
-{
-    if (!filePath) return HL_ERROR_UNKNOWN;
-
-    // TODO: Rework this function to not use the C++17 filesystem stuff to avoid copies
-    // TODO: Error handling
-    std::error_code ec;
-    std::uintmax_t s = std::filesystem::file_size(
-        std::filesystem::u8path(filePath), ec);
-
-    // TODO: Check if s can fit within a size_t
-    size = static_cast<size_t>(s);
+    isOpen = true;
     return HL_SUCCESS;
 }
 
 HL_RESULT hl_File::Close()
 {
     HL_RESULT result = HL_SUCCESS;
-    if (f)
+    if (isOpen)
     {
         // Error check
         if (fclose(f))
@@ -363,7 +328,7 @@ HL_RESULT hl_File::Close()
             result = HL_ERROR_UNKNOWN;
         }
 
-        f = nullptr;
+        isOpen = false;
     }
 
     return result;
@@ -371,78 +336,110 @@ HL_RESULT hl_File::Close()
 
 HL_RESULT hl_File::ReadString(std::string& str) const
 {
-    // TODO: Make this portable; sizeof(char) == 1 isn't true on every platform
-    // TODO: can we make this faster?
     HL_RESULT result;
-    char c;
+    uint8_t c;
 
-    while (HL_OK((result = ReadNoSwap(c))))
+    try
     {
-        if (c == '\0') break;
-        str += c;
+        while (HL_OK((result = ReadNoSwap(c))))
+        {
+            if (c == 0) break;
+            str += static_cast<char>(c);
+        }
+    }
+    catch (const std::bad_alloc&)
+    {
+        return HL_ERROR_OUT_OF_MEMORY;
+    }
+    catch (...)
+    {
+        return HL_ERROR_UNKNOWN;
     }
 
     return result;
 }
 
-HL_RESULT hl_File::ReadWString(std::wstring& str) const
+HL_RESULT hl_File::ReadStringUTF16(std::u16string& str) const
 {
-    // TODO: Make this portable; on mac/linux sizeof(wchar_t) == 4
-    // TODO: can we make this faster?
     HL_RESULT result;
-    wchar_t c;
+    uint16_t c;
 
-    while (HL_OK((result = Read(c))))
+    try
     {
-        if (c == L'\0') break;
-        str += c;
+        while (HL_OK((result = ReadNoSwap(c))))
+        {
+            if (c == 0) break;
+            str += static_cast<char16_t>(c);
+        }
+    }
+    catch (const std::bad_alloc&)
+    {
+        return HL_ERROR_OUT_OF_MEMORY;
+    }
+    catch (...)
+    {
+        return HL_ERROR_UNKNOWN;
     }
 
     return result;
 }
 
-enum HL_RESULT hl_FileWriteNull(const struct hl_File* file)
-{
-    return file->WriteNull();
-}
-
-template<std::size_t count>
-inline HL_RESULT hl_internal_WriteNulls(const hl_File& file)
+template<size_t count>
+inline HL_RESULT hl_INFileWriteNulls(const hl_File& file)
 {
     // Creates an array of the given size on the stack and writes it
-    std::array<std::uint8_t, count> nulls = {};
+    std::array<uint8_t, count> nulls = {};
     return file.WriteBytes(nulls.data(), count);
 }
 
-HL_RESULT hl_File::WriteNulls(std::size_t amount) const
+HL_RESULT hl_File::WriteNulls(size_t amount) const
 {
-    if (amount < 1) return HL_SUCCESS;
-
-    // Create small (1-8 bytes in size) arrays on
+    // Create small (1-16 bytes in size) arrays on
     // the stack instead of the heap for efficiency.
     switch (amount)
     {
+    case 0:
+        return HL_SUCCESS; // No need to write anything in this case obviously
     case 1:
         return WriteNull();
     case 2:
-        return hl_internal_WriteNulls<2>(*this);
+        return hl_INFileWriteNulls<2>(*this);
     case 3:
-        return hl_internal_WriteNulls<3>(*this);
+        return hl_INFileWriteNulls<3>(*this);
     case 4:
-        return hl_internal_WriteNulls<4>(*this);
+        return hl_INFileWriteNulls<4>(*this);
     case 5:
-        return hl_internal_WriteNulls<5>(*this);
+        return hl_INFileWriteNulls<5>(*this);
     case 6:
-        return hl_internal_WriteNulls<6>(*this);
+        return hl_INFileWriteNulls<6>(*this);
     case 7:
-        return hl_internal_WriteNulls<7>(*this);
+        return hl_INFileWriteNulls<7>(*this);
     case 8:
-        return hl_internal_WriteNulls<8>(*this);
+        return hl_INFileWriteNulls<8>(*this);
+    case 9:
+        return hl_INFileWriteNulls<9>(*this);
+    case 10:
+        return hl_INFileWriteNulls<10>(*this);
+    case 11:
+        return hl_INFileWriteNulls<11>(*this);
+    case 12:
+        return hl_INFileWriteNulls<12>(*this);
+    case 13:
+        return hl_INFileWriteNulls<13>(*this);
+    case 14:
+        return hl_INFileWriteNulls<14>(*this);
+    case 15:
+        return hl_INFileWriteNulls<15>(*this);
+    case 16:
+        return hl_INFileWriteNulls<16>(*this);
     }
 
     // Allocate larger arrays on the heap
-    std::unique_ptr<uint8_t[]> nulls =
-        std::make_unique<uint8_t[]>(amount);
+    void* nulls = calloc(amount, 1);
+    if (!nulls) return HL_ERROR_OUT_OF_MEMORY;
 
-    return WriteBytes(nulls.get(), amount);
+    // Write to file
+    HL_RESULT result = WriteBytes(nulls, amount);
+    free(nulls);
+    return result;
 }

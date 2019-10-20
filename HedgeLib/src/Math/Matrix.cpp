@@ -1,10 +1,7 @@
 #include "HedgeLib/Math/Matrix.h"
-#include "HedgeLib/IO/File.h"
 
 // hl_Matrix4x4
 HL_IMPL_ENDIAN_SWAP_CPP(hl_Matrix4x4);
-HL_IMPL_WRITE_CPP(hl_Matrix4x4);
-
 HL_IMPL_ENDIAN_SWAP(hl_Matrix4x4)
 {
     hl_SwapFloat(&v->M11);
@@ -26,9 +23,4 @@ HL_IMPL_ENDIAN_SWAP(hl_Matrix4x4)
     hl_SwapFloat(&v->M42);
     hl_SwapFloat(&v->M43);
     hl_SwapFloat(&v->M44);
-}
-
-HL_IMPL_WRITE(hl_Matrix4x4)
-{
-    file->Write(*ptr);
 }

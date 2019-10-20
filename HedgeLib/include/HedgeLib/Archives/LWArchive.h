@@ -1,115 +1,67 @@
 #pragma once
 #include "PACx.h"
-#include "../Offsets.h"
-#include "../Endian.h"
-#include "../IO/IO.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct hl_DPACProxyEntry
+typedef struct hl_Archive hl_Archive;
+
+typedef struct hl_LWArchive
 {
-    HL_STR32 Extension;
-    HL_STR32 Name;
-    uint32_t Index;
+    hl_PACxV2DataNode Header;
 
-    HL_INLN_X64_OFFSETS_CPP(Extension, Name);
-    HL_DECL_ENDIAN_SWAP_CPP();
-};
+    // Each node in here contains another array of nodes, this time containing hl_PACxV2DataEntries.
+    HL_ARR32(hl_PACxV2Node) TypeTree;
 
-HL_DECL_X64_OFFSETS(hl_DPACProxyEntry);
-HL_DECL_ENDIAN_SWAP(hl_DPACProxyEntry);
-
-typedef HL_ARR32(hl_DPACProxyEntry) hl_DPACProxyEntryTable;
-
-struct hl_DPACSplitTable
-{
-    HL_OFF32(HL_STR32) Splits;
-    uint32_t SplitCount;
-
-    HL_INLN_X64_OFFSETS_CPP(Splits);
-    HL_DECL_ENDIAN_SWAP_CPP();
-};
-
-HL_DECL_X64_OFFSETS(hl_DPACSplitTable);
-HL_DECL_ENDIAN_SWAP(hl_DPACSplitTable);
-
-enum HL_PACX_DATA_FLAGS
-{
-    HL_PACX_DATA_FLAGS_NONE     = 0,
-    HL_PACX_DATA_FLAGS_NO_DATA  = 0x80      // Indicates that this entry contains no data
-};
-
-struct hl_DPACDataEntry
-{
-    uint32_t DataSize;
-    uint32_t Unknown1;
-    uint32_t Unknown2;
-    uint8_t Flags;
-
-    HL_DECL_ENDIAN_SWAP_CPP();
-};
-
-HL_DECL_ENDIAN_SWAP(hl_DPACDataEntry);
-
-struct hl_DPACNode
-{
-    HL_STR32 Name;
-    HL_OFF32(uint8_t) Data;
-
-    HL_INLN_X64_OFFSETS_CPP(Name, Data);
-    HL_DECL_WRITEO_CPP();
-};
-
-HL_DECL_X64_OFFSETS(hl_DPACNode);
-HL_DECL_WRITEO(hl_DPACNode);
-
-struct hl_DLWArchive
-{
-    struct hl_DPACxV2DataNode Header;
-
-    // Each node in here contains another array of nodes, this time containing hl_DPACDataEntries.
-    HL_ARR32(hl_DPACNode) TypeTree;
-
-    HL_INLN_X64_OFFSETS_CPP(TypeTree.Offset);
     HL_DECL_ENDIAN_SWAP_CPP();
     HL_DECL_ENDIAN_SWAP_RECURSIVE_CPP();
-    HL_DECL_WRITE_CPP();
-};
+}
+hl_LWArchive;
 
-HL_DECL_X64_OFFSETS(hl_DLWArchive);
-HL_DECL_ENDIAN_SWAP(hl_DLWArchive);
-HL_DECL_ENDIAN_SWAP_RECURSIVE(hl_DLWArchive);
-HL_DECL_WRITE(hl_DLWArchive);
+HL_DECL_ENDIAN_SWAP(hl_LWArchive);
+HL_DECL_ENDIAN_SWAP_RECURSIVE(hl_LWArchive);
 
-HL_API const char** hl_LWArchiveGetSplits(const struct hl_Blob* blob, size_t* splitCount);
-HL_API enum HL_RESULT hl_ExtractLWArchive(const struct hl_Blob* blob, const char* dir);
-HL_API enum HL_RESULT hl_ExtractLWArchiveNative(
-    const struct hl_Blob* blob, const hl_NativeStr dir);
+HL_API HL_RESULT hl_DLoadLWArchive(const char* filePath, hl_Blob** blob);
+HL_API HL_RESULT hl_DLoadLWArchiveNative(const hl_NativeChar* filePath, hl_Blob** blob);
+HL_API size_t hl_LWArchiveGetFileCount(const hl_Blob* blob,
+    bool HL_DEFARG(includeProxies, true));
 
-HL_API enum HL_RESULT hl_CreateLWArchives(const struct hl_ArchiveFileEntry* files,
-    size_t fileCount, const char* filePath, uint32_t splitLimit, bool bigEndian);
+HL_API const char** hl_LWArchiveGetSplits(const hl_Blob* blob, size_t* splitCount);
 
-HL_API enum HL_RESULT hl_CreateLWArchivesNative(const struct hl_ArchiveFileEntry* files,
-    size_t fileCount, const hl_NativeStr filePath, uint32_t splitLimit, bool bigEndian);
+HL_API HL_RESULT hl_DExtractLWArchive(const hl_Blob* blob, const char* dir);
+HL_API HL_RESULT hl_DExtractLWArchiveNative(const hl_Blob* blob, const hl_NativeChar* dir);
+
+HL_API HL_RESULT hl_SaveLWArchive(const hl_Archive* arc,
+    const char* filePath, bool bigEndian,
+    uint32_t HL_DEFARG(splitLimit, HL_PACX_DEFAULT_SPLIT_LIMIT));
+
+HL_API HL_RESULT hl_SaveLWArchiveNative(const hl_Archive* arc,
+    const hl_NativeChar* filePath, bool bigEndian,
+    uint32_t HL_DEFARG(splitLimit, HL_PACX_DEFAULT_SPLIT_LIMIT));
 
 #ifdef __cplusplus
 }
 
 // Windows-specific overloads
 #ifdef _WIN32
-inline HL_RESULT hl_ExtractLWArchive(
-    const struct hl_Blob* blob, const hl_NativeStr dir)
+inline HL_RESULT hl_DLoadLWArchive(const hl_NativeChar* filePath, hl_Blob** blob)
 {
-    return hl_ExtractLWArchiveNative(blob, dir);
+    return hl_DLoadLWArchiveNative(filePath, blob);
 }
 
-inline HL_RESULT hl_CreateLWArchives(const struct hl_ArchiveFileEntry* files,
-    size_t fileCount, const hl_NativeStr filePath, uint32_t splitLimit, bool bigEndian)
+inline HL_RESULT hl_DExtractLWArchive(
+    const struct hl_Blob* blob, const hl_NativeChar* dir)
 {
-    return hl_CreateLWArchivesNative(files, fileCount,
-        filePath, splitLimit, bigEndian);
+    return hl_DExtractLWArchiveNative(blob, dir);
+}
+
+inline HL_RESULT hl_SaveLWArchive(const hl_Archive* arc,
+    const hl_NativeChar* filePath, bool bigEndian,
+    uint32_t splitLimit = HL_PACX_DEFAULT_SPLIT_LIMIT)
+{
+    return hl_SaveLWArchiveNative(arc,
+        filePath, bigEndian, splitLimit);
 }
 #endif
 #endif

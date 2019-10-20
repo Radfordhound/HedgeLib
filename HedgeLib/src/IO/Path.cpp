@@ -49,7 +49,7 @@ const char* hl_PathGetNamePtr(const char* path)
     return hl_INPathGetNamePtr(path);
 }
 
-const hl_NativeStr hl_PathGetNamePtrNative(const hl_NativeStr path)
+const hl_NativeChar* hl_PathGetNamePtrNative(const hl_NativeChar* path)
 {
     if (!path) return hl_EmptyStringNative;
     return hl_INPathGetNamePtr(path);
@@ -93,13 +93,24 @@ const char_t* hl_INPathGetExtPtrName(const char_t* fileName)
     return (foundExt) ? fileName : curChar;
 }
 
+template const char* hl_INPathGetExtPtrName<char, true>(const char* fileName);
+template const char* hl_INPathGetExtPtrName<char, false>(const char* fileName);
+
+#ifdef _WIN32
+template const hl_NativeChar* hl_INPathGetExtPtrName<hl_NativeChar, true>(
+    const hl_NativeChar* fileName);
+
+template const hl_NativeChar* hl_INPathGetExtPtrName<hl_NativeChar, false>(
+    const hl_NativeChar* fileName);
+#endif
+
 const char* hl_PathGetExtPtrName(const char* fileName)
 {
     if (!fileName) return hl_EmptyString;
     return hl_INPathGetExtPtrName(fileName);
 }
 
-const hl_NativeStr hl_PathGetExtPtrNameNative(const hl_NativeStr fileName)
+const hl_NativeChar* hl_PathGetExtPtrNameNative(const hl_NativeChar* fileName)
 {
     if (!fileName) return hl_EmptyStringNative;
     return hl_INPathGetExtPtrName(fileName);
@@ -111,7 +122,7 @@ const char* hl_PathGetExtsPtrName(const char* fileName)
     return hl_INPathGetExtPtrName<char, true>(fileName);
 }
 
-const hl_NativeStr hl_PathGetExtsPtrNameNative(const hl_NativeStr fileName)
+const hl_NativeChar* hl_PathGetExtsPtrNameNative(const hl_NativeChar* fileName)
 {
     if (!fileName) return hl_EmptyStringNative;
     return hl_INPathGetExtPtrName<hl_NativeChar, true>(fileName);
@@ -124,7 +135,7 @@ const char* hl_PathGetExtPtr(const char* filePath)
     return hl_INPathGetExtPtrName(filePath);
 }
 
-const hl_NativeStr hl_PathGetExtPtrNative(const hl_NativeStr filePath)
+const hl_NativeChar* hl_PathGetExtPtrNative(const hl_NativeChar* filePath)
 {
     // Return extension pointer
     filePath = hl_PathGetNamePtrNative(filePath);
@@ -138,7 +149,7 @@ const char* hl_PathGetExtsPtr(const char* filePath)
     return hl_INPathGetExtPtrName<char, true>(filePath);
 }
 
-const hl_NativeStr hl_PathGetExtsPtrNative(const hl_NativeStr filePath)
+const hl_NativeChar* hl_PathGetExtsPtrNative(const hl_NativeChar* filePath)
 {
     // Return extension pointer
     filePath = hl_PathGetNamePtrNative(filePath);
@@ -165,29 +176,29 @@ HL_RESULT hl_INPathGetNameNoExtName(const char_t* fileName, char_t** fileNameNoE
     return HL_SUCCESS;
 }
 
-enum HL_RESULT hl_PathGetNameNoExtName(const char* fileName, char** fileNameNoExt)
+HL_RESULT hl_PathGetNameNoExtName(const char* fileName, char** fileNameNoExt)
 {
-    if (!fileName || !fileNameNoExt) return HL_ERROR_UNKNOWN;
+    if (!fileName || !fileNameNoExt) return HL_ERROR_INVALID_ARGS;
     return hl_INPathGetNameNoExtName<char, false>(fileName, fileNameNoExt);
 }
 
-enum HL_RESULT hl_PathGetNameNoExtNameNative(
-    const hl_NativeStr fileName, hl_NativeStr* fileNameNoExt)
+HL_RESULT hl_PathGetNameNoExtNameNative(
+    const hl_NativeChar* fileName, hl_NativeChar** fileNameNoExt)
 {
-    if (!fileName || !fileNameNoExt) return HL_ERROR_UNKNOWN;
+    if (!fileName || !fileNameNoExt) return HL_ERROR_INVALID_ARGS;
     return hl_INPathGetNameNoExtName<hl_NativeChar, false>(fileName, fileNameNoExt);
 }
 
-enum HL_RESULT hl_PathGetNameNoExtsName(const char* fileName, char** fileNameNoExt)
+HL_RESULT hl_PathGetNameNoExtsName(const char* fileName, char** fileNameNoExt)
 {
-    if (!fileName || !fileNameNoExt) return HL_ERROR_UNKNOWN;
+    if (!fileName || !fileNameNoExt) return HL_ERROR_INVALID_ARGS;
     return hl_INPathGetNameNoExtName<char, true>(fileName, fileNameNoExt);
 }
 
-enum HL_RESULT hl_PathGetNameNoExtsNameNative(
-    const hl_NativeStr fileName, hl_NativeStr* fileNameNoExt)
+HL_RESULT hl_PathGetNameNoExtsNameNative(
+    const hl_NativeChar* fileName, hl_NativeChar** fileNameNoExt)
 {
-    if (!fileName || !fileNameNoExt) return HL_ERROR_UNKNOWN;
+    if (!fileName || !fileNameNoExt) return HL_ERROR_INVALID_ARGS;
     return hl_INPathGetNameNoExtName<hl_NativeChar, true>(fileName, fileNameNoExt);
 }
 
@@ -202,30 +213,30 @@ HL_RESULT hl_INPathGetNameNoExt(const char_t* filePath, char_t** fileNameNoExt)
         filePath, fileNameNoExt);
 }
 
-enum HL_RESULT hl_PathGetNameNoExt(const char* filePath, char** fileNameNoExt)
+HL_RESULT hl_PathGetNameNoExt(const char* filePath, char** fileNameNoExt)
 {
-    if (!filePath || !fileNameNoExt) return HL_ERROR_UNKNOWN;
+    if (!filePath || !fileNameNoExt) return HL_ERROR_INVALID_ARGS;
     return hl_INPathGetNameNoExt<char, false>(filePath, fileNameNoExt);
 }
 
-enum HL_RESULT hl_PathGetNameNoExtNative(
-    const hl_NativeStr filePath, hl_NativeStr* fileNameNoExt)
+HL_RESULT hl_PathGetNameNoExtNative(
+    const hl_NativeChar* filePath, hl_NativeChar** fileNameNoExt)
 {
-    if (!filePath || !fileNameNoExt) return HL_ERROR_UNKNOWN;
+    if (!filePath || !fileNameNoExt) return HL_ERROR_INVALID_ARGS;
     return hl_INPathGetNameNoExt<hl_NativeChar, false>(
         filePath, fileNameNoExt);
 }
 
-enum HL_RESULT hl_PathGetNameNoExts(const char* filePath, char** fileNameNoExt)
+HL_RESULT hl_PathGetNameNoExts(const char* filePath, char** fileNameNoExt)
 {
-    if (!filePath || !fileNameNoExt) return HL_ERROR_UNKNOWN;
+    if (!filePath || !fileNameNoExt) return HL_ERROR_INVALID_ARGS;
     return hl_INPathGetNameNoExt<char, true>(filePath, fileNameNoExt);
 }
 
-enum HL_RESULT hl_PathGetNameNoExtsNative(
-    const hl_NativeStr filePath, hl_NativeStr* fileNameNoExt)
+HL_RESULT hl_PathGetNameNoExtsNative(
+    const hl_NativeChar* filePath, hl_NativeChar** fileNameNoExt)
 {
-    if (!filePath || !fileNameNoExt) return HL_ERROR_UNKNOWN;
+    if (!filePath || !fileNameNoExt) return HL_ERROR_INVALID_ARGS;
     return hl_INPathGetNameNoExt<hl_NativeChar, true>(
         filePath, fileNameNoExt);
 }
@@ -247,8 +258,8 @@ size_t hl_PathGetStemRangeName(const char* fileName,
     return hl_INPathGetStemRangeName(fileName, stemEnd);
 }
 
-size_t hl_PathGetStemRangeNameNative(const hl_NativeStr fileName,
-    const hl_NativeStr* stemEnd)
+size_t hl_PathGetStemRangeNameNative(const hl_NativeChar* fileName,
+    const hl_NativeChar** stemEnd)
 {
     if (!fileName || !stemEnd) return 0;
     return hl_INPathGetStemRangeName(fileName, stemEnd);
@@ -274,8 +285,8 @@ size_t hl_PathGetStemRange(const char* path,
     return hl_INPathGetStemRange(stemStart, stemEnd);
 }
 
-size_t hl_PathGetStemRangeNative(const hl_NativeStr path,
-    const hl_NativeStr* stemStart, const hl_NativeStr* stemEnd)
+size_t hl_PathGetStemRangeNative(const hl_NativeChar* path,
+    const hl_NativeChar** stemStart, const hl_NativeChar** stemEnd)
 {
     if (!path || !stemStart || !stemEnd) return 0;
 
@@ -303,15 +314,15 @@ HL_RESULT hl_INPathGetStem(const char_t* path, char_t** stem)
     return HL_SUCCESS;
 }
 
-enum HL_RESULT hl_PathGetStem(const char* path, char** stem)
+HL_RESULT hl_PathGetStem(const char* path, char** stem)
 {
-    if (!path || !stem) return HL_ERROR_UNKNOWN;
+    if (!path || !stem) return HL_ERROR_INVALID_ARGS;
     return hl_INPathGetStem(path, stem);
 }
 
-enum HL_RESULT hl_PathGetStemNative(const hl_NativeStr path, hl_NativeStr* stem)
+HL_RESULT hl_PathGetStemNative(const hl_NativeChar* path, hl_NativeChar** stem)
 {
-    if (!path || !stem) return HL_ERROR_UNKNOWN;
+    if (!path || !stem) return HL_ERROR_INVALID_ARGS;
     return hl_INPathGetStem(path, stem);
 }
 
@@ -335,6 +346,15 @@ HL_RESULT hl_INPathGetParent(const char_t* path,
     return HL_SUCCESS;
 }
 
+template HL_RESULT hl_INPathGetParent<char>(const char* path,
+    const char* fileName, char** parent);
+
+#ifdef _WIN32
+template HL_RESULT hl_INPathGetParent<hl_NativeChar>(
+    const hl_NativeChar* path, const hl_NativeChar* fileName,
+    hl_NativeChar** parent);
+#endif
+
 template<typename char_t>
 HL_RESULT hl_INPathGetParent(const char_t* path, char_t** parent)
 {
@@ -351,20 +371,20 @@ template HL_RESULT hl_INPathGetParent<hl_NativeChar>(
     const hl_NativeChar* path, hl_NativeChar** parent);
 #endif
 
-enum HL_RESULT hl_PathGetParent(const char* path, char** parent)
+HL_RESULT hl_PathGetParent(const char* path, char** parent)
 {
-    if (!path || !parent) return HL_ERROR_UNKNOWN;
+    if (!path || !parent) return HL_ERROR_INVALID_ARGS;
     return hl_INPathGetParent(path, parent);
 }
 
-enum HL_RESULT hl_PathGetParentNative(
-    const hl_NativeStr path, hl_NativeStr* parent)
+HL_RESULT hl_PathGetParentNative(
+    const hl_NativeChar* path, hl_NativeChar** parent)
 {
-    if (!path || !parent) return HL_ERROR_UNKNOWN;
+    if (!path || !parent) return HL_ERROR_INVALID_ARGS;
     return hl_INPathGetParent(path, parent);
 }
 
-bool hl_INPathIsDirectory(const hl_NativeStr path)
+bool hl_INPathIsDirectory(const hl_NativeChar* path)
 {
 #ifdef _WIN32
     DWORD attrs = GetFileAttributesW(path);
@@ -382,7 +402,7 @@ bool hl_PathIsDirectory(const char* path)
     
 #ifdef _WIN32
     // Convert UTF-8 path to wide UTF-16 path
-    hl_NativeStr nativePath;
+    hl_NativeChar* nativePath;
     HL_RESULT result = hl_StringConvertUTF8ToNative(path, &nativePath);
     if (HL_FAILED(result)) return false;
 
@@ -395,7 +415,7 @@ bool hl_PathIsDirectory(const char* path)
 #endif
 }
 
-bool hl_PathIsDirectoryNative(const hl_NativeStr path)
+bool hl_PathIsDirectoryNative(const hl_NativeChar* path)
 {
     if (!path) return false;
     return hl_INPathIsDirectory(path);
@@ -448,20 +468,20 @@ HL_RESULT hl_INPathCombine(const char_t* path1,
         path1Len, path2Len, result);
 }
 
-enum HL_RESULT hl_PathCombine(const char* path1,
+HL_RESULT hl_PathCombine(const char* path1,
     const char* path2, char** result)
 {
     if (!path1 || !path2 || !result || (!*path1 && !*path2))
-        return HL_ERROR_UNKNOWN;
+        return HL_ERROR_INVALID_ARGS;
 
     return hl_INPathCombine(path1, path2, result);
 }
 
-enum HL_RESULT hl_PathCombineNative(const hl_NativeStr path1,
-    const hl_NativeStr path2, hl_NativeStr* result)
+HL_RESULT hl_PathCombineNative(const hl_NativeChar* path1,
+    const hl_NativeChar* path2, hl_NativeChar** result)
 {
     if (!path1 || !path2 || !result || (!*path1 && !*path2))
-        return HL_ERROR_UNKNOWN;
+        return HL_ERROR_INVALID_ARGS;
 
     return hl_INPathCombine(path1, path2, result);
 }
@@ -487,33 +507,44 @@ HL_RESULT hl_INPathRemoveExt(const char_t* filePath, char_t** pathNoExt)
     return HL_SUCCESS;
 }
 
-enum HL_RESULT hl_PathRemoveExt(const char* filePath, char** pathNoExt)
+template HL_RESULT hl_INPathRemoveExt<char, true>(const char* filePath, char** pathNoExt);
+template HL_RESULT hl_INPathRemoveExt<char, false>(const char* filePath, char** pathNoExt);
+
+#ifdef _WIN32
+template HL_RESULT hl_INPathRemoveExt<hl_NativeChar, true>(
+    const hl_NativeChar* filePath, hl_NativeChar** pathNoExt);
+
+template HL_RESULT hl_INPathRemoveExt<hl_NativeChar, false>(
+    const hl_NativeChar* filePath, hl_NativeChar** pathNoExt);
+#endif
+
+HL_RESULT hl_PathRemoveExt(const char* filePath, char** pathNoExt)
 {
-    if (!filePath || !pathNoExt) return HL_ERROR_UNKNOWN;
+    if (!filePath || !pathNoExt) return HL_ERROR_INVALID_ARGS;
     return hl_INPathRemoveExt<char, false>(filePath, pathNoExt);
 }
 
-enum HL_RESULT hl_PathRemoveExtNative(
-    const hl_NativeStr filePath, hl_NativeStr* pathNoExt)
+HL_RESULT hl_PathRemoveExtNative(
+    const hl_NativeChar* filePath, hl_NativeChar** pathNoExt)
 {
-    if (!filePath || !pathNoExt) return HL_ERROR_UNKNOWN;
+    if (!filePath || !pathNoExt) return HL_ERROR_INVALID_ARGS;
     return hl_INPathRemoveExt<hl_NativeChar, false>(filePath, pathNoExt);
 }
 
-enum HL_RESULT hl_PathRemoveExts(const char* filePath, char** pathNoExts)
+HL_RESULT hl_PathRemoveExts(const char* filePath, char** pathNoExts)
 {
-    if (!filePath || !pathNoExts) return HL_ERROR_UNKNOWN;
+    if (!filePath || !pathNoExts) return HL_ERROR_INVALID_ARGS;
     return hl_INPathRemoveExt<char, true>(filePath, pathNoExts);
 }
 
-enum HL_RESULT hl_PathRemoveExtsNative(
-    const hl_NativeStr filePath, hl_NativeStr* pathNoExts)
+HL_RESULT hl_PathRemoveExtsNative(
+    const hl_NativeChar* filePath, hl_NativeChar** pathNoExts)
 {
-    if (!filePath || !pathNoExts) return HL_ERROR_UNKNOWN;
+    if (!filePath || !pathNoExts) return HL_ERROR_INVALID_ARGS;
     return hl_INPathRemoveExt<hl_NativeChar, true>(filePath, pathNoExts);
 }
 
-bool hl_INPathExists(const hl_NativeStr path)
+bool hl_INPathExists(const hl_NativeChar* path)
 {
 #ifdef _WIN32
     return (GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES);
@@ -528,7 +559,7 @@ bool hl_PathExists(const char* path)
 
 #ifdef _WIN32
     // Convert path from UTF-8 to a native (UTF-16) path
-    hl_NativeStr nativePath;
+    hl_NativeChar* nativePath;
     if (HL_FAILED(hl_INStringConvertUTF8ToNative(
         path, &nativePath))) return false;
 
@@ -542,14 +573,17 @@ bool hl_PathExists(const char* path)
 #endif
 }
 
-bool hl_PathExistsNative(const hl_NativeStr path)
+bool hl_PathExistsNative(const hl_NativeChar* path)
 {
     if (!path) return false;
     return hl_INPathExists(path);
 }
 
-enum HL_RESULT hl_INPathCreateDirectory(const hl_NativeStr path)
+HL_RESULT hl_INPathCreateDirectory(const hl_NativeChar* path)
 {
+    // Return successfully if path is just empty
+    if (!*path) return HL_SUCCESS; // TODO: Is this needed on non-Windows platforms too?
+
 #ifdef _WIN32
     BOOL r = CreateDirectoryW(path, nullptr);
     if (!r && GetLastError() != ERROR_ALREADY_EXISTS)
@@ -567,19 +601,51 @@ enum HL_RESULT hl_INPathCreateDirectory(const hl_NativeStr path)
 #endif
 }
 
-enum HL_RESULT hl_PathCreateDirectory(const char* path)
+HL_RESULT hl_PathCreateDirectory(const char* path)
 {
-    if (!path || !*path) return HL_ERROR_UNKNOWN;
+    if (!path) return HL_ERROR_INVALID_ARGS;
     HL_INSTRING_NATIVE_CALL(path, hl_INPathCreateDirectory(nativeStr));
 }
 
-enum HL_RESULT hl_PathCreateDirectoryNative(const hl_NativeStr path)
+HL_RESULT hl_PathCreateDirectoryNative(const hl_NativeChar* path)
 {
-    if (!path || !*path) return HL_ERROR_UNKNOWN;
+    if (!path) return HL_ERROR_INVALID_ARGS;
     return hl_INPathCreateDirectory(path);
 }
 
-HL_RESULT hl_INPathGetFileCount(const hl_NativeStr dir,
+HL_RESULT hl_INPathGetSize(const hl_NativeChar* filePath, size_t* size)
+{
+#ifdef _WIN32
+    WIN32_FILE_ATTRIBUTE_DATA fd;
+    if (!GetFileAttributesExW(filePath, GetFileExInfoStandard, &fd))
+        return HL_ERROR_UNKNOWN; // TODO: Return a more helpful error using GetLastError
+
+    LARGE_INTEGER s;
+    s.HighPart = fd.nFileSizeHigh;
+    s.LowPart = fd.nFileSizeLow;
+    *size = static_cast<size_t>(s.QuadPart);
+#else
+    struct stat s;
+    if (stat(filePath, &s) == -1) return HL_ERROR_UNKNOWN; // TODO: Return a more helpful error
+    *size = static_cast<size_t>(s.st_size);
+#endif
+
+    return HL_SUCCESS;
+}
+
+HL_RESULT hl_PathGetSize(const char* filePath, size_t* size)
+{
+    if (!size) return HL_ERROR_UNKNOWN;
+    HL_INSTRING_NATIVE_CALL(filePath, hl_INPathGetSize(nativeStr, size));
+}
+
+HL_RESULT hl_PathGetSizeNative(const hl_NativeChar* filePath, size_t* size)
+{
+    if (!size) return HL_ERROR_UNKNOWN;
+    return hl_INPathGetSize(filePath, size);
+}
+
+HL_RESULT hl_INPathGetFileCount(const hl_NativeChar* dir,
     bool recursive, size_t* fileCount, size_t* bufSize)
 {
     size_t dirLen = hl_StrLenNative(dir);
@@ -587,27 +653,19 @@ HL_RESULT hl_INPathGetFileCount(const hl_NativeStr dir,
 #ifdef _WIN32
     // Adjust the path for usage in the FindFile functions
     // (The Win32 API is the messiest thing I swear)
-    hl_NativeStr fdir = static_cast<hl_NativeStr>(malloc(
-        (dirLen + 7) * sizeof(hl_NativeChar)));
-    //(dirLen && dir[dirLen - 2] == L'\\') ? 5 : 6));
+    hl_NativeChar* fdir = static_cast<hl_NativeChar*>(malloc(
+        (dirLen + 3) * sizeof(hl_NativeChar)));
 
     if (!fdir) return HL_ERROR_OUT_OF_MEMORY;
 
-    // look at this crap
-    // If we don't prefix the path with \\?\ windows limits path length to 260 characters
-    fdir[0] = L'\\';
-    fdir[1] = L'\\';
-    fdir[2] = L'?';
-    fdir[3] = L'\\';
-
     // Copy the actual path
-    std::copy(dir, dir + dirLen, fdir + 4);
+    std::copy(dir, dir + dirLen, fdir);
 
     // We also have to append \* since otherwise windows will just give
     // us the directory rather than files *IN* the directory
-    fdir[dirLen + 4] = L'\\';
-    fdir[dirLen + 5] = L'*';
-    fdir[dirLen + 6] = L'\0';
+    fdir[dirLen] = L'\\';
+    fdir[dirLen + 1] = L'*';
+    fdir[dirLen + 2] = L'\0';
 
     // Find the first file in the directory
     WIN32_FIND_DATAW fd;
@@ -630,7 +688,7 @@ HL_RESULT hl_INPathGetFileCount(const hl_NativeStr dir,
     {
 #endif
         // Get file name
-        hl_NativeStr fileName;
+        hl_NativeChar* fileName;
 
 #ifdef _WIN32
         // TODO: Is cFileName always null-terminated?
@@ -654,7 +712,7 @@ HL_RESULT hl_INPathGetFileCount(const hl_NativeStr dir,
             if (recursive)
             {
                 // Recurse through subdirectories
-                hl_NativeStr subDir;
+                hl_NativeChar* subDir;
                 HL_RESULT result = hl_INPathCombine(dir, fileName, &subDir);
                 if (HL_FAILED(result)) return HL_ERROR_OUT_OF_MEMORY;
 
@@ -668,11 +726,12 @@ HL_RESULT hl_INPathGetFileCount(const hl_NativeStr dir,
 
         // Files
         // TODO: Handle special cases
-#ifdef _WIN32
-        else if (fd.dwFileAttributes == FILE_ATTRIBUTE_NORMAL)
-#else
-        else if (e->d_type == DT_REG)
-#endif
+        else
+//#ifdef _WIN32
+//        else if (fd.dwFileAttributes == FILE_ATTRIBUTE_NORMAL)
+//#else
+//        else if (e->d_type == DT_REG)
+//#endif
         {
             // Increase file count
             ++(*fileCount);
@@ -704,53 +763,45 @@ HL_RESULT hl_INPathGetFileCount(const hl_NativeStr dir,
 HL_RESULT hl_PathGetFileCount(const char* dir,
     bool recursive, size_t* fileCount)
 {
-    if (!dir || !fileCount) return HL_ERROR_UNKNOWN;
+    if (!dir || !fileCount) return HL_ERROR_INVALID_ARGS;
 
     *fileCount = 0;
     HL_INSTRING_NATIVE_CALL(dir, hl_INPathGetFileCount(nativeStr,
         recursive, fileCount));
 }
 
-HL_RESULT hl_PathGetFileCountNative(const hl_NativeStr dir,
+HL_RESULT hl_PathGetFileCountNative(const hl_NativeChar* dir,
     bool recursive, size_t* fileCount)
 {
-    if (!dir || !fileCount) return HL_ERROR_UNKNOWN;
+    if (!dir || !fileCount) return HL_ERROR_INVALID_ARGS;
 
     *fileCount = 0;
     return hl_INPathGetFileCount(dir,
         recursive, fileCount);
 }
 
-HL_RESULT hl_INPathGetFilesInDirectoryNoAlloc(const hl_NativeStr dir,
-    bool recursive, size_t fileCount, hl_NativeStr*& fileNamePtrs,
-    hl_NativeStr& fileNames)
+HL_RESULT hl_INPathGetFilesInDirectoryNoAlloc(const hl_NativeChar* dir,
+    bool recursive, size_t fileCount, hl_NativeChar**& fileNamePtrs,
+    hl_NativeChar*& fileNames)
 {
     size_t dirLen = hl_StrLenNative(dir);
 
 #ifdef _WIN32
     // Adjust the path for usage in the FindFile functions
     // (The Win32 API is the messiest thing I swear)
-    hl_NativeStr fdir = static_cast<hl_NativeStr>(malloc(
-        (dirLen + 7) * sizeof(hl_NativeChar)));
-    //(dirLen && dir[dirLen - 2] == L'\\') ? 5 : 6));
+    hl_NativeChar* fdir = static_cast<hl_NativeChar*>(malloc(
+        (dirLen + 3) * sizeof(hl_NativeChar)));
 
     if (!fdir) return HL_ERROR_OUT_OF_MEMORY;
 
-    // look at this crap
-    // If we don't prefix the path with \\?\ windows limits path length to 260 characters
-    fdir[0] = L'\\';
-    fdir[1] = L'\\';
-    fdir[2] = L'?';
-    fdir[3] = L'\\';
-
     // Copy the actual path
-    std::copy(dir, dir + dirLen, fdir + 4);
+    std::copy(dir, dir + dirLen, fdir);
 
     // We also have to append \* since otherwise windows will just give
     // us the directory rather than files *IN* the directory
-    fdir[dirLen + 4] = L'\\';
-    fdir[dirLen + 5] = L'*';
-    fdir[dirLen + 6] = L'\0';
+    fdir[dirLen] = L'\\';
+    fdir[dirLen + 1] = L'*';
+    fdir[dirLen + 2] = L'\0';
 
     // Find the first file in the directory
     WIN32_FIND_DATAW fd;
@@ -773,7 +824,7 @@ HL_RESULT hl_INPathGetFilesInDirectoryNoAlloc(const hl_NativeStr dir,
     {
 #endif
         // Get file name
-        hl_NativeStr fileName;
+        hl_NativeChar* fileName;
 
 #ifdef _WIN32
         // TODO: Is cFileName always null-terminated?
@@ -797,7 +848,7 @@ HL_RESULT hl_INPathGetFilesInDirectoryNoAlloc(const hl_NativeStr dir,
             if (recursive)
             {
                 // Recurse through subdirectories
-                hl_NativeStr subDir;
+                hl_NativeChar* subDir;
                 HL_RESULT result = hl_INPathCombine(dir, fileName, &subDir);
                 if (HL_FAILED(result)) return HL_ERROR_OUT_OF_MEMORY;
 
@@ -811,11 +862,12 @@ HL_RESULT hl_INPathGetFilesInDirectoryNoAlloc(const hl_NativeStr dir,
 
         // Files
         // TODO: Handle special cases
-#ifdef _WIN32
-        else if (fd.dwFileAttributes == FILE_ATTRIBUTE_NORMAL)
-#else
-        else if (e->d_type == DT_REG)
-#endif
+        else
+//#ifdef _WIN32
+//        else if (fd.dwFileAttributes == FILE_ATTRIBUTE_NORMAL)
+//#else
+//        else if (e->d_type == DT_REG)
+//#endif
         {
             // Copy file name
             size_t nameLen = (hl_StrLenNative(fileName) + 1);
@@ -846,8 +898,8 @@ HL_RESULT hl_INPathGetFilesInDirectoryNoAlloc(const hl_NativeStr dir,
     return HL_SUCCESS;
 }
 
-HL_RESULT hl_INPathGetFilesInDirectory(const hl_NativeStr dir,
-    bool recursive, size_t* fileCount, hl_NativeStr** files)
+HL_RESULT hl_INPathGetFilesInDirectory(const hl_NativeChar* dir,
+    bool recursive, size_t* fileCount, hl_NativeChar*** files)
 {
     // Get file count and buffer size
     size_t bufSize = 0;
@@ -857,15 +909,15 @@ HL_RESULT hl_INPathGetFilesInDirectory(const hl_NativeStr dir,
         recursive, fileCount, &bufSize);
 
     // Allocate buffer to hold file names and pointers to file names
-    *files = static_cast<hl_NativeStr*>(malloc(
-        (*fileCount * sizeof(hl_NativeStr)) +
+    *files = static_cast<hl_NativeChar**>(malloc(
+        (*fileCount * sizeof(hl_NativeChar*)) +
         (bufSize * sizeof(hl_NativeChar))));
 
     if (!*files) return HL_ERROR_OUT_OF_MEMORY;
 
     // Get file names and return
-    hl_NativeStr* fileNamePtrs = *files;
-    hl_NativeStr fileNames = reinterpret_cast<hl_NativeStr>(
+    hl_NativeChar** fileNamePtrs = *files;
+    hl_NativeChar* fileNames = reinterpret_cast<hl_NativeChar*>(
         *files + *fileCount);
 
     result = hl_INPathGetFilesInDirectoryNoAlloc(dir, recursive,
@@ -880,23 +932,15 @@ HL_RESULT hl_INPathGetFilesInDirectory(const hl_NativeStr dir,
     return HL_SUCCESS;
 }
 
-HL_RESULT hl_PathGetFilesInDirectory(const char* dir,
+HL_RESULT hl_INPathGetFilesInDirectoryUTF8(const hl_NativeChar* dir,
     bool recursive, size_t* fileCount, char*** files)
 {
-    if (!dir || !fileCount || !files) return HL_ERROR_UNKNOWN;
-    
 #ifdef _WIN32
-    // Converts dir to UTF-16
-    hl_NativeStr nativeDir;
-    HL_RESULT result = hl_INStringConvertUTF8ToNative(dir, &nativeDir);
-    if (HL_FAILED(result)) return result;
-
     // Get files in the given directory as UTF-16 paths
-    hl_NativeStr* nativeFiles;
-    result = hl_INPathGetFilesInDirectory(
-        nativeDir, recursive, fileCount, &nativeFiles);
+    hl_NativeChar** nativeFiles;
+    HL_RESULT result = hl_INPathGetFilesInDirectory(
+        dir, recursive, fileCount, &nativeFiles);
 
-    free(nativeDir);
     if (HL_FAILED(result)) return result;
 
     // Get size of UTF-8 path buffer
@@ -944,31 +988,46 @@ HL_RESULT hl_PathGetFilesInDirectory(const char* dir,
 #endif
 }
 
-HL_RESULT hl_PathGetFilesInDirectoryNative(const hl_NativeStr dir,
-    bool recursive, size_t* fileCount, hl_NativeStr** files)
+HL_RESULT hl_PathGetFilesInDirectoryUTF8(const hl_NativeChar* dir,
+    bool recursive, size_t* fileCount, char*** files)
 {
-    if (!dir || !fileCount) return HL_ERROR_UNKNOWN;
+    if (!dir || !fileCount || !files) return HL_ERROR_INVALID_ARGS;
+    return hl_INPathGetFilesInDirectoryUTF8(dir, recursive, fileCount, files);
+}
+
+HL_RESULT hl_PathGetFilesInDirectory(const char* dir,
+    bool recursive, size_t* fileCount, char*** files)
+{
+    if (!dir || !fileCount || !files) return HL_ERROR_INVALID_ARGS;
+    HL_INSTRING_NATIVE_CALL(dir, hl_INPathGetFilesInDirectoryUTF8(
+        nativeStr, recursive, fileCount, files));
+}
+
+HL_RESULT hl_PathGetFilesInDirectoryNative(const hl_NativeChar* dir,
+    bool recursive, size_t* fileCount, hl_NativeChar*** files)
+{
+    if (!dir || !fileCount) return HL_ERROR_INVALID_ARGS;
     return hl_INPathGetFilesInDirectory(dir, recursive, fileCount, files);
 }
 
 // Windows-specific overloads
 #ifdef _WIN32
 HL_RESULT hl_PathCombine(const char* path1,
-    const hl_NativeStr path2, hl_NativeStr* result)
+    const hl_NativeChar* path2, hl_NativeChar** result)
 {
     if (!path1 || !path2 || !result || (!*path1 && !*path2))
-        return HL_ERROR_UNKNOWN;
+        return HL_ERROR_INVALID_ARGS;
 
     // TODO: Optimize-out the initial malloc done here to convert to UTF-16
     HL_INSTRING_NATIVE_CALL(path1, hl_INPathCombine(
         nativeStr, path2, result));
 }
 
-HL_RESULT hl_PathCombine(const hl_NativeStr path1,
-    const char* path2, hl_NativeStr* result)
+HL_RESULT hl_PathCombine(const hl_NativeChar* path1,
+    const char* path2, hl_NativeChar** result)
 {
     if (!path1 || !path2 || !result || (!*path1 && !*path2))
-        return HL_ERROR_UNKNOWN;
+        return HL_ERROR_INVALID_ARGS;
 
     // TODO: Optimize-out the initial malloc done here to convert to UTF-16
     HL_INSTRING_NATIVE_CALL(path2, hl_INPathCombine(

@@ -11,7 +11,7 @@
 const char* const hl_EmptyString = "";
 
 #ifdef _WIN32
-const hl_NativeStr const hl_EmptyStringNative = L"";
+const hl_NativeChar* const hl_EmptyStringNative = L"";
 #endif
 
 void hl_INStringEncodeCodepointUTF8(uint32_t cp, char*& u8str)
@@ -204,7 +204,7 @@ bool hl_StringsEqualInvASCII(const char* str1, const char* str2)
 }
 
 bool hl_StringsEqualInvASCIINative(
-    const hl_NativeStr str1, const hl_NativeStr str2)
+    const hl_NativeChar* str1, const hl_NativeChar* str2)
 {
     return hl_INStringsEqualInvASCII(str1, str2);
 }
@@ -512,7 +512,7 @@ HL_RESULT hl_INStringConvertUTF8ToUTF16(const char* u8str,
     return HL_SUCCESS;
 }
 
-enum HL_RESULT hl_StringConvertUTF8ToUTF16(const char* u8str,
+HL_RESULT hl_StringConvertUTF8ToUTF16(const char* u8str,
     uint16_t** u16str, size_t u8bufLen)
 {
     if (!u8str || !u16str) return HL_ERROR_UNKNOWN;
@@ -641,7 +641,7 @@ HL_RESULT hl_INStringConvertUTF8ToCP932(const char* u8str,
         u8str, cp932str, cp932bufLen, u8bufLen);
 }
 
-enum HL_RESULT hl_StringConvertUTF8ToCP932(
+HL_RESULT hl_StringConvertUTF8ToCP932(
     const char* u8str, char** cp932str, size_t u8bufLen)
 {
     if (!u8str || !cp932str) return HL_ERROR_UNKNOWN;
@@ -672,7 +672,7 @@ HL_RESULT hl_INStringConvertUTF16ToCP932(const uint16_t* u16str,
         u16str, cp932str, cp932bufLen, u16bufLen);
 }
 
-enum HL_RESULT hl_StringConvertUTF16ToCP932(
+HL_RESULT hl_StringConvertUTF16ToCP932(
     const uint16_t* u16str, char** cp932str, size_t u16bufLen)
 {
     if (!u16str || !cp932str) return HL_ERROR_UNKNOWN;
@@ -680,7 +680,7 @@ enum HL_RESULT hl_StringConvertUTF16ToCP932(
 }
 
 HL_RESULT hl_INStringConvertUTF8ToNative(const char* u8str,
-    hl_NativeStr* nativeStr, size_t u8bufLen)
+    hl_NativeChar** nativeStr, size_t u8bufLen)
 {
 #ifdef _WIN32
     return hl_INStringConvertUTF8ToUTF16(u8str,
@@ -688,7 +688,7 @@ HL_RESULT hl_INStringConvertUTF8ToNative(const char* u8str,
 #else
     // Allocate a buffer big enough to hold a copy of the string
     if (u8bufLen == 0) u8bufLen = (strlen(u8str) + 1);
-    *nativeStr = static_cast<hl_NativeStr>(malloc(u8bufLen));
+    *nativeStr = static_cast<hl_NativeChar*>(malloc(u8bufLen));
 
     if (!*nativeStr) return HL_ERROR_OUT_OF_MEMORY;
 
@@ -698,8 +698,8 @@ HL_RESULT hl_INStringConvertUTF8ToNative(const char* u8str,
 #endif
 }
 
-enum HL_RESULT hl_StringConvertUTF8ToNative(const char* u8str,
-    hl_NativeStr* nativeStr, size_t u8bufLen)
+HL_RESULT hl_StringConvertUTF8ToNative(const char* u8str,
+    hl_NativeChar** nativeStr, size_t u8bufLen)
 {
     if (!u8str || !nativeStr) return HL_ERROR_UNKNOWN;
     return hl_INStringConvertUTF8ToNative(u8str, nativeStr, u8bufLen);
@@ -774,7 +774,7 @@ HL_RESULT hl_INStringConvertUTF16ToUTF8(const uint16_t* u16str,
     return HL_SUCCESS;
 }
 
-enum HL_RESULT hl_StringConvertUTF16ToUTF8(
+HL_RESULT hl_StringConvertUTF16ToUTF8(
     const uint16_t* u16str, char** u8str, size_t u16bufLen)
 {
     if (!u16str || !u8str) return HL_ERROR_UNKNOWN;
@@ -782,7 +782,7 @@ enum HL_RESULT hl_StringConvertUTF16ToUTF8(
 }
 
 HL_RESULT hl_INStringConvertUTF16ToNative(
-    const uint16_t* u16str, hl_NativeStr* nativeStr, size_t u16bufLen)
+    const uint16_t* u16str, hl_NativeChar** nativeStr, size_t u16bufLen)
 {
 #ifdef _WIN32
     // Allocate a buffer big enough to hold a copy of the string
@@ -792,7 +792,7 @@ HL_RESULT hl_INStringConvertUTF16ToNative(
             reinterpret_cast<const wchar_t*>(u16str)) + 1);
     }
 
-    *nativeStr = static_cast<hl_NativeStr>(malloc(u16bufLen));
+    *nativeStr = static_cast<hl_NativeChar*>(malloc(u16bufLen));
     if (!*nativeStr) return HL_ERROR_OUT_OF_MEMORY;
 
     // Copy the string
@@ -804,8 +804,8 @@ HL_RESULT hl_INStringConvertUTF16ToNative(
 #endif
 }
 
-enum HL_RESULT hl_StringConvertUTF16ToNative(
-    const uint16_t* u16str, hl_NativeStr* nativeStr, size_t u16bufLen)
+HL_RESULT hl_StringConvertUTF16ToNative(
+    const uint16_t* u16str, hl_NativeChar** nativeStr, size_t u16bufLen)
 {
     if (!u16str || !nativeStr) return HL_ERROR_UNKNOWN;
     return hl_INStringConvertUTF16ToNative(u16str, nativeStr, u16bufLen);
@@ -924,7 +924,7 @@ HL_RESULT hl_INStringConvertCP932ToUTF8(const char* cp932str,
         cp932str, u8str, u8bufLen, cp932bufLen);
 }
 
-enum HL_RESULT hl_StringConvertCP932ToUTF8(
+HL_RESULT hl_StringConvertCP932ToUTF8(
     const char* cp932str, char** u8str, size_t cp932bufLen)
 {
     if (!cp932str || !u8str) return HL_ERROR_UNKNOWN;
@@ -957,7 +957,7 @@ HL_RESULT hl_INStringConvertCP932ToUTF16(const char* cp932str,
         cp932str, u16str, u16bufLen, cp932bufLen);
 }
 
-enum HL_RESULT hl_StringConvertCP932ToUTF16(
+HL_RESULT hl_StringConvertCP932ToUTF16(
     const char* cp932str, uint16_t** u16str, size_t cp932bufLen)
 {
     if (!cp932str || !u16str) return HL_ERROR_UNKNOWN;
@@ -965,7 +965,7 @@ enum HL_RESULT hl_StringConvertCP932ToUTF16(
 }
 
 HL_RESULT hl_INStringConvertCP932ToNative(
-    const char* cp932str, hl_NativeStr* nativeStr, size_t cp932bufLen)
+    const char* cp932str, hl_NativeChar** nativeStr, size_t cp932bufLen)
 {
 #ifdef _WIN32
     return hl_INStringConvertCP932ToUTF16(cp932str,
@@ -976,8 +976,8 @@ HL_RESULT hl_INStringConvertCP932ToNative(
 #endif
 }
 
-enum HL_RESULT hl_StringConvertCP932ToNative(
-    const char* cp932str, hl_NativeStr* nativeStr, size_t cp932bufLen)
+HL_RESULT hl_StringConvertCP932ToNative(
+    const char* cp932str, hl_NativeChar** nativeStr, size_t cp932bufLen)
 {
     if (!cp932str || !nativeStr) return HL_ERROR_UNKNOWN;
     return hl_INStringConvertCP932ToNative(cp932str, nativeStr, cp932bufLen);
@@ -1009,8 +1009,8 @@ HL_RESULT hl_StringJoin(const char* str1, const char* str2, char** result)
     return hl_INStringJoin(str1, str2, result);
 }
 
-HL_RESULT hl_StringJoinNative(const hl_NativeStr str1,
-    const hl_NativeStr str2, hl_NativeStr* result)
+HL_RESULT hl_StringJoinNative(const hl_NativeChar* str1,
+    const hl_NativeChar* str2, hl_NativeChar** result)
 {
     if (!str1 || !str2 || !result) return HL_ERROR_UNKNOWN;
     return hl_INStringJoin(str1, str2, result);

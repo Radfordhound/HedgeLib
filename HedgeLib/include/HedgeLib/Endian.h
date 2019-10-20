@@ -1,9 +1,10 @@
 #pragma once
 #include "Offsets.h"
-#include <stdint.h>
 
 #ifdef __cplusplus
 #include "Helpers.h"
+#include <utility>
+
 extern "C" {
 #else
 #include <stdbool.h>
@@ -90,16 +91,16 @@ HL_STATIC_ASSERT_SIZE(double, 8);
 #define HL_ENDIAN_SWAP_RECURSIVE(type, v, be) HL_ENDIAN_SWAP_RECURSIVE_NAME(type)(v, be)
 
 #define HL_DECL_ENDIAN_SWAP(type) \
-    HL_API void HL_ENDIAN_SWAP_NAME(type)(struct type* v)
+    HL_API void HL_ENDIAN_SWAP_NAME(type)(type* v)
 
 #define HL_DECL_ENDIAN_SWAP_RECURSIVE(type) \
-    HL_API void HL_ENDIAN_SWAP_RECURSIVE_NAME(type)(struct type* v, bool be);
+    HL_API void HL_ENDIAN_SWAP_RECURSIVE_NAME(type)(type* v, bool be);
 
 #define HL_IMPL_ENDIAN_SWAP(type) \
-    void HL_ENDIAN_SWAP_NAME(type)(struct type* v)
+    void HL_ENDIAN_SWAP_NAME(type)(type* v)
 
 #define HL_IMPL_ENDIAN_SWAP_RECURSIVE(type) \
-    void HL_ENDIAN_SWAP_RECURSIVE_NAME(type)(struct type* v, bool be)
+    void HL_ENDIAN_SWAP_RECURSIVE_NAME(type)(type* v, bool be)
 
 #define HL_INLN_ENDIAN_SWAP(type) \
     inline HL_IMPL_ENDIAN_SWAP(type)
@@ -158,27 +159,24 @@ HL_STATIC_ASSERT_SIZE(double, 8);
     void type::EndianSwapRecursive(bool isBigEndian) { \
         HL_ENDIAN_SWAP_RECURSIVE(type, this, isBigEndian); }
 
-namespace internal_impl
-{
-    template<typename T>
-    using EndianSwap_t = decltype(std::declval<T&>().EndianSwap());
+template<typename T>
+using hl_IEndianSwap_t = decltype(std::declval<T&>().EndianSwap());
 
-    template<typename T>
-    constexpr bool HasEndianSwapFunction = is_detected_v<EndianSwap_t, T>;
+template<typename T>
+constexpr bool hl_IHasEndianSwapFunction = hl_IIsDetected_v<hl_IEndianSwap_t, T>;
 
-    template<typename T>
-    using EndianSwapRecursive_t = decltype(std::declval
-        <T&>().EndianSwapRecursive(true));
+template<typename T>
+using hl_IEndianSwapRecursive_t = decltype(std::declval
+    <T&>().EndianSwapRecursive(true));
 
-    template<typename T>
-    constexpr bool HasEndianSwapRecursiveFunction =
-        is_detected_v<EndianSwapRecursive_t, T>;
-}
+template<typename T>
+constexpr bool hl_IHasEndianSwapRecursiveFunction =
+    hl_IIsDetected_v<hl_IEndianSwapRecursive_t, T>;
 
 template<typename T>
 inline void hl_Swap(T& value)
 {
-    if constexpr (internal_impl::HasEndianSwapFunction<T>)
+    if constexpr (hl_IHasEndianSwapFunction<T>)
     {
         value.EndianSwap();
     }
@@ -234,6 +232,18 @@ inline void hl_Swap(hl_ArrOff64& value)
     hl_SwapUInt64(&value.Count);
 }
 
+template<typename T>
+inline void hl_Swap(hl_ArrayOffset32<T>& value)
+{
+    hl_Swap(value.GetArray());
+}
+
+template<typename T>
+inline void hl_Swap(hl_ArrayOffset64<T>& value)
+{
+    hl_Swap(value.GetArray());
+}
+
 template<typename T, typename... Args>
 inline void hl_Swap(T& value, Args& ... args)
 {
@@ -244,7 +254,7 @@ inline void hl_Swap(T& value, Args& ... args)
 template<typename T>
 inline void hl_SwapRecursive(bool isBigEndian, T& value)
 {
-    if constexpr (internal_impl::HasEndianSwapRecursiveFunction<T>)
+    if constexpr (hl_IHasEndianSwapRecursiveFunction<T>)
     {
         value.EndianSwapRecursive(isBigEndian);
     }
@@ -290,6 +300,18 @@ inline void hl_SwapRecursive(bool isBigEndian, hl_ArrOff64& value)
         static_cast<size_t>(value.Count), isBigEndian);
 
     if (!isBigEndian) hl_SwapUInt64(&value.Count);
+}
+
+template<typename T>
+inline void hl_SwapRecursive(bool isBigEndian, hl_ArrayOffset32<T>& value)
+{
+    hl_SwapRecursive<T>(isBigEndian, value.GetArray());
+}
+
+template<typename T>
+inline void hl_SwapRecursive(bool isBigEndian, hl_ArrayOffset64<T>& value)
+{
+    hl_SwapRecursive<T>(isBigEndian, value.GetArray());
 }
 #else
 #define HL_DECL_ENDIAN_SWAP_CPP()

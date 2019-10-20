@@ -54,6 +54,11 @@ workspace("HedgeLib")
     -- Get some options
     include("options.lua")
 
+    -- Disable some warnings on windows
+    if Target == "windows" then
+        disablewarnings("4996") -- please use wcscpy_s even though it's not in the C++ standard we're begging you
+    end
+
 	-- Include Projects
 	include("HedgeLib")
 	

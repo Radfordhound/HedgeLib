@@ -1,6 +1,11 @@
 #pragma once
 #include "HedgeLib/String.h"
 
-template<bool pacv3>
-bool hl_INArchiveNextSplit(hl_NativeStr splitCharPtr);
-bool hl_INArchiveNextSplit(hl_NativeStr splitCharPtr, bool pacv3);
+template<typename char_t>
+bool hl_INArchiveNextSplit(char_t* splitCharPtr);
+
+template<typename char_t>
+bool hl_INArchiveNextSplitPACxV3(char_t* splitCharPtr);
+
+template<typename char_t>
+bool hl_INArchiveNextSplit(char_t* splitCharPtr, bool pacv3);

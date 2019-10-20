@@ -1,20 +1,9 @@
 #pragma once
+#include "String.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-// Error codes
-enum HL_RESULT
-{
-    HL_SUCCESS,
-    HL_ERROR_UNKNOWN,
-    HL_ERROR_OUT_OF_MEMORY,
-    // TODO: Add more results
-};
-
-#define HL_FAILED(result) (result != HL_SUCCESS)
-#define HL_OK(result) (result == HL_SUCCESS)
 
 // Static asserts
 #if defined(__cplusplus) && (__cplusplus >= 201103L || defined(__cpp_static_assert))
@@ -29,6 +18,9 @@ enum HL_RESULT
 
 #define HL_STATIC_ASSERT_SIZE(type, size) HL_STATIC_ASSERT(sizeof(type) == size, \
     "sizeof(" #type ") != expected size (" #size ").")
+
+HL_API const char* hl_GetResultString(HL_RESULT result);
+HL_API const hl_NativeChar* hl_GetResultStringNative(HL_RESULT result);
 
 #ifdef __cplusplus
 }

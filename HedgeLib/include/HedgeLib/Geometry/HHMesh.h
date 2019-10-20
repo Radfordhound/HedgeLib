@@ -1,54 +1,44 @@
 #pragma once
-#include "../Offsets.h"
 #include "../Endian.h"
-#include "../IO/IO.h"
-#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct hl_DHHSubMesh;
-typedef HL_ARR32(HL_OFF32(hl_DHHSubMesh)) hl_DHHSubMeshSlot;
+typedef struct hl_HHSubMesh hl_HHSubMesh;
+typedef HL_ARR32(HL_OFF32(hl_HHSubMesh)) hl_HHSubMeshSlot;
 
-struct hl_DHHSpecialSubMeshSlot
+typedef struct hl_HHSpecialSubMeshSlot
 {
     uint32_t Count;
     HL_OFF32(HL_STR32) Types;
     HL_OFF32(HL_OFF32(uint32_t)) SubMeshCounts;
-    HL_OFF32(HL_OFF32(HL_OFF32(hl_DHHSubMesh))) SubMeshes;
-
-    HL_INLN_X64_OFFSETS_CPP(Types, SubMeshCounts, SubMeshes);
+    HL_OFF32(HL_OFF32(HL_OFF32(hl_HHSubMesh))) SubMeshes;
 
     HL_DECL_ENDIAN_SWAP_CPP();
     HL_DECL_ENDIAN_SWAP_RECURSIVE_CPP();
-    HL_DECL_WRITEO_CPP();
-};
+}
+hl_HHSpecialSubMeshSlot;
 
-HL_DECL_X64_OFFSETS(hl_DHHSpecialSubMeshSlot);
-HL_DECL_ENDIAN_SWAP(hl_DHHSpecialSubMeshSlot);
-HL_DECL_ENDIAN_SWAP_RECURSIVE(hl_DHHSpecialSubMeshSlot);
-HL_DECL_WRITEO(hl_DHHSpecialSubMeshSlot);
+HL_STATIC_ASSERT_SIZE(hl_HHSpecialSubMeshSlot, 16);
+HL_DECL_ENDIAN_SWAP(hl_HHSpecialSubMeshSlot);
+HL_DECL_ENDIAN_SWAP_RECURSIVE(hl_HHSpecialSubMeshSlot);
 
-struct hl_DHHMesh
+typedef struct hl_HHMesh
 {
-    hl_DHHSubMeshSlot Solid;
-    hl_DHHSubMeshSlot Transparent;
-    hl_DHHSubMeshSlot Boolean;
-    struct hl_DHHSpecialSubMeshSlot Special;
-
-    HL_INLN_X64_OFFSETS_CPP(Solid.Offset, Transparent.Offset, Boolean.Offset,
-        Special.Types, Special.SubMeshCounts, Special.SubMeshes);
+    hl_HHSubMeshSlot Solid;
+    hl_HHSubMeshSlot Transparent;
+    hl_HHSubMeshSlot Boolean;
+    hl_HHSpecialSubMeshSlot Special;
 
     HL_DECL_ENDIAN_SWAP_CPP();
     HL_DECL_ENDIAN_SWAP_RECURSIVE_CPP();
-    HL_DECL_WRITEO_CPP();
-};
+}
+hl_HHMesh;
 
-HL_DECL_X64_OFFSETS(hl_DHHMesh);
-HL_DECL_ENDIAN_SWAP(hl_DHHMesh);
-HL_DECL_ENDIAN_SWAP_RECURSIVE(hl_DHHMesh);
-HL_DECL_WRITEO(hl_DHHMesh);
+HL_STATIC_ASSERT_SIZE(hl_HHMesh, 0x28);
+HL_DECL_ENDIAN_SWAP(hl_HHMesh);
+HL_DECL_ENDIAN_SWAP_RECURSIVE(hl_HHMesh);
 
 #ifdef __cplusplus
 }

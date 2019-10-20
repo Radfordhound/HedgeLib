@@ -3,7 +3,7 @@ newoption(
 {
 	trigger = "type",
 	value = "shared/static",
-	description = "What type of library HedgeLib is/will be.",
+	description = "What type of library HedgeLib is/will be",
 	default = "static",
 	allowed =
 	{

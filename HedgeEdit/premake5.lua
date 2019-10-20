@@ -5,19 +5,82 @@ project("HedgeEdit")
 	kind("WindowedApp")
 	links("HedgeLib")
 
+    -- Backend Option
+    newoption(
+    {
+	    trigger = "backend",
+	    description = "Which backend HedgeEdit should use for rendering",
+	    default = "auto",
+	    allowed =
+	    {
+            { "auto", "Pick automatically based on target platform" },
+		    { "d3d11", "Direct3D 11" },
+            --{ "vk", "Vulkan" }
+	    }
+    })
+
     -- Static or Shared
     if LibType == "shared" then
         defines("HL_DLL")
-        postbuildcommands("copy /Y \"$(ProjectDir)License.txt\" \"$(TargetDir)\License.txt\" >NUL")
+        postbuildcommands("copy /Y \"$(ProjectDir)License.txt\" \"$(TargetDir)License.txt\" >NUL")
         postbuildcommands("copy /Y \"$(SolutionDir)HedgeLib\\bin\\$(Platform)\\$(Configuration)\\HedgeLib.dll\" \"$(TargetDir)HedgeLib.dll\" >NUL")
     end
-	
-	-- Platform-Specifics
-	if Target == "windows" then
-		defines("NOMINMAX")
+
+    -- Platform-Specifics
+    if Target == "windows" then
+        defines("NOMINMAX")
 		files("app.manifest")
-		links({ "d3d11", "DXGI" })
-	end
+
+        -- Auto
+        if _OPTIONS["backend"] == "auto" then
+            _OPTIONS["backend"] = "d3d11"
+        end
+
+        -- Direct3D 11
+        if _OPTIONS["backend"] == "d3d11" then
+            files("shaders/**.hlsl")
+            links({ "d3d11", "DXGI" })
+            defines("D3D11")
+
+            -- We rely on the fact that the qt module is already adding the obj dir to includedirs for us
+            filter("files:**.hlsl")
+                shadermodel("5.0")
+                shaderentry("main")
+                shadervariablename("dxc_%{file.basename}")
+                shaderheaderfileoutput("$(IntDir)dxc_%{file.basename}.h")
+                shaderobjectfileoutput("")
+
+            filter("files:**_vs.hlsl")
+                shadertype("Vertex")
+
+            filter("files:**_ps.hlsl")
+                shadertype("Pixel")
+
+            filter({})
+        -- Vulkan
+        --elseif _OPTIONS["backend"] == "vk" then
+            -- TODO
+        else
+            premake.error("Unknown backend.")
+        end
+    else
+        pic "on"
+
+        -- Auto
+        if _OPTIONS["backend"] == "auto" then
+            _OPTIONS["backend"] = "vk"
+        end
+
+        -- Direct3D 11
+        if _OPTIONS["backend"] == "d3d11" then
+            premake.error("Direct3D 11 backend is only supported on Windows.")
+        -- Vulkan
+        --elseif _OPTIONS["backend"] == "vk" then
+            -- TODO
+        else
+            premake.error("Unknown backend.")
+        end
+    end
 	
 	-- Dependencies
 	local deps = GetDepends("depends.lua")

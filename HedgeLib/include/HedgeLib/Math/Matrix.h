@@ -1,13 +1,12 @@
 #pragma once
 #include "../Endian.h"
-#include "../IO/IO.h"
 
 #ifdef __cplusplus
 #include <array>
 extern "C" {
 #endif
 
-struct hl_Matrix4x4
+typedef struct hl_Matrix4x4
 {
     float M11;
     float M12;
@@ -61,11 +60,10 @@ struct hl_Matrix4x4
 #endif
 
     HL_DECL_ENDIAN_SWAP_CPP();
-    HL_DECL_WRITE_CPP();
-};
+}
+hl_Matrix4x4;
 
 HL_DECL_ENDIAN_SWAP(hl_Matrix4x4);
-HL_DECL_WRITE(hl_Matrix4x4);
 
 #ifdef __cplusplus
 }

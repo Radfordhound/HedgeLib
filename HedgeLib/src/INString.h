@@ -4,7 +4,7 @@
 #ifdef _WIN32
 // Converts the given path to UTF-16, calls a function, frees, and returns the HL_RESULT
 #define HL_INSTRING_NATIVE_CALL(str, funcCall) {\
-hl_NativeStr nativeStr;\
+hl_NativeChar* nativeStr;\
 HL_RESULT err = hl_INStringConvertUTF8ToNative(str, &nativeStr);\
 if (HL_FAILED(err)) return err;\
 err = funcCall;\
@@ -14,7 +14,7 @@ return err;\
 #else
 // Simply calls the function and returns the HL_RESULT
 #define HL_INSTRING_NATIVE_CALL(str, funcCall) \
-const hl_NativeStr nativeStr = str; return funcCall;
+const hl_NativeChar* nativeStr = str; return funcCall;
 #endif
 
 void hl_INStringEncodeCodepointUTF8(uint32_t cp, char*& u8str);
@@ -75,7 +75,7 @@ HL_RESULT hl_INStringConvertUTF16ToCP932(const uint16_t* u16str,
     char** cp932str, size_t u16bufLen);
 
 HL_RESULT hl_INStringConvertUTF8ToNative(const char* u8str,
-    hl_NativeStr* nativeStr, size_t u8bufLen = 0);
+    hl_NativeChar** nativeStr, size_t u8bufLen = 0);
 
 HL_RESULT hl_INStringConvertUTF16ToUTF8NoAlloc(const uint16_t* u16str,
     char* u8str, size_t u8bufLen, size_t u16bufLen);
@@ -90,7 +90,7 @@ HL_RESULT hl_INStringConvertUTF16ToUTF8(const uint16_t* u16str,
     char** u8str, size_t u16bufLen);
 
 HL_RESULT hl_INStringConvertUTF16ToNative(const uint16_t* u16str,
-    hl_NativeStr* nativeStr, size_t u16bufLen = 0);
+    hl_NativeChar** nativeStr, size_t u16bufLen = 0);
 
 template<typename char_t>
 HL_RESULT hl_INStringConvertCP932ToUnicodeNoAlloc(
@@ -109,4 +109,4 @@ HL_RESULT hl_INStringConvertCP932ToUTF16(const char* cp932str,
     uint16_t** u16str, size_t cp932bufLen);
 
 HL_RESULT hl_INStringConvertCP932ToNative(
-    const char* cp932str, hl_NativeStr* nativeStr, size_t cp932bufLen);
+    const char* cp932str, hl_NativeChar** nativeStr, size_t cp932bufLen);

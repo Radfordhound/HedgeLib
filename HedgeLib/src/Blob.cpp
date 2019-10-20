@@ -3,12 +3,22 @@
 #include "HedgeLib/IO/BINA.h"
 #include "INBlob.h"
 
-enum HL_BLOB_FORMAT hl_BlobGetFormat(const struct hl_Blob* blob)
+hl_Blob* hl_CreateBlob(size_t size, HL_BLOB_FORMAT format)
 {
-    return static_cast<enum HL_BLOB_FORMAT>(blob->Format);
+    return hl_INCreateBlob(size, format);
 }
 
-const void* hl_BlobGetData(const struct hl_Blob* blob)
+HL_BLOB_FORMAT hl_BlobGetFormat(const hl_Blob* blob)
+{
+    return static_cast<HL_BLOB_FORMAT>(blob->Format);
+}
+
+const void* hl_BlobGetRawData(const hl_Blob* blob)
+{
+    return &blob->Data;
+}
+
+const void* hl_BlobGetData(const hl_Blob* blob)
 {
     switch (blob->Format)
     {
@@ -20,23 +30,5 @@ const void* hl_BlobGetData(const struct hl_Blob* blob)
 
     default:
         return nullptr;
-    }
-}
-
-void hl_FreeBlob(struct hl_Blob* blob)
-{
-    switch (blob->Format)
-    {
-    case HL_BLOB_FORMAT_HEDGEHOG_ENGINE:
-        hl_HHFreeBlob(blob);
-        break;
-
-    case HL_BLOB_FORMAT_BINA:
-        hl_BINAFreeBlob(blob);
-        break;
-
-    default:
-        std::free(blob);
-        break;
     }
 }

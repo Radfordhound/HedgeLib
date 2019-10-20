@@ -29,7 +29,7 @@ HL_RESULT hl_INPathGetParent(const char_t* path,
 template<typename char_t>
 HL_RESULT hl_INPathGetParent(const char_t* path, char_t** parent);
 
-bool hl_INPathIsDirectory(const hl_NativeStr path);
+bool hl_INPathIsDirectory(const hl_NativeChar* path);
 
 template<typename char_t>
 inline bool hl_INPathCombineNeedsSlash1(const char_t* path1, size_t path1Len)
@@ -73,8 +73,11 @@ HL_RESULT hl_INPathCombine(const char_t* path1,
 template<typename char_t, bool multiExt = true>
 HL_RESULT hl_INPathRemoveExt(const char_t* filePath, char_t** pathNoExt);
 
-bool hl_INPathExists(const hl_NativeStr path);
-HL_RESULT hl_INPathCreateDirectory(const hl_NativeStr path);
+bool hl_INPathExists(const hl_NativeChar* path);
+HL_RESULT hl_INPathCreateDirectory(const hl_NativeChar* path);
 
-HL_RESULT hl_INPathGetFileCount(const hl_NativeStr dir,
+HL_RESULT hl_INPathGetFileCount(const hl_NativeChar* dir,
     bool recursive, size_t* fileCount, size_t* bufSize = nullptr);
+
+HL_RESULT hl_INPathGetFilesInDirectoryUTF8(const hl_NativeChar* dir,
+    bool recursive, size_t* fileCount, char*** files);

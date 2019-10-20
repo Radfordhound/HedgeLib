@@ -11,6 +11,9 @@ Makefile
 premake5.exe
 premake5
 
+# Visual Studio Code
+*.vscode/
+
 # User-specific files
 *.suo
 *.user
@@ -228,6 +231,13 @@ ModelManifest.xml
 /*.unityproj
 /*.booproj
 /.idea*/
+
+# ============================================= #
+# Xcode Project Files #
+# ============================================= #
+*.xcworkspace/
+*.xcodeproj/
+._main.cpp
 
 # ============ #
 # OS generated #

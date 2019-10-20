@@ -1,12 +1,11 @@
 #pragma once
 #include "../Endian.h"
-#include "../IO/IO.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct hl_AABB
+typedef struct hl_AABB
 {
     float StartX;
     float EndX;
@@ -36,12 +35,10 @@ struct hl_AABB
         hl_SwapFloat(&EndZ);
     }
 #endif
-
-    HL_DECL_WRITE_CPP();
-};
+}
+hl_AABB;
 
 HL_DECL_ENDIAN_SWAP(hl_AABB);
-HL_DECL_WRITE(hl_AABB);
 
 #ifdef __cplusplus
 }
