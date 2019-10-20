@@ -1,9 +1,9 @@
 #include "strings.h"
 
-const hl_NativeStr const EnglishText[STRING_CONSTANT_COUNT] =
+const hl_NativeChar* const EnglishText[STRING_CONSTANT_COUNT] =
 {
     // VERSION_STRING
-    HL_NATIVE_TEXT("0.2 (ALPHA)"),
+    HL_NATIVE_TEXT("0.25 (ALPHA)"),
 
     // USAGE_STRING
     HL_NATIVE_TEXT("Usage: HedgeArcPack [flags] input [output]"),
@@ -88,7 +88,7 @@ const hl_NativeStr const EnglishText[STRING_CONSTANT_COUNT] =
     HL_NATIVE_TEXT("(Forces .pac files)")
 };
 
-const hl_NativeStr const* Languages[LANGUAGE_COUNT] =
+const hl_NativeChar* const* Languages[LANGUAGE_COUNT] =
 {
     EnglishText
 };

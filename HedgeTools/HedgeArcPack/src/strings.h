@@ -1,14 +1,16 @@
 #pragma once
-#include <HedgeLib/String.h>
+#include "HedgeLib/String.h"
 #include <iostream>
 #include <cstdlib>
 
 #ifdef _WIN32
 #define ncout std::wcout
+#define ncerr std::wcerr
 #define ncin std::wcin
 #define nstring std::wstring
 #else
 #define ncout std::cout
+#define ncerr std::cerr
 #define ncin std::cin
 #define nstring std::string
 #endif
@@ -51,11 +53,11 @@ enum LANGUAGE_TYPE
     LANGUAGE_COUNT
 };
 
-extern const hl_NativeStr const EnglishText[STRING_CONSTANT_COUNT];
-extern const hl_NativeStr const* Languages[LANGUAGE_COUNT];
+extern const hl_NativeChar* const EnglishText[STRING_CONSTANT_COUNT];
+extern const hl_NativeChar* const* Languages[LANGUAGE_COUNT];
 extern LANGUAGE_TYPE CurrentLanguage;
 
-inline const hl_NativeStr const GetText(STRING_ID id)
+inline const hl_NativeChar* const GetText(STRING_ID id)
 {
     return Languages[CurrentLanguage][id];
 }

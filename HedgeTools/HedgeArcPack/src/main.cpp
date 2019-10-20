@@ -1,8 +1,8 @@
 #include "strings.h"
-#include <HedgeLib/Archives/HHArchive.h>
-#include <HedgeLib/Archives/LWArchive.h>
-#include <HedgeLib/Archives/Archive.h>
-#include <HedgeLib/IO/Path.h>
+#include "HedgeLib/Archives/GensArchive.h"
+#include "HedgeLib/Archives/LWArchive.h"
+#include "HedgeLib/Archives/Archive.h"
+#include "HedgeLib/IO/Path.h"
 #include <string>
 #include <cstring>
 #include <chrono>
@@ -50,7 +50,13 @@ int Error(STRING_ID id)
     return EXIT_FAILURE;
 }
 
-hl_ArchiveType GetArchiveType(const hl_NativeStr type)
+int Error(HL_RESULT result)
+{
+    ncout << GetText(ERROR_STRING) << hl_GetResultStringNative(result) << std::endl;
+    return EXIT_FAILURE;
+}
+
+HL_ARCHIVE_TYPE GetArchiveType(const hl_NativeChar* type)
 {
     //// Heroes/Shadow the Hedgehog .one files
     //if (hl_StringsEqualInvASCII(type, HL_NATIVE_TEXT("heroes")) ||
@@ -72,7 +78,7 @@ hl_ArchiveType GetArchiveType(const hl_NativeStr type)
         hl_StringsEqualInvASCII(type, HL_NATIVE_TEXT("ar")) ||
         hl_StringsEqualInvASCII(type, HL_NATIVE_TEXT("pfd")))
     {
-        return HL_ARC_TYPE_HEDGEHOG;
+        return HL_ARC_TYPE_GENS;
     }
 
     // Lost World .pac files
@@ -93,7 +99,7 @@ hl_ArchiveType GetArchiveType(const hl_NativeStr type)
     return HL_ARC_TYPE_UNKNOWN;
 }
 
-const hl_NativeStr GetArchiveExt(hl_ArchiveType type)
+const hl_NativeChar* GetArchiveExt(HL_ARCHIVE_TYPE type)
 {
     switch (type)
     {
@@ -101,7 +107,7 @@ const hl_NativeStr GetArchiveExt(hl_ArchiveType type)
     case HL_ARC_TYPE_STORYBOOK:
         return hl_ONEExtensionNative;*/
 
-    case HL_ARC_TYPE_HEDGEHOG:
+    case HL_ARC_TYPE_GENS:
         return hl_ARExtensionNative;
 
     case HL_ARC_TYPE_PACX_V2:
@@ -139,11 +145,11 @@ int main(int argc, char* argv[])
 
     // Parse arguments
     HL_RESULT result;
-    const hl_NativeStr input;
-    hl_NativeStr output;
+    const hl_NativeChar *input, *output;
+    hl_NStrPtr outputWrapper;
     HAP_MODES mode;
-    hl_ArchiveType type = HL_ARC_TYPE_UNKNOWN;
-    bool isSplit, be = false, customSplitLimit = false, freeOutput = false;
+    HL_ARCHIVE_TYPE type = HL_ARC_TYPE_UNKNOWN;
+    bool isSplit, be = false, customSplitLimit = false;
     unsigned long splitLimit = 0;
 
     if (argc == 2)
@@ -160,9 +166,13 @@ int main(int argc, char* argv[])
         }
         else
         {
+            hl_NativeChar* outputPtr;
             mode = HAP_MODE_EXTRACT;
-            result = hl_PathRemoveExts(input, &output); // TODO: Check result
-            freeOutput = true;
+            result = hl_PathRemoveExts(input, &outputPtr);
+            if (HL_FAILED(result)) return Error(result);
+
+            outputWrapper = outputPtr; // This will automatically free outputPtr for us
+            output = outputPtr;
         }
     }
     else
@@ -253,7 +263,7 @@ int main(int argc, char* argv[])
     {
         if (mode == HAP_MODE_EXTRACT)
         {
-            isSplit = hl_GetArchiveType(input, &type);
+            isSplit = hl_ArchiveGetTypeNative(input, &type);
         }
         else
         {
@@ -287,17 +297,21 @@ int main(int argc, char* argv[])
     // Auto-determine outputs
     if (!output)
     {
+        hl_NativeChar* outputPtr;
         if (mode == HAP_MODE_PACK)
         {
-            const hl_NativeStr ext = GetArchiveExt(type); // TODO: If PFD flag is set, use PFD extension instead
-            result = hl_StringJoinNative(input, ext, &output); // TODO: Check result
+            const hl_NativeChar* ext = GetArchiveExt(type); // TODO: If PFD flag is set, use PFD extension instead
+            result = hl_StringJoinNative(input, ext, &outputPtr);
+            if (HL_FAILED(result)) return Error(result);
         }
         else
         {
-            result = hl_PathRemoveExts(input, &output); // TODO: Check result
+            result = hl_PathRemoveExts(input, &outputPtr);
+            if (HL_FAILED(result)) return Error(result);
         }
 
-        freeOutput = true;
+        outputWrapper = outputPtr; // This will automatically free outputPtr for us
+        output = outputPtr;
     }
 
     std::chrono::high_resolution_clock::time_point begin =
@@ -307,54 +321,34 @@ int main(int argc, char* argv[])
     if (mode == HAP_MODE_EXTRACT)
     {
         ncout << GetText(EXTRACTING_STRING) << std::endl;
-        result = hl_ExtractArchivesOfType(input, output, type);
+        result = hl_ExtractArchivesOfTypeNative(input, output, type);
     }
 
     // Pack archive from directory
     else
     {
         ncout << GetText(PACKING_STRING) << std::endl;
+        hl_Archive* arcPtr;
+        result = hl_CreateArchive(input, &arcPtr);
+        if (HL_FAILED(result)) return Error(result);
 
-        // Get files in input directory
-        size_t fileCount;
-        char** files;
-
-#ifdef _WIN32
-        char* inputDir;
-        // TODO: Check result
-        result = hl_StringConvertUTF16ToUTF8(
-            reinterpret_cast<const uint16_t*>(input),
-            &inputDir);
-#else
-        const char* inputDir = input;
-#endif
-
-        // TODO: Check result
-        result = hl_PathGetFilesInDirectory(
-            inputDir, false, &fileCount, &files);
-
-#ifdef _WIN32
-        std::free(inputDir);
-#endif
-
-        hl_ArchiveFileEntry* entries = hl_CreateArchiveFileEntries(
-            const_cast<const char**>(files), fileCount);
+        hl_CPtr<hl_Archive> arc = arcPtr;
 
         // Pack archive
-        if (type == HL_ARC_TYPE_HEDGEHOG)
+        if (type == HL_ARC_TYPE_GENS)
         {
-            // TODO: Re-add HHArchive support
-            /*result = hl_CreateHHArchive(entries, fileCount, outputDir, outputName,
+            // TODO: Let user set pad amount
+            // TODO: Let user set whether or not to generate arl
+            // TODO: Let user set compression type
+            result = hl_SaveGensArchiveNative(arc, output,
                 static_cast<uint32_t>((customSplitLimit) ?
-                    splitLimit : HL_PACX_DEFAULT_SPLIT_LIMIT), 0x10,
-                HL_HHARCHIVE_TYPE_UNCOMPRESSED);*/
-            return Error(ERROR_INVALID_TYPE);
+                splitLimit : HL_PACX_DEFAULT_SPLIT_LIMIT));
         }
         else if (type == HL_ARC_TYPE_PACX_V2)
         {
-            result = hl_CreateLWArchivesNative(entries, fileCount,
-                output, static_cast<uint32_t>((customSplitLimit) ?
-                splitLimit : HL_PACX_DEFAULT_SPLIT_LIMIT), be);
+            result = hl_SaveLWArchiveNative(arc,
+                output, be, static_cast<uint32_t>((customSplitLimit) ?
+                splitLimit : HL_PACX_DEFAULT_SPLIT_LIMIT));
         }
         else
         {
@@ -362,14 +356,7 @@ int main(int argc, char* argv[])
         }
 
         // TODO: Support other types
-
-        // Free data
-        std::free(entries);
-        std::free(files);
     }
-
-    // Free output string if necessary
-    if (freeOutput) std::free(output);
 
     // Print elapsed time if succeeded
     if (HL_OK(result))
@@ -387,9 +374,7 @@ int main(int argc, char* argv[])
     // Otherwise, print error
     else
     {
-        // TODO: Friendly error
-        // TODO: Call Error function instead of this
-        ncout << GetText(ERROR_STRING) << result << std::endl;
+        return Error(result);
     }
 
     return EXIT_SUCCESS;

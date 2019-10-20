@@ -25,10 +25,6 @@ project("HedgeArcPack")
 	-- MSC Optimization
 	filter("toolset:msc")
 		flags("MultiProcessorCompile")
-	
-	-- GCC C++ 17 Filesystem support
-	filter("toolset:gcc or clang")
-		links("stdc++fs")
 
 	-- Debug Configuration
 	filter("configurations:Debug*")
