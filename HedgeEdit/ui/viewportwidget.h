@@ -1,9 +1,12 @@
 #pragma once
-
-#include "../src/GFX/viewport.h"
 #include "viewportrenderthread.h"
 #include <QWidget>
 #include <memory>
+
+namespace HedgeEdit::GFX
+{
+    class Viewport;
+}
 
 namespace HedgeEdit::UI
 {
@@ -16,7 +19,7 @@ namespace HedgeEdit::UI
         ~ViewportWidget();
 
     protected:
-        std::unique_ptr<HedgeEdit::GFX::Viewport> vp;
+        std::unique_ptr<GFX::Viewport> vp;
         std::unique_ptr<ViewportRenderThread> renderThread;
 
         bool event(QEvent* e) override;

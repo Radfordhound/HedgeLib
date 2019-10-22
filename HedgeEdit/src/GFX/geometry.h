@@ -1,51 +1,48 @@
 #pragma once
-#include "d3d.h"
-#include <Geometry/ISubMesh.h>
+#ifdef D3D11
+#include <winrt/base.h>
 #include <d3d11.h>
+#endif
+
 #include <cstdint>
 #include <cstddef>
 
+struct hl_HHSubMesh;
+
 namespace HedgeEdit::GFX
 {
-    // Forward-declaration for Device
-    class Device;
+    class Instance;
 
+    // Geometry:
+    // - VertexBuffer* VertexBuffer;
+    // - IndexBuffer* IndexBuffer;
+    // - size_t InputLayoutIndex;
+    // - ushort MaterialIndex;
+    // - bool SeeThrough; // For Solid/Boolean this is false
     class Geometry
     {
-        ID3D11Buffer* vertexBuffer;
-        ID3D11Buffer* indexBuffer;
-        std::size_t vertexFormatIndex;
-        UINT stride, faceCount;
+#ifdef D3D11
+        winrt::com_ptr<ID3D11Buffer> vertexBuffer;
+        winrt::com_ptr<ID3D11Buffer> indexBuffer;
+#endif
 
-        void CreateVertexBufferHH2(Device& device,
-            const HedgeLib::Geometry::ISubMesh* subMesh);
+        std::size_t vertexFormatHash;
+        unsigned int stride, faceCount;
 
     public:
-        std::uint16_t MaterialIndex;
+        std::size_t MaterialIndex;
         bool SeeThrough; // For Solid/Boolean this is false
 
-        void Create(Device& device,
-            const HedgeLib::Geometry::ISubMesh* subMesh);
-
         inline Geometry() = default;
-        inline Geometry(Device& device,
-            const HedgeLib::Geometry::ISubMesh* subMesh)
-        {
-            Create(device, subMesh);
-        }
-
-        inline ~Geometry() noexcept
-        {
-            SAFE_RELEASE(vertexBuffer);
-            SAFE_RELEASE(indexBuffer);
-        }
+        Geometry(Instance& inst, const hl_HHSubMesh& subMesh,
+            bool seeThrough = false);
         
-        inline std::size_t VertexFormatIndex() const noexcept
+        inline std::size_t VertexFormatHash() const noexcept
         {
-            return vertexFormatIndex;
+            return vertexFormatHash;
         }
 
-        void Bind(ID3D11DeviceContext* context) const;
-        void Draw(ID3D11DeviceContext* context) const;
+        void Bind(const Instance& inst) const;
+        void Draw(const Instance& inst) const;
     };
 }

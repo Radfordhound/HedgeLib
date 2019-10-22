@@ -1,237 +1,187 @@
 #include "geometry.h"
-#include "device.h"
-#include <d3d11.h>
-#include <Geometry/ISubMesh.h>
-#include <Geometry/VertexFormat.h>
-#include <cstdint>
-#include <cstddef>
+#include "inputLayout.h"
+#include "material.h"
+#include "shader.h"
+#include "instance.h"
+#include <HedgeLib/Geometry/HHSubMesh.h>
 #include <stdexcept>
-#include <memory>
 #include <algorithm>
-
-using namespace HedgeLib::Geometry;
+#include <cmath>
+#include <cstdlib>
 
 namespace HedgeEdit::GFX
 {
-    void Geometry::CreateVertexBufferHH2(Device& device, const ISubMesh* subMesh)
+#ifdef D3D11
+    static const UINT vertexBufferOffset = 0;
+#endif
+
+    std::int8_t Convert_R10_SINT_To_R8_SNORM(std::uint16_t input)
     {
-        // Create copy of formats data to operate on
-        std::size_t elementCount;
-        std::unique_ptr<VertexElement[]> format = subMesh->VertexFormat(elementCount);
-        std::unique_ptr<VertexElement[]> elements =
-            std::make_unique<VertexElement[]>(elementCount);
+        float output = static_cast<float>(input & 0x1FF);       // Get 9-bit value
+        output += (((input & 0x200) == 0) ? 0.0f : -512.0f);    // Apply sign
+        output /= 512.0f;                                       // Get normalized value
+        output *= 128.0f;                                       // Denormalize to 8-bit value
+        output = std::floor(output);                            // Floor because Forces does it idk
+        return static_cast<std::int8_t>(output);                // Cast to signed byte and return
+    }
 
-        // TODO: Reuse these copies?
-        std::copy(format.get(), format.get() + elementCount, elements.get());
+    std::uint32_t Convert_R10G10B10A2_SNORM_To_R8G8B8A8_SNORM(std::uint32_t input)
+    {
+        std::uint32_t output = static_cast<std::uint32_t>(
+            Convert_R10_SINT_To_R8_SNORM(input & 0x3FF));                                   // 10-bit red
 
-        // Compute new Vertex Buffer size
-        std::int32_t lastOffset = -1;
-        std::uint32_t offset = 0;
+        output |= ((Convert_R10_SINT_To_R8_SNORM((input >> 10) &                            // 10-bit green
+            0x3FF) << 8) & 0xFF00);
 
-        for (std::size_t i = 0; i < elementCount; ++i)
+        output |= ((Convert_R10_SINT_To_R8_SNORM((input >> 20) &                            // 10-bit blue
+            0x3FF) << 16) & 0xFF0000);
+
+        output |= ((((input & 0x80000000) ? -2 : 0) + ((input >> 30) & 1)) << 24);          // 2-bit alpha
+        return output;
+    }
+
+#ifdef D3D11
+    winrt::com_ptr<ID3D11Buffer> CreateVertexBuffer(
+        const Instance& inst, const hl_HHSubMesh& subMesh)
+    {
+        // Get vertex buffer size
+        std::size_t bufSize = (static_cast<std::size_t>(
+            subMesh.VertexSize) * subMesh.VertexCount);
+
+        // Create copy of buffer that we can modify before sending to the GPU
+        const std::uint8_t* origData = subMesh.Vertices.Get();
+        std::uint8_t* data = static_cast<std::uint8_t*>(std::malloc(bufSize));
+        if (!data) throw std::runtime_error("Out of memory!");
+
+        std::copy(origData, origData + bufSize, data);
+
+        // Convert data if necessary
+        const hl_HHVertexElement* format = subMesh.VertexElements.Get();
+        for (; format->Format != HL_HHVERTEX_FORMAT_LAST_ENTRY; ++format)
         {
-            // Ensure vertex formats are ordered just like the vertex data
-            if (static_cast<std::int32_t>(format[i].Offset) <= lastOffset)
+            switch (format->Format)
             {
-                throw std::logic_error(
-                    "Vertex Format order does not match Vertex Data!");
-            }
+            case HL_HHVERTEX_FORMAT_VECTOR3_HH1:
+                // ? -> DXGI_FORMAT_R8G8B8A8_SNORM ??
+                // TODO
+                throw std::runtime_error("HH1 Vector3 unpacking not yet implemented!");
 
-            // Compute new offset if offset change is necessary
-            lastOffset = static_cast<std::int32_t>(format[i].Offset);
-            elements[i].Offset += offset;
-
-            switch (format[i].Format)
-            {
-            case VERTEX_FORMAT_BYTE4:
-            case VERTEX_FORMAT_VECTOR4_BYTE:
-                offset += 12;
+            case HL_HHVERTEX_FORMAT_VECTOR3_HH2:
+                // R10G10B10A2_SNORM -> DXGI_FORMAT_R8G8B8A8_SNORM
+                uint32_t* dst = reinterpret_cast<uint32_t*>(data + format->Offset);
+                *dst = Convert_R10G10B10A2_SNORM_To_R8G8B8A8_SNORM(
+                    *reinterpret_cast<const uint32_t*>(origData + format->Offset));
                 break;
-
-            case VERTEX_FORMAT_VECTOR2_HALF:
-                offset += 4;
-                break;
-
-            case VERTEX_FORMAT_VECTOR3_HH1:
-            case VERTEX_FORMAT_VECTOR3_HH2:
-                offset += 8;
-                break;
-            }
-        }
-
-        // TODO: Create input layouts *properly*
-        vertexFormatIndex = device.CreateInputLayouts(elements.get(),
-            elementCount, *device.GetVertexShader(0));
-
-        // Reformat Vertex Buffer to match input layout
-        std::size_t vertexCount = subMesh->VertexCount();
-        std::size_t origVertexSize = subMesh->VertexSize();
-        std::size_t vertexSize = origVertexSize +
-            static_cast<std::size_t>(offset);
-
-        std::unique_ptr<std::uint8_t[]> vertices =
-            std::make_unique<std::uint8_t[]>(vertexSize * vertexCount);
-
-        for (std::size_t i = 0; i < elementCount; ++i)
-        {
-            std::uint8_t* origVertexPtr = (subMesh->Vertices() + format[i].Offset);
-            std::uint8_t* vertexPtr = (vertices.get() + elements[i].Offset);
-
-            switch (elements[i].Format)
-            {
-            case VERTEX_FORMAT_BYTE4:
-                // Copy indices and convert from 4 bytes to 4 ints
-                for (std::size_t i2 = 0; i2 < vertexCount; ++i2)
-                {
-                    std::uint8_t* origPtr = origVertexPtr;
-                    std::int32_t* ptr = reinterpret_cast<std::int32_t*>(vertexPtr);
-
-                    *ptr++ = static_cast<std::int32_t>(*origPtr++); // byte 1
-                    *ptr++ = static_cast<std::int32_t>(*origPtr++); // byte 2
-                    *ptr++ = static_cast<std::int32_t>(*origPtr++); // byte 3
-                    *ptr = static_cast<std::int32_t>(*origPtr);     // byte 4
-
-                    vertexPtr += vertexSize;
-                    origVertexPtr += origVertexSize;
-                }
-                break;
-
-            case VERTEX_FORMAT_VECTOR2:
-                // Copy vector
-                for (std::size_t i2 = 0; i2 < vertexCount; ++i2)
-                {
-                    std::uint64_t* origPtr = reinterpret_cast<std::uint64_t*>(origVertexPtr);
-                    std::uint64_t* ptr = reinterpret_cast<std::uint64_t*>(vertexPtr);
-
-                    *ptr = static_cast<std::uint64_t>(*origPtr); // X, Y
-
-                    vertexPtr += vertexSize;
-                    origVertexPtr += origVertexSize;
-                }
-                break;
-
-            // TODO: VERTEX_FORMAT_VECTOR2_HALF
-
-            case VERTEX_FORMAT_VECTOR3:
-                // Copy vector
-                for (std::size_t i2 = 0; i2 < vertexCount; ++i2)
-                {
-                    float* origPtr = reinterpret_cast<float*>(origVertexPtr);
-                    float* ptr = reinterpret_cast<float*>(vertexPtr);
-
-                    *ptr++ = static_cast<float>(*origPtr++); // X
-                    *ptr++ = static_cast<float>(*origPtr++); // Y
-                    *ptr = static_cast<float>(*origPtr);     // Z
-
-                    vertexPtr += vertexSize;
-                    origVertexPtr += origVertexSize;
-                }
-                break;
-
-            // TODO: VERTEX_FORMAT_VECTOR3_HH1
-            // TODO: VERTEX_FORMAT_VECTOR3_HH2
-
-            case VERTEX_FORMAT_VECTOR4:
-                // Copy vector
-                for (std::size_t i2 = 0; i2 < vertexCount; ++i2)
-                {
-                    std::uint64_t* origPtr = reinterpret_cast<std::uint64_t*>(origVertexPtr);
-                    std::uint64_t* ptr = reinterpret_cast<std::uint64_t*>(vertexPtr);
-
-                    *ptr++ = static_cast<std::uint64_t>(*origPtr++); // X, Y
-                    *ptr = static_cast<std::uint64_t>(*origPtr);     // Z, W
-
-                    vertexPtr += vertexSize;
-                    origVertexPtr += origVertexSize;
-                }
-                break;
-
-            case VERTEX_FORMAT_VECTOR4_BYTE:
-                // Copy vector and convert from 4 bytes to 4 floats
-                for (std::size_t i2 = 0; i2 < vertexCount; ++i2)
-                {
-                    std::uint8_t* origPtr = origVertexPtr;
-                    float* ptr = reinterpret_cast<float*>(vertexPtr);
-
-                    *ptr++ = static_cast<float>(*origPtr++) / 255.0f; // X
-                    *ptr++ = static_cast<float>(*origPtr++) / 255.0f; // Y
-                    *ptr++ = static_cast<float>(*origPtr++) / 255.0f; // Z
-                    *ptr = static_cast<float>(*origPtr) / 255.0f;     // W
-
-                    vertexPtr += vertexSize;
-                    origVertexPtr += origVertexSize;
-                }
-                break;
-
-            default:
-                throw std::logic_error("Unsupported vertex format!");
             }
         }
 
-        // Set stride and face count
-        stride = static_cast<UINT>(vertexSize);
-        faceCount = static_cast<UINT>(subMesh->FaceCount());
-
-        // Create Vertex Buffer
-        D3D11_BUFFER_DESC bufferDesc = {};
-        bufferDesc.ByteWidth = static_cast<UINT>(
-            vertexSize * vertexCount);
-
-        bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
-        bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-
-        D3D11_SUBRESOURCE_DATA bufferData = {};
-        bufferData.pSysMem = vertices.get();
-
-        HRESULT result = device.D3DDevice()->CreateBuffer(
-            &bufferDesc, &bufferData, &vertexBuffer);
-
-        if (FAILED(result))
+        // Create a buffer description
+        D3D11_BUFFER_DESC desc =
         {
-            throw std::runtime_error(
-                "Could not create a Direct3D 11 Vertex Buffer!");
-        }
+            static_cast<UINT>(bufSize),                     // ByteWidth
+            D3D11_USAGE_IMMUTABLE,                          // Usage
+            D3D11_BIND_VERTEX_BUFFER,                       // BindFlags
+            0,                                              // CPUAccessFlags
+            0,                                              // MiscFlags
+            0                                               // StructureByteStride
+        };
 
-        // Create Index Buffer
-        bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-        bufferDesc.ByteWidth = static_cast<UINT>(
-            sizeof(std::uint16_t) * faceCount);
+        // Create initial data structure
+        D3D11_SUBRESOURCE_DATA initialData = {};
+        initialData.pSysMem = data;
 
-        bufferData.pSysMem = subMesh->Faces();
+        // Create vertex buffer
+        winrt::com_ptr<ID3D11Buffer> buffer;
+        HRESULT result = inst.Device->CreateBuffer(&desc, &initialData, buffer.put());
 
-        result = device.D3DDevice()->CreateBuffer(
-            &bufferDesc, &bufferData, &indexBuffer);
-
-        if (FAILED(result))
-        {
-            throw std::runtime_error(
-                "Could not create a Direct3D 11 Index Buffer!");
-        }
+        // Free data and return buffer
+        std::free(data);
+        if (FAILED(result)) throw std::runtime_error("Could not create vertex buffer!");
+        return buffer;
     }
 
-    void Geometry::Create(Device& device, const ISubMesh* subMesh)
+    winrt::com_ptr<ID3D11Buffer> CreateIndexBuffer(
+        const Instance& inst, const hl_HHSubMesh& subMesh)
     {
-        switch (device.RenderMode())
+        // Create a buffer description
+        D3D11_BUFFER_DESC desc =
         {
-        case RENDER_MODE_HH2:
-            CreateVertexBufferHH2(device, subMesh);
-            break;
+            sizeof(uint16_t) * subMesh.Faces.Count,         // ByteWidth
+            D3D11_USAGE_IMMUTABLE,                          // Usage
+            D3D11_BIND_INDEX_BUFFER,                        // BindFlags
+            0,                                              // CPUAccessFlags
+            0,                                              // MiscFlags
+            0                                               // StructureByteStride
+        };
 
-        default:
-            // TODO
-            break;
+        // Create initial data structure
+        D3D11_SUBRESOURCE_DATA initialData = {};
+        initialData.pSysMem = HL_GETPTR32(uint16_t, subMesh.Faces.Offset);
+
+        // Create index buffer
+        winrt::com_ptr<ID3D11Buffer> buffer;
+        HRESULT result = inst.Device->CreateBuffer(&desc, &initialData, buffer.put());
+        if (FAILED(result)) throw std::runtime_error("Could not create index buffer!");
+
+        return buffer;
+    }
+#endif
+
+    Geometry::Geometry(Instance& inst, const hl_HHSubMesh& subMesh,
+        bool seeThrough) : SeeThrough(seeThrough)
+    {
+        // TODO: Materials sdjiogjnspigos
+        MaterialIndex = 0;
+
+        // Get input layout
+        const hl_HHVertexElement* format = subMesh.VertexElements.Get();
+        vertexFormatHash = inst.HashVertexFormat(format);
+        InputLayout* inputLayout = inst.GetInputLayout(vertexFormatHash);
+
+        if (!inputLayout)
+        {
+            // TODO: Get vertex shader properly from material rather than hardcoding it
+            //VertexShader* vertexShader = inst.GetVertexShader("common_vs");
+            //const VertexShaderVariant& variant = vertexShader->GetVariant(0);
+            const VertexShaderVariant* variant = inst.GetDefaultVS();
+
+            // Create input layout
+            inputLayout = new InputLayout(inst, format,
+                variant->GetSignature(), variant->GetSignatureLength());
+
+            inst.AddInputLayout(vertexFormatHash, inputLayout);
         }
+
+        // Create vertex/index buffer
+        vertexBuffer = CreateVertexBuffer(inst, subMesh);
+        indexBuffer = CreateIndexBuffer(inst, subMesh);
+
+        // Get stride and face count
+        stride = subMesh.VertexSize;
+        faceCount = subMesh.Faces.Count;
     }
 
-    void Geometry::Bind(ID3D11DeviceContext* context) const
+    void Geometry::Bind(const Instance& inst) const
     {
-        context->IASetVertexBuffers(Device::VertexBufferSlot, 1,
-            &vertexBuffer, &stride, &VertexBufferOffset);
-        context->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R16_UINT, 0);
+        // Bind geometry
+        inst.GetInputLayout(vertexFormatHash)->Use(inst);
+
+#ifdef D3D11
+        ID3D11Buffer* b = vertexBuffer.get();
+        inst.Context->IASetVertexBuffers(0, 1, &b, &stride, &vertexBufferOffset);
+        inst.Context->IASetIndexBuffer(indexBuffer.get(), DXGI_FORMAT_R16_UINT, 0);
+#endif
+
+        // Bind material
+        const Material* material = inst.GetMaterial(MaterialIndex);
+        // TODO: nullptr check
+        material->Bind(inst);
     }
 
-    void Geometry::Draw(ID3D11DeviceContext* context) const
+    void Geometry::Draw(const Instance& inst) const
     {
-        context->DrawIndexed(faceCount, 0, 0);
+#ifdef D3D11
+        inst.Context->DrawIndexed(faceCount, 0, 0);
+#endif
     }
 }

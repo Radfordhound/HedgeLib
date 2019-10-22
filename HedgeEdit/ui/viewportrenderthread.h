@@ -1,5 +1,5 @@
 #pragma once
-#include "../src/GFX/viewport.h"
+#include "../src/gfx/viewport.h"
 #include <QThread>
 
 namespace HedgeEdit::UI
@@ -9,11 +9,11 @@ namespace HedgeEdit::UI
         Q_OBJECT
 
     private:
-        HedgeEdit::GFX::Viewport* vp;
+        GFX::Viewport* vp;
         volatile bool rendering = false, canRender = true;
 
     public:
-        ViewportRenderThread(HedgeEdit::GFX::Viewport* vp,
+        ViewportRenderThread(GFX::Viewport* vp,
             QObject *parent = nullptr);
 
         bool IsRendering() const noexcept

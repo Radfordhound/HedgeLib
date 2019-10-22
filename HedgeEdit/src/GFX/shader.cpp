@@ -1,65 +1,74 @@
 #include "shader.h"
-#include "d3d.h"
-#include <d3d11.h>
-#include <Shaders/IShaderVariant.h>
-#include <cstddef>
+#include "instance.h"
+#include <cstdlib>
 #include <utility>
-
-using namespace HedgeLib::Shaders;
+#include <stdexcept>
 
 namespace HedgeEdit::GFX
 {
-    Shader::~Shader() {}
-
-    VertexShader::VertexShader(ID3D11Device* device,
-        std::unique_ptr<HedgeLib::Shaders::IShader> shader) :
-        Shader(std::move(shader))
+    VertexShaderVariant::VertexShaderVariant(const Instance& inst,
+        const void* bytecode, std::size_t bytecodeLength, const void* signaturePtr,
+        std::size_t signatureLength, std::unique_ptr<std::uint32_t[]> samplerIndices,
+        std::uint32_t samplerCount) : signaturePtr(signaturePtr),
+        signatureLength(signatureLength), samplerIndices(std::move(samplerIndices)),
+        samplerCount(samplerCount)
     {
-        const std::size_t variantCount = this->shader->VariantCount();
-        if (variantCount == 0)
-            throw std::logic_error("Cannot create shader with no variants!");
+#ifdef D3D11
+        // Create vertex shader
+        HRESULT result = inst.Device->CreateVertexShader(bytecode,
+            bytecodeLength, nullptr, data.put());
 
-        const std::unique_ptr<IShaderVariant>* origVariants =
-            this->shader->Variants();
-
-        // Create VertexShaderVariants
-        variants.resize(variantCount);
-        for (std::size_t i = 0; i < variantCount; ++i)
-        {
-            variants[i] = std::unique_ptr<VertexShaderVariant>(
-                new VertexShaderVariant(device, origVariants[i].get()));
-        }
-    };
-
-    void VertexShader::Use(ID3D11DeviceContext* context,
-        const std::size_t flags) const noexcept
-    {
-        variants[VariantIndex(flags)]->Use(context);
+        if (FAILED(result))
+            throw std::runtime_error("Could not create vertex shader!");
+#endif
     }
 
-    PixelShader::PixelShader(ID3D11Device* device,
-        std::unique_ptr<HedgeLib::Shaders::IShader> shader) :
-        Shader(std::move(shader))
+    void VertexShaderVariant::Use(Instance& inst) const
     {
-        const std::size_t variantCount = this->shader->VariantCount();
-        if (variantCount == 0)
-            throw std::logic_error("Cannot create shader with no variants!");
-
-        const std::unique_ptr<IShaderVariant>* origVariants =
-            this->shader->Variants();
-
-        // Create PixelShaderVariants
-        variants.resize(variantCount);
-        for (std::size_t i = 0; i < variantCount; ++i)
+        // Use samplers
+        for (std::uint32_t i = 0; i < samplerCount; ++i)
         {
-            variants[i] = std::unique_ptr<PixelShaderVariant>(
-                new PixelShaderVariant(device, origVariants[i].get()));
+            inst.VSUseSampler(samplerIndices[i], i);
         }
-    };
 
-    void PixelShader::Use(ID3D11DeviceContext* context,
-        const std::size_t flags) const noexcept
+        // Use shader
+#ifdef D3D11
+        inst.Context->VSSetShader(data.get(), nullptr, 0);
+#endif
+    }
+
+    PixelShaderVariant::PixelShaderVariant(const Instance& inst,
+        const void* bytecode, std::size_t bytecodeLength,
+        std::unique_ptr<std::uint32_t[]> samplerIndices, std::uint32_t samplerCount) :
+        samplerIndices(std::move(samplerIndices)), samplerCount(samplerCount)
     {
-        variants[VariantIndex(flags)]->Use(context);
+#ifdef D3D11
+        // Create pixel shader
+        HRESULT result = inst.Device->CreatePixelShader(bytecode,
+            bytecodeLength, nullptr, data.put());
+
+        if (FAILED(result))
+            throw std::runtime_error("Could not create pixel shader!");
+#endif
+    }
+
+    void PixelShaderVariant::Use(Instance& inst) const
+    {
+        // Use samplers
+        for (std::uint32_t i = 0; i < samplerCount; ++i)
+        {
+            inst.PSUseSampler(samplerIndices[i], i);
+        }
+
+        // Use shader
+#ifdef D3D11
+        inst.Context->PSSetShader(data.get(), nullptr, 0);
+#endif
+    }
+
+    VertexShader::~VertexShader()
+    {
+        delete[] variants;
+        std::free(signatures);
     }
 }

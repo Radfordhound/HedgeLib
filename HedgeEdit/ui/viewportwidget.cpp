@@ -1,6 +1,6 @@
 #include "viewportwidget.h"
-#include "../src/main.h"
-#include "../src/GFX/viewport.h"
+#include "../src/gfx/instance.h"
+#include "../src/gfx/viewport.h"
 #include <QEvent>
 #include <QThread>
 #include <memory>
@@ -16,7 +16,7 @@ namespace HedgeEdit::UI
 
         // Create viewport
         vp = std::unique_ptr<Viewport>(new Viewport(
-            GetDevice(),
+            GFX::MainInstance,
             reinterpret_cast<HWND>(winId()),
             static_cast<UINT>(width()),
             static_cast<UINT>(height())));
@@ -48,7 +48,7 @@ namespace HedgeEdit::UI
             {
                 renderThread->StopRendering();
                 // TODO: Is this right? Or do we get the new id from the event somehow?
-                vp->ChangeHWnd(reinterpret_cast<HWND>(winId()));
+                vp->ChangeHandle(reinterpret_cast<HWND>(winId()));
                 renderThread->ResumeRendering();
             }
         }

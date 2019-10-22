@@ -1,78 +1,115 @@
 #pragma once
-#include "shaderVariant.h"
-#include <d3d11.h>
-#include <Shaders/IShader.h>
-#include <Shaders/IShaderVariant.h>
-#include <memory>
-#include <utility>
-#include <vector>
 #include <cstddef>
-#include <cstdint>
+
+#ifdef D3D11
+#include <winrt/base.h>
+#include <d3d11.h>
+#endif
 
 namespace HedgeEdit::GFX
 {
-    class Shader
+    class Instance;
+
+    class VertexShaderVariant
+    {
+#ifdef D3D11
+        winrt::com_ptr<ID3D11VertexShader> data;
+#endif
+
+        const void* signaturePtr;
+        std::size_t signatureLength;
+        std::unique_ptr<std::uint32_t[]> samplerIndices;
+        std::uint32_t samplerCount;
+
+    public:
+        VertexShaderVariant(const Instance& inst, const void* bytecode,
+            std::size_t bytecodeLength, const void* signaturePtr,
+            std::size_t signatureLength, std::unique_ptr<std::uint32_t[]> samplerIndices,
+            std::uint32_t samplerCount);
+
+        inline const void* GetSignature() const
+        {
+            return signaturePtr;
+        }
+
+        inline std::size_t GetSignatureLength() const
+        {
+            return signatureLength;
+        }
+
+        void Use(Instance& inst) const;
+    };
+
+    class PixelShaderVariant
+    {
+#ifdef D3D11
+        winrt::com_ptr<ID3D11PixelShader> data;
+#endif
+
+        std::unique_ptr<std::uint32_t[]> samplerIndices;
+        std::uint32_t samplerCount;
+
+    public:
+        PixelShaderVariant(const Instance& inst, const void* bytecode,
+            std::size_t bytecodeLength, std::unique_ptr<std::uint32_t[]> samplerIndices,
+            std::uint32_t samplerCount);
+
+        void Use(Instance& inst) const;
+    };
+
+    class VertexShader
     {
     protected:
-        std::unique_ptr<HedgeLib::Shaders::IShader> shader;
+        VertexShaderVariant* variants;
+        void* signatures;
+        std::size_t variantCount;
 
     public:
-        inline Shader(std::unique_ptr<HedgeLib::Shaders::IShader> shader)
-            noexcept : shader(std::move(shader)) {};
+        inline VertexShader(VertexShaderVariant* variants, void* signatures,
+            std::size_t variantCount) : variants(variants),
+            variantCount(variantCount), signatures(signatures) {}
 
-        virtual ~Shader() = 0;
+        ~VertexShader();
 
-        inline std::size_t Flag(const char* variantType) const noexcept
+        inline VertexShaderVariant& GetVariant(std::size_t index)
         {
-            return shader->Flag(variantType);
+            return variants[index];
         }
 
-        inline std::size_t VariantIndex(const std::size_t flags) const noexcept
+        inline const VertexShaderVariant& GetVariant(std::size_t index) const
         {
-            return shader->VariantIndex(flags);
+            return variants[index];
         }
 
-        virtual void Use(ID3D11DeviceContext* context,
-            const std::size_t flags) const noexcept = 0;
+        inline std::size_t GetVariantCount() const
+        {
+            return variantCount;
+        }
     };
 
-    class VertexShader : public Shader
+    class PixelShader
     {
-        std::vector<std::unique_ptr<VertexShaderVariant>> variants;
+    protected:
+        std::unique_ptr<PixelShaderVariant[]> variants;
+        std::size_t variantCount;
 
     public:
-        VertexShader(ID3D11Device* device,
-            std::unique_ptr<HedgeLib::Shaders::IShader> shader);
+        inline PixelShader(PixelShaderVariant* variants, std::size_t variantCount) :
+            variants(variants), variantCount(variantCount) {}
 
-        inline ~VertexShader() override = default;
-
-        inline const std::vector<std::unique_ptr
-            <VertexShaderVariant>>& Variants() const noexcept
+        inline PixelShaderVariant& GetVariant(std::size_t index)
         {
-            return variants;
+            return variants[index];
         }
 
-        void Use(ID3D11DeviceContext* context, const std::size_t flags)
-            const noexcept override;
-    };
-
-    class PixelShader : public Shader
-    {
-        std::vector<std::unique_ptr<PixelShaderVariant>> variants;
-
-    public:
-        PixelShader(ID3D11Device* device, std::unique_ptr
-            <HedgeLib::Shaders::IShader> shader);
-
-        inline ~PixelShader() override = default;
-
-        inline const std::vector<std::unique_ptr
-            <PixelShaderVariant>>& Variants() const noexcept
+        inline const PixelShaderVariant& GetVariant(std::size_t index) const
         {
-            return variants;
+            return variants[index];
         }
 
-        void Use(ID3D11DeviceContext* context, const std::size_t flags)
-            const noexcept override;
+        inline std::size_t GetVariantCount() const
+        {
+            return variantCount;
+        }
     };
 }
