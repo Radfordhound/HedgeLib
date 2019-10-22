@@ -57,40 +57,30 @@ HL_IMPL_ENDIAN_SWAP_RECURSIVE(hl_HHSubMesh)
             // Figure out what type of data it is and swap its endianness
             switch (v->VertexElements[i].Format)
             {
-            case HL_HHVERTEX_FORMAT_VECTOR2:
-            {
-                reinterpret_cast<hl_Vector2*>(data)->EndianSwap();
-                break;
-            }
-
-            case HL_HHVERTEX_FORMAT_VECTOR3:
-            {
-                reinterpret_cast<hl_Vector3*>(data)->EndianSwap();
-                break;
-            }
-
-            case HL_HHVERTEX_FORMAT_VECTOR4:
-            {
-                reinterpret_cast<hl_Vector4*>(data)->EndianSwap();
-                break;
-            }
-
+            // TODO: Do we actually have to endian-swap HL_HHVERTEX_FORMAT_INDEX_BYTE and HL_HHVERTEX_FORMAT_INDEX?
+            case HL_HHVERTEX_FORMAT_INDEX_BYTE:
+            case HL_HHVERTEX_FORMAT_INDEX:
+            case HL_HHVERTEX_FORMAT_VECTOR3_HH1:
+            case HL_HHVERTEX_FORMAT_VECTOR3_HH2:
             case HL_HHVERTEX_FORMAT_VECTOR4_BYTE:
             {
-                if (v->VertexElements[i].Type == HL_HHVERTEX_TYPE_COLOR)
-                {
-                    // ABGR -> RGBA
-                    // TODO: Is this correct?? Are Vector4_Bytes actually just uints
-                    // that get reversed like this due to endianness? If so, do bone
-                    // weights actually need to be swapped too??
-
-                    uint32_t* d = reinterpret_cast<uint32_t*>(data);
-                    hl_Swap(*d);
-                }
+                uint32_t* d = reinterpret_cast<uint32_t*>(data);
+                hl_SwapUInt32(d);
                 break;
             }
 
-            // TODO: Swap all other necessary types
+            case HL_HHVERTEX_FORMAT_VECTOR2:
+                reinterpret_cast<hl_Vector2*>(data)->EndianSwap();
+                break;
+
+            case HL_HHVERTEX_FORMAT_VECTOR2_HALF:
+                hl_SwapUInt16(reinterpret_cast<uint16_t*>(data));
+                hl_SwapUInt16(reinterpret_cast<uint16_t*>(data) + 1);
+                break;
+
+            case HL_HHVERTEX_FORMAT_VECTOR3:
+                reinterpret_cast<hl_Vector3*>(data)->EndianSwap();
+                break;
             }
         }
 

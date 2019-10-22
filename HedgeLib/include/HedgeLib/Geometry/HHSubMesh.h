@@ -23,13 +23,13 @@ typedef enum HL_HHVERTEX_DATA_FORMAT
     // TODO: Index_Byte might actually just be a uint as BLENDINDICES semantic in HLSL is a uint
     // probably not actually since they seem to be signed.
     HL_HHVERTEX_FORMAT_INDEX_BYTE = 0x001A2286,     // N
-    HL_HHVERTEX_FORMAT_INDEX = 0x001A2386,          // N
-    HL_HHVERTEX_FORMAT_VECTOR2 = 0x002C23A5,        // N, F
-    HL_HHVERTEX_FORMAT_VECTOR2_HALF = 0x002C235F,   // N
-    HL_HHVERTEX_FORMAT_VECTOR3 = 0x002A23B9,        // N, F
-    HL_HHVERTEX_FORMAT_VECTOR3_HH1 = 0x002A2190,
-    HL_HHVERTEX_FORMAT_VECTOR3_HH2 = 0x002A2187,
-    HL_HHVERTEX_FORMAT_VECTOR4 = 0x001A23A6,        // N, F
+    HL_HHVERTEX_FORMAT_INDEX = 0x001A2386,          // N, S
+    HL_HHVERTEX_FORMAT_VECTOR2 = 0x002C23A5,        // N, S, 4
+    HL_HHVERTEX_FORMAT_VECTOR2_HALF = 0x002C235F,   // N, S
+    HL_HHVERTEX_FORMAT_VECTOR3 = 0x002A23B9,        // N, S, 4
+    HL_HHVERTEX_FORMAT_VECTOR3_HH1 = 0x002A2190,    // S
+    HL_HHVERTEX_FORMAT_VECTOR3_HH2 = 0x002A2187,    // S
+    HL_HHVERTEX_FORMAT_VECTOR4 = 0x001A23A6,        // N, S, 4
     HL_HHVERTEX_FORMAT_VECTOR4_BYTE = 0x001A2086,
     HL_HHVERTEX_FORMAT_LAST_ENTRY = 0xFFFFFFFF
 }
@@ -37,10 +37,11 @@ HL_HHVERTEX_DATA_FORMAT;
 
 // [Ignore these comments, just trying to figure out if those values above are flags?]
 // UUUU UUUU UUUU UUUU
-// UUUU UUNU UUUU UUUU
+// UUUU UUNS UU4U UUUU
 
 // N = Not normalized
-// F = Floating point or 32-bit?
+// S = Signed
+// 4 = 32-bit?
 
 typedef enum HL_HHVERTEX_DATA_TYPE
 {
