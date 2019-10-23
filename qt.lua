@@ -112,6 +112,19 @@ function FinalizeQt(architectures, configs, binDir)
 					cmds[#cmds + 1] = "copy /y \"" .. src .. "\" \"" ..
                         dst .. "\" >NUL"
 				end
+                
+                -- Copy Qt Style DLL
+                local stylesDir = JoinPaths(pDir, "styles")
+				cmds[#cmds + 1] = "echo Copying Qt Style DLL..."
+				cmds[#cmds + 1] = "if not exist \"" .. stylesDir ..
+                    "\" mkdir \"" .. stylesDir .. "\""
+				
+				local name = "qwindowsvistastyle" .. suffixQt
+                local src = JoinPaths(av.QtDir, "plugins", "styles", name .. ".dll")
+                local dst = JoinPaths(stylesDir, name .. ".dll")
+
+                cmds[#cmds + 1] = "copy /y \"" .. src .. "\" \"" ..
+                    dst .. "\" >NUL"
 			
 				links(JoinPaths(av.QtDir, "lib", "qtmain" .. suffixQt))
 				postbuildcommands(cmds)
