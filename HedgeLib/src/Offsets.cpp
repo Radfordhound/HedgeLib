@@ -33,7 +33,8 @@ void hl_FixOffset64(hl_DataOff64* off, const void* data, bool isBigEndian)
     if (isBigEndian) hl_SwapUInt64(off);
 
     // Get absolute pointer
-    uintptr_t absPtr = (reinterpret_cast<uintptr_t>(data) + *off);
+    uintptr_t absPtr = (reinterpret_cast<uintptr_t>(data) +
+        static_cast<uintptr_t>(*off));
 
     // Fix offset
     // (Set offset to absolute pointer)

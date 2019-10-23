@@ -1,6 +1,6 @@
 version: 0.0.{build}
 image:
-- Visual Studio 2017
+- Visual Studio 2019
 - Ubuntu1804
 platform:
 - Win32
@@ -10,7 +10,7 @@ configuration: Release
 matrix:
   exclude:
     - platform: x86
-      image: Visual Studio 2017
+      image: Visual Studio 2019
     - platform: Win32
       image: Ubuntu1804
 
@@ -18,13 +18,13 @@ for:
 -
   matrix:
     only:
-      - image: Visual Studio 2017
+      - image: Visual Studio 2019
 
   install:
-    - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha13/premake-5.0.0-alpha13-windows.zip", "C:\projects\hedgelib\premake.zip")
+    - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha14/premake-5.0.0-alpha14-windows.zip", "C:\projects\hedgelib\premake.zip")
     - ps: Expand-Archive -LiteralPath C:\projects\hedgelib\premake.zip -DestinationPath C:\projects\hedgelib\
-    - ps: Set-Content -Path C:\projects\hedgelib\hedgeedit\depends.lua -Value 'return { QtDir32 = "C:/Qt/5.12.1/msvc2017", QtDir64 = "C:/Qt/5.12.1/msvc2017_64" }'
-    - cmd: premake5 vs2017
+    - ps: Set-Content -Path C:\projects\hedgelib\hedgeedit\depends.lua -Value 'return { QtDir32 = "C:/Qt/5.13.1/msvc2017", QtDir64 = "C:/Qt/5.13.1/msvc2017_64" }'
+    - cmd: premake5 vs2019 --type=shared
   build:
     project: HedgeLib.sln
     verbosity: minimal
@@ -59,9 +59,9 @@ for:
       - image: Ubuntu1804
 
   install:
-    - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha13/premake-5.0.0-alpha13-linux.tar.gz", "/home/appveyor/projects/hedgelib/premake.tar.gz")
+    - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha14/premake-5.0.0-alpha14-linux.tar.gz", "/home/appveyor/projects/hedgelib/premake.tar.gz")
     - sh: tar -zvxf /home/appveyor/projects/hedgelib/premake.tar.gz -C /home/appveyor/projects/hedgelib
-    - sh: /home/appveyor/projects/hedgelib/premake5 gmake2
+    - sh: /home/appveyor/projects/hedgelib/premake5 gmake2 --type=shared
     - sh: sudo apt-get install -yq gcc-8-multilib g++-8-multilib
   build: off
   build_script:
