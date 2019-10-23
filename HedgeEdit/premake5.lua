@@ -23,7 +23,7 @@ project("HedgeEdit")
     if LibType == "shared" then
         defines("HL_DLL")
         postbuildcommands("copy /Y \"$(ProjectDir)License.txt\" \"$(TargetDir)License.txt\" >NUL")
-        postbuildcommands("copy /Y \"$(SolutionDir)HedgeLib\\bin\\$(Platform)\\$(Configuration)\\HedgeLib.dll\" \"$(TargetDir)HedgeLib.dll\" >NUL")
+        postbuildcommands("copy /Y \"$(SolutionDir)HedgeLib\\bin\\$(PlatformTarget)\\$(Configuration)\\HedgeLib.dll\" \"$(TargetDir)HedgeLib.dll\" >NUL")
     end
 
     -- Platform-Specifics

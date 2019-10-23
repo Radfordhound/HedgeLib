@@ -11,7 +11,7 @@ project("HedgeOffsets")
     if LibType == "shared" then
         defines("HL_DLL")
         if Target == "windows" then
-            postbuildcommands("copy /Y \"$(SolutionDir)HedgeLib\\bin\\$(Platform)\\$(Configuration)\\HedgeLib.dll\" \"$(TargetDir)HedgeLib.dll\" >NUL")
+            postbuildcommands("copy /Y \"$(SolutionDir)HedgeLib\\bin\\$(PlatformTarget)\\$(Configuration)\\HedgeLib.dll\" \"$(TargetDir)HedgeLib.dll\" >NUL")
         end
     end
 	
