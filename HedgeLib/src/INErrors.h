@@ -15,9 +15,9 @@ HL_INRESULT_STRING("The system ran out of memory"),
 HL_INRESULT_STRING("A function was called with invalid arguments"),
 
 // HL_ERROR_NOT_IMPLEMENTED
-HL_INRESULT_STRING("A function was called that has not yet been implemented"),
+HL_INRESULT_STRING("This feature has not yet been implemented"),
 
 // HL_ERROR_UNSUPPORTED
-HL_INRESULT_STRING("A function was called which attempted ans not supported")
+HL_INRESULT_STRING("Not supported")
 
 #undef HL_INRESULT_STRING

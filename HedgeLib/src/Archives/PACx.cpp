@@ -328,7 +328,7 @@ HL_RESULT hl_PACxRead(hl_File* file, hl_Blob** blob)
 
     // Read signature
     uint32_t sig;
-    HL_RESULT result = file->Read(sig);
+    HL_RESULT result = file->ReadNoSwap(sig);
     if (HL_FAILED(result)) return result;
 
     // Ensure we're dealing with a file in the PACx format

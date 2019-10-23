@@ -1,78 +1,128 @@
-#include "IO/BINA.h"
-#include "Offsets.h"
+#include "HedgeLib/Archives/PACx.h"
+#include "HedgeLib/IO/BINA.h"
+#include "HedgeLib/IO/File.h"
+#include "HedgeLib/Blob.h"
 #include <iostream>
-#include <cstdlib>
-#include <cstdint>
-#include <filesystem>
 
-using namespace HedgeLib;
-using namespace HedgeLib::IO;
-
-bool ReadOffsets(const std::filesystem::path filePath,
-    OffsetTable& offsetTable)
+HL_RESULT PrintOffsets(const char* filePath)
 {
-    File f = File::OpenRead(filePath);
-    auto headerType = BINA::GetHeaderType(f);
+    // Open file
+    hl_File file;
+    HL_RESULT result = file.OpenRead(filePath);
+    if (HL_FAILED(result)) return result;
 
-    switch (headerType)
+    // Get signature
+    uint32_t sig;
+    result = file.ReadNoSwap(sig);
+    if (HL_FAILED(result)) return result;
+
+    // Go back to beginning of file
+    result = file.JumpBehind(4);
+    if (HL_FAILED(result)) return result;
+
+    // BINA V2
+    hl_BlobPtr blob;
+    if (sig == HL_BINA_SIGNATURE)
     {
-    case BINA::HEADER_TYPE_BINAV2:
-    case BINA::HEADER_TYPE_PACxV2:
-    {
-        // Read header
-        auto header = BINA::DBINAV2Header();
-        BINA::ReadHeaderV2(f, header);
+        // Read file
+        hl_Blob* blobPtr;
+        result = hl_BINAReadV2(&file, &blobPtr);
+        if (HL_FAILED(result)) return result;
 
-        // Find DATA Node
-        BINA::DBINAV2NodeHeader nodeHeader = {};
-        long nodePos;
+        blob = blobPtr;
 
-        for (std::uint16_t i = 0; i < header.NodeCount; ++i)
+        // Get header
+        const hl_BINAV2Header* header = static_cast<hl_BINAV2Header*>(
+            hl_BlobGetRawData(blob));
+
+        uintptr_t headerPtr = reinterpret_cast<uintptr_t>(header);
+
+        // Print header metadata
+        std::cout << "Format: BINA v" << header->Version[0] << '.' <<
+            header->Version[1] << '.' << header->Version[2];
+
+        if (header->Version[1] == '1')
+            std::cout << " (64-Bit)";
+
+        std::cout << "\nEndianness: " << ((header->EndianFlag == HL_BINA_LE_FLAG) ?
+            "Little-Endian" : "Big-Endian") << "\n\n";
+
+        if (header->NodeCount > 1)
         {
-            nodePos = f.Tell();
-            if (!f.Read(&nodeHeader))
+            std::cout << "WARNING: This file has more than one node in it?! Unusual case.\n\n";
+        }
+
+        // Get offset table pointer
+        const hl_BINAV2DataNode* dataNode = hl_BINAGetDataNodeV2(blob);
+        if (!dataNode)
+        {
+            std::cout << "No data node present.\n";
+            return HL_SUCCESS;
+        }
+
+        const uint8_t* offTable = ((reinterpret_cast<const uint8_t*>(
+            dataNode) + dataNode->Header.Size) - dataNode->OffsetTableSize);
+
+        // Get string table pointer
+        uintptr_t data = (reinterpret_cast<uintptr_t>(dataNode + 1) +
+            dataNode->RelativeDataOffset);
+
+        uintptr_t strTable = (data + dataNode->StringTable);
+
+        // Print data node metadata
+        std::cout << "Data Node Size: 0x" << std::hex <<
+            dataNode->Header.Size << '\n';
+
+        std::cout << "String Table Size: 0x" << std::hex <<
+            dataNode->StringTableSize << '\n';
+
+        std::cout << "Offset Table Size: 0x" << std::hex <<
+            dataNode->OffsetTableSize << "\n\n";
+
+        // Print offsets and relevant data
+        size_t offCount = 0;
+        const uint32_t* currentOffset = reinterpret_cast<const uint32_t*>(data);
+        const uint8_t* eof = (offTable + dataNode->OffsetTableSize);
+
+        while (offTable < eof)
+        {
+            // Get next offset
+            if (!hl_BINANextOffset(&offTable, &currentOffset))
             {
-                std::cout << "ERROR: Could not read BINA node header!" << std::endl;
-                return false;
+                // Break if we've reached the last offset
+                break;
             }
 
-            if (nodeHeader.Signature() == BINA::DATASignature)
+            // Print info about this offset
+            std::cout << "Offset #" << std::dec << ++offCount << ":\t{ pos: 0x" << std::hex <<
+                (reinterpret_cast<uintptr_t>(currentOffset) - headerPtr);
+            
+            uintptr_t off;
+            if (header->Version[1] == '1')
             {
-                // Read Offset Table length
-                std::uint32_t offTableLen;
-                const bool isPACHeader = (headerType == BINA::HEADER_TYPE_PACxV2);
-
-                f.Seek((isPACHeader) ? 0x10 : 8, SEEK_CUR);
-                f.Read(&offTableLen);
-
-                // Read Offset Table
-                const std::uintptr_t origin = (isPACHeader) ? 0 : 0x40;
-                f.Seek((nodePos + nodeHeader.Size()) - offTableLen);
-
-                offsetTable = (header.Version[1] == '1') ?
-                    BINA::ReadOffsets<DataOffset64>(f, origin, offTableLen) :
-                    BINA::ReadOffsets<DataOffset32>(f, origin, offTableLen);
-
-                if (!isPACHeader)
-                {
-                    for (auto& off : offsetTable)
-                    {
-                        off += static_cast<std::uint32_t>(origin);
-                    }
-                }
-
-                return true;
+                // 64-bit offsets
+                off = reinterpret_cast<uintptr_t>(HL_GETPTR64(const uint8_t,
+                    *reinterpret_cast<const uint64_t*>(currentOffset)));
             }
             else
             {
-                // This isn't the DATA node; skip it!
-                f.Seek(nodeHeader.Size() -
-                    sizeof(nodeHeader), SEEK_CUR);
+                // 32-bit offsets
+                off = reinterpret_cast<uintptr_t>(HL_GETPTR32(
+                    const uint8_t, *currentOffset));
             }
+
+            std::cout << ", val: 0x" << std::hex << (off - headerPtr) << " }";
+
+            // Print string
+            if (off >= strTable)
+            {
+                std::cout << "\t(\"" << reinterpret_cast<const char*>(off) << "\")";
+            }
+
+            std::cout << '\n';
         }
 
-        std::cout << "ERROR: Could not find BINA DATA node!" << std::endl;
-        return false;
+        return HL_SUCCESS;
     }
 
     // TODO: BINA V1 Support
@@ -80,31 +130,38 @@ bool ReadOffsets(const std::filesystem::path filePath,
     // TODO: Hedgehog Engine Support
     // TODO: Mirage Header Support
 
-    default:
-    {
-        // TODO
-        return false;
-    }
-    }
+    return HL_ERROR_UNSUPPORTED;
 }
 
 int main(int argc, char* argv[])
 {
-    // TODO: Check arguments and print help if invalid
+    // Disable syncing with stdio to speed up cout performance
+    std::ios::sync_with_stdio(false);
 
-    // Read offset table
-    OffsetTable offTable;
-    if (!ReadOffsets(argv[1], offTable))
-        return EXIT_FAILURE;
-
-    // Print offset table
-    std::cout << "Offsets: " << offTable.size() << '\n';
-    for (auto& off : offTable)
+    // Print usage if arguments are invalid
+    int errorCode = EXIT_SUCCESS;
+    if (argc < 2)
     {
-        std::cout << std::hex << off << '\n';
+        std::cout << "Usage: HedgeOffsets filePath\n";
+#ifdef _WIN32
+        std::cout << "(Or just drag n' drop a file onto HedgeOffsets.exe)\n";
+#endif
+    }
+    else
+    {
+        // Read file and print offsets
+        HL_RESULT result = PrintOffsets(argv[1]);
+        if (HL_FAILED(result))
+        {
+            std::cout << "ERROR: " << hl_GetResultString(result) << '\n';
+            errorCode = EXIT_FAILURE;
+        }
     }
 
+    // Pause the program until the user presses enter
+    std::cout << "Press enter to continue...\n";
     std::cout.flush();
-    
-    return EXIT_SUCCESS;
+    std::cin.get();
+
+    return errorCode;
 }

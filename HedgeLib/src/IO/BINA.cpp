@@ -23,6 +23,7 @@ HL_IMPL_ENDIAN_SWAP_CPP(hl_BINAV2DataNode);
 HL_IMPL_ENDIAN_SWAP(hl_BINAV2DataNode)
 {
     v->Header.EndianSwap();
+    hl_Swap(v->StringTable);
     hl_Swap(v->StringTableSize);
     hl_Swap(v->OffsetTableSize);
     hl_Swap(v->RelativeDataOffset);
@@ -217,7 +218,7 @@ HL_RESULT hl_BINARead(hl_File* file, hl_Blob** blob)
 
     // Read signature
     uint32_t sig;
-    HL_RESULT result = file->Read(sig);
+    HL_RESULT result = file->ReadNoSwap(sig);
     if (HL_FAILED(result)) return result;
 
     result = file->JumpBehind(4);
