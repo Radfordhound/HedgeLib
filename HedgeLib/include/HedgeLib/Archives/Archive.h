@@ -13,7 +13,7 @@ namespace hl
      *  @brief Functions and types related to archives.
     */
 
-    const char* PathGetNamePtr(const char* path);
+    HL_API const char* PathGetNamePtr(const char* path);
 
     enum class ArchiveType : std::uint16_t
     {
