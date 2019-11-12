@@ -23,7 +23,7 @@ for:
   install:
     - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha14/premake-5.0.0-alpha14-windows.zip", "C:\projects\hedgelib\premake.zip")
     - ps: Expand-Archive -LiteralPath C:\projects\hedgelib\premake.zip -DestinationPath C:\projects\hedgelib\
-    - ps: Set-Content -Path C:\projects\hedgelib\hedgeedit\depends.lua -Value 'return { QtDir32 = "C:/Qt/5.13.1/msvc2017", QtDir64 = "C:/Qt/5.13.1/msvc2017_64" }'
+    - ps: Set-Content -Path C:\projects\hedgelib\hedgeedit\depends.lua -Value 'return { QtDir32 = "C:/Qt/5.13/msvc2017", QtDir64 = "C:/Qt/5.13/msvc2017_64" }'
     - cmd: premake5 vs2019 --type=shared
   build:
     project: HedgeLib.sln
