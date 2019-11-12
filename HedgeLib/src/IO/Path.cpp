@@ -443,12 +443,12 @@ namespace hl
 
     std::size_t INPathGetFileCount(const nchar* dir, bool recursive)
     {
-        std::size_t dirLen = StringLength(dir);
         std::size_t fileCount;
 
 #ifdef _WIN32
         // Adjust the path for usage in the FindFile functions
         // (The Win32 API is the messiest thing I swear)
+        std::size_t dirLen = StringLength(dir);
         std::unique_ptr<nchar[]> fdir = std::unique_ptr<nchar[]>(
             new nchar[dirLen + 3]);
 
@@ -489,7 +489,7 @@ namespace hl
         try
         {
             struct dirent* e;
-            while (e = readdir(d))
+            while ((e = readdir(d))) // Parenthesis here to silence warning
             {
 #endif
                 // Get file name
@@ -579,11 +579,10 @@ namespace hl
     void INPathGetFilesInDirectory(const nchar* dir, bool recursive,
         std::vector<std::unique_ptr<nchar[]>>& files)
     {
-        std::size_t dirLen = StringLength(dir);
-
 #ifdef _WIN32
         // Adjust the path for usage in the FindFile functions
         // (The Win32 API is the messiest thing I swear)
+        std::size_t dirLen = StringLength(dir);
         std::unique_ptr<nchar[]> fdir = std::unique_ptr<nchar[]>(
             new nchar[dirLen + 3]);
 
@@ -624,7 +623,7 @@ namespace hl
         try
         {
             struct dirent* e;
-            while (e = readdir(d))
+            while ((e = readdir(d)))
             {
 #endif
                 // Get file name
