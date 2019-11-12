@@ -83,6 +83,7 @@ namespace hl
         // Get PACx Data Node
         const PACxV2DataNode* dataNode = DPACxGetDataV2<PACxV2DataNode>(blob);
         if (!dataNode) throw std::runtime_error("Could not get PACx data node.");
+        if (!dataNode->TreesSize) return;
 
         // Get BINA Offset Table
         std::uint32_t offsetTableSize;
@@ -569,12 +570,12 @@ namespace hl
         return fileCount;
     }
 
-    std::unique_ptr<const char* []> DLWArchiveGetSplitPtrs(
+    std::unique_ptr<const char*[]> DLWArchiveGetSplitPtrs(
         const Blob& blob, std::size_t& splitCount)
     {
         // Get LW Archive
         const LWArchive* arc = DPACxGetDataV2<const LWArchive>(blob);
-        if (!arc)
+        if (!arc || !arc->Header.TreesSize)
         {
             splitCount = 0;
             return nullptr;
@@ -605,8 +606,8 @@ namespace hl
 
                 // Generate splits list and return
                 splitCount = static_cast<std::size_t>(splitTable->SplitCount);
-                std::unique_ptr<const char* []> splits = std::unique_ptr<const char* []>(
-                    new const char* [splitCount]);
+                std::unique_ptr<const char*[]> splits = std::unique_ptr<const char*[]>(
+                    new const char*[splitCount]);
 
                 for (std::uint32_t i3 = 0; i3 < splitTable->SplitCount; ++i3)
                 {
@@ -635,6 +636,8 @@ namespace hl
             throw std::runtime_error(
                 "Could not find valid PACx data in the given blob.");
         }
+
+        if (!dataNode->TreesSize) return;
 
         // Get BINA Offset Table
         std::uint32_t offsetTableSize;
