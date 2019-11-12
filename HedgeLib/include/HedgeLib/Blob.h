@@ -1,57 +1,84 @@
 #pragma once
-#include "HedgeLib.h"
-#include <stddef.h>
+#include <memory>
+#include <cstdint>
+#include <cstddef>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef enum HL_BLOB_FORMAT
+namespace hl
 {
-    HL_BLOB_FORMAT_GENERIC = 0,
-    HL_BLOB_FORMAT_HEDGEHOG_ENGINE,
-    HL_BLOB_FORMAT_BINA,
-    HL_BLOB_FORMAT_PACX
+    enum class BlobFormat : std::uint16_t
+    {
+        Generic = 0,
+        HedgehogEngine,
+        BINA,
+        PACx
+    };
+
+    class Blob
+    {
+        struct INBlobDeleter
+        {
+            void operator()(void* ptr) const
+            {
+                // Since we allocate with global operator new for performance
+                // we also have to free with global operator delete.
+                ::operator delete(ptr);
+            }
+        };
+
+        /*! @brief The general format of the data contained within the blob (e.g. BINA). */
+        BlobFormat format;
+
+        /*! @brief The specific type of the data contained within the blob (e.g. LW .pac). */
+        std::uint16_t type;
+
+        /*! @brief The data contained within the blob. */
+        std::unique_ptr<void, INBlobDeleter> data;
+
+    public:
+        inline Blob() = default;
+        inline Blob(std::size_t size, BlobFormat format = BlobFormat::Generic,
+            std::uint16_t type = 0) : format(format), type(type)
+        {
+            // Allocated using global operator new to avoid initialization for performance
+            // while avoiding malloc (which cannot be easily overwritten by the user).
+            data = std::unique_ptr<void, INBlobDeleter>(
+                ::operator new(size));
+        }
+
+        constexpr BlobFormat Format() const noexcept
+        {
+            return format;
+        }
+
+        constexpr std::uint16_t Type() const noexcept
+        {
+            return type;
+        }
+
+        template<typename T = std::uint8_t>
+        inline const T* RawData() const noexcept
+        {
+            return static_cast<const T*>(data.get());
+        }
+
+        template<typename T = std::uint8_t>
+        inline T* RawData() noexcept
+        {
+            return static_cast<T*>(data.get());
+        }
+
+        const void* Data() const;
+
+        template<typename T>
+        inline const T* Data() const
+        {
+            return static_cast<const T*>(Data());
+        }
+
+        template<typename T = void>
+        inline T* Data()
+        {
+            return static_cast<T*>(const_cast<void*>(Data()));
+        }
+    };
 }
-HL_BLOB_FORMAT;
-
-typedef struct hl_Blob hl_Blob;
-
-HL_API hl_Blob* hl_CreateBlob(size_t size, HL_BLOB_FORMAT format);
-HL_API HL_BLOB_FORMAT hl_BlobGetFormat(const hl_Blob* blob);
-HL_API const void* hl_BlobGetRawData(const hl_Blob* blob);
-HL_API const void* hl_BlobGetData(const hl_Blob* blob);
-
-#ifdef __cplusplus
-}
-
-#include "Memory.h"
-
-using hl_BlobPtr = hl_CPtr<hl_Blob>;
-
-// Non-const overloads
-inline void* hl_BlobGetRawData(hl_Blob* blob)
-{
-    return const_cast<void*>(hl_BlobGetRawData(
-        const_cast<const hl_Blob*>(blob)));
-}
-
-inline void* hl_BlobGetData(hl_Blob* blob)
-{
-    return const_cast<void*>(hl_BlobGetData(
-        const_cast<const hl_Blob*>(blob)));
-}
-
-// Helper functions
-template<typename T>
-inline T* hl_BlobGetData(hl_Blob* blob)
-{
-    return static_cast<T*>(hl_BlobGetData(blob));
-}
-
-template<typename T>
-inline const T* hl_BlobGetData(const hl_Blob* blob)
-{
-    return static_cast<const T*>(hl_BlobGetData(blob));
-}
-#endif

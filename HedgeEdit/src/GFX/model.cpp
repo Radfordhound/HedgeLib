@@ -11,32 +11,31 @@
 
 namespace HedgeEdit::GFX
 {
-    void CreateHHGeometry(Instance& inst, const hl_HHSubMeshSlot& slot,
-        std::uint16_t* geometryIndices, std::size_t& geometryIndex, bool seeThrough = false)
+    void CreateHHGeometry(Instance& inst, const hl::HHSubMeshSlot& slot,
+        std::uint16_t* geometryIndices, std::size_t& geometryIndex,
+        bool seeThrough = false)
     {
         // Create geometry from submeshes in the given slot
-        const HL_OFF32(hl_HHSubMesh)* subMeshes = HL_GETPTR32(
-            const HL_OFF32(hl_HHSubMesh), slot.Offset);
-
-        for (uint32_t i = 0; i < slot.Count; ++i)
+        const hl::DataOffset32<hl::HHSubMesh>* subMeshes = slot.Get();
+        for (std::uint32_t i = 0; i < slot.Count; ++i)
         {
-            const hl_HHSubMesh* subMesh = subMeshes[i].Get();
+            const hl::HHSubMesh* subMesh = subMeshes[i].Get();
             geometryIndices[geometryIndex++] = inst.AddGeometry(
                 std::unique_ptr<Geometry>(new Geometry(
                 inst, *subMesh, seeThrough)));
         }
     }
 
-    void CreateHHGeometry(Instance& inst, const hl_HHSpecialSubMeshSlot& slot,
+    void CreateHHGeometry(Instance& inst, const hl::HHSpecialSubMeshSlot& slot,
         std::uint16_t* geometryIndices, std::size_t& geometryIndex)
     {
         // Create geometry from submeshes in the special slot
-        for (uint32_t i = 0; i < slot.Count; ++i)
+        for (std::uint32_t i = 0; i < slot.Count; ++i)
         {
-            uint32_t subMeshCount = *slot.SubMeshCounts[i].Get();
-            for (uint32_t i2 = 0; i2 < subMeshCount; ++i2)
+            std::uint32_t subMeshCount = *slot.SubMeshCounts[i].Get();
+            for (std::uint32_t i2 = 0; i2 < subMeshCount; ++i2)
             {
-                const hl_HHSubMesh* subMesh = (slot.SubMeshes[i])[i2].Get();
+                const hl::HHSubMesh* subMesh = slot.SubMeshes[i][i2].Get();
                 geometryIndices[geometryIndex++] = inst.AddGeometry(
                     std::unique_ptr<Geometry>(new Geometry(
                     inst, *subMesh)));
@@ -44,13 +43,13 @@ namespace HedgeEdit::GFX
         }
     }
 
-    void CreateHHGeometry(Instance& inst, const HL_OFF32(hl_HHMesh)* meshes,
-        uint32_t meshCount, std::uint16_t* geometryIndices)
+    void CreateHHGeometry(Instance& inst, const hl::DataOffset32<hl::HHMesh>* meshes,
+        std::uint32_t meshCount, std::uint16_t* geometryIndices)
     {
         std::size_t geometryIndex = 0;
-        for (uint32_t i = 0; i < meshCount; ++i)
+        for (std::uint32_t i = 0; i < meshCount; ++i)
         {
-            const hl_HHMesh* mesh = meshes[i].Get();
+            const hl::HHMesh* mesh = meshes[i].Get();
             CreateHHGeometry(inst, mesh->Solid, geometryIndices, geometryIndex);
             CreateHHGeometry(inst, mesh->Transparent, geometryIndices, geometryIndex);
             CreateHHGeometry(inst, mesh->Boolean, geometryIndices, geometryIndex);
@@ -58,16 +57,15 @@ namespace HedgeEdit::GFX
         }
     }
 
-    Model::Model(Instance& inst, const hl_HHTerrainModel& model)
+    Model::Model(Instance& inst, const hl::HHTerrainModel& model)
     {
         // Get total geometry count
-        const HL_OFF32(hl_HHMesh)* meshes = HL_GETPTR32(
-            const HL_OFF32(hl_HHMesh), model.Meshes.Offset);
-
+        const hl::DataOffset32<hl::HHMesh>* meshes = model.Meshes.Get();
         geometryCount = 0;
-        for (uint32_t i = 0; i < model.Meshes.Count; ++i)
+
+        for (std::uint32_t i = 0; i < model.Meshes.Count; ++i)
         {
-            const hl_HHMesh* mesh = meshes[i].Get();
+            const hl::HHMesh* mesh = meshes[i].Get();
             geometryCount += mesh->Solid.Count;
             geometryCount += mesh->Transparent.Count;
             geometryCount += mesh->Boolean.Count;
@@ -79,16 +77,15 @@ namespace HedgeEdit::GFX
         CreateHHGeometry(inst, meshes, model.Meshes.Count, geometryIndices.get());
     }
 
-    Model::Model(Instance& inst, const hl_HHSkeletalModel& model)
+    Model::Model(Instance& inst, const hl::HHSkeletalModel& model)
     {
         // Get total geometry count
-        const HL_OFF32(hl_HHMesh)* meshes = HL_GETPTR32(
-            const HL_OFF32(hl_HHMesh), model.Meshes.Offset);
-
+        const hl::DataOffset32<hl::HHMesh>* meshes = model.Meshes.Get();
         geometryCount = 0;
-        for (uint32_t i = 0; i < model.Meshes.Count; ++i)
+
+        for (std::uint32_t i = 0; i < model.Meshes.Count; ++i)
         {
-            const hl_HHMesh* mesh = meshes[i].Get();
+            const hl::HHMesh* mesh = meshes[i].Get();
             geometryCount += mesh->Solid.Count;
             geometryCount += mesh->Transparent.Count;
             geometryCount += mesh->Boolean.Count;
@@ -114,13 +111,10 @@ namespace HedgeEdit::GFX
     Model* LoadHHModel(Instance& inst, const char* filePath)
     {
         // Open the file
-        hl_Blob* blobPtr;
-        HL_RESULT result = hl_HHLoad(filePath, &blobPtr);
-        if (HL_FAILED(result)) throw std::runtime_error("Could not load model.");
+        hl::Blob blob = hl::DHHLoad(filePath);
 
         // Load and endian-swap the data
-        hl_BlobPtr blob = blobPtr;
-        model_t* model = hl_HHGetData<model_t>(blob);
+        model_t* model = hl::DHHGetData<model_t>(blob);
         model->EndianSwapRecursive(true);
 
         // Generate a HedgeEdit model from it and return
@@ -129,11 +123,11 @@ namespace HedgeEdit::GFX
 
     Model* LoadHHSkeletalModel(Instance& inst, const char* filePath)
     {
-        return LoadHHModel<hl_HHSkeletalModel>(inst, filePath);
+        return LoadHHModel<hl::HHSkeletalModel>(inst, filePath);
     }
 
     Model* LoadHHTerrainModel(Instance& inst, const char* filePath)
     {
-        return LoadHHModel<hl_HHTerrainModel>(inst, filePath);
+        return LoadHHModel<hl::HHTerrainModel>(inst, filePath);
     }
 }

@@ -2,574 +2,486 @@
 #include "HedgeLib/Archives/LWArchive.h"
 #include "HedgeLib/Archives/Archive.h"
 #include "HedgeLib/IO/File.h"
-#include "../INBlob.h"
-#include "../INString.h"
-#include "../IO/INBINA.h"
+#include "INPACx.h"
 
-size_t hl_INLWArchiveGetBufferSize(const hl_Blob* blob, size_t& fileCount);
-HL_RESULT hl_INCreateLWArchive(const hl_Blob* blob, hl_ArchiveFileEntry*& entries, uint8_t*& data);
-
-const char* const hl_PACxExtension = ".pac";
-
-#ifdef _WIN32
-const hl_NativeChar* const hl_PACxExtensionNative = L".pac";
-#endif
-
-const hl_PACxSupportedExtension hl_PACxV2SupportedExtensions[] =
+namespace hl
 {
-    // Organized based on frequency information determined via a custom analyzation program
-    // High Frequency
-    { "dds", 57, HL_PACX_EXT_FLAGS_MIXED_TYPE },
-    { "material", 22, HL_PACX_EXT_FLAGS_SPLIT_TYPE },
-    { "model", 33, HL_PACX_EXT_FLAGS_SPLIT_TYPE },
-    { "uv-anim", 7, HL_PACX_EXT_FLAGS_MIXED_TYPE },
-    { "skl.hkx", 48 },
-    { "anm.hkx", 5 },
-    { "terrain-model", 29, HL_PACX_EXT_FLAGS_SPLIT_TYPE },
-    
-    // Average Frequency
-    { "swif", 51 },
-    { "effect", 17, HL_PACX_EXT_FLAGS_BINA },
-    { "mat-anim", 4, HL_PACX_EXT_FLAGS_MIXED_TYPE },
-    { "anm", 11 },
-    { "phy.hkx", 18 },
-    { "terrain-instanceinfo", 28 },
-    { "lua", 19 },
-    { "hhd", 13 },
-    { "light", 20 },
-    { "path2.bin", 50, HL_PACX_EXT_FLAGS_BINA },
-    { "lft", 21 },
+    const char* const PACxExtension = ".pac";
+    const nchar* const PACxExtensionNative = HL_NTEXT(".pac");
 
-    // Low frequency
-    { "shadow-model", 46, HL_PACX_EXT_FLAGS_BINA },
-    { "gism", 16 },
-    { "fxcol.bin", 15, HL_PACX_EXT_FLAGS_BINA },
-    { "xtb2", 61, HL_PACX_EXT_FLAGS_BINA },
-    { "model-instanceinfo", 34, HL_PACX_EXT_FLAGS_BINA },
-    { "svcol.bin", 52, HL_PACX_EXT_FLAGS_BINA },
-    { "vis-anim", 8, HL_PACX_EXT_FLAGS_MIXED_TYPE },
-    { "voxel.bin", 60 }, // TODO: Should these be merged??
-    { "score", 44 },
-    { "nextra.bin", 35, HL_PACX_EXT_FLAGS_BINA },
-    { "gsh", 26 },
-    { "shader-list", 27 },
-    { "bfttf", 9 },
-    { "pixelshader", 23 },
-    { "wpu", 24 },
-    { "wvu", 31 },
-    { "fpo", 24 },
-    { "psparam", 25 },
-    { "vertexshader", 30 },
-    { "ttf", 58 },
-    { "vsparam", 32 },
-    { "vpo", 31 },
-    { "path.bin", 49, HL_PACX_EXT_FLAGS_BINA },
-    { "pac.d", 37 }
-};
-
-const size_t hl_PACxV2SupportedExtensionCount = 42;
-
-// Credit to Skyth for parts of this list
-const char* const hl_PACxDataTypes[] = 
-{
-    // RawData == 0 as a fallback
-    "ResRawData",                       // 0
-
-    // The rest are organized alphabetically
-    "ResAnimator",                      // 1
-    "ResAnimCameraContainer",           // 2
-    "ResAnimLightContainer",            // 3
-    "ResAnimMaterial",                  // 4
-    "ResAnimSkeleton",                  // 5
-    "ResAnimTexPat",                    // 6
-    "ResAnimTexSrt",                    // 7
-    "ResAnimVis",                       // 8
-    "ResBFTTFData",                     // 9
-    "ResBitmapFont",                    // 10
-    "ResCharAnimScript",                // 11
-    "ResCodeTable",                     // 12
-    "ResCustomData",                    // 13
-    "ResCyanEffect",                    // 14
-    "ResFxColFile",                     // 15
-    "ResGismoConfig",                   // 16
-    "ResGrifEffect",                    // 17
-    "ResHavokMesh",                     // 18
-    "ResLuaData",                       // 19
-    "ResMirageLight",                   // 20
-    "ResMirageLightField",              // 21
-    "ResMirageMaterial",                // 22
-    "ResMiragePixelShader",             // 23
-    "ResMiragePixelShaderCode",         // 24
-    "ResMiragePixelShaderParameter",    // 25
-    "ResMirageResSM4ShaderContainer",   // 26
-    "ResMirageShaderList",              // 27
-    "ResMirageTerrainInstanceInfo",     // 28
-    "ResMirageTerrainModel",            // 29
-    "ResMirageVertexShader",            // 30
-    "ResMirageVertexShaderCode",        // 31
-    "ResMirageVertexShaderParameter",   // 32
-    "ResModel",                         // 33
-    "ResModelInstanceInfo",             // 34
-    "ResNameExtra",                     // 35
-    "ResObjectWorld",                   // 36
-    "ResPacDepend",                     // 37
-    "ResParticleLocation",              // 38
-    "ResProbe",                         // 39
-    "ResRawData",                       // 40
-    "ResReflection",                    // 41
-    "ResScalableFontSet",               // 42
-    "ResScene",                         // 43
-    "ResScoreTable",                    // 44
-    "ResShaderList",                    // 45
-    "ResShadowModel",                   // 46
-    "ResSHLightField",                  // 47
-    "ResSkeleton",                      // 48
-    "ResSplinePath",                    // 49
-    "ResSplinePath2",                   // 50
-    "ResSurfRideProject",               // 51
-    "ResSvCol",                         // 52
-    "ResTerrainGrassInfo",              // 53
-    "ResText",                          // 54
-    "ResTextMeta",                      // 55
-    "ResTextProject",                   // 56
-    "ResTexture",                       // 57
-    "ResTTFData",                       // 58
-    "ResVibration",                     // 59
-    "ResVoxelContainer",                // 60
-    "ResXTB2Data"                       // 61
-};
-
-const size_t hl_PACxDataTypeCount = 62;
-
-// hl_PACxV2ProxyEntry
-HL_IMPL_ENDIAN_SWAP_CPP(hl_PACxV2ProxyEntry);
-HL_IMPL_ENDIAN_SWAP(hl_PACxV2ProxyEntry)
-{
-    hl_Swap(v->Index);
-}
-
-// hl_PACxV2SplitTable
-HL_IMPL_ENDIAN_SWAP_CPP(hl_PACxV2SplitTable);
-HL_IMPL_ENDIAN_SWAP(hl_PACxV2SplitTable)
-{
-    hl_Swap(v->SplitCount);
-}
-
-// hl_PACxV2DataEntry
-HL_IMPL_ENDIAN_SWAP_CPP(hl_PACxV2DataEntry);
-HL_IMPL_ENDIAN_SWAP(hl_PACxV2DataEntry)
-{
-    hl_Swap(v->DataSize);
-    hl_Swap(v->Unknown1);
-    hl_Swap(v->Unknown2);
-}
-
-HL_IMPL_ENDIAN_SWAP_CPP(hl_PACxV2DataNode);
-HL_IMPL_ENDIAN_SWAP(hl_PACxV2DataNode)
-{
-    v->Header.EndianSwap();
-    hl_Swap(v->DataEntriesSize);
-    hl_Swap(v->TreesSize);
-    hl_Swap(v->ProxyTableSize);
-    hl_Swap(v->StringTableSize);
-    hl_Swap(v->OffsetTableSize);
-}
-
-size_t hl_PACxGetFileCount(const hl_Blob* blob, bool includeProxies)
-{
-    if (!blob) return 0;
-    switch (blob->GetData<hl_BINAV2Header>()->Version[0])
+    const PACxSupportedExtension PACxV2SupportedExtensions[] =
     {
-    // Lost World
-    case 0x32:
-        return hl_LWArchiveGetFileCount(blob, includeProxies);
+        // Organized based on frequency information determined via a custom analyzation program
+        // High Frequency
+        { "dds", 57, PACX_EXT_FLAGS_MIXED_TYPE },
+        { "material", 22, PACX_EXT_FLAGS_SPLIT_TYPE },
+        { "model", 33, PACX_EXT_FLAGS_SPLIT_TYPE },
+        { "uv-anim", 7, PACX_EXT_FLAGS_MIXED_TYPE },
+        { "skl.hkx", 48 },
+        { "anm.hkx", 5 },
+        { "terrain-model", 29, PACX_EXT_FLAGS_SPLIT_TYPE },
 
-    // Forces
-    case 0x33:
-        // TODO: Forces Archives
-        //return hl_ForcesArchiveGetFileCount(blob, includeProxies);
+        // Average Frequency
+        { "swif", 51 },
+        { "effect", 17, PACX_EXT_FLAGS_BINA },
+        { "mat-anim", 4, PACX_EXT_FLAGS_MIXED_TYPE },
+        { "anm", 11 },
+        { "phy.hkx", 18 },
+        { "terrain-instanceinfo", 28 },
+        { "lua", 19 },
+        { "hhd", 13 },
+        { "light", 20 },
+        { "path2.bin", 50, PACX_EXT_FLAGS_BINA },
+        { "lft", 21 },
 
-    // TODO: Tokyo 2020 Archives
-
-    default:
-        return 0;
-    }
-}
-
-size_t hl_INPACxGetBufferSize(const hl_Blob* blob, size_t& fileCount)
-{
-    switch (blob->GetData<hl_BINAV2Header>()->Version[0])
-    {
-    // Lost World
-    case 0x32:
-        return hl_INLWArchiveGetBufferSize(blob, fileCount);
-
-    // TODO: Forces Archives
-    //// Forces
-    //case 0x33:
-    //    return hl_INForcesArchiveGetBufferSize(blob, fileCount);
-
-    // TODO: Tokyo 2020 Archives
-
-    default: return 0;
-    }
-}
-
-HL_RESULT hl_INPACxCreateArchive(const hl_Blob* blob,
-    hl_ArchiveFileEntry*& entries, uint8_t*& data)
-{
-    switch (blob->GetData<hl_BINAV2Header>()->Version[0])
-    {
-    // Lost World
-    case 0x32:
-        return hl_INCreateLWArchive(blob, entries, data);
-
-    // TODO: Forces Archives
-    //// Forces
-    //case 0x33:
-    //    return hl_INCreateForcesArchive(blob, entries, data);
-
-    // TODO: Tokyo 2020 Archives
-    }
-
-    return HL_ERROR_UNSUPPORTED;
-}
-
-void hl_INPACxFixDataNodeV2(uint8_t*& nodes,
-    hl_BINAV2Header& header, bool bigEndian)
-{
-    // Endian-swap DATA node
-    hl_PACxV2DataNode* dataNode = reinterpret_cast<hl_PACxV2DataNode*>(nodes);
-    if (bigEndian) dataNode->EndianSwap();
-
-    // Get data pointer
-    uint8_t* data = reinterpret_cast<uint8_t*>(dataNode + 1);
-    data -= (sizeof(hl_PACxV2DataNode) + sizeof(hl_BINAV2Header));
-
-    // Get offset table pointer
-    const uint8_t* offTable = reinterpret_cast<const uint8_t*>(dataNode);
-    offTable += dataNode->Header.Size;
-    offTable -= dataNode->OffsetTableSize;
-
-    // Fix offsets
-    const uint8_t* eof = (offTable + dataNode->OffsetTableSize);
-    hl_INBINAFixOffsets<uint32_t>(offTable,
-        eof, data, bigEndian);
-
-    nodes += dataNode->Header.Size;
-}
-
-HL_RESULT hl_PACxReadV2(hl_File* file, hl_Blob** blob)
-{
-    // TODO
-    if (!file || !blob) return HL_ERROR_INVALID_ARGS;
-
-    // Read BINAV2 header
-    hl_BINAV2Header header;
-    HL_RESULT result = file->ReadNoSwap(header);
-    if (HL_FAILED(result)) return result;
-
-    if ((file->DoEndianSwap = (header.EndianFlag == HL_BINA_BE_FLAG)))
-    {
-        header.EndianSwap();
-    }
-
-    // Create blob using information from header
-    *blob = hl_INCreateBlob(header.FileSize, HL_BLOB_FORMAT_BINA,
-        HL_ARC_TYPE_PACX_V2);
-
-    if (!(*blob)) return HL_ERROR_OUT_OF_MEMORY;
-
-    // Copy header into blob
-    *((*blob)->GetData<hl_BINAV2Header>()) = header;
-
-    // Read the rest of the file into the blob
-    uint8_t* nodes = ((&(*blob)->Data) + sizeof(header));
-    result = file->ReadBytes(nodes, header.FileSize - sizeof(header));
-
-    if (HL_FAILED(result))
-    {
-        free(*blob);
-        return result;
-    }
-
-    // Fix nodes
-    for (uint16_t i = 0; i < header.NodeCount; ++i)
-    {
-        // To our knowledge, there's only one BINA V2 Node
-        // actually used by Sonic Team: The DATA Node.
-        // If more are discovered/added in later games, however,
-        // this switch statement makes it easy to add more.
-        hl_BINAV2NodeHeader* node = reinterpret_cast<hl_BINAV2NodeHeader*>(nodes);
-        switch (node->Signature)
-        {
-        // DATA Node
-        case HL_BINA_V2_DATA_NODE_SIGNATURE:
-        {
-            // Endian-swap DATA node
-            hl_INPACxFixDataNodeV2(nodes, header, file->DoEndianSwap);
-            break;
-        }
-
-        default:
-            if (file->DoEndianSwap) node->EndianSwap();
-            break;
-        }
-
-        nodes += node->Size;
-    }
-
-    return HL_SUCCESS;
-}
-
-HL_RESULT hl_PACxRead(hl_File* file, hl_Blob** blob)
-{
-    if (!file) return HL_ERROR_INVALID_ARGS;
-
-    // Read signature
-    uint32_t sig;
-    HL_RESULT result = file->ReadNoSwap(sig);
-    if (HL_FAILED(result)) return result;
-
-    // Ensure we're dealing with a file in the PACx format
-    if (sig != HL_PACX_SIGNATURE)
-        return HL_ERROR_UNSUPPORTED;
-
-    // Read version
-    uint8_t versionMajor;
-    result = file->ReadBytes(&versionMajor, 1);
-    if (HL_FAILED(result)) return result;
-
-    // Jump back to beginning of file
-    result = file->JumpBehind(5);
-    if (HL_FAILED(result)) return result;
-
-    // Determine PACx header type and read data
-    switch (versionMajor)
-    {
-    // PACx V2
-    case 0x32:
-        return hl_PACxReadV2(file, blob);
-
-    // TODO: PACx V3 Support
-    // TODO: PACx V4 Support
-
-    // Unknown format
-    default:
-        return HL_ERROR_UNSUPPORTED;
-    }
-}
-
-HL_RESULT hl_INPACxLoadV2(const hl_NativeChar* filePath, hl_Blob** blob)
-{
-    // TODO: Do stuff here instead of just calling hl_PACxReadV2 so you
-    // can optimize-out the need to read the file size and backtrack.
-    hl_File file;
-    HL_RESULT result = file.OpenReadNative(filePath);
-    if (HL_FAILED(result)) return result;
-
-    return hl_PACxReadV2(&file, blob);
-}
-
-HL_RESULT hl_PACxLoadV2(const char* filePath, hl_Blob** blob)
-{
-    if (!filePath || !blob) return HL_ERROR_INVALID_ARGS;
-    HL_INSTRING_NATIVE_CALL(filePath, hl_INPACxLoadV2(nativeStr, blob))
-}
-
-HL_RESULT hl_PACxLoadV2Native(const hl_NativeChar* filePath, hl_Blob** blob)
-{
-    if (!filePath || !blob) return HL_ERROR_INVALID_ARGS;
-    return hl_INPACxLoadV2(filePath, blob);
-}
-
-HL_RESULT hl_INPACxLoad(const hl_NativeChar* filePath, hl_Blob** blob)
-{
-    // TODO: Do stuff here instead of just calling hl_PACxRead so you
-    // can optimize-out the need to read the file size and backtrack.
-    hl_File file;
-    HL_RESULT result = file.OpenReadNative(filePath);
-    if (HL_FAILED(result)) return result;
-
-    return hl_PACxRead(&file, blob);
-}
-
-HL_RESULT hl_PACxLoad(const char* filePath, hl_Blob** blob)
-{
-    if (!filePath || !blob) return HL_ERROR_INVALID_ARGS;
-    HL_INSTRING_NATIVE_CALL(filePath, hl_INPACxLoad(nativeStr, blob));
-}
-
-HL_RESULT hl_PACxLoadNative(const hl_NativeChar* filePath, hl_Blob** blob)
-{
-    if (!filePath || !blob) return HL_ERROR_INVALID_ARGS;
-    return hl_INPACxLoad(filePath, blob);
-}
-
-HL_RESULT hl_PACxStartWriteV2(hl_File* file, bool bigEndian)
-{
-    if (!file) return HL_ERROR_INVALID_ARGS;
-
-    // Create "empty" header
-    hl_BINAV2Header header =
-    {
-        HL_PACX_SIGNATURE,                                  // PACx
-        { 0x32, 0x30, 0x31 },                               // 201
-        (bigEndian) ? HL_BINA_BE_FLAG : HL_BINA_LE_FLAG     // B or L
+        // Low frequency
+        { "shadow-model", 46, PACX_EXT_FLAGS_BINA },
+        { "gism", 16 },
+        { "fxcol.bin", 15, PACX_EXT_FLAGS_BINA },
+        { "xtb2", 61, PACX_EXT_FLAGS_BINA },
+        { "model-instanceinfo", 34, PACX_EXT_FLAGS_BINA },
+        { "svcol.bin", 52, PACX_EXT_FLAGS_BINA },
+        { "vis-anim", 8, PACX_EXT_FLAGS_MIXED_TYPE },
+        { "voxel.bin", 60 }, // TODO: Should these be merged??
+        { "score", 44 },
+        { "nextra.bin", 35, PACX_EXT_FLAGS_BINA },
+        { "gsh", 26 },
+        { "shader-list", 27 },
+        { "bfttf", 9 },
+        { "pixelshader", 23 },
+        { "wpu", 24 },
+        { "wvu", 31 },
+        { "fpo", 24 },
+        { "psparam", 25 },
+        { "vertexshader", 30 },
+        { "ttf", 58 },
+        { "vsparam", 32 },
+        { "vpo", 31 },
+        { "path.bin", 49, PACX_EXT_FLAGS_BINA },
+        { "pac.d", 37 }
     };
 
-    header.NodeCount = 1;
+    const std::size_t PACxV2SupportedExtensionCount = 42;
 
-    // Write header
-    file->DoEndianSwap = bigEndian;
-    return file->Write(header);
-}
-
-HL_RESULT hl_PACxFinishWriteV2(const hl_File* file, long headerPos)
-{
-    if (!file) return HL_ERROR_INVALID_ARGS;
-
-    // Fill-in file size
-    uint32_t fileSize = static_cast<uint32_t>(file->Tell());
-    if (headerPos >= static_cast<long>(fileSize))
-        return HL_ERROR_UNKNOWN; // TODO: Return a better error
-
-    fileSize -= headerPos;
-    HL_RESULT result = file->JumpTo(headerPos + 8);
-    if (HL_FAILED(result)) return result;
-
-    result = file->Write(fileSize);
-    return result;
-}
-
-bool hl_PACxIsBigEndian(const hl_Blob* blob)
-{
-    if (!blob) return false;
-    return hl_INBINAIsBigEndianV2(blob->GetData<hl_BINAV2Header>());
-}
-
-const void* hl_INPACxGetData(const void* blobData)
-{
-    switch (static_cast<const hl_BINAV2Header*>(blobData)->Version[0])
+    // Credit to Skyth for parts of this list
+    const char* const PACxDataTypes[] =
     {
-    // TODO: PACx V3 Support
-    // TODO: PACx V4 Support
+        // RawData == 0 as a fallback
+        "ResRawData",                       // 0
 
-    // PACx V2
-    case 0x32:
-        return hl_INBINAGetDataV2(blobData);
+        // The rest are organized alphabetically
+        "ResAnimator",                      // 1
+        "ResAnimCameraContainer",           // 2
+        "ResAnimLightContainer",            // 3
+        "ResAnimMaterial",                  // 4
+        "ResAnimSkeleton",                  // 5
+        "ResAnimTexPat",                    // 6
+        "ResAnimTexSrt",                    // 7
+        "ResAnimVis",                       // 8
+        "ResBFTTFData",                     // 9
+        "ResBitmapFont",                    // 10
+        "ResCharAnimScript",                // 11
+        "ResCodeTable",                     // 12
+        "ResCustomData",                    // 13
+        "ResCyanEffect",                    // 14
+        "ResFxColFile",                     // 15
+        "ResGismoConfig",                   // 16
+        "ResGrifEffect",                    // 17
+        "ResHavokMesh",                     // 18
+        "ResLuaData",                       // 19
+        "ResMirageLight",                   // 20
+        "ResMirageLightField",              // 21
+        "ResMirageMaterial",                // 22
+        "ResMiragePixelShader",             // 23
+        "ResMiragePixelShaderCode",         // 24
+        "ResMiragePixelShaderParameter",    // 25
+        "ResMirageResSM4ShaderContainer",   // 26
+        "ResMirageShaderList",              // 27
+        "ResMirageTerrainInstanceInfo",     // 28
+        "ResMirageTerrainModel",            // 29
+        "ResMirageVertexShader",            // 30
+        "ResMirageVertexShaderCode",        // 31
+        "ResMirageVertexShaderParameter",   // 32
+        "ResModel",                         // 33
+        "ResModelInstanceInfo",             // 34
+        "ResNameExtra",                     // 35
+        "ResObjectWorld",                   // 36
+        "ResPacDepend",                     // 37
+        "ResParticleLocation",              // 38
+        "ResProbe",                         // 39
+        "ResRawData",                       // 40
+        "ResReflection",                    // 41
+        "ResScalableFontSet",               // 42
+        "ResScene",                         // 43
+        "ResScoreTable",                    // 44
+        "ResShaderList",                    // 45
+        "ResShadowModel",                   // 46
+        "ResSHLightField",                  // 47
+        "ResSkeleton",                      // 48
+        "ResSplinePath",                    // 49
+        "ResSplinePath2",                   // 50
+        "ResSurfRideProject",               // 51
+        "ResSvCol",                         // 52
+        "ResTerrainGrassInfo",              // 53
+        "ResText",                          // 54
+        "ResTextMeta",                      // 55
+        "ResTextProject",                   // 56
+        "ResTexture",                       // 57
+        "ResTTFData",                       // 58
+        "ResVibration",                     // 59
+        "ResVoxelContainer",                // 60
+        "ResXTB2Data"                       // 61
+    };
 
-    default: return nullptr;
-    }
-}
+    //const std::uint8_t PACxV2DataTypesWeighted[] =
+    //{
+    //    // Organized based on ordering information determined via a custom analyzation program
+    //    // Values towards the top get written first
+    //    11, 13, 9,
+    //    // TODO
+    //};
 
-const void* hl_PACxGetData(const hl_Blob* blob)
-{
-    if (!blob) return nullptr;
-    return hl_INPACxGetData(&blob->Data);
-}
+    const std::size_t PACxDataTypeCount = 62;
 
-const uint8_t* hl_INPACxGetOffsetTableV2(
-    const hl_PACxV2DataNode* dataNode, uint32_t* offTableSize)
-{
-    *offTableSize = dataNode->OffsetTableSize;
-    return (reinterpret_cast<const uint8_t*>(dataNode) +
-        dataNode->Header.Size - *offTableSize);
-}
-
-const uint8_t* hl_INPACxGetOffsetTableV2(const void* blobData,
-    uint32_t* offTableSize)
-{
-    const hl_PACxV2DataNode* dataNode = reinterpret_cast<const hl_PACxV2DataNode*>(
-        hl_INBINAGetDataNodeV2(blobData));
-
-    if (!dataNode) return nullptr;
-    return hl_INPACxGetOffsetTableV2(dataNode, offTableSize);
-}
-
-const uint8_t* hl_PACxGetOffsetTableV2(const hl_Blob* blob,
-    uint32_t* offTableSize)
-{
-    if (!blob || !offTableSize) return nullptr;
-    return hl_INPACxGetOffsetTableV2(blob, offTableSize);
-}
-
-const uint8_t* hl_INPACxGetOffsetTable(
-    const void* blobData, uint32_t* offTableSize)
-{
-    switch (static_cast<const hl_BINAV2Header*>(blobData)->Version[0])
+    void DAddPACxArchive(const Blob& blob, Archive& arc)
     {
-    // TODO: PACx V3 Support
-    // TODO: PACx V4 Support
+        switch (blob.RawData<BINAV2Header>()->Version[0])
+        {
+        // Lost World
+        case 0x32:
+            DAddLWArchive(blob, arc);
+            break;
 
-    // PACx V2
-    case 0x32:
-        return hl_INPACxGetOffsetTableV2(blobData, offTableSize);
+        // Forces
+        //case 0x33:
+            // TODO: Forces Archives
+            //DAddForcesArchive(blob, arc);
+            //break;
 
-    default: return nullptr;
-    }
-}
-
-const uint8_t* hl_PACxGetOffsetTable(const hl_Blob* blob,
-    uint32_t* offTableSize)
-{
-    if (!blob || !offTableSize) return nullptr;
-    return hl_INPACxGetOffsetTable(&blob->Data, offTableSize);
-}
-
-const char** hl_PACxArchiveGetSplits(const hl_Blob* blob, size_t* splitCount)
-{
-    switch (blob->GetData<hl_BINAV2Header>()->Version[0])
-    {
-    // Lost World
-    case 0x32:
-        return hl_LWArchiveGetSplits(blob, splitCount);
-
-    // Forces
-    case 0x33:
-        // TODO: Forces Archives
-        //return hl_ForcesArchiveGetSplits(blob, splitCount);
-        return nullptr;
-
-    // TODO: Tokyo 2020 Archives
-
-    default:
-        return nullptr;
-    }
-}
-
-template<typename char_t>
-HL_RESULT hl_INExtractPACxArchive(const hl_Blob* blob, const char_t* dir)
-{
-    switch (blob->GetData<hl_BINAV2Header>()->Version[0])
-    {
-    // Lost World
-    case 0x32:
-        return hl_DExtractLWArchive(blob, dir);
-
-    //// Forces
-    //case 0x33:
-        // TODO: Forces Archives
-        //return hl_ExtractForcesArchive(blob, dir);
-
-    //// Tokyo 2020
-    //case 0x34:
         // TODO: Tokyo 2020 Archives
-        //return hl_ExtractTokyoArchive(blob, dir);
+
+        default:
+            throw std::runtime_error("Unknown or unsupported PACx version.");
+        }
     }
 
-    return HL_ERROR_UNSUPPORTED;
-}
+    std::size_t DPACxGetFileCount(const Blob& blob, bool includeProxies)
+    {
+        switch (blob.RawData<BINAV2Header>()->Version[0])
+        {
+        // Lost World
+        case 0x32:
+            return DLWArchiveGetFileCount(blob, includeProxies);
 
-HL_RESULT hl_ExtractPACxArchive(const hl_Blob* blob, const char* dir)
-{
-    if (!blob) return HL_ERROR_INVALID_ARGS; // dir is checked in the resulting calls
-    return hl_INExtractPACxArchive(blob, dir);
-}
+        // Forces
+        //case 0x33:
+            // TODO: Forces Archives
+            //return DForcesArchiveGetFileCount(blob, includeProxies);
 
-HL_RESULT hl_ExtractPACxArchiveNative(
-    const hl_Blob* blob, const hl_NativeChar* dir)
-{
-    if (!blob) return HL_ERROR_INVALID_ARGS; // dir is checked in the resulting calls
-    return hl_INExtractPACxArchive(blob, dir);
+        // TODO: Tokyo 2020 Archives
+
+        default:
+            throw std::runtime_error("Unknown or unsupported PACx version.");
+        }
+    }
+
+    void INDPACxFixDataNodeV2(std::uint8_t*& nodes,
+        BINAV2Header& header, bool bigEndian)
+    {
+        // Endian-swap DATA node
+        PACxV2DataNode* dataNode = reinterpret_cast<PACxV2DataNode*>(nodes);
+        if (bigEndian) dataNode->EndianSwap();
+
+        // Get data pointer
+        std::uint8_t* data = reinterpret_cast<std::uint8_t*>(dataNode + 1);
+        data -= (sizeof(PACxV2DataNode) + sizeof(BINAV2Header));
+
+        // Get offset table pointer
+        const std::uint8_t* offTable = reinterpret_cast<const std::uint8_t*>(dataNode);
+        offTable += dataNode->Header.Size;
+        offTable -= dataNode->OffsetTableSize;
+
+        // Fix offsets
+        BINAFixOffsets32(offTable, dataNode->OffsetTableSize, data, bigEndian);
+        nodes += dataNode->Header.Size;
+    }
+
+    Blob DPACxReadV2(File& file)
+    {
+        // Read BINAV2 header
+        BINAV2Header header;
+        file.ReadNoSwap(header);
+
+        if ((file.DoEndianSwap = (header.EndianFlag == HL_BINA_BE_FLAG)))
+        {
+            header.EndianSwap();
+        }
+
+        // Create blob using information from header
+        Blob blob = Blob(header.FileSize, BlobFormat::BINA,
+            static_cast<std::uint16_t>(ArchiveType::PACxV2));
+
+        // Copy header into blob
+        *blob.RawData<BINAV2Header>() = header;
+
+        // Read the rest of the file into the blob
+        std::uint8_t* nodes = (blob.RawData() + sizeof(header));
+        file.ReadBytes(nodes, header.FileSize - sizeof(header));
+
+        // Fix nodes
+        for (std::uint16_t i = 0; i < header.NodeCount; ++i)
+        {
+            // To our knowledge, there's only one BINA V2 Node
+            // actually used by Sonic Team: The DATA Node.
+            // If more are discovered/added in later games, however,
+            // this switch statement makes it easy to add more.
+            BINAV2NodeHeader* node = reinterpret_cast<BINAV2NodeHeader*>(nodes);
+            switch (node->Signature)
+            {
+            // DATA Node
+            case HL_BINA_V2_DATA_NODE_SIGNATURE:
+            {
+                // Endian-swap DATA node
+                INDPACxFixDataNodeV2(nodes, header, file.DoEndianSwap);
+                break;
+            }
+
+            default:
+                if (file.DoEndianSwap) node->EndianSwap();
+                break;
+            }
+
+            nodes += node->Size;
+        }
+
+        return blob;
+    }
+
+    Blob DPACxRead(File& file)
+    {
+        // Read signature
+        std::uint32_t sig;
+        file.ReadNoSwap(sig);
+
+        // Ensure we're dealing with a file in the PACx format
+        // TODO: Do we really want to have this check? I highly doubt the actual games even check it.
+        if (sig != HL_PACX_SIGNATURE)
+            throw std::runtime_error("The given file does not appear to be in the PACx format.");
+
+        // Read version
+        std::uint8_t versionMajor;
+        file.ReadBytes(&versionMajor, 1);
+
+        // Jump back to beginning of file
+        file.JumpBehind(5);
+
+        // Determine PACx header type and read data
+        switch (versionMajor)
+        {
+        // PACx V2
+        case 0x32:
+            return DPACxReadV2(file);
+
+            // TODO: PACx V3 Support
+            // TODO: PACx V4 Support
+
+            // Unknown format
+        default:
+            throw std::runtime_error("Unknown or unsupported PACx version.");
+        }
+    }
+
+    Blob INDPACxLoadV2(const nchar* filePath)
+    {
+        // TODO: Do stuff here instead of just calling DPACxReadV2 so you
+        // can optimize-out the need to read the file size and backtrack.
+        File file = File(filePath);
+        return DPACxReadV2(file);
+    }
+
+    Blob DPACxLoadV2(const char* filePath)
+    {
+#ifdef _WIN32
+        std::unique_ptr<nchar[]> nativePth = StringConvertUTF8ToNativePtr(filePath);
+        return INDPACxLoadV2(nativePth.get());
+#else
+        return INDPACxLoadV2(filePath);
+#endif
+    }
+
+    Blob INDPACxLoad(const nchar* filePath)
+    {
+        // TODO: Do stuff here instead of just calling hl_PACxRead so you
+        // can optimize-out the need to read the file size and backtrack.
+        File file = File(filePath);
+        return DPACxRead(file);
+    }
+
+    Blob DPACxLoad(const char* filePath)
+    {
+#ifdef _WIN32
+        std::unique_ptr<nchar[]> nativePth = StringConvertUTF8ToNativePtr(filePath);
+        return INDPACxLoad(nativePth.get());
+#else
+        return INDPACxLoad(filePath);
+#endif
+    }
+
+    void PACxStartWriteV2(File& file, bool bigEndian)
+    {
+        // Create "empty" header
+        BINAV2Header header =
+        {
+            HL_PACX_SIGNATURE,                                  // PACx
+            { 0x32, 0x30, 0x31 },                               // 201
+            (bigEndian) ? HL_BINA_BE_FLAG : HL_BINA_LE_FLAG     // B or L
+        };
+
+        header.NodeCount = 1;
+
+        // Write header
+        file.DoEndianSwap = bigEndian;
+        file.Write(header);
+    }
+
+    void PACxFinishWriteV2(const File& file, long headerPos)
+    {
+        // Fill-in file size
+        std::uint32_t fileSize = static_cast<std::uint32_t>(file.Tell());
+        if (headerPos >= static_cast<long>(fileSize))
+        {
+            throw std::invalid_argument(
+                "The given header position comes after the end of file, which is invalid.");
+        }
+
+        fileSize -= headerPos;
+        file.JumpTo(headerPos + 8);
+        file.Write(fileSize);
+    }
+
+    const void* DPACxGetData(const Blob& blob)
+    {
+        switch (blob.RawData<const BINAV2Header>()->Version[0])
+        {
+            // TODO: PACx V3 Support
+            // TODO: PACx V4 Support
+
+        // PACx V2
+        case 0x32:
+            return DPACxGetDataV2(blob);
+
+        default: return nullptr;
+        }
+    }
+
+    const std::uint8_t* INDPACxGetOffsetTableV2(
+        const PACxV2DataNode& dataNode, std::uint32_t& offTableSize)
+    {
+        offTableSize = dataNode.OffsetTableSize;
+        return (reinterpret_cast<const std::uint8_t*>(&dataNode) +
+            dataNode.Header.Size - offTableSize);
+    }
+
+    const std::uint8_t* DPACxGetOffsetTableV2(const Blob& blob,
+        std::uint32_t& offTableSize)
+    {
+        const PACxV2DataNode* dataNode = DPACxGetDataV2<const PACxV2DataNode>(blob);
+        if (!dataNode)
+        {
+            offTableSize = 0l;
+            return nullptr;
+        }
+
+        return INDPACxGetOffsetTableV2(*dataNode, offTableSize);
+    }
+
+    const std::uint8_t* DPACxGetOffsetTable(const Blob& blob,
+        std::uint32_t& offTableSize)
+    {
+        switch (blob.RawData<const BINAV2Header>()->Version[0])
+        {
+            // TODO: PACx V3 Support
+            // TODO: PACx V4 Support
+
+        // PACx V2
+        case 0x32:
+            return DPACxGetOffsetTableV2(blob, offTableSize);
+
+        default: return nullptr;
+        }
+    }
+
+    std::unique_ptr<const char*[]> DPACxArchiveGetSplitPtrs(
+        const Blob& blob, std::size_t& splitCount)
+    {
+        switch (blob.RawData<BINAV2Header>()->Version[0])
+        {
+        // Lost World
+        case 0x32:
+            return DLWArchiveGetSplitPtrs(blob, splitCount);
+
+        // Forces
+        //case 0x33:
+            // TODO: Forces Archives
+            //return DForcesArchiveGetSplitPtrs(blob, splitCount);
+
+            // TODO: Tokyo 2020 Archives
+
+        default:
+            throw std::runtime_error("Unknown or Unsupported PACx version.");
+        }
+    }
+
+    template<typename char_t>
+    void INDExtractPACxArchive(const Blob& blob, const char_t* dir)
+    {
+        switch (blob.RawData<BINAV2Header>()->Version[0])
+        {
+        // Lost World
+        case 0x32:
+            DExtractLWArchive(blob, dir);
+            break;
+
+        // Forces
+            //case 0x33:
+                // TODO: Forces Archives
+                //hl_ExtractForcesArchive(blob, dir);
+                //break;
+
+        // Tokyo 2020
+            //case 0x34:
+                // TODO: Tokyo 2020 Archives
+                //hl_ExtractTokyoArchive(blob, dir);
+                //break;
+
+        default:
+            throw std::runtime_error("Unknown or Unsupported PACx version.");
+        }
+    }
+
+    void DExtractPACxArchive(const Blob& blob, const char* dir)
+    {
+        // dir is checked in the resulting calls.
+        // INDExtractPACxArchive is a template function that can call normal or native variants
+        INDExtractPACxArchive(blob, dir);
+    }
+
+#ifdef _WIN32
+    Blob DPACxLoadV2(const nchar* filePath)
+    {
+        return INDPACxLoadV2(filePath);
+    }
+
+    Blob DPACxLoad(const nchar* filePath)
+    {
+        return INDPACxLoad(filePath);
+    }
+
+    void DExtractPACxArchive(const Blob& blob, const nchar* dir)
+    {
+        // dir is checked in the resulting calls.
+        // INDExtractPACxArchive is a template function that can call normal or native variants
+        INDExtractPACxArchive(blob, dir);
+    }
+#endif
 }

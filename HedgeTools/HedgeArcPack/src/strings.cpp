@@ -1,15 +1,15 @@
 #include "strings.h"
 
-const hl_NativeChar* const EnglishText[STRING_CONSTANT_COUNT] =
+const hl::nchar* const EnglishText[STRING_CONSTANT_COUNT] =
 {
     // VERSION_STRING
-    HL_NATIVE_TEXT("0.25 (ALPHA)"),
+    HL_NTEXT("0.25 (ALPHA)"),
 
     // USAGE_STRING
-    HL_NATIVE_TEXT("Usage: HedgeArcPack [flags] input [output]"),
+    HL_NTEXT("Usage: HedgeArcPack [flags] input [output]"),
 
     // HELP1_STRING
-    HL_NATIVE_TEXT(
+    HL_NTEXT(
         "Arguments surrounded by square brackets are optional; if they\n"
         "aren't specified, they will be auto-determined based on input.\n\n"
         "Flags:\n\n"
@@ -24,7 +24,7 @@ const hl_NativeChar* const EnglishText[STRING_CONSTANT_COUNT] =
         "\t\tValid options are:\n\n"),
 
     // HELP2_STRING
-    HL_NATIVE_TEXT(
+    HL_NTEXT(
         " -B\t\tPacks archives in big-endian if the given type supports it.\n"
         "\t\tIgnored when extracting.\n\n"
         " -S=limit\tSpecifies a custom \"split limit\" (how big each split is\n"
@@ -32,63 +32,63 @@ const hl_NativeChar* const EnglishText[STRING_CONSTANT_COUNT] =
         "\t\tSet this to 0 to disable the split limit.\n"),
 
     // ERROR_STRING
-    HL_NATIVE_TEXT("ERROR: "),
+    HL_NTEXT("ERROR: "),
 
     // ERROR_INVALID_FLAGS
-    HL_NATIVE_TEXT("Invalid/Unsupported flags."),
+    HL_NTEXT("Invalid/Unsupported flags."),
 
     // ERROR_TOO_MANY_MODES
-    HL_NATIVE_TEXT("Only one mode may be specified at a time."),
+    HL_NTEXT("Only one mode may be specified at a time."),
 
     // ERROR_TOO_MANY_ARGUMENTS
-    HL_NATIVE_TEXT("Too many arguments were given."),
+    HL_NTEXT("Too many arguments were given."),
 
     // ERROR_INVALID_TYPE
-    HL_NATIVE_TEXT("Invalid archive type."),
+    HL_NTEXT("Invalid archive type."),
 
     // ERROR_INVALID_SPLIT_LIMIT
-    HL_NATIVE_TEXT("Invalid split limit."),
+    HL_NTEXT("Invalid split limit."),
 
     // ERROR_NO_INPUT
-    HL_NATIVE_TEXT("No input was given."),
+    HL_NTEXT("No input was given."),
 
     // TYPE1_STRING
-    HL_NATIVE_TEXT(
+    HL_NTEXT(
         "Archive type could not be auto-detemined.\n"
         "Please enter one of the following options:\n"),
 
     // TYPE2_STRING
-    HL_NATIVE_TEXT("Archive type: "),
+    HL_NTEXT("Archive type: "),
 
     // EXTRACTING_STRING
-    HL_NATIVE_TEXT("Extracting..."),
+    HL_NTEXT("Extracting..."),
 
     // PACKING_STRING
-    HL_NATIVE_TEXT("Packing..."),
+    HL_NTEXT("Packing..."),
 
     // DONE1_STRING
-    HL_NATIVE_TEXT("Done! Completed in "),
+    HL_NTEXT("Done! Completed in "),
 
     // DONE2_STRING
-    HL_NATIVE_TEXT(" seconds."),
+    HL_NTEXT(" seconds."),
 
     // FILE_TYPE_HEROES
-    HL_NATIVE_TEXT("(Heroes/Shadow the Hedgehog .one files)"),
+    HL_NTEXT("(Heroes/Shadow the Hedgehog .one files)"),
 
     // FILE_TYPE_STORYBOOK
-    HL_NATIVE_TEXT("(Secret Rings/Black Knight .one files)"),
+    HL_NTEXT("(Secret Rings/Black Knight .one files)"),
 
     // FILE_TYPE_HEDGEHOG
-    HL_NATIVE_TEXT("(Unleashed/Generations .ar/.pfd files)"),
+    HL_NTEXT("(Unleashed/Generations .ar/.pfd files)"),
 
     // FILE_TYPE_PACV2
-    HL_NATIVE_TEXT("(Lost World .pac files)"),
+    HL_NTEXT("(Lost World .pac files)"),
 
     // FILE_TYPE_PACV3
-    HL_NATIVE_TEXT("(Forces .pac files)")
+    HL_NTEXT("(Forces .pac files)")
 };
 
-const hl_NativeChar* const* Languages[LANGUAGE_COUNT] =
+const hl::nchar* const* Languages[LANGUAGE_COUNT] =
 {
     EnglishText
 };

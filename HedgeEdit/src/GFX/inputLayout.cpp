@@ -35,11 +35,11 @@ namespace HedgeEdit::GFX
         { "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT }
     }};
 
-    DXGI_FORMAT ConvertVertexFormatHH2(const uint32_t format)
+    DXGI_FORMAT ConvertVertexFormatHH2(const std::uint32_t format)
     {
         switch (format)
         {
-        case HL_HHVERTEX_FORMAT_INDEX_BYTE:
+        case hl::HHVERTEX_FORMAT_INDEX_BYTE:
             // TODO: This format is correct, but apparently the game does something weird with the data itself?
             // For example 00 01 02 02 consistently becomes 00 00 5b 42 in memory.
             // Not sure why this is or what these in-memory values actually mean.
@@ -48,30 +48,30 @@ namespace HedgeEdit::GFX
             // Does Gens do this too??
             return DXGI_FORMAT_R8G8B8A8_UINT;
 
-        case HL_HHVERTEX_FORMAT_INDEX:
+        case hl::HHVERTEX_FORMAT_INDEX:
             // TODO: Is this correct?
             return DXGI_FORMAT_R8G8B8A8_SINT;
 
-        case HL_HHVERTEX_FORMAT_VECTOR2:
+        case hl::HHVERTEX_FORMAT_VECTOR2:
             return DXGI_FORMAT_R32G32_FLOAT;
 
-        case HL_HHVERTEX_FORMAT_VECTOR2_HALF:
+        case hl::HHVERTEX_FORMAT_VECTOR2_HALF:
             return DXGI_FORMAT_R16G16_FLOAT;
 
-        case HL_HHVERTEX_FORMAT_VECTOR3:
+        case hl::HHVERTEX_FORMAT_VECTOR3:
             return DXGI_FORMAT_R32G32B32_FLOAT;
 
-        case HL_HHVERTEX_FORMAT_VECTOR3_HH1:
+        case hl::HHVERTEX_FORMAT_VECTOR3_HH1:
             // TODO
             return DXGI_FORMAT_R8G8B8A8_SNORM;
 
-        case HL_HHVERTEX_FORMAT_VECTOR3_HH2:
+        case hl::HHVERTEX_FORMAT_VECTOR3_HH2:
             return DXGI_FORMAT_R8G8B8A8_SNORM;
 
-        case HL_HHVERTEX_FORMAT_VECTOR4:
+        case hl::HHVERTEX_FORMAT_VECTOR4:
             return DXGI_FORMAT_R32G32B32A32_FLOAT;
 
-        case HL_HHVERTEX_FORMAT_VECTOR4_BYTE:
+        case hl::HHVERTEX_FORMAT_VECTOR4_BYTE:
             return DXGI_FORMAT_R8G8B8A8_UNORM;
 
         default:
@@ -80,34 +80,34 @@ namespace HedgeEdit::GFX
     }
 
     winrt::com_ptr<ID3D11InputLayout> CreateInputLayoutStandard(const Instance& inst,
-        const hl_HHVertexElement* format, const void* signature,
+        const hl::HHVertexElement* format, const void* signature,
         std::size_t signatureLength)
     {
         // Get input elements
         std::array<D3D11_INPUT_ELEMENT_DESC, 4> elements = StandardInputElements;
-        size_t i;
+        std::size_t i;
 
-        for (; format->Format != HL_HHVERTEX_FORMAT_LAST_ENTRY; ++format)
+        for (; format->Format != hl::HHVERTEX_FORMAT_LAST_ENTRY; ++format)
         {
             // Get corresponding input element, if any. Skip otherwise
             switch (format->Type)
             {
-            case HL_HHVERTEX_TYPE_POSITION:
+            case hl::HHVERTEX_TYPE_POSITION:
                 if (format->Index != 0) continue;
                 i = 0;
                 break;
 
-            case HL_HHVERTEX_TYPE_NORMAL:
+            case hl::HHVERTEX_TYPE_NORMAL:
                 if (format->Index != 0) continue;
                 i = 1;
                 break;
 
-            case HL_HHVERTEX_TYPE_COLOR:
+            case hl::HHVERTEX_TYPE_COLOR:
                 if (format->Index != 0) continue;
                 i = 2;
                 break;
 
-            case HL_HHVERTEX_TYPE_UV:
+            case hl::HHVERTEX_TYPE_UV:
                 if (format->Index != 0) continue;
                 i = 3;
                 break;
@@ -138,54 +138,54 @@ namespace HedgeEdit::GFX
     }
 
     winrt::com_ptr<ID3D11InputLayout> CreateInputLayoutHH2(const Instance& inst,
-        const hl_HHVertexElement* format, const void* signature,
+        const hl::HHVertexElement* format, const void* signature,
         std::size_t signatureLength)
     {
         // Get input elements
         std::array<D3D11_INPUT_ELEMENT_DESC, 16> elements = HH2InputElements;
-        size_t i;
+        std::size_t i;
 
-        for (; format->Format != HL_HHVERTEX_FORMAT_LAST_ENTRY; ++format)
+        for (; format->Format != hl::HHVERTEX_FORMAT_LAST_ENTRY; ++format)
         {
             // Get corresponding input element, if any. Skip otherwise
             switch (format->Type)
             {
-            case HL_HHVERTEX_TYPE_POSITION:
+            case hl::HHVERTEX_TYPE_POSITION:
                 if (format->Index != 0) continue;
                 i = 0;
                 break;
 
-            case HL_HHVERTEX_TYPE_BONE_WEIGHT:
+            case hl::HHVERTEX_TYPE_BONE_WEIGHT:
                 if (format->Index > 1) continue;
-                i = (1 + static_cast<size_t>(format->Index));
+                i = (1 + static_cast<std::size_t>(format->Index));
                 break;
 
-            case HL_HHVERTEX_TYPE_BONE_INDEX:
+            case hl::HHVERTEX_TYPE_BONE_INDEX:
                 if (format->Index > 1) continue;
-                i = (3 + static_cast<size_t>(format->Index));
+                i = (3 + static_cast<std::size_t>(format->Index));
                 break;
 
-            case HL_HHVERTEX_TYPE_NORMAL:
+            case hl::HHVERTEX_TYPE_NORMAL:
                 if (format->Index > 1) continue;
-                i = (5 + static_cast<size_t>(format->Index));
+                i = (5 + static_cast<std::size_t>(format->Index));
                 break;
 
-            case HL_HHVERTEX_TYPE_UV:
+            case hl::HHVERTEX_TYPE_UV:
                 if (format->Index > 3) continue;
-                i = (7 + static_cast<size_t>(format->Index));
+                i = (7 + static_cast<std::size_t>(format->Index));
                 break;
 
-            case HL_HHVERTEX_TYPE_TANGENT:
+            case hl::HHVERTEX_TYPE_TANGENT:
                 if (format->Index > 1) continue;
-                i = (11 + static_cast<size_t>(format->Index));
+                i = (11 + static_cast<std::size_t>(format->Index));
                 break;
 
-            case HL_HHVERTEX_TYPE_BINORMAL:
+            case hl::HHVERTEX_TYPE_BINORMAL:
                 if (format->Index > 1) continue;
-                i = (13 + static_cast<size_t>(format->Index));
+                i = (13 + static_cast<std::size_t>(format->Index));
                 break;
 
-            case HL_HHVERTEX_TYPE_COLOR:
+            case hl::HHVERTEX_TYPE_COLOR:
                 if (format->Index != 0) continue;
                 i = 15;
                 break;
@@ -215,7 +215,7 @@ namespace HedgeEdit::GFX
         return inputLayout;
     }
 
-    InputLayout::InputLayout(const Instance& inst, const hl_HHVertexElement* format,
+    InputLayout::InputLayout(const Instance& inst, const hl::HHVertexElement* format,
         const void* signature, std::size_t signatureLength)
     {
         switch (inst.RenderType())

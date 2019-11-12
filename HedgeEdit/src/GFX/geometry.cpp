@@ -7,7 +7,6 @@
 #include <stdexcept>
 #include <algorithm>
 #include <cmath>
-#include <cstdlib>
 
 namespace HedgeEdit::GFX
 {
@@ -42,7 +41,7 @@ namespace HedgeEdit::GFX
 
 #ifdef D3D11
     winrt::com_ptr<ID3D11Buffer> CreateVertexBuffer(
-        const Instance& inst, const hl_HHSubMesh& subMesh)
+        const Instance& inst, const hl::HHSubMesh& subMesh)
     {
         // Get vertex buffer size
         std::size_t bufSize = (static_cast<std::size_t>(
@@ -50,27 +49,29 @@ namespace HedgeEdit::GFX
 
         // Create copy of buffer that we can modify before sending to the GPU
         const std::uint8_t* origData = subMesh.Vertices.Get();
-        std::uint8_t* data = static_cast<std::uint8_t*>(std::malloc(bufSize));
-        if (!data) throw std::runtime_error("Out of memory!");
+        std::unique_ptr<std::uint8_t[]> data = std::unique_ptr<std::uint8_t[]>(
+            new std::uint8_t[bufSize]);
 
-        std::copy(origData, origData + bufSize, data);
+        std::copy(origData, origData + bufSize, data.get());
 
         // Convert data if necessary
-        const hl_HHVertexElement* format = subMesh.VertexElements.Get();
-        for (; format->Format != HL_HHVERTEX_FORMAT_LAST_ENTRY; ++format)
+        const hl::HHVertexElement* format = subMesh.VertexElements.Get();
+        for (; format->Format != hl::HHVERTEX_FORMAT_LAST_ENTRY; ++format)
         {
             switch (format->Format)
             {
-            case HL_HHVERTEX_FORMAT_VECTOR3_HH1:
+            case hl::HHVERTEX_FORMAT_VECTOR3_HH1:
                 // ? -> DXGI_FORMAT_R8G8B8A8_SNORM ??
                 // TODO
                 throw std::runtime_error("HH1 Vector3 unpacking not yet implemented!");
 
-            case HL_HHVERTEX_FORMAT_VECTOR3_HH2:
+            case hl::HHVERTEX_FORMAT_VECTOR3_HH2:
                 // R10G10B10A2_SNORM -> DXGI_FORMAT_R8G8B8A8_SNORM
-                uint32_t* dst = reinterpret_cast<uint32_t*>(data + format->Offset);
+                std::uint32_t* dst = reinterpret_cast<std::uint32_t*>(
+                    data.get() + format->Offset);
+
                 *dst = Convert_R10G10B10A2_SNORM_To_R8G8B8A8_SNORM(
-                    *reinterpret_cast<const uint32_t*>(origData + format->Offset));
+                    *reinterpret_cast<const std::uint32_t*>(origData + format->Offset));
                 break;
             }
         }
@@ -88,25 +89,24 @@ namespace HedgeEdit::GFX
 
         // Create initial data structure
         D3D11_SUBRESOURCE_DATA initialData = {};
-        initialData.pSysMem = data;
+        initialData.pSysMem = data.get();
 
         // Create vertex buffer
         winrt::com_ptr<ID3D11Buffer> buffer;
         HRESULT result = inst.Device->CreateBuffer(&desc, &initialData, buffer.put());
 
         // Free data and return buffer
-        std::free(data);
         if (FAILED(result)) throw std::runtime_error("Could not create vertex buffer!");
         return buffer;
     }
 
     winrt::com_ptr<ID3D11Buffer> CreateIndexBuffer(
-        const Instance& inst, const hl_HHSubMesh& subMesh)
+        const Instance& inst, const hl::HHSubMesh& subMesh)
     {
         // Create a buffer description
         D3D11_BUFFER_DESC desc =
         {
-            sizeof(uint16_t) * subMesh.Faces.Count,         // ByteWidth
+            sizeof(std::uint16_t) * subMesh.Faces.Count,    // ByteWidth
             D3D11_USAGE_IMMUTABLE,                          // Usage
             D3D11_BIND_INDEX_BUFFER,                        // BindFlags
             0,                                              // CPUAccessFlags
@@ -116,7 +116,7 @@ namespace HedgeEdit::GFX
 
         // Create initial data structure
         D3D11_SUBRESOURCE_DATA initialData = {};
-        initialData.pSysMem = HL_GETPTR32(uint16_t, subMesh.Faces.Offset);
+        initialData.pSysMem = subMesh.Faces.Get();
 
         // Create index buffer
         winrt::com_ptr<ID3D11Buffer> buffer;
@@ -127,14 +127,14 @@ namespace HedgeEdit::GFX
     }
 #endif
 
-    Geometry::Geometry(Instance& inst, const hl_HHSubMesh& subMesh,
+    Geometry::Geometry(Instance& inst, const hl::HHSubMesh& subMesh,
         bool seeThrough) : SeeThrough(seeThrough)
     {
         // TODO: Materials sdjiogjnspigos
         MaterialIndex = 0;
 
         // Get input layout
-        const hl_HHVertexElement* format = subMesh.VertexElements.Get();
+        const hl::HHVertexElement* format = subMesh.VertexElements.Get();
         vertexFormatHash = inst.HashVertexFormat(format);
         InputLayout* inputLayout = inst.GetInputLayout(vertexFormatHash);
 

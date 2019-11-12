@@ -1,75 +1,86 @@
 #pragma once
-#include "../Endian.h"
+#include "../HedgeLib.h"
+#include "../Offsets.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct hl_HHMesh hl_HHMesh;
-typedef struct hl_Matrix4x4 hl_Matrix4x4;
-typedef struct hl_AABB hl_AABB;
-
-typedef struct hl_HHTerrainModel
+namespace hl
 {
-    HL_ARR32(HL_OFF32(hl_HHMesh)) Meshes;
-    HL_STR32 Name;
-    uint32_t Flags; // TODO: Make this an enum
+    struct HHMesh;
+    struct Matrix4x4;
+    struct AABB;
 
-    HL_DECL_ENDIAN_SWAP_CPP();
-    HL_DECL_ENDIAN_SWAP_RECURSIVE_CPP();
+    struct HHTerrainModel
+    {
+        ArrayOffset32<DataOffset32<HHMesh>> Meshes;
+        StringOffset32 Name;
+        std::uint32_t Flags; // TODO: Make this an enum
+
+        inline void EndianSwap()
+        {
+            Swap(Meshes);
+            Swap(Flags);
+        }
+
+        inline void EndianSwapRecursive(bool isBigEndian)
+        {
+            SwapRecursive(isBigEndian, Meshes);
+            Swap(Flags);
+        }
+    };
+
+    HL_STATIC_ASSERT_SIZE(HHTerrainModel, 16);
+
+    struct HHBone
+    {
+        std::int32_t Index;
+        StringOffset32 Name;
+
+        inline void EndianSwap()
+        {
+            Swap(Index);
+        }
+    };
+
+    HL_STATIC_ASSERT_SIZE(HHBone, 8);
+
+    struct HHSkeleton
+    {
+        // TODO: Convert this to an array if you find out what it is
+        std::uint32_t UnknownCount;
+        DataOffset32<std::uint8_t> UnknownOffset;
+
+        std::uint32_t BoneCount;
+        DataOffset32<DataOffset32<HHBone>> Bones;
+        DataOffset32<Matrix4x4> BoneMatrices;
+        DataOffset32<AABB> GlobalAABB;
+
+        inline void EndianSwap()
+        {
+            Swap(UnknownCount);
+            Swap(BoneCount);
+        }
+
+        HL_API void EndianSwapRecursive(bool isBigEndian);
+    };
+
+    HL_STATIC_ASSERT_SIZE(HHSkeleton, 0x18);
+
+    struct HHSkeletalModel
+    {
+        ArrayOffset32<DataOffset32<HHMesh>> Meshes;
+        HHSkeleton Skeleton;
+
+        inline void EndianSwap()
+        {
+            Swap(Meshes);
+            Skeleton.EndianSwap();
+        }
+
+        inline void EndianSwapRecursive(bool isBigEndian)
+        {
+            SwapRecursive(isBigEndian, Meshes);
+            Skeleton.EndianSwapRecursive(isBigEndian);
+        }
+    };
+
+    HL_STATIC_ASSERT_SIZE(HHSkeletalModel, 0x20);
 }
-hl_HHTerrainModel;
-
-HL_STATIC_ASSERT_SIZE(hl_HHTerrainModel, 16);
-HL_DECL_ENDIAN_SWAP(hl_HHTerrainModel);
-HL_DECL_ENDIAN_SWAP_RECURSIVE(hl_HHTerrainModel);
-
-typedef struct hl_HHBone
-{
-    int32_t Index;
-    HL_STR32 Name;
-
-    HL_DECL_ENDIAN_SWAP_CPP();
-}
-hl_HHBone;
-
-HL_STATIC_ASSERT_SIZE(hl_HHBone, 8);
-HL_DECL_ENDIAN_SWAP(hl_HHBone);
-
-typedef struct hl_HHSkeleton
-{
-    // TODO: Convert this to an array if you find out what it is
-    uint32_t UnknownCount;
-    HL_OFF32(uint8_t) UnknownOffset;
-
-    uint32_t BoneCount;
-    HL_OFF32(HL_OFF32(hl_HHBone)) Bones;
-    HL_OFF32(hl_Matrix4x4) BoneMatrices;
-    HL_OFF32(hl_AABB) GlobalAABB;
-
-    HL_DECL_ENDIAN_SWAP_CPP();
-    HL_DECL_ENDIAN_SWAP_RECURSIVE_CPP();
-}
-hl_HHSkeleton;
-
-HL_STATIC_ASSERT_SIZE(hl_HHSkeleton, 0x18);
-HL_DECL_ENDIAN_SWAP(hl_HHSkeleton);
-HL_DECL_ENDIAN_SWAP_RECURSIVE(hl_HHSkeleton);
-
-typedef struct hl_HHSkeletalModel
-{
-    HL_ARR32(HL_OFF32(hl_HHMesh)) Meshes;
-    hl_HHSkeleton Skeleton;
-
-    HL_DECL_ENDIAN_SWAP_CPP();
-    HL_DECL_ENDIAN_SWAP_RECURSIVE_CPP();
-}
-hl_HHSkeletalModel;
-
-HL_STATIC_ASSERT_SIZE(hl_HHSkeletalModel, 0x20);
-HL_DECL_ENDIAN_SWAP(hl_HHSkeletalModel);
-HL_DECL_ENDIAN_SWAP_RECURSIVE(hl_HHSkeletalModel);
-
-#ifdef __cplusplus
-}
-#endif

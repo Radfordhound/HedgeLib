@@ -21,9 +21,12 @@
 #include <cstddef>
 #include <cstdint>
 
-struct hl_HHVertexElement;
-struct hl_HHTerrainModel;
-struct hl_HHSkeletalModel;
+namespace hl
+{
+    struct HHVertexElement;
+    struct HHTerrainModel;
+    struct HHSkeletalModel;
+}
 
 namespace HedgeEdit::GFX
 {
@@ -67,8 +70,8 @@ namespace HedgeEdit::GFX
 
         Instance(RenderTypes renderType = RenderTypes::Standard);
 
-        static std::size_t HashVertexElement(const hl_HHVertexElement& e);
-        static std::size_t HashVertexFormat(const hl_HHVertexElement* f);
+        static std::size_t HashVertexElement(const hl::HHVertexElement& e);
+        static std::size_t HashVertexFormat(const hl::HHVertexElement* f);
 
         inline RenderTypes RenderType() const
         {
@@ -147,9 +150,9 @@ namespace HedgeEdit::GFX
         std::size_t AddMaterial(const std::string& name, Material* material);
         std::uint32_t AddGeometry(std::unique_ptr<Geometry> g);
         std::uint16_t AddModel(const std::string& name, Model* model);
-        std::uint16_t AddModel(const hl_HHTerrainModel& model);
-        std::uint16_t AddModel(const std::string& name, const hl_HHTerrainModel& model);
-        std::uint16_t AddModel(const std::string& name, const hl_HHSkeletalModel& model);
+        std::uint16_t AddModel(const hl::HHTerrainModel& model);
+        std::uint16_t AddModel(const std::string& name, const hl::HHTerrainModel& model);
+        std::uint16_t AddModel(const std::string& name, const hl::HHSkeletalModel& model);
 
         std::size_t LoadDDSTexture(const char* filePath);
         std::size_t LoadHHSkeletalModel(const char* filePath);

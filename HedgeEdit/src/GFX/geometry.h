@@ -7,7 +7,10 @@
 #include <cstdint>
 #include <cstddef>
 
-struct hl_HHSubMesh;
+namespace hl
+{
+    struct HHSubMesh;
+}
 
 namespace HedgeEdit::GFX
 {
@@ -34,7 +37,7 @@ namespace HedgeEdit::GFX
         bool SeeThrough; // For Solid/Boolean this is false
 
         inline Geometry() = default;
-        Geometry(Instance& inst, const hl_HHSubMesh& subMesh,
+        Geometry(Instance& inst, const hl::HHSubMesh& subMesh,
             bool seeThrough = false);
         
         inline std::size_t VertexFormatHash() const noexcept

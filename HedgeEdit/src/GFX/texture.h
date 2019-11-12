@@ -7,7 +7,10 @@
 #include <d3d11.h>
 #endif
 
-struct hl_DDSTexture;
+namespace hl
+{
+    struct DDSTexture;
+}
 
 namespace HedgeEdit::GFX
 {
@@ -23,13 +26,14 @@ namespace HedgeEdit::GFX
 #ifdef D3D11
         inline Texture(winrt::com_ptr<ID3D11ShaderResourceView> v) : view(v) {}
 #endif
-        Texture(const Instance& inst, const hl_DDSTexture* dds, size_t ddsSize);
+        Texture(const Instance& inst, const hl::DDSTexture& dds, std::size_t ddsSize);
 
         void Bind(const Instance& inst, unsigned int slot) const;
     };
 
-#ifdef D3D11
     Texture* LoadDDSTexture(const Instance& inst, const char* filePath);
-    Texture* LoadDDSTextureNative(const Instance& inst, const hl_NativeChar* filePath);
+
+#ifdef _WIN32
+    Texture* LoadDDSTexture(const Instance& inst, const hl::nchar* filePath);
 #endif
 }

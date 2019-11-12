@@ -1,203 +1,194 @@
 #pragma once
 #include "HedgeLib.h"
-#include "Result.h"
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstddef>
+#include <cstring>
+#include <string>
+#include <memory>
 
-#ifdef __cplusplus
-extern "C" {
-#else
-#include <stdbool.h>
+namespace hl
+{
 #ifdef _WIN32
-#include <wchar.h>
-#endif
-#endif
-
-#ifdef _WIN32
-typedef wchar_t hl_NativeChar;
-#define HL_NATIVE_TEXT(str) L##str
+#define HL_NTEXT(str) L##str
+    using nchar = wchar_t;
 #else
-typedef char hl_NativeChar;
-#define HL_NATIVE_TEXT(str) str
+#define HL_NTEXT(str) str
+    using nchar = char;
 #endif
 
-#define HL_CREATE_NATIVE_STR(len) ((hl_NativeChar*)\
-    malloc((len) * sizeof(hl_NativeChar)))
+    using nstring = std::basic_string<nchar, std::char_traits<nchar>, std::allocator<nchar>>;
 
 #define HL_TOLOWERASCII(c) ((c >= '[' || c <= '@') ? c : (c + 32))
 
-HL_API extern const char* const hl_EmptyString;
+    HL_API extern const char* const EmptyString;
+    HL_API extern const nchar* const EmptyStringNative;
+
+    HL_API std::size_t StringEncodeCodepointUTF8(
+        char* u8str, char32_t codepoint);
+
+    HL_API std::size_t StringEncodeCodepointUTF16(
+        char16_t* u16str, char32_t codepoint);
+
+    HL_API std::size_t StringDecodeCodepointUTF8(
+        const char* u8str, char32_t& codepoint);
+
+    HL_API std::size_t StringDecodeCodepointUTF16(
+        const char16_t* u16str, char32_t& codepoint);
+
+    inline std::size_t StringLength(const char* str)
+    {
+        return std::strlen(str);
+    }
+
+    inline char* StringCopy(const char* src, char* dst)
+    {
+        return std::strcpy(dst, src);
+    }
+
+    inline bool StringsEqual(const char* str1, const char* str2)
+    {
+        return !std::strcmp(str1, str2);
+    }
+
+    HL_API bool StringsEqualInvASCII(const char* str1, const char* str2);
 
 #ifdef _WIN32
-HL_API extern const hl_NativeChar* const hl_EmptyStringNative;
+    inline std::size_t StringLength(const nchar* str)
+    {
+        return std::wcslen(str);
+    }
+
+    inline nchar* StringCopy(const nchar* src, nchar* dst)
+    {
+        return std::wcscpy(dst, src);
+    }
+
+    inline bool StringsEqual(const nchar* str1, const nchar* str2)
+    {
+        return !std::wcscmp(str1, str2);
+    }
+
+    HL_API bool StringsEqualInvASCII(const nchar* str1, const nchar* str2);
+    HL_API bool StringsEqualInvASCII(const char* str1, const nchar* str2);
+    HL_API bool StringsEqualInvASCII(const nchar* str1, const char* str2);
+#endif
+
+    inline std::size_t StringGetReqUTF8UnitCount(char32_t codepoint)
+    {
+        // Return the amount of code units required to store the given
+        // codepoint, or 3 if the codepoint is invalid. (Invalid characters
+        // are replaced with 0xFFFD which requires 3 units to encode)
+        return ((codepoint < 0x80) ? 1 : (codepoint < 0x800) ? 2 :
+            (codepoint < 0x10000) ? 3 : (codepoint < 0x110000) ? 4 : 3);
+    }
+
+    inline std::size_t StringGetReqUTF16UnitCount(char32_t codepoint)
+    {
+        // Return 2 if the given codepoint is not in the BMP, otherwise 1.
+        // (Invalid characters are replaced with 0xFFFD which is in the BMP)
+        return (codepoint >= 0x10000 && codepoint < 0x110000) ? 2 : 1;
+    }
+
+    HL_API std::size_t StringGetReqUTF16BufferCountUTF8(
+        const char* str, std::size_t len = 0);
+
+    inline std::size_t StringGetReqNativeBufferCountUTF8(
+        const char* str, std::size_t len = 0)
+    {
+#ifdef _WIN32
+        return StringGetReqUTF16BufferCountUTF8(str, len);
 #else
-#define hl_EmptyStringNative hl_EmptyString
+        return (len) ? len : (std::strlen(str) + 1);
 #endif
+    }
 
-HL_API size_t hl_StringEncodeCodepointUTF8(
-    char* u8str, uint32_t codepoint);
+    HL_API std::size_t StringGetReqUTF8BufferCountUTF16(
+        const char16_t* str, std::size_t len = 0);
 
-HL_API size_t hl_StringEncodeCodepointUTF16(
-    uint16_t* u16str, uint32_t codepoint);
+    HL_API std::size_t StringGetReqUTF8BufferCountCP932(
+        const char* str, std::size_t len = 0);
 
-HL_API size_t hl_StringDecodeCodepointUTF8(
-    const char* u8str, uint32_t* codepoint);
+    HL_API std::size_t StringGetReqUTF16BufferCountCP932(
+        const char* str, std::size_t len = 0);
 
-HL_API size_t hl_StringDecodeCodepointUTF16(
-    const uint16_t* u16str, uint32_t* codepoint);
+    HL_API std::size_t StringGetReqCP932BufferCountUTF8(
+        const char* str, std::size_t len = 0);
 
-inline size_t hl_StrLen(const char* str)
-{
-    return strlen(str);
-}
+    HL_API std::size_t StringGetReqCP932BufferCountUTF16(
+        const char16_t* str, std::size_t len = 0);
 
-inline size_t hl_StrLenNative(const hl_NativeChar* str)
-{
+    inline std::size_t StringGetReqNativeBufferCountUTF16(
+        const char16_t* str, std::size_t len = 0)
+    {
 #ifdef _WIN32
-    return wcslen(str);
+        return (len) ? (std::wcslen(reinterpret_cast<const wchar_t*>(str)) + 1) : len;
 #else
-    return strlen(str);
+        return StringGetReqUTF8BufferCountUTF16(str, len);
 #endif
-}
+    }
 
-inline char* hl_StringCopy(const char* src, char* dst)
-{
-    return strcpy(dst, src);
-}
+    HL_API std::unique_ptr<char16_t[]> StringConvertUTF8ToUTF16Ptr(
+        const char* u8str, std::size_t u8bufLen = 0);
 
-inline hl_NativeChar* hl_StringCopyNative(
-    const hl_NativeChar* src, hl_NativeChar* dst)
-{
+    HL_API std::u16string StringConvertUTF8ToUTF16(
+        const char* u8str, std::size_t u8bufLen = 0);
+
+    HL_API std::unique_ptr<char[]> StringConvertUTF8ToCP932Ptr(
+        const char* u8str, std::size_t u8bufLen = 0);
+
+    HL_API std::string StringConvertUTF8ToCP932(
+        const char* u8str, std::size_t u8bufLen = 0);
+
+    HL_API std::unique_ptr<char[]> StringConvertUTF16ToCP932Ptr(
+        const char16_t* u16str, std::size_t u16bufLen = 0);
+
+    HL_API std::string StringConvertUTF16ToCP932(
+        const char16_t* u16str, std::size_t u16bufLen = 0);
+
+    HL_API std::unique_ptr<nchar[]> StringConvertUTF8ToNativePtr(
+        const char* u8str, std::size_t u8bufLen = 0);
+
+    HL_API nstring StringConvertUTF8ToNative(
+        const char* u8str, std::size_t u8bufLen = 0);
+
+    HL_API std::unique_ptr<char[]> StringConvertUTF16ToUTF8Ptr(
+        const char16_t* u16str, std::size_t u16bufLen = 0);
+
+    HL_API std::string StringConvertUTF16ToUTF8(
+        const char16_t* u16str, std::size_t u16bufLen = 0);
+
+    HL_API std::unique_ptr<nchar[]> StringConvertUTF16ToNativePtr(
+        const char16_t* u16str, std::size_t u16bufLen = 0);
+
+    HL_API nstring StringConvertUTF16ToNative(
+        const char16_t* u16str, std::size_t u16bufLen = 0);
+    
+    HL_API std::unique_ptr<char[]> StringConvertCP932ToUTF8Ptr(
+        const char* cp932str, std::size_t cp932bufLen = 0);
+
+    HL_API std::string StringConvertCP932ToUTF8(
+        const char* cp932str, std::size_t cp932bufLen = 0);
+
+    HL_API std::unique_ptr<char16_t[]> StringConvertCP932ToUTF16Ptr(
+        const char* cp932str, std::size_t cp932bufLen = 0);
+
+    HL_API std::u16string StringConvertCP932ToUTF16(
+        const char* cp932str, std::size_t cp932bufLen = 0);
+
+    HL_API std::unique_ptr<nchar[]> StringConvertCP932ToNativePtr(
+        const char* cp932str, std::size_t cp932bufLen = 0);
+
+    HL_API nstring StringConvertCP932ToNative(
+        const char* cp932str, std::size_t cp932bufLen = 0);
+
+    HL_API std::unique_ptr<char[]> StringJoinPtr(
+        const char* str1, const char* str2);
+
+    HL_API std::string StringJoin(const char* str1, const char* str2);
+
 #ifdef _WIN32
-    return wcscpy(dst, src);
-#else
-    return strcpy(dst, src);
+    HL_API std::unique_ptr<nchar[]> StringJoinPtr(
+        const nchar* str1, const nchar* str2);
+
+    HL_API nstring StringJoin(const nchar* str1, const nchar* str2);
 #endif
 }
-
-HL_API bool hl_StringsEqualInvASCII(const char* str1, const char* str2);
-HL_API bool hl_StringsEqualInvASCIINative(
-    const hl_NativeChar* str1, const hl_NativeChar* str2);
-
-inline size_t hl_StringGetReqUTF8UnitCount(uint32_t cp)
-{
-    // Return the amount of code units required to store the given
-    // codepoint, or 3 if the codepoint is invalid. (Invalid characters
-    // are replaced with 0xFFFD which requires 3 units to encode)
-    return (cp < 0x80) ? 1 : (cp < 0x800) ? 2 :
-        (cp < 0x10000) ? 3 : (cp < 0x110000) ? 4 : 3;
-}
-
-inline size_t hl_StringGetReqUTF16UnitCount(uint32_t cp)
-{
-    // Return 2 if the given codepoint is not in the BMP, otherwise 1.
-    // (Invalid characters are replaced with 0xFFFD which is in the BMP)
-    return (cp >= 0x10000 && cp < 0x110000) ? 2 : 1;
-}
-
-HL_API size_t hl_StringGetReqUTF16BufferCountUTF8(
-    const char* str, size_t HL_DEFARG(len, 0));
-
-inline size_t hl_StringGetReqNativeBufferCountUTF8(
-    const char* str, size_t HL_DEFARG(len, 0))
-{
-#ifdef _WIN32
-    return hl_StringGetReqUTF16BufferCountUTF8(str, len);
-#else
-    return (len) ? len : (strlen(str) + 1);
-#endif
-}
-
-HL_API size_t hl_StringGetReqUTF8BufferCountUTF16(
-    const uint16_t* str, size_t HL_DEFARG(len, 0));
-
-HL_API size_t hl_StringGetReqUTF8BufferCountCP932(
-    const char* str, size_t HL_DEFARG(len, 0));
-
-HL_API size_t hl_StringGetReqUTF16BufferCountCP932(
-    const char* str, size_t HL_DEFARG(len, 0));
-
-HL_API size_t hl_StringGetReqCP932BufferCountUTF8(
-    const char* str, size_t HL_DEFARG(len, 0));
-
-HL_API size_t hl_StringGetReqCP932BufferCountUTF16(
-    const uint16_t* str, size_t HL_DEFARG(len, 0));
-
-inline size_t hl_StringGetReqNativeBufferCountUTF16(
-    const uint16_t* str, size_t HL_DEFARG(len, 0))
-{
-#ifdef _WIN32
-    return (len) ? (wcslen(reinterpret_cast<const wchar_t*>(str)) + 1) : len;
-#else
-    return hl_StringGetReqUTF8BufferCountUTF16(str, len);
-#endif
-}
-
-inline bool hl_StringsEqualNative(const hl_NativeChar* str1, const hl_NativeChar* str2)
-{
-#ifdef _WIN32
-    return !wcscmp(str1, str2);
-#else
-    return !strcmp(str1, str2);
-#endif
-}
-
-HL_API enum HL_RESULT hl_StringConvertUTF8ToUTF16(
-    const char* u8str, uint16_t** u16str, size_t HL_DEFARG(u8bufLen, 0));
-
-HL_API enum HL_RESULT hl_StringConvertUTF8ToCP932(
-    const char* u8str, char** cp932str, size_t HL_DEFARG(u8bufLen, 0));
-
-HL_API enum HL_RESULT hl_StringConvertUTF16ToCP932(
-    const uint16_t* u16str, char** cp932str, size_t HL_DEFARG(u16bufLen, 0));
-
-HL_API enum HL_RESULT hl_StringConvertUTF8ToNative(
-    const char* u8str, hl_NativeChar** nativeStr, size_t HL_DEFARG(u8bufLen, 0));
-
-HL_API enum HL_RESULT hl_StringConvertUTF16ToUTF8(
-    const uint16_t* u16str, char** u8str, size_t HL_DEFARG(u16bufLen, 0));
-
-HL_API enum HL_RESULT hl_StringConvertUTF16ToNative(
-    const uint16_t* u16str, hl_NativeChar** nativeStr, size_t HL_DEFARG(u16bufLen, 0));
-
-HL_API enum HL_RESULT hl_StringConvertCP932ToUTF8(
-    const char* cp932str, char** u8str, size_t HL_DEFARG(cp932bufLen, 0));
-
-HL_API enum HL_RESULT hl_StringConvertCP932ToUTF16(
-    const char* cp932str, uint16_t** u16str, size_t HL_DEFARG(cp932bufLen, 0));
-
-HL_API enum HL_RESULT hl_StringConvertCP932ToNative(
-    const char* cp932str, hl_NativeChar** nativeStr, size_t HL_DEFARG(cp932bufLen, 0));
-
-HL_API HL_RESULT hl_StringJoin(const char* str1, const char* str2, char** result);
-HL_API HL_RESULT hl_StringJoinNative(const hl_NativeChar* str1,
-    const hl_NativeChar* str2, hl_NativeChar** result);
-
-#ifdef __cplusplus
-}
-
-#include "Memory.h"
-
-using hl_CStrPtr = hl_CPtr<char>;
-using hl_NStrPtr = hl_CPtr<hl_NativeChar>;
-
-// Windows-specific overloads
-#ifdef _WIN32
-inline size_t hl_StrLen(const hl_NativeChar* str)
-{
-    return wcslen(str);
-}
-
-inline hl_NativeChar* hl_StringCopy(const hl_NativeChar* src, hl_NativeChar* dst)
-{
-    return wcscpy(dst, src);
-}
-
-inline bool hl_StringsEqualInvASCII(
-    const hl_NativeChar* str1, const hl_NativeChar* str2)
-{
-    return hl_StringsEqualInvASCIINative(str1, str2);
-}
-#endif
-#endif

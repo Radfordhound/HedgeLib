@@ -8,11 +8,13 @@
 #define ncerr std::wcerr
 #define ncin std::wcin
 #define nstring std::wstring
+#define nstrtoul std::wcstoul
 #else
 #define ncout std::cout
 #define ncerr std::cerr
 #define ncin std::cin
 #define nstring std::string
+#define nstrtoul std::strtoul
 #endif
 
 enum STRING_ID
@@ -53,11 +55,11 @@ enum LANGUAGE_TYPE
     LANGUAGE_COUNT
 };
 
-extern const hl_NativeChar* const EnglishText[STRING_CONSTANT_COUNT];
-extern const hl_NativeChar* const* Languages[LANGUAGE_COUNT];
+extern const hl::nchar* const EnglishText[STRING_CONSTANT_COUNT];
+extern const hl::nchar* const* Languages[LANGUAGE_COUNT];
 extern LANGUAGE_TYPE CurrentLanguage;
 
-inline const hl_NativeChar* const GetText(STRING_ID id)
+inline const hl::nchar* const GetText(STRING_ID id)
 {
     return Languages[CurrentLanguage][id];
 }

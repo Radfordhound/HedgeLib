@@ -30,8 +30,5 @@
 #define HL_LOCAL
 #endif
 
-#ifdef __cplusplus
-#define HL_DEFARG(argName, defValue) argName = defValue
-#else
-#define HL_DEFARG(argName, defValue) argName
-#endif
+#define HL_STATIC_ASSERT_SIZE(type, size) static_assert(sizeof(type) == size, \
+    "sizeof(" #type ") != expected size (" #size ").")

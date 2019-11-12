@@ -1,45 +1,52 @@
 #pragma once
-#include "../Endian.h"
+#include "../HedgeLib.h"
+#include "../Offsets.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct hl_HHSubMesh hl_HHSubMesh;
-typedef HL_ARR32(HL_OFF32(hl_HHSubMesh)) hl_HHSubMeshSlot;
-
-typedef struct hl_HHSpecialSubMeshSlot
+namespace hl
 {
-    uint32_t Count;
-    HL_OFF32(HL_STR32) Types;
-    HL_OFF32(HL_OFF32(uint32_t)) SubMeshCounts;
-    HL_OFF32(HL_OFF32(HL_OFF32(hl_HHSubMesh))) SubMeshes;
+    struct HHSubMesh;
+    using HHSubMeshSlot = ArrayOffset32<DataOffset32<HHSubMesh>>;
 
-    HL_DECL_ENDIAN_SWAP_CPP();
-    HL_DECL_ENDIAN_SWAP_RECURSIVE_CPP();
+    struct HHSpecialSubMeshSlot
+    {
+        std::uint32_t Count;
+        DataOffset32<StringOffset32> Types;
+        DataOffset32<DataOffset32<std::uint32_t>> SubMeshCounts;
+        DataOffset32<DataOffset32<DataOffset32<HHSubMesh>>> SubMeshes;
+
+        inline void EndianSwap()
+        {
+            Swap(Count);
+        }
+
+        HL_API void EndianSwapRecursive(bool isBigEndian);
+    };
+    
+    HL_STATIC_ASSERT_SIZE(HHSpecialSubMeshSlot, 16);
+
+    struct HHMesh
+    {
+        HHSubMeshSlot Solid;
+        HHSubMeshSlot Transparent;
+        HHSubMeshSlot Boolean;
+        HHSpecialSubMeshSlot Special;
+
+        inline void EndianSwap()
+        {
+            Swap(Solid);
+            Swap(Transparent);
+            Swap(Boolean);
+            Special.EndianSwap();
+        }
+
+        inline void EndianSwapRecursive(bool isBigEndian)
+        {
+            SwapRecursive(isBigEndian, Solid);
+            SwapRecursive(isBigEndian, Transparent);
+            SwapRecursive(isBigEndian, Boolean);
+            Special.EndianSwapRecursive(isBigEndian);
+        }
+    };
+
+    HL_STATIC_ASSERT_SIZE(HHMesh, 0x28);
 }
-hl_HHSpecialSubMeshSlot;
-
-HL_STATIC_ASSERT_SIZE(hl_HHSpecialSubMeshSlot, 16);
-HL_DECL_ENDIAN_SWAP(hl_HHSpecialSubMeshSlot);
-HL_DECL_ENDIAN_SWAP_RECURSIVE(hl_HHSpecialSubMeshSlot);
-
-typedef struct hl_HHMesh
-{
-    hl_HHSubMeshSlot Solid;
-    hl_HHSubMeshSlot Transparent;
-    hl_HHSubMeshSlot Boolean;
-    hl_HHSpecialSubMeshSlot Special;
-
-    HL_DECL_ENDIAN_SWAP_CPP();
-    HL_DECL_ENDIAN_SWAP_RECURSIVE_CPP();
-}
-hl_HHMesh;
-
-HL_STATIC_ASSERT_SIZE(hl_HHMesh, 0x28);
-HL_DECL_ENDIAN_SWAP(hl_HHMesh);
-HL_DECL_ENDIAN_SWAP_RECURSIVE(hl_HHMesh);
-
-#ifdef __cplusplus
-}
-#endif

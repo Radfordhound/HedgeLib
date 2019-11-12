@@ -26,98 +26,98 @@ namespace HedgeEdit::GFX
 #define DDS_PAL8A       0x00000021  // DDPF_PALETTEINDEXED8 | DDPF_ALPHAPIXELS
 #define DDS_BUMPDUDV    0x00080000  // DDPF_BUMPDUDV
 
-    const hl_DDSPixelFormat DDSPF_DXT1 =
-    { sizeof(hl_DDSPixelFormat), HL_DDS_PF_FOURCC, HL_DDS_FOURCC_DXT1, 0, 0, 0, 0, 0 };
+    const hl::DDSPixelFormat DDSPF_DXT1 =
+    { sizeof(hl::DDSPixelFormat), hl::DDS_PF_FOURCC, hl::DDS_FOURCC_DXT1, 0, 0, 0, 0, 0 };
 
-    const hl_DDSPixelFormat DDSPF_DXT2 =
-    { sizeof(hl_DDSPixelFormat), HL_DDS_PF_FOURCC, HL_DDS_FOURCC_DXT2, 0, 0, 0, 0, 0 };
+    const hl::DDSPixelFormat DDSPF_DXT2 =
+    { sizeof(hl::DDSPixelFormat), hl::DDS_PF_FOURCC, hl::DDS_FOURCC_DXT2, 0, 0, 0, 0, 0 };
 
-    const hl_DDSPixelFormat DDSPF_DXT3 =
-    { sizeof(hl_DDSPixelFormat), HL_DDS_PF_FOURCC, HL_DDS_FOURCC_DXT3, 0, 0, 0, 0, 0 };
+    const hl::DDSPixelFormat DDSPF_DXT3 =
+    { sizeof(hl::DDSPixelFormat), hl::DDS_PF_FOURCC, hl::DDS_FOURCC_DXT3, 0, 0, 0, 0, 0 };
 
-    const hl_DDSPixelFormat DDSPF_DXT4 =
-    { sizeof(hl_DDSPixelFormat), HL_DDS_PF_FOURCC, HL_DDS_FOURCC_DXT4, 0, 0, 0, 0, 0 };
+    const hl::DDSPixelFormat DDSPF_DXT4 =
+    { sizeof(hl::DDSPixelFormat), hl::DDS_PF_FOURCC, hl::DDS_FOURCC_DXT4, 0, 0, 0, 0, 0 };
 
-    const hl_DDSPixelFormat DDSPF_DXT5 =
-    { sizeof(hl_DDSPixelFormat), HL_DDS_PF_FOURCC, HL_DDS_FOURCC_DXT5, 0, 0, 0, 0, 0 };
+    const hl::DDSPixelFormat DDSPF_DXT5 =
+    { sizeof(hl::DDSPixelFormat), hl::DDS_PF_FOURCC, hl::DDS_FOURCC_DXT5, 0, 0, 0, 0, 0 };
 
-    const hl_DDSPixelFormat DDSPF_BC4_UNORM =
-    { sizeof(hl_DDSPixelFormat), HL_DDS_PF_FOURCC, HL_DDS_FOURCC_BC4U, 0, 0, 0, 0, 0 };
+    const hl::DDSPixelFormat DDSPF_BC4_UNORM =
+    { sizeof(hl::DDSPixelFormat), hl::DDS_PF_FOURCC, hl::DDS_FOURCC_BC4U, 0, 0, 0, 0, 0 };
 
-    const hl_DDSPixelFormat DDSPF_BC4_SNORM =
-    { sizeof(hl_DDSPixelFormat), HL_DDS_PF_FOURCC, HL_DDS_FOURCC_BC4S, 0, 0, 0, 0, 0 };
+    const hl::DDSPixelFormat DDSPF_BC4_SNORM =
+    { sizeof(hl::DDSPixelFormat), hl::DDS_PF_FOURCC, hl::DDS_FOURCC_BC4S, 0, 0, 0, 0, 0 };
 
-    const hl_DDSPixelFormat DDSPF_BC5_UNORM =
-    { sizeof(hl_DDSPixelFormat), HL_DDS_PF_FOURCC, HL_DDS_FOURCC_BC5U, 0, 0, 0, 0, 0 };
+    const hl::DDSPixelFormat DDSPF_BC5_UNORM =
+    { sizeof(hl::DDSPixelFormat), hl::DDS_PF_FOURCC, hl::DDS_FOURCC_BC5U, 0, 0, 0, 0, 0 };
 
-    const hl_DDSPixelFormat DDSPF_BC5_SNORM =
-    { sizeof(hl_DDSPixelFormat), HL_DDS_PF_FOURCC, HL_DDS_FOURCC_BC5S, 0, 0, 0, 0, 0 };
+    const hl::DDSPixelFormat DDSPF_BC5_SNORM =
+    { sizeof(hl::DDSPixelFormat), hl::DDS_PF_FOURCC, hl::DDS_FOURCC_BC5S, 0, 0, 0, 0, 0 };
 
-    const hl_DDSPixelFormat DDSPF_R8G8_B8G8 =
-    { sizeof(hl_DDSPixelFormat), HL_DDS_PF_FOURCC, HL_DDS_FOURCC_RGBG, 0, 0, 0, 0, 0 };
+    const hl::DDSPixelFormat DDSPF_R8G8_B8G8 =
+    { sizeof(hl::DDSPixelFormat), hl::DDS_PF_FOURCC, hl::DDS_FOURCC_RGBG, 0, 0, 0, 0, 0 };
 
-    const hl_DDSPixelFormat DDSPF_G8R8_G8B8 =
-    { sizeof(hl_DDSPixelFormat), HL_DDS_PF_FOURCC, HL_DDS_FOURCC_GRGB, 0, 0, 0, 0, 0 };
+    const hl::DDSPixelFormat DDSPF_G8R8_G8B8 =
+    { sizeof(hl::DDSPixelFormat), hl::DDS_PF_FOURCC, hl::DDS_FOURCC_GRGB, 0, 0, 0, 0, 0 };
 
-    const hl_DDSPixelFormat DDSPF_YUY2 =
-    { sizeof(hl_DDSPixelFormat), HL_DDS_PF_FOURCC, HL_DDS_FOURCC_YUY2, 0, 0, 0, 0, 0 };
+    const hl::DDSPixelFormat DDSPF_YUY2 =
+    { sizeof(hl::DDSPixelFormat), hl::DDS_PF_FOURCC, hl::DDS_FOURCC_YUY2, 0, 0, 0, 0, 0 };
 
-    const hl_DDSPixelFormat DDSPF_A8R8G8B8 =
-    { sizeof(hl_DDSPixelFormat), DDS_RGBA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 };
+    const hl::DDSPixelFormat DDSPF_A8R8G8B8 =
+    { sizeof(hl::DDSPixelFormat), DDS_RGBA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 };
 
-    const hl_DDSPixelFormat DDSPF_X8R8G8B8 =
-    { sizeof(hl_DDSPixelFormat), HL_DDS_PF_RGB,  0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000 };
+    const hl::DDSPixelFormat DDSPF_X8R8G8B8 =
+    { sizeof(hl::DDSPixelFormat), hl::DDS_PF_RGB,  0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000 };
 
-    const hl_DDSPixelFormat DDSPF_A8B8G8R8 =
-    { sizeof(hl_DDSPixelFormat), DDS_RGBA, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 };
+    const hl::DDSPixelFormat DDSPF_A8B8G8R8 =
+    { sizeof(hl::DDSPixelFormat), DDS_RGBA, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 };
 
-    const hl_DDSPixelFormat DDSPF_X8B8G8R8 =
-    { sizeof(hl_DDSPixelFormat), HL_DDS_PF_RGB,  0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0x00000000 };
+    const hl::DDSPixelFormat DDSPF_X8B8G8R8 =
+    { sizeof(hl::DDSPixelFormat), hl::DDS_PF_RGB,  0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0x00000000 };
 
-    const hl_DDSPixelFormat DDSPF_G16R16 =
-    { sizeof(hl_DDSPixelFormat), HL_DDS_PF_RGB,  0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 };
+    const hl::DDSPixelFormat DDSPF_G16R16 =
+    { sizeof(hl::DDSPixelFormat), hl::DDS_PF_RGB,  0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 };
 
-    const hl_DDSPixelFormat DDSPF_R5G6B5 =
-    { sizeof(hl_DDSPixelFormat), HL_DDS_PF_RGB, 0, 16, 0x0000f800, 0x000007e0, 0x0000001f, 0x00000000 };
+    const hl::DDSPixelFormat DDSPF_R5G6B5 =
+    { sizeof(hl::DDSPixelFormat), hl::DDS_PF_RGB, 0, 16, 0x0000f800, 0x000007e0, 0x0000001f, 0x00000000 };
 
-    const hl_DDSPixelFormat DDSPF_A1R5G5B5 =
-    { sizeof(hl_DDSPixelFormat), DDS_RGBA, 0, 16, 0x00007c00, 0x000003e0, 0x0000001f, 0x00008000 };
+    const hl::DDSPixelFormat DDSPF_A1R5G5B5 =
+    { sizeof(hl::DDSPixelFormat), DDS_RGBA, 0, 16, 0x00007c00, 0x000003e0, 0x0000001f, 0x00008000 };
 
-    const hl_DDSPixelFormat DDSPF_A4R4G4B4 =
-    { sizeof(hl_DDSPixelFormat), DDS_RGBA, 0, 16, 0x00000f00, 0x000000f0, 0x0000000f, 0x0000f000 };
+    const hl::DDSPixelFormat DDSPF_A4R4G4B4 =
+    { sizeof(hl::DDSPixelFormat), DDS_RGBA, 0, 16, 0x00000f00, 0x000000f0, 0x0000000f, 0x0000f000 };
 
-    const hl_DDSPixelFormat DDSPF_R8G8B8 =
-    { sizeof(hl_DDSPixelFormat), HL_DDS_PF_RGB, 0, 24, 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000 };
+    const hl::DDSPixelFormat DDSPF_R8G8B8 =
+    { sizeof(hl::DDSPixelFormat), hl::DDS_PF_RGB, 0, 24, 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000 };
 
-    const hl_DDSPixelFormat DDSPF_L8 =
-    { sizeof(hl_DDSPixelFormat), HL_DDS_PF_LUMINANCE, 0,  8, 0xff, 0x00, 0x00, 0x00 };
+    const hl::DDSPixelFormat DDSPF_L8 =
+    { sizeof(hl::DDSPixelFormat), hl::DDS_PF_LUMINANCE, 0,  8, 0xff, 0x00, 0x00, 0x00 };
 
-    const hl_DDSPixelFormat DDSPF_L16 =
-    { sizeof(hl_DDSPixelFormat), HL_DDS_PF_LUMINANCE, 0, 16, 0xffff, 0x0000, 0x0000, 0x0000 };
+    const hl::DDSPixelFormat DDSPF_L16 =
+    { sizeof(hl::DDSPixelFormat), hl::DDS_PF_LUMINANCE, 0, 16, 0xffff, 0x0000, 0x0000, 0x0000 };
 
-    const hl_DDSPixelFormat DDSPF_A8L8 =
-    { sizeof(hl_DDSPixelFormat), DDS_LUMINANCEA, 0, 16, 0x00ff, 0x0000, 0x0000, 0xff00 };
+    const hl::DDSPixelFormat DDSPF_A8L8 =
+    { sizeof(hl::DDSPixelFormat), DDS_LUMINANCEA, 0, 16, 0x00ff, 0x0000, 0x0000, 0xff00 };
 
-    const hl_DDSPixelFormat DDSPF_A8L8_ALT =
-    { sizeof(hl_DDSPixelFormat), DDS_LUMINANCEA, 0, 8, 0x00ff, 0x0000, 0x0000, 0xff00 };
+    const hl::DDSPixelFormat DDSPF_A8L8_ALT =
+    { sizeof(hl::DDSPixelFormat), DDS_LUMINANCEA, 0, 8, 0x00ff, 0x0000, 0x0000, 0xff00 };
 
-    const hl_DDSPixelFormat DDSPF_A8 =
-    { sizeof(hl_DDSPixelFormat), HL_DDS_PF_ALPHA, 0, 8, 0x00, 0x00, 0x00, 0xff };
+    const hl::DDSPixelFormat DDSPF_A8 =
+    { sizeof(hl::DDSPixelFormat), hl::DDS_PF_ALPHA, 0, 8, 0x00, 0x00, 0x00, 0xff };
 
-    const hl_DDSPixelFormat DDSPF_V8U8 =
-    { sizeof(hl_DDSPixelFormat), DDS_BUMPDUDV, 0, 16, 0x00ff, 0xff00, 0x0000, 0x0000 };
+    const hl::DDSPixelFormat DDSPF_V8U8 =
+    { sizeof(hl::DDSPixelFormat), DDS_BUMPDUDV, 0, 16, 0x00ff, 0xff00, 0x0000, 0x0000 };
 
-    const hl_DDSPixelFormat DDSPF_Q8W8V8U8 =
-    { sizeof(hl_DDSPixelFormat), DDS_BUMPDUDV, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 };
+    const hl::DDSPixelFormat DDSPF_Q8W8V8U8 =
+    { sizeof(hl::DDSPixelFormat), DDS_BUMPDUDV, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 };
 
-    const hl_DDSPixelFormat DDSPF_V16U16 =
-    { sizeof(hl_DDSPixelFormat), DDS_BUMPDUDV, 0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 };
+    const hl::DDSPixelFormat DDSPF_V16U16 =
+    { sizeof(hl::DDSPixelFormat), DDS_BUMPDUDV, 0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 };
 
     // D3DFMT_A2R10G10B10/D3DFMT_A2B10G10R10 should be written using DX10 extension to avoid D3DX 10:10:10:2 reversal issue
 
     // This indicates the DDS_HEADER_DXT10 extension is present (the format is in dxgiFormat)
-    const hl_DDSPixelFormat DDSPF_DX10 =
-    { sizeof(hl_DDSPixelFormat), HL_DDS_PF_FOURCC, HL_DDS_FOURCC_DX10, 0, 0, 0, 0, 0 };
+    const hl::DDSPixelFormat DDSPF_DX10 =
+    { sizeof(hl::DDSPixelFormat), hl::DDS_PF_FOURCC, hl::DDS_FOURCC_DX10, 0, 0, 0, 0, 0 };
 
 #define DDS_HEADER_FLAGS_TEXTURE        0x00001007  // DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT 
 
@@ -141,53 +141,49 @@ namespace HedgeEdit::GFX
     typedef winrt::com_ptr<ID3D11ShaderResourceView> INTexData;
 #endif
 
-    const hl_DDSHeader* LoadTextureDataFromMemory(
-        const uint8_t* ddsData,
-        size_t ddsDataSize,
-        const uint8_t** bitData,
-        size_t* bitSize)
+    const hl::DDSHeader* LoadTextureDataFromMemory(const std::uint8_t* ddsData,
+        std::size_t ddsDataSize, const std::uint8_t** bitData, std::size_t* bitSize)
     {
-        if (!bitData || !bitSize)
-        {
-            throw std::invalid_argument(
-                "The LoadTextureDataFromMemory function was given invalid arguments.");
-        }
+        if (!bitData) throw std::invalid_argument("bitData was null");
+        if (!bitSize) throw std::invalid_argument("bitSize was null");
 
         if (ddsDataSize > UINT32_MAX)
         {
             throw std::invalid_argument("ddsDataSize is too large.");
         }
 
-        if (ddsDataSize < (sizeof(uint32_t) + sizeof(hl_DDSHeader)))
+        if (ddsDataSize < (sizeof(std::uint32_t) + sizeof(hl::DDSHeader)))
         {
             throw std::invalid_argument("ddsDataSize is too small.");
         }
 
         // DDS files always start with the same magic number ("DDS ")
-        uint32_t dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData);
+        std::uint32_t dwMagicNumber = *reinterpret_cast<
+            const std::uint32_t*>(ddsData);
+
         if (dwMagicNumber != HL_DDS_SIGNATURE)
         {
             throw std::runtime_error("The given data is not valid DDS data.");
         }
 
-        const hl_DDSHeader* header = reinterpret_cast<const hl_DDSHeader*>(
-            ddsData + sizeof(uint32_t));
+        const hl::DDSHeader* header = reinterpret_cast<const hl::DDSHeader*>(
+            ddsData + sizeof(std::uint32_t));
 
         // Verify header to validate DDS file
-        if (header->Size != sizeof(hl_DDSHeader) ||
-            header->PixelFormat.Size != sizeof(hl_DDSPixelFormat))
+        if (header->Size != sizeof(hl::DDSHeader) ||
+            header->PixelFormat.Size != sizeof(hl::DDSPixelFormat))
         {
             throw std::runtime_error("The given data is not valid DDS data.");
         }
 
         // Check for DX10 extension
         bool bDXT10Header = false;
-        if ((header->PixelFormat.Flags & HL_DDS_PF_FOURCC) &&
-            header->PixelFormat.FourCC == HL_DDS_FOURCC_DX10)
+        if ((header->PixelFormat.Flags & hl::DDS_PF_FOURCC) &&
+            header->PixelFormat.FourCC == hl::DDS_FOURCC_DX10)
         {
             // Must be long enough for both headers and magic value
-            if (ddsDataSize < (sizeof(hl_DDSHeader) +
-                sizeof(uint32_t) + sizeof(hl_DDSHeaderDXT10)))
+            if (ddsDataSize < (sizeof(hl::DDSHeader) +
+                sizeof(std::uint32_t) + sizeof(hl::DDSHeaderDXT10)))
             {
                 throw std::runtime_error("The given data is not valid DDS data.");
             }
@@ -196,8 +192,8 @@ namespace HedgeEdit::GFX
         }
 
         // Setup the pointers in the process request
-        size_t offset = (sizeof(uint32_t) + sizeof(hl_DDSHeader) +
-            ((bDXT10Header) ? sizeof(hl_DDSHeaderDXT10) : 0));
+        std::size_t offset = (sizeof(std::uint32_t) + sizeof(hl::DDSHeader) +
+            ((bDXT10Header) ? sizeof(hl::DDSHeaderDXT10) : 0));
 
         *bitData = ddsData + offset;
         *bitSize = ddsDataSize - offset;
@@ -205,67 +201,54 @@ namespace HedgeEdit::GFX
         return header;
     }
 
-    const hl_DDSHeader* LoadTextureDataFromFile(
-        const hl_NativeChar* filePath,
-        hl_CPtr<uint8_t>& ddsData,
-        const uint8_t** bitData,
-        size_t* bitSize)
+    const hl::DDSHeader* LoadTextureDataFromFile(
+        const hl::nchar* filePath,
+        std::unique_ptr<std::uint8_t[]>& ddsData,
+        const std::uint8_t** bitData,
+        std::size_t* bitSize)
     {
-        if (!bitData || !bitSize)
-        {
-            throw std::invalid_argument(
-                "The LoadTextureDataFromFile function was given invalid arguments.");
-        }
+        if (!bitData) throw std::invalid_argument("bitData was null.");
+        if (!bitSize) throw std::invalid_argument("bitSize was null.");
 
         // Open the file
-        hl_File file;
-        HL_RESULT result = file.OpenReadNative(filePath);
-        if (HL_FAILED(result)) throw std::runtime_error("Could not open the given file.");
+        hl::File file = hl::File(filePath);
 
         // Get the file size
-        size_t fileSize;
-        result = hl_PathGetSizeNative(filePath, &fileSize);
-
-        if (HL_FAILED(result))
-        {
-            throw std::runtime_error(
-                "Could not get the size of the given file.");
-        }
+        std::size_t fileSize = hl::PathGetSize(filePath);
 
         // Need at least enough data to fill the header and magic number to be a valid DDS
-        if (fileSize < (sizeof(uint32_t) + sizeof(hl_DDSHeader)))
+        if (fileSize < (sizeof(std::uint32_t) + sizeof(hl::DDSHeader)))
             throw std::runtime_error("The given file is not a valid DDS file.");
 
         // Create enough space for the file data
-        ddsData = static_cast<uint8_t*>(malloc(fileSize));
+        ddsData = std::unique_ptr<std::uint8_t[]>(new std::uint8_t[fileSize]);
 
         // Read the data in
-        result = file.ReadBytes(ddsData.Get(), fileSize);
-        if (HL_FAILED(result)) throw std::runtime_error("Could not read the given file.");
+        file.ReadBytes(ddsData.get(), fileSize);
 
         // DDS files always start with the same magic number ("DDS ")
-        uint32_t dwMagicNumber = *reinterpret_cast<const uint32_t*>(ddsData.Get());
+        std::uint32_t dwMagicNumber = *reinterpret_cast<const std::uint32_t*>(ddsData.get());
         if (dwMagicNumber != HL_DDS_SIGNATURE)
             throw std::runtime_error("The given file is not a valid DDS file.");
 
-        const hl_DDSHeader* header = reinterpret_cast<const hl_DDSHeader*>(
-            ddsData.Get() + sizeof(uint32_t));
+        const hl::DDSHeader* header = reinterpret_cast<const hl::DDSHeader*>(
+            ddsData.get() + sizeof(std::uint32_t));
 
         // Verify header to validate DDS file
-        if (header->Size != sizeof(hl_DDSHeader) ||
-            header->PixelFormat.Size != sizeof(hl_DDSPixelFormat))
+        if (header->Size != sizeof(hl::DDSHeader) ||
+            header->PixelFormat.Size != sizeof(hl::DDSPixelFormat))
         {
             throw std::runtime_error("The given file is not a valid DDS file.");
         }
 
         // Check for DX10 extension
         bool bDXT10Header = false;
-        if ((header->PixelFormat.Flags & HL_DDS_PF_FOURCC) &&
-            header->PixelFormat.FourCC == HL_DDS_FOURCC_DX10)
+        if ((header->PixelFormat.Flags & hl::DDS_PF_FOURCC) &&
+            header->PixelFormat.FourCC == hl::DDS_FOURCC_DX10)
         {
             // Must be long enough for both headers and magic value
-            if (fileSize < (sizeof(hl_DDSHeader) +
-                sizeof(uint32_t) + sizeof(hl_DDSHeaderDXT10)))
+            if (fileSize < (sizeof(hl::DDSHeader) +
+                sizeof(std::uint32_t) + sizeof(hl::DDSHeaderDXT10)))
             {
                 throw std::runtime_error("The given file is not a valid DDS file.");
             }
@@ -274,10 +257,10 @@ namespace HedgeEdit::GFX
         }
 
         // Setup the pointers in the process request
-        size_t offset = (sizeof(uint32_t) + sizeof(hl_DDSHeader) +
-            ((bDXT10Header) ? sizeof(hl_DDSHeaderDXT10) : 0));
+        std::size_t offset = (sizeof(std::uint32_t) + sizeof(hl::DDSHeader) +
+            ((bDXT10Header) ? sizeof(hl::DDSHeaderDXT10) : 0));
 
-        *bitData = (ddsData.Get() + offset);
+        *bitData = (ddsData.get() + offset);
         *bitSize = (fileSize - offset);
 
         return header;
@@ -286,7 +269,7 @@ namespace HedgeEdit::GFX
     //--------------------------------------------------------------------------------------
     // Return the BPP for a particular format
     //--------------------------------------------------------------------------------------
-    size_t BitsPerPixel(DXGI_FORMAT fmt)
+    std::size_t BitsPerPixel(DXGI_FORMAT fmt)
     {
         switch (fmt)
         {
@@ -435,17 +418,17 @@ namespace HedgeEdit::GFX
     //--------------------------------------------------------------------------------------
     // Get surface information for a particular format
     //--------------------------------------------------------------------------------------
-    void GetSurfaceInfo(size_t width, size_t height, DXGI_FORMAT fmt,
-        size_t* outNumBytes, size_t* outRowBytes, size_t* outNumRows)
+    void GetSurfaceInfo(std::size_t width, std::size_t height, DXGI_FORMAT fmt,
+        std::size_t* outNumBytes, std::size_t* outRowBytes, std::size_t* outNumRows)
     {
-        uint64_t numBytes;
-        uint64_t rowBytes;
-        uint64_t numRows;
+        std::uint64_t numBytes;
+        std::uint64_t rowBytes;
+        std::uint64_t numRows;
 
         bool bc = false;
         bool packed = false;
         bool planar = false;
-        size_t bpe = 0;
+        std::size_t bpe = 0;
 
         switch (fmt)
         {
@@ -509,18 +492,18 @@ namespace HedgeEdit::GFX
 
         if (bc)
         {
-            uint64_t numBlocksWide = 0;
+            std::uint64_t numBlocksWide = 0;
             if (width > 0)
             {
-                numBlocksWide = std::max<uint64_t>(1u,
-                    (static_cast<uint64_t>(width) + 3u) / 4u);
+                numBlocksWide = std::max<std::uint64_t>(1u,
+                    (static_cast<std::uint64_t>(width) + 3u) / 4u);
             }
 
-            uint64_t numBlocksHigh = 0;
+            std::uint64_t numBlocksHigh = 0;
             if (height > 0)
             {
-                numBlocksHigh = std::max<uint64_t>(1u,
-                    (static_cast<uint64_t>(height) + 3u) / 4u);
+                numBlocksHigh = std::max<std::uint64_t>(1u,
+                    (static_cast<std::uint64_t>(height) + 3u) / 4u);
             }
 
             rowBytes = numBlocksWide * bpe;
@@ -529,33 +512,33 @@ namespace HedgeEdit::GFX
         }
         else if (packed)
         {
-            rowBytes = ((static_cast<uint64_t>(width) + 1u) >> 1) * bpe;
-            numRows = static_cast<uint64_t>(height);
+            rowBytes = ((static_cast<std::uint64_t>(width) + 1u) >> 1) * bpe;
+            numRows = static_cast<std::uint64_t>(height);
             numBytes = rowBytes * height;
         }
         else if (fmt == DXGI_FORMAT_NV11)
         {
-            rowBytes = ((static_cast<uint64_t>(width) + 3u) >> 2) * 4u;
+            rowBytes = ((static_cast<std::uint64_t>(width) + 3u) >> 2) * 4u;
 
             // Direct3D makes this simplifying assumption, although it is larger than the 4:1:1 data
-            numRows = static_cast<uint64_t>(height) * 2u;
+            numRows = static_cast<std::uint64_t>(height) * 2u;
             numBytes = rowBytes * numRows;
         }
         else if (planar)
         {
-            rowBytes = ((static_cast<uint64_t>(width) + 1u) >> 1)* bpe;
-            numBytes = (rowBytes * static_cast<uint64_t>(height)) +
-                ((rowBytes * static_cast<uint64_t>(height) + 1u) >> 1);
+            rowBytes = ((static_cast<std::uint64_t>(width) + 1u) >> 1)* bpe;
+            numBytes = (rowBytes * static_cast<std::uint64_t>(height)) +
+                ((rowBytes * static_cast<std::uint64_t>(height) + 1u) >> 1);
 
-            numRows = height + ((static_cast<uint64_t>(height) + 1u) >> 1);
+            numRows = height + ((static_cast<std::uint64_t>(height) + 1u) >> 1);
         }
         else
         {
-            size_t bpp = BitsPerPixel(fmt);
+            std::size_t bpp = BitsPerPixel(fmt);
             if (!bpp) throw std::invalid_argument("The given format is unknown or unsupported.");
 
-            rowBytes = (static_cast<uint64_t>(width) * bpp + 7u) / 8u; // round up to nearest byte
-            numRows = static_cast<uint64_t>(height);
+            rowBytes = (static_cast<std::uint64_t>(width) * bpp + 7u) / 8u; // round up to nearest byte
+            numRows = static_cast<std::uint64_t>(height);
             numBytes = rowBytes * height;
         }
 
@@ -567,16 +550,16 @@ namespace HedgeEdit::GFX
 //        }
 //#endif
 
-        if (outNumBytes) *outNumBytes = static_cast<size_t>(numBytes);
-        if (outRowBytes) *outRowBytes = static_cast<size_t>(rowBytes);
-        if (outNumRows) *outNumRows = static_cast<size_t>(numRows);
+        if (outNumBytes) *outNumBytes = static_cast<std::size_t>(numBytes);
+        if (outRowBytes) *outRowBytes = static_cast<std::size_t>(rowBytes);
+        if (outNumRows) *outNumRows = static_cast<std::size_t>(numRows);
     }
 
 #define ISBITMASK(r, g, b, a) (ddpf.RBitMask == r && ddpf.GBitMask == g && ddpf.BBitMask == b && ddpf.ABitMask == a)
 
-    DXGI_FORMAT GetDXGIFormat(const hl_DDSPixelFormat& ddpf)
+    DXGI_FORMAT GetDXGIFormat(const hl::DDSPixelFormat& ddpf)
     {
-        if (ddpf.Flags & HL_DDS_PF_RGB)
+        if (ddpf.Flags & hl::DDS_PF_RGB)
         {
             // Note that sRGB formats are written using the "DX10" extended header
             switch (ddpf.RGBBitCount)
@@ -652,7 +635,7 @@ namespace HedgeEdit::GFX
                 break;
             }
         }
-        else if (ddpf.Flags & HL_DDS_PF_LUMINANCE)
+        else if (ddpf.Flags & hl::DDS_PF_LUMINANCE)
         {
             if (ddpf.RGBBitCount == 8)
             {
@@ -681,7 +664,7 @@ namespace HedgeEdit::GFX
                 }
             }
         }
-        else if (ddpf.Flags & HL_DDS_PF_ALPHA)
+        else if (ddpf.Flags & hl::DDS_PF_ALPHA)
         {
             if (ddpf.RGBBitCount == 8)
             {
@@ -712,44 +695,44 @@ namespace HedgeEdit::GFX
                 // No DXGI format maps to ISBITMASK(0x3ff00000, 0x000ffc00, 0x000003ff, 0xc0000000) aka D3DFMT_A2W10V10U10
             }
         }
-        else if (ddpf.Flags & HL_DDS_PF_FOURCC)
+        else if (ddpf.Flags & hl::DDS_PF_FOURCC)
         {
             switch (ddpf.FourCC)
             {
-            case HL_DDS_FOURCC_DXT1:
+            case hl::DDS_FOURCC_DXT1:
                 return DXGI_FORMAT_BC1_UNORM;
 
-            case HL_DDS_FOURCC_DXT2:
-            case HL_DDS_FOURCC_DXT3:
+            case hl::DDS_FOURCC_DXT2:
+            case hl::DDS_FOURCC_DXT3:
                 return DXGI_FORMAT_BC2_UNORM;
 
-            case HL_DDS_FOURCC_DXT4:
-            case HL_DDS_FOURCC_DXT5:
+            case hl::DDS_FOURCC_DXT4:
+            case hl::DDS_FOURCC_DXT5:
                 return DXGI_FORMAT_BC3_UNORM;
 
-            case HL_DDS_FOURCC_ATI1:
-            case HL_DDS_FOURCC_BC4U:
+            case hl::DDS_FOURCC_ATI1:
+            case hl::DDS_FOURCC_BC4U:
                 return DXGI_FORMAT_BC4_UNORM;
 
-            case HL_DDS_FOURCC_BC4S:
+            case hl::DDS_FOURCC_BC4S:
                 return DXGI_FORMAT_BC4_SNORM;
 
-            case HL_DDS_FOURCC_ATI2:
-            case HL_DDS_FOURCC_BC5U:
+            case hl::DDS_FOURCC_ATI2:
+            case hl::DDS_FOURCC_BC5U:
                 return DXGI_FORMAT_BC5_UNORM;
 
-            case HL_DDS_FOURCC_BC5S:
+            case hl::DDS_FOURCC_BC5S:
                 return DXGI_FORMAT_BC5_SNORM;
 
             // BC6H and BC7 are written using the "DX10" extended header
 
-            case HL_DDS_FOURCC_RGBG:
+            case hl::DDS_FOURCC_RGBG:
                 return DXGI_FORMAT_R8G8_B8G8_UNORM;
 
-            case HL_DDS_FOURCC_GRGB:
+            case hl::DDS_FOURCC_GRGB:
                 return DXGI_FORMAT_G8R8_G8B8_UNORM;
 
-            case HL_DDS_FOURCC_YUY2:
+            case hl::DDS_FOURCC_YUY2:
                 return DXGI_FORMAT_YUY2;
 
             case 36: // D3DFMT_A16B16G16R16
@@ -812,35 +795,33 @@ namespace HedgeEdit::GFX
     }
 
 #ifdef D3D11
-    void FillInitData(size_t width, size_t height, size_t depth, size_t mipCount,
-        size_t arraySize, DXGI_FORMAT format, size_t maxSize, size_t bitSize,
-        const uint8_t* bitData, size_t& twidth, size_t& theight, size_t& tdepth,
-        size_t& skipMip, D3D11_SUBRESOURCE_DATA* initData)
+    void FillInitData(std::size_t width, std::size_t height, std::size_t depth,
+        std::size_t mipCount, std::size_t arraySize, DXGI_FORMAT format,
+        std::size_t maxSize, std::size_t bitSize, const std::uint8_t* bitData,
+        std::size_t& twidth, std::size_t& theight, std::size_t& tdepth,
+        std::size_t& skipMip, D3D11_SUBRESOURCE_DATA* initData)
     {
-        if (!bitData || !initData)
-        {
-            std::invalid_argument(
-                "The FillInitData function was given invalid arguments.");
-        }
+        if (!bitData) throw std::invalid_argument("bitData was null");
+        if (!initData) throw std::invalid_argument("bitData was null");
 
         skipMip = 0;
         twidth = 0;
         theight = 0;
         tdepth = 0;
 
-        size_t NumBytes = 0;
-        size_t RowBytes = 0;
-        const uint8_t* pSrcBits = bitData;
-        const uint8_t* pEndBits = bitData + bitSize;
+        std::size_t NumBytes = 0;
+        std::size_t RowBytes = 0;
+        const std::uint8_t* pSrcBits = bitData;
+        const std::uint8_t* pEndBits = bitData + bitSize;
 
-        size_t index = 0;
-        for (size_t j = 0; j < arraySize; j++)
+        std::size_t index = 0;
+        for (std::size_t j = 0; j < arraySize; j++)
         {
-            size_t w = width;
-            size_t h = height;
-            size_t d = depth;
+            std::size_t w = width;
+            std::size_t h = height;
+            std::size_t d = depth;
 
-            for (size_t i = 0; i < mipCount; i++)
+            for (std::size_t i = 0; i < mipCount; i++)
             {
                 GetSurfaceInfo(w, h, format, &NumBytes, &RowBytes, nullptr);
                 if (NumBytes > UINT32_MAX || RowBytes > UINT32_MAX)
@@ -892,10 +873,11 @@ namespace HedgeEdit::GFX
     }
 
     winrt::com_ptr<ID3D11Resource> CreateD3DResources(const Instance& inst,
-        uint32_t resDim, size_t width, size_t height, size_t depth, size_t mipCount,
-        size_t arraySize, DXGI_FORMAT format, D3D11_USAGE usage, unsigned int bindFlags,
-        unsigned int cpuAccessFlags, unsigned int miscFlags, bool forceSRGB, bool isCubeMap,
-        D3D11_SUBRESOURCE_DATA* initData, ID3D11ShaderResourceView** texView)
+        std::uint32_t resDim, std::size_t width, std::size_t height, std::size_t depth,
+        std::size_t mipCount, std::size_t arraySize, DXGI_FORMAT format, D3D11_USAGE usage,
+        unsigned int bindFlags, unsigned int cpuAccessFlags, unsigned int miscFlags,
+        bool forceSRGB, bool isCubeMap, D3D11_SUBRESOURCE_DATA* initData,
+        ID3D11ShaderResourceView** texView)
     {
         HRESULT hr;
         winrt::com_ptr<ID3D11Resource> texture;
@@ -1064,26 +1046,26 @@ namespace HedgeEdit::GFX
 #endif
 
     INTexData CreateTextureFromDDS(const Instance& inst,
-        const hl_DDSHeader* header, const uint8_t* bitData,
-        size_t bitSize, size_t maxSize = 0, bool forceSRGB = false)
+        const hl::DDSHeader* header, const std::uint8_t* bitData,
+        std::size_t bitSize, std::size_t maxSize = 0, bool forceSRGB = false)
     {
         UINT width = header->Width;
         UINT height = header->Height;
         UINT depth = header->Depth;
 
-        uint32_t resDim;
+        std::uint32_t resDim;
         UINT arraySize = 1;
         DXGI_FORMAT format;
         bool isCubeMap = false;
 
-        size_t mipCount = header->MipMapCount;
+        std::size_t mipCount = header->MipMapCount;
         if (!mipCount) mipCount = 1;
 
-        if ((header->PixelFormat.Flags & HL_DDS_PF_FOURCC) &&
-            header->PixelFormat.FourCC == HL_DDS_FOURCC_DX10)
+        if ((header->PixelFormat.Flags & hl::DDS_PF_FOURCC) &&
+            header->PixelFormat.FourCC == hl::DDS_FOURCC_DX10)
         {
-            const hl_DDSHeaderDXT10* d3d10ext = reinterpret_cast<const hl_DDSHeaderDXT10*>(
-                reinterpret_cast<const uint8_t*>(header) + sizeof(hl_DDSHeader));
+            const hl::DDSHeaderDXT10* d3d10ext = reinterpret_cast<const hl::DDSHeaderDXT10*>(
+                reinterpret_cast<const std::uint8_t*>(header) + sizeof(hl::DDSHeader));
 
             arraySize = d3d10ext->ArraySize;
             if (!arraySize)
@@ -1112,7 +1094,7 @@ namespace HedgeEdit::GFX
             {
             case D3D11_RESOURCE_DIMENSION_TEXTURE1D:
                 // D3DX writes 1D textures with a fixed Height of 1
-                if ((header->Flags & HL_DDS_HEIGHT) && height != 1)
+                if ((header->Flags & hl::DDS_HEIGHT) && height != 1)
                 {
                     throw std::runtime_error(
                         "The DDS file contains a 1D texture yet has a 2D resolution.");
@@ -1130,7 +1112,7 @@ namespace HedgeEdit::GFX
                 break;
 
             case D3D11_RESOURCE_DIMENSION_TEXTURE3D:
-                if (!(header->Flags & HL_DDS_DEPTH))
+                if (!(header->Flags & hl::DDS_DEPTH))
                 {
                     throw std::runtime_error(
                         "The DDS file contains a 3D texture yet has no volume.");
@@ -1158,13 +1140,13 @@ namespace HedgeEdit::GFX
                     "The DDS file contains data in an unknown or unsupported format.");
             }
 
-            if (header->Flags & HL_DDS_DEPTH)
+            if (header->Flags & hl::DDS_DEPTH)
             {
                 resDim = D3D11_RESOURCE_DIMENSION_TEXTURE3D;
             }
             else
             {
-                if (header->Caps2 & HL_DDS_CAPS2_CUBEMAP)
+                if (header->Caps2 & hl::DDS_CAPS2_CUBEMAP)
                 {
                     // We require all six faces to be defined
                     if ((header->Caps2 & DDS_CUBEMAP_ALLFACES) != DDS_CUBEMAP_ALLFACES)
@@ -1322,8 +1304,8 @@ namespace HedgeEdit::GFX
 
             if (arraySize > 1)
             {
-                const uint8_t* pSrcBits = bitData;
-                const uint8_t* pEndBits = bitData + bitSize;
+                const std::uint8_t* pSrcBits = bitData;
+                const std::uint8_t* pEndBits = bitData + bitSize;
                 for (UINT item = 0; item < arraySize; ++item)
                 {
                     if ((pSrcBits + numBytes) > pEndBits)
@@ -1354,10 +1336,10 @@ namespace HedgeEdit::GFX
             std::unique_ptr<D3D11_SUBRESOURCE_DATA[]> initData =
                 std::make_unique<D3D11_SUBRESOURCE_DATA[]>(mipCount * arraySize);
 
-            size_t skipMip = 0;
-            size_t twidth = 0;
-            size_t theight = 0;
-            size_t tdepth = 0;
+            std::size_t skipMip = 0;
+            std::size_t twidth = 0;
+            std::size_t theight = 0;
+            std::size_t tdepth = 0;
 
 #ifdef D3D11
             FillInitData(width, height, depth, mipCount, arraySize,
@@ -1421,30 +1403,30 @@ namespace HedgeEdit::GFX
         return texView;
     }
 
-    HL_DDS_MISC2_FLAGS GetAlphaMode(const hl_DDSHeader* header)
+    hl::DDS_MISC2_FLAGS GetAlphaMode(const hl::DDSHeader* header)
     {
-        if (header->PixelFormat.Flags & HL_DDS_PF_FOURCC)
+        if (header->PixelFormat.Flags & hl::DDS_PF_FOURCC)
         {
-            if (header->PixelFormat.FourCC == HL_DDS_FOURCC_DX10)
+            if (header->PixelFormat.FourCC == hl::DDS_FOURCC_DX10)
             {
-                const hl_DDSHeaderDXT10* d3d10ext = reinterpret_cast<const hl_DDSHeaderDXT10*>(
-                    reinterpret_cast<const uint8_t*>(header) + sizeof(hl_DDSHeader));
+                const hl::DDSHeaderDXT10* d3d10ext = reinterpret_cast<const hl::DDSHeaderDXT10*>(
+                    reinterpret_cast<const std::uint8_t*>(header) + sizeof(hl::DDSHeader));
 
-                return static_cast<HL_DDS_MISC2_FLAGS>(d3d10ext->MiscFlags2 & 7);
+                return static_cast<hl::DDS_MISC2_FLAGS>(d3d10ext->MiscFlags2 & 7);
             }
-            else if (header->PixelFormat.FourCC == HL_DDS_FOURCC_DXT2 ||
-                header->PixelFormat.FourCC == HL_DDS_FOURCC_DXT4)
+            else if (header->PixelFormat.FourCC == hl::DDS_FOURCC_DXT2 ||
+                header->PixelFormat.FourCC == hl::DDS_FOURCC_DXT4)
             {
-                return HL_DDS_MISC2_ALPHA_MODE_PREMULTIPLIED;
+                return hl::DDS_MISC2_ALPHA_MODE_PREMULTIPLIED;
             }
         }
 
-        return HL_DDS_MISC2_ALPHA_MODE_UNKNOWN;
+        return hl::DDS_MISC2_ALPHA_MODE_UNKNOWN;
     }
 
     INTexData CreateDDSTextureFromMemory(const Instance& inst,
-        const uint8_t* ddsData, size_t ddsDataSize, size_t maxSize = 0,
-        bool forceSRGB = false, HL_DDS_MISC2_FLAGS* alphaMode = nullptr)
+        const std::uint8_t* ddsData, std::size_t ddsDataSize, std::size_t maxSize = 0,
+        bool forceSRGB = false, hl::DDS_MISC2_FLAGS* alphaMode = nullptr)
     {
         if (!ddsData)
         {
@@ -1453,10 +1435,10 @@ namespace HedgeEdit::GFX
         }
 
         // Validate DDS file in memory
-        const uint8_t* bitData;
-        size_t bitSize;
+        const std::uint8_t* bitData;
+        std::size_t bitSize;
 
-        const hl_DDSHeader* header = LoadTextureDataFromMemory(
+        const hl::DDSHeader* header = LoadTextureDataFromMemory(
             ddsData, ddsDataSize, &bitData, &bitSize);
 
         INTexData texView = CreateTextureFromDDS(inst,
@@ -1471,20 +1453,16 @@ namespace HedgeEdit::GFX
     }
 
     INTexData CreateDDSTextureFromFile(const Instance& inst,
-        const hl_NativeChar* filePath, size_t maxSize = 0,
-        bool forceSRGB = false, HL_DDS_MISC2_FLAGS* alphaMode = nullptr)
+        const hl::nchar* filePath, std::size_t maxSize = 0,
+        bool forceSRGB = false, hl::DDS_MISC2_FLAGS* alphaMode = nullptr)
     {
-        if (!filePath)
-        {
-            throw std::invalid_argument(
-                "The CreateDDSTextureFromFileEx function was given invalid arguments.");
-        }
+        if (!filePath) throw std::invalid_argument("filePath was null.");
 
-        hl_CPtr<uint8_t> ddsData;
-        const uint8_t* bitData;
-        size_t bitSize;
+        std::unique_ptr<std::uint8_t[]> ddsData;
+        const std::uint8_t* bitData;
+        std::size_t bitSize;
         
-        const hl_DDSHeader* header = LoadTextureDataFromFile(filePath,
+        const hl::DDSHeader* header = LoadTextureDataFromFile(filePath,
             ddsData, &bitData, &bitSize);
 
         INTexData texView = CreateTextureFromDDS(inst,
@@ -1498,33 +1476,30 @@ namespace HedgeEdit::GFX
         return texView;
     }
 
-    Texture::Texture(const Instance& inst, const hl_DDSTexture* dds, size_t ddsSize)
+    Texture::Texture(const Instance& inst, const hl::DDSTexture& dds, std::size_t ddsSize)
     {
         view = CreateDDSTextureFromMemory(inst,
-            reinterpret_cast<const uint8_t*>(dds), ddsSize);
+            reinterpret_cast<const std::uint8_t*>(&dds), ddsSize);
     }
 
     Texture* LoadDDSTexture(const Instance& inst, const char* filePath)
     {
 #ifdef _WIN32
-        hl_NativeChar* nativePathPtr;
-        HL_RESULT result = hl_StringConvertUTF8ToNative(filePath, &nativePathPtr);
-
-        if (HL_FAILED(result))
-            throw std::runtime_error("Failed to convert filePath to UTF-16.");
-
-        hl_NStrPtr nativePath = nativePathPtr;
-        return LoadDDSTextureNative(inst, nativePath);
+        std::unique_ptr<hl::nchar[]> nativePth = hl::StringConvertUTF8ToNativePtr(filePath);
+        return LoadDDSTexture(inst, nativePth.get());
 #else
-        return LoadDDSTextureNative(inst, filePath);
+        INTexData tex = CreateDDSTextureFromFile(inst, filePath);
+        return new Texture(tex);
 #endif
     }
 
-    Texture* LoadDDSTextureNative(const Instance& inst, const hl_NativeChar* filePath)
+#ifdef _WIN32
+    Texture* LoadDDSTexture(const Instance& inst, const hl::nchar* filePath)
     {
         INTexData tex = CreateDDSTextureFromFile(inst, filePath);
         return new Texture(tex);
     }
+#endif
 
     void Texture::Bind(const Instance& inst, unsigned int slot) const
     {

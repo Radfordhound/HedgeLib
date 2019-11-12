@@ -124,7 +124,7 @@ namespace HedgeEdit::GFX
         }
     }
 
-    std::size_t Instance::HashVertexElement(const hl_HHVertexElement& e)
+    std::size_t Instance::HashVertexElement(const hl::HHVertexElement& e)
     {
         // Slight modification of The Bernstein Hash based on this SO answer:
         // https://stackoverflow.com/a/34006336
@@ -141,14 +141,14 @@ namespace HedgeEdit::GFX
         return hash;
     }
 
-    std::size_t Instance::HashVertexFormat(const hl_HHVertexElement* f)
+    std::size_t Instance::HashVertexFormat(const hl::HHVertexElement* f)
     {
         // Slight modification of The Bernstein Hash based on this SO answer:
         // https://stackoverflow.com/a/34006336
         const std::size_t seed = 1009, factor = 9176;
         std::size_t hash = seed;
 
-        while (f->Format != HL_HHVERTEX_FORMAT_LAST_ENTRY)
+        while (f->Format != hl::HHVERTEX_FORMAT_LAST_ENTRY)
         {
             hash = (hash * factor) + HashVertexElement(*f);
             ++f;
@@ -323,19 +323,19 @@ namespace HedgeEdit::GFX
         return static_cast<std::uint16_t>(index);
     }
 
-    std::uint16_t Instance::AddModel(const hl_HHTerrainModel& model)
+    std::uint16_t Instance::AddModel(const hl::HHTerrainModel& model)
     {
         return AddModel(model.Name.Get(), new Model(*this, model));
     }
 
     std::uint16_t Instance::AddModel(const std::string& name,
-        const hl_HHTerrainModel& model)
+        const hl::HHTerrainModel& model)
     {
         return AddModel(name, new Model(*this, model));
     }
 
     std::uint16_t Instance::AddModel(const std::string& name,
-        const hl_HHSkeletalModel& model)
+        const hl::HHSkeletalModel& model)
     {
         return AddModel(name, new Model(*this, model));
     }
@@ -357,8 +357,8 @@ namespace HedgeEdit::GFX
 
     std::size_t Instance::LoadHHModel(const char* filePath)
     {
-        const char* ext = hl_PathGetExtPtr(filePath);
-        if (!strcmp(ext, ".terrain-model"))
+        const char* ext = hl::PathGetExtPtr(filePath);
+        if (!std::strcmp(ext, ".terrain-model"))
         {
             return LoadHHTerrainModel(filePath);
         }

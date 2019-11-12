@@ -1,323 +1,242 @@
 #pragma once
-#include "Offsets.h"
-
-#ifdef __cplusplus
-#include "Helpers.h"
+#include <cstdint>
 #include <utility>
-
-extern "C" {
-#else
-#include <stdbool.h>
-#endif
+#include <limits>
+#include <type_traits>
 
 #ifdef _WIN32
 #include <intrin.h>
 #endif
 
-inline void hl_SwapUInt16(uint16_t* v)
-{
-#ifdef _WIN32
-    * v = _byteswap_ushort(*v);
-#elif __GNUC__
-    * v = __builtin_bswap16(*v);
-#else
-    * v = (uint16_t)(((*v & 0xFF) << 8) |
-        ((*v & 0xFF00) >> 8));
+// non-clang compilers die if you don't do this
+#ifndef __has_builtin
+#define __has_builtin(x) 0
 #endif
-}
 
-inline void hl_SwapInt16(int16_t* v)
+namespace hl
 {
-    hl_SwapUInt16((uint16_t*)v);
-}
-
-inline void hl_SwapUInt32(uint32_t* v)
-{
+    inline void Swap(std::uint16_t& v)
+    {
 #ifdef _WIN32
-    * v = _byteswap_ulong(*v);
-#elif __GNUC__
-    * v = __builtin_bswap32(*v);
+        // Use MSVC intrinsic
+        v = _byteswap_ushort(v);
+#elif (defined(__clang__) && __has_builtin(__builtin_bswap16)) || \
+(defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)))
+        // Use Clang/GCC 4.8+ intrinsic
+        v = __builtin_bswap16(v);
 #else
-    * v = (uint32_t)(((*v & 0xFF) << 24) |
-        ((*v & 0xFF00) << 8) | ((*v & 0xFF0000) >> 8) |
-        ((*v & 0xFF000000) >> 24));
+        // Endian-swap by hand. Most compilers should hopefully
+        // be smart enough to turn this into an intrinsic anyway.
+        v = static_cast<std::uint16_t>(
+            ((v & 0xFF) << 8) | ((v & 0xFF00) >> 8));
 #endif
-}
+    }
 
-inline void hl_SwapInt32(int32_t* v)
-{
-    hl_SwapUInt32((uint32_t*)v);
-}
+    inline void Swap(std::int16_t& v)
+    {
+        // Swap signed value as though it's unsigned
+        Swap(reinterpret_cast<std::uint16_t&>(v));
+    }
 
-inline void hl_SwapFloat(float* v)
-{
-    hl_SwapUInt32((uint32_t*)v);
-}
-
-HL_STATIC_ASSERT_SIZE(float, 4);
-
-inline void hl_SwapUInt64(uint64_t* v)
-{
+    inline void Swap(std::uint32_t& v)
+    {
 #ifdef _WIN32
-    * v = _byteswap_uint64(*v);
-#elif __GNUC__
-    * v = __builtin_bswap64(*v);
+        // Use MSVC intrinsic
+        v = _byteswap_ulong(v);
+#elif (defined(__clang__) && __has_builtin(__builtin_bswap32)) || \
+(defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)))
+        // Use Clang/GCC 4.3+ intrinsic
+        v = __builtin_bswap32(v);
 #else
-    * v = (*v & 0x00000000FFFFFFFF) << 32 |
-        (*v & 0xFFFFFFFF00000000) >> 32;
-    *v = (*v & 0x0000FFFF0000FFFF) << 16 |
-        (*v & 0xFFFF0000FFFF0000) >> 16;
-    *v = (*v & 0x00FF00FF00FF00FF) << 8 |
-        (*v & 0xFF00FF00FF00FF00) >> 8;
+        // Endian-swap by hand. Most compilers should hopefully
+        // be smart enough to turn this into an intrinsic anyway.
+        v = static_cast<std::uint32_t>(((v & 0xFF) << 24) |
+            ((v & 0xFF00) << 8) | ((v & 0xFF0000) >> 8) |
+            ((v & 0xFF000000) >> 24));
 #endif
-}
+    }
 
-inline void hl_SwapInt64(int64_t* v)
-{
-    hl_SwapUInt64((uint64_t*)v);
-}
+    inline void Swap(std::int32_t& v)
+    {
+        // Swap signed value as though it's unsigned
+        Swap(reinterpret_cast<std::uint32_t&>(v));
+    }
 
-inline void hl_SwapDouble(double* v)
-{
-    hl_SwapUInt64((uint64_t*)v);
-}
+    static_assert(std::numeric_limits<float>::is_iec559,
+        "Floats must follow the IEEE_754 standard for HedgeLib to properly compile.");
 
-HL_STATIC_ASSERT_SIZE(double, 8);
+    static_assert(std::numeric_limits<float>::digits == 24,
+        "Floats must be 32-bit values for HedgeLib to properly compile.");
 
-#define HL_ENDIAN_SWAP_NAME(type) type##_EndianSwap
-#define HL_ENDIAN_SWAP_RECURSIVE_NAME(type) type##_EndianSwapRecursive
+    inline void Swap(float& v)
+    {
+        // Swap float as though it's an unsigned 32-bit integer
+        Swap(reinterpret_cast<std::uint32_t&>(v));
+    }
 
-#define HL_ENDIAN_SWAP(type, v) HL_ENDIAN_SWAP_NAME(type)(v)
-#define HL_ENDIAN_SWAP_RECURSIVE(type, v, be) HL_ENDIAN_SWAP_RECURSIVE_NAME(type)(v, be)
+    inline void Swap(std::uint64_t& v)
+    {
+#ifdef _WIN32
+        // Use MSVC intrinsic
+        v = _byteswap_uint64(v);
+#elif (defined(__clang__) && __has_builtin(__builtin_bswap64)) || \
+(defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)))
+        // Use Clang/GCC 4.3+ intrinsic
+        v = __builtin_bswap64(v);
+#else
+        // Endian-swap by hand. Most compilers should hopefully
+        // be smart enough to turn this into an intrinsic anyway.
+        v = ((v & 0x00000000FFFFFFFF) << 32 |
+            (v & 0xFFFFFFFF00000000) >> 32);
+        v = ((v & 0x0000FFFF0000FFFF) << 16 |
+            (v & 0xFFFF0000FFFF0000) >> 16);
+        v = ((v & 0x00FF00FF00FF00FF) << 8 |
+            (v & 0xFF00FF00FF00FF00) >> 8);
+#endif
+    }
 
-#define HL_DECL_ENDIAN_SWAP(type) \
-    HL_API void HL_ENDIAN_SWAP_NAME(type)(type* v)
+    inline void Swap(std::int64_t& v)
+    {
+        // Swap signed value as though it's unsigned
+        Swap(reinterpret_cast<std::uint64_t&>(v));
+    }
 
-#define HL_DECL_ENDIAN_SWAP_RECURSIVE(type) \
-    HL_API void HL_ENDIAN_SWAP_RECURSIVE_NAME(type)(type* v, bool be);
+    static_assert(std::numeric_limits<double>::is_iec559,
+        "Doubles must follow the IEEE_754 standard for HedgeLib to properly compile.");
 
-#define HL_IMPL_ENDIAN_SWAP(type) \
-    void HL_ENDIAN_SWAP_NAME(type)(type* v)
+    static_assert(std::numeric_limits<double>::digits == 53,
+        "Doubles must be 64-bit values for HedgeLib to properly compile.");
 
-#define HL_IMPL_ENDIAN_SWAP_RECURSIVE(type) \
-    void HL_ENDIAN_SWAP_RECURSIVE_NAME(type)(type* v, bool be)
+    inline void Swap(double& v)
+    {
+        // Swap double as though it's an unsigned 64-bit integer
+        Swap(reinterpret_cast<std::uint64_t&>(v));
+    }
 
-#define HL_INLN_ENDIAN_SWAP(type) \
-    inline HL_IMPL_ENDIAN_SWAP(type)
+    namespace internal
+    {
+        // Adapted from "Possible implementation" section of this page:
+        // https://en.cppreference.com/w/cpp/experimental/nonesuch
 
-#define HL_INLN_ENDIAN_SWAP_RECURSIVE(type) \
-    inline HL_IMPL_ENDIAN_SWAP_RECURSIVE(type)
+        // TODO: Once std::nonesuch is added to the C++ standard, add an ifdef that
+        // checks if it's present, and if so, aliases it instead of using this.
+        struct nonesuch
+        {
+            ~nonesuch() = delete;
+            nonesuch(nonesuch const&) = delete;
+            void operator=(nonesuch const&) = delete;
+        };
 
-#define HL_ENDIAN_SWAP_ARR32(type, v, be, swapCall) {\
-    if (be) hl_SwapUint32(&(v.Count));\
-\
-    type* ptr = HL_GETPTR32(type, v.Offset);\
-    for (uint32_t i = 0; i < v.Count; ++i)\
-    {\
-        swapCall;\
-    }\
-\
-    if (!be) hl_SwapUint32(&(v.Count));\
-}
+        // Adapted from "Possible implementation" section of this page:
+        // https://en.cppreference.com/w/cpp/experimental/is_detected
 
-#define HL_ENDIAN_SWAP_ARR64(type, v, be, swapCall) {\
-    if (be) hl_SwapUint64(&(v.Count));\
-\
-    type* ptr = HL_GETPTR64(type, v.Offset);\
-    for (uint64_t i = 0; i < v.Count; ++i)\
-    {\
-        swapCall;\
-    }\
-\
-    if (!be) hl_SwapUint64(&(v.Count));\
-}
+        // TODO: Once std::is_detected is added to the C++ standard, add an ifdef that
+        // checks if it's present, and if so, aliases it instead of using this.
 
-#define HL_ENDIAN_SWAP_ARR32_RECURSIVE(type, v, be) HL_ENDIAN_SWAP_ARR32(\
-    type, v, be, HL_ENDIAN_SWAP_RECURSIVE(type, v, be))
+        template <class Default, class AlwaysVoid,
+            template<class...> class Op, class... Args>
+        struct Detector
+        {
+            using value_t = std::false_type;
+            using type = Default;
+        };
 
-#define HL_ENDIAN_SWAP_ARR64_RECURSIVE(type, v, be) HL_ENDIAN_SWAP_ARR64(\
-    type, v, be, HL_ENDIAN_SWAP_RECURSIVE(type, v, be))
+        template <class... _Types>
+        using void_t =
+#ifdef __cpp_lib_void_t
+        std::void_t<_Types...>;
+#else
+        void;
+#endif
 
-// C++ Specific
-#ifdef __cplusplus
-}
+        template <class Default, template<class...> class Op, class... Args>
+        struct Detector<Default, void_t<Op<Args...>>, Op, Args...>
+        {
+            using value_t = std::true_type;
+            using type = Op<Args...>;
+        };
 
-#define HL_DECL_ENDIAN_SWAP_CPP() HL_API void EndianSwap()
+        template <template<class...> class Op, class... Args>
+        using is_detected = typename Detector<nonesuch, void, Op, Args...>::value_t;
 
-#define HL_DECL_ENDIAN_SWAP_RECURSIVE_CPP() \
-    HL_API void EndianSwapRecursive(bool isBigEndian)
+        template<template<class...> class Op, class... Args>
+        constexpr bool is_detected_v = is_detected<Op, Args...>::value;
 
-#define HL_INLN_ENDIAN_SWAP_CPP() inline void EndianSwap()
+        template<typename T>
+        using EndianSwap_t = decltype(std::declval<T&>().EndianSwap());
 
-#define HL_INLN_ENDIAN_SWAP_RECURSIVE_CPP() \
-    inline void EndianSwapRecursive(bool isBigEndian)
+        template<typename T>
+        constexpr bool HasEndianSwapFunction = is_detected_v<EndianSwap_t, T>;
 
-#define HL_IMPL_ENDIAN_SWAP_CPP(type) \
-    void type::EndianSwap() { HL_ENDIAN_SWAP(type, this); }
+        template<typename T>
+        using EndianSwapRecursive_t = decltype(std::declval
+            <T&>().EndianSwapRecursive(true));
 
-#define HL_IMPL_ENDIAN_SWAP_RECURSIVE_CPP(type) \
-    void type::EndianSwapRecursive(bool isBigEndian) { \
-        HL_ENDIAN_SWAP_RECURSIVE(type, this, isBigEndian); }
+        template<typename T>
+        constexpr bool HasEndianSwapRecursiveFunction =
+            is_detected_v<EndianSwapRecursive_t, T>;
+    }
 
-template<typename T>
-using hl_IEndianSwap_t = decltype(std::declval<T&>().EndianSwap());
+#ifndef __cpp_if_constexpr // TODO: Change this back to ifdef once done testing
+    template<typename T>
+    inline void Swap(T& value)
+    {
+        if constexpr (internal::HasEndianSwapFunction<T>)
+        {
+            value.EndianSwap();
+        }
+    }
 
-template<typename T>
-constexpr bool hl_IHasEndianSwapFunction = hl_IIsDetected_v<hl_IEndianSwap_t, T>;
-
-template<typename T>
-using hl_IEndianSwapRecursive_t = decltype(std::declval
-    <T&>().EndianSwapRecursive(true));
-
-template<typename T>
-constexpr bool hl_IHasEndianSwapRecursiveFunction =
-    hl_IIsDetected_v<hl_IEndianSwapRecursive_t, T>;
-
-template<typename T>
-inline void hl_Swap(T& value)
-{
-    if constexpr (hl_IHasEndianSwapFunction<T>)
+    template<typename T>
+    inline void SwapRecursive(bool isBigEndian, T& value)
+    {
+        if constexpr (internal::HasEndianSwapRecursiveFunction<T>)
+        {
+            value.EndianSwapRecursive(isBigEndian);
+        }
+        else
+        {
+            Swap(value);
+        }
+    }
+#else
+    template<typename T>
+    inline typename std::enable_if<internal::HasEndianSwapFunction<T>, void>::type
+        Swap(T& value)
     {
         value.EndianSwap();
     }
-}
 
-inline void hl_Swap(uint16_t& value)
-{
-    hl_SwapUInt16(&value);
-}
+    template<typename T>
+    inline typename std::enable_if<!internal::HasEndianSwapFunction<T>, void>::type
+        Swap(T& value) {}
 
-inline void hl_Swap(int16_t& value)
-{
-    hl_SwapInt16(&value);
-}
-
-inline void hl_Swap(uint32_t& value)
-{
-    hl_SwapUInt32(&value);
-}
-
-inline void hl_Swap(int32_t& value)
-{
-    hl_SwapInt32(&value);
-}
-
-inline void hl_Swap(float& value)
-{
-    hl_SwapFloat(&value);
-}
-
-inline void hl_Swap(uint64_t& value)
-{
-    hl_SwapUInt64(&value);
-}
-
-inline void hl_Swap(int64_t& value)
-{
-    hl_SwapInt64(&value);
-}
-
-inline void hl_Swap(double& value)
-{
-    hl_SwapDouble(&value);
-}
-
-inline void hl_Swap(hl_ArrOff32& value)
-{
-    hl_SwapUInt32(&value.Count);
-}
-
-inline void hl_Swap(hl_ArrOff64& value)
-{
-    hl_SwapUInt64(&value.Count);
-}
-
-template<typename T>
-inline void hl_Swap(hl_ArrayOffset32<T>& value)
-{
-    hl_Swap(value.GetArray());
-}
-
-template<typename T>
-inline void hl_Swap(hl_ArrayOffset64<T>& value)
-{
-    hl_Swap(value.GetArray());
-}
-
-template<typename T, typename... Args>
-inline void hl_Swap(T& value, Args& ... args)
-{
-    hl_Swap(value);
-    hl_Swap(args...);
-}
-
-template<typename T>
-inline void hl_SwapRecursive(bool isBigEndian, T& value)
-{
-    if constexpr (hl_IHasEndianSwapRecursiveFunction<T>)
+    template<typename T>
+    inline typename std::enable_if<internal::HasEndianSwapRecursiveFunction<T>, void>::type
+        SwapRecursive(bool isBigEndian, T& value)
     {
         value.EndianSwapRecursive(isBigEndian);
     }
-    else
+
+    template<typename T>
+    inline typename std::enable_if<!internal::HasEndianSwapRecursiveFunction<T>, void>::type
+        SwapRecursive(bool isBigEndian, T& value)
     {
-        hl_Swap(value);
+        Swap(value);
     }
-}
-
-template<typename T, typename... Args>
-inline void hl_SwapRecursive(bool isBigEndian, T& value, Args& ... args)
-{
-    hl_SwapRecursive(isBigEndian, value);
-    hl_SwapRecursive(isBigEndian, args...);
-}
-
-template<typename T>
-inline void hl_SwapArray(T* ptr, size_t count, bool isBigEndian)
-{
-    for (size_t i = 0; i < count; ++i)
-    {
-        hl_SwapRecursive(isBigEndian, ptr[i]);
-    }
-}
-
-template<typename T>
-inline void hl_SwapRecursive(bool isBigEndian, hl_ArrOff32& value)
-{
-    if (isBigEndian) hl_SwapUInt32(&value.Count);
-
-    hl_SwapArray<T>(HL_GETPTR32(T, value.Offset),
-        static_cast<size_t>(value.Count), isBigEndian);
-
-    if (!isBigEndian) hl_SwapUInt32(&value.Count);
-}
-
-template<typename T>
-inline void hl_SwapRecursive(bool isBigEndian, hl_ArrOff64& value)
-{
-    if (isBigEndian) hl_SwapUInt64(&value.Count);
-
-    hl_SwapArray<T>(HL_GETPTR64(T, value.Offset),
-        static_cast<size_t>(value.Count), isBigEndian);
-
-    if (!isBigEndian) hl_SwapUInt64(&value.Count);
-}
-
-template<typename T>
-inline void hl_SwapRecursive(bool isBigEndian, hl_ArrayOffset32<T>& value)
-{
-    hl_SwapRecursive<T>(isBigEndian, value.GetArray());
-}
-
-template<typename T>
-inline void hl_SwapRecursive(bool isBigEndian, hl_ArrayOffset64<T>& value)
-{
-    hl_SwapRecursive<T>(isBigEndian, value.GetArray());
-}
-#else
-#define HL_DECL_ENDIAN_SWAP_CPP()
-#define HL_DECL_ENDIAN_SWAP_RECURSIVE_CPP()
-#define HL_INLN_ENDIAN_SWAP_CPP()
-#define HL_INLN_ENDIAN_SWAP_RECURSIVE_CPP()
-#define HL_IMPL_ENDIAN_SWAP_CPP(type)
-#define HL_IMPL_ENDIAN_SWAP_RECURSIVE_CPP(type)
 #endif
+
+    template<typename T, typename... Args>
+    inline void Swap(T& value, Args& ... args)
+    {
+        Swap(value);
+        Swap(args...);
+    }
+
+    template<typename T, typename... Args>
+    inline void SwapRecursive(bool isBigEndian, T& value, Args& ... args)
+    {
+        SwapRecursive(isBigEndian, value);
+        SwapRecursive(isBigEndian, args...);
+    }
+}

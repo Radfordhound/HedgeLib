@@ -3,9 +3,12 @@
 #include <cstddef>
 #include <cstdint>
 
-struct hl_HHMesh;
-struct hl_HHTerrainModel;
-struct hl_HHSkeletalModel;
+namespace hl
+{
+    struct HHMesh;
+    struct HHTerrainModel;
+    struct HHSkeletalModel;
+}
 
 namespace HedgeEdit::GFX
 {
@@ -18,8 +21,8 @@ namespace HedgeEdit::GFX
         std::size_t geometryCount;
 
     public:
-        Model(Instance& inst, const hl_HHTerrainModel& model);
-        Model(Instance& inst, const hl_HHSkeletalModel& model);
+        Model(Instance& inst, const hl::HHTerrainModel& model);
+        Model(Instance& inst, const hl::HHSkeletalModel& model);
 
         void Draw(const Instance& inst) const;
     };

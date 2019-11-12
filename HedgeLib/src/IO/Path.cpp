@@ -2,6 +2,8 @@
 #include "../INString.h"
 #include "HedgeLib/IO/Path.h"
 #include <algorithm>
+#include <stdexcept>
+#include <system_error>
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -13,1024 +15,947 @@
 #include <dirent.h>
 #endif
 
-template<typename char_t>
-const char_t* hl_INPathGetNamePtr(const char_t* path)
+namespace hl
 {
-    // Find file/directory name
-    const char_t* curChar = path;
-    while (*curChar)
+    template<typename char_t>
+    const char_t* INPathGetNamePtr(const char_t* path)
     {
-        if (
-#ifdef _WIN32
-            // Paths on POSIX systems allow backslashes in file names
-            *curChar == static_cast<char_t>('\\') ||
-#endif
-            *curChar == static_cast<char_t>('/'))
+        // Find file/directory name
+        const char_t* curChar = path;
+        while (*curChar)
         {
-            path = ++curChar;
-            continue;
-        }
-
-        ++curChar;
-    }
-
-    return path;
-}
-
-template const char* hl_INPathGetNamePtr<char>(const char* path);
+            if (
 #ifdef _WIN32
-template const hl_NativeChar* hl_INPathGetNamePtr<hl_NativeChar>(
-    const hl_NativeChar* path);
+                // Paths on POSIX systems allow backslashes in file names
+                *curChar == static_cast<char_t>('\\') ||
 #endif
-
-const char* hl_PathGetNamePtr(const char* path)
-{
-    if (!path) return hl_EmptyString;
-    return hl_INPathGetNamePtr(path);
-}
-
-const hl_NativeChar* hl_PathGetNamePtrNative(const hl_NativeChar* path)
-{
-    if (!path) return hl_EmptyStringNative;
-    return hl_INPathGetNamePtr(path);
-}
-
-template<typename char_t, bool multiExt>
-const char_t* hl_INPathGetExtPtrName(const char_t* fileName)
-{
-    if (!*fileName) return fileName;
-
-    // Ignore first . in files that begin with . and
-    // return an empty string for paths that end with ..
-    const char_t* curChar = fileName;
-    if (*(curChar++) == static_cast<char_t>('.') &&
-        *curChar == static_cast<char_t>('.'))
-    {
-        fileName = curChar++;
-        if (!*curChar) return curChar;
-    }
-
-    // Find extension
-    bool foundExt = false;
-    while (*curChar)
-    {
-        if (*curChar == static_cast<char_t>('.'))
-        {
-            if constexpr (multiExt)
+                *curChar == static_cast<char_t>('/'))
             {
-                return curChar;
-            }
-            else
-            {
-                fileName = curChar;
-                foundExt = true;
-            }
-        }
-
-        ++curChar;
-    }
-
-    return (foundExt) ? fileName : curChar;
-}
-
-template const char* hl_INPathGetExtPtrName<char, true>(const char* fileName);
-template const char* hl_INPathGetExtPtrName<char, false>(const char* fileName);
-
-#ifdef _WIN32
-template const hl_NativeChar* hl_INPathGetExtPtrName<hl_NativeChar, true>(
-    const hl_NativeChar* fileName);
-
-template const hl_NativeChar* hl_INPathGetExtPtrName<hl_NativeChar, false>(
-    const hl_NativeChar* fileName);
-#endif
-
-const char* hl_PathGetExtPtrName(const char* fileName)
-{
-    if (!fileName) return hl_EmptyString;
-    return hl_INPathGetExtPtrName(fileName);
-}
-
-const hl_NativeChar* hl_PathGetExtPtrNameNative(const hl_NativeChar* fileName)
-{
-    if (!fileName) return hl_EmptyStringNative;
-    return hl_INPathGetExtPtrName(fileName);
-}
-
-const char* hl_PathGetExtsPtrName(const char* fileName)
-{
-    if (!fileName) return hl_EmptyString;
-    return hl_INPathGetExtPtrName<char, true>(fileName);
-}
-
-const hl_NativeChar* hl_PathGetExtsPtrNameNative(const hl_NativeChar* fileName)
-{
-    if (!fileName) return hl_EmptyStringNative;
-    return hl_INPathGetExtPtrName<hl_NativeChar, true>(fileName);
-}
-
-const char* hl_PathGetExtPtr(const char* filePath)
-{
-    // Return extension pointer
-    filePath = hl_PathGetNamePtr(filePath);
-    return hl_INPathGetExtPtrName(filePath);
-}
-
-const hl_NativeChar* hl_PathGetExtPtrNative(const hl_NativeChar* filePath)
-{
-    // Return extension pointer
-    filePath = hl_PathGetNamePtrNative(filePath);
-    return hl_INPathGetExtPtrName(filePath);
-}
-
-const char* hl_PathGetExtsPtr(const char* filePath)
-{
-    // Return extension pointer
-    filePath = hl_PathGetNamePtr(filePath);
-    return hl_INPathGetExtPtrName<char, true>(filePath);
-}
-
-const hl_NativeChar* hl_PathGetExtsPtrNative(const hl_NativeChar* filePath)
-{
-    // Return extension pointer
-    filePath = hl_PathGetNamePtrNative(filePath);
-    return hl_INPathGetExtPtrName<hl_NativeChar, true>(filePath);
-}
-
-template<typename char_t, bool multiExt>
-HL_RESULT hl_INPathGetNameNoExtName(const char_t* fileName, char_t** fileNameNoExt)
-{
-    // Get extension pointer and name length
-    const char_t* ext = hl_INPathGetExtPtrName<char_t, multiExt>(fileName);
-    size_t nameLen = static_cast<size_t>(ext - fileName);
-
-    // Malloc buffer large enough to hold name
-    *fileNameNoExt = static_cast<char_t*>(malloc(
-        (nameLen + 1) * sizeof(char_t)));
-
-    if (!*fileNameNoExt) return HL_ERROR_OUT_OF_MEMORY;
-
-    // Copy name into new buffer and return
-    std::copy(fileName, ext, *fileNameNoExt);
-    (*fileNameNoExt)[nameLen] = static_cast<char_t>('\0');
-
-    return HL_SUCCESS;
-}
-
-HL_RESULT hl_PathGetNameNoExtName(const char* fileName, char** fileNameNoExt)
-{
-    if (!fileName || !fileNameNoExt) return HL_ERROR_INVALID_ARGS;
-    return hl_INPathGetNameNoExtName<char, false>(fileName, fileNameNoExt);
-}
-
-HL_RESULT hl_PathGetNameNoExtNameNative(
-    const hl_NativeChar* fileName, hl_NativeChar** fileNameNoExt)
-{
-    if (!fileName || !fileNameNoExt) return HL_ERROR_INVALID_ARGS;
-    return hl_INPathGetNameNoExtName<hl_NativeChar, false>(fileName, fileNameNoExt);
-}
-
-HL_RESULT hl_PathGetNameNoExtsName(const char* fileName, char** fileNameNoExt)
-{
-    if (!fileName || !fileNameNoExt) return HL_ERROR_INVALID_ARGS;
-    return hl_INPathGetNameNoExtName<char, true>(fileName, fileNameNoExt);
-}
-
-HL_RESULT hl_PathGetNameNoExtsNameNative(
-    const hl_NativeChar* fileName, hl_NativeChar** fileNameNoExt)
-{
-    if (!fileName || !fileNameNoExt) return HL_ERROR_INVALID_ARGS;
-    return hl_INPathGetNameNoExtName<hl_NativeChar, true>(fileName, fileNameNoExt);
-}
-
-template<typename char_t, bool multiExt>
-HL_RESULT hl_INPathGetNameNoExt(const char_t* filePath, char_t** fileNameNoExt)
-{
-    // Get file name
-    filePath = hl_INPathGetNamePtr(filePath);
-
-    // Get name without extension
-    return hl_INPathGetNameNoExtName<char_t, multiExt>(
-        filePath, fileNameNoExt);
-}
-
-HL_RESULT hl_PathGetNameNoExt(const char* filePath, char** fileNameNoExt)
-{
-    if (!filePath || !fileNameNoExt) return HL_ERROR_INVALID_ARGS;
-    return hl_INPathGetNameNoExt<char, false>(filePath, fileNameNoExt);
-}
-
-HL_RESULT hl_PathGetNameNoExtNative(
-    const hl_NativeChar* filePath, hl_NativeChar** fileNameNoExt)
-{
-    if (!filePath || !fileNameNoExt) return HL_ERROR_INVALID_ARGS;
-    return hl_INPathGetNameNoExt<hl_NativeChar, false>(
-        filePath, fileNameNoExt);
-}
-
-HL_RESULT hl_PathGetNameNoExts(const char* filePath, char** fileNameNoExt)
-{
-    if (!filePath || !fileNameNoExt) return HL_ERROR_INVALID_ARGS;
-    return hl_INPathGetNameNoExt<char, true>(filePath, fileNameNoExt);
-}
-
-HL_RESULT hl_PathGetNameNoExtsNative(
-    const hl_NativeChar* filePath, hl_NativeChar** fileNameNoExt)
-{
-    if (!filePath || !fileNameNoExt) return HL_ERROR_INVALID_ARGS;
-    return hl_INPathGetNameNoExt<hl_NativeChar, true>(
-        filePath, fileNameNoExt);
-}
-
-template<typename char_t>
-size_t hl_INPathGetStemRangeName(const char_t* fileName, const char_t** stemEnd)
-{
-    // Get extension pointer
-    *stemEnd = hl_INPathGetExtPtrName(fileName);
-
-    // Return size
-    return static_cast<size_t>(*stemEnd - fileName);
-}
-
-size_t hl_PathGetStemRangeName(const char* fileName,
-    const char** stemEnd)
-{
-    if (!fileName || !stemEnd) return 0;
-    return hl_INPathGetStemRangeName(fileName, stemEnd);
-}
-
-size_t hl_PathGetStemRangeNameNative(const hl_NativeChar* fileName,
-    const hl_NativeChar** stemEnd)
-{
-    if (!fileName || !stemEnd) return 0;
-    return hl_INPathGetStemRangeName(fileName, stemEnd);
-}
-
-template<typename char_t>
-size_t hl_INPathGetStemRange(const char_t** stemStart, const char_t** stemEnd)
-{
-    // Get name pointer
-    *stemStart = hl_INPathGetNamePtr(*stemStart);
-    if (!(**stemStart)) return 0;
-
-    // Return stem range
-    return hl_INPathGetStemRangeName(*stemStart, stemEnd);
-}
-
-size_t hl_PathGetStemRange(const char* path,
-    const char** stemStart, const char** stemEnd)
-{
-    if (!path || !stemStart || !stemEnd) return 0;
-
-    *stemStart = path;
-    return hl_INPathGetStemRange(stemStart, stemEnd);
-}
-
-size_t hl_PathGetStemRangeNative(const hl_NativeChar* path,
-    const hl_NativeChar** stemStart, const hl_NativeChar** stemEnd)
-{
-    if (!path || !stemStart || !stemEnd) return 0;
-
-    *stemStart = path;
-    return hl_INPathGetStemRange(stemStart, stemEnd);
-}
-
-template<typename char_t>
-HL_RESULT hl_INPathGetStem(const char_t* path, char_t** stem)
-{
-    // Get stem range
-    const char_t* ext;
-    size_t stemLen = hl_INPathGetStemRange(&path, &ext);
-
-    // Malloc buffer large enough to hold stem
-    *stem = static_cast<char_t*>(malloc(
-        (stemLen + 1) * sizeof(char_t)));
-
-    if (!*stem) return HL_ERROR_OUT_OF_MEMORY;
-
-    // Copy stem into new buffer and return
-    std::copy(path, ext, *stem);
-    (*stem)[stemLen] = static_cast<char_t>('\0');
-
-    return HL_SUCCESS;
-}
-
-HL_RESULT hl_PathGetStem(const char* path, char** stem)
-{
-    if (!path || !stem) return HL_ERROR_INVALID_ARGS;
-    return hl_INPathGetStem(path, stem);
-}
-
-HL_RESULT hl_PathGetStemNative(const hl_NativeChar* path, hl_NativeChar** stem)
-{
-    if (!path || !stem) return HL_ERROR_INVALID_ARGS;
-    return hl_INPathGetStem(path, stem);
-}
-
-template<typename char_t>
-HL_RESULT hl_INPathGetParent(const char_t* path,
-    const char_t* fileName, char_t** parent)
-{
-    // Get parent length
-    size_t parentLen = static_cast<size_t>(fileName - path);
-    if (parentLen < 2) ++parentLen;
-
-    // Malloc buffer large enough to hold stem
-    *parent = static_cast<char_t*>(malloc(
-        parentLen * sizeof(char_t)));
-
-    if (!*parent) return HL_ERROR_OUT_OF_MEMORY;
-
-    // Copy stem into new buffer and return
-    if (parentLen > 1) std::copy(path, fileName, *parent);
-    (*parent)[parentLen - 1] = static_cast<char_t>('\0');
-    return HL_SUCCESS;
-}
-
-template HL_RESULT hl_INPathGetParent<char>(const char* path,
-    const char* fileName, char** parent);
-
-#ifdef _WIN32
-template HL_RESULT hl_INPathGetParent<hl_NativeChar>(
-    const hl_NativeChar* path, const hl_NativeChar* fileName,
-    hl_NativeChar** parent);
-#endif
-
-template<typename char_t>
-HL_RESULT hl_INPathGetParent(const char_t* path, char_t** parent)
-{
-    // Get name pointer
-    const char_t* fileName = hl_INPathGetNamePtr(path);
-
-    // Return parent
-    return hl_INPathGetParent(path, fileName, parent);
-}
-
-template HL_RESULT hl_INPathGetParent<char>(const char* path, char** parent);
-#ifdef _WIN32
-template HL_RESULT hl_INPathGetParent<hl_NativeChar>(
-    const hl_NativeChar* path, hl_NativeChar** parent);
-#endif
-
-HL_RESULT hl_PathGetParent(const char* path, char** parent)
-{
-    if (!path || !parent) return HL_ERROR_INVALID_ARGS;
-    return hl_INPathGetParent(path, parent);
-}
-
-HL_RESULT hl_PathGetParentNative(
-    const hl_NativeChar* path, hl_NativeChar** parent)
-{
-    if (!path || !parent) return HL_ERROR_INVALID_ARGS;
-    return hl_INPathGetParent(path, parent);
-}
-
-bool hl_INPathIsDirectory(const hl_NativeChar* path)
-{
-#ifdef _WIN32
-    DWORD attrs = GetFileAttributesW(path);
-    return (attrs != INVALID_FILE_ATTRIBUTES &&
-        (attrs & FILE_ATTRIBUTE_DIRECTORY));
-#else
-    struct stat sb;
-    return (!stat(path, &sb) && S_ISDIR(sb.st_mode));
-#endif
-}
-
-bool hl_PathIsDirectory(const char* path)
-{
-    if (!path) return false;
-    
-#ifdef _WIN32
-    // Convert UTF-8 path to wide UTF-16 path
-    hl_NativeChar* nativePath;
-    HL_RESULT result = hl_StringConvertUTF8ToNative(path, &nativePath);
-    if (HL_FAILED(result)) return false;
-
-    // Check if the given path is a directory
-    bool isDir = hl_INPathIsDirectory(nativePath);
-    free(nativePath);
-    return isDir;
-#else
-    return hl_INPathIsDirectory(path);
-#endif
-}
-
-bool hl_PathIsDirectoryNative(const hl_NativeChar* path)
-{
-    if (!path) return false;
-    return hl_INPathIsDirectory(path);
-}
-
-template<typename char_t>
-void hl_INPathCombineNoAlloc(const char_t* path1, const char_t* path2,
-    size_t path1Len, size_t path2Len, char_t* buffer, bool addSlash)
-{
-    // Copy path1 and append slash if necessary
-    std::copy(path1, path1 + path1Len, buffer);
-    if (addSlash) buffer[path1Len - 1] =
-        static_cast<char_t>(HL_PATH_SEPARATOR);
-
-    // Copy path2
-    std::copy(path2, path2 + path2Len, buffer + path1Len);
-}
-
-template<typename char_t>
-HL_RESULT hl_INPathCombine(const char_t* path1, const char_t* path2,
-    size_t path1Len, size_t path2Len, char_t** result)
-{
-    // Check if we need to append a slash to the end of path1
-    bool addSlash = hl_INPathCombineNeedsSlash(path1, path2, path1Len);
-    if (addSlash) ++path1Len;
-
-    // Malloc buffer large enough to hold result
-    *result = static_cast<char_t*>(malloc(
-        (path1Len + ++path2Len) * sizeof(char_t)));
-
-    if (!*result) return HL_ERROR_OUT_OF_MEMORY;
-
-    // Combine paths and return
-    hl_INPathCombineNoAlloc(path1, path2, path1Len,
-        path2Len, *result, addSlash);
-
-    return HL_SUCCESS;
-}
-
-template<typename char_t>
-HL_RESULT hl_INPathCombine(const char_t* path1,
-    const char_t* path2, char_t** result)
-{
-    // Determine path lengths
-    size_t path1Len = hl_StrLen(path1);
-    size_t path2Len = hl_StrLen(path2);
-
-    // Combine paths
-    return hl_INPathCombine(path1, path2,
-        path1Len, path2Len, result);
-}
-
-HL_RESULT hl_PathCombine(const char* path1,
-    const char* path2, char** result)
-{
-    if (!path1 || !path2 || !result || (!*path1 && !*path2))
-        return HL_ERROR_INVALID_ARGS;
-
-    return hl_INPathCombine(path1, path2, result);
-}
-
-HL_RESULT hl_PathCombineNative(const hl_NativeChar* path1,
-    const hl_NativeChar* path2, hl_NativeChar** result)
-{
-    if (!path1 || !path2 || !result || (!*path1 && !*path2))
-        return HL_ERROR_INVALID_ARGS;
-
-    return hl_INPathCombine(path1, path2, result);
-}
-
-template<typename char_t, bool multiExt>
-HL_RESULT hl_INPathRemoveExt(const char_t* filePath, char_t** pathNoExt)
-{
-    // Get file name and first extension
-    const char_t* fileName = hl_INPathGetNamePtr<char_t>(filePath);
-    const char_t* ext = hl_INPathGetExtPtrName<char_t, multiExt>(fileName);
-    size_t pathLen = static_cast<size_t>(ext - filePath);
-
-    // Malloc buffer large enough to hold path
-    *pathNoExt = static_cast<char_t*>(malloc(
-        (pathLen + 1) * sizeof(char_t)));
-
-    if (!*pathNoExt) return HL_ERROR_OUT_OF_MEMORY;
-
-    // Copy stem into new buffer and return
-    std::copy(filePath, ext, *pathNoExt);
-    (*pathNoExt)[pathLen] = static_cast<char_t>('\0');
-
-    return HL_SUCCESS;
-}
-
-template HL_RESULT hl_INPathRemoveExt<char, true>(const char* filePath, char** pathNoExt);
-template HL_RESULT hl_INPathRemoveExt<char, false>(const char* filePath, char** pathNoExt);
-
-#ifdef _WIN32
-template HL_RESULT hl_INPathRemoveExt<hl_NativeChar, true>(
-    const hl_NativeChar* filePath, hl_NativeChar** pathNoExt);
-
-template HL_RESULT hl_INPathRemoveExt<hl_NativeChar, false>(
-    const hl_NativeChar* filePath, hl_NativeChar** pathNoExt);
-#endif
-
-HL_RESULT hl_PathRemoveExt(const char* filePath, char** pathNoExt)
-{
-    if (!filePath || !pathNoExt) return HL_ERROR_INVALID_ARGS;
-    return hl_INPathRemoveExt<char, false>(filePath, pathNoExt);
-}
-
-HL_RESULT hl_PathRemoveExtNative(
-    const hl_NativeChar* filePath, hl_NativeChar** pathNoExt)
-{
-    if (!filePath || !pathNoExt) return HL_ERROR_INVALID_ARGS;
-    return hl_INPathRemoveExt<hl_NativeChar, false>(filePath, pathNoExt);
-}
-
-HL_RESULT hl_PathRemoveExts(const char* filePath, char** pathNoExts)
-{
-    if (!filePath || !pathNoExts) return HL_ERROR_INVALID_ARGS;
-    return hl_INPathRemoveExt<char, true>(filePath, pathNoExts);
-}
-
-HL_RESULT hl_PathRemoveExtsNative(
-    const hl_NativeChar* filePath, hl_NativeChar** pathNoExts)
-{
-    if (!filePath || !pathNoExts) return HL_ERROR_INVALID_ARGS;
-    return hl_INPathRemoveExt<hl_NativeChar, true>(filePath, pathNoExts);
-}
-
-bool hl_INPathExists(const hl_NativeChar* path)
-{
-#ifdef _WIN32
-    return (GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES);
-#else
-    return (access(path, F_OK) != -1);
-#endif
-}
-
-bool hl_PathExists(const char* path)
-{
-    if (!path) return false;
-
-#ifdef _WIN32
-    // Convert path from UTF-8 to a native (UTF-16) path
-    hl_NativeChar* nativePath;
-    if (HL_FAILED(hl_INStringConvertUTF8ToNative(
-        path, &nativePath))) return false;
-
-    // Check if path exists
-    bool exists = hl_INPathExists(nativePath);
-    free(nativePath);
-    return exists;
-#else
-    // Check if path exists
-    return hl_INPathExists(path);
-#endif
-}
-
-bool hl_PathExistsNative(const hl_NativeChar* path)
-{
-    if (!path) return false;
-    return hl_INPathExists(path);
-}
-
-HL_RESULT hl_INPathCreateDirectory(const hl_NativeChar* path)
-{
-    // Return successfully if path is just empty
-    if (!*path) return HL_SUCCESS; // TODO: Is this needed on non-Windows platforms too?
-
-#ifdef _WIN32
-    BOOL r = CreateDirectoryW(path, nullptr);
-    if (!r && GetLastError() != ERROR_ALREADY_EXISTS)
-    {
-        return HL_ERROR_UNKNOWN; // TODO: Return a more helpful error
-    }
-
-    return HL_SUCCESS;
-#else
-    if (!mkdir(path, S_IRWXU | S_IRWXG | S_IRWXO) || errno == EEXIST)
-        return HL_SUCCESS;
-
-    // TODO: Use errno to return a more helpful error
-    return HL_ERROR_UNKNOWN;
-#endif
-}
-
-HL_RESULT hl_PathCreateDirectory(const char* path)
-{
-    if (!path) return HL_ERROR_INVALID_ARGS;
-    HL_INSTRING_NATIVE_CALL(path, hl_INPathCreateDirectory(nativeStr));
-}
-
-HL_RESULT hl_PathCreateDirectoryNative(const hl_NativeChar* path)
-{
-    if (!path) return HL_ERROR_INVALID_ARGS;
-    return hl_INPathCreateDirectory(path);
-}
-
-HL_RESULT hl_INPathGetSize(const hl_NativeChar* filePath, size_t* size)
-{
-#ifdef _WIN32
-    WIN32_FILE_ATTRIBUTE_DATA fd;
-    if (!GetFileAttributesExW(filePath, GetFileExInfoStandard, &fd))
-        return HL_ERROR_UNKNOWN; // TODO: Return a more helpful error using GetLastError
-
-    LARGE_INTEGER s;
-    s.HighPart = fd.nFileSizeHigh;
-    s.LowPart = fd.nFileSizeLow;
-    *size = static_cast<size_t>(s.QuadPart);
-#else
-    struct stat s;
-    if (stat(filePath, &s) == -1) return HL_ERROR_UNKNOWN; // TODO: Return a more helpful error
-    *size = static_cast<size_t>(s.st_size);
-#endif
-
-    return HL_SUCCESS;
-}
-
-HL_RESULT hl_PathGetSize(const char* filePath, size_t* size)
-{
-    if (!size) return HL_ERROR_UNKNOWN;
-    HL_INSTRING_NATIVE_CALL(filePath, hl_INPathGetSize(nativeStr, size));
-}
-
-HL_RESULT hl_PathGetSizeNative(const hl_NativeChar* filePath, size_t* size)
-{
-    if (!size) return HL_ERROR_UNKNOWN;
-    return hl_INPathGetSize(filePath, size);
-}
-
-HL_RESULT hl_INPathGetFileCount(const hl_NativeChar* dir,
-    bool recursive, size_t* fileCount, size_t* bufSize)
-{
-    size_t dirLen = hl_StrLenNative(dir);
-
-#ifdef _WIN32
-    // Adjust the path for usage in the FindFile functions
-    // (The Win32 API is the messiest thing I swear)
-    hl_NativeChar* fdir = static_cast<hl_NativeChar*>(malloc(
-        (dirLen + 3) * sizeof(hl_NativeChar)));
-
-    if (!fdir) return HL_ERROR_OUT_OF_MEMORY;
-
-    // Copy the actual path
-    std::copy(dir, dir + dirLen, fdir);
-
-    // We also have to append \* since otherwise windows will just give
-    // us the directory rather than files *IN* the directory
-    fdir[dirLen] = L'\\';
-    fdir[dirLen + 1] = L'*';
-    fdir[dirLen + 2] = L'\0';
-
-    // Find the first file in the directory
-    WIN32_FIND_DATAW fd;
-    HANDLE h = FindFirstFileW(fdir, &fd);
-    free(fdir);
-
-    if (h == INVALID_HANDLE_VALUE) return HL_ERROR_UNKNOWN;
-
-    // Loop through subsequent files in directory
-    do
-    {
-#else
-    // Open the directory
-    DIR* d = opendir(dir);
-    if (!d) return HL_ERROR_UNKNOWN; // TODO: Use errno to get a more helpful error
-
-    // Loop through subsequent files in directory
-    struct dirent* e;
-    while (e = readdir(d))
-    {
-#endif
-        // Get file name
-        hl_NativeChar* fileName;
-
-#ifdef _WIN32
-        // TODO: Is cFileName always null-terminated?
-        fileName = fd.cFileName;
-#else
-        fileName = e->d_name;
-#endif
-
-        // Directories
-#ifdef _WIN32
-        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-#else
-        if (e->d_type == DT_DIR)
-#endif
-        {
-            // Skip . and .. (necessary to avoid infinite recursion)
-            if (hl_StringsEqualNative(fileName, HL_NATIVE_TEXT(".")) ||
-                hl_StringsEqualNative(fileName, HL_NATIVE_TEXT("..")))
+                path = ++curChar;
                 continue;
-
-            if (recursive)
-            {
-                // Recurse through subdirectories
-                hl_NativeChar* subDir;
-                HL_RESULT result = hl_INPathCombine(dir, fileName, &subDir);
-                if (HL_FAILED(result)) return HL_ERROR_OUT_OF_MEMORY;
-
-                result = hl_INPathGetFileCount(subDir, recursive,
-                    fileCount, bufSize);
-
-                free(subDir);
-                if (HL_FAILED(result)) return result;
             }
+
+            ++curChar;
         }
 
-        // Files
-        // TODO: Handle special cases
-        else
-//#ifdef _WIN32
-//        else if (fd.dwFileAttributes == FILE_ATTRIBUTE_NORMAL)
-//#else
-//        else if (e->d_type == DT_REG)
-//#endif
-        {
-            // Increase file count
-            ++(*fileCount);
-
-            // Increase buffer size if necessary
-            if (bufSize)
-            {
-                // TODO: Is cFileName always null-terminated??
-                *bufSize += (dirLen + hl_StrLenNative(fileName) + 1);
-                if (hl_INPathCombineNeedsSlash(dir, fileName, dirLen)) ++(*bufSize);
-            }
-        }
+        return path;
     }
-#ifdef _WIN32
-    while (FindNextFileW(h, &fd));
 
-    // TODO: Use GetLastError to ensure we've just reached the last file and no error occured.
+    template const char* INPathGetNamePtr<char>(const char* path);
 
-    // Close the directory
-    FindClose(h); // TODO: Check result?
-#else
-    // Close the directory
-    closedir(d); // TODO: Check result?
-#endif
-
-    return HL_SUCCESS;
-}
-
-HL_RESULT hl_PathGetFileCount(const char* dir,
-    bool recursive, size_t* fileCount)
-{
-    if (!dir || !fileCount) return HL_ERROR_INVALID_ARGS;
-
-    *fileCount = 0;
-    HL_INSTRING_NATIVE_CALL(dir, hl_INPathGetFileCount(nativeStr,
-        recursive, fileCount));
-}
-
-HL_RESULT hl_PathGetFileCountNative(const hl_NativeChar* dir,
-    bool recursive, size_t* fileCount)
-{
-    if (!dir || !fileCount) return HL_ERROR_INVALID_ARGS;
-
-    *fileCount = 0;
-    return hl_INPathGetFileCount(dir,
-        recursive, fileCount);
-}
-
-HL_RESULT hl_INPathGetFilesInDirectoryNoAlloc(const hl_NativeChar* dir,
-    bool recursive, size_t fileCount, hl_NativeChar**& fileNamePtrs,
-    hl_NativeChar*& fileNames)
-{
-    size_t dirLen = hl_StrLenNative(dir);
-
-#ifdef _WIN32
-    // Adjust the path for usage in the FindFile functions
-    // (The Win32 API is the messiest thing I swear)
-    hl_NativeChar* fdir = static_cast<hl_NativeChar*>(malloc(
-        (dirLen + 3) * sizeof(hl_NativeChar)));
-
-    if (!fdir) return HL_ERROR_OUT_OF_MEMORY;
-
-    // Copy the actual path
-    std::copy(dir, dir + dirLen, fdir);
-
-    // We also have to append \* since otherwise windows will just give
-    // us the directory rather than files *IN* the directory
-    fdir[dirLen] = L'\\';
-    fdir[dirLen + 1] = L'*';
-    fdir[dirLen + 2] = L'\0';
-
-    // Find the first file in the directory
-    WIN32_FIND_DATAW fd;
-    HANDLE h = FindFirstFileW(fdir, &fd);
-    free(fdir);
-
-    if (h == INVALID_HANDLE_VALUE) return HL_ERROR_UNKNOWN;
-
-    // Loop through subsequent files in directory
-    do
+    const char* PathGetNamePtr(const char* path)
     {
-#else
-    // Open the directory
-    DIR* d = opendir(dir);
-    if (!d) return HL_ERROR_UNKNOWN; // TODO: Use errno to get a more helpful error
+        if (!path) return EmptyString;
+        return INPathGetNamePtr(path);
+    }
 
-    // Loop through subsequent files in directory
-    struct dirent* e;
-    while (e = readdir(d))
+    template<typename char_t, bool multiExt>
+    const char_t* INPathGetExtPtrName(const char_t* fileName)
     {
-#endif
+        if (!*fileName) return fileName;
+
+        // Ignore first . in files that begin with . and
+        // return an empty string for paths that end with ..
+        const char_t* curChar = fileName;
+        if (*(curChar++) == static_cast<char_t>('.') &&
+            *curChar == static_cast<char_t>('.'))
+        {
+            fileName = curChar++;
+            if (!*curChar) return curChar;
+        }
+
+        // Find extension
+        bool foundExt = false;
+        while (*curChar)
+        {
+            if (*curChar == static_cast<char_t>('.'))
+            {
+                if constexpr (multiExt)
+                {
+                    return curChar;
+                }
+                else
+                {
+                    fileName = curChar;
+                    foundExt = true;
+                }
+            }
+
+            ++curChar;
+        }
+
+        return (foundExt) ? fileName : curChar;
+    }
+
+    template const char* INPathGetExtPtrName<char, true>(const char* fileName);
+    template const char* INPathGetExtPtrName<char, false>(const char* fileName);
+
+    const char* PathGetExtPtrName(const char* fileName)
+    {
+        if (!fileName) return EmptyString;
+        return INPathGetExtPtrName(fileName);
+    }
+
+    const char* PathGetExtsPtrName(const char* fileName)
+    {
+        if (!fileName) return EmptyString;
+        return INPathGetExtPtrName<char, true>(fileName);
+    }
+
+    const char* PathGetExtPtr(const char* filePath)
+    {
+        // Return extension pointer
+        filePath = PathGetNamePtr(filePath);
+        return INPathGetExtPtrName(filePath);
+    }
+
+    const char* PathGetExtsPtr(const char* filePath)
+    {
+        // Return extension pointer
+        filePath = PathGetNamePtr(filePath);
+        return INPathGetExtPtrName<char, true>(filePath);
+    }
+
+    template<typename char_t, bool multiExt>
+    std::unique_ptr<char_t[]> INPathGetNameNoExtNamePtr(const char_t* fileName)
+    {
+        // Get extension pointer and name length
+        const char_t* ext = INPathGetExtPtrName<char_t, multiExt>(fileName);
+        std::size_t nameLen = static_cast<std::size_t>(ext - fileName);
+
+        // Allocate buffer large enough to hold name
+        std::unique_ptr<char_t[]> fileNameNoExt = std::unique_ptr<char_t[]>(
+            new char_t[nameLen + 1]);
+
+        // Copy name into new buffer and return
+        std::copy(fileName, ext, fileNameNoExt.get());
+        fileNameNoExt[nameLen] = static_cast<char_t>('\0');
+
+        return fileNameNoExt;
+    }
+
+    std::unique_ptr<char[]> PathGetNameNoExtNamePtr(const char* fileName)
+    {
+        if (!fileName) throw std::invalid_argument("fileName was null");
+        return INPathGetNameNoExtNamePtr<char, false>(fileName);
+    }
+
+    std::unique_ptr<char[]> PathGetNameNoExtsNamePtr(const char* fileName)
+    {
+        if (!fileName) throw std::invalid_argument("fileName was null");
+        return INPathGetNameNoExtNamePtr<char, true>(fileName);
+    }
+
+    template<typename char_t, bool multiExt>
+    std::unique_ptr<char_t[]> INPathGetNameNoExtPtr(const char_t* filePath)
+    {
         // Get file name
-        hl_NativeChar* fileName;
+        filePath = INPathGetNamePtr(filePath);
 
-#ifdef _WIN32
-        // TODO: Is cFileName always null-terminated?
-        fileName = fd.cFileName;
-#else
-        fileName = e->d_name;
-#endif
-
-        // Directories
-#ifdef _WIN32
-        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-#else
-        if (e->d_type == DT_DIR)
-#endif
-        {
-            // Skip . and .. (necessary to avoid infinite recursion)
-            if (hl_StringsEqualNative(fileName, HL_NATIVE_TEXT(".")) ||
-                hl_StringsEqualNative(fileName, HL_NATIVE_TEXT("..")))
-                continue;
-
-            if (recursive)
-            {
-                // Recurse through subdirectories
-                hl_NativeChar* subDir;
-                HL_RESULT result = hl_INPathCombine(dir, fileName, &subDir);
-                if (HL_FAILED(result)) return HL_ERROR_OUT_OF_MEMORY;
-
-                result = hl_INPathGetFilesInDirectoryNoAlloc(subDir,
-                    recursive, fileCount, fileNamePtrs, fileNames);
-
-                free(subDir);
-                if (HL_FAILED(result)) return result;
-            }
-        }
-
-        // Files
-        // TODO: Handle special cases
-        else
-//#ifdef _WIN32
-//        else if (fd.dwFileAttributes == FILE_ATTRIBUTE_NORMAL)
-//#else
-//        else if (e->d_type == DT_REG)
-//#endif
-        {
-            // Copy file name
-            size_t nameLen = (hl_StrLenNative(fileName) + 1);
-            bool addSlash = hl_INPathCombineNeedsSlash(dir, fileName, dirLen);
-
-            hl_INPathCombineNoAlloc(dir, fileName, (addSlash) ?
-                dirLen + 1 : dirLen, nameLen, fileNames, addSlash);
-            
-            // Set name pointer
-            *fileNamePtrs = fileNames;
-            ++fileNamePtrs;
-            fileNames += (dirLen + nameLen);
-            if (addSlash) ++fileNames;
-        }
+        // Get name without extension
+        return INPathGetNameNoExtNamePtr<char_t, multiExt>(filePath);
     }
-#ifdef _WIN32
-    while (FindNextFileW(h, &fd));
 
-    // TODO: Use GetLastError to ensure we've just reached the last file and no error occured.
-
-    // Close the directory
-    FindClose(h); // TODO: Check result?
-#else
-    // Close the directory
-    closedir(d); // TODO: Check result?
-#endif
-
-    return HL_SUCCESS;
-}
-
-HL_RESULT hl_INPathGetFilesInDirectory(const hl_NativeChar* dir,
-    bool recursive, size_t* fileCount, hl_NativeChar*** files)
-{
-    // Get file count and buffer size
-    size_t bufSize = 0;
-    *fileCount = 0;
-
-    HL_RESULT result = hl_INPathGetFileCount(dir,
-        recursive, fileCount, &bufSize);
-
-    // Allocate buffer to hold file names and pointers to file names
-    *files = static_cast<hl_NativeChar**>(malloc(
-        (*fileCount * sizeof(hl_NativeChar*)) +
-        (bufSize * sizeof(hl_NativeChar))));
-
-    if (!*files) return HL_ERROR_OUT_OF_MEMORY;
-
-    // Get file names and return
-    hl_NativeChar** fileNamePtrs = *files;
-    hl_NativeChar* fileNames = reinterpret_cast<hl_NativeChar*>(
-        *files + *fileCount);
-
-    result = hl_INPathGetFilesInDirectoryNoAlloc(dir, recursive,
-        *fileCount, fileNamePtrs, fileNames);
-
-    if (HL_FAILED(result))
+    std::unique_ptr<char[]> PathGetNameNoExtPtr(const char* filePath)
     {
-        free(*files);
+        if (!filePath) throw std::invalid_argument("filePath was null");
+        return INPathGetNameNoExtPtr<char, false>(filePath);
+    }
+
+    std::unique_ptr<char[]> PathGetNameNoExtsPtr(const char* filePath)
+    {
+        if (!filePath) throw std::invalid_argument("filePath was null");
+        return INPathGetNameNoExtPtr<char, true>(filePath);
+    }
+
+    template<typename char_t>
+    std::size_t INPathGetStemRangeName(const char_t* fileName, const char_t*& stemEnd)
+    {
+        // Get extension pointer
+        stemEnd = INPathGetExtPtrName(fileName);
+
+        // Return size
+        return static_cast<std::size_t>(stemEnd - fileName);
+    }
+
+    std::size_t PathGetStemRangeName(const char* fileName,
+        const char*& stemEnd)
+    {
+        if (!fileName) return 0;
+        return INPathGetStemRangeName(fileName, stemEnd);
+    }
+
+    template<typename char_t>
+    std::size_t INPathGetStemRange(const char_t*& stemStart, const char_t*& stemEnd)
+    {
+        // Get name pointer
+        stemStart = INPathGetNamePtr(stemStart);
+        if (!(*stemStart)) return 0;
+
+        // Return stem range
+        return INPathGetStemRangeName(stemStart, stemEnd);
+    }
+
+    std::size_t PathGetStemRange(const char* path,
+        const char*& stemStart, const char*& stemEnd)
+    {
+        if (!path) return 0;
+
+        stemStart = path;
+        return INPathGetStemRange(stemStart, stemEnd);
+    }
+
+    template<typename char_t>
+    std::unique_ptr<char_t[]> INPathGetStemPtr(const char_t* path)
+    {
+        // Get stem range
+        const char_t* ext;
+        std::size_t stemLen = INPathGetStemRange(path, ext);
+
+        // Allocate a buffer large enough to hold stem
+        std::unique_ptr<char_t[]> stem = std::unique_ptr<char_t[]>(
+            new char_t[stemLen + 1]);
+
+        // Copy stem into new buffer and return
+        std::copy(path, ext, stem.get());
+        stem[stemLen] = static_cast<char_t>('\0');
+
+        return stem;
+    }
+
+    std::unique_ptr<char[]> PathGetStemPtr(const char* path)
+    {
+        if (!path) throw std::invalid_argument("path was null");
+        return INPathGetStemPtr(path);
+    }
+
+    template<typename char_t>
+    std::unique_ptr<char_t[]> INPathGetParentPtr(const char_t* path,
+        const char_t* fileName)
+    {
+        // Get parent length
+        std::size_t parentLen = static_cast<std::size_t>(fileName - path);
+        if (parentLen < 2) ++parentLen;
+
+        // Allocate a buffer large enough to hold stem
+        std::unique_ptr<char_t[]> parent = std::unique_ptr<char_t[]>(
+            new char_t[parentLen]);
+
+        // Copy stem into new buffer and return
+        if (parentLen > 1) std::copy(path, fileName, parent.get());
+        parent[parentLen - 1] = static_cast<char_t>('\0');
+        return parent;
+    }
+
+    template std::unique_ptr<char[]> INPathGetParentPtr(const char* path,
+        const char* fileName);
+
+    template<typename char_t>
+    std::unique_ptr<char_t[]> INPathGetParentPtr(const char_t* path)
+    {
+        // Get name pointer
+        const char_t* fileName = INPathGetNamePtr(path);
+
+        // Return parent
+        return INPathGetParentPtr(path, fileName);
+    }
+
+    template std::unique_ptr<char[]> INPathGetParentPtr<char>(const char* path);
+
+    std::unique_ptr<char[]> PathGetParentPtr(const char* path)
+    {
+        if (!path) throw std::invalid_argument("path was null");
+        return INPathGetParentPtr(path);
+    }
+
+    template<typename char_t>
+    void INPathCombineNoAlloc(const char_t* path1, const char_t* path2,
+        std::size_t path1Len, std::size_t path2Len, char_t* buffer, bool addSlash)
+    {
+        // Copy path1 and append slash if necessary
+        std::copy(path1, path1 + path1Len, buffer);
+        if (addSlash) buffer[path1Len - 1] =
+            static_cast<char_t>(PathSeparator);
+
+        // Copy path2
+        std::copy(path2, path2 + path2Len, buffer + path1Len);
+    }
+
+    template<typename char_t>
+    std::unique_ptr<char_t[]> INPathCombinePtr(const char_t* path1, const char_t* path2,
+        std::size_t path1Len, std::size_t path2Len)
+    {
+        // Check if we need to append a slash to the end of path1
+        bool addSlash = INPathCombineNeedsSlash(path1, path2, path1Len);
+        if (addSlash) ++path1Len;
+
+        // Allocate a buffer large enough to hold result
+        std::unique_ptr<char_t[]> result = std::unique_ptr<char_t[]>(
+            new char_t[path1Len + ++path2Len]);
+
+        // Combine paths and return
+        INPathCombineNoAlloc(path1, path2, path1Len,
+            path2Len, result.get(), addSlash);
+
         return result;
     }
 
-    return HL_SUCCESS;
-}
+    template<typename char_t>
+    std::unique_ptr<char_t[]> INPathCombinePtr(const char_t* path1, const char_t* path2)
+    {
+        // Determine path lengths
+        std::size_t path1Len = StringLength(path1);
+        std::size_t path2Len = StringLength(path2);
 
-HL_RESULT hl_INPathGetFilesInDirectoryUTF8(const hl_NativeChar* dir,
-    bool recursive, size_t* fileCount, char*** files)
-{
+        // Combine paths
+        return INPathCombinePtr(path1, path2,
+            path1Len, path2Len);
+    }
+
+    std::unique_ptr<char[]> PathCombinePtr(const char* path1, const char* path2)
+    {
+        if (!path1 || !path2 || !*path1 || !*path2)
+            throw std::invalid_argument("path1 and/or path2 was null or empty");
+
+        return INPathCombinePtr(path1, path2);
+    }
+
+    template<typename char_t, bool multiExt>
+    std::unique_ptr<char_t[]> INPathRemoveExtPtr(const char_t* filePath)
+    {
+        // Get file name and first extension
+        const char_t* fileName = INPathGetNamePtr<char_t>(filePath);
+        const char_t* ext = INPathGetExtPtrName<char_t, multiExt>(fileName);
+        std::size_t pathLen = static_cast<std::size_t>(ext - filePath);
+
+        // Allocate a buffer large enough to hold path
+        std::unique_ptr<char_t[]> pathNoExt = std::unique_ptr<char_t[]>(
+            new char_t[pathLen + 1]);
+
+        // Copy stem into new buffer and return
+        std::copy(filePath, ext, pathNoExt.get());
+        pathNoExt[pathLen] = static_cast<char_t>('\0');
+
+        return pathNoExt;
+    }
+
+    template std::unique_ptr<char[]> INPathRemoveExtPtr<char, true>(const char* filePath);
+    template std::unique_ptr<char[]> INPathRemoveExtPtr<char, false>(const char* filePath);
+
+    std::unique_ptr<char[]> PathRemoveExtPtr(const char* filePath)
+    {
+        if (!filePath) throw std::invalid_argument("filePath was null");
+        return INPathRemoveExtPtr<char, false>(filePath);
+    }
+
+    std::unique_ptr<char[]> PathRemoveExtsPtr(const char* filePath)
+    {
+        if (!filePath) throw std::invalid_argument("filePath was null");
+        return INPathRemoveExtPtr<char, true>(filePath);
+    }
+
+    bool INPathIsDirectory(const nchar* path)
+    {
 #ifdef _WIN32
-    // Get files in the given directory as UTF-16 paths
-    hl_NativeChar** nativeFiles;
-    HL_RESULT result = hl_INPathGetFilesInDirectory(
-        dir, recursive, fileCount, &nativeFiles);
-
-    if (HL_FAILED(result)) return result;
-
-    // Get size of UTF-8 path buffer
-    size_t bufSize = (*fileCount * sizeof(char*));
-    for (size_t i = 0; i < *fileCount; ++i)
-    {
-        bufSize += hl_INStringGetReqUTF8BufferCountUTF16(
-            reinterpret_cast<const uint16_t*>(nativeFiles[i]));
+        DWORD attrs = GetFileAttributesW(path);
+        return (attrs != INVALID_FILE_ATTRIBUTES &&
+            (attrs & FILE_ATTRIBUTE_DIRECTORY));
+#else
+        struct stat sb;
+        return (!stat(path, &sb) && S_ISDIR(sb.st_mode));
+#endif
     }
 
-    // Convert UTF-16 file paths to UTF-8 and return
-    *files = static_cast<char**>(malloc(bufSize));
-    if (!*files)
+    bool PathIsDirectory(const char* path)
     {
-        free(nativeFiles);
-        return HL_ERROR_OUT_OF_MEMORY;
+#ifdef _WIN32
+        // Convert UTF-8 path to wide UTF-16 path
+        std::unique_ptr<nchar[]> nativePth = StringConvertUTF8ToNativePtr(path);
+
+        // Check if the given path is a directory
+        return INPathIsDirectory(nativePth.get());
+#else
+        if (!path) throw std::invalid_argument("path was null");
+        return INPathIsDirectory(path);
+#endif
     }
 
-    char* fileNames = reinterpret_cast<char*>(*files + *fileCount);
-    for (size_t i = 0; i < *fileCount; ++i)
+    bool INPathExists(const nchar* path)
     {
-        size_t u8bufLen = hl_INStringGetReqUTF8BufferCountUTF16(
-            reinterpret_cast<const uint16_t*>(nativeFiles[i]), 0);
+#ifdef _WIN32
+        return (GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES);
+#else
+        return (access(path, F_OK) != -1);
+#endif
+    }
 
-        result = hl_INStringConvertUTF16ToUTF8NoAlloc(
-            reinterpret_cast<const uint16_t*>(nativeFiles[i]),
-            fileNames, u8bufLen, 0);
+    bool PathExists(const char* path)
+    {
+        if (!path) return false;
 
-        if (HL_FAILED(result))
+#ifdef _WIN32
+        // Convert path from UTF-8 to a native (UTF-16) path
+        std::unique_ptr<nchar[]> nativePth = StringConvertUTF8ToNativePtr(path);
+
+        // Check if path exists
+        return INPathExists(nativePth.get());
+#else
+        // Check if path exists
+        return INPathExists(path);
+#endif
+    }
+
+    std::size_t INPathGetSize(const nchar* filePath)
+    {
+#ifdef _WIN32
+        WIN32_FILE_ATTRIBUTE_DATA fd;
+        if (!GetFileAttributesExW(filePath, GetFileExInfoStandard, &fd))
         {
-            free(nativeFiles);
-            free(*files);
-            return result;
+            std::error_code errorCode(GetLastError(), std::system_category());
+            throw std::system_error(errorCode);
         }
 
-        (*files)[i] = fileNames;
-        fileNames += u8bufLen;
+        LARGE_INTEGER s;
+        s.HighPart = fd.nFileSizeHigh;
+        s.LowPart = fd.nFileSizeLow;
+        return static_cast<std::size_t>(s.QuadPart);
+#else
+        struct stat s;
+        if (stat(filePath, &s) == -1)
+        {
+            throw std::runtime_error("stat failed"); // TODO: Give a more helpful error
+        }
+
+        return static_cast<std::size_t>(s.st_size);
+#endif
     }
 
-    free(nativeFiles);
-    return HL_SUCCESS;
-#else
-    // Get files in the given directory and return
-    return hl_INPathGetFilesInDirectory(dir, recursive, fileCount, files);
-#endif
-}
-
-HL_RESULT hl_PathGetFilesInDirectoryUTF8(const hl_NativeChar* dir,
-    bool recursive, size_t* fileCount, char*** files)
-{
-    if (!dir || !fileCount || !files) return HL_ERROR_INVALID_ARGS;
-    return hl_INPathGetFilesInDirectoryUTF8(dir, recursive, fileCount, files);
-}
-
-HL_RESULT hl_PathGetFilesInDirectory(const char* dir,
-    bool recursive, size_t* fileCount, char*** files)
-{
-    if (!dir || !fileCount || !files) return HL_ERROR_INVALID_ARGS;
-    HL_INSTRING_NATIVE_CALL(dir, hl_INPathGetFilesInDirectoryUTF8(
-        nativeStr, recursive, fileCount, files));
-}
-
-HL_RESULT hl_PathGetFilesInDirectoryNative(const hl_NativeChar* dir,
-    bool recursive, size_t* fileCount, hl_NativeChar*** files)
-{
-    if (!dir || !fileCount) return HL_ERROR_INVALID_ARGS;
-    return hl_INPathGetFilesInDirectory(dir, recursive, fileCount, files);
-}
-
-// Windows-specific overloads
+    std::size_t PathGetSize(const char* filePath)
+    {
 #ifdef _WIN32
-HL_RESULT hl_PathCombine(const char* path1,
-    const hl_NativeChar* path2, hl_NativeChar** result)
-{
-    if (!path1 || !path2 || !result || (!*path1 && !*path2))
-        return HL_ERROR_INVALID_ARGS;
-
-    // TODO: Optimize-out the initial malloc done here to convert to UTF-16
-    HL_INSTRING_NATIVE_CALL(path1, hl_INPathCombine(
-        nativeStr, path2, result));
-}
-
-HL_RESULT hl_PathCombine(const hl_NativeChar* path1,
-    const char* path2, hl_NativeChar** result)
-{
-    if (!path1 || !path2 || !result || (!*path1 && !*path2))
-        return HL_ERROR_INVALID_ARGS;
-
-    // TODO: Optimize-out the initial malloc done here to convert to UTF-16
-    HL_INSTRING_NATIVE_CALL(path2, hl_INPathCombine(
-        path1, nativeStr, result));
-}
+        std::unique_ptr<nchar[]> nativePth = StringConvertUTF8ToNativePtr(filePath);
+        return INPathGetSize(nativePth.get());
+#else
+        if (!filePath) throw std::invalid_argument("filePath was null");
+        return INPathGetSize(filePath);
 #endif
+    }
+
+    std::size_t INPathGetFileCount(const nchar* dir, bool recursive)
+    {
+        std::size_t dirLen = StringLength(dir);
+        std::size_t fileCount;
+
+#ifdef _WIN32
+        // Adjust the path for usage in the FindFile functions
+        // (The Win32 API is the messiest thing I swear)
+        std::unique_ptr<nchar[]> fdir = std::unique_ptr<nchar[]>(
+            new nchar[dirLen + 3]);
+
+        // Copy the actual path
+        std::copy(dir, dir + dirLen, fdir.get());
+
+        // We also have to append \* since otherwise windows will just give
+        // us the directory rather than files *IN* the directory
+        fdir[dirLen] = L'\\';
+        fdir[dirLen + 1] = L'*';
+        fdir[dirLen + 2] = L'\0';
+
+        // Find the first file in the directory
+        WIN32_FIND_DATAW fd;
+        HANDLE h = FindFirstFileW(fdir.get(), &fd);
+
+        if (h == INVALID_HANDLE_VALUE)
+        {
+            // TODO: Return a more helpful error (using GetLastError()?)
+            throw std::runtime_error("FindFirstFileW failed");
+        }
+
+        // Loop through subsequent files in directory
+        try
+        {
+            do
+            {
+#else
+        // Open the directory
+        DIR* d = opendir(dir);
+        if (!d)
+        {
+            // TODO: Use errno to get a more helpful error
+            throw std::runtime_error("opendir failed");
+        }
+
+        // Loop through subsequent files in directory
+        try
+        {
+            struct dirent* e;
+            while (e = readdir(d))
+            {
+#endif
+                // Get file name
+                nchar* fileName;
+
+#ifdef _WIN32
+                // TODO: Is cFileName always null-terminated?
+                fileName = fd.cFileName;
+#else
+                fileName = e->d_name;
+#endif
+
+                // Directories
+#ifdef _WIN32
+                if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+#else
+                if (e->d_type == DT_DIR)
+#endif
+                {
+                    if (recursive)
+                    {
+                        // Skip . and .. (necessary to avoid infinite recursion)
+                        if (StringsEqual(fileName, HL_NTEXT(".")) ||
+                            StringsEqual(fileName, HL_NTEXT("..")))
+                            continue;
+
+                        // Recurse through subdirectories
+                        std::unique_ptr<nchar[]> subDir = INPathCombinePtr(dir, fileName);
+                        fileCount += INPathGetFileCount(subDir.get(), recursive);
+                    }
+                }
+
+                // Files
+                // TODO: Handle special cases
+                else
+//#ifdef _WIN32
+//                else if (fd.dwFileAttributes == FILE_ATTRIBUTE_NORMAL)
+//#else
+//                else if (e->d_type == DT_REG)
+//#endif
+                {
+                    // Increase file count
+                    ++fileCount;
+                }
+            }
+#ifdef _WIN32
+            while (FindNextFileW(h, &fd));
+#endif
+        }
+        catch (std::exception& ex)
+        {
+            // Clost the directory
+#ifdef _WIN32
+            FindClose(h); // TODO: Check result?
+#else
+            closedir(d); // TODO: Check result?
+#endif
+
+            // Re-throw the exception
+            throw ex;
+        }
+
+        // TODO: Use GetLastError to ensure we've just reached the last file and no error occured.
+
+        // Close the directory
+#ifdef _WIN32
+        FindClose(h); // TODO: Check result?
+#else
+        // Close the directory
+        closedir(d); // TODO: Check result?
+#endif
+
+        return fileCount;
+    }
+
+    std::size_t PathGetFileCount(const char* dir, bool recursive)
+    {
+#ifdef _WIN32
+        std::unique_ptr<nchar[]> nativePth = StringConvertUTF8ToNativePtr(dir);
+        return INPathGetFileCount(nativePth.get(), recursive);
+#else
+        if (!dir) throw std::invalid_argument("dir was null");
+        return INPathGetFileCount(dir, recursive);
+#endif
+    }
+
+    void INPathGetFilesInDirectory(const nchar* dir, bool recursive,
+        std::vector<std::unique_ptr<nchar[]>>& files)
+    {
+        std::size_t dirLen = StringLength(dir);
+
+#ifdef _WIN32
+        // Adjust the path for usage in the FindFile functions
+        // (The Win32 API is the messiest thing I swear)
+        std::unique_ptr<nchar[]> fdir = std::unique_ptr<nchar[]>(
+            new nchar[dirLen + 3]);
+
+        // Copy the actual path
+        std::copy(dir, dir + dirLen, fdir.get());
+
+        // We also have to append \* since otherwise windows will just give
+        // us the directory rather than files *IN* the directory
+        fdir[dirLen] = L'\\';
+        fdir[dirLen + 1] = L'*';
+        fdir[dirLen + 2] = L'\0';
+
+        // Find the first file in the directory
+        WIN32_FIND_DATAW fd;
+        HANDLE h = FindFirstFileW(fdir.get(), &fd);
+
+        if (h == INVALID_HANDLE_VALUE)
+        {
+            // TODO: Return a more helpful error (using GetLastError()?)
+            throw std::runtime_error("FindFirstFileW failed");
+        }
+
+        // Loop through subsequent files in directory
+        try
+        {
+            do
+            {
+#else
+        // Open the directory
+        DIR* d = opendir(dir);
+        if (!d)
+        {
+            // TODO: Use errno to get a more helpful error
+            throw std::runtime_error("opendir failed");
+        }
+
+        // Loop through subsequent files in directory
+        try
+        {
+            struct dirent* e;
+            while (e = readdir(d))
+            {
+#endif
+                // Get file name
+                nchar* fileName;
+
+#ifdef _WIN32
+                // TODO: Is cFileName always null-terminated?
+                fileName = fd.cFileName;
+#else
+                fileName = e->d_name;
+#endif
+
+                // Directories
+#ifdef _WIN32
+                if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+#else
+                if (e->d_type == DT_DIR)
+#endif
+                {
+                    // Skip . and .. (necessary to avoid infinite recursion)
+                    if (StringsEqual(fileName, HL_NTEXT(".")) ||
+                        StringsEqual(fileName, HL_NTEXT("..")))
+                        continue;
+
+                    if (recursive)
+                    {
+                        // Recurse through subdirectories
+                        std::unique_ptr<nchar[]> subDir = INPathCombinePtr(dir, fileName);
+                        INPathGetFilesInDirectory(subDir.get(), recursive, files);
+                    }
+                }
+
+                // Files
+                // TODO: Handle special cases
+                else
+//#ifdef _WIN32
+//                else if (fd.dwFileAttributes == FILE_ATTRIBUTE_NORMAL)
+//#else
+//                else if (e->d_type == DT_REG)
+//#endif
+                {
+                    // Copy file name
+                    std::size_t nameLen = StringLength(fileName);
+                    files.push_back(INPathCombinePtr(dir, fileName, dirLen, nameLen));
+                }
+            }
+#ifdef _WIN32
+            while (FindNextFileW(h, &fd));
+#endif
+        }
+        catch (std::exception & ex)
+        {
+            // Close the directory
+#ifdef _WIN32
+            FindClose(h); // TODO: Check result?
+#else
+            closedir(d); // TODO: Check result?
+#endif
+
+            // Re-throw the exception
+            throw ex;
+        }
+
+        // TODO: Use GetLastError to ensure we've just reached the last file and no error occured.
+
+        // Close the directory
+#ifdef _WIN32
+        FindClose(h); // TODO: Check result?
+#else
+        // Close the directory
+        closedir(d); // TODO: Check result?
+#endif
+    }
+
+    std::vector<std::unique_ptr<char[]>> INPathGetFilesInDirectoryUTF8(
+        const nchar* dir, bool recursive)
+    {
+#ifdef _WIN32
+        // Get files in the given directory as UTF-16 paths
+        std::vector<std::unique_ptr<nchar[]>> files;
+        INPathGetFilesInDirectory(dir, recursive, files);
+
+        // Convert UTF-16 file paths to UTF-8 and return
+        std::vector<std::unique_ptr<char[]>> u8files = std::vector<
+            std::unique_ptr<char[]>>(files.size());
+
+        for (std::size_t i = 0; i < files.size(); ++i)
+        {
+            u8files[i] = StringConvertUTF16ToUTF8Ptr(reinterpret_cast<
+                const char16_t*>(files[i].get()));
+        }
+
+        return u8files;
+#else
+        // Get files in the given directory and return
+        std::vector<std::unique_ptr<char[]>> files;
+        INPathGetFilesInDirectory(dir, recursive, files);
+        return files;
+#endif
+    }
+
+    std::vector<std::unique_ptr<char[]>> PathGetFilesInDirectoryUTF8(
+        const char* dir, bool recursive)
+    {
+#ifdef _WIN32
+        std::unique_ptr<nchar[]> nativePth = StringConvertUTF8ToNativePtr(dir);
+        return INPathGetFilesInDirectoryUTF8(nativePth.get(), recursive);
+#else
+        if (!dir) throw std::invalid_argument("dir was null");
+        return INPathGetFilesInDirectoryUTF8(dir, recursive);
+#endif
+    }
+
+    std::vector<std::unique_ptr<nchar[]>> PathGetFilesInDirectory(
+        const char* dir, bool recursive)
+    {
+        std::vector<std::unique_ptr<nchar[]>> files;
+
+#ifdef _WIN32
+        std::unique_ptr<nchar[]> nativePth = StringConvertUTF8ToNativePtr(dir);
+        INPathGetFilesInDirectory(nativePth.get(), recursive, files);
+#else
+        if (!dir) throw std::invalid_argument("dir was null");
+        INPathGetFilesInDirectory(dir, recursive, files);
+#endif
+
+        return files;
+    }
+
+    void INPathCreateDirectory(const nchar* path)
+    {
+        // Return successfully if path is just empty
+        if (!*path) return; // TODO: Is this needed on non-Windows platforms too?
+
+#ifdef _WIN32
+        BOOL r = CreateDirectoryW(path, nullptr);
+        if (!r && GetLastError() != ERROR_ALREADY_EXISTS)
+        {
+            std::error_code errorCode(GetLastError(), std::system_category());
+            throw std::system_error(errorCode);
+        }
+#else
+        if (!mkdir(path, S_IRWXU | S_IRWXG | S_IRWXO) || errno == EEXIST)
+        {
+            // TODO: Use errno to give a more helpful error
+            throw std::runtime_error("mkdir failed");
+        }
+#endif
+    }
+
+    void PathCreateDirectory(const char* path)
+    {
+#ifdef _WIN32
+        std::unique_ptr<nchar[]> nativePth = StringConvertUTF8ToNativePtr(path);
+        INPathCreateDirectory(nativePth.get());
+#else
+        if (!path) throw std::invalid_argument("path was null");
+        INPathCreateDirectory(path);
+#endif
+    }
+
+#ifdef _WIN32
+    const nchar* PathGetNamePtr(const nchar* path)
+    {
+        if (!path) return EmptyStringNative;
+        return INPathGetNamePtr(path);
+    }
+
+    const nchar* PathGetExtPtrName(const nchar* fileName)
+    {
+        if (!fileName) return EmptyStringNative;
+        return INPathGetExtPtrName(fileName);
+    }
+
+    const nchar* PathGetExtsPtrName(const nchar* fileName)
+    {
+        if (!fileName) return EmptyStringNative;
+        return INPathGetExtPtrName<nchar, true>(fileName);
+    }
+
+    const nchar* PathGetExtPtr(const nchar* filePath)
+    {
+        // Return extension pointer
+        filePath = PathGetNamePtr(filePath);
+        return INPathGetExtPtrName(filePath);
+    }
+
+    const nchar* PathGetExtsPtr(const nchar* filePath)
+    {
+        // Return extension pointer
+        filePath = PathGetNamePtr(filePath);
+        return INPathGetExtPtrName<nchar, true>(filePath);
+    }
+
+    std::unique_ptr<nchar[]> PathGetNameNoExtNamePtr(const nchar* fileName)
+    {
+        if (!fileName) throw std::invalid_argument("fileName was null");
+        return INPathGetNameNoExtNamePtr<nchar, false>(fileName);
+    }
+
+    std::unique_ptr<nchar[]> PathGetNameNoExtsNamePtr(const nchar* fileName)
+    {
+        if (!fileName) throw std::invalid_argument("fileName was null");
+        return INPathGetNameNoExtNamePtr<nchar, true>(fileName);
+    }
+
+    std::unique_ptr<nchar[]> PathGetNameNoExtPtr(const nchar* filePath)
+    {
+        if (!filePath) throw std::invalid_argument("filePath was null");
+        return INPathGetNameNoExtPtr<nchar, false>(filePath);
+    }
+
+    std::unique_ptr<nchar[]> PathGetNameNoExtsPtr(const nchar* filePath)
+    {
+        if (!filePath) throw std::invalid_argument("filePath was null");
+        return INPathGetNameNoExtPtr<nchar, true>(filePath);
+    }
+
+    std::size_t PathGetStemRangeName(const nchar* fileName, const nchar*& stemEnd)
+    {
+        if (!fileName) return 0;
+        return INPathGetStemRangeName(fileName, stemEnd);
+    }
+
+    std::size_t PathGetStemRange(const nchar* path,
+        const nchar*& stemStart, const nchar*& stemEnd)
+    {
+        if (!path) return 0;
+
+        stemStart = path;
+        return INPathGetStemRange(stemStart, stemEnd);
+    }
+
+    std::unique_ptr<nchar[]> PathGetStemPtr(const nchar* path)
+    {
+        if (!path) throw std::invalid_argument("path was null");
+        return INPathGetStemPtr(path);
+    }
+
+    std::unique_ptr<nchar[]> PathGetParentPtr(const nchar* path)
+    {
+        if (!path) throw std::invalid_argument("path was null");
+        return INPathGetParentPtr(path);
+    }
+
+    std::unique_ptr<nchar[]> PathCombinePtr(const nchar* path1,
+        const nchar* path2)
+    {
+        if (!path1 || !path2 || !*path1 || !*path2)
+            throw std::invalid_argument("path1 and/or path2 was null or empty");
+
+        return INPathCombinePtr(path1, path2);
+    }
+
+    std::unique_ptr<nchar[]> PathCombinePtr(const char* path1,
+        const nchar* path2)
+    {
+        if (!path1 || !path2 || !*path1 || !*path2)
+            throw std::invalid_argument("path1 and/or path2 was null or empty");
+
+        std::unique_ptr<nchar[]> nativePth = StringConvertUTF8ToNativePtr(path1);
+        return INPathCombinePtr(nativePth.get(), path2);
+    }
+
+    std::unique_ptr<nchar[]> PathCombinePtr(const nchar* path1,
+        const char* path2)
+    {
+        if (!path1 || !path2 || !*path1 || !*path2)
+            throw std::invalid_argument("path1 and/or path2 was null or empty");
+
+        std::unique_ptr<nchar[]> nativePth = StringConvertUTF8ToNativePtr(path2);
+        return INPathCombinePtr(path1, nativePth.get());
+    }
+
+    std::unique_ptr<nchar[]> PathRemoveExtPtr(const nchar* filePath)
+    {
+        if (!filePath) throw std::invalid_argument("filePath was null");
+        return INPathRemoveExtPtr<nchar, false>(filePath);
+    }
+
+    std::unique_ptr<nchar[]> PathRemoveExtsPtr(const nchar* filePath)
+    {
+        if (!filePath) throw std::invalid_argument("filePath was null");
+        return INPathRemoveExtPtr<nchar, true>(filePath);
+    }
+
+    bool PathIsDirectory(const nchar* path)
+    {
+        if (!path) throw std::invalid_argument("path was null");
+        return INPathIsDirectory(path);
+    }
+
+    bool PathExists(const nchar* path)
+    {
+        if (!path) throw std::invalid_argument("path was null");
+        return INPathExists(path);
+    }
+
+    std::size_t PathGetSize(const nchar* filePath)
+    {
+        if (!filePath) throw std::invalid_argument("filePath was null");
+        return INPathGetSize(filePath);
+    }
+
+    std::size_t PathGetFileCount(const nchar* dir, bool recursive)
+    {
+        if (!dir) throw std::invalid_argument("dir was null");
+        return INPathGetFileCount(dir, recursive);
+    }
+
+    std::vector<std::unique_ptr<char[]>> PathGetFilesInDirectoryUTF8(
+        const nchar* dir, bool recursive)
+    {
+        if (!dir) throw std::invalid_argument("dir was null");
+        return INPathGetFilesInDirectoryUTF8(dir, recursive);
+    }
+
+    std::vector<std::unique_ptr<nchar[]>> PathGetFilesInDirectory(
+        const nchar* dir, bool recursive)
+    {
+        if (!dir) throw std::invalid_argument("dir was null");
+
+        std::vector<std::unique_ptr<nchar[]>> files;
+        INPathGetFilesInDirectory(dir, recursive, files);
+        return files;
+    }
+
+    void PathCreateDirectory(const nchar* path)
+    {
+        if (!path) throw std::invalid_argument("path was null");
+        INPathCreateDirectory(path);
+    }
+#endif
+}

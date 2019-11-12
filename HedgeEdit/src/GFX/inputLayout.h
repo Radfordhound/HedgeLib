@@ -4,7 +4,10 @@
 #include <d3d11.h>
 #endif
 
-struct hl_HHVertexElement;
+namespace hl
+{
+    struct HHVertexElement;
+}
 
 namespace HedgeEdit::GFX
 {
@@ -17,7 +20,7 @@ namespace HedgeEdit::GFX
 #endif
 
     public:
-        InputLayout(const Instance& inst, const hl_HHVertexElement* format,
+        InputLayout(const Instance& inst, const hl::HHVertexElement* format,
             const void* signature, std::size_t signatureLength);
 
         void Use(const Instance& inst) const;

@@ -1,180 +1,193 @@
 #pragma once
+#include "../Offsets.h"
 #include "../String.h"
-#include "../Endian.h"
 #include "../StringTable.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
+namespace hl
+{
 #define HL_BINA_SIGNATURE                   0x414E4942
 #define HL_BINA_V2_DATA_NODE_SIGNATURE      0x41544144
 
-#define HL_BINA_BE_FLAG             ((uint8_t)0x42)
-#define HL_BINA_LE_FLAG             ((uint8_t)0x4C)
+#define HL_BINA_BE_FLAG             static_cast<std::uint8_t>(0x42)
+#define HL_BINA_LE_FLAG             static_cast<std::uint8_t>(0x4C)
 #define HL_BINA_OFFSET_SIZE_MASK    0xC0
 #define HL_BINA_OFFSET_DATA_MASK    0x3F
 
-typedef struct hl_File hl_File;
-typedef struct hl_Blob hl_Blob;
+    class Blob;
+    class File;
 
-typedef enum HL_BINA_OFFSET_SIZE
-{
-    HL_BINA_SIX_BIT         = 0x40,
-    HL_BINA_FOURTEEN_BIT    = 0x80,
-    HL_BINA_THIRTY_BIT      = 0xC0
-}
-HL_BINA_OFFSET_SIZE;
-
-typedef struct hl_BINAV2Header
-{
-    uint32_t Signature;     // "BINA"
-    uint8_t Version[3];     // Version Number.
-    uint8_t EndianFlag;     // 'B' for Big Endian, 'L' for Little Endian.
-    uint32_t FileSize;      // The size of the entire file, including this header.
-    uint16_t NodeCount;     // How many hl_BINAV2Nodes are in the file.
-    uint16_t Padding;       // Included so fwrite won't write 2 bytes of garbage.
-
-    HL_DECL_ENDIAN_SWAP_CPP();
-}
-hl_BINAV2Header;
-
-HL_STATIC_ASSERT_SIZE(hl_BINAV2Header, 16);
-HL_DECL_ENDIAN_SWAP(hl_BINAV2Header);
-
-typedef struct hl_BINAV2NodeHeader
-{
-    uint32_t Signature;     // Used to determine what type of node this is.
-    uint32_t Size;          // The size of the node, including this header.
-
-    HL_DECL_ENDIAN_SWAP_CPP();
-}
-hl_BINAV2NodeHeader;
-
-HL_STATIC_ASSERT_SIZE(hl_BINAV2NodeHeader, 8);
-HL_DECL_ENDIAN_SWAP(hl_BINAV2NodeHeader);
-
-typedef struct hl_BINAV2DataNode
-{
-    hl_BINAV2NodeHeader Header;     // Contains general information on this node.
-    uint32_t StringTable;           // Offset to the beginning of the string table.
-    uint32_t StringTableSize;       // The size of the string table in bytes, including padding.
-    uint32_t OffsetTableSize;       // The size of the offset table in bytes, including padding.
-    uint16_t RelativeDataOffset;    // The offset to the data relative to the end of this struct.
-    uint16_t Padding;               // Included so fwrite won't write 2 bytes of garbage.
-
-    HL_DECL_ENDIAN_SWAP_CPP();
-}
-hl_BINAV2DataNode;
-
-HL_STATIC_ASSERT_SIZE(hl_BINAV2DataNode, 0x18);
-HL_DECL_ENDIAN_SWAP(hl_BINAV2DataNode);
-
-HL_API bool hl_BINANextOffset(const uint8_t** offTable, const uint32_t** curOff);
-
-HL_API void hl_BINAFixOffsets32(const uint8_t* offTable, uint32_t size,
-    void* data, bool isBigEndian);
-
-HL_API void hl_BINAFixOffsets64(const uint8_t* offTable, uint32_t size,
-    void* data, bool isBigEndian);
-
-HL_API HL_RESULT hl_BINAReadV1(hl_File* file, hl_Blob** blob);
-HL_API HL_RESULT hl_BINAReadV2(hl_File* file, hl_Blob** blob);
-HL_API HL_RESULT hl_BINARead(hl_File* file, hl_Blob** blob);
-HL_API HL_RESULT hl_BINALoad(const char* filePath, hl_Blob** blob);
-HL_API HL_RESULT hl_BINALoadNative(const hl_NativeChar* filePath, hl_Blob** blob);
-
-HL_API HL_RESULT hl_BINAWriteStringTable32(const hl_File* file,
-    const hl_StringTable* strTable, hl_OffsetTable* offTable);
-
-HL_API HL_RESULT hl_BINAWriteStringTable64(const hl_File* file,
-    const hl_StringTable* strTable, hl_OffsetTable* offTable);
-
-inline HL_RESULT hl_BINAWriteStringTable(const hl_File* file,
-    const hl_StringTable* strTable, hl_OffsetTable* offTable,
-    bool use64BitOffsets)
-{
-    if (use64BitOffsets)
+    enum BINA_OFFSET_SIZE
     {
-        return hl_BINAWriteStringTable64(file, strTable, offTable);
+        BINA_SIX_BIT = 0x40,
+        BINA_FOURTEEN_BIT = 0x80,
+        BINA_THIRTY_BIT = 0xC0
+    };
+
+    struct BINAV2Header
+    {
+        std::uint32_t Signature;    // "BINA"
+        std::uint8_t Version[3];    // Version Number.
+        std::uint8_t EndianFlag;    // 'B' for Big Endian, 'L' for Little Endian.
+        std::uint32_t FileSize;     // The size of the entire file, including this header.
+        std::uint16_t NodeCount;    // How many hl_BINAV2Nodes are in the file.
+        std::uint16_t Padding;      // Included so fwrite won't write 2 bytes of garbage.
+
+        inline void EndianSwap()
+        {
+            Swap(FileSize);
+            Swap(NodeCount);
+        }
+    };
+
+    HL_STATIC_ASSERT_SIZE(BINAV2Header, 16);
+
+    struct BINAV2NodeHeader
+    {
+        std::uint32_t Signature;    // Used to determine what type of node this is.
+        std::uint32_t Size;         // The size of the node, including this header.
+
+        inline void EndianSwap()
+        {
+            Swap(Size);
+        }
+    };
+
+    HL_STATIC_ASSERT_SIZE(BINAV2NodeHeader, 8);
+
+    struct BINAV2DataNode
+    {
+        BINAV2NodeHeader Header;            // Contains general information on this node.
+        std::uint32_t StringTable;          // Offset to the beginning of the string table.
+        std::uint32_t StringTableSize;      // The size of the string table in bytes, including padding.
+        std::uint32_t OffsetTableSize;      // The size of the offset table in bytes, including padding.
+        std::uint16_t RelativeDataOffset;   // The offset to the data relative to the end of this struct.
+        std::uint16_t Padding;              // Included so fwrite won't write 2 bytes of garbage.
+
+        inline void EndianSwap()
+        {
+            Header.EndianSwap();
+            Swap(StringTable);
+            Swap(StringTableSize);
+            Swap(OffsetTableSize);
+            Swap(RelativeDataOffset);
+        }
+    };
+
+    HL_STATIC_ASSERT_SIZE(BINAV2DataNode, 0x18);
+
+    HL_API bool BINANextOffset(const std::uint8_t*& offTable,
+        const std::uint32_t*& curOff);
+
+    HL_API void BINAFixOffsets32(const std::uint8_t* offTable,
+        std::uint32_t size, void* data, bool isBigEndian);
+
+    HL_API void BINAFixOffsets64(const std::uint8_t* offTable,
+        std::uint32_t size, void* data, bool isBigEndian);
+
+    HL_API Blob DBINAReadV1(File& file);
+    HL_API Blob DBINAReadV2(File& file);
+    HL_API Blob DBINARead(File& file);
+    HL_API Blob DBINALoad(const char* filePath);
+
+#ifdef _WIN32
+    HL_API Blob DBINALoad(const nchar* filePath);
+#endif
+
+    HL_API void BINAWriteStringTable32(const File& file,
+        const StringTable& strTable, OffsetTable& offTable);
+
+    HL_API void BINAWriteStringTable64(const File& file,
+        const StringTable& strTable, OffsetTable& offTable);
+
+    inline void BINAWriteStringTable(const File& file,
+        const StringTable& strTable, OffsetTable& offTable,
+        bool use64BitOffsets)
+    {
+        if (use64BitOffsets)
+        {
+            return BINAWriteStringTable64(file, strTable, offTable);
+        }
+
+        return BINAWriteStringTable32(file, strTable, offTable);
     }
 
-    return hl_BINAWriteStringTable32(file, strTable, offTable);
-}
+    HL_API void BINAWriteOffsetTableSorted(const File& file,
+        const OffsetTable& offTable);
 
-HL_API HL_RESULT hl_BINAWriteOffsetTableSorted(const hl_File* file,
-    const hl_OffsetTable* offTable);
-HL_API HL_RESULT hl_BINAWriteOffsetTable(const hl_File* file,
-    hl_OffsetTable* offTable);
+    HL_API void BINAWriteOffsetTable(const File& file,
+        OffsetTable& offTable);
 
-HL_API HL_RESULT hl_BINAStartWriteV2(hl_File* file, bool bigEndian, bool use64BitOffsets);
-HL_API HL_RESULT hl_BINAStartWriteV2DataNode(hl_File* file);
+    HL_API void BINAStartWriteV2(File& file,
+        bool bigEndian, bool use64BitOffsets);
 
-HL_API HL_RESULT hl_BINAFinishWriteV2DataNode32(const hl_File* file,
-    long dataNodePos, hl_OffsetTable* offTable, const hl_StringTable* strTable);
+    HL_API void BINAStartWriteV2DataNode(File& file);
 
-HL_API HL_RESULT hl_BINAFinishWriteV2DataNode64(const hl_File* file,
-    long dataNodePos, hl_OffsetTable* offTable, const hl_StringTable* strTable);
+    HL_API void BINAFinishWriteV2DataNode32(const File& file,
+        long dataNodePos, OffsetTable& offTable, const StringTable& strTable);
 
-inline HL_RESULT hl_BINAFinishWriteV2DataNode(const hl_File* file,
-    long dataNodePos, hl_OffsetTable* offTable, const hl_StringTable* strTable,
-    bool use64BitOffsets)
-{
-    if (use64BitOffsets)
+    HL_API void BINAFinishWriteV2DataNode64(const File& file,
+        long dataNodePos, OffsetTable& offTable, const StringTable& strTable);
+
+    inline void BINAFinishWriteV2DataNode(const File& file,
+        long dataNodePos, OffsetTable& offTable, const StringTable& strTable,
+        bool use64BitOffsets)
     {
-        return hl_BINAFinishWriteV2DataNode64(file,
+        if (use64BitOffsets)
+        {
+            return BINAFinishWriteV2DataNode64(file,
+                dataNodePos, offTable, strTable);
+        }
+
+        return BINAFinishWriteV2DataNode32(file,
             dataNodePos, offTable, strTable);
     }
 
-    return hl_BINAFinishWriteV2DataNode32(file,
-        dataNodePos, offTable, strTable);
+    HL_API void BINAFinishWriteV2(const File& file,
+        long headerPos, std::uint16_t nodeCount);
+
+    inline bool DBINAIsBigEndianV2(const BINAV2Header& header)
+    {
+        return (header.EndianFlag == HL_BINA_BE_FLAG);
+    }
+
+    HL_API bool DBINAIsBigEndianV2(const Blob& blob);
+    HL_API bool DBINAIsBigEndian(const Blob& blob);
+
+    HL_API const BINAV2DataNode* DBINAGetDataNodeV2(const Blob& blob);
+    HL_API const void* DBINAGetDataNode(const Blob& blob);
+    HL_API const void* DBINAGetDataV2(const Blob& blob);
+
+    template<typename T>
+    inline const T* DBINAGetDataV2(const Blob& blob)
+    {
+        return static_cast<const T*>(DBINAGetDataV2(blob));
+    }
+
+    template<typename T = void>
+    inline T* DBINAGetDataV2(Blob& blob)
+    {
+        return static_cast<T*>(const_cast<void*>(
+            DBINAGetDataV2(const_cast<const Blob&>(blob))));
+    }
+
+    HL_API const void* DBINAGetData(const Blob& blob);
+
+    template<typename T>
+    inline const T* DBINAGetData(const Blob& blob)
+    {
+        return static_cast<const T*>(DBINAGetData(blob));
+    }
+
+    template<typename T = void>
+    inline T* DBINAGetData(Blob& blob)
+    {
+        return static_cast<T*>(const_cast<void*>(
+            DBINAGetData(const_cast<const Blob&>(blob))));
+    }
+
+    HL_API const std::uint8_t* DBINAGetOffsetTableV2(const Blob& blob,
+        std::uint32_t& offTableSize);
+
+    HL_API const std::uint8_t* DBINAGetOffsetTable(const Blob& blob,
+        std::uint32_t& offTableSize);
 }
-
-HL_API HL_RESULT hl_BINAFinishWriteV2(const hl_File* file,
-    long headerPos, uint16_t nodeCount);
-
-HL_API bool hl_BINAIsBigEndianV2(const hl_BINAV2Header* header);
-HL_API bool hl_BINAIsBigEndianV2Blob(const hl_Blob* blob);
-HL_API bool hl_BINAIsBigEndian(const hl_Blob* blob);
-
-HL_API const hl_BINAV2DataNode* hl_BINAGetDataNodeV2(const hl_Blob* blob);
-HL_API const void* hl_BINAGetDataNode(const hl_Blob* blob);
-HL_API const void* hl_BINAGetDataV2(const hl_Blob* blob);
-HL_API const void* hl_BINAGetData(const hl_Blob* blob);
-
-HL_API const uint8_t* hl_BINAGetOffsetTableV2(const hl_Blob* blob,
-    uint32_t* offTableSize);
-
-HL_API const uint8_t* hl_BINAGetOffsetTable(const hl_Blob* blob,
-    uint32_t* offTableSize);
-
-#ifdef __cplusplus
-}
-
-// Helper functions
-template<typename T>
-inline T* hl_BINAGetDataV2(hl_Blob* blob)
-{
-    return static_cast<T*>(const_cast<void*>(
-        hl_BINAGetDataV2(blob)));
-}
-
-template<typename T>
-inline const T* hl_BINAGetDataV2(const hl_Blob* blob)
-{
-    return static_cast<const T*>(hl_BINAGetDataV2(blob));
-}
-
-template<typename T>
-inline T* hl_BINAGetData(hl_Blob* blob)
-{
-    return static_cast<T*>(const_cast<void*>(
-        hl_BINAGetData(blob)));
-}
-
-template<typename T>
-inline const T* hl_BINAGetData(const hl_Blob* blob)
-{
-    return static_cast<const T*>(hl_BINAGetData(blob));
-}
-#endif

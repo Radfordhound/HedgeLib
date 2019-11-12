@@ -12,11 +12,11 @@
 #include <io.h>
 #endif
 
-enum HAP_MODES
+enum class HAPMode
 {
-    HAP_MODE_UNKNOWN = 0,
-    HAP_MODE_EXTRACT,
-    HAP_MODE_PACK
+    Unknown = 0,
+    Extract,
+    Pack
 };
 
 void PrintArchiveTypes(const char* prefix = " ")
@@ -50,69 +50,63 @@ int Error(STRING_ID id)
     return EXIT_FAILURE;
 }
 
-int Error(HL_RESULT result)
-{
-    ncout << GetText(ERROR_STRING) << hl_GetResultStringNative(result) << std::endl;
-    return EXIT_FAILURE;
-}
-
-HL_ARCHIVE_TYPE GetArchiveType(const hl_NativeChar* type)
+hl::ArchiveType GetArchiveType(const hl::nchar* type)
 {
     //// Heroes/Shadow the Hedgehog .one files
-    //if (hl_StringsEqualInvASCII(type, HL_NATIVE_TEXT("heroes")) ||
-    //    hl_StringsEqualInvASCII(type, HL_NATIVE_TEXT("shadow")))
+    //if (hl::StringsEqualInvASCII(type, HL_NTEXT("heroes")) ||
+    //    hl::StringsEqualInvASCII(type, HL_NTEXT("shadow")))
     //{
-    //    return HL_ARC_TYPE_HEROES;
+    //    return hl::ArchiveType::Heroes;
     //}
 
     //// Secret Rings/Black Knight .one files
-    //if (hl_StringsEqualInvASCII(type, HL_NATIVE_TEXT("sb")) ||
-    //    hl_StringsEqualInvASCII(type, HL_NATIVE_TEXT("storybook")))
+    //if (hl::StringsEqualInvASCII(type, HL_NTEXT("sb")) ||
+    //    hl::StringsEqualInvASCII(type, HL_NTEXT("storybook")))
     //{
-    //    return HL_ARC_TYPE_STORYBOOK;
+    //    return hl::ArchiveType::Storybook;
     //}
 
     // Unleashed/Generations .ar/.pfd files
-    if (hl_StringsEqualInvASCII(type, HL_NATIVE_TEXT("unleashed")) ||
-        hl_StringsEqualInvASCII(type, HL_NATIVE_TEXT("gens")) ||
-        hl_StringsEqualInvASCII(type, HL_NATIVE_TEXT("ar")) ||
-        hl_StringsEqualInvASCII(type, HL_NATIVE_TEXT("pfd")))
+    if (hl::StringsEqualInvASCII(type, HL_NTEXT("unleashed")) ||
+        hl::StringsEqualInvASCII(type, HL_NTEXT("gens")) ||
+        hl::StringsEqualInvASCII(type, HL_NTEXT("ar")) ||
+        hl::StringsEqualInvASCII(type, HL_NTEXT("pfd")))
     {
-        return HL_ARC_TYPE_GENS;
+        return hl::ArchiveType::Gens;
     }
 
     // Lost World .pac files
-    if (hl_StringsEqualInvASCII(type, HL_NATIVE_TEXT("lw")) ||
-        hl_StringsEqualInvASCII(type, HL_NATIVE_TEXT("lost world")) ||
-        hl_StringsEqualInvASCII(type, HL_NATIVE_TEXT("pacv2")))
+    if (hl::StringsEqualInvASCII(type, HL_NTEXT("lw")) ||
+        hl::StringsEqualInvASCII(type, HL_NTEXT("lost world")) ||
+        hl::StringsEqualInvASCII(type, HL_NTEXT("pacv2")))
     {
-        return HL_ARC_TYPE_PACX_V2;
+        return hl::ArchiveType::PACxV2;
     }
 
     //// Forces .pac files
-    //if (hl_StringsEqualInvASCII(type, HL_NATIVE_TEXT("forces")) ||
-    //    hl_StringsEqualInvASCII(type, HL_NATIVE_TEXT("pacv3")))
+    //if (hl::StringsEqualInvASCII(type, HL_NTEXT("forces")) ||
+    //    hl::StringsEqualInvASCII(type, HL_NTEXT("pacv3")))
     //{
-    //    return HL_ARC_TYPE_PACX_V3;
+    //    return hl::ArchiveType::PACxV3;
     //}
 
-    return HL_ARC_TYPE_UNKNOWN;
+    return hl::ArchiveType::Unknown;
 }
 
-const hl_NativeChar* GetArchiveExt(HL_ARCHIVE_TYPE type)
+const hl::nchar* GetArchiveExt(hl::ArchiveType type)
 {
     switch (type)
     {
-    /*case HL_ARC_TYPE_HEROES:
-    case HL_ARC_TYPE_STORYBOOK:
-        return hl_ONEExtensionNative;*/
+    /*case hl::ArchiveType::Heroes:
+    case hl::ArchiveType::Storybook:
+        return hl::ONEExtensionNative;*/
 
-    case HL_ARC_TYPE_GENS:
-        return hl_ARExtensionNative;
+    case hl::ArchiveType::Gens:
+        return hl::ARExtensionNative;
 
-    case HL_ARC_TYPE_PACX_V2:
-    case HL_ARC_TYPE_PACX_V3:
-        return hl_PACxExtensionNative;
+    case hl::ArchiveType::PACxV2:
+    case hl::ArchiveType::PACxV3:
+        return hl::PACxExtensionNative;
     }
 
     return nullptr;
@@ -136,231 +130,212 @@ int main(int argc, char* argv[])
 
     // Show help
     if (argc < 2 || (argc == 2 &&
-        (hl_StringsEqualNative(argv[1], HL_NATIVE_TEXT("-?")) ||
-        hl_StringsEqualNative(argv[1], HL_NATIVE_TEXT("/?")))))
+        (hl::StringsEqual(argv[1], HL_NTEXT("-?")) ||
+        hl::StringsEqual(argv[1], HL_NTEXT("/?")))))
     {
         PrintHelp();
         return EXIT_SUCCESS;
     }
 
-    // Parse arguments
-    HL_RESULT result;
-    const hl_NativeChar *input, *output;
-    hl_NStrPtr outputWrapper;
-    HAP_MODES mode;
-    HL_ARCHIVE_TYPE type = HL_ARC_TYPE_UNKNOWN;
-    bool isSplit, be = false, customSplitLimit = false;
-    unsigned long splitLimit = 0;
-
-    if (argc == 2)
+    try
     {
-        // Check if argument is a flag
-        if (argv[1][0] == HL_NATIVE_TEXT('-')) return Error(ERROR_NO_INPUT);
+        // Parse arguments
+        const hl::nchar *input, *output;
+        std::unique_ptr<hl::nchar[]> outputWrapper;
+        HAPMode mode;
+        hl::ArchiveType type = hl::ArchiveType::Unknown;
+        bool isSplit, be = false, customSplitLimit = false;
+        unsigned long splitLimit = 0;
 
-        // Auto-determine output and mode based on input
-        input = argv[1];
-        if (hl_PathIsDirectory(input))
-        {
-            mode = HAP_MODE_PACK;
-            output = nullptr;
-        }
-        else
-        {
-            hl_NativeChar* outputPtr;
-            mode = HAP_MODE_EXTRACT;
-            result = hl_PathRemoveExts(input, &outputPtr);
-            if (HL_FAILED(result)) return Error(result);
-
-            outputWrapper = outputPtr; // This will automatically free outputPtr for us
-            output = outputPtr;
-        }
-    }
-    else
-    {
-        // Parse arguments to get input, output, and mode
-        input = nullptr;
-        output = nullptr;
-        mode = HAP_MODE_UNKNOWN;
-
-        for (int i = 1; i < argc; ++i)
+        if (argc == 2)
         {
             // Check if argument is a flag
-            if (argv[i][0] == HL_NATIVE_TEXT('-'))
+            if (argv[1][0] == HL_NTEXT('-')) return Error(ERROR_NO_INPUT);
+
+            // Auto-determine output and mode based on input
+            input = argv[1];
+            if (hl::PathIsDirectory(input))
             {
-                // Parse flag
-                switch (HL_TOLOWERASCII(argv[i][1]))
+                mode = HAPMode::Pack;
+                output = nullptr;
+            }
+            else
+            {
+                mode = HAPMode::Extract;
+                outputWrapper = hl::PathRemoveExtsPtr(input);
+                output = outputWrapper.get();
+            }
+        }
+        else
+        {
+            // Parse arguments to get input, output, and mode
+            input = nullptr;
+            output = nullptr;
+            mode = HAPMode::Unknown;
+
+            for (int i = 1; i < argc; ++i)
+            {
+                // Check if argument is a flag
+                if (argv[i][0] == HL_NTEXT('-'))
                 {
-                // Extract mode
-                case 'e':
-                    if (mode) return Error(ERROR_TOO_MANY_MODES);
-                    mode = HAP_MODE_EXTRACT;
-                    continue;
-
-                // Pack mode
-                case 'p':
-                    if (mode) return Error(ERROR_TOO_MANY_MODES);
-                    mode = HAP_MODE_PACK;
-                    continue;
-
-                // Type flag
-                case 't':
-                    if (argv[i][2] != '=') return Error(ERROR_INVALID_TYPE);
-
-                    type = GetArchiveType(argv[i] + 3);
-                    if (type == HL_ARC_TYPE_UNKNOWN)
+                    // Parse flag
+                    switch (HL_TOLOWERASCII(argv[i][1]))
                     {
-                        return Error(ERROR_INVALID_TYPE);
+                        // Extract mode
+                    case 'e':
+                        if (mode != HAPMode::Unknown) return Error(ERROR_TOO_MANY_MODES);
+                        mode = HAPMode::Extract;
+                        continue;
+
+                        // Pack mode
+                    case 'p':
+                        if (mode != HAPMode::Unknown) return Error(ERROR_TOO_MANY_MODES);
+                        mode = HAPMode::Pack;
+                        continue;
+
+                        // Type flag
+                    case 't':
+                        if (argv[i][2] != '=') return Error(ERROR_INVALID_TYPE);
+
+                        type = GetArchiveType(argv[i] + 3);
+                        if (type == hl::ArchiveType::Unknown)
+                        {
+                            return Error(ERROR_INVALID_TYPE);
+                        }
+                        continue;
+
+                        // Big Endian flag
+                    case 'b':
+                        be = true;
+                        continue;
+
+                        // Split limit
+                    case 's':
+                        if (argv[i][2] != '=') return Error(ERROR_INVALID_SPLIT_LIMIT);
+
+                        splitLimit = nstrtoul(argv[i] + 3, nullptr, 0);
+                        customSplitLimit = true;
+                        continue;
+
+                        // Invalid flag
+                    default:
+                        return Error(ERROR_INVALID_FLAGS);
                     }
-                    continue;
-
-                // Big Endian flag
-                case 'b':
-                    be = true;
-                    continue;
-
-                // Split limit
-                case 's':
-                    if (argv[i][2] != '=') return Error(ERROR_INVALID_SPLIT_LIMIT);
-
-                    splitLimit =
-#ifdef _WIN32
-                        std::wcstoul(
-#else
-                        std::strtoul(
-#endif
-                        argv[i] + 3, nullptr, 0);
-
-                    customSplitLimit = true;
-                    continue;
-
-                // Invalid flag
-                default:
-                    return Error(ERROR_INVALID_FLAGS);
                 }
+
+                // Set input and output
+                if (!input) input = argv[i];
+                else if (!output) output = argv[i];
+
+                // Arguments are invalid
+                else return Error(ERROR_TOO_MANY_ARGUMENTS);
             }
 
-            // Set input and output
-            if (!input) input = argv[i];
-            else if (!output) output = argv[i];
+            // Quit if input was not specified
+            if (!input) return Error(ERROR_NO_INPUT);
 
-            // Arguments are invalid
-            else return Error(ERROR_TOO_MANY_ARGUMENTS);
+            // Auto-determine mode
+            if (mode == HAPMode::Unknown)
+            {
+                mode = (hl::PathIsDirectory(input)) ?
+                    HAPMode::Pack : HAPMode::Extract;
+            }
         }
-        
-        // Quit if input was not specified
-        if (!input) return Error(ERROR_NO_INPUT);
 
-        // Auto-determine mode
-        if (!mode)
+        // Auto-determine type
+        if (type == hl::ArchiveType::Unknown)
         {
-            mode = (hl_PathIsDirectory(input)) ?
-                HAP_MODE_PACK : HAP_MODE_EXTRACT;
+            if (mode == HAPMode::Extract)
+            {
+                isSplit = hl::ArchiveGetType(input, type);
+            }
+            else
+            {
+                // TODO: Determine archive type from various information, such
+                // as presence of an existing archive with the same name.
+            }
         }
-    }
 
-    // Auto-determine type
-    if (type == HL_ARC_TYPE_UNKNOWN)
-    {
-        if (mode == HAP_MODE_EXTRACT)
+        // Prompt user if type could not be auto-determined
+        if (type == hl::ArchiveType::Unknown)
         {
-            isSplit = hl_ArchiveGetTypeNative(input, &type);
+            // Prompt user for type
+            ncout << GetText(TYPE1_STRING) << std::endl;
+
+            PrintArchiveTypes();
+            ncout << std::endl;
+            ncout << GetText(TYPE2_STRING);
+
+            // Get user input
+            nstring arcType;
+            ncin >> arcType;
+
+            type = GetArchiveType(arcType.c_str());
+
+            if (type == hl::ArchiveType::Unknown)
+            {
+                return Error(ERROR_INVALID_TYPE);
+            }
         }
+
+        // Auto-determine outputs
+        if (!output)
+        {
+            if (mode == HAPMode::Pack)
+            {
+                const hl::nchar* ext = GetArchiveExt(type); // TODO: If PFD flag is set, use PFD extension instead
+                outputWrapper = hl::StringJoinPtr(input, ext);
+            }
+            else
+            {
+                outputWrapper = hl::PathRemoveExtsPtr(input);
+            }
+
+            output = outputWrapper.get();
+        }
+
+        std::chrono::high_resolution_clock::time_point begin =
+            std::chrono::high_resolution_clock::now();
+
+        // Extract archive
+        if (mode == HAPMode::Extract)
+        {
+            ncout << GetText(EXTRACTING_STRING) << std::endl;
+            hl::ExtractArchivesOfType(input, output, type);
+        }
+
+        // Pack archive from directory
         else
         {
-            // TODO: Determine archive type from various information, such
-            // as presence of an existing archive with the same name.
-        }
-    }
+            ncout << GetText(PACKING_STRING) << std::endl;
+            hl::Archive arc = hl::Archive();
+            arc.AddDirectory(input);
 
-    // Prompt user if type could not be auto-determined
-    if (type == HL_ARC_TYPE_UNKNOWN)
-    {
-        // Prompt user for type
-        ncout << GetText(TYPE1_STRING) << std::endl;
-        
-        PrintArchiveTypes();
-        ncout << std::endl;
-        ncout << GetText(TYPE2_STRING);
+            // Pack archive
+            if (type == hl::ArchiveType::Gens)
+            {
+                // TODO: Let user set pad amount
+                // TODO: Let user set whether or not to generate arl
+                // TODO: Let user set compression type
+                hl::SaveGensArchive(arc, output,
+                    static_cast<std::uint32_t>((customSplitLimit) ?
+                        splitLimit : HL_GENS_DEFAULT_SPLIT_LIMIT));
+            }
+            else if (type == hl::ArchiveType::PACxV2)
+            {
+                hl::SaveLWArchive(arc,
+                    output, be, static_cast<std::uint32_t>((customSplitLimit) ?
+                        splitLimit : HL_PACX_DEFAULT_SPLIT_LIMIT));
+            }
+            else
+            {
+                return Error(ERROR_INVALID_TYPE);
+            }
 
-        // Get user input
-        nstring arcType;
-        ncin >> arcType;
-
-        type = GetArchiveType(arcType.c_str());
-
-        if (type == HL_ARC_TYPE_UNKNOWN)
-        {
-            return Error(ERROR_INVALID_TYPE);
-        }
-    }
-
-    // Auto-determine outputs
-    if (!output)
-    {
-        hl_NativeChar* outputPtr;
-        if (mode == HAP_MODE_PACK)
-        {
-            const hl_NativeChar* ext = GetArchiveExt(type); // TODO: If PFD flag is set, use PFD extension instead
-            result = hl_StringJoinNative(input, ext, &outputPtr);
-            if (HL_FAILED(result)) return Error(result);
-        }
-        else
-        {
-            result = hl_PathRemoveExts(input, &outputPtr);
-            if (HL_FAILED(result)) return Error(result);
+            // TODO: Support other types
         }
 
-        outputWrapper = outputPtr; // This will automatically free outputPtr for us
-        output = outputPtr;
-    }
-
-    std::chrono::high_resolution_clock::time_point begin =
-        std::chrono::high_resolution_clock::now();
-
-    // Extract archive
-    if (mode == HAP_MODE_EXTRACT)
-    {
-        ncout << GetText(EXTRACTING_STRING) << std::endl;
-        result = hl_ExtractArchivesOfTypeNative(input, output, type);
-    }
-
-    // Pack archive from directory
-    else
-    {
-        ncout << GetText(PACKING_STRING) << std::endl;
-        hl_Archive* arcPtr;
-        result = hl_CreateArchive(input, &arcPtr);
-        if (HL_FAILED(result)) return Error(result);
-
-        hl_CPtr<hl_Archive> arc = arcPtr;
-
-        // Pack archive
-        if (type == HL_ARC_TYPE_GENS)
-        {
-            // TODO: Let user set pad amount
-            // TODO: Let user set whether or not to generate arl
-            // TODO: Let user set compression type
-            result = hl_SaveGensArchiveNative(arc, output,
-                static_cast<uint32_t>((customSplitLimit) ?
-                splitLimit : HL_PACX_DEFAULT_SPLIT_LIMIT));
-        }
-        else if (type == HL_ARC_TYPE_PACX_V2)
-        {
-            result = hl_SaveLWArchiveNative(arc,
-                output, be, static_cast<uint32_t>((customSplitLimit) ?
-                splitLimit : HL_PACX_DEFAULT_SPLIT_LIMIT));
-        }
-        else
-        {
-            return Error(ERROR_INVALID_TYPE);
-        }
-
-        // TODO: Support other types
-    }
-
-    // Print elapsed time if succeeded
-    if (HL_OK(result))
-    {
+        // Print elapsed time
         std::chrono::high_resolution_clock::time_point end =
             std::chrono::high_resolution_clock::now();
 
@@ -370,11 +345,12 @@ int main(int argc, char* argv[])
         ncout << GetText(DONE1_STRING) << (runtime / 1000.0f) <<
             GetText(DONE2_STRING) << std::endl;
     }
-
-    // Otherwise, print error
-    else
+    catch (std::exception& ex)
     {
-        return Error(result);
+        ncerr << "ERROR: " << ex.what() << std::endl;
+        ncout << "Press enter to continue..." << std::endl;
+        ncin.get();
+        return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;
