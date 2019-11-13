@@ -443,7 +443,7 @@ namespace hl
 
     std::size_t INPathGetFileCount(const nchar* dir, bool recursive)
     {
-        std::size_t fileCount;
+        std::size_t fileCount = 0;
 
 #ifdef _WIN32
         // Adjust the path for usage in the FindFile functions
@@ -579,10 +579,11 @@ namespace hl
     void INPathGetFilesInDirectory(const nchar* dir, bool recursive,
         std::vector<std::unique_ptr<nchar[]>>& files)
     {
+        std::size_t dirLen = StringLength(dir);
+
 #ifdef _WIN32
         // Adjust the path for usage in the FindFile functions
         // (The Win32 API is the messiest thing I swear)
-        std::size_t dirLen = StringLength(dir);
         std::unique_ptr<nchar[]> fdir = std::unique_ptr<nchar[]>(
             new nchar[dirLen + 3]);
 
@@ -766,7 +767,7 @@ namespace hl
             throw std::system_error(errorCode);
         }
 #else
-        if (!mkdir(path, S_IRWXU | S_IRWXG | S_IRWXO) || errno == EEXIST)
+        if (mkdir(path, S_IRWXU | S_IRWXG | S_IRWXO) && errno != EEXIST)
         {
             // TODO: Use errno to give a more helpful error
             throw std::runtime_error("mkdir failed");
