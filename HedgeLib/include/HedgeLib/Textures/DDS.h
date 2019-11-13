@@ -98,11 +98,11 @@ namespace hl
 
     HL_STATIC_ASSERT_SIZE(DDSHeader, 0x7C);
 
-    enum class DDS_Dimension : std::uint32_t
+    enum DDS_DIMENSION : std::uint32_t
     {
-        Texture1D = 2,
-        Texture2D = 3,
-        Texture3D = 4
+        HL_DDS_DIMENSION_TEXTURE1D = 2,
+        HL_DDS_DIMENSION_TEXTURE2D = 3,
+        HL_DDS_DIMENSION_TEXTURE3D = 4
     };
 
     enum DDS_MISC_FLAGS : std::uint32_t
