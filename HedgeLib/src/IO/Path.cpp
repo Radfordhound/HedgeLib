@@ -314,7 +314,7 @@ namespace hl
 
     std::unique_ptr<char[]> PathCombinePtr(const char* path1, const char* path2)
     {
-        if (!path1 || !path2 || !*path1 || !*path2)
+        if (!path1 || !path2 || (!*path1 && !*path2))
             throw std::invalid_argument("path1 and/or path2 was null or empty");
 
         return INPathCombinePtr(path1, path2);
@@ -872,7 +872,7 @@ namespace hl
     std::unique_ptr<nchar[]> PathCombinePtr(const nchar* path1,
         const nchar* path2)
     {
-        if (!path1 || !path2 || !*path1 || !*path2)
+        if (!path1 || !path2 || (!*path1 && !*path2))
             throw std::invalid_argument("path1 and/or path2 was null or empty");
 
         return INPathCombinePtr(path1, path2);
@@ -881,7 +881,7 @@ namespace hl
     std::unique_ptr<nchar[]> PathCombinePtr(const char* path1,
         const nchar* path2)
     {
-        if (!path1 || !path2 || !*path1 || !*path2)
+        if (!path1 || !path2 || (!*path1 && !*path2))
             throw std::invalid_argument("path1 and/or path2 was null or empty");
 
         std::unique_ptr<nchar[]> nativePth = StringConvertUTF8ToNativePtr(path1);
@@ -891,7 +891,7 @@ namespace hl
     std::unique_ptr<nchar[]> PathCombinePtr(const nchar* path1,
         const char* path2)
     {
-        if (!path1 || !path2 || !*path1 || !*path2)
+        if (!path1 || !path2 || (!*path1 && !*path2))
             throw std::invalid_argument("path1 and/or path2 was null or empty");
 
         std::unique_ptr<nchar[]> nativePth = StringConvertUTF8ToNativePtr(path2);
