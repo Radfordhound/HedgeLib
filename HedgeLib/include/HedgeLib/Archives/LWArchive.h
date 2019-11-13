@@ -8,12 +8,12 @@ namespace hl
     {
         PACxV2DataNode Header;
 
-        // Each node in here contains another array of nodes, this time containing hl_PACxV2DataEntries.
-        ArrayOffset32<PACxV2Node> TypeTree;
+        // Each node in here contains another array of nodes, this time containing PACxV2DataEntries.
+        PACxV2NodeTree TypeTree;
 
         inline void EndianSwap()
         {
-            Header.EndianSwap();
+            // Header is already swapped in INDPACxFixDataNodeV2
             Swap(TypeTree);
         }
 

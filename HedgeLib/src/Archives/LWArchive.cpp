@@ -23,13 +23,13 @@ namespace hl
         PACxV2Node* typeNodes = TypeTree.Get();
         for (std::uint32_t i = 0; i < TypeTree.Count; ++i)
         {
-            // Check if file tree is split table
+            // Check if node points to a split table
             bool isSplitTable = (!std::strcmp(typeNodes[i].Name,
                 pacv2SplitType));
 
             // Get file tree from type node
-            ArrayOffset32<PACxV2Node>* fileTree =
-                typeNodes[i].Data.GetAs<ArrayOffset32<PACxV2Node>>();
+            PACxV2NodeTree* fileTree =
+                typeNodes[i].Data.GetAs<PACxV2NodeTree>();
 
             // Swap nodes in file tree
             if (isBigEndian) Swap(*fileTree);
@@ -131,8 +131,8 @@ namespace hl
                 continue;
 
             // Get file tree from type node
-            const ArrayOffset32<PACxV2Node>* fileTree =
-                typeNodes[i].Data.GetAs<ArrayOffset32<PACxV2Node>>();
+            const PACxV2NodeTree* fileTree =
+                typeNodes[i].Data.GetAs<PACxV2NodeTree>();
 
             // Generate file entries
             const PACxV2Node* fileNodes = fileTree->Get();
@@ -142,7 +142,7 @@ namespace hl
                 const PACxV2DataEntry* dataEntry =
                     fileNodes[i2].Data.GetAs<PACxV2DataEntry>();
 
-                if (dataEntry->Flags & PACXV2_DATA_FLAGS_NO_DATA)
+                if (dataEntry->Flags & PACXV2_DATA_FLAGS_NOT_HERE)
                     continue;
 
                 // Create entry and set file size
@@ -542,8 +542,8 @@ namespace hl
                 continue;
 
             // Get file tree from type node
-            const ArrayOffset32<PACxV2Node>* fileTree = typeNodes[i].Data.GetAs<
-                ArrayOffset32<PACxV2Node>>();
+            const PACxV2NodeTree* fileTree = typeNodes[i].Data.GetAs<
+                PACxV2NodeTree>();
 
             // Get file count in tree
             if (includeProxies)
@@ -559,7 +559,7 @@ namespace hl
                     const PACxV2DataEntry* dataEntry = fileNodes[i2].Data.GetAs<
                         const PACxV2DataEntry>();
 
-                    if (dataEntry->Flags & PACXV2_DATA_FLAGS_NO_DATA)
+                    if (dataEntry->Flags & PACXV2_DATA_FLAGS_NOT_HERE)
                         continue;
 
                     ++fileCount;
@@ -590,8 +590,8 @@ namespace hl
                 continue;
 
             // Get file nodes
-            const ArrayOffset32<PACxV2Node>* fileTree = typeNodes[i].Data.GetAs<
-                const ArrayOffset32<PACxV2Node>>();
+            const PACxV2NodeTree* fileTree = typeNodes[i].Data.GetAs<
+                const PACxV2NodeTree>();
 
             const PACxV2Node* fileNodes = fileTree->Offset.Get();
             for (std::uint32_t i2 = 0; i2 < fileTree->Count; ++i2)
@@ -698,14 +698,20 @@ namespace hl
 #endif
 
             // Get file tree
-            const ArrayOffset32<PACxV2Node>* fileTree = typeNodes[i].Data.GetAs<
-                const ArrayOffset32<PACxV2Node>>();
+            const PACxV2NodeTree* fileTree = typeNodes[i].Data.GetAs<
+                const PACxV2NodeTree>();
 
             const PACxV2Node* fileNodes = fileTree->Offset.Get();
 
             // Iterate through file nodes
             for (std::uint32_t i2 = 0; i2 < fileTree->Count; ++i2)
             {
+                const PACxV2DataEntry* dataEntry = fileNodes[i2].Data.GetAs<
+                    const PACxV2DataEntry>();
+
+                if (dataEntry->Flags & PACXV2_DATA_FLAGS_NOT_HERE)
+                    continue;
+
                 // Get the current name's length
                 std::size_t len = (extLen +
 #ifdef _WIN32
@@ -719,9 +725,15 @@ namespace hl
             }
         }
 
+        // Increase maxNameLen to account for null terminator
+        // (On Windows this is already handled by StringGetReqUTF16BufferCountUTF8)
+#ifndef _WIN32
+        ++maxNameLen;
+#endif
+
         // Create file path buffer and copy directory into it
         std::unique_ptr<nchar[]> filePath = std::unique_ptr<nchar[]>(
-            new nchar[dirLen + maxNameLen + 2]);
+            new nchar[dirLen + maxNameLen]);
 
         std::copy(dir, dir + dirLen, filePath.get());
         if (addSlash) filePath[dirLen - 1] = PathSeparatorNative;
@@ -749,9 +761,14 @@ namespace hl
             std::size_t extLen = static_cast<std::size_t>(
                 colonPos - reinterpret_cast<std::uintptr_t>(ext));
 
+#ifdef _WIN32
+            std::size_t u16ExtLen = StringGetReqUTF16BufferCountUTF8(
+                ext, extLen);
+#endif
+
             // Get file tree
-            const ArrayOffset32<PACxV2Node>* fileTree = typeNodes[i].Data.GetAs<
-                const ArrayOffset32<PACxV2Node>>();
+            const PACxV2NodeTree* fileTree = typeNodes[i].Data.GetAs<
+                const PACxV2NodeTree>();
 
             const PACxV2Node* fileNodes = fileTree->Offset.Get();
 
@@ -761,7 +778,7 @@ namespace hl
                 const PACxV2DataEntry* dataEntry = fileNodes[i2].Data.GetAs<
                     const PACxV2DataEntry>();
 
-                if (dataEntry->Flags & PACXV2_DATA_FLAGS_NO_DATA)
+                if (dataEntry->Flags & PACXV2_DATA_FLAGS_NOT_HERE)
                     continue;
 
                 // Get file name
@@ -772,21 +789,21 @@ namespace hl
                 // Convert file name to UTF-16 and copy
                 INStringConvertUTF8ToUTF16NoAlloc(name,
                     reinterpret_cast<char16_t*>(fileName),
-                    nameLen * sizeof(nchar), nameLen);
+                    nameLen);
 
                 // Convert extension to UTF-16 and copy
-                fileName[nameLen] = L'.';
+                fileName[nameLen++] = L'.';
                 INStringConvertUTF8ToUTF16NoAlloc(ext,
-                    reinterpret_cast<char16_t*>(fileName + nameLen + 1),
-                    extLen * sizeof(nchar), extLen);
+                    reinterpret_cast<char16_t*>(fileName + nameLen),
+                    u16ExtLen, extLen);
 
-                fileName[nameLen + extLen + 1] = L'\0';
+                fileName[nameLen + u16ExtLen] = L'\0';
 #else
                 // Copy file name and extension
-                std::copy(name, name + nameLen, fileName);              // chr_Sonic
-                fileName[nameLen] = '.';                                // .
-                std::copy(ext, ext + extLen, fileName + nameLen + 1);   // model
-                fileName[nameLen + extLen + 1] = '\0';                  // \0
+                std::copy(name, name + nameLen, fileName);          // chr_Sonic
+                fileName[nameLen++] = '.';                          // .
+                std::copy(ext, ext + extLen, fileName + nameLen);   // model
+                fileName[nameLen + extLen] = '\0';                  // \0
 #endif
 
                 // Write data to file
@@ -881,11 +898,9 @@ namespace hl
                     BINAFinishWriteV2DataNode32(file, 16, offTable, strTable);
                     BINAFinishWriteV2(file, 0, 1);
                 }
-
-                //file.Close();
             }
         }
-            }
+    }
 
     void DExtractLWArchive(const Blob& blob, const char* dir)
     {
@@ -1073,7 +1088,7 @@ namespace hl
         }
 
         // Write data entries
-        ArrayOffset32<PACxV2Node> proxyEntryTable = {};
+        PACxV2NodeTree proxyEntryTable = {};
         long dataEntriesPos = offPos, eof, splitsPos;
         offPos = (fileTreesPos + 8);
         wroteSplitTable = false;
@@ -1107,12 +1122,12 @@ namespace hl
                 PACxV2DataEntry dataEntry = {};
                 dataEntry.DataSize = static_cast<std::uint32_t>(metadata[i2].Size);
                 dataEntry.Flags = (splitIndex != metadata[i2].SplitIndex) ?
-                    PACXV2_DATA_FLAGS_NO_DATA :
+                    PACXV2_DATA_FLAGS_NOT_HERE :
                     PACXV2_DATA_FLAGS_NONE;
 
                 // Get data
                 const void* data;
-                if (dataEntry.Flags != PACXV2_DATA_FLAGS_NO_DATA)
+                if (dataEntry.Flags != PACXV2_DATA_FLAGS_NOT_HERE)
                 {
                     if (files[i2].Data)
                     {

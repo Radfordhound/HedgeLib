@@ -63,7 +63,7 @@ namespace hl
     enum PACXV2_DATA_FLAGS
     {
         PACXV2_DATA_FLAGS_NONE = 0,
-        PACXV2_DATA_FLAGS_NO_DATA = 0x80    // Indicates that this entry contains no data
+        PACXV2_DATA_FLAGS_NOT_HERE = 0x80   // Indicates that this entry contains no data
     };
 
     struct PACxV2DataEntry
@@ -91,6 +91,8 @@ namespace hl
 
     HL_STATIC_ASSERT_SIZE(PACxV2Node, 8);
 
+    using PACxV2NodeTree = ArrayOffset32<PACxV2Node>;
+
     struct PACxV2DataNode
     {
         BINAV2NodeHeader Header;        // Contains general information on this node.
@@ -116,6 +118,88 @@ namespace hl
 
     HL_STATIC_ASSERT_SIZE(PACxV2DataNode, 0x20);
 
+    using PACxV3SplitTable = ArrayOffset64<StringOffset64>;
+
+    enum PACxV3DataType : std::uint64_t
+    {
+        PACXV3_DATA_TYPE_REGULAR_FILE = 0,
+        PACXV3_DATA_TYPE_NOT_HERE = 1,
+        PACXV3_DATA_TYPE_BINA_FILE = 2
+    };
+
+    struct PACxV3DataEntry
+    {
+        std::uint32_t Unknown1;             // Date Modified or Hash??
+        std::uint32_t DataSize;
+        std::uint64_t Unknown2;             // Always 0? Unknown1 from PACxV2DataEntry??
+        DataOffset64<std::uint8_t> Data;
+        std::uint64_t Unknown3;             // Always 0? Unknown2 from PACxV2DataEntry??
+        StringOffset64 Extension;
+        std::uint64_t DataType;             // Probably actually just a single byte with 7 bytes of padding.
+    };
+
+    HL_STATIC_ASSERT_SIZE(PACxV3DataEntry, 0x30);
+
+    struct PACxV3Node
+    {
+        StringOffset64 Name;
+        DataOffset64<std::uint8_t> Data;
+        DataOffset64<std::int32_t> ChildIndices;
+        std::int32_t ParentIndex;
+        std::int32_t GlobalIndex;
+        std::int32_t DataIndex;
+        std::uint16_t ChildCount;
+        std::uint8_t HasData;
+        std::uint8_t FullPathSize;                  // Not counting this node's name.
+    };
+
+    HL_STATIC_ASSERT_SIZE(PACxV3Node, 0x28);
+
+    struct PACxV3NodeTree
+    {
+        std::uint32_t NodeCount;
+        std::uint32_t DataNodeCount;
+        DataOffset64<PACxV3Node> Nodes;
+        DataOffset64<std::int32_t> DataNodeIndices;
+    };
+
+    HL_STATIC_ASSERT_SIZE(PACxV3NodeTree, 0x18);
+
+    struct PACxV3Header
+    {
+        std::uint32_t Signature;        // "PACx"
+        std::uint8_t Version[3];        // Version Number.
+        std::uint8_t EndianFlag;        // 'B' for Big Endian, 'L' for Little Endian.
+        std::uint32_t Unknown1;         // Date Modified or Hash??
+        std::uint32_t FileSize;
+        std::uint32_t NodesSize;
+        std::uint32_t SplitsInfoSize;
+        std::uint32_t DataEntriesSize;
+        std::uint32_t StringTableSize;  // The size of the string table in bytes, including padding.
+        std::uint32_t DataSize;
+        std::uint32_t OffsetTableSize;  // The size of the offset table in bytes, including padding.
+        std::uint16_t Type;
+        std::uint16_t Unknown2;         // Always 0x108?
+        std::uint32_t SplitCount;
+
+        inline void EndianSwap()
+        {
+            Swap(Unknown1);
+            Swap(FileSize);
+            Swap(NodesSize);
+            Swap(SplitsInfoSize);
+            Swap(DataEntriesSize);
+            Swap(StringTableSize);
+            Swap(DataSize);
+            Swap(OffsetTableSize);
+            Swap(Type);
+            Swap(Unknown2);
+            Swap(SplitCount);
+        }
+    };
+
+    HL_STATIC_ASSERT_SIZE(PACxV3Header, 0x30);
+
     // TODO: PACx V4 Support
     //struct PACxV4Header
     //{
@@ -140,8 +224,10 @@ namespace hl
         bool includeProxies = true);
 
     HL_API Blob DPACxReadV2(File& file);
+    HL_API Blob DPACxReadV3(File& file);
     HL_API Blob DPACxRead(File& file);
     HL_API Blob DPACxLoadV2(const char* filePath);
+    HL_API Blob DPACxLoadV3(const char* filePath);
     HL_API Blob DPACxLoad(const char* filePath);
     
     HL_API void PACxStartWriteV2(File& file, bool bigEndian);
@@ -169,6 +255,21 @@ namespace hl
     {
         return static_cast<T*>(const_cast<void*>(
             DPACxGetDataV2(blob)));
+    }
+
+    HL_API const void* DPACxGetDataV3(const Blob& blob);
+
+    template<typename T>
+    inline const T* DPACxGetDataV3(const Blob& blob)
+    {
+        return static_cast<const T*>(DPACxGetDataV3(blob));
+    }
+
+    template<typename T>
+    inline T* DPACxGetDataV3(Blob& blob)
+    {
+        return static_cast<T*>(const_cast<void*>(
+            DPACxGetDataV3(blob)));
     }
 
     HL_API const void* DPACxGetData(const Blob& blob);
@@ -199,6 +300,7 @@ namespace hl
     
 #ifdef _WIN32
     HL_API Blob DPACxLoadV2(const nchar* filePath);
+    HL_API Blob DPACxLoadV3(const nchar* filePath);
     HL_API Blob DPACxLoad(const nchar* filePath);
     HL_API void DExtractPACxArchive(const Blob& blob, const nchar* dir);
 #endif

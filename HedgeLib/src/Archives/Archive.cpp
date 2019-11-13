@@ -3,6 +3,7 @@
 #include "HedgeLib/Archives/PACx.h"
 #include "HedgeLib/Archives/GensArchive.h"
 #include "HedgeLib/Archives/LWArchive.h"
+#include "HedgeLib/Archives/ForcesArchive.h"
 #include "HedgeLib/IO/Path.h"
 #include "HedgeLib/IO/File.h"
 #include "HedgeLib/IO/BINA.h"
@@ -212,7 +213,7 @@ namespace hl
         Blob blob;
         switch (type)
         {
-            // Unknown PACx
+        // Unknown PACx
         case ArchiveType::PACx:
         {
             // Load the PAC
@@ -229,7 +230,9 @@ namespace hl
                 }
                 return blob;
 
-                // TODO: Add Forces archive support
+            case ArchiveType::PACxV3:
+                return blob;
+
                 // TODO: Add Tokyo 2020 archive support
 
             default:
@@ -242,9 +245,13 @@ namespace hl
         case ArchiveType::Gens:
             return DLoadGensArchive(filePath);
 
-            // Lost World
+        // Lost World
         case ArchiveType::PACxV2:
             return DLoadLWArchive(filePath);
+
+        // Forces
+        case ArchiveType::PACxV3:
+            return DLoadForcesArchive(filePath);
 
             // TODO: Add other Archive Types
 
@@ -426,6 +433,12 @@ namespace hl
         case ArchiveType::PACxV2:
             DAddLWArchive(blob, *this);
             break;
+
+        // Forces
+        // TODO: Un-comment this
+        //case ArchiveType::PACxV3:
+            //DAddForcesArchive(blob, *this);
+            //break;
 
             // TODO: Add other Archive Types
 
@@ -668,17 +681,22 @@ namespace hl
     {
         switch (static_cast<ArchiveType>(blob.Type()))
         {
-            // Unknown PACx
+        // Unknown PACx
         case ArchiveType::PACx:
             return DPACxGetFileCount(blob, includeProxies);
 
-            // Unleashed/Generations
+        // Unleashed/Generations
         case ArchiveType::Gens:
             return DGensArchiveGetFileCount(blob);
 
-            // Lost World
+        // Lost World
         case ArchiveType::PACxV2:
             return DLWArchiveGetFileCount(blob, includeProxies);
+
+        // Forces
+        // TODO: Un-comment this
+        //case ArchiveType::PACxV3:
+            //return DForcesArchiveGetFileCount(blob, includeProxies);
 
             // TODO: Add other Archive Types
 
@@ -699,27 +717,26 @@ namespace hl
             DExtractPACxArchive(blob, dir);
             return;
 
-            // .ar/.pfd (Unleashed/Generations)
+        // .ar/.pfd (Unleashed/Generations)
         case ArchiveType::Gens:
             DExtractGensArchive(blob, dir);
             return;
 
-            // .pac V2 (LW)
+        // .pac V2 (LW)
         case ArchiveType::PACxV2:
             DExtractLWArchive(blob, dir);
             return;
 
-            // .pac V3 (Forces)
+        // .pac V3 (Forces)
         case ArchiveType::PACxV3:
-            // TODO: Forces Archives
-            //DExtractForcesArchive(blob, dir);
-            break;
+            DExtractForcesArchive(blob, dir);
+            return;
 
-            // .pac V4 (Tokyo 2020)
-        case ArchiveType::PACxV4:
+        // .pac V4 (Tokyo 2020)
+        //case ArchiveType::PACxV4:
             // TODO: Tokyo 2020 Archives
             //DExtractTokyoArchive(blob, dir);
-            break;
+            //return;
         }
 
         // Attempt to auto-detect archive type
@@ -761,11 +778,11 @@ namespace hl
 
         // Extract splits
         std::size_t splitCount;
-        if (rootExists && (static_cast<std::uint16_t>(type)&
+        if (rootExists && (static_cast<std::uint16_t>(type) &
             static_cast<std::uint16_t>(ArchiveType::PACx)))
         {
             // Get splits list from data in root PAC
-            std::unique_ptr<const char* []> splits = DPACxArchiveGetSplitPtrs(
+            std::unique_ptr<const char*[]> splits = DPACxArchiveGetSplitPtrs(
                 arc, splitCount);
 
             // There are no splits to extract

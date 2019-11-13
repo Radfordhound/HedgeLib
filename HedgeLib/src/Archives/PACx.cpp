@@ -1,5 +1,6 @@
 #include "HedgeLib/Archives/PACx.h"
 #include "HedgeLib/Archives/LWArchive.h"
+#include "HedgeLib/Archives/ForcesArchive.h"
 #include "HedgeLib/Archives/Archive.h"
 #include "HedgeLib/IO/File.h"
 #include "INPACx.h"
@@ -257,6 +258,39 @@ namespace hl
         return blob;
     }
 
+    Blob DPACxReadV3(File& file)
+    {
+        // Read PACxV3 header
+        PACxV3Header header;
+        file.ReadNoSwap(header);
+
+        if (header.EndianFlag == HL_BINA_BE_FLAG)
+        {
+            throw std::runtime_error("Cannot yet read big endian PACxV3 files.");
+        }
+
+        // Create blob using information from header
+        Blob blob = Blob(header.FileSize, BlobFormat::BINA,
+            static_cast<std::uint16_t>(ArchiveType::PACxV3));
+
+        // Copy header into blob
+        *blob.RawData<PACxV3Header>() = header;
+
+        // Read the rest of the file into the blob
+        std::uint8_t* data = (blob.RawData() + sizeof(header));
+        file.ReadBytes(data, header.FileSize - sizeof(header));
+
+        // Get offset table pointer
+        data = blob.RawData();
+        const std::uint8_t* offTable = data;
+        offTable += header.FileSize;
+        offTable -= header.OffsetTableSize;
+
+        // Fix offsets
+        BINAFixOffsets64(offTable, header.OffsetTableSize, data, false);
+        return blob;
+    }
+
     Blob DPACxRead(File& file)
     {
         // Read signature
@@ -282,7 +316,10 @@ namespace hl
         case 0x32:
             return DPACxReadV2(file);
 
-            // TODO: PACx V3 Support
+        // PACx V3
+        case 0x33:
+            return DPACxReadV3(file);
+
             // TODO: PACx V4 Support
 
             // Unknown format
@@ -306,6 +343,24 @@ namespace hl
         return INDPACxLoadV2(nativePth.get());
 #else
         return INDPACxLoadV2(filePath);
+#endif
+    }
+
+    Blob INDPACxLoadV3(const nchar* filePath)
+    {
+        // TODO: Do stuff here instead of just calling DPACxReadV3 so you
+        // can optimize-out the need to read the file size and backtrack.
+        File file = File(filePath);
+        return DPACxReadV3(file);
+    }
+
+    Blob DPACxLoadV3(const char* filePath)
+    {
+#ifdef _WIN32
+        std::unique_ptr<nchar[]> nativePth = StringConvertUTF8ToNativePtr(filePath);
+        return INDPACxLoadV3(nativePth.get());
+#else
+        return INDPACxLoadV3(filePath);
 #endif
     }
 
@@ -359,16 +414,25 @@ namespace hl
         file.Write(fileSize);
     }
 
+    const void* DPACxGetDataV3(const Blob& blob)
+    {
+        // Included for completeness
+        return blob.RawData();
+    }
+
     const void* DPACxGetData(const Blob& blob)
     {
         switch (blob.RawData<const BINAV2Header>()->Version[0])
         {
-            // TODO: PACx V3 Support
             // TODO: PACx V4 Support
 
         // PACx V2
         case 0x32:
             return DPACxGetDataV2(blob);
+
+        // PACx V3
+        case 0x33:
+            return DPACxGetDataV3(blob);
 
         default: return nullptr;
         }
@@ -400,12 +464,16 @@ namespace hl
     {
         switch (blob.RawData<const BINAV2Header>()->Version[0])
         {
-            // TODO: PACx V3 Support
             // TODO: PACx V4 Support
 
         // PACx V2
         case 0x32:
             return DPACxGetOffsetTableV2(blob, offTableSize);
+
+        // PACx V3
+        // TODO
+        /*case 0x33:
+            return DPACxGetOffsetTableV3(blob, offTableSize);*/
 
         default: return nullptr;
         }
@@ -421,9 +489,8 @@ namespace hl
             return DLWArchiveGetSplitPtrs(blob, splitCount);
 
         // Forces
-        //case 0x33:
-            // TODO: Forces Archives
-            //return DForcesArchiveGetSplitPtrs(blob, splitCount);
+        case 0x33:
+            return DForcesArchiveGetSplitPtrs(blob, splitCount);
 
             // TODO: Tokyo 2020 Archives
 
@@ -443,16 +510,15 @@ namespace hl
             break;
 
         // Forces
-            //case 0x33:
-                // TODO: Forces Archives
-                //hl_ExtractForcesArchive(blob, dir);
-                //break;
+        case 0x33:
+            DExtractForcesArchive(blob, dir);
+            break;
 
         // Tokyo 2020
-            //case 0x34:
-                // TODO: Tokyo 2020 Archives
-                //hl_ExtractTokyoArchive(blob, dir);
-                //break;
+        //case 0x34:
+            // TODO: Tokyo 2020 Archives
+            //DExtractTokyoArchive(blob, dir);
+            //break;
 
         default:
             throw std::runtime_error("Unknown or Unsupported PACx version.");
@@ -470,6 +536,11 @@ namespace hl
     Blob DPACxLoadV2(const nchar* filePath)
     {
         return INDPACxLoadV2(filePath);
+    }
+
+    Blob DPACxLoadV3(const nchar* filePath)
+    {
+        return INDPACxLoadV3(filePath);
     }
 
     Blob DPACxLoad(const nchar* filePath)
