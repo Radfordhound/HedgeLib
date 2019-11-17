@@ -177,7 +177,7 @@ namespace hl
             is_detected_v<EndianSwapRecursive_t, T>;
     }
 
-#ifndef __cpp_if_constexpr // TODO: Change this back to ifdef once done testing
+#ifdef __cpp_if_constexpr
     template<typename T>
     inline void Swap(T& value)
     {

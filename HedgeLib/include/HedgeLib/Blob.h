@@ -78,7 +78,8 @@ namespace hl
         template<typename T = void>
         inline T* Data()
         {
-            return static_cast<T*>(const_cast<void*>(Data()));
+            return static_cast<T*>(const_cast<void*>(
+                const_cast<const Blob*>(this)->Data()));
         }
     };
 }
