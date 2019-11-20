@@ -84,10 +84,15 @@ namespace hl
 
     HL_STATIC_ASSERT_SIZE(HHMirageNode, 16);
 
+    inline HHHeaderType HHDetectHeaderType(const void* blobData)
+    {
+        return (*static_cast<const std::uint32_t*>(blobData) & HHMIRAGE_NODE_IS_ROOT) ?
+            HHHeaderType::Mirage : HHHeaderType::Standard;
+    }
+
     inline HHHeaderType HHDetectHeaderType(const Blob& blob)
     {
-        return (*blob.RawData<std::uint32_t>() & HHMIRAGE_NODE_IS_ROOT) ?
-            HHHeaderType::Mirage : HHHeaderType::Standard;
+        return HHDetectHeaderType(blob.RawData());
     }
 
     HL_API void HHFixOffsets(std::uint32_t* offTable,
@@ -159,7 +164,18 @@ namespace hl
             name, recursive));
     }
 
-    HL_API const HHMirageNode* DHHMirageGetDataNode(const Blob& blob);
+    HL_API const HHMirageNode* DHHMirageGetDataNode(const void* blobData);
+
+    inline const HHMirageNode* DHHMirageGetDataNode(const Blob& blob)
+    {
+        return DHHMirageGetDataNode(blob.RawData());
+    }
+
+    inline HHMirageNode* DHHMirageGetDataNode(void* blobData)
+    {
+        return const_cast<HHMirageNode*>(DHHMirageGetDataNode(
+            const_cast<const void*>(blobData)));
+    }
 
     inline HHMirageNode* DHHMirageGetDataNode(Blob& blob)
     {
@@ -167,16 +183,36 @@ namespace hl
             const_cast<const Blob&>(blob)));
     }
 
+    inline const void* DHHGetDataStandard(const void* blobData)
+    {
+        const HHStandardHeader* header = static_cast<
+            const HHStandardHeader*>(blobData);
+
+        return GetAbs<void>(header, header->DataOffset);
+    }
+
+    template<typename T>
+    inline const T* DHHGetDataStandard(const void* blobData)
+    {
+        return static_cast<const T*>(DHHGetDataStandard(blobData));
+    }
+
+    template<typename T = void>
+    inline T* DHHGetDataStandard(void* blobData)
+    {
+        return static_cast<T*>(const_cast<void*>(DHHGetDataStandard(
+            const_cast<const void*>(blobData))));
+    }
+
     inline const void* DHHGetDataStandard(const Blob& blob)
     {
-        const HHStandardHeader* header = blob.RawData<HHStandardHeader>();
-        return GetAbs<void>(header, header->DataOffset);
+        return DHHGetDataStandard(blob.RawData());
     }
 
     template<typename T>
     inline const T* DHHGetDataStandard(const Blob& blob)
     {
-        return static_cast<const T*>(DHHGetDataStandard(blob));
+        return static_cast<const T*>(DHHGetDataStandard(blob.RawData()));
     }
 
     template<typename T = void>
@@ -186,17 +222,35 @@ namespace hl
             const_cast<const Blob&>(blob))));
     }
 
-    inline const void* DHHGetDataMirage(const Blob& blob)
+    inline const void* DHHGetDataMirage(const void* blobData)
     {
-        const HHMirageNode* dataNode = DHHMirageGetDataNode(blob);
+        const HHMirageNode* dataNode = DHHMirageGetDataNode(blobData);
         if (!dataNode) return nullptr;
         return HHMirageNodeGetData(*dataNode);
     }
 
     template<typename T>
+    inline const T* DHHGetDataMirage(const void* blobData)
+    {
+        return static_cast<const T*>(DHHGetDataMirage(blobData));
+    }
+
+    template<typename T = void>
+    inline T* DHHGetDataMirage(void* blobData)
+    {
+        return static_cast<T*>(const_cast<void*>(DHHGetDataMirage(
+            const_cast<const void*>(blobData))));
+    }
+
+    inline const void* DHHGetDataMirage(const Blob& blob)
+    {
+        return DHHGetDataMirage(blob.RawData());
+    }
+
+    template<typename T>
     inline const T* DHHGetDataMirage(const Blob& blob)
     {
-        return static_cast<const T*>(DHHGetDataMirage(blob));
+        return static_cast<const T*>(DHHGetDataMirage(blob.RawData()));
     }
 
     template<typename T = void>
@@ -206,20 +260,38 @@ namespace hl
             const_cast<const Blob&>(blob))));
     }
 
-    inline const void* DHHGetData(const Blob& blob)
+    inline const void* DHHGetData(const void* blobData)
     {
         // Mirage Header
-        if (HHDetectHeaderType(blob) == HHHeaderType::Mirage)
-            return DHHGetDataMirage(blob);
+        if (HHDetectHeaderType(blobData) == HHHeaderType::Mirage)
+            return DHHGetDataMirage(blobData);
 
         // Standard Header
-        return DHHGetDataStandard(blob);
+        return DHHGetDataStandard(blobData);
+    }
+
+    template<typename T>
+    inline const T* DHHGetData(const void* blobData)
+    {
+        return static_cast<const T*>(DHHGetData(blobData));
+    }
+
+    template<typename T = void>
+    inline T* DHHGetData(void* blobData)
+    {
+        return static_cast<T*>(const_cast<void*>(DHHGetData(
+            const_cast<const void*>(blobData))));
+    }
+
+    inline const void* DHHGetData(const Blob& blob)
+    {
+        return DHHGetData(blob.RawData());
     }
 
     template<typename T>
     inline const T* DHHGetData(const Blob& blob)
     {
-        return static_cast<const T*>(DHHGetData(blob));
+        return static_cast<const T*>(DHHGetData(blob.RawData()));
     }
 
     template<typename T = void>
@@ -227,6 +299,13 @@ namespace hl
     {
         return static_cast<T*>(const_cast<void*>(DHHGetData(
             const_cast<const Blob&>(blob))));
+    }
+
+    HL_API void DHHFixData(void* blobData);
+
+    inline void DHHFixData(Blob& blob)
+    {
+        DHHFixData(blob.RawData());
     }
 
     HL_API Blob DHHRead(File& file);

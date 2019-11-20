@@ -1764,7 +1764,7 @@ namespace hl
 
             // Get length of the file name (without the extension) and the splits
             ext = PathGetExtPtrName(fileNameUTF8);
-            nameLen = (ext - fileNameUTF8);
+            nameLen = static_cast<std::size_t>(ext - fileNameUTF8);
             extLen = std::strlen(ext);
 
             strTableLen += ((nameLen + 1) + ((nameLen +

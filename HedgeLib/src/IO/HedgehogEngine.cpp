@@ -101,10 +101,12 @@ namespace hl
         return INHHMirageGetNode(parentNode, name, recursive);
     }
 
-    const HHMirageNode* DHHMirageGetDataNode(const Blob& blob)
+    const HHMirageNode* DHHMirageGetDataNode(const void* blobData)
     {
         // Get a pointer to the header and first node
-        const HHMirageHeader* header = blob.RawData<HHMirageHeader>();
+        const HHMirageHeader* header = static_cast<
+            const HHMirageHeader*>(blobData);
+
         const HHMirageNode* nodes = HHMirageGetChildNodes(
             *reinterpret_cast<const HHMirageNode*>(header));
 
@@ -129,6 +131,55 @@ namespace hl
         return INHHMirageSwapNodes(*curNode);
     }
 
+    void DHHFixData(void* blobData)
+    {
+        // Mirage Header
+        std::uint32_t fileSize = *static_cast<std::uint32_t*>(blobData);
+        hl::Swap(fileSize);
+
+        if ((fileSize & HHMIRAGE_NODE_IS_ROOT))
+        {
+            // Endian-swap mirage header
+            HHMirageHeader* header = static_cast<HHMirageHeader*>(blobData);
+            header->EndianSwap();
+
+            // Get nodes pointer
+            HHMirageNode* node = reinterpret_cast<HHMirageNode*>(header + 1);
+
+            // Fix offsets
+            HHFixOffsets(GetAbs<std::uint32_t>(blobData,
+                header->OffsetTableOffset), header->OffsetCount, node);
+
+            // Endian swap mirage nodes if file has any
+            if (!(header->FileSize & HHMIRAGE_NODE_HAS_NO_CHILDREN))
+            {
+                INHHMirageSwapNodes(*node);
+            }
+        }
+
+        // Standard Header
+        else
+        {
+            // Endian-swap standard header
+            HHStandardHeader* header = static_cast<HHStandardHeader*>(blobData);
+            header->EndianSwap();
+
+            // Get offset table
+            std::uint32_t* offTable = GetAbs<std::uint32_t>(
+                blobData, header->OffsetTableOffset);
+
+            // Get offset count
+            Swap(*offTable);
+            std::uint32_t offCount = *offTable++;
+
+            // Get data pointer
+            void* data = GetAbs<void>(blobData, header->DataOffset);
+
+            // Fix offsets
+            HHFixOffsets(offTable, offCount, data);
+        }
+    }
+
     Blob DHHRead(File& file)
     {
         // Hedgehog Engine data is always big endian
@@ -150,50 +201,8 @@ namespace hl
 
         file.ReadBytes(fileData, fileSize);
 
-        // Mirage Header
-        if (isMirage)
-        {
-            // Endian-swap mirage header
-            HHMirageHeader* header = static_cast<HHMirageHeader*>(fileData);
-            header->EndianSwap();
-
-            // Get nodes pointer
-            HHMirageNode* node = reinterpret_cast<HHMirageNode*>(header + 1);
-
-            // Fix offsets
-            HHFixOffsets(GetAbs<std::uint32_t>(fileData,
-                header->OffsetTableOffset), header->OffsetCount, node);
-
-            // Endian swap mirage nodes if file has any
-            if (!(header->FileSize & HHMIRAGE_NODE_HAS_NO_CHILDREN))
-            {
-                INHHMirageSwapNodes(*node);
-            }
-        }
-
-        // Standard Header
-        else
-        {
-            // Endian-swap standard header
-            HHStandardHeader* header = static_cast<HHStandardHeader*>(fileData);
-            header->EndianSwap();
-
-            // Get offset table
-            std::uint32_t* offTable = GetAbs<std::uint32_t>(
-                fileData, header->OffsetTableOffset);
-
-            // Get offset count
-            Swap(offTable);
-            std::uint32_t offCount = *offTable++;
-
-            // Get data pointer
-            void* data = GetAbs<void>(fileData, header->DataOffset);
-
-            // Fix offsets
-            HHFixOffsets(GetAbs<std::uint32_t>(fileData,
-                header->OffsetTableOffset), offCount, data);
-        }
-
+        // Fix data and return blob
+        DHHFixData(fileData);
         return blob;
     }
 

@@ -219,7 +219,7 @@ namespace hl
         }
 
         // Create blob using information from header
-        Blob blob = Blob(header.FileSize, BlobFormat::BINA,
+        Blob blob = Blob(header.FileSize, BlobFormat::PACx,
             static_cast<std::uint16_t>(ArchiveType::PACxV2));
 
         // Copy header into blob
@@ -270,7 +270,7 @@ namespace hl
         }
 
         // Create blob using information from header
-        Blob blob = Blob(header.FileSize, BlobFormat::BINA,
+        Blob blob = Blob(header.FileSize, BlobFormat::PACx,
             static_cast<std::uint16_t>(ArchiveType::PACxV3));
 
         // Copy header into blob

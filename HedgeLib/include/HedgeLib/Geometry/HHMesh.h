@@ -1,10 +1,8 @@
 #pragma once
-#include "../HedgeLib.h"
-#include "../Offsets.h"
+#include "HHSubMesh.h"
 
 namespace hl
 {
-    struct HHSubMesh;
     using HHSubMeshSlot = ArrayOffset32<DataOffset32<HHSubMesh>>;
 
     struct HHSpecialSubMeshSlot

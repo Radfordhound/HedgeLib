@@ -1,10 +1,8 @@
 #pragma once
-#include "../HedgeLib.h"
-#include "../Offsets.h"
+#include "HHMesh.h"
 
 namespace hl
 {
-    struct HHMesh;
     struct Matrix4x4;
     struct AABB;
 
