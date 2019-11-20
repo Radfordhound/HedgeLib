@@ -3,6 +3,8 @@
 #include "../src/gfx/viewport.h"
 #include <QEvent>
 #include <QThread>
+#include <QMouseEvent>
+#include <QApplication>
 #include <memory>
 
 using namespace HedgeEdit::GFX;
@@ -68,5 +70,67 @@ namespace HedgeEdit::UI
             static_cast<FLOAT>(height()));
 
         renderThread->ResumeRendering();
+    }
+
+    void ViewportWidget::mousePressEvent(QMouseEvent* e)
+    {
+        if (e->button() == Qt::RightButton)
+        {
+            prevPos = e->pos();
+            rotatingCamera = true;
+            QApplication::setOverrideCursor(Qt::BlankCursor);
+        }
+    }
+
+    void ViewportWidget::mouseReleaseEvent(QMouseEvent* e)
+    {
+        if (e->button() == Qt::RightButton)
+        {
+            rotatingCamera = false;
+            QApplication::restoreOverrideCursor();
+        }
+    }
+
+    void ViewportWidget::mouseMoveEvent(QMouseEvent* e)
+    {
+        if (rotatingCamera)
+        {
+            // Rotate Camera
+            QPoint curPos = e->pos();
+            QPoint dif = (curPos - prevPos);
+            
+            vp->RotateCamera(dif.x(), -dif.y());
+
+            // Lock cursor to center of viewport if necessary
+            if (!geometry().contains(curPos, true))
+            {
+                curPos = geometry().center();
+                QCursor::setPos(mapToGlobal(curPos));
+            }
+
+            prevPos = curPos;
+        }
+    }
+
+    void ViewportWidget::keyPressEvent(QKeyEvent* e)
+    {
+        if (e->key() == Qt::Key_W) vp->MovingForward = true;
+        if (e->key() == Qt::Key_S) vp->MovingBackward = true;
+        if (e->key() == Qt::Key_A) vp->MovingLeft = true;
+        if (e->key() == Qt::Key_D) vp->MovingRight = true;
+
+        vp->Moving = (vp->MovingForward || vp->MovingBackward ||
+            vp->MovingLeft || vp->MovingRight);
+    }
+
+    void ViewportWidget::keyReleaseEvent(QKeyEvent* e)
+    {
+        if (e->key() == Qt::Key_W) vp->MovingForward = false;
+        if (e->key() == Qt::Key_S) vp->MovingBackward = false;
+        if (e->key() == Qt::Key_A) vp->MovingLeft = false;
+        if (e->key() == Qt::Key_D) vp->MovingRight = false;
+
+        vp->Moving = (vp->MovingForward || vp->MovingBackward ||
+            vp->MovingLeft || vp->MovingRight);
     }
 }

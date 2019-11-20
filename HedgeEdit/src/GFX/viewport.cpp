@@ -4,6 +4,7 @@
 #include "shader.h"
 #include "model.h"
 #include <stdexcept>
+#include <cmath>
 
 namespace HedgeEdit::GFX
 {
@@ -47,6 +48,17 @@ namespace HedgeEdit::GFX
 #endif
     }
 
+    void Viewport::UpdateCameraForward()
+    {
+        float x = DirectX::XMConvertToRadians(DirectX::XMVectorGetX(camRot));
+        float y = DirectX::XMConvertToRadians(DirectX::XMVectorGetY(camRot));
+        float yCos = std::cos(y);
+
+        camForward = DirectX::XMVector3Normalize(
+            DirectX::XMVectorSet(std::sin(x) * yCos,
+            std::sin(y), -std::cos(x) * yCos, 1));
+    }
+
     Viewport::Viewport(Instance& inst, WindowHandle handle,
         unsigned int width, unsigned int height) : inst(inst)
     {
@@ -80,10 +92,10 @@ namespace HedgeEdit::GFX
         // TODO
 
         // Setup Vector3s
-        camPos = DirectX::XMVectorSet(0, 0.5f, 2, 0);
-        // TODO: Do I need to set camRot?
-        camUp = DirectX::XMVectorSet(0, 1, 0, 0);
-        camForward = DirectX::XMVectorSet(0, 0, -1, 0);
+        camPos = DirectX::XMVectorSet(0, 0.5f, 2, 1);
+        camUp = DirectX::XMVectorSet(0, 1, 0, 1);
+        camForward = DirectX::XMVectorSet(0, 0, -1, 1);
+        camRot = DirectX::XMVectorSet(0, 0, 0, 1);
 
         // Setup Matrices
         UpdateViewMatrix();
@@ -95,6 +107,18 @@ namespace HedgeEdit::GFX
         UpdateViewProjMatrix();
 #endif
     };
+
+    void Viewport::RotateCamera(int amountX, int amountY)
+    {
+        camRot = DirectX::XMVectorAdd(camRot, DirectX::XMVectorSet(
+            static_cast<float>(amountX) * CameraSensitivity,
+            static_cast<float>(amountY) * CameraSensitivity,
+            0, 0));
+
+        UpdateCameraForward();
+        UpdateViewMatrix();
+        UpdateViewProjMatrix();
+    }
 
     void Viewport::Resize(unsigned int width, unsigned int height)
     {
@@ -122,6 +146,48 @@ namespace HedgeEdit::GFX
 #endif
 
         UpdateViewProjMatrix();
+    }
+
+    void Viewport::Update()
+    {
+        // Keyboard Input
+        if (Moving)
+        {
+            // Get camera movement speed
+            float speed = NormalSpeed; // TODO: Let user go fast or slow too
+
+            // Forwards/Backwards
+            if (MovingForward)
+            {
+                camPos = DirectX::XMVectorAdd(camPos,
+                    DirectX::XMVectorScale(camForward, speed));
+            }
+            else if (MovingBackward)
+            {
+                camPos = DirectX::XMVectorSubtract(camPos,
+                    DirectX::XMVectorScale(camForward, speed));
+            }
+
+            // Left/Right
+            if (MovingLeft)
+            {
+                camPos = DirectX::XMVectorSubtract(camPos,
+                    DirectX::XMVectorScale(DirectX::XMVector3Normalize(
+                    DirectX::XMVector3Cross(camForward, camUp)), speed));
+            }
+            else if (MovingRight)
+            {
+                camPos = DirectX::XMVectorAdd(camPos,
+                    DirectX::XMVectorScale(DirectX::XMVector3Normalize(
+                    DirectX::XMVector3Cross(camForward, camUp)), speed));
+            }
+
+            // Update matrices
+            UpdateViewMatrix();
+            UpdateViewProjMatrix();
+        }
+
+        // TODO: Update UV-animations and such
     }
 
     void Viewport::Render()
@@ -177,9 +243,13 @@ namespace HedgeEdit::GFX
         cb->UseVS(inst, 1);
         cb->UsePS(inst, 1);
 
-        // Draw model
-        /*Model* m = inst.GetModel(0);
-        m->Draw(inst);*/
+        // Draw models
+        // TODO: Do this much better lol. Do depth sorting for transparent models too
+        for (std::size_t i = 0; i < inst.GetModelCount(); ++i)
+        {
+            Model* m = inst.GetModel(static_cast<std::uint16_t>(i));
+            m->Draw(inst);
+        }
 
         // Swap the back buffer and front buffer
         // TODO: Delay this properly

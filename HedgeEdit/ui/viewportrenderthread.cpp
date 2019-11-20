@@ -20,6 +20,10 @@ namespace HedgeEdit::UI
             if (!canRender)
                 continue;
 
+            // Update
+            vp->Update();
+
+            // Render
             rendering = true;
             vp->Render();
             // TODO: Should we delay this or something?

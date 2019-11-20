@@ -31,6 +31,8 @@ namespace HedgeEdit::GFX
 
         void Init(unsigned int width, unsigned int height);
 
+        void UpdateCameraForward();
+
         inline void UpdateViewMatrix()
         {
 #ifdef D3D11
@@ -48,7 +50,12 @@ namespace HedgeEdit::GFX
         }
 
     public:
-        std::array<float, 4> ClearColor{ 0, 0, 0, 0 };
+        std::array<float, 4> ClearColor{ 0, 0, 0, 1 };
+        float CameraSensitivity = 0.25f, SlowSpeed = 0.25f,
+            NormalSpeed = 0.5f, FastSpeed = 1;
+
+        bool MovingForward = false, MovingBackward = false,
+            MovingLeft = false, MovingRight = false, Moving = false;
 
         Viewport(Instance& inst, WindowHandle handle,
             unsigned int width, unsigned int height);
@@ -58,7 +65,9 @@ namespace HedgeEdit::GFX
             if (handle) this->handle = handle;
         }
 
+        void RotateCamera(int amountX, int amountY);
         void Resize(unsigned int width, unsigned int height);
+        void Update();
         void Render();
 
     private:
