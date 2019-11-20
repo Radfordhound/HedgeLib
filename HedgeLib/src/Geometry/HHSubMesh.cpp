@@ -57,6 +57,10 @@ namespace hl
                 case HHVERTEX_FORMAT_VECTOR3:
                     reinterpret_cast<Vector3*>(data)->EndianSwap();
                     break;
+
+                case HHVERTEX_FORMAT_VECTOR4:
+                    reinterpret_cast<Vector4*>(data)->EndianSwap();
+                    break;
                 }
             }
 
