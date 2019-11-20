@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 
 namespace HedgeEdit::GFX
 {
@@ -130,9 +131,6 @@ namespace HedgeEdit::GFX
     Geometry::Geometry(Instance& inst, const hl::HHSubMesh& subMesh,
         bool seeThrough) : SeeThrough(seeThrough)
     {
-        // TODO: Materials sdjiogjnspigos
-        MaterialIndex = 0;
-
         // Get input layout
         const hl::HHVertexElement* format = subMesh.VertexElements.Get();
         vertexFormatHash = inst.HashVertexFormat(format);
@@ -159,6 +157,13 @@ namespace HedgeEdit::GFX
         // Get stride and face count
         stride = subMesh.VertexSize;
         faceCount = subMesh.Faces.Count;
+
+        // Get material
+        const char* matName = subMesh.MaterialName.Get();
+        std::size_t matNameLen = (std::strlen(matName) + 1);
+
+        MaterialName = std::unique_ptr<char[]>(new char[matNameLen]);
+        std::copy(matName, matName + matNameLen, MaterialName.get());
     }
 
     void Geometry::Bind(const Instance& inst) const
@@ -173,7 +178,7 @@ namespace HedgeEdit::GFX
 #endif
 
         // Bind material
-        const Material* material = inst.GetMaterial(MaterialIndex);
+        const Material* material = inst.GetMaterial(MaterialName.get());
         // TODO: nullptr check
         material->Bind(inst);
     }

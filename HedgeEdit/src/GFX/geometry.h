@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <memory>
 
 namespace hl
 {
@@ -15,6 +16,7 @@ namespace hl
 namespace HedgeEdit::GFX
 {
     class Instance;
+    class Material;
 
     // Geometry:
     // - VertexBuffer* VertexBuffer;
@@ -33,7 +35,7 @@ namespace HedgeEdit::GFX
         unsigned int stride, faceCount;
 
     public:
-        std::size_t MaterialIndex;
+        std::unique_ptr<char[]> MaterialName;
         bool SeeThrough; // For Solid/Boolean this is false
 
         inline Geometry() = default;
