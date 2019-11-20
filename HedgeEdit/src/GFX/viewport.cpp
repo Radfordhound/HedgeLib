@@ -37,12 +37,46 @@ namespace HedgeEdit::GFX
                 "Could not create a Direct3D 11 Render Target View!");
         }
 
+        // Create the Depth Buffer
+        D3D11_TEXTURE2D_DESC depthDesc = 
+        {
+            width, height,
+            1, 1, DXGI_FORMAT_D32_FLOAT,
+            { 1, 0 }, D3D11_USAGE_DEFAULT,
+            D3D11_BIND_DEPTH_STENCIL
+        };
+
+        result = inst.Device->CreateTexture2D(
+            &depthDesc, nullptr, depthBuffer.put());
+
+        if (FAILED(result))
+        {
+            throw std::runtime_error(
+                "Could not create a Direct3D 11 Depth Buffer!");
+        }
+
+        // Create the Depth Stencil
+        D3D11_DEPTH_STENCIL_VIEW_DESC depthViewDesc =
+        {
+            DXGI_FORMAT_D32_FLOAT,
+            D3D11_DSV_DIMENSION_TEXTURE2D
+        };
+
+        result = inst.Device->CreateDepthStencilView(depthBuffer.get(),
+            &depthViewDesc, depthView.put());
+        
+        if (FAILED(result))
+        {
+            throw std::runtime_error(
+                "Could not create a Direct3D 11 Depth Stencil View!");
+        }
+
         // Set the Viewport
-        D3D11_VIEWPORT viewport = {};
-        viewport.TopLeftX = 0;
-        viewport.TopLeftY = 0;
-        viewport.Width = static_cast<FLOAT>(width);
-        viewport.Height = static_cast<FLOAT>(height);
+        D3D11_VIEWPORT viewport =
+        {
+            0, 0, static_cast<FLOAT>(width),
+            static_cast<FLOAT>(height), 0, 1
+        };
 
         inst.Context->RSSetViewports(1, &viewport);
 #endif
@@ -88,9 +122,6 @@ namespace HedgeEdit::GFX
         // Initialize surface
         Init(width, height);
 
-        // Create the Depth Buffer
-        // TODO
-
         // Setup Vector3s
         camPos = DirectX::XMVectorSet(0, 0.5f, 2, 1);
         camUp = DirectX::XMVectorSet(0, 1, 0, 1);
@@ -126,6 +157,8 @@ namespace HedgeEdit::GFX
         // Release render targets
         inst.Context->OMSetRenderTargets(0, nullptr, nullptr);
         renderTargetView = nullptr;
+        depthBuffer = nullptr;
+        depthView = nullptr;
 
         // Resize the swap chain buffers and preserve its existing values
         HRESULT result = swapChain->ResizeBuffers(
@@ -197,10 +230,13 @@ namespace HedgeEdit::GFX
         inst.Context->ClearRenderTargetView(
             renderTargetView.get(), &(ClearColor[0]));
 
+        // Clear the depth buffer
+        inst.Context->ClearDepthStencilView(
+            depthView.get(), D3D11_CLEAR_DEPTH, 1, 0);
+
         // Set the Render Target
         ID3D11RenderTargetView* rtv = renderTargetView.get();
-        // TODO: Set Depth Stencil View
-        inst.Context->OMSetRenderTargets(1, &rtv, nullptr);
+        inst.Context->OMSetRenderTargets(1, &rtv, depthView.get());
 
         // TODO: Transparency Slots
         inst.Context->IASetPrimitiveTopology(

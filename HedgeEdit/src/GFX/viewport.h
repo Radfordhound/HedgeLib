@@ -24,6 +24,8 @@ namespace HedgeEdit::GFX
 #ifdef D3D11
         winrt::com_ptr<IDXGISwapChain> swapChain;
         winrt::com_ptr<ID3D11RenderTargetView> renderTargetView;
+        winrt::com_ptr<ID3D11Texture2D> depthBuffer;
+        winrt::com_ptr<ID3D11DepthStencilView> depthView;
 
         DirectX::XMVECTOR camPos, camRot, camUp, camForward;
         DirectX::XMMATRIX view, proj, viewProj;
