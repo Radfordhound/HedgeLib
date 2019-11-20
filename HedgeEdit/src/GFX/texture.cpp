@@ -1248,7 +1248,7 @@ namespace HedgeEdit::GFX
             // Create texture with auto-generated mipmaps
             winrt::com_ptr<ID3D11Resource> tex = CreateD3DResources(
                 inst, resDim, width, height, depth, 0, arraySize, format,
-                D3D11_USAGE_STAGING, // TODO: Does this need to be DEFAULT instead?
+                D3D11_USAGE_DEFAULT,
                 D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
                 0, D3D11_RESOURCE_MISC_GENERATE_MIPS,
                 forceSRGB, isCubeMap, nullptr, texView.put());

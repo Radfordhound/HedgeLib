@@ -26,5 +26,5 @@ struct PS_IN
 
 float4 main(PS_IN input) : SV_Target
 {
-    return diffuse.Sample(diffuse_s, input.uv0) *input.col;
+    return diffuse.Sample(diffuse_s, input.uv0) * input.col;
 }

@@ -342,17 +342,20 @@ namespace HedgeEdit::GFX
 
     std::size_t Instance::LoadDDSTexture(const char* filePath)
     {
-        return AddTexture(filePath, GFX::LoadDDSTexture(*this, filePath));
+        return AddTexture(hl::PathGetNameNoExtPtr(filePath).get(),
+            GFX::LoadDDSTexture(*this, filePath));
     }
 
     std::size_t Instance::LoadHHSkeletalModel(const char* filePath)
     {
-        return AddModel(filePath, GFX::LoadHHSkeletalModel(*this, filePath));
+        return AddModel(hl::PathGetNameNoExtPtr(filePath).get(),
+            GFX::LoadHHSkeletalModel(*this, filePath));
     }
 
     std::size_t Instance::LoadHHTerrainModel(const char* filePath)
     {
-        return AddModel(filePath, GFX::LoadHHTerrainModel(*this, filePath));
+        return AddModel(hl::PathGetNameNoExtPtr(filePath).get(),
+            GFX::LoadHHTerrainModel(*this, filePath));
     }
 
     std::size_t Instance::LoadHHModel(const char* filePath)

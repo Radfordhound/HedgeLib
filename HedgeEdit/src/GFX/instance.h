@@ -93,6 +93,11 @@ namespace HedgeEdit::GFX
 
         void Clear();
 
+        inline std::size_t GetModelCount()
+        {
+            return models.size();
+        }
+
         InputLayout* GetInputLayout(std::size_t hash) const;
         ConstantBuffer* GetConstantBuffer(const std::string& name) const;
 

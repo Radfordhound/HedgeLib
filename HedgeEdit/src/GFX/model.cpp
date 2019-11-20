@@ -69,7 +69,11 @@ namespace HedgeEdit::GFX
             geometryCount += mesh->Solid.Count;
             geometryCount += mesh->Transparent.Count;
             geometryCount += mesh->Boolean.Count;
-            geometryCount += mesh->Special.Count;
+            
+            for (std::uint32_t i2 = 0; i2 < mesh->Special.Count; ++i2)
+            {
+                geometryCount += *mesh->Special.SubMeshCounts[i2].Get();
+            }
         }
 
         // Create geometry
