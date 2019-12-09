@@ -226,7 +226,7 @@ namespace hl
                 if (DBINAIsBigEndianV2(blob))
                 {
                     LWArchive* arc = DPACxGetDataV2<LWArchive>(blob);
-                    arc->EndianSwapRecursive(true);
+                    if (arc) arc->EndianSwapRecursive(true);
                 }
                 return blob;
 

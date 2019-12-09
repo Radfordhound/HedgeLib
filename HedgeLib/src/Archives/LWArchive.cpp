@@ -9,6 +9,7 @@
 #include "../INString.h"
 #include <algorithm>
 #include <cctype>
+#include <cassert>
 
 namespace hl
 {
@@ -631,13 +632,7 @@ namespace hl
         const PACxV2DataNode* dataNode = reinterpret_cast
             <const PACxV2DataNode*>(DPACxGetDataV2(blob));
 
-        if (!dataNode)
-        {
-            throw std::runtime_error(
-                "Could not find valid PACx data in the given blob.");
-        }
-
-        if (!dataNode->TreesSize) return;
+        if (!dataNode || !dataNode->TreesSize) return;
 
         // Get BINA Offset Table
         std::uint32_t offsetTableSize;
@@ -762,8 +757,9 @@ namespace hl
                 colonPos - reinterpret_cast<std::uintptr_t>(ext));
 
 #ifdef _WIN32
-            std::size_t u16ExtLen = StringGetReqUTF16BufferCountUTF8(
-                ext, extLen);
+            std::size_t u16ExtLen = (extLen) ?
+                StringGetReqUTF16BufferCountUTF8(
+                ext, extLen) : 0;
 #endif
 
             // Get file tree
@@ -791,19 +787,26 @@ namespace hl
                     reinterpret_cast<char16_t*>(fileName),
                     nameLen);
 
-                // Convert extension to UTF-16 and copy
-                fileName[nameLen++] = L'.';
-                INStringConvertUTF8ToUTF16NoAlloc(ext,
-                    reinterpret_cast<char16_t*>(fileName + nameLen),
-                    u16ExtLen, extLen);
+                if (u16ExtLen)
+                {
+                    // Convert extension to UTF-16 and copy
+                    fileName[nameLen++] = L'.';
+                    INStringConvertUTF8ToUTF16NoAlloc(ext,
+                        reinterpret_cast<char16_t*>(fileName + nameLen),
+                        u16ExtLen, extLen);
+                }
 
                 fileName[nameLen + u16ExtLen] = L'\0';
 #else
                 // Copy file name and extension
-                std::copy(name, name + nameLen, fileName);          // chr_Sonic
-                fileName[nameLen++] = '.';                          // .
-                std::copy(ext, ext + extLen, fileName + nameLen);   // model
-                fileName[nameLen + extLen] = '\0';                  // \0
+                std::copy(name, name + nameLen, fileName);              // chr_Sonic
+                if (extLen)
+                {
+                    fileName[nameLen++] = '.';                          // .
+                    std::copy(ext, ext + extLen, fileName + nameLen);   // model
+                }
+
+                fileName[nameLen + extLen] = '\0';                      // \0
 #endif
 
                 // Write data to file
@@ -991,9 +994,7 @@ namespace hl
                 splitIndex > types[i].LastSplitIndex)) continue;
 
             // Fix type offset
-            strTable.emplace_back(const_cast<char*>(
-                types[i].DataType), typeNodeOffPos);
-
+            strTable.emplace_back(types[i].DataType, typeNodeOffPos);
             typeNodeOffPos += 4;
 
             // Fix file tree offset
@@ -1058,7 +1059,7 @@ namespace hl
 
         // Get file data buffer size
         std::size_t dataBufferSize = 0;
-        for (size_t i = 0; i < typeCount; ++i)
+        for (std::size_t i = 0; i < typeCount; ++i)
         {
             // Skip if type has no data or is not present in this split
             if (types[i].FirstSplitIndex > splitIndex ||
@@ -1106,9 +1107,7 @@ namespace hl
                     metadata[i2].TypeIndex != i || !metadata[i2].Size) continue;
 
                 // Fix file name
-                strTable.emplace_back(const_cast<char*>(
-                    metadata[i2].Name), offPos);
-
+                strTable.emplace_back(metadata[i2].Name, offPos);
                 offPos += 4;
 
                 // Fix data offset
@@ -1418,11 +1417,13 @@ namespace hl
         }
 
         // Write proxy entry table
-        file.Pad(16);
-        long proxyEntryTablePos = file.Tell();
-
+        long proxyEntryTablePos;
         if (proxyEntryTable.Count)
         {
+            // Pad and get position
+            file.Pad(16);
+            proxyEntryTablePos = file.Tell();
+
             // Write table
             offPos = (proxyEntryTablePos + 4);
             file.Write(proxyEntryTable);
@@ -1456,6 +1457,10 @@ namespace hl
                     ++proxyEntry.Index;
                 }
             }
+        }
+        else
+        {
+            proxyEntryTablePos = file.Tell();
         }
 
         // Write string table
@@ -1759,7 +1764,7 @@ namespace hl
                     }
                 }
 
-                throw std::runtime_error("LW Archives can only have up to 99 splits.");
+                throw std::runtime_error("LW Archives cannot have more than 99 splits.");
             }
 
             // Get length of the file name (without the extension) and the splits
@@ -1773,6 +1778,7 @@ namespace hl
         else
         {
             nameLen = 0;
+            extLen = 0;
         }
 
         // Allocate string/type metadata table
@@ -1817,6 +1823,9 @@ namespace hl
             // Set type metadata for types we haven't dealt with before
             if (!metadata[i].TypeIndex || !types[--metadata[i].TypeIndex].DataType)
             {
+                assert((!metadata[i].PACxExtIndex && !metadata[i].Name) ||
+                    metadata[i].TypeIndex == typeCount);
+
                 // Setup new type metadata
                 types[typeCount].DataType = curStrPtr;
                 types[typeCount].FirstSplitIndex = metadata[i].SplitIndex;
@@ -1932,7 +1941,7 @@ namespace hl
 
             for (std::uint8_t i = 0; i < splitCount; ++i)
             {
-                // Copt file name + extension
+                // Copy file name + extension
                 std::copy(fileNameUTF8, fileNameUTF8 + nameLen + extLen, curStrPtr);
                 curStrPtr += (nameLen + extLen);
 

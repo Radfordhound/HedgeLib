@@ -3,7 +3,7 @@
 const hl::nchar* const EnglishText[STRING_CONSTANT_COUNT] =
 {
     // VERSION_STRING
-    HL_NTEXT("0.25 (ALPHA)"),
+    HL_NTEXT("0.26 (ALPHA)"),
 
     // USAGE_STRING
     HL_NTEXT("Usage: HedgeArcPack [flags] input [output]"),
