@@ -1464,7 +1464,7 @@ namespace hl
 
         // Write offset table
         std::uint32_t offTablePos = static_cast<std::uint32_t>(file.Tell());
-        BINAWriteOffsetTable(file, offTable);
+        BINAWriteOffsetTable32(file, offTable);
 
         // Fill-in node size
         eof = file.Tell();

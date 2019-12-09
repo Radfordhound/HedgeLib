@@ -111,10 +111,16 @@ namespace hl
         return BINAWriteStringTable32(file, strTable, offTable);
     }
 
-    HL_API void BINAWriteOffsetTableSorted(const File& file,
+    HL_API void BINAWriteOffsetTableSorted32(const File& file,
         const OffsetTable& offTable);
 
-    HL_API void BINAWriteOffsetTable(const File& file,
+    HL_API void BINAWriteOffsetTableSorted64(const File& file,
+        const OffsetTable& offTable);
+
+    HL_API void BINAWriteOffsetTable32(const File& file,
+        OffsetTable& offTable);
+
+    HL_API void BINAWriteOffsetTable64(const File& file,
         OffsetTable& offTable);
 
     HL_API void BINAStartWriteV2(File& file,

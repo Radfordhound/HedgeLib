@@ -259,25 +259,27 @@ namespace hl
                 }
             }
         }
-
-        file.Pad();
     }
 
     void BINAWriteStringTable32(const File& file,
         const StringTable& strTable, OffsetTable& offTable)
     {
-        return INBINAWriteStringTable<std::uint32_t>(
+        INBINAWriteStringTable<std::uint32_t>(
             file, strTable, offTable);
+
+        file.Pad(4);
     }
 
     void BINAWriteStringTable64(const File& file,
         const StringTable& strTable, OffsetTable& offTable)
     {
-        return INBINAWriteStringTable<std::uint64_t>(
+        INBINAWriteStringTable<std::uint64_t>(
             file, strTable, offTable);
+
+        file.Pad(8);
     }
 
-    void BINAWriteOffsetTableSorted(const File& file,
+    void INBINAWriteOffsetTableSorted(const File& file,
         const OffsetTable& offTable)
     {
         std::uint32_t o, curOffset = static_cast<std::uint32_t>(file.Origin);
@@ -309,16 +311,36 @@ namespace hl
 
             curOffset = offset;
         }
-
-        file.Pad();
     }
 
-    void BINAWriteOffsetTable(const File& file,
+    void BINAWriteOffsetTableSorted32(const File& file,
+        const OffsetTable& offTable)
+    {
+        INBINAWriteOffsetTableSorted(file, offTable);
+        file.Pad(4);
+    }
+
+    void BINAWriteOffsetTableSorted64(const File& file,
+        const OffsetTable& offTable)
+    {
+        INBINAWriteOffsetTableSorted(file, offTable);
+        file.Pad(8);
+    }
+
+    void BINAWriteOffsetTable32(const File& file,
         OffsetTable& offTable)
     {
         // Sort the offsets in the table from least to greatest, then write it to the file
         std::sort(offTable.begin(), offTable.end());
-        return BINAWriteOffsetTableSorted(file, offTable);
+        BINAWriteOffsetTableSorted32(file, offTable);
+    }
+
+    void BINAWriteOffsetTable64(const File& file,
+        OffsetTable& offTable)
+    {
+        // Sort the offsets in the table from least to greatest, then write it to the file
+        std::sort(offTable.begin(), offTable.end());
+        BINAWriteOffsetTableSorted64(file, offTable);
     }
 
     void BINAStartWriteV2(File& file, bool bigEndian, bool use64BitOffsets)
@@ -376,7 +398,7 @@ namespace hl
 
         // Write offset table
         std::uint32_t offTablePos = static_cast<std::uint32_t>(file.Tell());
-        BINAWriteOffsetTable(file, offTable);
+        BINAWriteOffsetTable32(file, offTable);
 
         // Fill-in node size
         std::uint32_t eof = static_cast<std::uint32_t>(file.Tell());
