@@ -3,7 +3,7 @@
 const hl::nchar* const EnglishText[STRING_CONSTANT_COUNT] =
 {
     // VERSION_STRING
-    HL_NTEXT("0.30 (ALPHA)"),
+    HL_NTEXT("1.0 (BETA)"),
 
     // USAGE_STRING
     HL_NTEXT("Usage: HedgeArcPack [flags] input [output]"),
@@ -45,6 +45,9 @@ const hl::nchar* const EnglishText[STRING_CONSTANT_COUNT] =
 
     // ERROR_INVALID_TYPE
     HL_NTEXT("Invalid archive type."),
+
+    // ERROR_INVALID_INPUT
+    HL_NTEXT("The given input file or folder does not exist."),
 
     // ERROR_INVALID_SPLIT_LIMIT
     HL_NTEXT("Invalid split limit."),

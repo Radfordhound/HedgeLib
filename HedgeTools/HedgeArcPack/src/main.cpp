@@ -246,6 +246,10 @@ int main(int argc, char* argv[])
             }
         }
 
+        // Ensure input actually exists
+        if (!hl::PathExists(input))
+            return Error(ERROR_INVALID_INPUT);
+
         // Auto-determine type
         if (type == hl::ArchiveType::Unknown)
         {
