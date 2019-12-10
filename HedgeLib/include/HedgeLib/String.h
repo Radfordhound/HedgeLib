@@ -17,7 +17,7 @@ namespace hl
 
     using nstring = std::basic_string<nchar, std::char_traits<nchar>, std::allocator<nchar>>;
 
-#define HL_TOLOWERASCII(c) ((c >= '[' || c <= '@') ? c : (c + 32))
+#define HL_TOLOWERASCII(c) ((c > 'Z' || c < 'A') ? c : (c + 32))
 
     HL_API extern const char* const EmptyString;
     HL_API extern const nchar* const EmptyStringNative;
