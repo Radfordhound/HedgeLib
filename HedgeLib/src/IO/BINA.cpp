@@ -240,8 +240,8 @@ namespace hl
 
             // Write string
             pos = file.Tell();
-            std::size_t len = std::strlen(data[i].String);
-            file.WriteBytes(data[i].String, len + 1);
+            file.WriteBytes(data[i].String, data[i].Length);
+            file.WriteNull();
 
             // Fix offset
             file.FixOffset<OffsetType>(
@@ -249,8 +249,8 @@ namespace hl
 
             for (std::size_t i2 = (i + 1); i2 < strTable.size(); ++i2)
             {
-                if (data[i].String == data[i2].String || !std::strcmp(
-                    data[i].String, data[i2].String))
+                if (data[i].Length == data[i2].Length && (data[i].String == data[i2].String ||
+                    !std::strncmp(data[i].String, data[i2].String, data[i].Length)))
                 {
                     file.FixOffset<OffsetType>(
                         data[i2].OffPosition, pos, offTable);
