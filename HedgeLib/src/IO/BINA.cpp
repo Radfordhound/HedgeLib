@@ -259,6 +259,8 @@ namespace hl
                 }
             }
         }
+
+        file.Pad(sizeof(OffsetType));
     }
 
     void BINAWriteStringTable32(const File& file,
@@ -266,8 +268,6 @@ namespace hl
     {
         INBINAWriteStringTable<std::uint32_t>(
             file, strTable, offTable);
-
-        file.Pad(4);
     }
 
     void BINAWriteStringTable64(const File& file,
@@ -275,8 +275,6 @@ namespace hl
     {
         INBINAWriteStringTable<std::uint64_t>(
             file, strTable, offTable);
-
-        file.Pad(8);
     }
 
     void INBINAWriteOffsetTableSorted(const File& file,
@@ -327,20 +325,27 @@ namespace hl
         file.Pad(8);
     }
 
-    void BINAWriteOffsetTable32(const File& file,
-        OffsetTable& offTable)
+    template<typename OffsetType>
+    void INBINAWriteOffsetTable(const File& file, OffsetTable& offTable)
     {
         // Sort the offsets in the table from least to greatest, then write it to the file
         std::sort(offTable.begin(), offTable.end());
-        BINAWriteOffsetTableSorted32(file, offTable);
+        INBINAWriteOffsetTableSorted(file, offTable);
+
+        // Pad by the appropriate amount
+        file.Pad(sizeof(OffsetType));
+    }
+
+    void BINAWriteOffsetTable32(const File& file,
+        OffsetTable& offTable)
+    {
+        INBINAWriteOffsetTable<std::uint32_t>(file, offTable);
     }
 
     void BINAWriteOffsetTable64(const File& file,
         OffsetTable& offTable)
     {
-        // Sort the offsets in the table from least to greatest, then write it to the file
-        std::sort(offTable.begin(), offTable.end());
-        BINAWriteOffsetTableSorted64(file, offTable);
+        INBINAWriteOffsetTable<std::uint64_t>(file, offTable);
     }
 
     void BINAStartWriteV2(File& file, bool bigEndian, bool use64BitOffsets)
@@ -398,7 +403,7 @@ namespace hl
 
         // Write offset table
         std::uint32_t offTablePos = static_cast<std::uint32_t>(file.Tell());
-        BINAWriteOffsetTable32(file, offTable);
+        INBINAWriteOffsetTable<OffsetType>(file, offTable);
 
         // Fill-in node size
         std::uint32_t eof = static_cast<std::uint32_t>(file.Tell());
