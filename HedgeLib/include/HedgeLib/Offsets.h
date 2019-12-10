@@ -17,8 +17,9 @@ namespace hl
             sizeof(const T*) > 4), const T*>::type INGet() const
         {
             return (off) ? reinterpret_cast<const T*>(
-                reinterpret_cast<std::uintptr_t>(&off) +
-                static_cast<std::uintptr_t>(off)) : nullptr;
+                reinterpret_cast<std::intptr_t>(&off) +
+                static_cast<std::intptr_t>(static_cast<
+                std::int32_t>(off))) : nullptr;
         }
 
         template<std::size_t PtrSize = sizeof(std::uintptr_t)>
@@ -26,8 +27,9 @@ namespace hl
             sizeof(T*) > 4), T*>::type INGet()
         {
             return (off) ? reinterpret_cast<T*>(
-                reinterpret_cast<std::uintptr_t>(&off) +
-                static_cast<std::uintptr_t>(off)) : nullptr;
+                reinterpret_cast<std::intptr_t>(&off) +
+                static_cast<std::intptr_t>(static_cast<
+                std::int32_t>(off))) : nullptr;
         }
 
         template<std::size_t PtrSize = sizeof(std::uintptr_t)>
@@ -35,20 +37,22 @@ namespace hl
             sizeof(T*) > 4)>::type INSet(std::uintptr_t ptr)
         {
             // Make offset relative to itself
-            std::uintptr_t addr = reinterpret_cast<std::uintptr_t>(&off);
-            if (ptr <= addr)
+            std::intptr_t addr = reinterpret_cast<std::intptr_t>(&off);
+            if (ptr == addr)
             {
-                throw std::runtime_error((ptr == addr) ?
-                    "Cannot have a 32-bit offset that points to itself on this platform." :
-                    "Cannot have a 32-bit offset that points to a value before itself on this platform.");
+                throw std::runtime_error(
+                    "Cannot have a 32-bit offset that points to itself on this platform.");
             }
 
-            ptr -= addr;
+            addr = (static_cast<std::intptr_t>(ptr) - addr);
 
-            if (ptr > UINT32_MAX)
-                throw std::overflow_error("Cannot have a 32-bit offset larger than 32-bits.");
+            if (addr > INT32_MAX || addr < INT32_MIN)
+            {
+                throw std::overflow_error(
+                    "Cannot have a 32-bit offset that can't fit within 32-bits.");
+            }
 
-            off = static_cast<std::uint32_t>(ptr);
+            off = static_cast<std::uint32_t>(addr);
         }
 
         // For 32-bit architecture
