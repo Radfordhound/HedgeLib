@@ -932,6 +932,102 @@ namespace hl
         std::uint8_t PACxExtIndex;  // 0 means type is not a supported extension; subtract 1 for real index
     };
 
+    void INWriteLWArchiveBINAFile(File& file, const void* data,
+        PACxV2DataEntry& dataEntry, StringTable& strTable, OffsetTable& offTable,
+        bool isBigEndian)
+    {
+        // Swap node count if necessary
+        if (isBigEndian)
+        {
+            // This is ok since isBigEndian is only true if
+            // data points to something non-const.
+            Swap(*static_cast<BINAV2Header*>(
+                const_cast<void*>(data)));
+        }
+
+        // Get BINA V2 Data Node
+        const BINAV2DataNode* dataNode = INDBINAGetDataNodeV2(data);
+        if (!dataNode)
+        {
+            // No DATA node was found, so just write the data as-is and return.
+            file.Write(dataEntry);
+            file.WriteBytes(data, dataEntry.DataSize);
+            return;
+        }
+
+        // Get values from data node and swap them if necessary
+        std::uint32_t dataNodeSize = dataNode->Header.Size;
+        std::uint32_t offTableSize = dataNode->OffsetTableSize;
+
+        if (isBigEndian)
+        {
+            Swap(dataNodeSize);
+            Swap(offTableSize);
+        }
+
+        // Get offset table pointer
+        const std::uint8_t* offsetTable = (reinterpret_cast<
+            const std::uint8_t*>(dataNode) +
+            dataNodeSize - offTableSize);
+
+        // Get end of file pointer and data pointer
+        const std::uint8_t* eof = (offsetTable + offTableSize);
+        std::uint16_t relDataOff = dataNode->RelativeDataOffset;
+        if (isBigEndian) Swap(relDataOff);
+
+        const std::uint8_t* dataPtr = (reinterpret_cast<const std::uint8_t*>(
+            dataNode + 1) + relDataOff);
+
+        // HACK: Use string table offset as data size
+        dataEntry.DataSize = dataNode->StringTable;
+        if (isBigEndian) Swap(dataEntry.DataSize);
+
+        // Write data entry
+        file.Write(dataEntry);
+
+        // Write data
+        const long pos = file.Tell();
+        file.WriteBytes(dataPtr, dataEntry.DataSize);
+
+        // Add offsets from BINA file to global PACx offset table
+        const std::uint32_t* currentOffset = reinterpret_cast<
+            const std::uint32_t*>(dataPtr);
+
+        long offPos = pos;
+        char* stringTable = const_cast<char*>(reinterpret_cast<
+            const char*>(dataPtr + dataEntry.DataSize));
+
+        while (offsetTable < eof)
+        {
+            // Get next offset
+            if (!BINANextOffset(offsetTable, currentOffset)) break;
+
+            // Endian swap offset
+            if (isBigEndian)
+            {
+                Swap(*const_cast<std::uint32_t*>(currentOffset));
+            }
+
+            // Add offset to global offset table
+            offPos = (pos + static_cast<long>(reinterpret_cast
+                <const std::uint8_t*>(currentOffset) - dataPtr));
+
+            char* off = const_cast<char*>(reinterpret_cast
+                <const char*>(dataPtr + *currentOffset));
+
+            if (off >= stringTable)
+            {
+                // Add offset to the global string table
+                strTable.emplace_back(off, offPos);
+            }
+            else
+            {
+                file.FixOffset32(offPos, pos + static_cast
+                    <long>(*currentOffset), offTable);
+            }
+        }
+    }
+
     void INWriteLWArchive(File& file,
         const ArchiveFileEntry* files, INFileMetadata* metadata,
         std::size_t fileCount, const INTypeMetadata* types, std::uint16_t typeCount,
@@ -1149,102 +1245,23 @@ namespace hl
                         // File has a BINA signature
                         if (*static_cast<const std::uint32_t*>(data) == HL_BINA_SIGNATURE)
                         {
-                            // Determine endianness
-                            // (We assume data given to us by the user is already endian-swapped)
-                            bool isBigEndian = (!files[i2].Data) ?
-                                DBINAIsBigEndianV2(*static_cast<const BINAV2Header*>(data)) :
-                                false;
-
-                            // Swap node count if necessary
-                            if (isBigEndian)
+                            // Only merge if version number == 200
+                            // (Don't merge BINA v210+ files if user tries to pack one)
+                            const BINAV2Header* header = static_cast<const BINAV2Header*>(data);
+                            if (header->Version[0] == '2' && header->Version[1] == '0' &&
+                                header->Version[2] == '0')
                             {
-                                // This is ok since isBigEndian is only true if
-                                // data points to something non-const.
-                                Swap(*static_cast<BINAV2Header*>(
-                                    const_cast<void*>(data)));
+                                // Determine endianness
+                                // (We assume data given to us by the user is already endian-swapped)
+                                bool isBigEndian = (!files[i2].Data) ?
+                                    DBINAIsBigEndianV2(*header) : false;
+
+                                // Write BINA file
+                                INWriteLWArchiveBINAFile(file, data, dataEntry,
+                                    strTable, offTable, isBigEndian);
+
+                                continue;
                             }
-
-                            // Get BINA V2 Data Node
-                            const BINAV2DataNode* dataNode = INDBINAGetDataNodeV2(data);
-                            if (!dataNode)
-                            {
-                                throw std::runtime_error(
-                                    "Could not find BINA Data Node in BINA file.");
-                            }
-
-                            // Get values from data node and swap them if necessary
-                            std::uint32_t dataNodeSize = dataNode->Header.Size;
-                            std::uint32_t offTableSize = dataNode->OffsetTableSize;
-
-                            if (isBigEndian)
-                            {
-                                Swap(dataNodeSize);
-                                Swap(offTableSize);
-                            }
-
-                            // Get offset table pointer
-                            const std::uint8_t* offsetTable = (reinterpret_cast<
-                                const std::uint8_t*>(dataNode) +
-                                dataNodeSize - offTableSize);
-
-                            // Get end of file pointer and data pointer
-                            const std::uint8_t* eof = (offsetTable + offTableSize);
-                            std::uint16_t relDataOff = dataNode->RelativeDataOffset;
-                            if (isBigEndian) Swap(relDataOff);
-
-                            const std::uint8_t* data = (reinterpret_cast<const std::uint8_t*>(
-                                dataNode + 1) + relDataOff);
-
-                            // HACK: Use string table offset as data size
-                            dataEntry.DataSize = dataNode->StringTable;
-                            if (isBigEndian) Swap(dataEntry.DataSize);
-
-                            // Write data entry
-                            file.Write(dataEntry);
-
-                            // Write data
-                            const long pos = file.Tell();
-                            file.WriteBytes(data, dataEntry.DataSize);
-
-                            // Add offsets from BINA file to global PACx offset table
-                            const std::uint32_t* currentOffset = reinterpret_cast<
-                                const std::uint32_t*>(data);
-
-                            long offPos = pos;
-                            char* stringTable = const_cast<char*>(reinterpret_cast<
-                                const char*>(data + dataEntry.DataSize));
-
-                            while (offsetTable < eof)
-                            {
-                                // Get next offset
-                                if (!BINANextOffset(offsetTable, currentOffset)) break;
-
-                                // Endian swap offset
-                                if (isBigEndian)
-                                {
-                                    Swap(*const_cast<std::uint32_t*>(currentOffset));
-                                }
-
-                                // Add offset to global offset table
-                                offPos = (pos + static_cast<long>(reinterpret_cast
-                                    <const std::uint8_t*>(currentOffset) - data));
-
-                                char* off = const_cast<char*>(reinterpret_cast
-                                    <const char*>(data + *currentOffset));
-
-                                if (off >= stringTable)
-                                {
-                                    // Add offset to the global string table
-                                    strTable.emplace_back(off, offPos);
-                                }
-                                else
-                                {
-                                    file.FixOffset32(offPos, pos + static_cast
-                                        <long>(*currentOffset), offTable);
-                                }
-                            }
-
-                            continue;
                         }
 
                         // File has no BINA signature; search for
