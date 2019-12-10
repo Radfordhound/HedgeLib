@@ -26,7 +26,7 @@ void PrintArchiveTypes(const char* prefix = " ")
     ncout << prefix << "sb/storybook\t\t" << GetText(FILE_TYPE_STORYBOOK) << std::endl;*/
     ncout << prefix << "unleashed/gens/ar/pfd\t" << GetText(FILE_TYPE_HEDGEHOG) << std::endl;
     ncout << prefix << "lw/lost world/pacv2\t" << GetText(FILE_TYPE_PACV2) << std::endl;
-    ncout << prefix << "war/forces/pacv3\t" << GetText(FILE_TYPE_PACV3) << std::endl;
+    ncout << prefix << "wars/forces/pacv3\t" << GetText(FILE_TYPE_PACV3) << std::endl;
 }
 
 void PrintHelp()
@@ -85,7 +85,7 @@ hl::ArchiveType GetArchiveType(const hl::nchar* type)
     }
 
     // Forces .pac files
-    if (hl::StringsEqualInvASCII(type, HL_NTEXT("war")) ||
+    if (hl::StringsEqualInvASCII(type, HL_NTEXT("wars")) ||
         hl::StringsEqualInvASCII(type, HL_NTEXT("forces")) ||
         hl::StringsEqualInvASCII(type, HL_NTEXT("pacv3")))
     {
