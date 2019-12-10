@@ -64,6 +64,58 @@ namespace hl
 
     const std::size_t PACxV2SupportedExtensionCount = 42;
 
+    const PACxSupportedExtension PACxV3SupportedExtensions[] =
+    {
+        // Organized based on frequency information determined via a custom analyzation program
+        // High Frequency
+        { "dds", 57, PACX_EXT_FLAGS_SPLIT_TYPE },
+        { "model", 33, PACX_EXT_FLAGS_SPLIT_TYPE },
+        { "material", 22, PACX_EXT_FLAGS_SPLIT_TYPE },
+        { "terrain-model", 29, PACX_EXT_FLAGS_SPLIT_TYPE },
+        { "swif", 51 },
+        { "terrain-instanceinfo", 28 },
+        { "gedit", 36, PACX_EXT_FLAGS_BINA },
+        { "uv-anim", 7, PACX_EXT_FLAGS_SPLIT_TYPE },
+        { "cemt", 14 },
+        { "light", 20 },
+        { "rfl", 41, PACX_EXT_FLAGS_BINA },
+
+        // Average Frequency
+        { "skl.hkx", 48 },
+        { "anm.hkx", 5 },
+        { "mat-anim", 4, PACX_EXT_FLAGS_SPLIT_TYPE },
+        { "cnvrs-text", 54, PACX_EXT_FLAGS_BINA },
+        { "codetbl", 12, PACX_EXT_FLAGS_BINA },
+        { "asm", 1, PACX_EXT_FLAGS_BINA },
+        { "model-instanceinfo", 34, PACX_EXT_FLAGS_BINA },
+        { "cam-anim", 2, PACX_EXT_FLAGS_SPLIT_TYPE },
+
+        // Low Frequency
+        { "phy.hkx", 18 },
+        { "vis-anim", 8, PACX_EXT_FLAGS_SPLIT_TYPE },
+        { "scene", 43, PACX_EXT_FLAGS_BINA },
+        { "effdb", 38, PACX_EXT_FLAGS_BINA },
+        { "shlf", 47, PACX_EXT_FLAGS_BINA },
+        { "gism", 16, PACX_EXT_FLAGS_BINA },
+        { "probe", 39, PACX_EXT_FLAGS_BINA },
+        { "svcol.bin", 52, PACX_EXT_FLAGS_BINA },
+        { "fxcol.bin", 15, PACX_EXT_FLAGS_BINA },
+        { "grass.bin", 53, PACX_EXT_FLAGS_BINA },
+        { "path", 49, PACX_EXT_FLAGS_BINA },
+        { "pt-anim", 6, PACX_EXT_FLAGS_SPLIT_TYPE },
+        { "lit-anim", 3, PACX_EXT_FLAGS_SPLIT_TYPE },
+        { "cnvrs-proj", 56, PACX_EXT_FLAGS_BINA },
+        { "cnvrs-meta", 55, PACX_EXT_FLAGS_BINA },
+        { "scfnt", 42, PACX_EXT_FLAGS_BINA },
+        { "pso", 23, PACX_EXT_FLAGS_SPLIT_TYPE },
+        { "vso", 30, PACX_EXT_FLAGS_SPLIT_TYPE },
+        { "bfnt", 10, PACX_EXT_FLAGS_BINA },
+        { "vib", 59, PACX_EXT_FLAGS_BINA },
+        { "shader-list", 45, PACX_EXT_FLAGS_BINA }
+    };
+
+    const std::size_t PACxV3SupportedExtensionCount = 40;
+
     // Credit to Skyth for parts of this list
     const char* const PACxDataTypes[] =
     {
@@ -412,6 +464,68 @@ namespace hl
         fileSize -= headerPos;
         file.JumpTo(headerPos + 8);
         file.Write(fileSize);
+    }
+
+    void PACxStartWriteV3(File& file, std::uint32_t unknown1,
+        std::uint16_t type, std::uint32_t splitCount, bool bigEndian)
+    {
+        // Create "empty" header
+        PACxV3Header header =
+        {
+            HL_PACX_SIGNATURE,                                  // PACx
+            { 0x33, 0x30, 0x31 },                               // 301
+            (bigEndian) ? HL_BINA_BE_FLAG : HL_BINA_LE_FLAG,    // B or L
+            unknown1
+        };
+
+        header.Type = type;
+        header.Unknown2 = 0x108;
+        header.SplitCount = splitCount;
+
+        // Write header
+        file.DoEndianSwap = bigEndian;
+        file.Write(header);
+    }
+
+    void PACxFinishWriteV3(const File& file, std::uint32_t nodesSize,
+        std::uint32_t splitsInfoSize, std::uint32_t dataEntriesSize,
+        std::uint32_t strTableSize, long dataPos,
+        OffsetTable& offTable, long headerPos)
+    {
+        // Write offset table
+        file.Pad(8);
+        long offTablePos = file.Tell();
+
+        if (headerPos >= offTablePos)
+        {
+            throw std::invalid_argument(
+                "The given header position comes after the offset table, which is invalid.");
+        }
+
+        BINAWriteOffsetTable64(file, offTable);
+
+        // Fill-in file size
+        long eof = file.Tell();
+        std::uint32_t fileSize = static_cast<std::uint32_t>(eof - headerPos);
+
+        file.JumpTo(headerPos + 12);
+        file.Write(fileSize);
+
+        // Fill-in a bunch of additional sizes
+        file.Write(nodesSize);
+        file.Write(splitsInfoSize);
+        file.Write(dataEntriesSize);
+        file.Write(strTableSize);
+
+        // Fill-in data size
+        std::uint32_t dataSize = static_cast<std::uint32_t>(offTablePos - dataPos);
+        file.Write(dataSize);
+
+        // Fill-in offset table size
+        std::uint32_t offTableSize = static_cast<std::uint32_t>(eof - offTablePos);
+
+        file.Write(offTableSize);
+        file.JumpTo(eof);
     }
 
     const void* DPACxGetDataV3(const Blob& blob)

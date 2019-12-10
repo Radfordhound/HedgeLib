@@ -30,9 +30,8 @@ namespace hl
 
     HL_API void DExtractForcesArchive(const Blob& blob, const char* dir);
 
-    //HL_API void SaveForcesArchive(const Archive& arc,
-    //    const char* filePath, bool bigEndian,
-    //    std::uint32_t splitLimit = HL_PACX_DEFAULT_SPLIT_LIMIT);
+    HL_API void SaveForcesArchive(const Archive& arc, const char* filePath,
+        std::uint32_t splitLimit = HL_PACXV3_DEFAULT_SPLIT_LIMIT);
 
 #ifdef _WIN32
     inline Blob DLoadForcesArchive(const nchar* filePath)
@@ -43,8 +42,7 @@ namespace hl
 
     HL_API void DExtractForcesArchive(const Blob& blob, const nchar* dir);
 
-    //HL_API void SaveForcesArchive(const Archive& arc,
-    //    const nchar* filePath, bool bigEndian,
-    //    std::uint32_t splitLimit = HL_PACX_DEFAULT_SPLIT_LIMIT);
+    HL_API void SaveForcesArchive(const Archive& arc, const nchar* filePath,
+        std::uint32_t splitLimit = HL_PACXV3_DEFAULT_SPLIT_LIMIT);
 #endif
 }

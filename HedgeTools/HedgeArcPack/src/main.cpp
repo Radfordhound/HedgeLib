@@ -1,6 +1,7 @@
 #include "strings.h"
 #include "HedgeLib/Archives/GensArchive.h"
 #include "HedgeLib/Archives/LWArchive.h"
+#include "HedgeLib/Archives/ForcesArchive.h"
 #include "HedgeLib/Archives/Archive.h"
 #include "HedgeLib/IO/Path.h"
 #include <string>
@@ -25,7 +26,7 @@ void PrintArchiveTypes(const char* prefix = " ")
     ncout << prefix << "sb/storybook\t\t" << GetText(FILE_TYPE_STORYBOOK) << std::endl;*/
     ncout << prefix << "unleashed/gens/ar/pfd\t" << GetText(FILE_TYPE_HEDGEHOG) << std::endl;
     ncout << prefix << "lw/lost world/pacv2\t" << GetText(FILE_TYPE_PACV2) << std::endl;
-    //ncout << prefix << "forces/pacv3\t\t" << GetText(FILE_TYPE_PACV3) << std::endl;
+    ncout << prefix << "war/forces/pacv3\t" << GetText(FILE_TYPE_PACV3) << std::endl;
 }
 
 void PrintHelp()
@@ -83,12 +84,13 @@ hl::ArchiveType GetArchiveType(const hl::nchar* type)
         return hl::ArchiveType::PACxV2;
     }
 
-    //// Forces .pac files
-    //if (hl::StringsEqualInvASCII(type, HL_NTEXT("forces")) ||
-    //    hl::StringsEqualInvASCII(type, HL_NTEXT("pacv3")))
-    //{
-    //    return hl::ArchiveType::PACxV3;
-    //}
+    // Forces .pac files
+    if (hl::StringsEqualInvASCII(type, HL_NTEXT("war")) ||
+        hl::StringsEqualInvASCII(type, HL_NTEXT("forces")) ||
+        hl::StringsEqualInvASCII(type, HL_NTEXT("pacv3")))
+    {
+        return hl::ArchiveType::PACxV3;
+    }
 
     return hl::ArchiveType::Unknown;
 }
@@ -137,8 +139,10 @@ int main(int argc, char* argv[])
         return EXIT_SUCCESS;
     }
 
+#ifdef NDEBUG
     try
     {
+#endif
         // Parse arguments
         const hl::nchar *input, *output;
         std::unique_ptr<hl::nchar[]> outputWrapper;
@@ -181,19 +185,19 @@ int main(int argc, char* argv[])
                     // Parse flag
                     switch (HL_TOLOWERASCII(argv[i][1]))
                     {
-                        // Extract mode
+                    // Extract mode
                     case 'e':
                         if (mode != HAPMode::Unknown) return Error(ERROR_TOO_MANY_MODES);
                         mode = HAPMode::Extract;
                         continue;
 
-                        // Pack mode
+                    // Pack mode
                     case 'p':
                         if (mode != HAPMode::Unknown) return Error(ERROR_TOO_MANY_MODES);
                         mode = HAPMode::Pack;
                         continue;
 
-                        // Type flag
+                    // Type flag
                     case 't':
                         if (argv[i][2] != '=') return Error(ERROR_INVALID_TYPE);
 
@@ -204,12 +208,12 @@ int main(int argc, char* argv[])
                         }
                         continue;
 
-                        // Big Endian flag
+                    // Big Endian flag
                     case 'b':
                         be = true;
                         continue;
 
-                        // Split limit
+                    // Split limit
                     case 's':
                         if (argv[i][2] != '=') return Error(ERROR_INVALID_SPLIT_LIMIT);
 
@@ -217,7 +221,7 @@ int main(int argc, char* argv[])
                         customSplitLimit = true;
                         continue;
 
-                        // Invalid flag
+                    // Invalid flag
                     default:
                         return Error(ERROR_INVALID_FLAGS);
                     }
@@ -319,13 +323,19 @@ int main(int argc, char* argv[])
                 // TODO: Let user set compression type
                 hl::SaveGensArchive(arc, output,
                     static_cast<std::uint32_t>((customSplitLimit) ?
-                        splitLimit : HL_GENS_DEFAULT_SPLIT_LIMIT));
+                    splitLimit : HL_GENS_DEFAULT_SPLIT_LIMIT));
             }
             else if (type == hl::ArchiveType::PACxV2)
             {
                 hl::SaveLWArchive(arc,
                     output, be, static_cast<std::uint32_t>((customSplitLimit) ?
-                        splitLimit : HL_PACX_DEFAULT_SPLIT_LIMIT));
+                    splitLimit : HL_PACXV2_DEFAULT_SPLIT_LIMIT));
+            }
+            else if (type == hl::ArchiveType::PACxV3)
+            {
+                hl::SaveForcesArchive(arc,
+                    output, static_cast<std::uint32_t>((customSplitLimit) ?
+                    splitLimit : HL_PACXV3_DEFAULT_SPLIT_LIMIT));
             }
             else
             {
@@ -344,6 +354,7 @@ int main(int argc, char* argv[])
 
         ncout << GetText(DONE1_STRING) << (runtime / 1000.0f) <<
             GetText(DONE2_STRING) << std::endl;
+#ifdef NDEBUG    
     }
     catch (std::exception& ex)
     {
@@ -352,6 +363,7 @@ int main(int argc, char* argv[])
         ncin.get();
         return EXIT_FAILURE;
     }
+#endif
 
     return EXIT_SUCCESS;
 }

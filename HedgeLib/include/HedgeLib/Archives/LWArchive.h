@@ -32,7 +32,7 @@ namespace hl
 
     HL_API void SaveLWArchive(const Archive& arc,
         const char* filePath, bool bigEndian,
-        std::uint32_t splitLimit = HL_PACX_DEFAULT_SPLIT_LIMIT);
+        std::uint32_t splitLimit = HL_PACXV2_DEFAULT_SPLIT_LIMIT);
 
 #ifdef _WIN32
     HL_API Blob DLoadLWArchive(const nchar* filePath);
@@ -40,6 +40,6 @@ namespace hl
 
     HL_API void SaveLWArchive(const Archive& arc,
         const nchar* filePath, bool bigEndian,
-        std::uint32_t splitLimit = HL_PACX_DEFAULT_SPLIT_LIMIT);
+        std::uint32_t splitLimit = HL_PACXV2_DEFAULT_SPLIT_LIMIT);
 #endif
 }

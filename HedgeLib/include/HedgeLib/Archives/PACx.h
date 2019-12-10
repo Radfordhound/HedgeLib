@@ -3,8 +3,9 @@
 
 namespace hl
 {
-#define HL_PACX_SIGNATURE           0x78434150
-#define HL_PACX_DEFAULT_SPLIT_LIMIT 0xA037A0
+#define HL_PACX_SIGNATURE             0x78434150
+#define HL_PACXV2_DEFAULT_SPLIT_LIMIT 0xA037A0
+#define HL_PACXV3_DEFAULT_SPLIT_LIMIT 0x1E00000
 
     HL_API extern const char* const PACxExtension;
     HL_API extern const nchar* const PACxExtensionNative;
@@ -27,6 +28,9 @@ namespace hl
 
     HL_API extern const PACxSupportedExtension PACxV2SupportedExtensions[];
     HL_API extern const std::size_t PACxV2SupportedExtensionCount;
+
+    HL_API extern const PACxSupportedExtension PACxV3SupportedExtensions[];
+    HL_API extern const std::size_t PACxV3SupportedExtensionCount;
 
     HL_API extern const char* const PACxDataTypes[];
     HL_API extern const std::size_t PACxDataTypeCount;
@@ -118,6 +122,7 @@ namespace hl
 
     HL_STATIC_ASSERT_SIZE(PACxV2DataNode, 0x20);
 
+    // Thanks to Skyth for cracking the majority of the PACxV3 format!
     using PACxV3SplitTable = ArrayOffset64<StringOffset64>;
 
     enum PACxV3DataType : std::uint64_t
@@ -165,6 +170,13 @@ namespace hl
 
     HL_STATIC_ASSERT_SIZE(PACxV3NodeTree, 0x18);
 
+    enum PACxV3Type : std::uint16_t
+    {
+        PACXV3_TYPE_IS_ROOT = 1,
+        PACXV3_TYPE_IS_SPLIT = 2,
+        PACXV3_TYPE_HAS_SPLITS = 4
+    };
+
     struct PACxV3Header
     {
         std::uint32_t Signature;        // "PACx"
@@ -178,7 +190,7 @@ namespace hl
         std::uint32_t StringTableSize;  // The size of the string table in bytes, including padding.
         std::uint32_t DataSize;
         std::uint32_t OffsetTableSize;  // The size of the offset table in bytes, including padding.
-        std::uint16_t Type;
+        std::uint16_t Type;             // Bitwise-and this with values from the PACxV3Type enum.
         std::uint16_t Unknown2;         // Always 0x108?
         std::uint32_t SplitCount;
 
@@ -232,6 +244,14 @@ namespace hl
     
     HL_API void PACxStartWriteV2(File& file, bool bigEndian);
     HL_API void PACxFinishWriteV2(const File& file, long headerPos);
+    HL_API void PACxStartWriteV3(File& file, std::uint32_t unknown1,
+        std::uint16_t type, std::uint32_t splitCount, bool bigEndian = false);
+
+    HL_API void PACxFinishWriteV3(const File& file, std::uint32_t nodesSize,
+        std::uint32_t splitsInfoSize, std::uint32_t dataEntriesSize,
+        std::uint32_t strTableSize, long dataPos,
+        OffsetTable& offTable, long headerPos);
+
     inline bool DPACxIsBigEndian(const Blob& blob)
     {
         return DBINAIsBigEndianV2(blob);
