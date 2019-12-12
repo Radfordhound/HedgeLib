@@ -1,22 +1,23 @@
 project("HedgeEdit")
-	language("C++")
-	cppdialect("C++17")
-	targetdir("bin/%{cfg.platform}/%{cfg.buildcfg}")
-	kind("WindowedApp")
-	links("HedgeLib")
+    language("C++")
+    cppdialect("C++17")
+    targetdir("bin/%{cfg.platform}/%{cfg.buildcfg}")
+    kind("WindowedApp")
+    links("HedgeLib")
+    runpathdirs("bin/%{cfg.platform}/%{cfg.buildcfg}")
 
     -- Backend Option
     newoption(
     {
-	    trigger = "backend",
-	    description = "Which backend HedgeEdit should use for rendering",
-	    default = "auto",
-	    allowed =
-	    {
+        trigger = "backend",
+        description = "Which backend HedgeEdit should use for rendering",
+        default = "auto",
+        allowed =
+        {
             { "auto", "Pick automatically based on target platform" },
-		    { "d3d11", "Direct3D 11" },
+            { "d3d11", "Direct3D 11" },
             --{ "vk", "Vulkan" }
-	    }
+        }
     })
 
     -- Static or Shared
@@ -29,7 +30,7 @@ project("HedgeEdit")
     -- Platform-Specifics
     if Target == "windows" then
         defines("NOMINMAX")
-		files("app.manifest")
+        files("app.manifest")
 
         -- Auto
         if _OPTIONS["backend"] == "auto" then
@@ -81,40 +82,40 @@ project("HedgeEdit")
             premake.error("Unknown backend.")
         end
     end
-	
-	-- Dependencies
-	local deps = GetDepends("depends.lua")
-	includedirs({ "ui", "../HedgeLib/include" })
-	files({ "src/**.cpp", "src/**.h", "ui/**.cpp",
-		"ui/**.h", "ui/**.ui", "ui/**.qrc" })
-	
-	-- MSC Optimization
-	filter("toolset:msc")
-		flags("MultiProcessorCompile")
-	
-	-- GCC C++ 17 Filesystem support
-	filter("toolset:gcc or clang")
-		links("stdc++fs")
+    
+    -- Dependencies
+    local deps = GetDepends("depends.lua")
+    includedirs({ "ui", "../HedgeLib/include" })
+    files({ "src/**.cpp", "src/**.h", "ui/**.cpp",
+        "ui/**.h", "ui/**.ui", "ui/**.qrc" })
+    
+    -- MSC Optimization
+    filter("toolset:msc")
+        flags("MultiProcessorCompile")
+    
+    -- GCC C++ 17 Filesystem support
+    filter("toolset:gcc or clang")
+        links("stdc++fs")
 
-	-- Debug Configuration
-	filter("configurations:Debug*")
-		defines("DEBUG")
-		symbols("On")
+    -- Debug Configuration
+    filter("configurations:Debug*")
+        defines("DEBUG")
+        symbols("On")
 
-	-- Release Configuration
-	filter("configurations:Release*")
-		defines("NDEBUG")
-		optimize("Speed")
-		flags("LinkTimeOptimization")
-		
-	-- x86
-	filter("platforms:x86")
-		architecture("x86")
-		defines("x86")
-		
-	-- x64
-	filter("platforms:x64")
-		architecture("x86_64")
-		defines("x64")
-		
-	FinalizeQtDefault(deps.QtDir32, deps.QtDir64)
+    -- Release Configuration
+    filter("configurations:Release*")
+        defines("NDEBUG")
+        optimize("Speed")
+        flags("LinkTimeOptimization")
+        
+    -- x86
+    filter("platforms:x86")
+        architecture("x86")
+        defines("x86")
+        
+    -- x64
+    filter("platforms:x64")
+        architecture("x86_64")
+        defines("x64")
+        
+    FinalizeQtDefault(deps.QtDir32, deps.QtDir64)

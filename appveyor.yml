@@ -73,6 +73,7 @@ for:
         Copy-Item "$dir/HedgeLib/include" -Destination "$dir/HedgeLib/bin/$env:PLATFORM/Release/include" -Recurse
         foreach ($project in $projects) {
           cp -n "$dir/License.txt" "$dir/$project/bin/$env:PLATFORM/Release/License.txt"
+          cp -n "$dir/HedgeLib/bin/$env:PLATFORM/Release/libHedgeLib.so" "$dir/$project/bin/$env:PLATFORM/Release/libHedgeLib.so"
         }
   artifacts:
     - path: HedgeLib/bin/$(PLATFORM)/Release
