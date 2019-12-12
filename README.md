@@ -9,7 +9,7 @@
 This repository uses [AppVeyor](https://www.appveyor.com) to automatically build every commit!
 As such, you don't have to manually build any of the tools/libraries in this repository if you simply want to try out the latest versions.
 
-- [Stable (release) builds](https://github.com/Radfordhound/HedgeLib/releases) (none yet)
+- [Stable (release) builds](https://github.com/Radfordhound/HedgeLib/releases)
 - [Latest (development) builds](https://ci.appveyor.com/project/Radfordhound/hedgelib)
 
 ## HedgeLib
@@ -17,14 +17,17 @@ HedgeLib is a C++ library [under the MIT license](License.txt) that aims to make
 Right now, HedgeLib supports the following:
 
 ### Hedgehog Engine
-- "Mirage" headers (used in models/materials from Rio 2016 and beyond)
-- Models (.model/.terrain-model)
+- "Mirage" headers (used in models/materials from Lost World and beyond)
+- Models (.model/.terrain-model; v5.0)
+
+### Sonic Forces
+- Archives (.pac; aka "PACx V3")
+
+### Sonic Lost World
+- Archives (.pac; aka "PACx V2")
 
 ### Sonic Unleashed/Generations
 - Uncompressed Archives (.ar/.pfd)
-
-### Sonic Lost World
-- Archives (.pac)
 
 ### Other
 - BINA headers and string/offset tables (used in many files from '06, Colors, LW, Forces, and more)
