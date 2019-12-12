@@ -435,10 +435,9 @@ namespace hl
             break;
 
         // Forces
-        // TODO: Un-comment this
-        //case ArchiveType::PACxV3:
-            //DAddForcesArchive(blob, *this);
-            //break;
+        case ArchiveType::PACxV3:
+            DAddForcesArchive(blob, *this);
+            break;
 
             // TODO: Add other Archive Types
 
@@ -694,9 +693,8 @@ namespace hl
             return DLWArchiveGetFileCount(blob, includeProxies);
 
         // Forces
-        // TODO: Un-comment this
-        //case ArchiveType::PACxV3:
-            //return DForcesArchiveGetFileCount(blob, includeProxies);
+        case ArchiveType::PACxV3:
+            return DForcesArchiveGetFileCount(blob, includeProxies);
 
             // TODO: Add other Archive Types
 

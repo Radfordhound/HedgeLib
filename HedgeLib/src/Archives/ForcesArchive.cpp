@@ -12,6 +12,203 @@
 
 namespace hl
 {
+    void INDAddForcesArchive(Archive& arc, const PACxV3Node* nodes,
+        const PACxV3Node& node, const char* fileName, char* curCharPtr)
+    {
+        for (std::uint16_t i = 0; i < node.ChildCount; ++i)
+        {
+            // Get the current child node's index
+            std::int32_t childNodeIndex = node.ChildIndices[i];
+            if (childNodeIndex < 0) continue;
+
+            // Copy node name into buffer if node has a name
+            const char* name = nodes[childNodeIndex].Name;
+            if (name)
+            {
+                // Get length of this node's name
+                std::size_t nameLen = std::strlen(name);
+
+                // Copy node name
+                std::copy(name, name + nameLen, curCharPtr);
+
+                // Recurse through child nodes
+                if (nodes[childNodeIndex].ChildCount)
+                {
+                    INDAddForcesArchive(arc, nodes, nodes[childNodeIndex],
+                        fileName, curCharPtr + nameLen);
+                }
+            }
+
+            // Extract file if node has data
+            if (nodes[childNodeIndex].HasData)
+            {
+                // Get the current data entry
+                const PACxV3DataEntry* dataEntry = nodes[
+                    childNodeIndex].Data.GetAs<PACxV3DataEntry>();
+
+                // Skip if the data is not here
+                if (dataEntry->DataType == PACXV3_DATA_TYPE_NOT_HERE)
+                    continue;
+
+                // Append extension to file path
+                std::size_t extLen = (dataEntry->Extension) ?
+                    std::strlen(dataEntry->Extension) : 0;
+
+                if (extLen)
+                {
+                    // Add dot
+                    *curCharPtr = HL_NTEXT('.');
+                    ++extLen;
+
+                    // Copy extension
+                    std::copy(dataEntry->Extension.Get(),
+                        dataEntry->Extension + extLen, (curCharPtr + 1));
+                }
+                else
+                {
+                    *curCharPtr = HL_NTEXT('\0');
+                }
+
+                // Add file entry to archive
+                arc.Files.emplace_back(fileName, dataEntry->Data.Get(),
+                    static_cast<std::size_t>(dataEntry->DataSize));
+            }
+        }
+    }
+
+    void DAddForcesArchive(const Blob& blob, Archive& arc)
+    {
+        // Get PACx V3 Data
+        const ForcesArchive* pac = blob.RawData<ForcesArchive>();
+
+        // Return if there's nothing to add
+        if (!pac->Header.DataSize || !pac->Header.NodesSize ||
+            !pac->Header.DataEntriesSize) return;
+
+        // Determine file path buffer size
+        std::size_t maxNameLen = 0;
+        const PACxV3Node* typeNodes = pac->TypeTree.Nodes.Get();
+
+        for (std::uint32_t i = 0; i < pac->TypeTree.DataNodeCount; ++i)
+        {
+            // Get the current data node's index
+            std::int32_t dataNodeIndex = pac->TypeTree.DataNodeIndices[i];
+            if (dataNodeIndex < 0) continue;
+
+            // Get file tree
+            const PACxV3NodeTree* fileTree = typeNodes[dataNodeIndex].Data.GetAs<
+                const PACxV3NodeTree>();
+
+            // Iterate through file nodes
+            const PACxV3Node* fileNodes = fileTree->Nodes.Get();
+            for (std::uint32_t i2 = 0; i2 < fileTree->DataNodeCount; ++i2)
+            {
+                // Get the current data node's index
+                dataNodeIndex = fileTree->DataNodeIndices[i2];
+                if (dataNodeIndex < 0) continue;
+
+                // Get the current data entry
+                const PACxV3DataEntry* dataEntry = fileNodes[
+                    dataNodeIndex].Data.GetAs<PACxV3DataEntry>();
+
+                // Skip if the data is not here
+                if (dataEntry->DataType == PACXV3_DATA_TYPE_NOT_HERE)
+                    continue;
+
+                // Get the current name's length
+                std::size_t len = static_cast<std::size_t>(
+                    fileNodes[dataNodeIndex].FullPathSize);
+
+                // Get the current extension's length
+                if (dataEntry->Extension)
+                {
+                    len += std::strlen(dataEntry->Extension);
+                }
+
+                // Increase max name length if the current name's length is greater
+                if (len > maxNameLen) maxNameLen = len;
+            }
+        }
+
+        // Increase maxNameLen to account for null terminator and dot
+        maxNameLen += 2;
+
+        // Create file path buffer and copy directory into it
+        std::unique_ptr<char[]> filePath = std::unique_ptr<char[]>(
+            new char[maxNameLen]);
+
+        // Iterate through type tree
+        for (std::uint32_t i = 0; i < pac->TypeTree.DataNodeCount; ++i)
+        {
+            // Get the current data node's index
+            std::int32_t dataNodeIndex = pac->TypeTree.DataNodeIndices[i];
+            if (dataNodeIndex < 0) continue;
+
+            // Get file tree
+            const PACxV3NodeTree* fileTree = typeNodes[dataNodeIndex].Data.GetAs<
+                const PACxV3NodeTree>();
+
+            if (!fileTree->DataNodeCount) continue; // Skip if tree has no data nodes
+
+            // Iterate through file nodes
+            const PACxV3Node* fileNodes = fileTree->Nodes.Get();
+            INDAddForcesArchive(arc, fileNodes, fileNodes[0],
+                filePath.get(), filePath.get());
+        }
+    }
+
+    std::size_t DForcesArchiveGetFileCount(
+        const Blob& blob, bool includeProxies)
+    {
+        // Get PACx V3 Data
+        std::size_t fileCount = 0;
+        const ForcesArchive* pac = blob.RawData<ForcesArchive>();
+
+        // Return if there's no files
+        if (!pac->Header.DataSize || !pac->Header.NodesSize ||
+            !pac->Header.DataEntriesSize) return fileCount;
+
+        // Iterate through type tree
+        const PACxV3Node* typeNodes = pac->TypeTree.Nodes.Get();
+        for (std::uint32_t i = 0; i < pac->TypeTree.DataNodeCount; ++i)
+        {
+            // Get the current data node's index
+            std::int32_t dataNodeIndex = pac->TypeTree.DataNodeIndices[i];
+            if (dataNodeIndex < 0) continue;
+
+            // Get file tree
+            const PACxV3NodeTree* fileTree = typeNodes[dataNodeIndex].Data.GetAs<
+                const PACxV3NodeTree>();
+
+            if (includeProxies)
+            {
+                fileCount += static_cast<std::size_t>(fileTree->DataNodeCount);
+            }
+            else
+            {
+                for (std::uint32_t i2 = 0; i2 < fileTree->DataNodeCount; ++i2)
+                {
+                    // Get the current data node's index
+                    dataNodeIndex = fileTree->DataNodeIndices[i2];
+                    if (dataNodeIndex < 0) continue;
+
+                    // Get the current data entry
+                    const PACxV3DataEntry* dataEntry = fileTree->Nodes[
+                        dataNodeIndex].Data.GetAs<PACxV3DataEntry>();
+
+                    // Skip if the data is not here
+                    if (dataEntry->DataType == PACXV3_DATA_TYPE_NOT_HERE)
+                        continue;
+
+                    // Increment file counter
+                    ++fileCount;
+                }
+            }
+        }
+
+        return fileCount;
+    }
+
     std::unique_ptr<const char*[]> DForcesArchiveGetSplitPtrs(
         const Blob& blob, std::size_t& splitCount)
     {

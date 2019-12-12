@@ -13,17 +13,15 @@ namespace hl
         PACxV3NodeTree TypeTree;
     };
 
-    // TODO
-
-    //HL_API void DAddForcesArchive(const Blob& blob, Archive& arc);
+    HL_API void DAddForcesArchive(const Blob& blob, Archive& arc);
     inline Blob DLoadForcesArchive(const char* filePath)
     {
         // Included for completeness
         return DPACxLoadV3(filePath);
     }
 
-    /*HL_API std::size_t DForcesArchiveGetFileCount(const Blob& blob,
-        bool includeProxies = true);*/
+    HL_API std::size_t DForcesArchiveGetFileCount(const Blob& blob,
+        bool includeProxies = true);
 
     HL_API std::unique_ptr<const char*[]> DForcesArchiveGetSplitPtrs(
         const Blob& blob, std::size_t& splitCount);
