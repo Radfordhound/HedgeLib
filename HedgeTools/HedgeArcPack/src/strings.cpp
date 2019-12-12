@@ -6,20 +6,23 @@ const hl::nchar* const EnglishText[STRING_CONSTANT_COUNT] =
     HL_NTEXT("1.0 (BETA)"),
 
     // USAGE_STRING
-    HL_NTEXT("Usage: HedgeArcPack [flags] input [output]"),
+    HL_NTEXT("Usage: HedgeArcPack input [output] [mode] [flags]"),
 
     // HELP1_STRING
     HL_NTEXT(
-        "Arguments surrounded by square brackets are optional; if they\n"
-        "aren't specified, they will be auto-determined based on input.\n\n"
-        "Flags:\n\n"
+        "Arguments surrounded by square brackets are optional and can\n"
+        "be specified in any order. If they aren't specified, they will\n"
+        "be auto-determined based on input.\n\n"
+        "If the desired archive type wasn't specified with -T and cannot\n"
+        "be automatically determined, the user will be prompted to enter one.\n\n"
+        "Modes:\n\n"
         " -E\t\tExtracts the archive specified by input to the directory\n"
-        "\t\tspecified by outputDir. The outputName argument is ignored.\n\n"
-        " -P\t\tPacks the directory specified by input into a series\n"
-        "\t\tof archives in outputDir, each prefixed with outputName.\n\n"
-        "\t\tIf the desired archive type wasn't specified with -T\n"
-        "\t\tand cannot be automatically determined, the user\n"
-        "\t\twill be prompted to enter one.\n\n"
+        "\t\tspecified by output.\n\n"
+        " -P\t\tPacks the directory specified by input into a root archive\n"
+        "\t\tlocated at output as well as a series of split archives located\n"
+        "\t\tnext to output. (e.g. If output == \"out/w1a01_far.pac\", a\n"
+        "\t\tsplit called \"out/w1a01_far.pac.00\" may be generated.)\n\n"
+        "Flags:\n\n"
         " -T=type\tSpecifies what type of archive to pack/extract.\n"
         "\t\tValid options are:\n\n"),
 
