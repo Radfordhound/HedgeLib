@@ -90,6 +90,11 @@ namespace hl
     template const char* INPathGetExtPtrName<char, true>(const char* fileName);
     template const char* INPathGetExtPtrName<char, false>(const char* fileName);
 
+#ifdef _WIN32
+    template const nchar* INPathGetExtPtrName<nchar, true>(const nchar* fileName);
+    template const nchar* INPathGetExtPtrName<nchar, false>(const nchar* fileName);
+#endif
+
     const char* PathGetExtPtrName(const char* fileName)
     {
         if (!fileName) return EmptyString;
@@ -250,6 +255,11 @@ namespace hl
     template std::unique_ptr<char[]> INPathGetParentPtr(const char* path,
         const char* fileName);
 
+#ifdef _WIN32
+    template std::unique_ptr<nchar[]> INPathGetParentPtr(const nchar* path,
+        const nchar* fileName);
+#endif
+
     template<typename char_t>
     std::unique_ptr<char_t[]> INPathGetParentPtr(const char_t* path)
     {
@@ -261,6 +271,10 @@ namespace hl
     }
 
     template std::unique_ptr<char[]> INPathGetParentPtr<char>(const char* path);
+
+#ifdef _WIN32
+    template std::unique_ptr<nchar[]> INPathGetParentPtr<nchar>(const nchar* path);
+#endif
 
     std::unique_ptr<char[]> PathGetParentPtr(const char* path)
     {
@@ -341,6 +355,11 @@ namespace hl
 
     template std::unique_ptr<char[]> INPathRemoveExtPtr<char, true>(const char* filePath);
     template std::unique_ptr<char[]> INPathRemoveExtPtr<char, false>(const char* filePath);
+
+#ifdef _WIN32
+    template std::unique_ptr<nchar[]> INPathRemoveExtPtr<nchar, true>(const nchar* filePath);
+    template std::unique_ptr<nchar[]> INPathRemoveExtPtr<nchar, false>(const nchar* filePath);
+#endif
 
     std::unique_ptr<char[]> PathRemoveExtPtr(const char* filePath)
     {
