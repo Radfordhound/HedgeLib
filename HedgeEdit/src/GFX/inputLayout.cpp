@@ -1,6 +1,6 @@
 #include "inputLayout.h"
 #include "instance.h"
-#include <HedgeLib/Geometry/HHSubMesh.h>
+#include <HedgeLib/Geometry/HHMesh.h>
 #include <stdexcept>
 #include <array>
 

@@ -6,21 +6,66 @@ namespace hl
     struct Matrix4x4;
     struct AABB;
 
+    using HHMeshSlot = ArrayOffset32<DataOffset32<HHMesh>>;
+
+    struct HHSpecialMeshSlot
+    {
+        std::uint32_t Count;
+        DataOffset32<StringOffset32> Types;
+        DataOffset32<DataOffset32<std::uint32_t>> MeshCounts;
+        DataOffset32<DataOffset32<DataOffset32<HHMesh>>> Meshes;
+
+        inline void EndianSwap()
+        {
+            Swap(Count);
+        }
+
+        HL_API void EndianSwapRecursive(bool isBigEndian);
+    };
+
+    HL_STATIC_ASSERT_SIZE(HHSpecialMeshSlot, 16);
+
+    struct HHMeshGroup
+    {
+        HHMeshSlot Solid;
+        HHMeshSlot Transparent;
+        HHMeshSlot Boolean;
+        HHSpecialMeshSlot Special;
+
+        inline void EndianSwap()
+        {
+            Swap(Solid);
+            Swap(Transparent);
+            Swap(Boolean);
+            Special.EndianSwap();
+        }
+
+        inline void EndianSwapRecursive(bool isBigEndian)
+        {
+            SwapRecursive(isBigEndian, Solid);
+            SwapRecursive(isBigEndian, Transparent);
+            SwapRecursive(isBigEndian, Boolean);
+            Special.EndianSwapRecursive(isBigEndian);
+        }
+    };
+
+    HL_STATIC_ASSERT_SIZE(HHMeshGroup, 0x28);
+
     struct HHTerrainModel
     {
-        ArrayOffset32<DataOffset32<HHMesh>> Meshes;
+        ArrayOffset32<DataOffset32<HHMeshGroup>> MeshGroups;
         StringOffset32 Name;
         std::uint32_t Flags; // TODO: Make this an enum
 
         inline void EndianSwap()
         {
-            Swap(Meshes);
+            Swap(MeshGroups);
             Swap(Flags);
         }
 
         inline void EndianSwapRecursive(bool isBigEndian)
         {
-            SwapRecursive(isBigEndian, Meshes);
+            SwapRecursive(isBigEndian, MeshGroups);
             Swap(Flags);
         }
     };
@@ -64,18 +109,18 @@ namespace hl
 
     struct HHSkeletalModel
     {
-        ArrayOffset32<DataOffset32<HHMesh>> Meshes;
+        ArrayOffset32<DataOffset32<HHMeshGroup>> MeshGroups;
         HHSkeleton Skeleton;
 
         inline void EndianSwap()
         {
-            Swap(Meshes);
+            Swap(MeshGroups);
             Skeleton.EndianSwap();
         }
 
         inline void EndianSwapRecursive(bool isBigEndian)
         {
-            SwapRecursive(isBigEndian, Meshes);
+            SwapRecursive(isBigEndian, MeshGroups);
             Skeleton.EndianSwapRecursive(isBigEndian);
         }
     };

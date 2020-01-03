@@ -26,6 +26,7 @@ namespace HedgeEdit::GFX
         winrt::com_ptr<ID3D11RenderTargetView> renderTargetView;
         winrt::com_ptr<ID3D11Texture2D> depthBuffer;
         winrt::com_ptr<ID3D11DepthStencilView> depthView;
+        winrt::com_ptr<ID3D11DepthStencilState> depthState;
 
         DirectX::XMVECTOR camPos, camRot, camUp, camForward;
         DirectX::XMMATRIX view, proj, viewProj;
@@ -71,9 +72,5 @@ namespace HedgeEdit::GFX
         void Resize(unsigned int width, unsigned int height);
         void Update();
         void Render();
-
-    private:
-        void BeginFrameStandard();
-        void BeginFrameHH2();
     };
 }

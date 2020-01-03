@@ -5,7 +5,7 @@
 #include <d3d11.h>
 #endif
 
-#include <unordered_map>
+#include "../flat_hash_map.h"
 #include <string>
 #include <cstdint>
 
@@ -26,12 +26,12 @@ namespace HedgeEdit::GFX
         D3D11_MAPPED_SUBRESOURCE mappedRes;
 #endif
 
-        std::unordered_map<std::string, ConstantBufferVariable> variables;
+        ska::flat_hash_map<std::string, ConstantBufferVariable> variables;
 
     public:
 #ifdef D3D11
         ConstantBuffer(const Instance& inst, std::size_t bufferSize,
-            std::unordered_map<std::string, ConstantBufferVariable> variables, 
+            ska::flat_hash_map<std::string, ConstantBufferVariable> variables,
             const D3D11_USAGE usage = D3D11_USAGE_DEFAULT,
             const D3D11_CPU_ACCESS_FLAG flags = static_cast<D3D11_CPU_ACCESS_FLAG>(0),
             const void* initialData = nullptr);

@@ -3,7 +3,6 @@
 #include "geometry.h"
 #include "HedgeLib/Geometry/HHModel.h"
 #include "HedgeLib/Geometry/HHMesh.h"
-#include "HedgeLib/Geometry/HHSubMesh.h"
 #include "HedgeLib/IO/HedgehogEngine.h"
 #include "HedgeLib/IO/File.h"
 #include "HedgeLib/Blob.h"
@@ -11,104 +10,73 @@
 
 namespace HedgeEdit::GFX
 {
-    void CreateHHGeometry(Instance& inst, const hl::HHSubMeshSlot& slot,
-        std::uint16_t* geometryIndices, std::size_t& geometryIndex,
-        bool seeThrough = false)
+    void CreateGeometry(Instance& inst, MeshGroup& group,
+        const hl::HHMeshSlot& slot, std::size_t index)
     {
-        // Create geometry from submeshes in the given slot
-        const hl::DataOffset32<hl::HHSubMesh>* subMeshes = slot.Get();
+        // Create geometry from meshes in the given slot
+        const hl::DataOffset32<hl::HHMesh>* meshes = slot.Get();
         for (std::uint32_t i = 0; i < slot.Count; ++i)
-        {
-            const hl::HHSubMesh* subMesh = subMeshes[i].Get();
-            geometryIndices[geometryIndex++] = inst.AddGeometry(
-                std::unique_ptr<Geometry>(new Geometry(
-                inst, *subMesh, seeThrough)));
-        }
-    }
-
-    void CreateHHGeometry(Instance& inst, const hl::HHSpecialSubMeshSlot& slot,
-        std::uint16_t* geometryIndices, std::size_t& geometryIndex)
-    {
-        // Create geometry from submeshes in the special slot
-        for (std::uint32_t i = 0; i < slot.Count; ++i)
-        {
-            std::uint32_t subMeshCount = *slot.SubMeshCounts[i].Get();
-            for (std::uint32_t i2 = 0; i2 < subMeshCount; ++i2)
-            {
-                const hl::HHSubMesh* subMesh = slot.SubMeshes[i][i2].Get();
-                geometryIndices[geometryIndex++] = inst.AddGeometry(
-                    std::unique_ptr<Geometry>(new Geometry(
-                    inst, *subMesh)));
-            }
-        }
-    }
-
-    void CreateHHGeometry(Instance& inst, const hl::DataOffset32<hl::HHMesh>* meshes,
-        std::uint32_t meshCount, std::uint16_t* geometryIndices)
-    {
-        std::size_t geometryIndex = 0;
-        for (std::uint32_t i = 0; i < meshCount; ++i)
         {
             const hl::HHMesh* mesh = meshes[i].Get();
-            CreateHHGeometry(inst, mesh->Solid, geometryIndices, geometryIndex);
-            CreateHHGeometry(inst, mesh->Transparent, geometryIndices, geometryIndex);
-            CreateHHGeometry(inst, mesh->Boolean, geometryIndices, geometryIndex);
-            CreateHHGeometry(inst, mesh->Special, geometryIndices, geometryIndex);
+            group.Meshes[index++] = Geometry(inst, *mesh);
         }
+    }
+
+    template<typename T>
+    void CreateModel(Model& mdl, Instance& inst, const T& model)
+    {
+        // Get total geometry count for each mesh group
+        const hl::DataOffset32<hl::HHMeshGroup>* meshGroups = model.MeshGroups.Get();
+        std::size_t solidCount = 0, transCount = 0, boolCount = 0;
+
+        for (std::uint32_t i = 0; i < model.MeshGroups.Count; ++i)
+        {
+            const hl::HHMeshGroup* meshGroup = meshGroups[i].Get();
+            solidCount += meshGroup->Solid.Count;
+            transCount += meshGroup->Transparent.Count;
+            boolCount += meshGroup->Boolean.Count;
+
+            // TODO: Special meshes
+            //SpecialMeshGroupCount += mesh->Special.Count;
+        }
+
+        // Create mesh groups
+        mdl.Solid = MeshGroup(solidCount);
+        mdl.Transparent = MeshGroup(transCount);
+        mdl.Boolean = MeshGroup(boolCount);
+
+        // TODO: Special meshes
+        /*SpecialMeshGroups = (SpecialMeshGroupCount) ? std::unique_ptr<SpecialMeshGroup[]>(
+            new SpecialMeshGroup[SpecialMeshGroupCount]) : nullptr;*/
+
+        // Create geometry
+        solidCount = 0, transCount = 0, boolCount = 0;
+        for (std::uint32_t i = 0; i < model.MeshGroups.Count; ++i)
+        {
+            const hl::HHMeshGroup* meshGroup = meshGroups[i].Get();
+
+            CreateGeometry(inst, mdl.Solid, meshGroup->Solid, solidCount);
+            CreateGeometry(inst, mdl.Transparent, meshGroup->Transparent, transCount);
+            CreateGeometry(inst, mdl.Boolean, meshGroup->Boolean, boolCount);
+
+            solidCount += meshGroup->Solid.Count;
+            transCount += meshGroup->Transparent.Count;
+            boolCount += meshGroup->Boolean.Count;
+
+            // TODO: Special meshes
+        }
+
+        mdl.SpecialMeshGroupCount = 0; // TODO
     }
 
     Model::Model(Instance& inst, const hl::HHTerrainModel& model)
     {
-        // Get total geometry count
-        const hl::DataOffset32<hl::HHMesh>* meshes = model.Meshes.Get();
-        geometryCount = 0;
-
-        for (std::uint32_t i = 0; i < model.Meshes.Count; ++i)
-        {
-            const hl::HHMesh* mesh = meshes[i].Get();
-            geometryCount += mesh->Solid.Count;
-            geometryCount += mesh->Transparent.Count;
-            geometryCount += mesh->Boolean.Count;
-            
-            for (std::uint32_t i2 = 0; i2 < mesh->Special.Count; ++i2)
-            {
-                geometryCount += *mesh->Special.SubMeshCounts[i2].Get();
-            }
-        }
-
-        // Create geometry
-        geometryIndices = std::make_unique<std::uint16_t[]>(geometryCount);
-        CreateHHGeometry(inst, meshes, model.Meshes.Count, geometryIndices.get());
+        CreateModel(*this, inst, model);
     }
 
     Model::Model(Instance& inst, const hl::HHSkeletalModel& model)
     {
-        // Get total geometry count
-        const hl::DataOffset32<hl::HHMesh>* meshes = model.Meshes.Get();
-        geometryCount = 0;
-
-        for (std::uint32_t i = 0; i < model.Meshes.Count; ++i)
-        {
-            const hl::HHMesh* mesh = meshes[i].Get();
-            geometryCount += mesh->Solid.Count;
-            geometryCount += mesh->Transparent.Count;
-            geometryCount += mesh->Boolean.Count;
-            geometryCount += mesh->Special.Count;
-        }
-
-        // Create geometry
-        geometryIndices = std::make_unique<std::uint16_t[]>(geometryCount);
-        CreateHHGeometry(inst, meshes, model.Meshes.Count, geometryIndices.get());
-    }
-
-    void Model::Draw(const Instance& inst) const
-    {
-        for (std::size_t i = 0; i < geometryCount; ++i)
-        {
-            Geometry* geometry = inst.GetGeometry(geometryIndices[i]);
-            geometry->Bind(inst);
-            geometry->Draw(inst);
-        }
+        CreateModel(*this, inst, model);
     }
 
     template<typename model_t>

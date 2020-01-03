@@ -5,7 +5,8 @@
 
 namespace hl
 {
-    struct HHMaterial;
+    struct HHMaterialV1;
+    struct HHMaterialV3;
 }
 
 namespace HedgeEdit::GFX
@@ -23,13 +24,14 @@ namespace HedgeEdit::GFX
     class Material
     {
     public:
-        VertexShader* VertexShader;
-        PixelShader* PixelShader;
+        std::string VertexShaderName;
+        std::string PixelShaderName;
         std::vector<TextureMeta> Textures;
         
-        Material(Instance& inst, const hl::HHMaterial& mat);
+        // TODO: Add constructor for V1 materials too
+        Material(Instance& inst, const hl::HHMaterialV3& mat);
 
-        void Bind(const Instance& inst) const;
+        void Bind(Instance& inst) const;
         // TODO
     };
 

@@ -1,8 +1,9 @@
 #include "instance.h"
 #include "dxc_default_vs.h"
 #include "dxc_default_ps.h"
-#include "HedgeLib/Geometry/HHSubMesh.h"
+#include "HedgeLib/Geometry/HHMesh.h"
 #include "HedgeLib/Geometry/HHModel.h"
+#include "HedgeLib/Geometry/HHInstanceInfo.h"
 #include "HedgeLib/IO/Path.h"
 #include <stdexcept>
 
@@ -175,7 +176,9 @@ namespace HedgeEdit::GFX
         inputLayouts.clear();
 
         // Clear remaining loaded resources
-        // TODO
+        textures.clear();
+        materials.clear();
+        models.clear();
     }
 
     InputLayout* Instance::GetInputLayout(std::size_t hash) const
@@ -192,79 +195,39 @@ namespace HedgeEdit::GFX
         return it->second.get();
     }
 
-    std::size_t Instance::GetTextureIndex(const std::string& name) const
-    {
-        auto it = textureIndices.find(name);
-        if (it != textureIndices.end()) return it->second;
-        throw std::runtime_error("No texture was present with the given name.");
-    }
-
     Texture* Instance::GetTexture(const std::string& name) const
     {
-        auto it = textureIndices.find(name);
-        if (it == textureIndices.end()) return nullptr;
-        return textures[it->second].get();
-    }
-
-    std::size_t Instance::GetMaterialIndex(const std::string& name) const
-    {
-        auto it = materialIndices.find(name);
-        if (it != materialIndices.end()) return it->second;
-        throw std::runtime_error("No material was present with the given name.");
+        auto it = textures.find(name);
+        if (it == textures.end()) return nullptr;
+        return it->second.get();
     }
 
     Material* Instance::GetMaterial(const std::string& name) const
     {
-        auto it = materialIndices.find(name);
-        if (it == materialIndices.end()) return nullptr;
-        return materials[it->second].get();
-    }
-
-    std::uint16_t Instance::GetVertexShaderIndex(const std::string& name) const
-    {
-        auto it = vertexShaderIndices.find(name);
-        if (it != vertexShaderIndices.end()) return it->second;
-        throw std::runtime_error("No vertex shader was present with the given name.");
+        auto it = materials.find(name);
+        if (it == materials.end()) return nullptr;
+        return it->second.get();
     }
 
     VertexShader* Instance::GetVertexShader(const std::string& name) const
     {
-        auto it = vertexShaderIndices.find(name);
-        if (it == vertexShaderIndices.end()) return nullptr;
-        return vertexShaders[it->second].get();
-    }
-
-    std::uint16_t Instance::GetPixelShaderIndex(const std::string& name) const
-    {
-        auto it = pixelShaderIndices.find(name);
-        if (it != pixelShaderIndices.end()) return it->second;
-        throw std::runtime_error("No pixel shader was present with the given name.");
+        auto it = vertexShaders.find(name);
+        if (it == vertexShaders.end()) return nullptr;
+        return it->second.get();
     }
 
     PixelShader* Instance::GetPixelShader(const std::string& name) const
     {
-        auto it = pixelShaderIndices.find(name);
-        if (it == pixelShaderIndices.end()) return nullptr;
-        return pixelShaders[it->second].get();
-    }
-
-    Geometry* Instance::GetGeometry(const std::uint16_t index) const
-    {
-        return (index >= geometry.size()) ? nullptr : geometry[index].get();
-    }
-
-    std::uint16_t Instance::GetModelIndex(const std::string& name) const
-    {
-        auto it = modelIndices.find(name);
-        if (it != modelIndices.end()) return it->second;
-        throw std::runtime_error("No model was present with the given name.");
+        auto it = pixelShaders.find(name);
+        if (it == pixelShaders.end()) return nullptr;
+        return it->second.get();
     }
 
     Model* Instance::GetModel(const std::string& name) const
     {
-        auto it = modelIndices.find(name);
-        if (it == modelIndices.end()) return nullptr;
-        return models[it->second].get();
+        auto it = models.find(name);
+        if (it == models.end()) return nullptr;
+        return it->second.get();
     }
 
     void Instance::AddConstantBuffer(const std::string& name,
@@ -274,91 +237,59 @@ namespace HedgeEdit::GFX
             ConstantBuffer>(constantBuffer) });
     }
 
-    std::size_t Instance::AddTexture(const std::string& name, Texture* texture)
+    Texture& Instance::AddTexture(const std::string& name, Texture* texture)
     {
-        // Add the texture to the vector
-        std::size_t index = textures.size();
-        textures.push_back(std::unique_ptr<Texture>(texture));
-        textureIndices.insert({ name, index });
-        return index;
+        // Add the texture to the hash table
+        return *textures.insert({ name, std::unique_ptr<Texture>(texture) }).first->second.get();
     }
 
-    std::size_t Instance::AddMaterial(const std::string& name, Material* material)
+    Material& Instance::AddMaterial(const std::string& name, Material* material)
     {
-        // Add the material to the vector
-        std::size_t index = materials.size();
-        materials.push_back(std::unique_ptr<Material>(material));
-        materialIndices.insert({ name, index });
-        return index;
+        // Add the material to the hash table
+        return *materials.insert({ name, std::unique_ptr<Material>(material) }).first->second.get();
     }
 
-    std::uint32_t Instance::AddGeometry(std::unique_ptr<Geometry> g)
+    Model& Instance::AddModel(const std::string& name, Model* model)
     {
-        // Ensure we haven't reached the geometry limit yet
-        std::size_t index = geometry.size();
-        if (index > 0xFFFFFFFF)
-        {
-            throw std::runtime_error(
-                "The maximum number of geometries has been reached!");
-        }
-
-        // Add the geometry
-        geometry.emplace_back(std::move(g));
-        return static_cast<std::uint32_t>(index);
+        return *models.insert({ name, std::unique_ptr<Model>(model) }).first->second.get();
     }
 
-    std::uint16_t Instance::AddModel(const std::string& name, Model* model)
-    {
-        // Ensure we haven't reached the model limit yet
-        std::size_t index = models.size();
-        if (index > 0xFFFF)
-        {
-            throw std::runtime_error(
-                "The maximum number of models has been reached!");
-        }
-
-        // Add the model to the vector
-        models.push_back(std::unique_ptr<Model>(model));
-        modelIndices.insert({ name, static_cast<std::uint16_t>(index) });
-        return static_cast<std::uint16_t>(index);
-    }
-
-    std::uint16_t Instance::AddModel(const hl::HHTerrainModel& model)
+    Model& Instance::AddModel(const hl::HHTerrainModel& model)
     {
         return AddModel(model.Name.Get(), new Model(*this, model));
     }
 
-    std::uint16_t Instance::AddModel(const std::string& name,
+    Model& Instance::AddModel(const std::string& name,
         const hl::HHTerrainModel& model)
     {
         return AddModel(name, new Model(*this, model));
     }
 
-    std::uint16_t Instance::AddModel(const std::string& name,
+    Model& Instance::AddModel(const std::string& name,
         const hl::HHSkeletalModel& model)
     {
         return AddModel(name, new Model(*this, model));
     }
 
-    std::size_t Instance::LoadDDSTexture(const char* filePath)
+    Texture& Instance::LoadDDSTexture(const char* filePath)
     {
         return AddTexture(hl::PathGetNameNoExtPtr(filePath).get(),
             GFX::LoadDDSTexture(*this, filePath));
     }
 
-    std::size_t Instance::LoadHHSkeletalModel(const char* filePath)
+    Model& Instance::LoadHHSkeletalModel(const char* filePath)
     {
         return AddModel(hl::PathGetNameNoExtPtr(filePath).get(),
             GFX::LoadHHSkeletalModel(*this, filePath));
     }
 
-    std::size_t Instance::LoadHHTerrainModel(const char* filePath)
+    Model& Instance::LoadHHTerrainModel(const char* filePath)
     {
         return AddModel(hl::PathGetNameNoExtPtr(filePath).get(),
             GFX::LoadHHTerrainModel(*this, filePath));
     }
 
-    std::size_t Instance::LoadHHModel(const char* filePath)
+    Model& Instance::LoadHHModel(const char* filePath)
     {
         const char* ext = hl::PathGetExtPtr(filePath);
         if (!std::strcmp(ext, ".terrain-model"))
@@ -369,5 +300,93 @@ namespace HedgeEdit::GFX
         {
             return LoadHHSkeletalModel(filePath);
         }
+    }
+
+    void Instance::BeginFrameStandard(const Matrix4x4& viewProj) const
+    {
+        // Update cbWorld
+        ConstantBuffer* cb = GetConstantBuffer("cbWorld");
+        cb->Map(Context.get(), D3D11_MAP_WRITE_DISCARD);
+        cb->SetValue("viewProj", &viewProj);
+        cb->Unmap(Context.get());
+
+        // Use cbWorld
+        cb->UseVS(*this, 0);
+        cb->UsePS(*this, 0);
+
+        // Use cbInstance
+        cb = GetConstantBuffer("cbInstance");
+        cb->UseVS(*this, 1);
+        cb->UsePS(*this, 1);
+    }
+
+    void Instance::BeginFrameHH2(const Matrix4x4& viewProj) const
+    {
+        // TODO
+    }
+
+    void Instance::BindTransformStandard(const Transform& transform)
+    {
+        // Update cbInstance
+        ConstantBuffer* cbInstance = GetConstantBuffer("cbInstance");
+        cbInstance->Map(Context.get(), D3D11_MAP_WRITE_DISCARD);
+        cbInstance->SetValue("world", &transform.GetMatrix());
+        cbInstance->Unmap(Context.get());
+    }
+
+    void Instance::BindTransformHH2(const Transform& transform)
+    {
+        // TODO
+    }
+
+    void Instance::DrawMeshGroup(const MeshGroup& meshGroup)
+    {
+        for (std::size_t i = 0; i < meshGroup.MeshCount; ++i)
+        {
+            const Geometry& geometry = meshGroup.Meshes[i];
+            geometry.Bind(*this);
+            geometry.Draw(*this);
+        }
+    }
+
+    void Instance::DrawStage()
+    {
+        Context->IASetPrimitiveTopology(
+            D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+        // TODO: Bind shaders properly in material bind function
+        VertexShaderVariant* vs = GetDefaultVS();
+        vs->Use(*this);
+
+        PixelShaderVariant* ps = GetDefaultPS();
+        ps->Use(*this);
+
+        // Render first pass (solid)
+        for (const auto& mdlIt : models)
+        {
+            const Model* mdl = mdlIt.second.get();
+            for (const auto& t : mdl->Instances)
+            {
+                BindTransform(t);
+                DrawMeshGroup(mdl->Solid);
+                DrawMeshGroup(mdl->Boolean); // TODO: Is this alright to do in the first pass?
+            }
+        }
+
+        // Render second pass (transparent)
+        // TODO: Do proper depth-sorting
+        for (const auto& mdlIt : models)
+        {
+            const Model* mdl = mdlIt.second.get();
+            if (!mdl->Transparent.MeshCount) continue;
+
+            for (const auto& t : mdl->Instances)
+            {
+                BindTransform(t);
+                DrawMeshGroup(mdl->Transparent);
+            }
+        }
+
+        // TODO: Special passes
     }
 }

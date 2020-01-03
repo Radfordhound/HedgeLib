@@ -22,7 +22,7 @@ namespace hl
         HL_API void EndianSwapRecursive(bool isBigEndian);
     };
 
-    struct HHMaterial
+    struct HHMaterialV1
     {
         StringOffset32 Shader;
 
@@ -31,7 +31,43 @@ namespace hl
         // Not sure if it's used in Unleashed/Generations.
         StringOffset32 UnknownName;
 
-        DataOffset32<StringOffset32> Texset;
+        StringOffset32 TexsetName;
+        std::uint32_t Unknown1; // Unused in v1 Materials?
+
+        std::uint8_t MaterialFlag;
+        std::uint8_t NoBackFaceCulling;
+        std::uint8_t AdditiveBlending;
+        std::uint8_t UnknownFlag1;
+
+        std::uint8_t ParameterCount;
+        std::uint8_t Padding1; // Always 0?
+        std::uint8_t UnknownFlag2;
+        std::uint8_t Padding2; // Always 0?
+
+        DataOffset32<DataOffset32<HHMaterialParameter>> Parameters;
+        std::uint32_t Padding3;
+        std::uint32_t Unknown2;
+
+        inline void EndianSwap()
+        {
+            Swap(Unknown1);
+            Swap(Padding3);
+            Swap(Unknown2);
+        }
+
+        HL_API void EndianSwapRecursive(bool isBigEndian);
+    };
+
+    struct HHMaterialV3
+    {
+        StringOffset32 Shader;
+
+        // I thought the first one was VertexShader and this was PixelShader, but from
+        // testing it appears that this one is just unused, at least in LW and Forces.
+        // Not sure if it's used in Unleashed/Generations.
+        StringOffset32 UnknownName;
+
+        DataOffset32<StringOffset32> Texsets;
         DataOffset32<DataOffset32<HHTexture>> Textures;
 
         std::uint8_t MaterialFlag;

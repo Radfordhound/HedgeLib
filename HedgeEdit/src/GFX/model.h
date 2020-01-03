@@ -1,7 +1,7 @@
 #pragma once
+#include "geometry.h"
+#include "../transform.h"
 #include <memory>
-#include <cstddef>
-#include <cstdint>
 
 namespace hl
 {
@@ -13,18 +13,38 @@ namespace hl
 namespace HedgeEdit::GFX
 {
     class Instance;
-    class Geometry;
+    using MeshSlot = std::unique_ptr<Geometry[]>;
+
+    struct MeshGroup
+    {
+        std::unique_ptr<Geometry[]> Meshes;
+        std::size_t MeshCount;
+
+        inline MeshGroup() = default;
+        inline MeshGroup(std::size_t meshCount) : MeshCount(meshCount),
+            Meshes(new Geometry[meshCount]) {}
+    };
+
+    struct SpecialMeshGroup : MeshGroup
+    {
+        std::string Name;
+    };
 
     class Model
     {
-        std::unique_ptr<std::uint16_t[]> geometryIndices;
-        std::size_t geometryCount;
-
     public:
+        MeshGroup Solid;
+        MeshGroup Transparent;
+        MeshGroup Boolean;
+
+        std::unique_ptr<SpecialMeshGroup[]> SpecialMeshGroups;
+        std::size_t SpecialMeshGroupCount;
+
+        std::vector<Transform> Instances;
+        bool OnlyDefaultInstance = false;
+
         Model(Instance& inst, const hl::HHTerrainModel& model);
         Model(Instance& inst, const hl::HHSkeletalModel& model);
-
-        void Draw(const Instance& inst) const;
     };
 
     Model* LoadHHSkeletalModel(Instance& inst, const char* filePath);

@@ -7,7 +7,7 @@ namespace HedgeEdit::GFX
 {
 #ifdef D3D11
     ConstantBuffer::ConstantBuffer(const Instance& inst, std::size_t bufferSize,
-        std::unordered_map<std::string, ConstantBufferVariable> variables,
+        ska::flat_hash_map<std::string, ConstantBufferVariable> variables,
         const D3D11_USAGE usage, const D3D11_CPU_ACCESS_FLAG flags,
         const void* initialData) : variables(variables)
     {

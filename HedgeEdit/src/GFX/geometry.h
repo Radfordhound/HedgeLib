@@ -6,11 +6,11 @@
 
 #include <cstdint>
 #include <cstddef>
-#include <memory>
+#include <string>
 
 namespace hl
 {
-    struct HHSubMesh;
+    struct HHMesh;
 }
 
 namespace HedgeEdit::GFX
@@ -26,28 +26,27 @@ namespace HedgeEdit::GFX
     // - bool SeeThrough; // For Solid/Boolean this is false
     class Geometry
     {
+        std::size_t vertexFormatHash;
+
 #ifdef D3D11
         winrt::com_ptr<ID3D11Buffer> vertexBuffer;
         winrt::com_ptr<ID3D11Buffer> indexBuffer;
 #endif
 
-        std::size_t vertexFormatHash;
         unsigned int stride, faceCount;
 
     public:
-        std::unique_ptr<char[]> MaterialName;
-        bool SeeThrough; // For Solid/Boolean this is false
+        std::string MaterialName;
 
         inline Geometry() = default;
-        Geometry(Instance& inst, const hl::HHSubMesh& subMesh,
-            bool seeThrough = false);
+        Geometry(Instance& inst, const hl::HHMesh& mesh);
         
         inline std::size_t VertexFormatHash() const noexcept
         {
             return vertexFormatHash;
         }
 
-        void Bind(const Instance& inst) const;
+        void Bind(Instance& inst) const;
         void Draw(const Instance& inst) const;
     };
 }

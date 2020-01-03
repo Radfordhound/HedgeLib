@@ -7,11 +7,11 @@
 
 namespace HedgeEdit::GFX
 {
-    Material::Material(Instance& inst, const hl::HHMaterial& mat)
+    Material::Material(Instance& inst, const hl::HHMaterialV3& mat)
     {
         // Get shaders
-        VertexShader = inst.GetVertexShader(mat.Shader.Get());
-        PixelShader = inst.GetPixelShader(mat.Shader.Get());
+        VertexShaderName = std::string(mat.Shader);
+        PixelShaderName = std::string(mat.Shader);
         
         // Generate texture metadata
         const hl::DataOffset32<hl::HHTexture>* textures = mat.Textures.Get();
@@ -24,12 +24,17 @@ namespace HedgeEdit::GFX
         }
     }
 
-    void Material::Bind(const Instance& inst) const
+    void Material::Bind(Instance& inst) const
     {
+        // TODO: Bind vertex/pixel shaders
+
         // Get texture
         // TODO: Do this correctly
+        if (Textures.size() < 1) return;
+        
         const Texture* tex = inst.GetTexture(Textures[0].TextureName);
-        // TODO: nullptr check
+        if (!tex) return;
+        // TODO: proper nullptr check
         tex->Bind(inst, 0);
 
         // TODO: Set material parameters
@@ -41,7 +46,8 @@ namespace HedgeEdit::GFX
         hl::Blob blob = hl::DHHLoad(filePath);
 
         // Load and endian-swap the data
-        hl::HHMaterial* mat = hl::DHHGetData<hl::HHMaterial>(blob.RawData());
+        // TODO: Get version number and use correct struct based on that
+        hl::HHMaterialV3* mat = hl::DHHGetData<hl::HHMaterialV3>(blob.RawData());
         mat->EndianSwapRecursive(true);
 
         // Generate a HedgeEdit material from it and return

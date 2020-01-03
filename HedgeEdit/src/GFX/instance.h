@@ -7,6 +7,7 @@
 #include "shader.h"
 #include "geometry.h"
 #include "model.h"
+#include "../flat_hash_map.h"
 
 #include "HedgeLib/String.h"
 
@@ -16,7 +17,6 @@
 #endif
 
 #include <vector>
-#include <unordered_map>
 #include <string>
 #include <cstddef>
 #include <cstdint>
@@ -26,6 +26,7 @@ namespace hl
     struct HHVertexElement;
     struct HHTerrainModel;
     struct HHSkeletalModel;
+    struct HHTerrainInstanceInfoV0;
 }
 
 namespace HedgeEdit::GFX
@@ -42,20 +43,13 @@ namespace HedgeEdit::GFX
         winrt::com_array<winrt::com_ptr<ID3D11SamplerState>> samplers;
 #endif
 
-        std::unordered_map<std::size_t, std::unique_ptr<InputLayout>> inputLayouts;
-        std::unordered_map<std::string, std::unique_ptr<ConstantBuffer>> constantBuffers;
-        std::unordered_map<std::string, std::size_t> textureIndices;
-        std::unordered_map<std::string, std::size_t> materialIndices;
-        std::unordered_map<std::string, std::uint16_t> vertexShaderIndices;
-        std::unordered_map<std::string, std::uint16_t> pixelShaderIndices;
-        std::unordered_map<std::string, std::uint16_t> modelIndices;
-
-        std::vector<std::unique_ptr<Texture>> textures;
-        std::vector<std::unique_ptr<Material>> materials;
-        std::vector<std::unique_ptr<VertexShader>> vertexShaders;
-        std::vector<std::unique_ptr<PixelShader>> pixelShaders;
-        std::vector<std::unique_ptr<Geometry>> geometry;
-        std::vector<std::unique_ptr<Model>> models;
+        ska::flat_hash_map<std::size_t, std::unique_ptr<InputLayout>> inputLayouts;
+        ska::flat_hash_map<std::string, std::unique_ptr<ConstantBuffer>> constantBuffers;
+        ska::flat_hash_map<std::string, std::unique_ptr<Texture>> textures;
+        ska::flat_hash_map<std::string, std::unique_ptr<Material>> materials;
+        ska::flat_hash_map<std::string, std::unique_ptr<VertexShader>> vertexShaders;
+        ska::flat_hash_map<std::string, std::unique_ptr<PixelShader>> pixelShaders;
+        ska::flat_hash_map<std::string, std::unique_ptr<Model>> models;
 
         void InitStandard();
         void InitHH2();
@@ -101,47 +95,11 @@ namespace HedgeEdit::GFX
         InputLayout* GetInputLayout(std::size_t hash) const;
         ConstantBuffer* GetConstantBuffer(const std::string& name) const;
 
-        std::size_t GetTextureIndex(const std::string& name) const;
         Texture* GetTexture(const std::string& name) const;
-
-        inline Texture* GetTexture(std::size_t index) const
-        {
-            return textures[index].get();
-        }
-
-        std::size_t GetMaterialIndex(const std::string& name) const;
         Material* GetMaterial(const std::string& name) const;
-
-        inline Material* GetMaterial(std::size_t index) const
-        {
-            return materials[index].get();
-        }
-
-        std::uint16_t GetVertexShaderIndex(const std::string& name) const;
         VertexShader* GetVertexShader(const std::string& name) const;
-
-        inline VertexShader* GetVertexShader(std::uint16_t index) const
-        {
-            return vertexShaders[index].get();
-        }
-
-        std::uint16_t GetPixelShaderIndex(const std::string& name) const;
         PixelShader* GetPixelShader(const std::string& name) const;
-
-        inline PixelShader* GetPixelShader(std::uint16_t index) const
-        {
-            return pixelShaders[index].get();
-        }
-
-        Geometry* GetGeometry(const std::uint16_t index) const; // TODO: inline?
-
-        std::uint16_t GetModelIndex(const std::string& name) const;
         Model* GetModel(const std::string& name) const;
-
-        inline Model* GetModel(std::uint16_t index) const
-        {
-            return models[index].get();
-        }
 
         inline void AddInputLayout(std::size_t hash, InputLayout* inputLayout)
         {
@@ -151,17 +109,53 @@ namespace HedgeEdit::GFX
         void AddConstantBuffer(const std::string& name,
             ConstantBuffer* constantBuffer);
 
-        std::size_t AddTexture(const std::string& name, Texture* texture);
-        std::size_t AddMaterial(const std::string& name, Material* material);
-        std::uint32_t AddGeometry(std::unique_ptr<Geometry> g);
-        std::uint16_t AddModel(const std::string& name, Model* model);
-        std::uint16_t AddModel(const hl::HHTerrainModel& model);
-        std::uint16_t AddModel(const std::string& name, const hl::HHTerrainModel& model);
-        std::uint16_t AddModel(const std::string& name, const hl::HHSkeletalModel& model);
+        Texture& AddTexture(const std::string& name, Texture* texture);
+        Material& AddMaterial(const std::string& name, Material* material);
+        Model& AddModel(const std::string& name, Model* model);
+        Model& AddModel(const hl::HHTerrainModel& model);
+        Model& AddModel(const std::string& name, const hl::HHTerrainModel& model);
+        Model& AddModel(const std::string& name, const hl::HHSkeletalModel& model);
 
-        std::size_t LoadDDSTexture(const char* filePath);
-        std::size_t LoadHHSkeletalModel(const char* filePath);
-        std::size_t LoadHHTerrainModel(const char* filePath);
-        std::size_t LoadHHModel(const char* filePath);
+        Texture& LoadDDSTexture(const char* filePath);
+        Model& LoadHHSkeletalModel(const char* filePath);
+        Model& LoadHHTerrainModel(const char* filePath);
+        Model& LoadHHModel(const char* filePath);
+
+        void BeginFrameStandard(const Matrix4x4& viewProj) const;
+        void BeginFrameHH2(const Matrix4x4& viewProj) const;
+
+        inline void BeginFrame(const Matrix4x4& viewProj)
+        {
+            switch (renderType)
+            {
+            case RenderTypes::HedgehogEngine2:
+                BeginFrameHH2(viewProj);
+                break;
+
+            default:
+                BeginFrameStandard(viewProj);
+                break;
+            }
+        }
+
+        void BindTransformStandard(const Transform& transform);
+        void BindTransformHH2(const Transform& transform);
+
+        inline void BindTransform(const Transform& transform)
+        {
+            switch (renderType)
+            {
+            case RenderTypes::HedgehogEngine2:
+                BindTransformHH2(transform);
+                break;
+
+            default:
+                BindTransformStandard(transform);
+                break;
+            }
+        }
+
+        void DrawMeshGroup(const MeshGroup& meshGroup);
+        void DrawStage();
     };
 }

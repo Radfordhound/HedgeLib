@@ -71,6 +71,39 @@ namespace HedgeEdit::GFX
                 "Could not create a Direct3D 11 Depth Stencil View!");
         }
 
+        // Create Depth Stencil State
+        D3D11_DEPTH_STENCIL_DESC depthStateDesc;
+        depthStateDesc.DepthEnable = true;
+        depthStateDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+        depthStateDesc.DepthFunc = D3D11_COMPARISON_GREATER_EQUAL;
+        depthStateDesc.StencilEnable = false;
+        depthStateDesc.StencilReadMask = 0xFF;
+        depthStateDesc.StencilWriteMask = 0xFF;
+
+        depthStateDesc.FrontFace =
+        {
+            D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP,
+            D3D11_STENCIL_OP_KEEP, D3D11_COMPARISON_ALWAYS
+        };
+
+        depthStateDesc.BackFace =
+        {
+            D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP,
+            D3D11_STENCIL_OP_KEEP, D3D11_COMPARISON_ALWAYS
+        };
+
+        result = inst.Device->CreateDepthStencilState(
+            &depthStateDesc, depthState.put());
+
+        if (FAILED(result))
+        {
+            throw std::runtime_error(
+                "Could not create a Direct3D 11 Depth Stencil State!");
+        }
+
+        // Set depth stencil state
+        //inst.Context->OMSetDepthStencilState(depthState.get(), 0);
+
         // Set the Viewport
         D3D11_VIEWPORT viewport =
         {
@@ -123,10 +156,10 @@ namespace HedgeEdit::GFX
         Init(width, height);
 
         // Setup Vector3s
-        camPos = DirectX::XMVectorSet(0, 0.5f, 2, 1);
-        camUp = DirectX::XMVectorSet(0, 1, 0, 1);
-        camForward = DirectX::XMVectorSet(0, 0, -1, 1);
-        camRot = DirectX::XMVectorSet(0, 0, 0, 1);
+        camPos = DirectX::XMVectorZero();
+        camUp = DirectX::XMVectorSet(0, 1, 0, 0);
+        camForward = DirectX::XMVectorSet(0, 0, -1, 0);
+        camRot = DirectX::XMVectorZero();
 
         // Setup Matrices
         UpdateViewMatrix();
@@ -159,6 +192,7 @@ namespace HedgeEdit::GFX
         renderTargetView = nullptr;
         depthBuffer = nullptr;
         depthView = nullptr;
+        depthState = nullptr;
 
         // Resize the swap chain buffers and preserve its existing values
         HRESULT result = swapChain->ResizeBuffers(
@@ -238,76 +272,13 @@ namespace HedgeEdit::GFX
         ID3D11RenderTargetView* rtv = renderTargetView.get();
         inst.Context->OMSetRenderTargets(1, &rtv, depthView.get());
 
-        // TODO: Transparency Slots
-        inst.Context->IASetPrimitiveTopology(
-            D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-
-        // Begin frame
-        switch (inst.RenderType())
-        {
-        case RenderTypes::Standard:
-            BeginFrameStandard();
-            break;
-
-        case RenderTypes::HedgehogEngine2:
-            BeginFrameHH2();
-            break;
-        }
-
-        // TODO: Do all of this properly
-
-        // Set vertex/pixel shaders
-        //VertexShader* vs = device.GetVertexShader("common_vs");
-        VertexShaderVariant* vs = inst.GetDefaultVS();
-        vs->Use(inst);
-
-        //PixelShader* ps = device.GetPixelShader("IgnoreLight_d");
-        PixelShaderVariant* ps = inst.GetDefaultPS();
-        ps->Use(inst);
-
-        // Update cbInstance
-        ConstantBuffer* cb = inst.GetConstantBuffer("cbInstance");
-        cb->Map(inst.Context.get(), D3D11_MAP_WRITE_DISCARD);
-        DirectX::XMMATRIX world = DirectX::XMMatrixScaling(1, 1, 1) *
-            DirectX::XMMatrixRotationRollPitchYaw(0, 0, 0) *
-            DirectX::XMMatrixTranslation(0, 0, 0);
-
-        cb->SetValue("world", &world);
-        cb->Unmap(inst.Context.get());
-
-        // Use cbInstance
-        cb->UseVS(inst, 1);
-        cb->UsePS(inst, 1);
-
-        // Draw models
-        // TODO: Do this much better lol. Do depth sorting for transparent models too
-        for (std::size_t i = 0; i < inst.GetModelCount(); ++i)
-        {
-            Model* m = inst.GetModel(static_cast<std::uint16_t>(i));
-            m->Draw(inst);
-        }
+        // Render the scene
+        inst.BeginFrame(viewProj);
+        inst.DrawStage();
 
         // Swap the back buffer and front buffer
         // TODO: Delay this properly
         swapChain->Present(1, 0);
 #endif
-    }
-
-    void Viewport::BeginFrameStandard()
-    {
-        // Update cbWorld
-        ConstantBuffer* cbWorld = inst.GetConstantBuffer("cbWorld");
-        cbWorld->Map(inst.Context.get(), D3D11_MAP_WRITE_DISCARD);
-        cbWorld->SetValue("viewProj", &viewProj);
-        cbWorld->Unmap(inst.Context.get());
-
-        // Use cbWorld
-        cbWorld->UseVS(inst, 0);
-        cbWorld->UsePS(inst, 0);
-    }
-
-    void Viewport::BeginFrameHH2()
-    {
-        // TODO
     }
 }

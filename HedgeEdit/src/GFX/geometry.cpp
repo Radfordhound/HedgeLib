@@ -3,7 +3,7 @@
 #include "material.h"
 #include "shader.h"
 #include "instance.h"
-#include <HedgeLib/Geometry/HHSubMesh.h>
+#include "HedgeLib/Geometry/HHMesh.h"
 #include <stdexcept>
 #include <algorithm>
 #include <cmath>
@@ -42,21 +42,21 @@ namespace HedgeEdit::GFX
 
 #ifdef D3D11
     winrt::com_ptr<ID3D11Buffer> CreateVertexBuffer(
-        const Instance& inst, const hl::HHSubMesh& subMesh)
+        const Instance& inst, const hl::HHMesh& mesh)
     {
         // Get vertex buffer size
         std::size_t bufSize = (static_cast<std::size_t>(
-            subMesh.VertexSize) * subMesh.VertexCount);
+            mesh.VertexSize) * mesh.VertexCount);
 
         // Create copy of buffer that we can modify before sending to the GPU
-        const std::uint8_t* origData = subMesh.Vertices.Get();
+        const std::uint8_t* origData = mesh.Vertices.Get();
         std::unique_ptr<std::uint8_t[]> data = std::unique_ptr<std::uint8_t[]>(
             new std::uint8_t[bufSize]);
 
         std::copy(origData, origData + bufSize, data.get());
 
         // Convert data if necessary
-        const hl::HHVertexElement* format = subMesh.VertexElements.Get();
+        const hl::HHVertexElement* format = mesh.VertexElements.Get();
         for (; format->Format != hl::HHVERTEX_FORMAT_LAST_ENTRY; ++format)
         {
             switch (format->Format)
@@ -102,12 +102,12 @@ namespace HedgeEdit::GFX
     }
 
     winrt::com_ptr<ID3D11Buffer> CreateIndexBuffer(
-        const Instance& inst, const hl::HHSubMesh& subMesh)
+        const Instance& inst, const hl::HHMesh& mesh)
     {
         // Create a buffer description
         D3D11_BUFFER_DESC desc =
         {
-            sizeof(std::uint16_t) * subMesh.Faces.Count,    // ByteWidth
+            sizeof(std::uint16_t) * mesh.Faces.Count,       // ByteWidth
             D3D11_USAGE_IMMUTABLE,                          // Usage
             D3D11_BIND_INDEX_BUFFER,                        // BindFlags
             0,                                              // CPUAccessFlags
@@ -117,7 +117,7 @@ namespace HedgeEdit::GFX
 
         // Create initial data structure
         D3D11_SUBRESOURCE_DATA initialData = {};
-        initialData.pSysMem = subMesh.Faces.Get();
+        initialData.pSysMem = mesh.Faces.Get();
 
         // Create index buffer
         winrt::com_ptr<ID3D11Buffer> buffer;
@@ -128,17 +128,16 @@ namespace HedgeEdit::GFX
     }
 #endif
 
-    Geometry::Geometry(Instance& inst, const hl::HHSubMesh& subMesh,
-        bool seeThrough) : SeeThrough(seeThrough)
+    Geometry::Geometry(Instance& inst, const hl::HHMesh& mesh)
     {
         // Get input layout
-        const hl::HHVertexElement* format = subMesh.VertexElements.Get();
+        const hl::HHVertexElement* format = mesh.VertexElements.Get();
         vertexFormatHash = inst.HashVertexFormat(format);
         InputLayout* inputLayout = inst.GetInputLayout(vertexFormatHash);
 
         if (!inputLayout)
         {
-            // TODO: Get vertex shader properly from material rather than hardcoding it
+            // TODO: Will the default vertex shader actually work everytime??
             //VertexShader* vertexShader = inst.GetVertexShader("common_vs");
             //const VertexShaderVariant& variant = vertexShader->GetVariant(0);
             const VertexShaderVariant* variant = inst.GetDefaultVS();
@@ -151,22 +150,19 @@ namespace HedgeEdit::GFX
         }
 
         // Create vertex/index buffer
-        vertexBuffer = CreateVertexBuffer(inst, subMesh);
-        indexBuffer = CreateIndexBuffer(inst, subMesh);
+        vertexBuffer = CreateVertexBuffer(inst, mesh);
+        indexBuffer = CreateIndexBuffer(inst, mesh);
 
         // Get stride and face count
-        stride = subMesh.VertexSize;
-        faceCount = subMesh.Faces.Count;
+        stride = mesh.VertexSize;
+        faceCount = mesh.Faces.Count;
 
         // Get material
-        const char* matName = subMesh.MaterialName.Get();
-        std::size_t matNameLen = (std::strlen(matName) + 1);
-
-        MaterialName = std::unique_ptr<char[]>(new char[matNameLen]);
-        std::copy(matName, matName + matNameLen, MaterialName.get());
+        const char* matName = mesh.MaterialName.Get();
+        MaterialName = std::string(matName);
     }
 
-    void Geometry::Bind(const Instance& inst) const
+    void Geometry::Bind(Instance& inst) const
     {
         // Bind geometry
         inst.GetInputLayout(vertexFormatHash)->Use(inst);
@@ -178,7 +174,7 @@ namespace HedgeEdit::GFX
 #endif
 
         // Bind material
-        const Material* material = inst.GetMaterial(MaterialName.get());
+        Material* material = inst.GetMaterial(MaterialName);
         // TODO: nullptr check
         material->Bind(inst);
     }
