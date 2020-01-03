@@ -3,7 +3,6 @@
 #include "dxc_default_ps.h"
 #include "HedgeLib/Geometry/HHMesh.h"
 #include "HedgeLib/Geometry/HHModel.h"
-#include "HedgeLib/Geometry/HHInstanceInfo.h"
 #include "HedgeLib/IO/Path.h"
 #include <stdexcept>
 

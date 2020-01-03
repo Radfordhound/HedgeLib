@@ -1,4 +1,5 @@
 #pragma once
+#include "HedgeLib.h"
 #include <memory>
 #include <cstdint>
 #include <cstddef>
@@ -67,7 +68,7 @@ namespace hl
             return static_cast<T*>(data.get());
         }
 
-        const void* Data() const;
+        HL_API const void* Data() const;
 
         template<typename T>
         inline const T* Data() const
