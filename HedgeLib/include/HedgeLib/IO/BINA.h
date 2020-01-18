@@ -23,6 +23,36 @@ namespace hl
         BINA_THIRTY_BIT = 0xC0
     };
 
+    struct BINAV1Header
+    {
+        std::uint32_t FileSize;             // The size of the entire file, including this header.
+        std::uint32_t OffsetTableOffset;    // The non-absolute offset to the offset table.
+        std::uint32_t OffsetTableSize;      // The size of the offset table.
+        std::uint32_t Unknown1;             // Seems to just be padding.
+
+        std::uint16_t UnknownFlag1;
+        std::uint16_t UnknownFlag2;         // IsFooterMagicPresent?
+        std::uint16_t Unknown2;
+        std::uint8_t Version;               // Version Number.
+        std::uint8_t EndianFlag;            // 'B' for Big Endian, 'L' for Little Endian.
+
+        std::uint32_t Signature;            // "BINA"
+        std::uint32_t Padding;              // Included so fwrite won't write 4 bytes of garbage.
+
+        inline void EndianSwap()
+        {
+            Swap(FileSize);
+            Swap(OffsetTableOffset);
+            Swap(OffsetTableSize);
+            Swap(Unknown1);
+            Swap(UnknownFlag1);
+            Swap(UnknownFlag2);
+            Swap(Unknown2);
+        }
+    };
+
+    HL_STATIC_ASSERT_SIZE(BINAV1Header, 0x20);
+
     struct BINAV2Header
     {
         std::uint32_t Signature;    // "BINA"
@@ -123,6 +153,7 @@ namespace hl
     HL_API void BINAWriteOffsetTable64(const File& file,
         OffsetTable& offTable);
 
+    HL_API void BINAStartWriteV1(File& file, bool bigEndian);
     HL_API void BINAStartWriteV2(File& file,
         bool bigEndian, bool use64BitOffsets);
 
@@ -148,19 +179,43 @@ namespace hl
             dataNodePos, offTable, strTable);
     }
 
+    HL_API void BINAFinishWriteV1(const File& file,
+        long headerPos, OffsetTable& offTable);
+
     HL_API void BINAFinishWriteV2(const File& file,
         long headerPos, std::uint16_t nodeCount);
+
+    inline bool DBINAIsBigEndianV1(const BINAV1Header& header)
+    {
+        return (header.EndianFlag == HL_BINA_BE_FLAG);
+    }
 
     inline bool DBINAIsBigEndianV2(const BINAV2Header& header)
     {
         return (header.EndianFlag == HL_BINA_BE_FLAG);
     }
 
+    HL_API bool DBINAIsBigEndianV1(const Blob& blob);
     HL_API bool DBINAIsBigEndianV2(const Blob& blob);
     HL_API bool DBINAIsBigEndian(const Blob& blob);
 
     HL_API const BINAV2DataNode* DBINAGetDataNodeV2(const Blob& blob);
     HL_API const void* DBINAGetDataNode(const Blob& blob);
+    HL_API const void* DBINAGetDataV1(const Blob& blob);
+
+    template<typename T>
+    inline const T* DBINAGetDataV1(const Blob& blob)
+    {
+        return static_cast<const T*>(DBINAGetDataV1(blob));
+    }
+
+    template<typename T = void>
+    inline T* DBINAGetDataV1(Blob& blob)
+    {
+        return static_cast<T*>(const_cast<void*>(
+            DBINAGetDataV1(const_cast<const Blob&>(blob))));
+    }
+
     HL_API const void* DBINAGetDataV2(const Blob& blob);
 
     template<typename T>
@@ -190,6 +245,9 @@ namespace hl
         return static_cast<T*>(const_cast<void*>(
             DBINAGetData(const_cast<const Blob&>(blob))));
     }
+
+    HL_API const std::uint8_t* DBINAGetOffsetTableV1(const Blob& blob,
+        std::uint32_t& offTableSize);
 
     HL_API const std::uint8_t* DBINAGetOffsetTableV2(const Blob& blob,
         std::uint32_t& offTableSize);

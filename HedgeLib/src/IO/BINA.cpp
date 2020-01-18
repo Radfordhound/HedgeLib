@@ -92,8 +92,34 @@ namespace hl
 
     Blob DBINAReadV1(File& file)
     {
-        // TODO
-        throw std::logic_error("The given function has not yet been implemented.");
+        // Read BINAV1 header
+        BINAV1Header header;
+        file.ReadNoSwap(header);
+
+        if ((file.DoEndianSwap = (header.EndianFlag == HL_BINA_BE_FLAG)))
+        {
+            header.EndianSwap();
+        }
+
+        // Create blob using information from header
+        Blob blob = Blob(header.FileSize, BlobFormat::BINA);
+
+        // Copy header into blob
+        *blob.RawData<BINAV1Header>() = header;
+
+        // Read the rest of the file into the blob
+        std::uint8_t* data = (blob.RawData() + sizeof(header));
+        file.ReadBytes(data, header.FileSize - sizeof(header));
+
+        // Get offset table pointer
+        const std::uint8_t* offTable = (data + header.OffsetTableOffset);
+
+        // Fix offsets
+        const std::uint8_t* eof = (offTable + header.OffsetTableSize);
+        INBINAFixOffsets<DataOffset32>(offTable,
+            eof, data, file.DoEndianSwap);
+
+        return blob;
     }
 
     void INBINAFixDataNodeV2(std::uint8_t*& nodes,
@@ -348,6 +374,24 @@ namespace hl
         INBINAWriteOffsetTable<std::uint64_t>(file, offTable);
     }
 
+    void BINAStartWriteV1(File& file, bool bigEndian)
+    {
+        // Create "empty" header
+        BINAV1Header header = {};
+        header.Version = '1';
+        header.EndianFlag = (bigEndian) ?
+            HL_BINA_BE_FLAG : HL_BINA_LE_FLAG;
+
+        header.Signature = HL_BINA_SIGNATURE;
+
+        // Write header
+        file.DoEndianSwap = bigEndian;
+        file.Write(header);
+
+        // Set origin
+        file.Origin = file.Tell();
+    }
+
     void BINAStartWriteV2(File& file, bool bigEndian, bool use64BitOffsets)
     {
         // Create "empty" header
@@ -442,6 +486,36 @@ namespace hl
             dataNodePos, offTable, strTable);
     }
 
+    void BINAFinishWriteV1(const File& file,
+        long headerPos, OffsetTable& offTable)
+    {
+        // Write offset table
+        std::uint32_t offTablePos = static_cast<std::uint32_t>(file.Tell());
+        BINAWriteOffsetTable32(file, offTable);
+
+        // Fill-in file size
+        std::uint32_t fileSize = static_cast<std::uint32_t>(file.Tell());
+        if (headerPos >= static_cast<long>(fileSize))
+        {
+            throw std::invalid_argument(
+                "The given header position comes after the end of file, which is invalid.");
+        }
+
+        fileSize -= headerPos;
+        file.JumpTo(headerPos);
+        file.Write(fileSize);
+
+        // Fill-in offset table offset
+        offTablePos -= headerPos;
+        fileSize -= offTablePos;
+
+        offTablePos -= file.Origin;
+        file.Write(offTablePos);
+
+        // Fill-in offset table size
+        file.Write(fileSize);
+    }
+
     void BINAFinishWriteV2(const File& file,
         long headerPos, std::uint16_t nodeCount)
     {
@@ -461,6 +535,11 @@ namespace hl
         file.Write(nodeCount);
     }
 
+    bool DBINAIsBigEndianV1(const Blob& blob)
+    {
+        return DBINAIsBigEndianV1(*blob.RawData<BINAV1Header>());
+    }
+
     bool DBINAIsBigEndianV2(const Blob& blob)
     {
         return DBINAIsBigEndianV2(*blob.RawData<BINAV2Header>());
@@ -477,8 +556,7 @@ namespace hl
 
         default:
         {
-            // TODO: BINA V1 Support
-            throw std::runtime_error("The given BINA version is unknown or unsupported.");
+            return DBINAIsBigEndianV1(blob);
         }
         }
     }
@@ -527,8 +605,7 @@ namespace hl
 
         default:
         {
-            // TODO: BINA V1 Support
-            throw std::runtime_error("The given BINA version is unknown or unsupported.");
+            return DBINAGetDataV1(blob);
         }
         }
     }
@@ -537,6 +614,11 @@ namespace hl
     {
         return (reinterpret_cast<const std::uint8_t*>(dataNode + 1) +
             dataNode->RelativeDataOffset);
+    }
+
+    const void* DBINAGetDataV1(const Blob& blob)
+    {
+        return (blob.RawData<BINAV1Header>() + 1);
     }
 
     const void* DBINAGetDataV2(const Blob& blob)
@@ -557,10 +639,17 @@ namespace hl
 
         default:
         {
-            // TODO: BINA V1 Support
-            throw std::runtime_error("The given BINA version is unknown or unsupported.");
+            return DBINAGetDataV1(blob);
         }
         }
+    }
+
+    const std::uint8_t* DBINAGetOffsetTableV1(const Blob& blob,
+        std::uint32_t& offTableSize)
+    {
+        const BINAV1Header* header = blob.RawData<BINAV1Header>();
+        offTableSize = header->OffsetTableSize;
+        return (blob.RawData() + header->OffsetTableOffset);
     }
 
     const std::uint8_t* INDBINAGetOffsetTableV2(
@@ -588,8 +677,7 @@ namespace hl
             return DBINAGetOffsetTableV2(blob, offTableSize);
 
         default:
-            // TODO: BINA V1 Support
-            throw std::runtime_error("The given BINA version is unknown or unsupported.");
+            return DBINAGetOffsetTableV1(blob, offTableSize);
         }
     }
 }
