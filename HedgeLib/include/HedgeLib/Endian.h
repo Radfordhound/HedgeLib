@@ -38,6 +38,12 @@ namespace hl
         Swap(reinterpret_cast<std::uint16_t&>(v));
     }
 
+    inline void Swap(char16_t& v)
+    {
+        // Swap character as though it's an unsigned integer
+        Swap(reinterpret_cast<std::uint16_t&>(v));
+    }
+
     inline void Swap(std::uint32_t& v)
     {
 #ifdef _WIN32
@@ -60,6 +66,12 @@ namespace hl
     {
         // Swap signed value as though it's unsigned
         Swap(reinterpret_cast<std::uint32_t&>(v));
+    }
+
+    inline void Swap(char32_t& v)
+    {
+        // Swap character as though it's an unsigned integer
+        Swap(reinterpret_cast<std::uint16_t&>(v));
     }
 
     static_assert(std::numeric_limits<float>::is_iec559,
