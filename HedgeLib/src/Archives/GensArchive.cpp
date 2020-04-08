@@ -244,7 +244,11 @@ namespace hl
             // If we're generating a split, break if we've surpassed the split limit
             // Note how we check this *after* we've already written the file entry
             // as it seems that's how the actual game does it for some reason?
-            if (splitLimit && arSize >= splitLimit) break;
+            if (splitLimit && arSize >= splitLimit)
+            {
+                ++fileIndex;
+                break;
+            }
         }
 
         // Write file size to arl if necessary and return
