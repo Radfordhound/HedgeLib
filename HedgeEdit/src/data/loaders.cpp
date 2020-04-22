@@ -29,6 +29,8 @@ namespace HedgeEdit::Data
 
         // TODO: Load misc pacs
         // TODO: Load sky pacs
+        // TODO: Move this somewhere else ?
+        UI::MainInstance->UpdateUI();
     }
 
     DEFINE_LOADER(ForcesLoader)

@@ -54,4 +54,10 @@ namespace HedgeEdit::UI
         qApp->setStyleSheet(
             "QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }");
     }
+
+    void MainWindow::UpdateUI()
+    {
+        SceneView->UpdateUI();
+        // TODO
+    }
 }

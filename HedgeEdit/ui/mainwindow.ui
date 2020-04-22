@@ -115,7 +115,19 @@
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <widget class="QDockWidget" name="dockWidgetProperties">
+  <widget class="QDockWidget" name="dockWidget1">
+   <property name="allowedAreas">
+    <set>Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea</set>
+   </property>
+   <property name="windowTitle">
+    <string>Scene View</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="HedgeEdit::UI::SceneViewWidget" name="SceneView" />
+  </widget>
+  <widget class="QDockWidget" name="dockWidget2">
    <property name="sizePolicy">
     <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
      <horstretch>0</horstretch>
@@ -125,7 +137,7 @@
    <property name="minimumSize">
     <size>
      <width>270</width>
-     <height>0</height>
+     <height>38</height>
     </size>
    </property>
    <property name="baseSize">

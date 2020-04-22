@@ -16,7 +16,7 @@ namespace HedgeEdit::UI
     public slots:
         void PropertiesClosed();
         void DebugEnableDarkTheme();
-        // TODO
+        void UpdateUI();
     };
 
     extern MainWindow* MainInstance;
