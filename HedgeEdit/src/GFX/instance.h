@@ -7,6 +7,7 @@
 #include "shader.h"
 #include "geometry.h"
 #include "model.h"
+#include "../terrainGroup.h"
 #include "../flat_hash_map.h"
 
 #include "HedgeLib/String.h"
@@ -50,6 +51,8 @@ namespace HedgeEdit::GFX
         ska::flat_hash_map<std::string, std::unique_ptr<VertexShader>> vertexShaders;
         ska::flat_hash_map<std::string, std::unique_ptr<PixelShader>> pixelShaders;
         ska::flat_hash_map<std::string, std::unique_ptr<Model>> models;
+
+        std::vector<TerrainGroup> terrainGroups;
 
         void InitStandard();
         void InitHH2();
@@ -115,6 +118,57 @@ namespace HedgeEdit::GFX
         Model& AddModel(const hl::HHTerrainModel& model);
         Model& AddModel(const std::string& name, const hl::HHTerrainModel& model);
         Model& AddModel(const std::string& name, const hl::HHSkeletalModel& model);
+
+        inline TerrainGroup& GetDefaultTerrainGroup()
+        {
+            return terrainGroups[0];
+        }
+
+        inline std::size_t GetTerrainGroupCount()
+        {
+            return terrainGroups.size();
+        }
+
+        inline TerrainGroup* GetTerrainGroups()
+        {
+            return terrainGroups.data();
+        }
+
+        inline TerrainGroup& GetTerrainGroup(std::size_t index)
+        {
+            return terrainGroups[index];
+        }
+
+        TerrainGroup* GetTerrainGroup(const char* name);
+
+        inline TerrainGroup& GetTerrainGroupNoNull(const char* name)
+        {
+            TerrainGroup* group = GetTerrainGroup(name);
+            return (group) ? *group : GetDefaultTerrainGroup();
+        }
+
+        inline TerrainGroup& GetOrAddTerrainGroup(const char* name)
+        {
+            TerrainGroup* group = GetTerrainGroup(name);
+            if (group) return *group;
+            
+            return (name) ? AddTerrainGroup(name) : GetDefaultTerrainGroup();
+        }
+
+        inline void AddTerrainInstance(const GameObject& terrain)
+        {
+            GetDefaultTerrainGroup().Terrain.push_back(terrain);
+        }
+        
+        TerrainGroup& AddTerrainGroup(const TerrainGroup& group)
+        {
+            return terrainGroups.emplace_back(group);
+        }
+
+        TerrainGroup& AddTerrainGroup(const char* groupName)
+        {
+            return terrainGroups.emplace_back(groupName);
+        }
 
         Texture& LoadDDSTexture(const char* filePath);
         Model& LoadHHSkeletalModel(const char* filePath);

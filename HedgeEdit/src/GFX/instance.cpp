@@ -111,6 +111,9 @@ namespace HedgeEdit::GFX
         Context->RSSetState(RasterizerState.get());
 #endif
 
+        // Create default terrain group
+        terrainGroups.emplace_back();
+
         // Initialize resources
         switch (renderType)
         {
@@ -178,6 +181,9 @@ namespace HedgeEdit::GFX
         textures.clear();
         materials.clear();
         models.clear();
+
+        terrainGroups.clear();
+        terrainGroups.emplace_back();
     }
 
     InputLayout* Instance::GetInputLayout(std::size_t hash) const
@@ -268,6 +274,20 @@ namespace HedgeEdit::GFX
         const hl::HHSkeletalModel& model)
     {
         return AddModel(name, new Model(*this, model));
+    }
+
+    TerrainGroup* Instance::GetTerrainGroup(const char* name)
+    {
+        if (!name) return nullptr;
+        for (std::size_t i = 0; i < terrainGroups.size(); ++i)
+        {
+            if (terrainGroups[i].Name == name)
+            {
+                return &terrainGroups[i];
+            }
+        }
+        
+        return nullptr;
     }
 
     Texture& Instance::LoadDDSTexture(const char* filePath)
@@ -361,28 +381,56 @@ namespace HedgeEdit::GFX
         ps->Use(*this);
 
         // Render first pass (solid)
-        for (const auto& mdlIt : models)
+        Transform defaultTransform = Transform();
+        for (const auto& terrainGroup : terrainGroups)
         {
-            const Model* mdl = mdlIt.second.get();
-            for (const auto& t : mdl->Instances)
+            for (const auto& terrain : terrainGroup.Terrain)
             {
-                BindTransform(t);
-                DrawMeshGroup(mdl->Solid);
-                DrawMeshGroup(mdl->Boolean); // TODO: Is this alright to do in the first pass?
+                if (terrain.ModelName.empty()) continue;
+                GFX::Model* trrMdl = GetModel(terrain.ModelName);
+
+                if (terrain.Instances.empty())
+                {
+                    BindTransform(defaultTransform);
+                    DrawMeshGroup(trrMdl->Solid);
+                    DrawMeshGroup(trrMdl->Boolean);
+                }
+                else
+                {
+                    for (const auto& transform : terrain.Instances)
+                    {
+                        BindTransform(transform);
+                        DrawMeshGroup(trrMdl->Solid);
+                        DrawMeshGroup(trrMdl->Boolean);
+                    }
+                }
             }
         }
 
         // Render second pass (transparent)
         // TODO: Do proper depth-sorting
-        for (const auto& mdlIt : models)
+        for (const auto& terrainGroup : terrainGroups)
         {
-            const Model* mdl = mdlIt.second.get();
-            if (!mdl->Transparent.MeshCount) continue;
-
-            for (const auto& t : mdl->Instances)
+            for (const auto& terrain : terrainGroup.Terrain)
             {
-                BindTransform(t);
-                DrawMeshGroup(mdl->Transparent);
+                if (terrain.ModelName.empty()) continue;
+
+                GFX::Model* trrMdl = GetModel(terrain.ModelName);
+                if (!trrMdl->Transparent.MeshCount) continue;
+
+                if (terrain.Instances.empty())
+                {
+                    BindTransform(defaultTransform);
+                    DrawMeshGroup(trrMdl->Transparent);
+                }
+                else
+                {
+                    for (const auto& transform : terrain.Instances)
+                    {
+                        BindTransform(transform);
+                        DrawMeshGroup(trrMdl->Transparent);
+                    }
+                }
             }
         }
 

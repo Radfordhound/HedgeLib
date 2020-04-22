@@ -38,18 +38,12 @@ namespace HedgeEdit::Data::Parsers
         hl::HHTerrainInstanceInfoV0* instInfo = hl::DHHGetData<hl::HHTerrainInstanceInfoV0>(data);
         instInfo->EndianSwapRecursive(true);
         
-        std::string mdlName = std::string(instInfo->ModelName);
-        GFX::Model* mdl = inst.GetModel(mdlName); // TODO: nullptr check
+        GFX::Model* mdl = inst.GetModel(std::string(instInfo->ModelName)); // TODO: nullptr check
 
-        if (mdl->OnlyDefaultInstance)
-        {
-            mdl->Instances[0] = Transform(HHFixMatrix(*instInfo->Matrix.Get()));
-            mdl->OnlyDefaultInstance = false;
-        }
-        else
-        {
-            mdl->Instances.emplace_back(HHFixMatrix(*instInfo->Matrix.Get()));
-        }
+        TerrainGroup& terrainGroup = inst.GetOrAddTerrainGroup(groupName);
+        GameObject* terrainInst = terrainGroup.GetTerrainInstance(instInfo->ModelName); // TODO: nullptr check
+
+        terrainInst->Instances.emplace_back(HHFixMatrix(*instInfo->Matrix.Get()));
     }
 
     DEFINE_PARSER(ResMirageTerrainModel)
@@ -61,13 +55,8 @@ namespace HedgeEdit::Data::Parsers
         mdl->EndianSwapRecursive(true);
 
         GFX::Model& model = inst.AddModel(name, *mdl);
-        model.Instances.emplace_back();
-        /*model.Instances.emplace_back(Matrix4x4(
-            10, 0, 0, 0,
-            0, 10, 0, 0,
-            0, 0, 10, 0,
-            0, 0, 0, 1));*/
 
-        model.OnlyDefaultInstance = true;
+        TerrainGroup& terrainGroup = inst.GetOrAddTerrainGroup(groupName);
+        terrainGroup.Terrain.emplace_back(name);
     }
 }

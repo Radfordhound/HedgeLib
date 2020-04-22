@@ -1,6 +1,5 @@
 #pragma once
 #include "geometry.h"
-#include "../transform.h"
 #include <memory>
 
 namespace hl
@@ -40,8 +39,6 @@ namespace HedgeEdit::GFX
         std::unique_ptr<SpecialMeshGroup[]> SpecialMeshGroups;
         std::size_t SpecialMeshGroupCount;
 
-        std::vector<Transform> Instances;
-        bool OnlyDefaultInstance = false;
 
         Model(Instance& inst, const hl::HHTerrainModel& model);
         Model(Instance& inst, const hl::HHSkeletalModel& model);
