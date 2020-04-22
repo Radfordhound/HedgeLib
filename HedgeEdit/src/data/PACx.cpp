@@ -6,10 +6,42 @@
 #include "HedgeLib/Blob.h"
 #include <algorithm>
 
+#define DEF_RES_PACX_PARSER(type) { #type, &Parsers::type::Parse }
+
 namespace HedgeEdit::Data
 {
-    template<typename Parser>
-    void ParsePACxV2(GFX::Instance& inst, hl::PACxV2NodeTree* fileTree)
+    struct INPACxResParser
+    {
+        const char* TypeName;
+        ParseFuncPtr Parser;
+    };
+
+    static const INPACxResParser INPACxV2Parsers[] =
+    {
+        DEF_RES_PACX_PARSER(ResTexture),
+        DEF_RES_PACX_PARSER(ResMirageMaterial),
+        DEF_RES_PACX_PARSER(ResModel),
+        DEF_RES_PACX_PARSER(ResMirageTerrainInstanceInfo),
+        DEF_RES_PACX_PARSER(ResMirageTerrainModel)
+    };
+
+    static constexpr std::size_t INPACxV2ParserCount =
+        (sizeof(INPACxV2Parsers) / sizeof(INPACxResParser));
+
+    static const INPACxResParser INPACxV3Parsers[] =
+    {
+        DEF_RES_PACX_PARSER(ResTexture),
+        DEF_RES_PACX_PARSER(ResMirageMaterial),
+        DEF_RES_PACX_PARSER(ResModel),
+        DEF_RES_PACX_PARSER(ResMirageTerrainInstanceInfo),
+        DEF_RES_PACX_PARSER(ResMirageTerrainModel)
+    };
+
+    static constexpr std::size_t INPACxV3ParserCount =
+        (sizeof(INPACxV3Parsers) / sizeof(INPACxResParser));
+    
+    void ParsePACxV2(GFX::Instance& inst, const char* arcName,
+        hl::PACxV2NodeTree* fileTree, const ParseFuncPtr parser)
     {
         // Iterate through each file in the file tree
         hl::PACxV2Node* fileNodes = fileTree->Get();
@@ -23,12 +55,12 @@ namespace HedgeEdit::Data
                 continue;
 
             // Call the given parser on this data entry
-            Parser::Parse(inst, fileNodes[i].Name.Get(), dataEntry + 1,
-                static_cast<std::size_t>(dataEntry->DataSize));
+            parser(inst, fileNodes[i].Name.Get(), dataEntry + 1,
+                static_cast<std::size_t>(dataEntry->DataSize), arcName);
         }
     }
 
-    void ReadPACxV2(GFX::Instance& inst, hl::Blob& blob)
+    void ReadPACxV2(GFX::Instance& inst, const char* arcName, hl::Blob& blob)
     {
         using namespace Parsers;
         hl::LWArchive* arc = blob.Data<hl::LWArchive>();
@@ -43,27 +75,13 @@ namespace HedgeEdit::Data
 
             // Parse data based on its type
             hl::PACxV2NodeTree* fileTree = typeNodes[i].Data.GetAs<hl::PACxV2NodeTree>();
-            if (!std::strcmp(typeName, "ResTexture"))
+            for (std::size_t i2 = 0; i2 < INPACxV2ParserCount; ++i2)
             {
-                ParsePACxV2<ResTexture>(inst, fileTree);
+                if (!std::strcmp(typeName, INPACxV2Parsers[i2].TypeName))
+                {
+                    ParsePACxV2(inst, arcName, fileTree, INPACxV2Parsers[i2].Parser);
+                }
             }
-            else if (!std::strcmp(typeName, "ResMirageMaterial"))
-            {
-                ParsePACxV2<ResMirageMaterial>(inst, fileTree);
-            }
-            else if (!std::strcmp(typeName, "ResModel"))
-            {
-                ParsePACxV2<ResModel>(inst, fileTree);
-            }
-            else if (!std::strcmp(typeName, "ResMirageTerrainInstanceInfo"))
-            {
-                ParsePACxV2<ResMirageTerrainInstanceInfo>(inst, fileTree);
-            }
-            else if (!std::strcmp(typeName, "ResMirageTerrainModel"))
-            {
-                ParsePACxV2<ResMirageTerrainModel>(inst, fileTree);
-            }
-            else continue;
         }
     }
 
@@ -73,6 +91,7 @@ namespace HedgeEdit::Data
         hl::Blob blob = hl::DLoadLWArchive(filePath);
 
         // Get root directory
+        std::unique_ptr<char[]> arcName;
         std::unique_ptr<hl::nchar[]> dir = hl::PathGetParentPtr(filePath);
 
         // Read splits
@@ -86,14 +105,24 @@ namespace HedgeEdit::Data
                 dir.get(), splitPtrs[i]);
 
             hl::Blob splitBlob = hl::DLoadLWArchive(splitPath.get());
-            ReadPACxV2(inst, splitBlob);
+            arcName = hl::PathGetNameNoExtsNamePtr(splitPtrs[i]);
+
+            ReadPACxV2(inst, arcName.get(), splitBlob);
         }
 
         // Parse root archive
-        ReadPACxV2(inst, blob);
+#ifdef _WIN32
+        std::unique_ptr<hl::nchar[]> arcNameNative = hl::PathGetNameNoExtsPtr(filePath);
+        arcName = hl::StringConvertUTF16ToUTF8Ptr(
+            reinterpret_cast<char16_t*>(arcNameNative.get()));
+#else
+        arcName = hl::PathGetNameNoExtsPtr(filePath);
+#endif
+
+        ReadPACxV2(inst, arcName.get(), blob);
     }
 
-    void ParsePACxV3(GFX::Instance& inst, hl::PACxV3Node* nodes,
+    void ParsePACxV3(GFX::Instance& inst, const char* arcName, hl::PACxV3Node* nodes,
         const hl::PACxV3Node& node, const char* fileName, char* curPtr,
         const ParseFuncPtr parser)
     {
@@ -114,7 +143,7 @@ namespace HedgeEdit::Data
                 // Recurse through child nodes
                 if (nodes[childNodeIndex].ChildCount)
                 {
-                    ParsePACxV3(inst, nodes,
+                    ParsePACxV3(inst, arcName, nodes,
                         nodes[childNodeIndex], fileName,
                         curPtr + nameLen, parser);
                 }
@@ -136,14 +165,14 @@ namespace HedgeEdit::Data
 
                 // Call the given parser on this data entry
                 parser(inst, fileName, dataEntry->Data.Get(),
-                    static_cast<std::size_t>(dataEntry->DataSize));
+                    static_cast<std::size_t>(dataEntry->DataSize), arcName);
             }
         }
     }
 
-    void ReadPACxV3Types(GFX::Instance& inst, hl::PACxV3Node* nodes,
-        const hl::PACxV3Node& node, const char* typeName,
-        char* fileName, char* curPtr)
+    void ReadPACxV3Types(GFX::Instance& inst, const char* arcName,
+        hl::PACxV3Node* nodes, const hl::PACxV3Node& node,
+        const char* typeName, char* fileName, char* curPtr)
     {
         for (std::uint16_t i = 0; i < node.ChildCount; ++i)
         {
@@ -162,7 +191,7 @@ namespace HedgeEdit::Data
                 // Recurse through child nodes
                 if (nodes[childNodeIndex].ChildCount)
                 {
-                    ReadPACxV3Types(inst, nodes, nodes[childNodeIndex],
+                    ReadPACxV3Types(inst, arcName, nodes, nodes[childNodeIndex],
                         typeName, fileName, curPtr + nameLen);
                 }
             }
@@ -180,40 +209,21 @@ namespace HedgeEdit::Data
                 *curPtr = '\0';
 
                 // Get parser based on data type
-                using namespace Parsers;
-                ParseFuncPtr parser;
-
-                if (!std::strcmp(typeName, "ResTexture"))
+                for (std::size_t i2 = 0; i2 < INPACxV3ParserCount; ++i2)
                 {
-                    parser = &ResTexture::Parse;
+                    if (!std::strcmp(typeName, INPACxV3Parsers[i2].TypeName))
+                    {
+                        // Iterate through file nodes
+                        hl::PACxV3Node* fileNodes = fileTree->Nodes.Get();
+                        ParsePACxV3(inst, arcName, fileNodes, fileNodes[0],
+                            fileName, fileName, INPACxV3Parsers[i2].Parser);
+                    }
                 }
-                else if (!std::strcmp(typeName, "ResMirageMaterial"))
-                {
-                    parser = &ResMirageMaterial::Parse;
-                }
-                else if (!std::strcmp(typeName, "ResModel"))
-                {
-                    parser = &ResModel::Parse;
-                }
-                else if (!std::strcmp(typeName, "ResMirageTerrainInstanceInfo"))
-                {
-                    parser = &ResMirageTerrainInstanceInfo::Parse;
-                }
-                else if (!std::strcmp(typeName, "ResMirageTerrainModel"))
-                {
-                    parser = &ResMirageTerrainModel::Parse;
-                }
-                else continue;
-
-                // Iterate through file nodes
-                hl::PACxV3Node* fileNodes = fileTree->Nodes.Get();
-                ParsePACxV3(inst, fileNodes, fileNodes[0],
-                    fileName, fileName, parser);
             }
         }
     }
 
-    void ReadPACxV3(GFX::Instance& inst, hl::Blob& blob)
+    void ReadPACxV3(GFX::Instance& inst, const char* arcName, hl::Blob& blob)
     {
         hl::ForcesArchive* arc = blob.Data<hl::ForcesArchive>();
 
@@ -225,7 +235,7 @@ namespace HedgeEdit::Data
         char fileName[255];
         char typeName[31];
 
-        ReadPACxV3Types(inst, typeNodes, typeNodes[0],
+        ReadPACxV3Types(inst, arcName, typeNodes, typeNodes[0],
             typeName, fileName, typeName);
     }
 
@@ -235,6 +245,7 @@ namespace HedgeEdit::Data
         hl::Blob blob = hl::DLoadForcesArchive(filePath);
 
         // Get root directory
+        std::unique_ptr<char[]> arcName;
         std::unique_ptr<hl::nchar[]> dir = hl::PathGetParentPtr(filePath);
 
         // Read splits
@@ -248,10 +259,20 @@ namespace HedgeEdit::Data
                 dir.get(), splitPtrs[i]);
 
             hl::Blob splitBlob = hl::DLoadForcesArchive(splitPath.get());
-            ReadPACxV3(inst, splitBlob);
+            arcName = hl::PathGetNameNoExtsNamePtr(splitPtrs[i]);
+
+            ReadPACxV3(inst, arcName.get(), splitBlob);
         }
 
         // Parse root archive
-        ReadPACxV3(inst, blob);
+#ifdef _WIN32
+        std::unique_ptr<hl::nchar[]> arcNameNative = hl::PathGetNameNoExtsPtr(filePath);
+        arcName = hl::StringConvertUTF16ToUTF8Ptr(
+            reinterpret_cast<char16_t*>(arcNameNative.get()));
+#else
+        arcName = hl::PathGetNameNoExtsPtr(filePath);
+#endif
+
+        ReadPACxV3(inst, arcName.get(), blob);
     }
 }
