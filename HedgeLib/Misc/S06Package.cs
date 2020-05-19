@@ -105,10 +105,9 @@ namespace HedgeLib.Archives
             writer.AddOffset("typeEntriesPos");
 
             // Types
+            writer.FillInOffset("typeEntriesPos", false);
             for (int i = 0; i < Types.Count; i++)
             {
-                if (i == 0)
-                    writer.FillInOffset("typeEntriesPos", false);
 
                 writer.AddString($"typeName{i}", Types[i].TypeName);
                 writer.Write(Types[i].FileCount);
