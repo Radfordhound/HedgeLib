@@ -108,7 +108,6 @@ namespace HedgeLib.Archives
             writer.FillInOffset("typeEntriesPos", false);
             for (int i = 0; i < Types.Count; i++)
             {
-
                 writer.AddString($"typeName{i}", Types[i].TypeName);
                 writer.Write(Types[i].FileCount);
                 writer.AddOffset($"typeFilesOffset{i}");
@@ -117,11 +116,9 @@ namespace HedgeLib.Archives
             // Files
             uint fileEntriesPos = (uint)writer.BaseStream.Position;
 
+			writer.FillInOffset("fileEntriesPos", false);
             for (int i = 0; i < Files.Count; i++)
             {
-                if (i == 0)
-                    writer.FillInOffset("fileEntriesPos", false);
-
                 writer.AddString($"friendlyName{i}", Files[i].FriendlyName);
                 writer.AddString($"filePath{i}", Files[i].FilePath);
             }
