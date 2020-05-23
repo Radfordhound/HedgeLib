@@ -36,6 +36,8 @@ Right now it supports the following:
 ### Sonic '06
 - [Reading Archives.](HedgeLib/Archives/S06Archive.cs)
 - [Reading/Writing Set Data.](HedgeLib/Sets/S06SetData.cs)
+- [Reading/Writing Packages.](HedgeLib/Misc/S06Package.cs)
+- [Reading/Writing Font Pictures.](HedgeLib/Misc/S06FontPicture.cs)
 
 ### Sonic Heroes/Shadow the Hedgehog
 - [Reading/Writing Uncompressed Archives.](HedgeLib/Archives/ONEArchive.cs)
