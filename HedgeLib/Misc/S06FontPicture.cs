@@ -9,7 +9,7 @@ namespace HedgeLib.Misc
     public class S06FontPictureUV
     {
         public string Placeholder;
-        public uint X, Y, Width, Height;
+        public ushort X, Y, Width, Height;
     }
 
     public class S06FontPicture : FileBase
@@ -79,10 +79,10 @@ namespace HedgeLib.Misc
             for (int i = 0; i < Entries.Count; i++)
             {
                 writer.AddString($"placeholderName{i}", Entries[i].Placeholder);
-                writer.Write((ushort)Entries[i].X);
-                writer.Write((ushort)Entries[i].Y);
-                writer.Write((ushort)Entries[i].Width);
-                writer.Write((ushort)Entries[i].Height);
+                writer.Write(Entries[i].X);
+                writer.Write(Entries[i].Y);
+                writer.Write(Entries[i].Width);
+                writer.Write(Entries[i].Height);
             }
 
             writer.FinishWrite(header);
