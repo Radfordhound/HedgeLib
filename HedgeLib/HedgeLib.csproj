@@ -65,6 +65,7 @@
     <Compile Include="Materials\GensMaterial.cs" />
     <Compile Include="Math\AABB.cs" />
     <Compile Include="Misc\ForcesGISM.cs" />
+    <Compile Include="Misc\S06FontPicture.cs" />
     <Compile Include="Misc\S06Package.cs" />
     <Compile Include="RFL\ForcesCaptionParam.cs" />
     <Compile Include="RFL\ForcesDLCParam.cs" />
