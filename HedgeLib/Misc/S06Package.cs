@@ -128,14 +128,12 @@ namespace HedgeLib.Misc
             for (int i = 0; i < Types.Count; i++)
             {
                 var typeElem = new XElement("Type");
-                var typeAttr = new XAttribute("Name", Types[i].TypeName);
-                typeElem.Add(typeAttr);
+                typeElem.Add(new XAttribute("Name", Types[i].TypeName));
 
                 for (int f = 0; f < Types[i].Files.Count; f++)
                 {
                     var fileElem = new XElement("File", Types[i].Files[f].FilePath);
-                    var fileTypeAttr = new XAttribute("FriendlyName", Types[i].Files[f].FriendlyName);
-                    fileElem.Add(fileTypeAttr);
+                    fileElem.Add(new XAttribute("FriendlyName", Types[i].Files[f].FriendlyName));
                     typeElem.Add(fileElem);
                 }
 

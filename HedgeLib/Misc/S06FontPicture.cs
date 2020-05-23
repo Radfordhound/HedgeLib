@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using HedgeLib.IO;
+using System.Xml.Linq;
 using HedgeLib.Headers;
 using HedgeLib.Exceptions;
 using System.Collections.Generic;
@@ -86,6 +87,56 @@ namespace HedgeLib.Misc
             }
 
             writer.FinishWrite(header);
+        }
+
+        public void ExportXML(string filePath)
+        {
+            // Header
+            var rootElem = new XElement("PFT");
+
+            // Texture
+            var typeElem = new XElement("Texture");
+            var typeAttr = new XAttribute("File", Texture);
+            typeElem.Add(typeAttr);
+
+            // Placeholders
+            for (int i = 0; i < Entries.Count; i++)
+            {
+                var pictureElem = new XElement("Picture", Entries[i].Placeholder);
+                pictureElem.Add(new XAttribute("X", Entries[i].X));
+                pictureElem.Add(new XAttribute("Y", Entries[i].Y));
+                pictureElem.Add(new XAttribute("Width", Entries[i].Width));
+                pictureElem.Add(new XAttribute("Height", Entries[i].Height));
+                typeElem.Add(pictureElem);
+            }
+
+            rootElem.Add(typeElem);
+
+            var xml = new XDocument(rootElem);
+            xml.Save(filePath);
+        }
+
+        public void ImportXML(string filePath)
+        {
+            var xml = XDocument.Load(filePath);
+
+            // Texture
+            foreach (var textureElem in xml.Root.Elements("Texture"))
+            {
+                Texture = textureElem.Attribute("File").Value;
+
+                // Placeholders
+                foreach (var pictureElem in textureElem.Elements("Picture"))
+                {
+                    S06FontPictureUV entry = new S06FontPictureUV();
+                    ushort.TryParse(pictureElem.Attribute("X").Value, out entry.X);
+                    ushort.TryParse(pictureElem.Attribute("Y").Value, out entry.Y);
+                    ushort.TryParse(pictureElem.Attribute("Width").Value, out entry.Width);
+                    ushort.TryParse(pictureElem.Attribute("Height").Value, out entry.Height);
+                    entry.Placeholder = pictureElem.Value;
+                    Entries.Add(entry);
+                }
+            }
         }
     }
 }
