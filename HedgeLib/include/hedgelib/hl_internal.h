@@ -129,6 +129,17 @@ typedef uintptr_t HlUPtr;
 
 /* Define size macros. */
 #define HL_SIZE_MAX SIZE_MAX
+
+/* Define max integral types/macros. */
+#ifdef INTMAX_MAX
+typedef intmax_t HlSMax;
+#endif
+#ifdef UINTMAX_MAX
+typedef uintmax_t HlUMax;
+#endif
+
+#define HL_SMAX_MAX INTMAX_MAX
+#define HL_UMAX_MAX UINTMAX_MAX
 #else
 #ifdef _MSC_VER
 /* Define typedefs for MSVC-specific fixed-width integral types. */
@@ -166,6 +177,13 @@ typedef HlU32 HlUPtr;
 
 /* Define size macros. */
 #define HL_SIZE_MAX HL_UPTR_MAX
+
+/* Define max integral types/macros. */
+typedef HlSPtr HlSMax;
+typedef HlUPtr HlUMax;
+
+#define HL_SMAX_MAX HL_SPTR_MAX
+#define HL_UMAX_MAX HL_UPTR_MAX
 #else
 /* Include hl_in_c89_stdint.h, which defines all the values we need. */
 #include "hl_in_c89_stdint.h"

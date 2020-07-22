@@ -324,6 +324,13 @@ typedef unsigned HL_IN_MAX_TYPE HlUPtr;
 #endif
 #endif
 
+/*
+    7.18.1.5	Greatest-width integer types
+*/
+
+typedef HL_IN_MAX_TYPE			HlSMax;
+typedef unsigned HL_IN_MAX_TYPE HlUMax;
+
 #if !defined(__cplusplus) || defined(__STDC_LIMIT_MACROS)
 
 /*
@@ -364,5 +371,12 @@ typedef unsigned HL_IN_MAX_TYPE HlUPtr;
 #else
 #define HL_SIZE_MAX     HL_IN_UPPER_MAX
 #endif
+
+/*
+    7.18.2.5	Limits of greatest-width integer types
+*/
+
+#define	HL_SMAX_MAX HL_IN_TOP_MAX
+#define	HL_UMAX_MAX HL_IN_UPPER_MAX
 
 #endif  /* !defined(__cplusplus) || defined(__STDC_LIMIT_MACROS) */
