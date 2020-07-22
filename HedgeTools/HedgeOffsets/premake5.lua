@@ -1,32 +1,29 @@
 project("HedgeOffsets")
-    language("C++")
-    cppdialect("C++17")
-    targetdir("bin/%{cfg.platform}/%{cfg.buildcfg}")
+    language("C")
     kind("ConsoleApp")
-    links("HedgeLib")
-    runpathdirs("bin/%{cfg.platform}/%{cfg.buildcfg}")
     
-    includedirs({ "../../HedgeLib/include" })
+    targetdir("bin/%{cfg.platform}/%{cfg.buildcfg}")
+    runpathdirs("bin/%{cfg.platform}/%{cfg.buildcfg}")
+    includedirs("../../HedgeLib/include")
 
-    -- Static or Shared
+    -- Link to HedgeLib
+    links("HedgeLib")
+    
     if LibType == "shared" then
-        defines("HL_DLL")
-        if Target == "windows" then
-            postbuildcommands("copy /Y \"$(SolutionDir)HedgeLib\\bin\\$(PlatformTarget)\\$(Configuration)\\HedgeLib.dll\" \"$(TargetDir)HedgeLib.dll\" >NUL")
-        end
+        defines({ "HL_DLL" })
     end
     
     -- Platform-Specifics
-    if Target == "windows" then
+    if target == "windows" then
         defines("NOMINMAX")
     end
     
-    files({ "src/**.cpp", "src/**.h" })
+    files({ "src/**.c", "src/**.h" })
     
     -- MSC Optimization
     filter("toolset:msc")
         flags("MultiProcessorCompile")
-
+    
     -- Debug Configuration
     filter("configurations:Debug*")
         defines("DEBUG")

@@ -13,24 +13,31 @@ As such, you don't have to manually build any of the tools/libraries in this rep
 - [Latest (development) builds](https://ci.appveyor.com/project/Radfordhound/hedgelib)
 
 ## HedgeLib
-HedgeLib is a C++ library [under the MIT license](License.txt) that aims to make modding games in the Sonic the Hedgehog franchise easier, similar to [Dario's excellent "LibGens"](https://github.com/DarioSamo/libgens-sonicglvl).
+HedgeLib is a C89 library [under the MIT license](License.txt) that aims to make modding games in the Sonic the Hedgehog franchise easier, similar to [Dario's excellent "LibGens"](https://github.com/DarioSamo/libgens-sonicglvl).
 Right now, HedgeLib supports the following:
 
-### Hedgehog Engine
-- "Mirage" headers (used in models/materials from Lost World and beyond)
-- Models (.model/.terrain-model; v5.0)
+### Ninja Next ("Sega NN")
+- Node Motions (Skeletal Animations) [.xnm, .snm, .gnm, .cnm, .inm, .enm, .ynm, .znm]
+- Camera Motions [.xnc, .snc, .gnc, .cnc, .inc, .enc, .ync, .znc]
+- Light Motions [.xnl, .snl, .gnl, .cnl, .inl, .enl, .ynl, .znl]
+- Morph Motions [.xnf, .snf, .gnf, .cnf, .inf, .enf, .ynf, .znf]
+- Material Motions [.xnv, .snv, .gnv, .cnv, .inv, .env, .ynv, .znv]
 
-### Sonic Forces
-- Archives (.pac; aka "PACx V3")
-
-### Sonic Lost World
-- Archives (.pac; aka "PACx V2")
-
-### Sonic Unleashed/Generations
-- Uncompressed Archives (.ar/.pfd)
-
-### Other
-- BINA headers and string/offset tables (used in many files from '06, Colors, LW, Forces, and more)
+**Used in:**
+- Sega SuperStars
+- Sonic Riders
+- Sonic '06
+- Super Monkey Ball: Banana Blitz
+- Bleach: Shattered Blade
+- Sonic and the Secret Rings
+- Sonic Riders: Zero Gravity
+- Sonic Unleashed (Wii/PS2)
+- Sonic and the Black Knight
+- Super Monkey Ball: Step and Roll
+- Sonic the Hedgehog 4: Episode I
+- Sonic Free Riders
+- Sonic the Hedgehog 4: Episode II
+- ...and more
 
 ## HedgeEdit
 A level editor built with DirectX/Qt designed to carry much of the same functionality as "SonicGlvl", but with support for a large number of games in the series, rather than just Generations. Uses HedgeLib for reading/writing archives, models, materials, object placement, etc.

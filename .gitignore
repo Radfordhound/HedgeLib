@@ -11,6 +11,14 @@ Makefile
 premake5.exe
 premake5
 
+# Other
+Ignored/
+[Dd]epends.lua
+HedgeTest/out/
+HedgeTest/tmp/
+HedgeTest/src/tests/tmp_tests.h
+HedgeTest/src/tmp_tests_depends.h
+
 # Visual Studio Code
 *.vscode/
 
@@ -249,7 +257,3 @@ ModelManifest.xml
 ehthumbs.db
 [Tt]humbs.db
 [Dd]esktop.ini
-
-# Other
-Ignored/
-[Dd]epends.lua
