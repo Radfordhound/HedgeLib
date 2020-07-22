@@ -1,20 +1,7 @@
 #include "hedgelib/io/hl_nn.h"
 #include "hedgelib/hl_blob.h"
 #include "hedgelib/hl_endian.h"
-#include <stdio.h>
-
-#ifdef HL_IN_WIN32_UNICODE
-#include <wchar.h>
-#define nstrcmp wcscmp
-#define nprintf wprintf
-#define fnprintf fwprintf
-#define nmain wmain
-#else
-#define nstrcmp strcmp
-#define nprintf nprintf
-#define fnprintf fprintf
-#define nmain main
-#endif
+#include "../../hedgetools_helpers.h"
 
 static void NNPrintOffsets(HlBlob* blob)
 {
