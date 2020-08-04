@@ -378,11 +378,11 @@ const HlNChar* hlNNPlatformGetFriendlyName(HlNNPlatform platform)
     switch (platform)
     {
     case HL_NN_PLATFORM_XBOX:           return HL_NTEXT("Xbox");
-    case HL_NN_PLATFORM_PS2:            return HL_NTEXT("PlayStation 2");
+    case HL_NN_PLATFORM_PS2:            return HL_NTEXT("PlayStation2");
     case HL_NN_PLATFORM_GAMECUBE:       return HL_NTEXT("Gamecube");
-    case HL_NN_PLATFORM_PS3:            return HL_NTEXT("PlayStation 3");
+    case HL_NN_PLATFORM_PS3:            return HL_NTEXT("PlayStation3");
     case HL_NN_PLATFORM_MOBILE:         return HL_NTEXT("Mobile");
-    case HL_NN_PLATFORM_XBOX_EXTENDED:  return HL_NTEXT("Xbox Extended");
+    case HL_NN_PLATFORM_XBOX_EXTENDED:  return HL_NTEXT("Xbox_Extended");
     case HL_NN_PLATFORM_OTHER:          return HL_NTEXT("Other");
     default:                            return NULL;
     }
