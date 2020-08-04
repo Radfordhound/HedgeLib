@@ -4,6 +4,65 @@
 #include "../../hedgetools_helpers.h"
 #include <stdlib.h>
 
+typedef enum STRING_ID
+{
+    HELP_STRING,
+
+#ifdef _WIN32
+    WIN32_HELP_STRING,
+#endif
+
+    NN_FORMAT_STRING,
+    NN_DATA_CHUNK_COUNT_STRING,
+    NN_DATA_SIZE_STRING,
+    NN_NOF0_SIZE_STRING,
+
+    OFFSET_INFO_STRING,
+    PRESS_ENTER_STRING,
+
+    ERROR_STRING,
+    ERROR_MULTIPLE_PATHS,
+
+    STRING_CONSTANT_COUNT
+}
+STRING_ID;
+
+/* Auto-generate localized text arrays. */
+#define LOCALIZED_TEXT(languageID)\
+    static const HlNChar* const languageID##Text[STRING_CONSTANT_COUNT] =
+
+#include "text.h"
+#undef LOCALIZED_TEXT
+
+typedef enum LANGUAGE_TYPE
+{
+/* Auto-generate this enum. */
+#define LANGUAGE(languageID) LANGUAGE_##languageID,
+#include "languages.h"
+#undef LANGUAGE
+
+    LANGUAGE_COUNT
+}
+LANGUAGE_TYPE;
+
+static const HlNChar* const* Languages[] =
+{
+/* Auto-generate this array. */
+#define LANGUAGE(languageID) languageID##Text,
+#include "languages.h"
+#undef LANGUAGE
+
+    /*
+       Put a NULL at the end to avoid the whole
+       "C89 doesn't allow trailing commas" thing.
+    */
+    NULL
+};
+
+static LANGUAGE_TYPE CurrentLanguage = (LANGUAGE_TYPE)0;
+
+#define GET_TEXT(id) Languages[CurrentLanguage][id]
+
 static void NNPrintOffsets(HlBlob* blob)
 {
     HlNNBinCnkNOF0Header* NOF0Header;
@@ -27,13 +86,13 @@ static void NNPrintOffsets(HlBlob* blob)
         NOF0Header = (HlNNBinCnkNOF0Header*)hlOff32Get(&header->NOF0Offset);
 
         /* Print header metadata. */
-        nprintf(HL_NTEXT("Format: NN %s v%u\n\n"),
+        nprintf(GET_TEXT(NN_FORMAT_STRING),
             hlNNPlatformGetFriendlyName(platform),
             (unsigned int)header->version);
 
-        nprintf(HL_NTEXT("Data Chunk Count: %d\n"), (unsigned int)header->chunkCount);
-        nprintf(HL_NTEXT("Data Size: 0x%X\n"), (unsigned int)header->dataSize);
-        nprintf(HL_NTEXT("NOF0 chunk size: 0x%X\n\n"), (unsigned int)header->NOF0Size);
+        nprintf(GET_TEXT(NN_DATA_CHUNK_COUNT_STRING), (unsigned int)header->chunkCount);
+        nprintf(GET_TEXT(NN_DATA_SIZE_STRING), (unsigned int)header->dataSize);
+        nprintf(GET_TEXT(NN_NOF0_SIZE_STRING), (unsigned int)header->NOF0Size);
     }
 
     /* Endian swap NOF0 header if necessary for the given platform. */
@@ -71,7 +130,7 @@ static void NNPrintOffsets(HlBlob* blob)
             }
 
             /* Print offset info. */
-            nprintf(HL_NTEXT("Offset #%d:\t{ pos: 0x%X, val: 0x%X }\n"),
+            nprintf(GET_TEXT(OFFSET_INFO_STRING),
                 (unsigned int)i + 1,                                            /* Offset number. */
                 (unsigned int)((HlUPtr)curOff - headerPtr),                     /* Offset position. */
                 (unsigned int)((HlUPtr)HL_ADD_OFF(data, *curOff) - headerPtr)   /* Offset value. */
@@ -107,18 +166,16 @@ static HlResult printOffsets(const HlNChar* filePath)
 
 static void printUsage(FILE* stream)
 {
-    fnprintf(stream, HL_NTEXT("Usage: HedgeOffsets filePath [options]\n"));
-    fnprintf(stream, HL_NTEXT("  -NP\tExit without prompting user to press enter.\n"));
-    fnprintf(stream, HL_NTEXT("  -?\tDisplays this help.\n"));
+    fnprintf(stream, GET_TEXT(HELP_STRING));
 
 #ifdef _WIN32
-    fnprintf(stream, HL_NTEXT("\n(Or just drag n' drop a file onto HedgeOffsets.exe)"));
+    fnprintf(stream, GET_TEXT(WIN32_HELP_STRING));
 #endif
 }
 
 static void printError(const HlNChar* err)
 {
-    fnprintf(stderr, HL_NTEXT("ERROR: %s\n"), err);
+    fnprintf(stderr, GET_TEXT(ERROR_STRING), err);
 }
 
 int nmain(int argc, HlNChar* argv[])
@@ -152,7 +209,7 @@ int nmain(int argc, HlNChar* argv[])
         /* Invalid command line arguments. */
         else
         {
-            printError(HL_NTEXT("Cannot handle multiple file paths."));
+            printError(GET_TEXT(ERROR_MULTIPLE_PATHS));
             returnCode = EXIT_FAILURE;
             goto end;
         }
@@ -181,7 +238,7 @@ end:
     /* Pause the program until the user presses enter, unless the no prompt flag was specified. */
     if (doPrompt)
     {
-        nprintf(HL_NTEXT("\nPress enter to continue..."));
+        nprintf(GET_TEXT(PRESS_ENTER_STRING));
         getchar();
     }
 
