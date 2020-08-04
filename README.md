@@ -50,23 +50,24 @@ A collection of miscellaneous tools that utilize HedgeLib to allow editing a wid
 Right now this includes the following:
 
 - [HedgeArcPack](HedgeTools/HedgeArcPack)
-  * A Command Line tool that allows quick and powerful extraction and generation of archiving formats from all games HedgeLib supports.
+  * A C89 Command-Line tool that allows quick and powerful extraction and generation of archiving formats from all games HedgeLib supports.
 - [HedgeOffsets](HedgeTools/HedgeOffsets)
-  * A Command Line tool that reads the offset table in BINA/Hedgehog Engine formats and prints each offset. Useful for debugging and reverse-engineering of undocumented formats which contain an offset table.
+  * A C89 Command-Line tool that reads the offset table in BINA/Hedgehog Engine formats and prints each offset. Useful for debugging and reverse-engineering of undocumented formats which contain an offset table.
 
 # Manually Building
 Building HedgeLib is supposed to be easy.
 If you're having trouble building with the following instructions, please [create an issue](https://github.com/Radfordhound/HedgeLib/issues/new).
 
-1: Clone the HedgeLib repository:
+**1: Clone the HedgeLib repository:**
 ```
 git clone https://github.com/Radfordhound/HedgeLib.git
 ```
 
-2: Download Premake from [here](https://premake.github.io/download.html) and extract it to the directory you cloned HedgeLib to.
+**2: Download Premake from [here](https://premake.github.io/download.html) and extract it to the directory you cloned HedgeLib to.**
+
 HedgeLib uses Premake for easy Project/Makefile generation across different platforms/IDEs.
 
-Everything that follows is platform-specific.
+**Everything that follows is platform-specific.**
 
 ## Windows
 You'll need to install the following if you don't have them already:
@@ -79,7 +80,7 @@ You'll need to install the following if you don't have them already:
 
 Once you've got everything, simply:
 
-1: Open a cmd window in the folder you cloned HedgeLib to and run the following command:
+**1: Open a cmd window in the folder you cloned HedgeLib to and run the following command:**
 ```
 premake5 vs2019
 ```
@@ -89,22 +90,23 @@ If you're using an older version of Visual Studio, simply replace ```vs2019``` w
 
 MinGW/Cygwin/etc. aren't officially supported/tested, but should also work fine. Just type ```premake5 gmake2``` instead.
 
-2: Follow the on-screen prompts, if any.
+**2: Follow the on-screen prompts, if any.**
 
-3: Open the HedgeLib.sln file that Premake generated in Visual Studio and hit "Build Solution" (or Ctrl+Shift+B).
+**3: Open the HedgeLib.sln file that Premake generated in Visual Studio and hit "Build Solution" (or Ctrl+Shift+B).**
 
-(Or, if you're using MinGW/Cygwin/etc., just run "make".)
+Or, if you're using MinGW/Cygwin/etc., just run "make".
 
 ## macOS
-1: Open a terminal in the folder you cloned HedgeLib to and run the following command:
+**1: Open a terminal in the folder you cloned HedgeLib to and run the following command:**
 ```
 ./premake5 xcode4
 ```
 
-2: Follow the on-screen prompts, if any.
+**2: Follow the on-screen prompts, if any.**
 
-3: Open the resulting .xcworkspace in Xcode and build there.
-Alternatively, you can build from the terminal by entering the following command:
+**3: Open the resulting .xcworkspace in Xcode and build there.**
+
+Alternatively, you can build from the terminal by ```cd```ing into the directory of the tool you want to build (e.g. HedgeTools/HedgeOffsets) and entering the following command:
 ```
 xcodebuild
 ```
@@ -115,16 +117,16 @@ xcodebuild -configuration Release
 ```
 
 ## Linux
-1: Open a terminal in the folder you cloned HedgeLib to and run the following command:
+**1: Open a terminal in the folder you cloned HedgeLib to and run the following command:**
 ```
 ./premake5 gmake2
 ```
 
 If you wish to build using Clang instead of GCC, run ```./premake5 gmake2 --cc=clang``` instead.
 
-2: Follow the on-screen prompts, if any.
+**2: Follow the on-screen prompts, if any.**
 
-3: Run the following command:
+**3: Run the following command:**
 ```
 make config=debug_x64
 ```
@@ -136,5 +138,5 @@ To build with a different configuration, simply replace ```debug_x64``` with any
 - release_x86   (Release build for 32-bit x86 Architecture)
 - release_x64   (Release build for 64-bit x86 Architecture)
 
-Building for non-x86 architectures (such as ARM) is not officially supported.
+Building for non-x86 architectures (such as ARM) should work correctly, but it's currently not officially supported.
 If you'd like to help us change that, please let us know by [creating an issue](https://github.com/Radfordhound/HedgeLib/issues/new)!
