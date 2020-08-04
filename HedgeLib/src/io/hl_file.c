@@ -4,15 +4,17 @@
 
 #ifdef _WIN32
 #include "../hl_in_win32.h"
+#elif defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+#include "../hl_in_posix.h"
+#include <sys/stat.h>
+#include <fcntl.h> 
+#include <unistd.h>
+#else
+#error "Unknown or unsupported platform!"
 #endif
 
 #ifdef _WIN32
-typedef struct HlFile
-{
-    HANDLE handle;
-    size_t curPos;
-}
-HlFile;
+typedef HANDLE HlINFileHandle;
 
 static DWORD hlINWin32FileGetDesiredAccess(const HlFileMode mode)
 {
@@ -66,15 +68,44 @@ static DWORD hlINWin32FileGetCreateOptions(const HlFileMode mode)
             OPEN_ALWAYS : CREATE_ALWAYS;
     }
 }
+#elif defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+typedef int HlINFileHandle;
+
+static int hlINPosixFileGetFlags(const HlFileMode mode)
+{
+    switch (mode & HL_FILE_MODE_MASK)
+    {
+        case HL_FILE_MODE_READ:
+            return O_RDONLY;
+
+        case HL_FILE_MODE_WRITE:
+            return O_WRONLY | O_CREAT | O_TRUNC;
+
+        case HL_FILE_MODE_READ_WRITE:
+            /* TODO: Is this all right? */
+            return O_RDWR | ((mode & HL_FILE_FLAG_UPDATE) ?
+                O_CREAT : O_TRUNC);
+
+        default: return 0;
+    }
+}
 #endif
+
+typedef struct HlFile
+{
+    HlINFileHandle handle;
+    size_t curPos;
+}
+HlFile;
 
 HlResult hlFileOpen(const HlNChar* HL_RESTRICT filePath,
     HlFileMode mode, HlFile** HL_RESTRICT file)
 {
+    HlINFileHandle fileHandle;
+    HlFile* hlFile;
+
 #ifdef _WIN32
     SECURITY_ATTRIBUTES securityAttrs;
-    HlFile* fileBuf;
-    HANDLE fileHandle;
 
     /* Get desired access, share mode, and create options from HlFileMode. */
     const DWORD desiredAccess = hlINWin32FileGetDesiredAccess(mode);
@@ -82,8 +113,8 @@ HlResult hlFileOpen(const HlNChar* HL_RESTRICT filePath,
     const DWORD createOptions = hlINWin32FileGetCreateOptions(mode);
 
     /* Allocate enough space for a HlFile. */
-    fileBuf = HL_ALLOC_OBJ(HlFile);
-    if (!fileBuf) return HL_ERROR_OUT_OF_MEMORY;
+    hlFile = HL_ALLOC_OBJ(HlFile);
+    if (!hlFile) return HL_ERROR_OUT_OF_MEMORY;
 
     /* Setup securityAttrs */
     securityAttrs.nLength = (DWORD)(sizeof(SECURITY_ATTRIBUTES));
@@ -103,23 +134,36 @@ HlResult hlFileOpen(const HlNChar* HL_RESTRICT filePath,
             shareMode, &securityAttrs, createOptions,
             FILE_ATTRIBUTE_NORMAL, 0);
 
-    /* Set pointers if necessary and return result. */
+    /* Return result if we encountered an error. */
     if (fileHandle == INVALID_HANDLE_VALUE)
     {
-        hlFree(fileBuf);
+        hlFree(hlFile);
         return hlINWin32GetResultLastError();
     }
+#else
+    /* Allocate enough space for a HlFile. */
+    hlFile = HL_ALLOC_OBJ(HlFile);
+    if (!hlFile) return HL_ERROR_OUT_OF_MEMORY;
 
-    fileBuf->handle = fileHandle;
-    fileBuf->curPos = 0;
-    *file = fileBuf;
+    /* Open file and return if any errors were encountered. */
+    fileHandle = open(filePath, hlINPosixFileGetFlags(mode),
+        S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+
+    /* Return result if we encountered an error. */
+    if (fileHandle == -1)
+    {
+        hlFree(hlFile);
+        return hlINPosixGetResultErrno();
+    }
+#endif
+    
+    /* Set pointer and return success. */
+    hlFile->handle = fileHandle;
+    hlFile->curPos = 0;
+    *file = hlFile;
 
     return HL_RESULT_SUCCESS;
-#else
-    /* TODO: Support for non-Windows platforms. */
-    HL_ASSERT(0);
-    return 0; /* So compiler doesn't complain. */
-#endif
+
 }
 
 HlResult hlFileRead(HlFile* HL_RESTRICT file, size_t count,
@@ -162,9 +206,49 @@ HlResult hlFileRead(HlFile* HL_RESTRICT file, size_t count,
             HL_ERROR_UNKNOWN;
     }
 #else
-    /* TODO: Support for non-Windows platforms. */
-    HL_ASSERT(0);
-    return 0; /* So compiler doesn't complain. */
+    ssize_t readBytes;
+    HlBool succeeded;
+
+    /* Ensure count can fit within a ssize_t before casting to one. */
+    HL_ASSERT(count <= SSIZE_MAX);
+
+    /* Read the given number of bytes from the file. */
+    readBytes = read(file->handle, buf, count);
+    
+    /* Set succeeded and act based on if the read succeeded or failed. */
+    if ((succeeded = (readBytes != -1)))
+    {
+        /* Increase file curPos. */
+        file->curPos += readBytes;
+    }
+    else
+    {
+        /* Set readBytes count to 0. */
+        readBytes = 0;
+    }
+
+    if (readByteCount)
+    {
+        /*
+           The readByteCount pointer was provided; store the
+           amount of bytes successfully read from the file into it
+           and return the result.
+        */
+        *readByteCount = (size_t)readBytes;
+        return (succeeded) ? HL_RESULT_SUCCESS :
+            hlINPosixGetResultErrno();
+    }
+    else
+    {
+        /*
+           The readByteCount pointer was not provided; return
+           the result, also treating the amount of read bytes
+           not being equal to count as an error.
+        */
+        if (!succeeded) return hlINPosixGetResultErrno();
+        return (readBytes == count) ? HL_RESULT_SUCCESS :
+            HL_ERROR_UNKNOWN;
+    }
 #endif
 }
 
@@ -208,9 +292,49 @@ HlResult hlFileWrite(HlFile* HL_RESTRICT file, size_t count,
             HL_ERROR_UNKNOWN;
     }
 #else
-    /* TODO: Support for non-Windows platforms. */
-    HL_ASSERT(0);
-    return 0; /* So compiler doesn't complain. */
+    ssize_t writtenBytes;
+    HlBool succeeded;
+
+    /* Ensure count can fit within a ssize_t before casting to one. */
+    HL_ASSERT(count <= SSIZE_MAX);
+
+    /* Write the given number of bytes to the file. */
+    writtenBytes = write(file->handle, buf, count);
+    
+    /* Set succeeded and act based on if the write succeeded or failed. */
+    if ((succeeded = (writtenBytes != -1)))
+    {
+        /* Increase file curPos. */
+        file->curPos += writtenBytes;
+    }
+    else
+    {
+        /* Set writtenBytes count to 0. */
+        writtenBytes = 0;
+    }
+
+    if (writtenByteCount)
+    {
+        /*
+           The writtenByteCount pointer was provided; store the
+           amount of bytes successfully written to the file and
+           return the result.
+        */
+        *writtenByteCount = (size_t)writtenBytes;
+        return (succeeded) ? HL_RESULT_SUCCESS :
+            hlINPosixGetResultErrno();
+    }
+    else
+    {
+        /*
+           The writtenByteCount pointer was not provided; return
+           the result, also treating the amount of written bytes
+           not being equal to count as an error.
+        */
+        if (!succeeded) return hlINPosixGetResultErrno();
+        return (writtenBytes == count) ? HL_RESULT_SUCCESS :
+            HL_ERROR_UNKNOWN;
+    }
 #endif
 }
 
@@ -277,17 +401,19 @@ HlResult hlFilePad(HlFile* file, size_t stride)
 
 HlResult hlFileClose(HlFile* file)
 {
-#ifdef _WIN32
     /* Close the given file and return whether closing was successful or not. */
+#ifdef _WIN32
     BOOL succeeded = CloseHandle(file->handle);
     hlFree(file);
 
     return (succeeded) ? HL_RESULT_SUCCESS :
         hlINWin32GetResultLastError();
 #else
-    /* TODO: Support for non-Windows platforms. */
-    HL_ASSERT(0);
-    return 0; /* So compiler doesn't complain. */
+    int result = close(file->handle);
+    hlFree(file);
+
+    return (result != -1) ? HL_RESULT_SUCCESS :
+        hlINPosixGetResultErrno();
 #endif
 }
 
@@ -310,9 +436,19 @@ HlResult hlFileGetSize(HlFile* HL_RESTRICT file, size_t* HL_RESTRICT fileSize)
     return (succeeded) ? HL_RESULT_SUCCESS :
         hlINWin32GetResultLastError();
 #else
-    /* TODO: Support for non-Windows platforms. */
-    HL_ASSERT(0);
-    return 0; /* So compiler doesn't complain. */
+    struct stat st;
+    if (fstat(file->handle, &st))
+    {
+        /* Store 0 in the fileSize pointer and return the error. */
+        *fileSize = 0;
+        return hlINPosixGetResultErrno();
+    }
+    else
+    {
+        /* Store the file's size in the fileSize pointer and return success. */
+        *fileSize = st.st_size;
+        return HL_RESULT_SUCCESS;
+    }
 #endif
 }
 
@@ -394,6 +530,22 @@ static DWORD hlINWin32FileGetMoveMethod(const HlSeekMode mode)
         return FILE_END;
     }
 }
+#elif defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+static int hlINPosixFileGetSeekMethod(const HlSeekMode mode)
+{
+    switch (mode)
+    {
+    default:
+    case HL_SEEK_MODE_BEG:
+        return SEEK_SET;
+
+    case HL_SEEK_MODE_CUR:
+        return SEEK_CUR;
+
+    case HL_SEEK_MODE_END:
+        return SEEK_END;
+    }
+}
 #endif
 
 HlResult hlFileSeek(HlFile* file,
@@ -416,21 +568,22 @@ HlResult hlFileSeek(HlFile* file,
     return (succeeded) ? HL_RESULT_SUCCESS :
         hlINWin32GetResultLastError();
 #else
-    /* TODO: Support for non-Windows platforms. */
-    HL_ASSERT(0);
-    return 0; /* So compiler doesn't complain. */
+    /* Seek using the given parameters. */
+    off_t curPos = lseek(file->handle, (off_t)offset,
+        hlINPosixFileGetSeekMethod(seekMode));
+
+    /* Return failure if seeking failed. */
+    if (curPos == (off_t)-1) return hlINPosixGetResultErrno();
+
+    /* Set file curPos and return success. */
+    file->curPos = (size_t)curPos;
+    return HL_RESULT_SUCCESS;
 #endif
 }
 
 size_t hlFileTell(const HlFile* file)
 {
-#ifdef _WIN32
     return file->curPos;
-#else
-    /* TODO: Support for non-Windows platforms. */
-    HL_ASSERT(0);
-    return 0; /* So compiler doesn't complain. */
-#endif
 }
 
 HlResult hlFileJumpTo(HlFile* file, size_t pos)
@@ -452,9 +605,15 @@ HlResult hlFileJumpTo(HlFile* file, size_t pos)
     return (succeeded) ? HL_RESULT_SUCCESS :
         hlINWin32GetResultLastError();
 #else
-    /* TODO: Support for non-Windows platforms. */
-    HL_ASSERT(0);
-    return 0; /* So compiler doesn't complain. */
+    /* Jump to the given position. */
+    off_t curPos = lseek(file->handle, (off_t)pos, SEEK_SET);
+
+    /* Return failure if seeking failed. */
+    if (curPos == (off_t)-1) return hlINPosixGetResultErrno();
+
+    /* Set file curPos and return success. */
+    file->curPos = (size_t)curPos;
+    return HL_RESULT_SUCCESS;
 #endif
 }
 

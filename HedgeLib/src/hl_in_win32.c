@@ -1,3 +1,4 @@
+#ifdef _WIN32
 #include "hl_in_win32.h"
 
 HlResult hlINWin32GetResult(HRESULT hresult)
@@ -13,3 +14,4 @@ HlResult hlINWin32GetResult(HRESULT hresult)
     default: return HL_ERROR_UNKNOWN;
     }
 }
+#endif
