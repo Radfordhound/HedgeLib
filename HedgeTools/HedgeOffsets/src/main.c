@@ -2,6 +2,7 @@
 #include "hedgelib/hl_blob.h"
 #include "hedgelib/hl_endian.h"
 #include "../../hedgetools_helpers.h"
+#include <stdlib.h>
 
 static void NNPrintOffsets(HlBlob* blob)
 {

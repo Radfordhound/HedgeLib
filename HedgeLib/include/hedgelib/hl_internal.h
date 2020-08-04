@@ -208,7 +208,8 @@ typedef char HlNChar;
 /* C++11 unicode character types */
 typedef char16_t HlChar16;
 typedef char32_t HlChar32;
-#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L &&\
+ !(defined(__APPLE__) && defined(__MACH__)) /* macOS "supports" C11 but doesn't include uchar.h */
 /* C11 unicode character types */
 #include <uchar.h>
 typedef char16_t HlChar16;

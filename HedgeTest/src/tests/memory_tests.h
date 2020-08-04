@@ -62,10 +62,6 @@ TEST(NullAllocTest,
 
     *data = 7;
 
-    /* hlRealloc size 0 test. */
-    data = hlRealloc(data, 0);
-    if (!data) return HL_ERROR_OUT_OF_MEMORY;
-
     /* null hlFree test. */
     hlFree(0);
     return HL_RESULT_SUCCESS;

@@ -11,7 +11,7 @@
 #define nmain wmain
 #else
 #define nstrcmp strcmp
-#define nprintf nprintf
+#define nprintf printf
 #define fnprintf fprintf
 #define nmain main
 #endif
