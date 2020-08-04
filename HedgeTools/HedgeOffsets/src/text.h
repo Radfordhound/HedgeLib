@@ -2,8 +2,7 @@ LOCALIZED_TEXT(ENGLISH)
 {
     /* HELP_STRING */
     HL_NTEXT("Usage: HedgeOffsets filePath [options]\n")
-    HL_NTEXT("  -?\tDisplays this help.\n")
-    HL_NTEXT("  -NP\tExit without prompting user to press enter.\n"),
+    HL_NTEXT("  -?\tDisplays this help.\n"),
 
     /* WIN32_HELP_STRING */
 #ifdef _WIN32

@@ -63,6 +63,40 @@ static LANGUAGE_TYPE CurrentLanguage = (LANGUAGE_TYPE)0;
 
 #define GET_TEXT(id) Languages[CurrentLanguage][id]
 
+#ifdef _WIN32
+/* Define _WIN32_WINNT so we can use some additional functions we require. */
+#if !defined(_WIN32_WINNT) || _WIN32_WINNT < 0x0500
+#undef _WIN32_WINNT
+#define _WIN32_WINNT 0x0500
+#endif
+
+/* Include windows.h */
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+static void win32PromptIfNecessary(void)
+{
+    HWND consoleWindow = GetConsoleWindow();
+    DWORD processID;
+
+    /* If console window handle is NULL, just return. */
+    if (!consoleWindow) return;
+    
+    /* Get the process ID of the console window. */
+    GetWindowThreadProcessId(consoleWindow, &processID);
+
+    /*
+       If the current process ID matches the console window's
+       process ID, prompt the user to press enter to continue.
+    */
+    if (GetCurrentProcessId() == processID)
+    {
+        nprintf(GET_TEXT(PRESS_ENTER_STRING));
+        getchar();
+    }
+}
+#endif
+
 static void NNPrintOffsets(HlBlob* blob)
 {
     HlNNBinCnkNOF0Header* NOF0Header;
@@ -182,19 +216,13 @@ int nmain(int argc, HlNChar* argv[])
 {
     const HlNChar* input = NULL;
     int i, returnCode = EXIT_SUCCESS;
-    HlBool doPrompt = HL_TRUE, showedHelp = HL_FALSE;
+    HlBool showedHelp = HL_FALSE;
 
     /* Parse command-line arguments. */
     for (i = 1; i < argc; ++i)
     {
-        /* No prompt flag. */
-        if (!nstrcmp(argv[i], HL_NTEXT("-NP")))
-        {
-            doPrompt = HL_FALSE;
-        }
-
         /* Help flag. */
-        else if (!nstrcmp(argv[i], HL_NTEXT("-?")))
+        if (!nstrcmp(argv[i], HL_NTEXT("-?")))
         {
             printUsage(stdout);
             showedHelp = HL_TRUE;
@@ -235,12 +263,10 @@ int nmain(int argc, HlNChar* argv[])
     }
 
 end:
-    /* Pause the program until the user presses enter, unless the no prompt flag was specified. */
-    if (doPrompt)
-    {
-        nprintf(GET_TEXT(PRESS_ENTER_STRING));
-        getchar();
-    }
+#ifdef _WIN32
+    /* Pause until the user presses enter if necessary. */
+    win32PromptIfNecessary();
+#endif
 
     return returnCode;
 }
