@@ -10,7 +10,7 @@
 #include <fcntl.h> 
 #include <unistd.h>
 #else
-#error "Unknown or unsupported platform!"
+#error "HedgeLib currently only supports Windows and POSIX-compliant platforms."
 #endif
 
 #ifdef _WIN32

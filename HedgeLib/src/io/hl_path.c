@@ -6,13 +6,11 @@
 #ifdef _WIN32
 #include "../hl_in_win32.h"
 #elif defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-/* Include sys/stat.h and errno.h if target is a POSIX-compliant system. */
+#include "../hl_in_posix.h"
 #include <sys/stat.h>
-#include <errno.h>
 
 #else
-/* Error otherwise; target is not currently supported. */
-#error HedgeLib does not currently support non-Windows/POSIX platforms.
+#error "HedgeLib currently only supports Windows and POSIX-compliant platforms."
 #endif
 
 HlBool hlINPathCombineNeedsSep1(const HlNChar* path1, size_t path1Len)
@@ -417,7 +415,7 @@ HlResult hlPathCreateDirectory(const HlNChar* dirPath, HlBool overwrite)
            case, it's not actually an error, so return success.
         */
         return (overwrite && errno == EEXIST) ?
-            HL_RESULT_SUCCESS : HL_ERROR_UNKNOWN; /* TODO: Get last error. */
+            HL_RESULT_SUCCESS : hlINPosixGetResultErrno();
     }
 #endif
 
