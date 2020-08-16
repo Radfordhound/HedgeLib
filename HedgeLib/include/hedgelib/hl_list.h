@@ -17,10 +17,10 @@ extern "C" {
     (HlBool)((*(void**)(&(list).data) = hlRealloc((list).data,\
         sizeof(*((list).data)) * (list).capacity)) != 0))
 
-    /*
-        The list needs to grow if the list's count + the
-        given grow amount exceeds the list's capacity.
-    */
+/*
+    The list needs to grow if the list's count + the
+    given grow amount exceeds the list's capacity.
+*/
 #define HL_INLIST_NEEDS_GROW(list, growAmount)\
     (HlBool)(((list).count + (growAmount)) > (list).capacity)
 
