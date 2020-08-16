@@ -18,6 +18,10 @@ HL_API HlBool hlStrCopyLimit(const char* HL_RESTRICT src,
 /* Native string helper functions */
 HL_API size_t hlNStrLen(const HlNChar* str);
 HL_API HlNChar* hlNStrCopy(const HlNChar* HL_RESTRICT src, HlNChar* HL_RESTRICT dst);
+HL_API int hlNStrCmp(const HlNChar* HL_RESTRICT str1, const HlNChar* HL_RESTRICT str2);
+
+#define hlNStrsEqual(str1, str2) (HlBool)(hlNStrCmp(str1, str2) == 0)
+
 HL_API size_t hlNStrCopyAndLen(const HlNChar* HL_RESTRICT src, HlNChar* HL_RESTRICT dst);
 HL_API HlBool hlNStrCopyLimit(const HlNChar* HL_RESTRICT src,
     HlNChar* HL_RESTRICT dst, size_t dstBufLen, size_t* HL_RESTRICT len);
@@ -58,6 +62,11 @@ HL_API HlChar32* hlStrConvUTF16ToUTF32(const HlChar16* src, size_t srcLen);
 
 HL_API char* hlStrConvUTF32ToUTF8(const HlChar32* src, size_t srcLen);
 HL_API HlChar16* hlStrConvUTF32ToUTF16(const HlChar32* src, size_t srcLen);
+
+#ifndef HL_NO_EXTERNAL_WRAPPERS
+HL_API HlBool hlNStrsEqualExt(const HlNChar* HL_RESTRICT str1,
+    const HlNChar* HL_RESTRICT str2);
+#endif
 
 #ifdef __cplusplus
 }

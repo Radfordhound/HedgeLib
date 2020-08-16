@@ -11,12 +11,9 @@
 #endif
 
 #ifdef _WIN32
-/* Include windows.h and limits.h if target is Windows */
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <limits.h>
-
 #elif defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-/* Include unistd.h if target is a POSIX-compliant system */
 #include <unistd.h>
 #endif
 
@@ -88,6 +85,15 @@ HlNChar* hlNStrCopy(const HlNChar* HL_RESTRICT src, HlNChar* HL_RESTRICT dst)
     return wcscpy(dst, src);
 #else
     return strcpy(dst, src);
+#endif
+}
+
+int hlNStrCmp(const HlNChar* HL_RESTRICT str1, const HlNChar* HL_RESTRICT str2)
+{
+#ifdef HL_IN_WIN32_UNICODE
+    return wcscmp(str1, str2);
+#else
+    return strcmp(str1, str2);
 #endif
 }
 
@@ -361,3 +367,11 @@ HlChar16* hlStrConvUTF32ToUTF16(const HlChar32* src, size_t srcLen)
     HL_ASSERT(0);
     return 0; /* So compiler doesn't complain. */
 }
+
+#ifndef HL_NO_EXTERNAL_WRAPPERS
+HlBool hlNStrsEqualExt(const HlNChar* HL_RESTRICT str1,
+    const HlNChar* HL_RESTRICT str2)
+{
+    return hlNStrsEqual(str1, str2);
+}
+#endif
