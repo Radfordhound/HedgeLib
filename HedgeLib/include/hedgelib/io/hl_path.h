@@ -47,6 +47,7 @@ HL_API HlNChar* hlPathCombine(const HlNChar* HL_RESTRICT path1,
     const HlNChar* HL_RESTRICT path2, size_t path1Len, size_t path2Len);
 
 HL_API size_t hlPathGetSize(const HlNChar* filePath);
+HL_API HlBool hlPathExists(const HlNChar* path);
 HL_API HlResult hlPathCreateDirectory(const HlNChar* dirPath, HlBool overwrite);
 
 #ifdef __cplusplus

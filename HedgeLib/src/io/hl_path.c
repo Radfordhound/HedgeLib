@@ -8,7 +8,7 @@
 #elif defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
 #include "../hl_in_posix.h"
 #include <sys/stat.h>
-
+#include <unistd.h>
 #else
 #error "HedgeLib currently only supports Windows and POSIX-compliant platforms."
 #endif
@@ -383,6 +383,15 @@ size_t hlPathGetSize(const HlNChar* filePath)
 
     /* Return file size. */
     return (size_t)s.st_size;
+#endif
+}
+
+HlBool hlPathExists(const HlNChar* path)
+{
+#ifdef _WIN32
+    return (HlBool)(GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES);
+#else
+    return (HlBool)(access(path, F_OK) != -1);
 #endif
 }
 
