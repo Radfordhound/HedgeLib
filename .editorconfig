@@ -4,3 +4,6 @@ root = true
 indent_style = space
 indent_size = 4
 insert_final_newline = true
+
+[*.{c++,cc,cpp,cppm,cxx,h,h++,hh,hpp,hxx,inl,ipp,ixx,tlh,tli}]
+vc_generate_documentation_comments = doxygen_slash_star
