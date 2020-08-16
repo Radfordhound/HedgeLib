@@ -39,6 +39,12 @@ Right now, HedgeLib supports the following:
 - Sonic the Hedgehog 4: Episode II
 - ...and more
 
+### Other
+#### AR Archives (.ar/.pfd)
+**Used in:**
+- Sonic Unleashed (360/PS3)
+- Sonic Generations (PC/360/PS3)
+
 ## HedgeEdit
 A level editor built with DirectX/Qt designed to carry much of the same functionality as "SonicGlvl", but with support for a large number of games in the series, rather than just Generations. Uses HedgeLib for reading/writing archives, models, materials, object placement, etc.
 
