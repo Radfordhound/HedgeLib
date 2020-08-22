@@ -55,7 +55,7 @@ for:
         for($i = 0; $i -lt $projects.length; $i++) {
           $project = $projects[$i]
           $binary = $binaries[$i]
-          copy /y "$dir\$project\bin\$env:PLATFORM\Release\$binary" "$dir\HedgeTools\bin\$env:PLATFORM\$binary"
+          Copy-Item "$dir\$project\bin\$env:PLATFORM\Release\$binary" -Destination "$dir\HedgeTools\bin\$env:PLATFORM\$binary"
         }
         
   artifacts:
@@ -90,7 +90,7 @@ for:
         for($i = 0; $i -lt $projects.length; $i++) {
           $project = $projects[$i]
           $binary = $binaries[$i]
-          cp -n "$dir/$project/bin/$env:PLATFORM/Release/$binary" "$dir/HedgeTools/bin/$env:PLATFORM/Release/$binary"
+          cp -n "$dir/$project/bin/$env:PLATFORM/Release/$binary" "$dir/HedgeTools/bin/$env:PLATFORM/$binary"
         }
   artifacts:
     - path: HedgeLib/bin/$(PLATFORM)/Release
@@ -124,7 +124,7 @@ for:
         for($i = 0; $i -lt $projects.length; $i++) {
           $project = $projects[$i]
           $binary = $binaries[$i]
-          cp -n "$dir/$project/bin/$env:PLATFORM/Release/$binary" "$dir/$project/bin/$env:PLATFORM/Release/$binary"
+          cp -n "$dir/$project/bin/$env:PLATFORM/Release/$binary" "$dir/$project/bin/$env:PLATFORM/$binary"
         }
   artifacts:
     - path: HedgeLib/bin/$(PLATFORM)/Release
