@@ -124,7 +124,7 @@ for:
         for($i = 0; $i -lt $projects.length; $i++) {
           $project = $projects[$i]
           $binary = $binaries[$i]
-          cp -n "$dir/$project/bin/$env:PLATFORM/Release/$binary" "$dir/$project/bin/$env:PLATFORM/$binary"
+          cp -n "$dir/$project/bin/$env:PLATFORM/Release/$binary" "$dir/HedgeTools/bin/$env:PLATFORM/$binary"
         }
   artifacts:
     - path: HedgeLib/bin/$(PLATFORM)/Release
