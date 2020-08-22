@@ -55,7 +55,7 @@ for:
         for($i = 0; $i -lt $projects.length; $i++) {
           $project = $projects[$i]
           $binary = $binaries[$i]
-          robocopy /xc /xn /xo /nfl /njh /njs /ndl "$dir" "$dir\HedgeTools\bin\$env:PLATFORM" "$dir\$project\bin\$env:PLATFORM\Release\$binary"
+          copy /y "$dir\$project\bin\$env:PLATFORM\Release\$binary" "$dir\HedgeTools\bin\$env:PLATFORM\$binary"
         }
         
   artifacts:
@@ -90,7 +90,7 @@ for:
         for($i = 0; $i -lt $projects.length; $i++) {
           $project = $projects[$i]
           $binary = $binaries[$i]
-          cp -n "$dir/$project/bin/$env:PLATFORM/Release/$binary" "$dir/$project/bin/$env:PLATFORM/Release/$binary"
+          cp -n "$dir/$project/bin/$env:PLATFORM/Release/$binary" "$dir/HedgeTools/bin/$env:PLATFORM/Release/$binary"
         }
   artifacts:
     - path: HedgeLib/bin/$(PLATFORM)/Release
@@ -106,7 +106,7 @@ for:
     - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-linux.tar.gz", "/Users/appveyor/projects/hedgelib/premake.tar.gz")
     - sh: tar -zvxf /Users/appveyor/projects/hedgelib/premake.tar.gz -C /Users/appveyor/projects/hedgelib
     - sh: chmod 755 /Users/appveyor/projects/hedgelib/premake5
-    - sh: /Users/appveyor/projects/hedgelib/premake5 xcode4 --type=shared
+    - sh: (cd /Users/appveyor/projects/hedgelib; ./premake5 xcode4 --type=shared)
   build: off
   build_script:
     - ps: |
