@@ -200,10 +200,10 @@ static HlResult printOffsets(const HlNChar* filePath)
 
 static void printUsage(FILE* stream)
 {
-    fnprintf(stream, GET_TEXT(HELP_STRING));
+    fnprintf(stream, HL_NTEXT("%s"), GET_TEXT(HELP_STRING));
 
 #ifdef _WIN32
-    fnprintf(stream, GET_TEXT(WIN32_HELP_STRING));
+    fnprintf(stream, HL_NTEXT("%s"), GET_TEXT(WIN32_HELP_STRING));
 #endif
 }
 
