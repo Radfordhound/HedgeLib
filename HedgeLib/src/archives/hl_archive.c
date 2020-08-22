@@ -174,7 +174,7 @@ static HlResult hlINArchiveEntriesExtract(const HlArchiveEntry* HL_RESTRICT entr
 
                 /* Write data to the file. */
                 result = hlFileWrite(file, entries[i].size,
-                    (void*)entries[i].data, NULL);
+                    (void*)((HlUPtr)entries[i].data), NULL);
 
                 if (HL_FAILED(result))
                 {
@@ -214,7 +214,7 @@ static HlResult hlINArchiveEntriesExtract(const HlArchiveEntry* HL_RESTRICT entr
 
             /* Recursively extract archive entries within this directory. */
             result = hlINArchiveEntriesExtract(
-                (HlArchiveEntry*)entries[i].data, entries[i].size,
+                (HlArchiveEntry*)((HlUPtr)entries[i].data), entries[i].size,
                 recursive, pathBuf, pathBufLen, fullPathLen);
 
             if (HL_FAILED(result)) return result;

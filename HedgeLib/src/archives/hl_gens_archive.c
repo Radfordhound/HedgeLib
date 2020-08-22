@@ -127,7 +127,7 @@ HlResult hlGensArchiveRead(const HlBlob** HL_RESTRICT splits,
 #endif
 
                 /* Set data pointer. */
-                curEntry->data = (HlUMax)curDataPtr;
+                curEntry->data = (HlUMax)((HlUPtr)curDataPtr);
 
                 /* Copy data. */
                 memcpy(curDataPtr, fileData, curEntry->size);
