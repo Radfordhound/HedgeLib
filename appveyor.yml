@@ -62,7 +62,7 @@ for:
     - path: HedgeLib/bin/$(PLATFORM)/Release
       name: HedgeLib
     - path: HedgeTools/bin/$(PLATFORM)
-      name: HedgeOffsets
+      name: HedgeTools
 -
   matrix:
     only:
@@ -103,7 +103,7 @@ for:
       - image: macos
 
   install:
-    - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-linux.tar.gz", "/Users/appveyor/projects/hedgelib/premake.tar.gz")
+    - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-macosx.tar.gz", "/Users/appveyor/projects/hedgelib/premake.tar.gz")
     - sh: tar -zvxf /Users/appveyor/projects/hedgelib/premake.tar.gz -C /Users/appveyor/projects/hedgelib
     - sh: chmod 755 /Users/appveyor/projects/hedgelib/premake5
     - sh: (cd /Users/appveyor/projects/hedgelib; ./premake5 xcode4 --type=shared)
