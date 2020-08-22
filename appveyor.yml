@@ -111,7 +111,7 @@ for:
   build_script:
     - ps: |
         $projects = "HedgeLib","HedgeTools/HedgeOffsets"
-        $binaries = "libHedgeLib.dylib","HedgeOffsets.app"
+        $binaries = "libHedgeLib.dylib","HedgeOffsets"
         $dir = "/Users/appveyor/projects/hedgelib"
         Copy-Item "$dir/HedgeLib/include" -Destination "$dir/HedgeLib/bin/$env:PLATFORM/Release/include" -Recurse
         foreach ($project in $projects) {
