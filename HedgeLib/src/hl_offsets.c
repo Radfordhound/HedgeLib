@@ -6,7 +6,7 @@ void* hlOff32Get(const HlU32* offPtr)
 {
     /* Convert from relative pointer to absolute pointer and return result. */
     return (*offPtr) ? (void*)((HlSPtr)offPtr +
-        (HlSPtr)((HlS32)*offPtr)) : 0;
+        (HlSPtr)((HlS32)*offPtr)) : NULL;
 }
 
 void hlOff32Set(HlU32* offPtr, void* ptr)
@@ -17,6 +17,9 @@ void hlOff32Set(HlU32* offPtr, void* ptr)
        store that within the given offset.
     */
     HlSPtr addr = (HlSPtr)offPtr;
+
+    /* Return early if the given offset is null. */
+    if (*offPtr == 0) return;
 
     /*
        Ensure offset does not point to itself; we can't do that
@@ -54,6 +57,9 @@ void hlOff64Set(HlU64* offPtr, void* ptr)
        store that within the given offset.
     */
     HlSPtr addr = (HlSPtr)offPtr;
+
+    /* Return early if the given offset is null. */
+    if (*offPtr == 0) return;
 
     /*
        Ensure offset does not point to itself; we can't do that
