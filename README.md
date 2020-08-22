@@ -16,6 +16,20 @@ As such, you don't have to manually build any of the tools/libraries in this rep
 HedgeLib is a C89 library [under the MIT license](License.txt) that aims to make modding games in the Sonic the Hedgehog franchise easier, similar to [Dario's excellent "LibGens"](https://github.com/DarioSamo/libgens-sonicglvl).
 Right now, HedgeLib supports the following:
 
+### Hedgehog Engine 1/2
+- Models (.model/.terrain-model; v5.0)
+
+**Used in:**
+- Sonic Unleashed (360/PS3)
+- Sonic Generations (PC/360/PS3)
+- Sonic Lost World (PC/Wii U)
+- Mario & Sonic at the Sochi 2014 Olympic Winter Games (Wii U)
+- Mario & Sonic at the Rio 2016 Olympic Games (Wii U)
+- Sonic Forces
+- Mario & Sonic at the Olympic Games Tokyo 2020
+- Sakura Wars
+- ...and more
+
 ### Ninja Next ("Sega NN")
 - Node Motions (Skeletal Animations) [.xnm, .snm, .gnm, .cnm, .inm, .enm, .ynm, .znm]
 - Camera Motions [.xnc, .snc, .gnc, .cnc, .inc, .enc, .ync, .znc]
