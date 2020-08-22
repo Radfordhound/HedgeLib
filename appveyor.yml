@@ -2,6 +2,7 @@ version: 0.0.{build}
 image:
 - Visual Studio 2019
 - Ubuntu1804
+- macos
 platform:
 - Win32
 - x86
@@ -11,8 +12,12 @@ matrix:
   exclude:
     - platform: x86
       image: Visual Studio 2019
+    - platform: x86
+      image: macos
     - platform: Win32
       image: Ubuntu1804
+    - platform: Win32
+      image: macos
 
 for:
 -
@@ -21,16 +26,16 @@ for:
       - image: Visual Studio 2019
 
   install:
-    - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha14/premake-5.0.0-alpha14-windows.zip", "C:\projects\hedgelib\premake.zip")
+    - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-windows.zip", "C:\projects\hedgelib\premake.zip")
     - ps: Expand-Archive -LiteralPath C:\projects\hedgelib\premake.zip -DestinationPath C:\projects\hedgelib\
-    - ps: Set-Content -Path C:\projects\hedgelib\hedgeedit\depends.lua -Value 'return { QtDir32 = "C:/Qt/5.13/msvc2017", QtDir64 = "C:/Qt/5.13/msvc2017_64" }'
+#    - ps: Set-Content -Path C:\projects\hedgelib\hedgeedit\depends.lua -Value 'return { QtDir32 = "C:/Qt/5.13/msvc2017", QtDir64 = "C:/Qt/5.13/msvc2017_64" }'
     - cmd: premake5 vs2019 --type=shared
   build:
     project: HedgeLib.sln
     verbosity: minimal
   after_build:
     - ps: |
-        $projects = "HedgeEdit","HedgeLib","HedgeTools\HedgeArcPack","HedgeTools\HedgeOffsets"
+        $projects = "HedgeLib","HedgeTools\HedgeOffsets"
         $dir = "C:\projects\hedgelib"
         if ($env:PLATFORM -imatch "Win32") {
           foreach ($project in $projects) {
@@ -40,17 +45,14 @@ for:
         Copy-Item "$dir\hedgelib\include" -Destination "$dir\hedgelib\bin\$env:PLATFORM\Release\include" -Recurse
         foreach ($project in $projects) {
           robocopy /xc /xn /xo /nfl /njh /njs /ndl "$dir" "$dir\$project\bin\$env:PLATFORM\Release" License.txt
+          robocopy /xc /xn /xo /nfl /njh /njs /ndl "$dir" "$dir\$project\bin\$env:PLATFORM\Release" Third-Party-Licenses.txt
           del $dir\$project\bin\$env:PLATFORM\Release\*.iobj
           del $dir\$project\bin\$env:PLATFORM\Release\*.ipdb
           del $dir\$project\bin\$env:PLATFORM\Release\*.pdb
         }
   artifacts:
-    - path: HedgeEdit/bin/$(PLATFORM)/Release
-      name: HedgeEdit
     - path: HedgeLib/bin/$(PLATFORM)/Release
       name: HedgeLib
-    - path: HedgeTools/HedgeArcPack/bin/$(PLATFORM)/Release
-      name: HedgeArcPack
     - path: HedgeTools/HedgeOffsets/bin/$(PLATFORM)/Release
       name: HedgeOffsets
 -
@@ -59,7 +61,7 @@ for:
       - image: Ubuntu1804
 
   install:
-    - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha14/premake-5.0.0-alpha14-linux.tar.gz", "/home/appveyor/projects/hedgelib/premake.tar.gz")
+    - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-linux.tar.gz", "/home/appveyor/projects/hedgelib/premake.tar.gz")
     - sh: tar -zvxf /home/appveyor/projects/hedgelib/premake.tar.gz -C /home/appveyor/projects/hedgelib
     - sh: /home/appveyor/projects/hedgelib/premake5 gmake2 --type=shared
     - sh: sudo apt-get update
@@ -68,17 +70,43 @@ for:
   build_script:
     - sh: make CPP=g++-8 CXX=g++-8 LD=g++-8 config=release_$PLATFORM
     - ps: |
-        $projects = "HedgeLib","HedgeTools/HedgeArcPack","HedgeTools/HedgeOffsets"
+        $projects = "HedgeLib","HedgeTools/HedgeOffsets"
         $dir = "/home/appveyor/projects/hedgelib"
         Copy-Item "$dir/HedgeLib/include" -Destination "$dir/HedgeLib/bin/$env:PLATFORM/Release/include" -Recurse
         foreach ($project in $projects) {
           cp -n "$dir/License.txt" "$dir/$project/bin/$env:PLATFORM/Release/License.txt"
+          cp -n "$dir/Third-Party-Licenses.txt" "$dir/$project/bin/$env:PLATFORM/Release/Third-Party-Licenses.txt"
           cp -n "$dir/HedgeLib/bin/$env:PLATFORM/Release/libHedgeLib.so" "$dir/$project/bin/$env:PLATFORM/Release/libHedgeLib.so"
         }
   artifacts:
     - path: HedgeLib/bin/$(PLATFORM)/Release
       name: HedgeLib
-    - path: HedgeTools/HedgeArcPack/bin/$(PLATFORM)/Release
-      name: HedgeArcPack
+    - path: HedgeTools/HedgeOffsets/bin/$(PLATFORM)/Release
+      name: HedgeOffsets
+-
+  matrix:
+    only:
+      - image: macos
+
+  install:
+    - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-macosx.tar.gz", "/home/appveyor/projects/hedgelib/premake.tar.gz")
+    - sh: tar -zvxf /home/appveyor/projects/hedgelib/premake.tar.gz -C /home/appveyor/projects/hedgelib
+    - sh: /home/appveyor/projects/hedgelib/premake5 xcode4 --type=shared
+  build: off
+  build_script:
+    - ps: |
+        $projects = "HedgeLib","HedgeTools/HedgeOffsets"
+        $dir = "/home/appveyor/projects/hedgelib"
+        Copy-Item "$dir/HedgeLib/include" -Destination "$dir/HedgeLib/bin/$env:PLATFORM/Release/include" -Recurse
+        foreach ($project in $projects) {
+          cd "$dir/$project"
+          xcodebuild -configuration Release
+          cp -n "$dir/License.txt" "$dir/$project/bin/$env:PLATFORM/Release/License.txt"
+          cp -n "$dir/Third-Party-Licenses.txt" "$dir/$project/bin/$env:PLATFORM/Release/Third-Party-Licenses.txt"
+          cp -n "$dir/HedgeLib/bin/$env:PLATFORM/Release/libHedgeLib.dylib" "$dir/$project/bin/$env:PLATFORM/Release/libHedgeLib.dylib"
+        }
+  artifacts:
+    - path: HedgeLib/bin/$(PLATFORM)/Release
+      name: HedgeLib
     - path: HedgeTools/HedgeOffsets/bin/$(PLATFORM)/Release
       name: HedgeOffsets
