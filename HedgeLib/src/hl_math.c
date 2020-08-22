@@ -11,6 +11,7 @@ void hlVector3Swap(HlVector3* vec)
 {
     hlSwapFloatP(&vec->x);
     hlSwapFloatP(&vec->y);
+    hlSwapFloatP(&vec->z);
 }
 
 void hlVector4Swap(HlVector4* vec)
