@@ -21,7 +21,7 @@ project("HedgeTest")
     links("HedgeLib")
     
     if LibType == "shared" then
-        defines({ "HL_DLL" })
+        defines({ "HL_IS_DLL" })
     end
     
     -- Platform-Specifics
