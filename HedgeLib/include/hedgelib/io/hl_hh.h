@@ -28,15 +28,15 @@ typedef struct HlHHStandardHeader
     HlU32 fileSize;
     HlU32 version;
     HlU32 dataSize;
-    HlU32 dataOffset;
-    HlU32 offsetTableOffset;
-    HlU32 eofOffset;
+    HL_OFF32(void) dataOffset;
+    HL_OFF32(HlU32) offsetTableOffset;
+    HL_OFF32(HlU32) eofOffset;
 }
 HlHHStandardHeader;
 
 HL_STATIC_ASSERT_SIZE(HlHHStandardHeader, 0x18);
 
-HL_API void hlHHStandardHeaderSwap(HlHHStandardHeader* header);
+HL_API void hlHHStandardHeaderSwap(HlHHStandardHeader* header, HlBool swapOffsets);
 
 HL_API void hlHHStandardHeaderFix(HlHHStandardHeader* header);
 HL_API void hlHHOffsetsFix(HlU32* HL_RESTRICT offsets,

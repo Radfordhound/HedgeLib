@@ -3,21 +3,25 @@
 #include "hedgelib/hl_blob.h"
 #include "../hl_in_assert.h" /* TODO: Remove this? */
 
-void hlHHStandardHeaderSwap(HlHHStandardHeader* header)
+void hlHHStandardHeaderSwap(HlHHStandardHeader* header, HlBool swapOffsets)
 {
     hlSwapU32P(&header->fileSize);
     hlSwapU32P(&header->version);
     hlSwapU32P(&header->dataSize);
-    hlSwapU32P(&header->dataOffset);
-    hlSwapU32P(&header->offsetTableOffset);
-    hlSwapU32P(&header->eofOffset);
+    
+    if (swapOffsets)
+    {
+        hlSwapU32P(&header->dataOffset);
+        hlSwapU32P(&header->offsetTableOffset);
+        hlSwapU32P(&header->eofOffset);
+    }
 }
 
 void hlHHStandardHeaderFix(HlHHStandardHeader* header)
 {
     /* Swap endianness if necessary. */
 #ifndef HL_IS_BIG_ENDIAN
-    hlHHStandardHeaderSwap(header);
+    hlHHStandardHeaderSwap(header, HL_TRUE);
 #endif
     
     /* Fix offsets. */
