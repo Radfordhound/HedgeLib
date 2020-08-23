@@ -54,6 +54,17 @@ Right now, HedgeLib supports the following:
 - ...and more
 
 ### Other
+#### BINA
+**Used in various files from:**
+- Sonic '06
+- Sonic Colors (Wii)
+- Sonic Lost World (PC/Wii U)
+- Mario & Sonic at the Rio 2016 Olympic Games (Wii U)
+- Sonic Forces
+- Mario & Sonic at the Olympic Games Tokyo 2020
+- Sakura Wars
+- ...and more
+
 #### AR Archives (.ar/.pfd)
 **Used in:**
 - Sonic Unleashed (360/PS3)
