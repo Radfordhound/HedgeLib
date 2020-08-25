@@ -21,11 +21,23 @@ LOCALIZED_TEXT(ENGLISH)
     /* NN_NOF0_SIZE_STRING */
     HL_NTEXT("NOF0 chunk size: 0x%X\n\n"),
 
+    /* BINA_FORMAT_STRING */
+    HL_NTEXT("Format: BINA Version %c.%c.%c (%s %s)\n\n"),
+
+    /* BINA_BLOCK_COUNT_STRING */
+    HL_NTEXT("Block Count: %d\n\n"),
+
     /* OFFSET_INFO_STRING */
     HL_NTEXT("Offset #%d:\t{ pos: 0x%X, val: 0x%X }\n"),
 
     /* PRESS_ENTER_STRING */
     HL_NTEXT("\nPress enter to continue..."),
+
+    /* WARNING_STRING */
+    HL_NTEXT("WARNING: %s\n"),
+
+    /* WARNING_UNKNOWN_BLOCK_TYPE */
+    HL_NTEXT("Unknown block type encountered."),
 
     /* ERROR_STRING */
     HL_NTEXT("ERROR: %s\n"),

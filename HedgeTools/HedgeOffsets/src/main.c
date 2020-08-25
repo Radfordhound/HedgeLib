@@ -1,5 +1,5 @@
 #include "hedgelib/io/hl_nn.h"
-#include "hedgelib/hl_blob.h"
+#include "hedgelib/io/hl_bina.h"
 #include "hedgelib/hl_endian.h"
 #include "../../hedgetools_helpers.h"
 #include <stdlib.h>
@@ -17,8 +17,14 @@ typedef enum STRING_ID
     NN_DATA_SIZE_STRING,
     NN_NOF0_SIZE_STRING,
 
+    BINA_FORMAT_STRING,
+    BINA_BLOCK_COUNT_STRING,
+
     OFFSET_INFO_STRING,
     PRESS_ENTER_STRING,
+
+    WARNING_STRING,
+    WARNING_UNKNOWN_BLOCK_TYPE,
 
     ERROR_STRING,
     ERROR_MULTIPLE_PATHS,
@@ -97,6 +103,16 @@ static void win32PromptIfNecessary(void)
 }
 #endif
 
+static void printWarning(const HlNChar* warning)
+{
+    fnprintf(stderr, GET_TEXT(WARNING_STRING), warning);
+}
+
+static void printError(const HlNChar* err)
+{
+    fnprintf(stderr, GET_TEXT(ERROR_STRING), err);
+}
+
 static void NNPrintOffsets(HlBlob* blob)
 {
     HlNNBinCnkNOF0Header* NOF0Header;
@@ -173,6 +189,122 @@ static void NNPrintOffsets(HlBlob* blob)
     }
 }
 
+static void BINAPrintOffsets(const void* HL_RESTRICT offsets,
+    HlU8 endianFlag, HlU32 offsetTableSize, HlBool is64Bit,
+    const HlUPtr headerPtr, void* HL_RESTRICT data)
+{
+    /* Get pointers. */
+    const HlU8* curOffPos = (const HlU8*)offsets;
+    const HlU8* eof = (curOffPos + offsetTableSize);
+    size_t curOffVal;
+    HlU32* curOff = (HlU32*)data;
+    unsigned int i = 0;
+
+    /* Print offsets. */
+    while (curOffPos < eof)
+    {
+        /*
+           Get the next offset's address - return early
+           if we've reached the end of the offset table.
+        */
+        if (!hlBINAOffsetsNext(&curOffPos, &curOff))
+            return;
+
+        /* Endian swap the offset if necessary. */
+        if (hlBINANeedsSwap(endianFlag))
+        {
+            if (is64Bit)
+            {
+                hlSwapU64P((HlU64*)curOff);
+            }
+            else
+            {
+                hlSwapU32P(curOff);
+            }
+        }
+
+        /* Get current offset value. */
+        curOffVal = (is64Bit) ?
+            (size_t)(*((HlU64*)curOff)) :
+            (size_t)*curOff;
+
+        /* Print offset info. */
+        nprintf(GET_TEXT(OFFSET_INFO_STRING),
+            ++i,                                                /* Offset number. */
+            (unsigned int)((HlUPtr)curOff - headerPtr),         /* Offset position. */
+            (unsigned int)((HlUPtr)HL_ADD_OFF(data,             /* Offset value. */
+                curOffVal) - headerPtr)
+        );
+    }
+}
+
+static HlResult BINAV2PrintOffsets(HlBlob* blob)
+{
+    /* Swap header if necessary. */
+    HlBINAV2Header* header = (HlBINAV2Header*)blob->data;
+    const HlU32 version = hlBINAGetVersion(blob);
+    const HlBool is64Bit = hlBINAIs64Bit(version);
+
+    if (hlBINANeedsSwap(header->endianFlag))
+    {
+        hlBINAV2HeaderSwap(header);
+    }
+
+    /* Print header metadata. */
+    nprintf(GET_TEXT(BINA_FORMAT_STRING),
+        hlBINAGetMajorVersionChar(version),
+        hlBINAGetMinorVersionChar(version),
+        hlBINAGetRevisionVersionChar(version),
+        (is64Bit) ? HL_NTEXT("64-bit") : HL_NTEXT("32-bit"),
+        (header->endianFlag == 'L') ? HL_NTEXT("LE") : HL_NTEXT("BE"));
+
+    nprintf(GET_TEXT(BINA_BLOCK_COUNT_STRING),
+        (unsigned int)header->blockCount);
+
+    /* Fix blocks. */
+    {
+        HlBINAV2BlockHeader* curBlock = (HlBINAV2BlockHeader*)(header + 1);
+        HlU16 i;
+
+        for (i = 0; i < header->blockCount; ++i)
+        {
+            /* Fix block based on type. */
+            switch (curBlock->signature)
+            {
+            case HL_BINAV2_BLOCK_TYPE_DATA:
+            {
+                /* Fix block data header. */
+                HlBINAV2BlockDataHeader* dataHeader = (HlBINAV2BlockDataHeader*)curBlock;
+                hlBINAV2DataHeaderFix(dataHeader, header->endianFlag);
+
+                /* Fix offsets. */
+                {
+                    void* data = HL_ADD_OFF(dataHeader + 1, dataHeader->relativeDataOffset);
+                    void* offsets = HL_ADD_OFF(hlOff32Get(&dataHeader->stringTableOffset),
+                        dataHeader->stringTableSize);
+
+                    BINAPrintOffsets(offsets, header->endianFlag,
+                        dataHeader->offsetTableSize, is64Bit,
+                        (HlUPtr)blob->data, data);
+                }
+
+                return HL_RESULT_SUCCESS;
+            }
+
+            default:
+                printWarning(GET_TEXT(WARNING_UNKNOWN_BLOCK_TYPE));
+                break;
+            }
+
+            /* Get next block. */
+            curBlock = hlBINAV2BlockGetNext(curBlock);
+        }
+
+        /* No data block was found. */
+        return HL_ERROR_INVALID_DATA;
+    }
+}
+
 static HlResult printOffsets(const HlNChar* filePath)
 {
     HlBlob* blob;
@@ -193,6 +325,12 @@ static HlResult printOffsets(const HlNChar* filePath)
             return HL_RESULT_SUCCESS;
         }
 
+        /* BINA V2. */
+        else if (sig == HL_BINA_SIG)
+        {
+            return BINAV2PrintOffsets(blob);
+        }
+
         /* Unknown or unsupported file type. */
         return HL_ERROR_UNSUPPORTED;
     }
@@ -205,11 +343,6 @@ static void printUsage(FILE* stream)
 #ifdef _WIN32
     fnprintf(stream, HL_NTEXT("%s"), GET_TEXT(WIN32_HELP_STRING));
 #endif
-}
-
-static void printError(const HlNChar* err)
-{
-    fnprintf(stderr, GET_TEXT(ERROR_STRING), err);
 }
 
 int nmain(int argc, HlNChar* argv[])
