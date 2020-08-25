@@ -114,6 +114,44 @@ void hlBINAV2BlocksFix(HlBINAV2BlockHeader* curBlock, HlU16 blockCount, HlU8 end
     }
 }
 
+HlBool hlBINAOffsetsNext(const HlU8** HL_RESTRICT curOffsetPosPtr,
+    HlU32** HL_RESTRICT curOffsetPtr)
+{
+    const HlU8* curOffsetPos = *curOffsetPosPtr;
+    HlU32 relOffPos;
+
+    switch (*curOffsetPos & HL_BINA_OFF_SIZE_MASK)
+    {
+    default:
+        /* A size of 0 indicates that we've reached the end of the offset table. */
+        return HL_FALSE;
+
+    case HL_BINA_OFF_SIZE_SIX_BIT:
+        *curOffsetPtr += (*curOffsetPos++ & HL_BINA_OFF_DATA_MASK);
+        break;
+
+    case HL_BINA_OFF_SIZE_FOURTEEN_BIT:
+        relOffPos = (((HlU32)*curOffsetPos++ & HL_BINA_OFF_DATA_MASK) << 8);
+        relOffPos |= ((HlU32)*curOffsetPos++);
+
+        *curOffsetPtr += relOffPos;
+        break;
+
+    case HL_BINA_OFF_SIZE_THIRTY_BIT:
+        relOffPos = (((HlU32)*curOffsetPos++ & HL_BINA_OFF_DATA_MASK) << 24);
+        relOffPos |= (((HlU32)*curOffsetPos++) << 16);
+        relOffPos |= (((HlU32)*curOffsetPos++) << 8);
+        relOffPos |= ((HlU32)*curOffsetPos++);
+
+        *curOffsetPtr += relOffPos;
+        break;
+    }
+
+    /* Set curOffsetPosPtr and return. */
+    *curOffsetPosPtr = curOffsetPos;
+    return HL_TRUE;
+}
+
 void hlBINAOffsetsFix(const void* HL_RESTRICT offsets, HlU8 endianFlag,
     HlU32 offsetTableSize, void* HL_RESTRICT data)
 {
@@ -125,34 +163,12 @@ void hlBINAOffsetsFix(const void* HL_RESTRICT offsets, HlU8 endianFlag,
     /* Fix offsets. */
     while (curOffsetPos < eof)
     {
-        /* Get the next offset's address. */
-        HlU32 relOffPos;
-        switch (*curOffsetPos & HL_BINA_OFF_SIZE_MASK)
-        {
-        default:
-            /* A size of 0 indicates that we've reached the end of the offset table. */
+        /*
+           Get the next offset's address - return early
+           if we've reached the end of the offset table. 
+        */
+        if (!hlBINAOffsetsNext(&curOffsetPos, &curOffset))
             return;
-
-        case HL_BINA_OFF_SIZE_SIX_BIT:
-            curOffset += (*curOffsetPos++ & HL_BINA_OFF_DATA_MASK);
-            break;
-
-        case HL_BINA_OFF_SIZE_FOURTEEN_BIT:
-            relOffPos = (((HlU32)*curOffsetPos++ & HL_BINA_OFF_DATA_MASK) << 8);
-            relOffPos |= ((HlU32)*curOffsetPos++);
-
-            curOffset += relOffPos;
-            break;
-
-        case HL_BINA_OFF_SIZE_THIRTY_BIT:
-            relOffPos = (((HlU32)*curOffsetPos++ & HL_BINA_OFF_DATA_MASK) << 24);
-            relOffPos |= (((HlU32)*curOffsetPos++) << 16);
-            relOffPos |= (((HlU32)*curOffsetPos++) << 8);
-            relOffPos |= ((HlU32)*curOffsetPos++);
-
-            curOffset += relOffPos;
-            break;
-        }
 
         /* Endian swap the offset if necessary. */
         if (hlBINANeedsSwap(endianFlag))

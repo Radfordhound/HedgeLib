@@ -83,7 +83,7 @@ typedef enum HlBINAV2BlockType
 
     /**
        @brief Unknown block type, never used to our knowledge.
-       We only know about it because Lost World for Wii U checks fo rit.
+       We only know about it because Lost World for Wii U checks for it.
     */
     HL_BINAV2_BLOCK_TYPE_IMAG = HL_MAKE_SIG('I', 'M', 'A', 'G')
 }
@@ -139,6 +139,9 @@ HL_API void hlBINAV2DataHeaderFix(HlBINAV2BlockDataHeader* dataHeader, HlU8 endi
 
 HL_API void hlBINAV2BlocksFix(HlBINAV2BlockHeader* blocks,
     HlU16 blockCount, HlU8 endianFlag);
+
+HL_API HlBool hlBINAOffsetsNext(const HlU8** HL_RESTRICT curOffsetPosPtr,
+    HlU32** HL_RESTRICT curOffsetPtr);
 
 HL_API void hlBINAOffsetsFix(const void* HL_RESTRICT offsets,
     HlU8 endianFlag, HlU32 offsetTableSize, void* HL_RESTRICT data);
