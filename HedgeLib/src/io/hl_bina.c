@@ -39,7 +39,8 @@ void hlBINAV2BlockHeaderSwap(HlBINAV2BlockHeader* blockHeader)
     hlSwapU32P(&blockHeader->size);
 }
 
-void hlBINAV2BlockHeaderFix(HlBINAV2BlockHeader* blockHeader, HlU8 endianFlag)
+void hlBINAV2BlockHeaderFix(HlBINAV2BlockHeader* blockHeader,
+    HlU8 endianFlag, HlBool is64Bit)
 {
     switch (blockHeader->signature)
     {
@@ -55,8 +56,16 @@ void hlBINAV2BlockHeaderFix(HlBINAV2BlockHeader* blockHeader, HlU8 endianFlag)
             void* offsets = HL_ADD_OFF(hlOff32Get(&dataHeader->stringTableOffset),
                 dataHeader->stringTableSize);
 
-            hlBINAOffsetsFix(offsets, endianFlag,
-                dataHeader->offsetTableSize, data);
+            if (is64Bit)
+            {
+                hlBINAOffsetsFix64(offsets, endianFlag,
+                    dataHeader->offsetTableSize, data);
+            }
+            else
+            {
+                hlBINAOffsetsFix32(offsets, endianFlag,
+                    dataHeader->offsetTableSize, data);
+            }
         }
         break;
     }
@@ -93,7 +102,8 @@ void hlBINAV2DataHeaderFix(HlBINAV2BlockDataHeader* dataHeader, HlU8 endianFlag)
     }
 }
 
-void hlBINAV2BlocksFix(HlBINAV2BlockHeader* curBlock, HlU16 blockCount, HlU8 endianFlag)
+void hlBINAV2BlocksFix(HlBINAV2BlockHeader* curBlock, HlU16 blockCount,
+    HlU8 endianFlag, HlBool is64Bit)
 {
     HlU16 i;
 
@@ -101,7 +111,7 @@ void hlBINAV2BlocksFix(HlBINAV2BlockHeader* curBlock, HlU16 blockCount, HlU8 end
     if (!blockCount) return;
 
     /* Fix the first block's header. */
-    hlBINAV2BlockHeaderFix(curBlock, endianFlag);
+    hlBINAV2BlockHeaderFix(curBlock, endianFlag, is64Bit);
 
     /* Fix subsequent block headers, if any. */
     for (i = 1; i < blockCount; ++i)
@@ -110,7 +120,7 @@ void hlBINAV2BlocksFix(HlBINAV2BlockHeader* curBlock, HlU16 blockCount, HlU8 end
         curBlock = hlBINAV2BlockGetNext(curBlock);
 
         /* Fix this block's header. */
-        hlBINAV2BlockHeaderFix(curBlock, endianFlag);
+        hlBINAV2BlockHeaderFix(curBlock, endianFlag, is64Bit);
     }
 }
 
@@ -152,7 +162,7 @@ HlBool hlBINAOffsetsNext(const HlU8** HL_RESTRICT curOffsetPosPtr,
     return HL_TRUE;
 }
 
-void hlBINAOffsetsFix(const void* HL_RESTRICT offsets, HlU8 endianFlag,
+void hlBINAOffsetsFix32(const void* HL_RESTRICT offsets, HlU8 endianFlag,
     HlU32 offsetTableSize, void* HL_RESTRICT data)
 {
     /* Get pointers. */
@@ -181,6 +191,35 @@ void hlBINAOffsetsFix(const void* HL_RESTRICT offsets, HlU8 endianFlag,
     }
 }
 
+void hlBINAOffsetsFix64(const void* HL_RESTRICT offsets, HlU8 endianFlag,
+    HlU32 offsetTableSize, void* HL_RESTRICT data)
+{
+    /* Get pointers. */
+    const HlU8* curOffsetPos = (const HlU8*)offsets;
+    const HlU8* eof = (curOffsetPos + offsetTableSize);
+    HlU64* curOffset = (HlU64*)data;
+
+    /* Fix offsets. */
+    while (curOffsetPos < eof)
+    {
+        /*
+           Get the next offset's address - return early
+           if we've reached the end of the offset table. 
+        */
+        if (!hlBINAOffsetsNext(&curOffsetPos, (HlU32**)(&curOffset)))
+            return;
+
+        /* Endian swap the offset if necessary. */
+        if (hlBINANeedsSwap(endianFlag))
+        {
+            hlSwapU64P(curOffset);
+        }
+
+        /* Fix the offset. */
+        hlOff64Fix(curOffset, data);
+    }
+}
+
 void hlBINAV1Fix(HlBlob* blob)
 {
     /* Fix header. */
@@ -190,7 +229,7 @@ void hlBINAV1Fix(HlBlob* blob)
     /* Fix offsets. */
     {
         void* data = (header + 1);
-        hlBINAOffsetsFix(hlOff32Get(&header->offsetTableOffset),
+        hlBINAOffsetsFix32(hlOff32Get(&header->offsetTableOffset),
             header->endianFlag, header->offsetTableSize, data);
     }
 }
@@ -207,7 +246,10 @@ void hlBINAV2Fix(HlBlob* blob)
     /* Fix blocks. */
     {
         HlBINAV2BlockHeader* blocks = (HlBINAV2BlockHeader*)(header + 1);
-        hlBINAV2BlocksFix(blocks, header->blockCount, header->endianFlag);
+        const HlBool is64Bit = hlBINAIs64Bit(hlBINAGetVersion(blob));
+
+        hlBINAV2BlocksFix(blocks, header->blockCount,
+            header->endianFlag, is64Bit);
     }
 }
 
@@ -320,6 +362,11 @@ HlU8 hlBINAGetRevisionVersionExt(HlU32 version)
 HlBool hlBINAHasV2HeaderExt(const HlBlob* blob)
 {
     return hlBINAHasV2Header(blob);
+}
+
+HlBool hlBINAIs64BitExt(HlU32 version)
+{
+    return hlBINAIs64Bit(version);
 }
 
 void* hlBINAV1GetDataExt(const HlBlob* blob)

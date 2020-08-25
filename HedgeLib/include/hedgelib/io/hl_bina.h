@@ -130,7 +130,9 @@ HL_STATIC_ASSERT_SIZE(HlBINAV2BlockDataHeader, 0x18);
 HL_API void hlBINAV1HeaderSwap(HlBINAV1Header* header, HlBool swapOffsets);
 HL_API void hlBINAV2HeaderSwap(HlBINAV2Header* header);
 HL_API void hlBINAV2BlockHeaderSwap(HlBINAV2BlockHeader* blockHeader);
-HL_API void hlBINAV2BlockHeaderFix(HlBINAV2BlockHeader* blockHeader, HlU8 endianFlag);
+HL_API void hlBINAV2BlockHeaderFix(HlBINAV2BlockHeader* blockHeader,
+    HlU8 endianFlag, HlBool is64Bit);
+
 HL_API void hlBINAV2DataHeaderSwap(HlBINAV2BlockDataHeader* dataHeader, HlBool swapOffsets);
 HL_API void hlBINAV2DataHeaderFix(HlBINAV2BlockDataHeader* dataHeader, HlU8 endianFlag);
 
@@ -138,12 +140,15 @@ HL_API void hlBINAV2DataHeaderFix(HlBINAV2BlockDataHeader* dataHeader, HlU8 endi
     block, (block)->size))
 
 HL_API void hlBINAV2BlocksFix(HlBINAV2BlockHeader* blocks,
-    HlU16 blockCount, HlU8 endianFlag);
+    HlU16 blockCount, HlU8 endianFlag, HlBool is64Bit);
 
 HL_API HlBool hlBINAOffsetsNext(const HlU8** HL_RESTRICT curOffsetPosPtr,
     HlU32** HL_RESTRICT curOffsetPtr);
 
-HL_API void hlBINAOffsetsFix(const void* HL_RESTRICT offsets,
+HL_API void hlBINAOffsetsFix32(const void* HL_RESTRICT offsets,
+    HlU8 endianFlag, HlU32 offsetTableSize, void* HL_RESTRICT data);
+
+HL_API void hlBINAOffsetsFix64(const void* HL_RESTRICT offsets,
     HlU8 endianFlag, HlU32 offsetTableSize, void* HL_RESTRICT data);
 
 HL_API void hlBINAV1Fix(HlBlob* blob);
@@ -161,6 +166,7 @@ HL_API HlU32 hlBINAGetVersion(const HlBlob* blob);
 #define hlBINAGetRevisionVersion(version)   (HlU8)(hlBINAGetRevisionVersionChar(version) - 0x30)
 
 #define hlBINAHasV2Header(blob)             (HlBool)(*(const HlU32*)((blob)->data) == HL_BINA_SIG)
+#define hlBINAIs64Bit(version)              (HlBool)((version) >= 0x323130U) /* version >= 2.1.0 */
 
 HL_API HlBINAV2BlockDataHeader* hlBINAV2GetDataBlock(const HlBlob* blob);
 
@@ -178,6 +184,7 @@ HL_API HlU8 hlBINAGetMajorVersionExt(HlU32 version);
 HL_API HlU8 hlBINAGetMinorVersionExt(HlU32 version);
 HL_API HlU8 hlBINAGetRevisionVersionExt(HlU32 version);
 HL_API HlBool hlBINAHasV2HeaderExt(const HlBlob* blob);
+HL_API HlBool hlBINAIs64BitExt(HlU32 version);
 HL_API void* hlBINAV1GetDataExt(const HlBlob* blob);
 #endif
 
