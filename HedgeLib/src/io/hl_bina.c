@@ -125,7 +125,7 @@ void hlBINAV2BlocksFix(HlBINAV2BlockHeader* curBlock, HlU16 blockCount,
 }
 
 HlBool hlBINAOffsetsNext(const HlU8** HL_RESTRICT curOffsetPosPtr,
-    HlU32** HL_RESTRICT curOffsetPtr)
+    const HlU32** HL_RESTRICT curOffsetPtr)
 {
     const HlU8* curOffsetPos = *curOffsetPosPtr;
     HlU32 relOffPos;
@@ -206,7 +206,7 @@ void hlBINAOffsetsFix64(const void* HL_RESTRICT offsets, HlU8 endianFlag,
            Get the next offset's address - return early
            if we've reached the end of the offset table. 
         */
-        if (!hlBINAOffsetsNext(&curOffsetPos, (HlU32**)(&curOffset)))
+        if (!hlBINAOffsetsNext(&curOffsetPos, (const HlU32**)(&curOffset)))
             return;
 
         /* Endian swap the offset if necessary. */
