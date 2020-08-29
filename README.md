@@ -54,6 +54,11 @@ Right now, HedgeLib supports the following:
 - ...and more
 
 ### Other
+#### PACx V2 Packfiles (.pac)
+**Used in:**
+- Sonic Lost World (PC/Wii U)
+- Mario & Sonic at the Rio 2016 Olympic Games (Wii U)
+
 #### BINA
 **Used in various files from:**
 - Sonic '06
