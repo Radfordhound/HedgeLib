@@ -628,12 +628,15 @@ static HlResult hlINPACxV2FileTreeSetupEntries(
 
                                 {
                                     /* Copy string and get length. */
-                                    size_t strSize = (hlStrCopyAndLen((const char*)curOffsetVal,
-                                        (char*)(*curDataPtr)) + 1);
+                                    char* curStr = (char*)(*curDataPtr);
+                                    size_t strSize = (hlStrCopyAndLen(
+                                        (const char*)curOffsetVal,
+                                        curStr + 1));
 
                                     /* Increase strTableSize and curDataPtr. */
                                     strTableSize += strSize;
-                                    (char*)(*curDataPtr) += strSize;
+                                    curStr += strSize;
+                                    *curDataPtr = curStr;
                                 }
                             }
                         }
@@ -775,7 +778,9 @@ static HlResult hlINPACxV2FileTreeSetupEntries(
 
                 /* Setup BINA header and data block header. */
                 {
-                    HlBINAV2Header* dstHeader = (HlBINAV2Header*)((*curEntry)->data);
+                    HlBINAV2Header* dstHeader = (HlBINAV2Header*)(
+                        (HlUPtr)((*curEntry)->data));
+
                     HlBINAV2BlockDataHeader* dstDataBlock =
                         (HlBINAV2BlockDataHeader*)(dstHeader + 1);
 
@@ -1129,8 +1134,8 @@ static HlResult hlINPACxV2LoadSplits(const HlNChar* HL_RESTRICT filePath,
     /* Load splits. */
     {
         /* Get data block. */
-        const HlPACxV2BlockDataHeader* dataBlock = (const
-            HlPACxV2BlockDataHeader*)hlBINAV2GetDataBlock(rootPac);
+        HlPACxV2BlockDataHeader* dataBlock = (HlPACxV2BlockDataHeader*)
+            hlBINAV2GetDataBlock(rootPac);
 
         /* TODO: Ensure data block pointer is not null. */
 

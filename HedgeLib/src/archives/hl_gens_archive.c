@@ -156,7 +156,7 @@ static HlResult hlINGensArchiveLoadSingle(const HlNChar* HL_RESTRICT filePath,
     if (HL_FAILED(result)) return result;
 
     /* Parse blob into HlArchive, free blob, and return. */
-    result = hlGensArchiveRead(&blob, 1, archive);
+    result = hlGensArchiveRead((const HlBlob**)&blob, 1, archive);
     hlFree(blob);
     return result;
 }
@@ -314,7 +314,7 @@ static HlResult hlINGensArchiveLoadSplits(const HlNChar* HL_RESTRICT filePath,
         while (hlINArchiveNextSplit2(lastCharPtr) && hlPathExists(pathBuf));
 
         /* Parse blobs into HlArchive. */
-        result = hlGensArchiveRead(blobsPtr, blobCount, archive);
+        result = hlGensArchiveRead((const HlBlob**)blobsPtr, blobCount, archive);
 
     free_blobs_and_end:
         {

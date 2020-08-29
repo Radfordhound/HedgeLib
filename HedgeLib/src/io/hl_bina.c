@@ -177,7 +177,7 @@ void hlBINAOffsetsFix32(const void* HL_RESTRICT offsets, HlU8 endianFlag,
            Get the next offset's address - return early
            if we've reached the end of the offset table. 
         */
-        if (!hlBINAOffsetsNext(&curOffsetPos, &curOffset))
+        if (!hlBINAOffsetsNext(&curOffsetPos, (const HlU32**)&curOffset))
             return;
 
         /* Endian swap the offset if necessary. */
