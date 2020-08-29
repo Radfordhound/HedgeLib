@@ -111,7 +111,7 @@ static HlResult hlINArchiveEntriesExtract(const HlArchiveEntry* HL_RESTRICT entr
                machine, and path is the absolute path to the file;
                get the filename from the path.
             */
-            entryName = hlPathGetName(entries[i].path, 0);
+            entryName = hlPathGetName(entries[i].path);
         }
         else
         {

@@ -23,7 +23,7 @@ extern "C" {
 #define HL_IS_PATH_SEP(c) ((c) == HL_NTEXT('/'))
 #endif
 
-HL_API const HlNChar* hlPathGetName(const HlNChar* path, size_t pathLen);
+HL_API const HlNChar* hlPathGetName(const HlNChar* path);
 HL_API const HlNChar* hlPathGetExt(const HlNChar* path, size_t pathLen);
 HL_API const HlNChar* hlPathGetExts(const HlNChar* path, size_t pathLen);
 

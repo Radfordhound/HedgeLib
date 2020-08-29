@@ -15,6 +15,9 @@
 
 HlBool hlINPathCombineNeedsSep1(const HlNChar* path1, size_t path1Len)
 {
+    /* Return early if path1Len == 0. */
+    if (!path1Len) return HL_FALSE;
+
     /* We need to add a separator if path1 doesn't end with one. */
     return (path1Len-- &&
 #ifdef _WIN32
@@ -35,7 +38,29 @@ HlBool hlINPathCombineNeedsSep2(const HlNChar* path2)
         *path2 != HL_NTEXT('/'));
 }
 
-const HlNChar* hlPathGetName(const HlNChar* path, size_t pathLen)
+HlBool hlINPathCombineNeedsSep1UTF8(const char* path1, size_t path1Len)
+{
+    /* We need to add a separator if path1 doesn't end with one. */
+    return (path1Len-- &&
+#ifdef _WIN32
+        /* (Only check on Windows since paths on POSIX systems allow backslashes in file names.) */
+        path1[path1Len] != '\\' &&
+#endif
+        path1[path1Len] != '/');
+}
+
+HlBool hlINPathCombineNeedsSep2UTF8(const char* path2)
+{
+    /* We don't need to add a separator if path2 begins with one. */
+    return (
+#ifdef _WIN32
+        /* (Only check on Windows since paths on POSIX systems allow backslashes in file names.) */
+        *path2 != '\\' &&
+#endif
+        *path2 != '/');
+}
+
+const HlNChar* hlPathGetName(const HlNChar* path)
 {
     /*
     =======================================
@@ -54,38 +79,22 @@ const HlNChar* hlPathGetName(const HlNChar* path, size_t pathLen)
     */
 
     /* Get the name of the file/directory at the given path and return it. */
-    const HlNChar* name = path;
-    if (pathLen)
+    const HlNChar* curChar = path;
+    while (*curChar)
     {
-        const HlNChar* curChar = (path + pathLen);
-        HL_ASSERT(0); /* TODO */
-
-        while (curChar >= path)
+        /* Account for path separators... */
+        if (HL_IS_PATH_SEP(*curChar) &&
+            (curChar == path ||                     /* ...before the name. */
+            *(curChar + 1) != HL_NTEXT('\0')))      /* ...and after the name. */
         {
-            /* TODO: Implement the length-based variant of this function. */
+            path = ++curChar;
+            continue;
         }
 
-        return 0; /* So compiler doesn't complain. */
+        ++curChar;
     }
-    else
-    {
-        const HlNChar* curChar = path;
-        while (*curChar)
-        {
-            /* Account for path separators... */
-            if (HL_IS_PATH_SEP(*curChar) &&
-                (curChar == name ||                 /* ...before the name. */
-                *(curChar + 1) != HL_NTEXT('\0')))   /* ...and after the name. */
-            {
-                name = ++curChar;
-                continue;
-            }
 
-            ++curChar;
-        }
-
-        return name;
-    }
+    return path;
 }
 
 const HlNChar* hlPathGetExt(const HlNChar* path, size_t pathLen)
