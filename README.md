@@ -54,6 +54,16 @@ Right now, HedgeLib supports the following:
 - ...and more
 
 ### Other
+#### PACx V4 Packfiles (.pac)
+**Used in:**
+- Olympic Games Tokyo 2020 - The Official Video Game
+- Mario & Sonic at the Olympic Games Tokyo 2020
+- Sakura Wars
+
+#### PACx V3 Packfiles (.pac)
+**Used in:**
+- Sonic Forces
+
 #### PACx V2 Packfiles (.pac)
 **Used in:**
 - Sonic Lost World (PC/Wii U)

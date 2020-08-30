@@ -141,6 +141,170 @@ HlPACxV2ProxyEntryTable;
 
 HL_STATIC_ASSERT_SIZE(HlPACxV2ProxyEntryTable, 8);
 
+/* Thanks to Skyth for cracking the majority of the PACxV3 format! */
+typedef struct HlPACxV3SplitEntry
+{
+    HL_OFF64_STR name;
+}
+HlPACxV3SplitEntry;
+
+HL_STATIC_ASSERT_SIZE(HlPACxV3SplitEntry, 8);
+
+typedef struct HlPACxV3SplitTable
+{
+    HlU64 splitCount;
+    HL_OFF64(void) splitEntries;
+}
+HlPACxV3SplitTable;
+
+HL_STATIC_ASSERT_SIZE(HlPACxV3SplitTable, 16);
+
+typedef enum PACxV3DataType
+{
+    HL_PACXV3_DATA_TYPE_REGULAR_FILE = 0,
+    HL_PACXV3_DATA_TYPE_NOT_HERE = 1,
+    HL_PACXV3_DATA_TYPE_BINA_FILE = 2
+}
+PACxV3DataType;
+
+typedef struct HlPACxV3DataEntry
+{
+    /** @brief Date Modified or Hash?? */
+    HlU32 unknown1;
+    HlU32 dataSize;
+    /** @brief Always 0? Unknown1 from PACxV2DataEntry?? */
+    HlU64 unknown2;
+    HL_OFF64(void) data;
+    /** @brief Always 0? Unknown2 from PACxV2DataEntry?? */
+    HlU64 unknown3;
+    HL_OFF64_STR extension;
+    /** @brief Probably actually just a single byte with 7 bytes of padding?? */
+    HlU64 dataType;
+}
+HlPACxV3DataEntry;
+
+HL_STATIC_ASSERT_SIZE(HlPACxV3DataEntry, 0x30);
+
+typedef struct HlPACxV3Node
+{
+    HL_OFF64_STR name;
+    HL_OFF64(void) data;
+    HL_OFF64(HlS32) childIndices;
+    HlS32 parentIndex;
+    HlS32 globalIndex;
+    HlS32 dataIndex;
+    HlU16 childCount;
+    HlU8 hasData;
+    /** @brief Where this node's name should be copied to within the global name buffer. */
+    HlU8 bufStartIndex;
+}
+HlPACxV3Node;
+
+HL_STATIC_ASSERT_SIZE(HlPACxV3Node, 0x28);
+
+typedef struct HlPACxV3NodeTree
+{
+    HlU32 nodeCount;
+    HlU32 dataNodeCount;
+    HL_OFF64(HlPACxV3Node) nodes;
+    HL_OFF64(HlS32) dataNodeIndices;
+}
+HlPACxV3NodeTree;
+
+HL_STATIC_ASSERT_SIZE(HlPACxV3NodeTree, 0x18);
+
+typedef enum HlPACxV3Type
+{
+    HL_PACXV3_TYPE_IS_ROOT = 1,
+    HL_PACXV3_TYPE_IS_SPLIT = 2,
+    HL_PACXV3_TYPE_HAS_SPLITS = 4
+}
+HlPACxV3Type;
+
+typedef struct HlPACxV3Header
+{
+    /** @brief "PACx" */
+    HlU32 signature;
+    /** @brief Version Number. */
+    HlU8 version[3];
+    /** @brief 'B' for Big Endian, 'L' for Little Endian. */
+    HlU8 endianFlag;
+    /** @brief Date Modified or Hash?? */
+    HlU32 unknown1;
+    HlU32 fileSize;
+    HlU32 nodesSize;
+    HlU32 splitTableSize;
+    HlU32 dataEntriesSize;
+    /** @brief The size of the string table in bytes, including padding. */
+    HlU32 stringTableSize;
+    HlU32 dataSize;
+    /** @brief The size of the offset table in bytes, including padding. */
+    HlU32 offsetTableSize;
+    /** @brief Bitwise-and this with values from the PACxV3Type enum. */
+    HlU16 type;
+    /** @brief Always 0x108? */
+    HlU16 unknown2;
+    HlU32 splitCount;
+}
+HlPACxV3Header;
+
+HL_STATIC_ASSERT_SIZE(HlPACxV3Header, 0x30);
+
+/**
+   @brief Information explaining how to decompress a blob of LZ4-compressed data.
+
+   When decompressing the root pac allocate a buffer of
+   size header.rootUncompressedSize, then loop through these
+   chunks and decompress each one, one-by-one, into that buffer.
+
+   If you try to decompress all at once instead the data can be corrupted.
+*/
+typedef struct HlPACxV4Chunk
+{
+    HlU32 compressedSize;
+    HlU32 uncompressedSize;
+}
+HlPACxV4Chunk;
+
+HL_STATIC_ASSERT_SIZE(HlPACxV4Chunk, 8);
+
+typedef struct HlPACxV4SplitEntry
+{
+    HL_OFF64_STR name;
+    HlU32 compressedSize;
+    HlU32 uncompressedSize;
+    HlU32 offset;
+    HlU32 chunkCount;
+    HL_OFF64(HlPACxV4Chunk) chunksOffset;
+}
+HlPACxV4SplitEntry;
+
+HL_STATIC_ASSERT_SIZE(HlPACxV4SplitEntry, 0x20);
+
+typedef struct HlPACxV4Header
+{
+    /** @brief "PACx" */
+    HlU32 signature;
+    /** @brief Version Number. */
+    HlU8 version[3];
+    /** @brief 'B' for Big Endian, 'L' for Little Endian. */
+    HlU8 endianFlag;
+    /** @brief Date Modified or Hash?? */
+    HlU32 unknown1;
+    HlU32 fileSize;
+    HL_OFF32(void) rootOffset;
+    HlU32 rootCompressedSize;
+    HlU32 rootUncompressedSize;
+    /** @brief Bitwise-and this with values from the PACxV3Type enum. */
+    HlU16 type;
+    /** @brief Always 0x208? */
+    HlU16 unknown2;
+    HlU32 chunkCount;
+}
+HlPACxV4Header;
+
+HL_STATIC_ASSERT_SIZE(HlPACxV4Header, 0x24);
+
 HL_API void hlPACxV2NodeSwap(HlPACxV2Node* node, HlBool swapOffsets);
 HL_API void hlPACxV2NodeTreeSwap(HlPACxV2NodeTree* nodeTree, HlBool swapOffsets);
 HL_API void hlPACxV2DataEntrySwap(HlPACxV2DataEntry* dataEntry);
@@ -166,21 +330,63 @@ HL_API HlPACxV2NodeTree* hlPACxV2DataGetFileTree(
     const char* HL_RESTRICT resType);
 
 #define hlPACxV2DataGetDataEntries(dataBlock) (HlPACxV2DataEntry*)(\
-    HL_ADD_OFF(hlPACxV2DataGetTypeTree(dataBlock), dataBlock->treesSize))
+    HL_ADD_OFF(hlPACxV2DataGetTypeTree(dataBlock), (dataBlock)->treesSize))
 
 #define hlPACxV2DataGetProxyEntryTable(dataBlock) (HlPACxV2ProxyEntryTable*)(\
-    HL_ADD_OFF(hlPACxV2DataGetDataEntries(dataBlock), dataBlock->dataEntriesSize))
+    HL_ADD_OFF(hlPACxV2DataGetDataEntries(dataBlock), (dataBlock)->dataEntriesSize))
 
 #define hlPACxV2DataGetStringTable(dataBlock) (char*)(\
-    HL_ADD_OFF(hlPACxV2DataGetProxyEntryTable(dataBlock), dataBlock->proxyTableSize))
+    HL_ADD_OFF(hlPACxV2DataGetProxyEntryTable(dataBlock), (dataBlock)->proxyTableSize))
 
 #define hlPACxV2DataGetOffsetTable(dataBlock) HL_ADD_OFFC(\
-    hlPACxV2DataGetStringTable(dataBlock), dataBlock->stringTableSize)
+    hlPACxV2DataGetStringTable(dataBlock), (dataBlock)->stringTableSize)
 
 HL_API HlResult hlPACxV2Read(const HlBlob** HL_RESTRICT pacs,
     size_t pacCount, HlArchive** HL_RESTRICT archive);
 
 HL_API HlResult hlPACxV2Load(const HlNChar* HL_RESTRICT filePath,
+    HlBool loadSplits, HlArchive** HL_RESTRICT archive);
+
+HL_API void hlPACxV3Fix(HlBlob* blob);
+
+#define hlPACxV3GetTypeTree(header) (HlPACxV3NodeTree*)((header) + 1)
+#define hlPACxV3GetSplitTable(header) (HlPACxV3SplitTable*)(\
+    HL_ADD_OFF(hlPACxV3GetTypeTree(header), (header)->nodesSize))
+
+#define hlPACxV3GetDataEntries(header) (HlPACxV3DataEntry*)(\
+    HL_ADD_OFF(hlPACxV3GetSplitTable(header), (header)->splitTableSize))
+
+#define hlPACxV3GetStringTable(header) (char*)(\
+    HL_ADD_OFF(hlPACxV3GetDataEntries(header), (header)->dataEntriesSize))
+
+#define hlPACxV3GetData(header) (void*)(\
+    HL_ADD_OFF(hlPACxV3GetStringTable(header), (header)->stringTableSize))
+
+#define hlPACxV3GetOffsetTable(header) HL_ADD_OFFC(\
+    hlPACxV3GetData(header), (header)->dataSize)
+
+HL_API HlResult hlPACxV3Read(const HlBlob** HL_RESTRICT pacs,
+    size_t pacCount, HlArchive** HL_RESTRICT archive);
+
+HL_API HlResult hlPACxV3Load(const HlNChar* HL_RESTRICT filePath,
+    HlBool loadSplits, HlArchive** HL_RESTRICT archive);
+
+HL_API void hlPACxV4Fix(HlBlob* blob);
+
+#define hlPACxV4GetRootChunks(header) (HlPACxV4Chunk*)((header) + 1)
+
+HL_API HlResult hlPACxV4DecompressNoAlloc(const void* HL_RESTRICT compressedData,
+    const HlPACxV4Chunk* HL_RESTRICT chunks, HlU32 chunkCount,
+    HlU32 uncompressedSize, void* HL_RESTRICT uncompressedData);
+
+HL_API HlResult hlPACxV4Decompress(const void* HL_RESTRICT compressedData,
+    const HlPACxV4Chunk* HL_RESTRICT chunks, HlU32 chunkCount,
+    HlU32 uncompressedSize, void** HL_RESTRICT uncompressedData);
+
+HL_API HlResult hlPACxV4Read(HlBlob* HL_RESTRICT pac,
+    HlBool loadSplits, HlArchive** HL_RESTRICT archive);
+
+HL_API HlResult hlPACxV4Load(const HlNChar* HL_RESTRICT filePath,
     HlBool loadSplits, HlArchive** HL_RESTRICT archive);
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS
@@ -191,6 +397,14 @@ HL_API HlPACxV2ProxyEntryTable* hlPACxV2DataGetProxyEntryTableExt(
 
 HL_API char* hlPACxV2DataGetStringTableExt(HlPACxV2BlockDataHeader* dataBlock);
 HL_API const void* hlPACxV2DataGetOffsetTableExt(const HlPACxV2BlockDataHeader* dataBlock);
+
+HL_API HlPACxV3NodeTree* hlPACxV3GetTypeTreeExt(HlPACxV3Header* header);
+HL_API HlPACxV3SplitTable* hlPACxV3GetSplitTableExt(HlPACxV3Header* header);
+HL_API HlPACxV3DataEntry* hlPACxV3GetDataEntriesExt(HlPACxV3Header* header);
+HL_API char* hlPACxV3GetStringTableExt(HlPACxV3Header* header);
+HL_API void* hlPACxV3GetDataExt(HlPACxV3Header* header);
+HL_API const void* hlPACxV3GetOffsetTableExt(HlPACxV3Header* header);
+HL_API HlPACxV4Chunk* hlPACxV4GetRootChunksExt(HlPACxV4Header* header);
 #endif
 
 #ifdef __cplusplus
