@@ -1619,6 +1619,9 @@ HlResult hlPACxV4DecompressNoAlloc(const void* HL_RESTRICT compressedData,
         if (r < 0 || (HlU32)r < chunks[i].uncompressedSize)
             return HL_ERROR_UNKNOWN;
 
+        /* Substract from uncompressedSize. */
+        uncompressedSize -= chunks[i].uncompressedSize;
+
         /* Increment pointers. */
         compressedPtr += chunks[i].compressedSize;
         uncompressedPtr += chunks[i].uncompressedSize;
@@ -1762,7 +1765,7 @@ HlResult hlPACxV4Read(HlBlob* HL_RESTRICT pac,
     {
         /* Generate HlArchive. */
         HlBlob* tmpRootBlobPtr = &root;
-        result = hlPACxV3Read(&tmpRootBlobPtr, 1, archive);
+        result = hlPACxV3Read((const HlBlob**)(&tmpRootBlobPtr), 1, archive);
     }
 
 end:
