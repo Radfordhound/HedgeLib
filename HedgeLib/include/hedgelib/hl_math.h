@@ -23,7 +23,7 @@ typedef struct HlVector2Half
 }
 HlVector2Half;
 
-HL_STATIC_ASSERT_SIZE(HlVector2, 4);
+HL_STATIC_ASSERT_SIZE(HlVector2Half, 4);
 
 typedef struct HlVector2
 {
