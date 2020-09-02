@@ -17,6 +17,7 @@ HedgeLib is a C89 library [under the MIT license](License.txt) that aims to make
 Right now, HedgeLib supports the following:
 
 ### Hedgehog Engine 1/2
+- "Mirage" headers (used in models/materials from Lost World and beyond)
 - Models (.model/.terrain-model; v5.0)
 
 **Used in:**

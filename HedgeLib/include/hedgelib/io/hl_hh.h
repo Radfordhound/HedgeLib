@@ -10,19 +10,6 @@ typedef struct HlBlob HlBlob;
 
 #define HL_HH_MIRAGE_MAGIC      0x0133054AU
 
-typedef enum HlHHMirageNodeFlags
-{
-    /* Masks */
-    HL_HH_MIRAGE_NODE_FLAGS_MASK        = 0xE0000000U,
-    HL_HH_MIRAGE_NODE_SIZE_MASK         = 0x1FFFFFFFU,
-
-    /* Flags */
-    HL_HH_MIRAGE_NODE_HAS_NO_CHILDREN   = 0x20000000U,
-    HL_HH_MIRAGE_NODE_IS_LAST_CHILD     = 0x40000000U,
-    HL_HH_MIRAGE_NODE_IS_ROOT           = 0x80000000U
-}
-HlHHMirageNodeFlags;
-
 typedef struct HlHHStandardHeader
 {
     HlU32 fileSize;
@@ -36,15 +23,102 @@ HlHHStandardHeader;
 
 HL_STATIC_ASSERT_SIZE(HlHHStandardHeader, 0x18);
 
+/* Thanks to Skyth for cracking the "Mirage" stuff! */
+
+typedef struct HlHHMirageHeader
+{
+    HlU32 fileSize;
+    /** @brief Not checked by the game apparently. */
+    HlU32 magic;
+    HL_OFF32(HlU32) offsetTableOffset;
+    HlU32 offsetCount;
+}
+HlHHMirageHeader;
+
+HL_STATIC_ASSERT_SIZE(HlHHMirageHeader, 16);
+
+typedef enum HlHHMirageNodeFlags
+{
+    /* Masks */
+    HL_HH_MIRAGE_NODE_FLAGS_MASK = 0xE0000000U,
+    HL_HH_MIRAGE_NODE_SIZE_MASK = 0x1FFFFFFFU,
+
+    /* Flags */
+    HL_HH_MIRAGE_NODE_HAS_NO_CHILDREN = 0x20000000U,
+    HL_HH_MIRAGE_NODE_IS_LAST_CHILD = 0x40000000U,
+    HL_HH_MIRAGE_NODE_IS_ROOT = 0x80000000U,
+    HL_HH_MIRAGE_NODE_IS_LAST_OR_ROOT = (HL_HH_MIRAGE_NODE_IS_ROOT |
+        HL_HH_MIRAGE_NODE_IS_LAST_CHILD)
+}
+HlHHMirageNodeFlags;
+
+typedef struct HlHHMirageNode
+{
+    /** @brief See HlHHMirageNodeFlags. */
+    HlU32 flags;
+    HlU32 value;
+    char name[8];
+}
+HlHHMirageNode;
+
+HL_STATIC_ASSERT_SIZE(HlHHMirageNode, 16);
+
 HL_API void hlHHStandardHeaderSwap(HlHHStandardHeader* header, HlBool swapOffsets);
+HL_API void hlHHMirageHeaderSwap(HlHHMirageHeader* header, HlBool swapOffsets);
+HL_API void hlHHMirageNodeSwap(HlHHMirageNode* node);
 
 HL_API void hlHHStandardHeaderFix(HlHHStandardHeader* header);
+HL_API void hlHHMirageHeaderFix(HlHHMirageHeader* header);
 HL_API void hlHHOffsetsFix(HlU32* HL_RESTRICT offsets,
     HlU32 offsetCount, void* HL_RESTRICT data);
 
+HL_API void hlHHStandardFix(HlBlob* blob);
+HL_API void hlHHMirageFix(HlBlob* blob);
 HL_API void hlHHFix(HlBlob* blob);
 
-HL_API void* hlHHGetData(const HlBlob* blob);
+#define hlHHHeaderIsMirage(header) (HlBool)(*(const HlU32*)(header) & HL_HH_MIRAGE_NODE_IS_ROOT)
+
+#ifdef HL_IS_BIG_ENDIAN
+#define hlHHHeaderIsMirageNotFixed(header) hlHHHeaderIsMirage(header)
+#else
+#define hlHHHeaderIsMirageNotFixed(header) (HlBool)(*(const HlU32*)(header) & 0x80U)
+#endif
+
+#define hlHHMirageHeaderGetNodes(header)\
+    (((header)->fileSize & HL_HH_MIRAGE_NODE_HAS_NO_CHILDREN) ? NULL :\
+    ((const HlHHMirageNode*)((header) + 1)))
+
+#define hlHHMirageNodeGetSize(node) ((node)->flags & HL_HH_MIRAGE_NODE_SIZE_MASK)
+
+#define hlHHMirageNodeGetNext(node)\
+    (((node)->flags & HL_HH_MIRAGE_NODE_IS_LAST_OR_ROOT) ? NULL :\
+    (const HlHHMirageNode*)HL_ADD_OFFC(node, hlHHMirageNodeGetSize(node)))
+
+#define hlHHMirageNodeGetChildren(node)\
+    (((node)->flags & HL_HH_MIRAGE_NODE_HAS_NO_CHILDREN) ? NULL :\
+    ((const HlHHMirageNode*)(node) + 1))
+
+HL_API const HlHHMirageNode* hlHHMirageGetNode(
+    const HlHHMirageNode* HL_RESTRICT nodes,
+    const char* HL_RESTRICT name, HlBool recursive);
+
+HL_API const HlHHMirageNode* hlHHMirageGetDataNode(const HlBlob* blob);
+
+#define hlHHStandardGetData(blob) (const void*)hlOff32Get(\
+    &((const HlHHStandardHeader*)((blob)->data))->dataOffset);
+
+HL_API const void* hlHHMirageGetData(const HlBlob* blob);
+HL_API const void* hlHHGetData(const HlBlob* blob);
+
+#ifndef HL_NO_EXTERNAL_WRAPPERS
+HL_API HlBool hlHHHeaderIsMirageExt(const void* header);
+HL_API HlBool hlHHHeaderIsMirageNotFixedExt(const void* header);
+HL_API const HlHHMirageNode* hlHHMirageHeaderGetNodesExt(const HlHHMirageHeader* header);
+HL_API HlU32 hlHHMirageNodeGetSizeExt(const HlHHMirageNode* node);
+HL_API const HlHHMirageNode* hlHHMirageNodeGetNextExt(const HlHHMirageNode* node);
+HL_API const HlHHMirageNode* hlHHMirageNodeGetChildrenExt(const HlHHMirageNode* node);
+HL_API const void* hlHHStandardGetDataExt(const HlBlob* blob);
+#endif
 
 #ifdef __cplusplus
 }
