@@ -1,6 +1,12 @@
 #include "hedgelib/hl_math.h"
 #include "hedgelib/hl_endian.h"
 
+void hlVector2HalfSwap(HlVector2Half* vec)
+{
+    hlSwapU16P(&vec->x);
+    hlSwapU16P(&vec->y);
+}
+
 void hlVector2Swap(HlVector2* vec)
 {
     hlSwapFloatP(&vec->x);

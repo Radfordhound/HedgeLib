@@ -16,6 +16,15 @@ extern "C" {
 #define HL_IS_NAN(v) isnan(v)
 #endif
 
+typedef struct HlVector2Half
+{
+    HlU16 x;
+    HlU16 y;
+}
+HlVector2Half;
+
+HL_STATIC_ASSERT_SIZE(HlVector2, 4);
+
 typedef struct HlVector2
 {
     float x;
@@ -47,6 +56,7 @@ HlQuaternion;
 
 HL_STATIC_ASSERT_SIZE(HlVector4, 16);
 
+HL_API void hlVector2HalfSwap(HlVector2Half* vec);
 HL_API void hlVector2Swap(HlVector2* vec);
 HL_API void hlVector3Swap(HlVector3* vec);
 HL_API void hlVector4Swap(HlVector4* vec);
