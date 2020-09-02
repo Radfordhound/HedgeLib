@@ -65,7 +65,7 @@ void hlHHMeshSwapVertices(HlHHMesh* mesh)
     /* Swap vertices based on vertex format. */
     while (hhCurVertexElement->format != HL_HH_VERTEX_FORMAT_LAST_ENTRY)
     {
-        void* curVertex = hhVertices;
+        void* curVertex = HL_ADD_OFF(hhVertices, hhCurVertexElement->offset);
         HlU32 i;
 
         for (i = 0; i < mesh->vertexCount; ++i)
@@ -86,7 +86,9 @@ void hlHHMeshSwapVertices(HlHHMesh* mesh)
                 hlVector2Swap(((HlVector2*)curVertex));
                 break;
 
-            /* TODO: Add support for half format(s). */
+            case HL_HH_VERTEX_FORMAT_VECTOR2_HALF:
+                hlVector2HalfSwap(((HlVector2Half*)curVertex));
+                break;
 
             case HL_HH_VERTEX_FORMAT_VECTOR3:
                 hlVector3Swap(((HlVector3*)curVertex));
@@ -350,7 +352,10 @@ static HlResult hlINHHVertexFormatRead(const HlHHMeshSlot* HL_RESTRICT hhMeshSlo
                         HL_VERTEX_ELEM_DIMENSION_2D);
                     break;
 
-                /* TODO: Add support for half format(s). */
+                case HL_HH_VERTEX_FORMAT_VECTOR2_HALF:
+                    hlCurVertexElement->type = (HL_VERTEX_ELEM_FORMAT_HALF |
+                        HL_VERTEX_ELEM_DIMENSION_2D);
+                    break;
 
                 case HL_HH_VERTEX_FORMAT_VECTOR3:
                     hlCurVertexElement->type = (HL_VERTEX_ELEM_FORMAT_FLOAT |
