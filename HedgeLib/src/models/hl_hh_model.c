@@ -205,12 +205,11 @@ static void hlINHHMeshGroupsSwapRecursive(
     }
 }
 
-void hlHHSkeletalModelFix(HlBlob* blob)
+void hlHHSkeletalModelFix(HlHHSkeletalModel* model)
 {
     /* TODO: Have this just be a macro if HL_IS_BIG_ENDIAN is set? */
 
 #ifndef HL_IS_BIG_ENDIAN
-    HlHHSkeletalModel* model = (HlHHSkeletalModel*)hlHHGetData(blob);
     HL_OFF32(HlHHMeshGroup)* meshGroupOffsets = (HL_OFF32(HlHHMeshGroup)*)
         hlOff32Get(&model->meshGroupsOffset);
 
@@ -219,12 +218,11 @@ void hlHHSkeletalModelFix(HlBlob* blob)
 #endif
 }
 
-void hlHHTerrainModelFix(HlBlob* blob)
+void hlHHTerrainModelFix(HlHHTerrainModel* model)
 {
     /* TODO: Have this just be a macro if HL_IS_BIG_ENDIAN is set? */
 
 #ifndef HL_IS_BIG_ENDIAN
-    HlHHTerrainModel* model = (HlHHTerrainModel*)hlHHGetData(blob);
     HL_OFF32(HlHHMeshGroup)* meshGroupOffsets = (HL_OFF32(HlHHMeshGroup)*)
         hlOff32Get(&model->meshGroupsOffset);
 
@@ -576,14 +574,14 @@ static HlResult hlINHHMeshGroupsRead(
     return HL_RESULT_SUCCESS;
 }
 
-HlResult hlHHSkeletalModelRead(const HlBlob* HL_RESTRICT blob,
-    HlModel** HL_RESTRICT model)
+HlResult hlHHSkeletalModelParse(
+    const HlHHSkeletalModel* HL_RESTRICT hhModel,
+    HlModel** HL_RESTRICT hlModel)
 {
-    const HlHHSkeletalModel* hhModel = (const HlHHSkeletalModel*)hlHHGetData(blob);
     const HL_OFF32(HlHHMeshGroup)* hhMeshGroups = (const HL_OFF32(HlHHMeshGroup)*)
         hlOff32Get(&hhModel->meshGroupsOffset);
 
-    void* hlModelBuf;
+    HlModel* hlModelBuf;
     HlResult result;
 
     /* Allocate HlModel buffer. */
@@ -594,44 +592,62 @@ HlResult hlHHSkeletalModelRead(const HlBlob* HL_RESTRICT blob,
             hhMeshGroups, hhModel->meshGroupCount);
 
         /* Allocate HlModel buffer. */
-        hlModelBuf = hlAlloc(reqBufSize);
+        hlModelBuf = (HlModel*)hlAlloc(reqBufSize);
         if (!hlModelBuf) return HL_ERROR_OUT_OF_MEMORY;
     }
 
     /* Read HlModel. */
     {
         /* Setup HlModel. */
-        HlModel* hlModel = (HlModel*)hlModelBuf;
-        hlModel->name = NULL;
-        hlModel->meshGroupCount = (size_t)hhModel->meshGroupCount;
-        hlModel->meshGroups = (HlMeshGroup*)HL_ADD_OFF(hlModelBuf, sizeof(HlModel));
+        hlModelBuf->name = NULL;
+        hlModelBuf->meshGroupCount = (size_t)hhModel->meshGroupCount;
+        hlModelBuf->meshGroups = (HlMeshGroup*)HL_ADD_OFF(
+            hlModelBuf, sizeof(HlModel));
 
         /* Setup HlMeshGroups. */
-        hlModel->vertexFormats = (HlVertexFormat*)
-            &hlModel->meshGroups[hlModel->meshGroupCount];
+        hlModelBuf->vertexFormats = (HlVertexFormat*)
+            &hlModelBuf->meshGroups[hlModelBuf->meshGroupCount];
 
-        hlModel->vertexFormatCount = hlModel->meshGroupCount;
+        hlModelBuf->vertexFormatCount = hlModelBuf->meshGroupCount;
 
         result = hlINHHMeshGroupsRead(hhMeshGroups,
-            hhModel->meshGroupCount, hlModel->meshGroups);
+            hhModel->meshGroupCount, hlModelBuf->meshGroups);
 
         if (HL_FAILED(result)) return result;
 
         /* Set model pointer and return success. */
-        *model = hlModel;
+        *hlModel = hlModelBuf;
         return HL_RESULT_SUCCESS;
     }
 }
 
-HlResult hlHHTerrainModelRead(const HlBlob* HL_RESTRICT blob,
-    HlModel** HL_RESTRICT model)
+HlResult hlHHSkeletalModelRead(HlBlob* HL_RESTRICT blob,
+    HlModel** HL_RESTRICT hlModel)
 {
-    const HlHHTerrainModel* hhModel = (const HlHHTerrainModel*)hlHHGetData(blob);
+    /* Fix HH general data. */
+    HlHHSkeletalModel* hhModel;
+    hlHHFix(blob);
+
+    /* Get HH skeletal model pointer. */
+    hhModel = (HlHHSkeletalModel*)hlHHGetData(blob);
+    if (!hhModel) return HL_ERROR_INVALID_DATA;
+
+    /* Fix HH skeletal model data. */
+    hlHHSkeletalModelFix(hhModel);
+
+    /* Parse HH skeletal model data into HlModel and return result. */
+    return hlHHSkeletalModelParse(hhModel, hlModel);
+}
+
+HlResult hlHHTerrainModelParse(
+    const HlHHTerrainModel* HL_RESTRICT hhModel,
+    HlModel** HL_RESTRICT hlModel)
+{
     const HL_OFF32(HlHHMeshGroup)* hhMeshGroups = (const HL_OFF32(HlHHMeshGroup)*)
         hlOff32Get(&hhModel->meshGroupsOffset);
 
     const char* hhModelName = (const char*)hlOff32Get(&hhModel->nameOffset);
-    void* hlModelBuf;
+    HlModel* hlModelBuf;
     size_t modelNameLen;
     HlResult result;
 
@@ -647,35 +663,52 @@ HlResult hlHHTerrainModelRead(const HlBlob* HL_RESTRICT blob,
         reqBufSize += modelNameLen;
 
         /* Allocate HlModel buffer. */
-        hlModelBuf = hlAlloc(reqBufSize);
+        hlModelBuf = (HlModel*)hlAlloc(reqBufSize);
         if (!hlModelBuf) return HL_ERROR_OUT_OF_MEMORY;
     }
 
     /* Read HlModel. */
     {
         /* Setup HlModel. */
-        HlModel* hlModel = (HlModel*)hlModelBuf;
-        hlModel->name = (const char*)HL_ADD_OFFC(hlModelBuf, sizeof(HlModel));
-        hlModel->meshGroupCount = (size_t)hhModel->meshGroupCount;
-        hlModel->meshGroups = (HlMeshGroup*)HL_ADD_OFF(hlModelBuf,
+        hlModelBuf->name = (const char*)HL_ADD_OFFC(hlModelBuf, sizeof(HlModel));
+        hlModelBuf->meshGroupCount = (size_t)hhModel->meshGroupCount;
+        hlModelBuf->meshGroups = (HlMeshGroup*)HL_ADD_OFF(hlModelBuf,
             sizeof(HlModel) + modelNameLen);
 
         /* Setup HlMeshGroups. */
-        hlModel->vertexFormats = (HlVertexFormat*)
-            &hlModel->meshGroups[hlModel->meshGroupCount];
+        hlModelBuf->vertexFormats = (HlVertexFormat*)
+            &hlModelBuf->meshGroups[hlModelBuf->meshGroupCount];
 
-        hlModel->vertexFormatCount = hlModel->meshGroupCount;
+        hlModelBuf->vertexFormatCount = hlModelBuf->meshGroupCount;
 
         result = hlINHHMeshGroupsRead(hhMeshGroups,
-            hhModel->meshGroupCount, hlModel->meshGroups);
+            hhModel->meshGroupCount, hlModelBuf->meshGroups);
 
         if (HL_FAILED(result)) return result;
 
         /* Copy name. */
-        memcpy(hlModel + 1, hhModelName, modelNameLen);
+        memcpy(hlModelBuf + 1, hhModelName, modelNameLen);
 
         /* Set model pointer and return success. */
-        *model = hlModel;
+        *hlModel = hlModelBuf;
         return HL_RESULT_SUCCESS;
     }
+}
+
+HlResult hlHHTerrainModelRead(HlBlob* HL_RESTRICT blob,
+    HlModel** HL_RESTRICT hlModel)
+{
+    /* Fix HH general data. */
+    HlHHTerrainModel* hhModel;
+    hlHHFix(blob);
+
+    /* Get HH terrain model pointer. */
+    hhModel = (HlHHTerrainModel*)hlHHGetData(blob);
+    if (!hhModel) return HL_ERROR_INVALID_DATA;
+
+    /* Fix HH terrain model data. */
+    hlHHTerrainModelFix(hhModel);
+
+    /* Parse HH terrain model data into HlModel and return result. */
+    return hlHHTerrainModelParse(hhModel, hlModel);
 }

@@ -165,14 +165,22 @@ HL_API void hlHHTerrainModelSwap(HlHHTerrainModel* model, HlBool swapOffsets);
 HL_API void hlHHSkeletonSwap(HlHHSkeleton* skeleton);
 HL_API void hlHHSkeletalModelSwap(HlHHSkeletalModel* model, HlBool swapOffsets);
 
-HL_API void hlHHSkeletalModelFix(HlBlob* blob);
-HL_API void hlHHTerrainModelFix(HlBlob* blob);
+HL_API void hlHHSkeletalModelFix(HlHHSkeletalModel* model);
+HL_API void hlHHTerrainModelFix(HlHHTerrainModel* model);
 
-HL_API HlResult hlHHSkeletalModelRead(const HlBlob* HL_RESTRICT blob,
-    HlModel** HL_RESTRICT model);
+HL_API HlResult hlHHSkeletalModelParse(
+    const HlHHSkeletalModel* HL_RESTRICT hhModel,
+    HlModel** HL_RESTRICT hlModel);
 
-HL_API HlResult hlHHTerrainModelRead(const HlBlob* HL_RESTRICT blob,
-    HlModel** HL_RESTRICT model);
+HL_API HlResult hlHHSkeletalModelRead(HlBlob* HL_RESTRICT blob,
+    HlModel** HL_RESTRICT hlModel);
+
+HL_API HlResult hlHHTerrainModelParse(
+    const HlHHTerrainModel *HL_RESTRICT hhModel,
+    HlModel** HL_RESTRICT hlModel);
+
+HL_API HlResult hlHHTerrainModelRead(HlBlob* HL_RESTRICT blob,
+    HlModel** HL_RESTRICT hlModel);
 
 #ifdef __cplusplus
 }

@@ -122,14 +122,11 @@ static void hlINNNSubMotionNodeSwapKeys(HlNNSubMotion* subMot)
     case HL_NN_SMOTIPTYPE_SI_SPLINE:
         switch (subMot->type & HL_NN_SMOTTYPE_VALUETYPE_MASK)
         {
-        case HL_NN_SMOTTYPE_TRANSLATION_X:
-        case HL_NN_SMOTTYPE_TRANSLATION_Y:
-        case HL_NN_SMOTTYPE_TRANSLATION_Z:
-        case HL_NN_SMOTTYPE_SCALING_X:
-        case HL_NN_SMOTTYPE_SCALING_Y:
-        case HL_NN_SMOTTYPE_SCALING_Z:
-        case HL_NN_SMOTTYPE_USER_FLOAT:
-            hlINNNSubMotionSwapKeysCaseBody(Bezier)
+/* Auto-generate this switch's body. */
+#define HL_IN_NN_SUBMOTION_NODE_IP_AUTOGEN(nnSubMotFormat, nnSubMotTypeSuffix, hlSubMotTypeSuffix)\
+    case nnSubMotFormat: hlINNNSubMotionSwapKeysCaseBody(nnSubMotTypeSuffix)
+
+#include "hl_in_nn_motion_autogen.h"
 
         case HL_NN_SMOTTYPE_ROTATION_X:
         case HL_NN_SMOTTYPE_ROTATION_Y:
@@ -158,28 +155,17 @@ static void hlINNNSubMotionNodeSwapKeys(HlNNSubMotion* subMot)
             break;
 
         /* TODO: Swap HL_NN_SMOTTYPE_QUATERNION */
-        /* TODO: Swap HL_NN_SMOTTYPE_NODEHIDE */
         }
         break;
 
     default:
         switch (subMot->type & HL_NN_SMOTTYPE_VALUETYPE_MASK)
         {
-        case HL_NN_SMOTTYPE_TRANSLATION_X:
-        case HL_NN_SMOTTYPE_TRANSLATION_Y:
-        case HL_NN_SMOTTYPE_TRANSLATION_Z:
-        case HL_NN_SMOTTYPE_SCALING_X:
-        case HL_NN_SMOTTYPE_SCALING_Y:
-        case HL_NN_SMOTTYPE_SCALING_Z:
-        case HL_NN_SMOTTYPE_USER_FLOAT:
-            hlINNNSubMotionSwapKeysCaseBody(Float)
+/* Auto-generate this switch's body. */
+#define HL_IN_NN_SUBMOTION_NODE_AUTOGEN(nnSubMotFormat, nnSuffix, hlSuffix, hlFormat)\
+    case nnSubMotFormat: hlINNNSubMotionSwapKeysCaseBody(nnSuffix)
 
-        case HL_NN_SMOTTYPE_USER_UINT32:
-            hlINNNSubMotionSwapKeysCaseBody(UInt)
-
-        case HL_NN_SMOTTYPE_TRANSLATION_XYZ:
-        case HL_NN_SMOTTYPE_SCALING_XYZ:
-            hlINNNSubMotionSwapKeysCaseBody(Vector)
+#include "hl_in_nn_motion_autogen.h"
 
         case HL_NN_SMOTTYPE_ROTATION_X:
         case HL_NN_SMOTTYPE_ROTATION_Y:
@@ -232,7 +218,6 @@ static void hlINNNSubMotionNodeSwapKeys(HlNNSubMotion* subMot)
             break;
 
         /* TODO: Swap HL_NN_SMOTTYPE_QUATERNION */
-        /* TODO: Swap HL_NN_SMOTTYPE_NODEHIDE */
         }
         break;
     }
@@ -502,25 +487,11 @@ void hlNNSubMotionSwapKeys(HlNNSubMotion* subMot, HlU32 motType)
     /* Compute required size to convert this submotion and all of its keys. */
     switch (motType & HL_NN_MOTIONTYPE_CATEGORY_MASK)
     {
-    case HL_NN_MOTIONTYPE_NODE:
-        hlINNNSubMotionNodeSwapKeys(subMot);
-        break;
+/* Auto-generate this switch's body. */
+#define HL_IN_NN_MOTION_TYPE_AUTOGEN(nnMotType, nnMotTypeSuffix, hlMotType)\
+    case nnMotType: hlINNNSubMotion##nnMotTypeSuffix##SwapKeys(subMot); break;
 
-    case HL_NN_MOTIONTYPE_CAMERA:
-        hlINNNSubMotionCameraSwapKeys(subMot);
-        break;
-
-    case HL_NN_MOTIONTYPE_LIGHT:
-        hlINNNSubMotionLightSwapKeys(subMot);
-        break;
-
-    case HL_NN_MOTIONTYPE_MORPH:
-        hlINNNSubMotionMorphSwapKeys(subMot);
-        break;
-
-    case HL_NN_MOTIONTYPE_MATERIAL:
-        hlINNNSubMotionMaterialSwapKeys(subMot);
-        break;
+#include "hl_in_nn_motion_autogen.h"
     }
 }
 
@@ -564,7 +535,7 @@ void hlNNMotionFix(HlNNBinCnkDataHeader* dataHeader)
 
         /* Swap NN Motion. */
         motion = (HlNNMotion*)hlOff32Get(&dataHeader->mainDataOffset);
-        hlNNMotionSwap(motion, 0);
+        hlNNMotionSwap(motion, HL_FALSE);
 
         /* Get NN SubMotions pointer. */
         subMots = (HlNNSubMotion*)hlOff32Get(&motion->subMotions);
@@ -591,15 +562,11 @@ static size_t hlINNNSubMotionNodeComputeReqSize(const HlNNSubMotion* subMot)
     case HL_NN_SMOTIPTYPE_SI_SPLINE:
         switch (subMot->type & HL_NN_SMOTTYPE_VALUETYPE_MASK)
         {
-        case HL_NN_SMOTTYPE_TRANSLATION_X:
-        case HL_NN_SMOTTYPE_TRANSLATION_Y:
-        case HL_NN_SMOTTYPE_TRANSLATION_Z:
-        case HL_NN_SMOTTYPE_SCALING_X:
-        case HL_NN_SMOTTYPE_SCALING_Y:
-        case HL_NN_SMOTTYPE_SCALING_Z:
-        case HL_NN_SMOTTYPE_USER_FLOAT:
-            reqKeySize = sizeof(HlAnimationKeyFloatIP);
-            break;
+/* Auto-generate this switch's body. */
+#define HL_IN_NN_SUBMOTION_NODE_IP_AUTOGEN(nnSubMotFormat, nnSubMotTypeSuffix, hlSubMotTypeSuffix)\
+    case nnSubMotFormat: reqKeySize = sizeof(HlAnimationKey##hlSubMotTypeSuffix); break;
+
+#include "hl_in_nn_motion_autogen.h"
 
         case HL_NN_SMOTTYPE_ROTATION_X:
         case HL_NN_SMOTTYPE_ROTATION_Y:
@@ -639,21 +606,16 @@ static size_t hlINNNSubMotionNodeComputeReqSize(const HlNNSubMotion* subMot)
             break;
 
         /* TODO: Parse HL_NN_SMOTTYPE_QUATERNION */
-        /* TODO: Parse HL_NN_SMOTTYPE_NODEHIDE */
         }
 
     default:
         switch (subMot->type & HL_NN_SMOTTYPE_VALUETYPE_MASK)
         {
-        case HL_NN_SMOTTYPE_TRANSLATION_X:
-        case HL_NN_SMOTTYPE_TRANSLATION_Y:
-        case HL_NN_SMOTTYPE_TRANSLATION_Z:
-        case HL_NN_SMOTTYPE_SCALING_X:
-        case HL_NN_SMOTTYPE_SCALING_Y:
-        case HL_NN_SMOTTYPE_SCALING_Z:
-        case HL_NN_SMOTTYPE_USER_FLOAT:
-            reqKeySize = sizeof(HlAnimationKeyFloat);
-            break;
+/* Auto-generate this switch's body. */
+#define HL_IN_NN_SUBMOTION_NODE_AUTOGEN(nnSubMotFormat, nnSuffix, hlSuffix, hlFormat)\
+    case nnSubMotFormat: reqKeySize = sizeof(HlAnimationKey##hlSuffix); break;
+
+#include "hl_in_nn_motion_autogen.h"
 
         case HL_NN_SMOTTYPE_ROTATION_X:
         case HL_NN_SMOTTYPE_ROTATION_Y:
@@ -684,15 +646,6 @@ static size_t hlINNNSubMotionNodeComputeReqSize(const HlNNSubMotion* subMot)
             }
             break;
 
-        case HL_NN_SMOTTYPE_USER_UINT32:
-            reqKeySize = sizeof(HlAnimationKeyUInt);
-            break;
-
-        case HL_NN_SMOTTYPE_TRANSLATION_XYZ:
-        case HL_NN_SMOTTYPE_SCALING_XYZ:
-            reqKeySize = sizeof(HlAnimationKeyFloat3);
-            break;
-
         case HL_NN_SMOTTYPE_ROTATION_XYZ:
             switch (subMot->type & HL_NN_SMOTTYPE_FRAME_MASK)
             {
@@ -721,7 +674,6 @@ static size_t hlINNNSubMotionNodeComputeReqSize(const HlNNSubMotion* subMot)
             break;
 
         /* TODO: Parse HL_NN_SMOTTYPE_QUATERNION */
-        /* TODO: Parse HL_NN_SMOTTYPE_NODEHIDE */
         }
         break;
     }
@@ -991,20 +943,11 @@ static size_t hlINNNSubMotionComputeReqSize(const HlNNSubMotion* subMot, HlU32 m
     /* Compute required size to convert this submotion and all of its keys. */
     switch (motType & HL_NN_MOTIONTYPE_CATEGORY_MASK)
     {
-    case HL_NN_MOTIONTYPE_NODE:
-        return hlINNNSubMotionNodeComputeReqSize(subMot);
+/* Auto-generate this switch's body. */
+#define HL_IN_NN_MOTION_TYPE_AUTOGEN(nnMotType, nnMotTypeSuffix, hlMotType)\
+    case nnMotType: return hlINNNSubMotion##nnMotTypeSuffix##ComputeReqSize(subMot);
 
-    case HL_NN_MOTIONTYPE_CAMERA:
-        return hlINNNSubMotionCameraComputeReqSize(subMot);
-
-    case HL_NN_MOTIONTYPE_LIGHT:
-        return hlINNNSubMotionLightComputeReqSize(subMot);
-
-    case HL_NN_MOTIONTYPE_MORPH:
-        return hlINNNSubMotionMorphComputeReqSize(subMot);
-
-    case HL_NN_MOTIONTYPE_MATERIAL:
-        return hlINNNSubMotionMaterialComputeReqSize(subMot);
+#include "hl_in_nn_motion_autogen.h"
 
     default: return sizeof(HlAnimationKeyGroup);
     }
@@ -1016,25 +959,11 @@ static HlAnimationFlags hlINNNMotionParseType(const HlNNMotion* motion)
     HlAnimationFlags animFlags;
     switch (motion->type & HL_NN_MOTIONTYPE_CATEGORY_MASK)
     {
-    case HL_NN_MOTIONTYPE_NODE:
-        animFlags = HL_ANIM_TYPE_BONE;
-        break;
+/* Auto-generate this switch's body. */
+#define HL_IN_NN_MOTION_TYPE_AUTOGEN(nnMotType, nnMotTypeSuffix, hlMotType)\
+    case nnMotType: animFlags = hlMotType; break;
 
-    case HL_NN_MOTIONTYPE_CAMERA:
-        animFlags = HL_ANIM_TYPE_CAMERA;
-        break;
-
-    case HL_NN_MOTIONTYPE_LIGHT:
-        animFlags = HL_ANIM_TYPE_LIGHT;
-        break;
-
-    case HL_NN_MOTIONTYPE_MORPH:
-        animFlags = HL_ANIM_TYPE_MORPH;
-        break;
-
-    case HL_NN_MOTIONTYPE_MATERIAL:
-        animFlags = HL_ANIM_TYPE_MATERIAL;
-        break;
+#include "hl_in_nn_motion_autogen.h"
 
     default:
         animFlags = (HlAnimationFlags)0;
@@ -1077,18 +1006,11 @@ static HlAnimationKeyGroupFlags hlINNNSubMotionNodeParseTypeFloat(const HlNNSubM
 {
     switch (subMot->type & HL_NN_SMOTTYPE_VALUETYPE_MASK)
     {
-    case HL_NN_SMOTTYPE_TRANSLATION_X:
-        return (HL_ANIM_KEY_FORMAT_FLOAT | HL_ANIM_KEY_BONE_TYPE_POS_X);
+/* Auto-generate this switch's body. */
+#define HL_IN_NN_SUBMOTION_NODE_AUTOGEN(nnSubMotFormat, nnSuffix, hlSuffix, hlFormat)\
+    case nnSubMotFormat: return hlFormat;
 
-    case HL_NN_SMOTTYPE_TRANSLATION_Y:
-        return (HL_ANIM_KEY_FORMAT_FLOAT | HL_ANIM_KEY_BONE_TYPE_POS_Y);
-
-    case HL_NN_SMOTTYPE_TRANSLATION_Z:
-        return (HL_ANIM_KEY_FORMAT_FLOAT | HL_ANIM_KEY_BONE_TYPE_POS_Z);
-
-    case HL_NN_SMOTTYPE_TRANSLATION_XYZ:
-        return (HL_ANIM_KEY_FORMAT_FLOAT | HL_ANIM_KEY_DIMENSION_3D |
-            HL_ANIM_KEY_BONE_TYPE_POS_XYZ);
+#include "hl_in_nn_motion_autogen.h"
 
     case HL_NN_SMOTTYPE_ROTATION_X:
     {
@@ -1149,27 +1071,7 @@ static HlAnimationKeyGroupFlags hlINNNSubMotionNodeParseTypeFloat(const HlNNSubM
         return (HlAnimationKeyGroupFlags)0;
     }
 
-    case HL_NN_SMOTTYPE_SCALING_X:
-        return (HL_ANIM_KEY_FORMAT_FLOAT | HL_ANIM_KEY_BONE_TYPE_SCALE_X);
-
-    case HL_NN_SMOTTYPE_SCALING_Y:
-        return (HL_ANIM_KEY_FORMAT_FLOAT | HL_ANIM_KEY_BONE_TYPE_SCALE_Y);
-
-    case HL_NN_SMOTTYPE_SCALING_Z:
-        return (HL_ANIM_KEY_FORMAT_FLOAT | HL_ANIM_KEY_BONE_TYPE_SCALE_Z);
-
-    case HL_NN_SMOTTYPE_SCALING_XYZ:
-        return (HL_ANIM_KEY_FORMAT_FLOAT | HL_ANIM_KEY_DIMENSION_3D |
-            HL_ANIM_KEY_BONE_TYPE_SCALE_XYZ);
-
-    case HL_NN_SMOTTYPE_USER_UINT32:
-        return (HL_ANIM_KEY_FORMAT_UINT | HL_ANIM_KEY_TYPE_CUSTOM);
-
-    case HL_NN_SMOTTYPE_USER_FLOAT:
-        return (HL_ANIM_KEY_FORMAT_FLOAT | HL_ANIM_KEY_TYPE_CUSTOM);
-
     /* TODO: Parse HL_NN_SMOTTYPE_QUATERNION */
-    /* TODO: Parse HL_NN_SMOTTYPE_NODEHIDE */
 
     default: return (HlAnimationKeyGroupFlags)0;
     }
@@ -1430,25 +1332,11 @@ static HlAnimationKeyGroupFlags hlINNNSubMotionParseType(
     case HL_NN_SMOTTYPE_FRAME_FLOAT:
         switch (motType)
         {
-        case HL_NN_MOTIONTYPE_NODE:
-            flags = hlINNNSubMotionNodeParseTypeFloat(subMot);
-            break;
+/* Auto-generate this switch's body. */
+#define HL_IN_NN_MOTION_TYPE_AUTOGEN(nnMotType, nnMotTypeSuffix, hlMotType)\
+    case nnMotType: flags = hlINNNSubMotion##nnMotTypeSuffix##ParseTypeFloat(subMot); break;
 
-        case HL_NN_MOTIONTYPE_CAMERA:
-            flags = hlINNNSubMotionCameraParseTypeFloat(subMot);
-            break;
-
-        case HL_NN_MOTIONTYPE_LIGHT:
-            flags = hlINNNSubMotionLightParseTypeFloat(subMot);
-            break;
-
-        case HL_NN_MOTIONTYPE_MORPH:
-            flags = hlINNNSubMotionMorphParseTypeFloat(subMot);
-            break;
-
-        case HL_NN_MOTIONTYPE_MATERIAL:
-            flags = hlINNNSubMotionMaterialParseTypeFloat(subMot);
-            break;
+#include "hl_in_nn_motion_autogen.h"
 
         default:
             flags = (HlAnimationKeyGroupFlags)0;
@@ -1985,20 +1873,12 @@ static void* hlINNNSubMotionReadKeyFrames(
     case HL_NN_SMOTTYPE_FRAME_FLOAT:
         switch (motType)
         {
-        case HL_NN_MOTIONTYPE_NODE:
-            return hlINNNSubMotionNodeReadKeyFramesFloat(subMot, hlKeyframes);
+/* Auto-generate this switch's body. */
+#define HL_IN_NN_MOTION_TYPE_AUTOGEN(nnMotType, nnMotTypeSuffix, hlMotType)\
+    case nnMotType: return hlINNNSubMotion##nnMotTypeSuffix##ReadKeyFramesFloat(\
+                        subMot, hlKeyframes);
 
-        case HL_NN_MOTIONTYPE_CAMERA:
-            return hlINNNSubMotionCameraReadKeyFramesFloat(subMot, hlKeyframes);
-
-        case HL_NN_MOTIONTYPE_LIGHT:
-            return hlINNNSubMotionLightReadKeyFramesFloat(subMot, hlKeyframes);
-
-        case HL_NN_MOTIONTYPE_MORPH:
-            return hlINNNSubMotionMorphReadKeyFramesFloat(subMot, hlKeyframes);
-
-        case HL_NN_MOTIONTYPE_MATERIAL:
-            return hlINNNSubMotionMaterialReadKeyFramesFloat(subMot, hlKeyframes);
+#include "hl_in_nn_motion_autogen.h"
         }
         break;
 
@@ -2014,19 +1894,15 @@ static void* hlINNNSubMotionReadKeyFrames(
     return hlKeyframes;
 }
 
-HlAnimation* hlNNMotionRead(const HlBlob* blob)
+HlResult hlNNMotionParse(const HlNNMotion* HL_RESTRICT motion,
+    HlAnimation** HL_RESTRICT hlAnim)
 {
-    void* hlAnimBuf;
-    const HlNNMotion* motion;
+    HlAnimation* hlAnimBuf;
     const HlNNSubMotion* subMots;
     size_t totalReqSize, i;
 
-    /* Get NN Motion pointer. */
-    motion = (const HlNNMotion*)hlNNGetData(blob);
-
     /* Get NN SubMotions pointer. */
-    subMots = (const HlNNSubMotion*)
-        hlOff32Get(&motion->subMotions);
+    subMots = (const HlNNSubMotion*)hlOff32Get(&motion->subMotions);
 
     /* Compute total required size to convert this NN Motion. */
     totalReqSize = sizeof(HlAnimation);
@@ -2037,12 +1913,11 @@ HlAnimation* hlNNMotionRead(const HlBlob* blob)
     }
 
     /* Allocate a buffer of the required size. */
-    hlAnimBuf = hlAlloc(totalReqSize);
-    if (!hlAnimBuf) return NULL;
+    hlAnimBuf = (HlAnimation*)hlAlloc(totalReqSize);
+    if (!hlAnimBuf) return HL_ERROR_OUT_OF_MEMORY;
 
     /* Convert NN Motion to HlAnimation. */
     {
-        HlAnimation* hlAnim = (HlAnimation*)hlAnimBuf;
         void* hlAnimKeys;
         HlU32 motType;
         
@@ -2050,22 +1925,22 @@ HlAnimation* hlNNMotionRead(const HlBlob* blob)
         motType = (motion->type & HL_NN_MOTIONTYPE_CATEGORY_MASK);
 
         /* Setup HlAnimation. */
-        hlAnim->flagsAndType = hlINNNMotionParseType(motion);
-        hlAnim->framerate = motion->framerate;
-        hlAnim->startFrame = motion->startFrame;
-        hlAnim->endFrame = motion->endFrame;
-        hlAnim->keyGroupCount = (size_t)motion->subMotionCount;
-        hlAnim->keyGroups = (HlAnimationKeyGroup*)
-            HL_ADD_OFF(hlAnimBuf, sizeof(*hlAnim));
+        hlAnimBuf->flagsAndType = hlINNNMotionParseType(motion);
+        hlAnimBuf->framerate = motion->framerate;
+        hlAnimBuf->startFrame = motion->startFrame;
+        hlAnimBuf->endFrame = motion->endFrame;
+        hlAnimBuf->keyGroupCount = (size_t)motion->subMotionCount;
+        hlAnimBuf->keyGroups = (HlAnimationKeyGroup*)
+            HL_ADD_OFF(hlAnimBuf, sizeof(*hlAnimBuf));
 
         /* Get animation keys pointer. */
-        hlAnimKeys = HL_ADD_OFF(hlAnim->keyGroups,
-            sizeof(HlAnimationKeyGroup) * hlAnim->keyGroupCount);
+        hlAnimKeys = HL_ADD_OFF(hlAnimBuf->keyGroups,
+            sizeof(HlAnimationKeyGroup) * hlAnimBuf->keyGroupCount);
 
         /* Convert NN SubMotions to HlAnimationKeyGroups. */
         for (i = 0; i < motion->subMotionCount; ++i)
         {
-            HlAnimationKeyGroup* keyGroup = &hlAnim->keyGroups[i];
+            HlAnimationKeyGroup* keyGroup = &hlAnimBuf->keyGroups[i];
 
             keyGroup->flagsAndType = hlINNNSubMotionParseType(&subMots[i], motType);
             keyGroup->startFrame = subMots[i].startFrame;
@@ -2099,13 +1974,30 @@ HlAnimation* hlNNMotionRead(const HlBlob* blob)
             {
                 keyGroup->flagsAndType = (HlAnimationKeyGroupFlags)0;
                 keyGroup->keyframeCount = 0;
-                keyGroup->keyframes = 0;
+                keyGroup->keyframes = NULL;
             }
         }
     }
 
-    /* Return pointer to newly-created HlAnimation buffer. */
-    return (HlAnimation*)hlAnimBuf;
+    /* Set pointer and return success. */
+    *hlAnim = hlAnimBuf;
+    return HL_RESULT_SUCCESS;
+}
+
+HlResult hlNNMotionRead(HlBlob* HL_RESTRICT blob,
+    HlAnimation** HL_RESTRICT hlAnim)
+{
+    /* Fix NN general data. */
+    HlNNBinCnkDataHeader* dataHeader;
+    hlNNFix(blob);
+
+    /* Fix NN motion data. */
+    dataHeader = hlNNGetDataHeader(blob);;
+    hlNNMotionFix(dataHeader);
+
+    /* Parse NN motion data into HlAnim and return result. */
+    return hlNNMotionParse((const HlNNMotion*)hlOff32Get(
+        &dataHeader->mainDataOffset), hlAnim);
 }
 
 #define hlINNNSubMotionWriteKeyframesLoop(parseLine, swapFunc)\
