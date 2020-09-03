@@ -10,42 +10,470 @@ HlModel** hlModelReadOBJ(const HlBlob* blob, size_t* modelCount)
     return NULL;
 }
 
+static HlResult hlINMeshWriteVerticesOBJVec1(const HlMesh* HL_RESTRICT mesh,
+    const HlVertexFormat* HL_RESTRICT vtxFmt, const HlVertexElement* HL_RESTRICT vtxElem,
+    size_t bufStartIndex, char* HL_RESTRICT buf, size_t* HL_RESTRICT globalVertexCount,
+    HlFile* HL_RESTRICT file)
+{
+    const void* verticesBufPtr;
+    size_t i, bufLen;
+    int len;
+    HlResult result;
+
+    /* Write vertices. */
+    for (i = 0; i < mesh->vertexCount; ++i)
+    {
+        /* Get pointer to data within vertices buffer. */
+        verticesBufPtr = HL_ADD_OFFC(mesh->vertices,
+            (i * vtxFmt->vertexFormatSize) + (size_t)vtxElem->offset);
+
+        switch (vtxElem->type & HL_VERTEX_ELEM_FORMAT_MASK)
+        {
+        case HL_VERTEX_ELEM_FORMAT_FLOAT:
+        {
+            const float* data = (const float*)verticesBufPtr;
+            double x;
+
+            /* Store X value. */
+            x = (double)data[0];
+
+            /* Check for NAN and infinity values. */
+            if (HL_IS_NAN(x)) x = 0;
+
+            /* Store data in buffer. */
+            len = sprintf(&buf[bufStartIndex], "%f\n", x);
+            if (len < 0) return HL_ERROR_UNKNOWN;
+
+            /* Increase buffer length and global vertex count. */
+            bufLen = (bufStartIndex + (size_t)len);
+            ++(*globalVertexCount);
+            break;
+        }
+
+        /* TODO: Support half floats. */
+
+        default: return HL_ERROR_UNSUPPORTED;
+        }
+
+        /* Write buffer contents to file. */
+        result = hlFileWrite(file, bufLen * sizeof(char), buf, 0);
+        if (HL_FAILED(result)) return result;
+    }
+
+    return HL_RESULT_SUCCESS;
+}
+
+static HlResult hlINMeshWriteVerticesOBJVec2(const HlMesh* HL_RESTRICT mesh,
+    const HlVertexFormat* HL_RESTRICT vtxFmt, const HlVertexElement* HL_RESTRICT vtxElem,
+    size_t bufStartIndex, char* HL_RESTRICT buf, size_t* HL_RESTRICT globalVertexCount,
+    HlFile* HL_RESTRICT file)
+{
+    const void* verticesBufPtr;
+    size_t i, bufLen;
+    int len;
+    HlResult result;
+
+    /* Write vertices. */
+    for (i = 0; i < mesh->vertexCount; ++i)
+    {
+        /* Get pointer to data within vertices buffer. */
+        verticesBufPtr = HL_ADD_OFFC(mesh->vertices,
+            (i * vtxFmt->vertexFormatSize) + (size_t)vtxElem->offset);
+
+        switch (vtxElem->type & HL_VERTEX_ELEM_FORMAT_MASK)
+        {
+        case HL_VERTEX_ELEM_FORMAT_FLOAT:
+        {
+            const float* data = (const float*)verticesBufPtr;
+            double x, y;
+
+            /* Store XY values. */
+            x = (double)data[0];
+            y = (double)data[1];
+
+            /* Check for NAN and infinity values. */
+            if (HL_IS_NAN(x)) x = 0;
+            if (HL_IS_NAN(y)) y = 0;
+
+            /* Flip Y if this is a texture coordinate. */
+            if ((vtxElem->type & HL_VERTEX_ELEM_TYPE_MASK) ==
+                HL_VERTEX_ELEM_TYPE_TEXCOORD)
+            {
+                y = -y;
+            }
+
+            /* Store data in buffer. */
+            len = sprintf(&buf[bufStartIndex], "%f %f\n", x, y);
+            if (len < 0) return HL_ERROR_UNKNOWN;
+
+            /* Increase buffer length and global vertex count. */
+            bufLen = (bufStartIndex + (size_t)len);
+            ++(*globalVertexCount);
+            break;
+        }
+
+        /* TODO: Support half floats. */
+
+        default: return HL_ERROR_UNSUPPORTED;
+        }
+
+        /* Write buffer contents to file. */
+        result = hlFileWrite(file, bufLen * sizeof(char), buf, 0);
+        if (HL_FAILED(result)) return result;
+    }
+
+    return HL_RESULT_SUCCESS;
+}
+
+static HlResult hlINMeshWriteVerticesOBJVec3(const HlMesh* HL_RESTRICT mesh,
+    const HlVertexFormat* HL_RESTRICT vtxFmt, const HlVertexElement* HL_RESTRICT vtxElem,
+    size_t bufStartIndex, char* HL_RESTRICT buf, size_t* HL_RESTRICT globalVertexCount,
+    HlFile* HL_RESTRICT file)
+{
+    const void* verticesBufPtr;
+    size_t i, bufLen;
+    int len;
+    HlResult result;
+
+    /* Write vertices. */
+    for (i = 0; i < mesh->vertexCount; ++i)
+    {
+        /* Get pointer to data within vertices buffer. */
+        verticesBufPtr = HL_ADD_OFFC(mesh->vertices,
+            (i * vtxFmt->vertexFormatSize) + (size_t)vtxElem->offset);
+
+        switch (vtxElem->type & HL_VERTEX_ELEM_FORMAT_MASK)
+        {
+        case HL_VERTEX_ELEM_FORMAT_FLOAT:
+        {
+            const float* data = (const float*)verticesBufPtr;
+            double x, y, z;
+
+            /* Store XYZ values. */
+            x = (double)data[0];
+            y = (double)data[1];
+            z = (double)data[2];
+
+            /* Check for NAN and infinity values. */
+            if (HL_IS_NAN(x)) x = 0;
+            if (HL_IS_NAN(y)) y = 0;
+            if (HL_IS_NAN(z)) z = 0;
+
+            /* Flip Y if this is a texture coordinate. */
+            if ((vtxElem->type & HL_VERTEX_ELEM_TYPE_MASK) ==
+                HL_VERTEX_ELEM_TYPE_TEXCOORD)
+            {
+                y = -y;
+            }
+
+            /* Store data in buffer. */
+            len = sprintf(&buf[bufStartIndex], "%f %f %f\n", x, y, z);
+            if (len < 0) return HL_ERROR_UNKNOWN;
+
+            /* Increase buffer length and global vertex count. */
+            bufLen = (bufStartIndex + (size_t)len);
+            ++(*globalVertexCount);
+            break;
+        }
+
+        /* TODO: Support half floats. */
+
+        default: return HL_ERROR_UNSUPPORTED;
+        }
+
+        /* Write buffer contents to file. */
+        result = hlFileWrite(file, bufLen * sizeof(char), buf, 0);
+        if (HL_FAILED(result)) return result;
+    }
+
+    return HL_RESULT_SUCCESS;
+}
+
+static HlResult hlINMeshWriteVerticesOBJVec4(const HlMesh* HL_RESTRICT mesh,
+    const HlVertexFormat* HL_RESTRICT vtxFmt, const HlVertexElement* HL_RESTRICT vtxElem,
+    size_t bufStartIndex, char* HL_RESTRICT buf, size_t* HL_RESTRICT globalVertexCount,
+    HlFile* HL_RESTRICT file)
+{
+    const void* verticesBufPtr;
+    size_t i, bufLen;
+    int len;
+    HlResult result;
+
+    /* Write vertices. */
+    for (i = 0; i < mesh->vertexCount; ++i)
+    {
+        /* Get pointer to data within vertices buffer. */
+        verticesBufPtr = HL_ADD_OFFC(mesh->vertices,
+            (i * vtxFmt->vertexFormatSize) + (size_t)vtxElem->offset);
+
+        switch (vtxElem->type & HL_VERTEX_ELEM_FORMAT_MASK)
+        {
+        case HL_VERTEX_ELEM_FORMAT_FLOAT:
+        {
+            const float* data = (const float*)verticesBufPtr;
+            double x, y, z, w;
+
+            /* Store XYZW values. */
+            x = (double)data[0];
+            y = (double)data[1];
+            z = (double)data[2];
+            w = (double)data[3];
+
+            /* Check for NAN and infinity values. */
+            if (HL_IS_NAN(x)) x = 0;
+            if (HL_IS_NAN(y)) y = 0;
+            if (HL_IS_NAN(z)) z = 0;
+            if (HL_IS_NAN(w)) w = 1.0;
+
+            /* Store data in buffer. */
+            len = sprintf(&buf[bufStartIndex], "%f %f %f %f\n", x, y, z, w);
+            if (len < 0) return HL_ERROR_UNKNOWN;
+
+            /* Increase buffer length and global vertex count. */
+            bufLen = (bufStartIndex + (size_t)len);
+            ++(*globalVertexCount);
+            break;
+        }
+
+        /* TODO: Support half floats. */
+
+        default: return HL_ERROR_UNSUPPORTED;
+        }
+
+        /* Write buffer contents to file. */
+        result = hlFileWrite(file, bufLen * sizeof(char), buf, 0);
+        if (HL_FAILED(result)) return result;
+    }
+
+    return HL_RESULT_SUCCESS;
+}
+
+/* C89 doesn't support the printf z modifier, so fallback to l. */
+#if (defined(__cplusplus) || defined(_MSC_VER)) ||\
+    (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
+#define HL_IN_OBJ_FACES_PRINTF_FORMAT   "%zu"
+#define HL_IN_OBJ_FACES_CAST_T          size_t
+#else
+#define HL_IN_OBJ_FACES_PRINTF_FORMAT   "%lu"
+#define HL_IN_OBJ_FACES_CAST_T          unsigned long
+#endif
+
+typedef enum HlINOBJFaceTypes
+{
+    HL_IN_OBJ_FACE_TYPE_POSITION = 1,
+    HL_IN_OBJ_FACE_TYPE_TEXCOORD = 2,
+    HL_IN_OBJ_FACE_TYPE_NORMAL = 4
+}
+HlINOBJFaceTypes;
+
+typedef struct HlINOBJGlobalCounts
+{
+    size_t vertexCount;
+    size_t texcoordCount;
+    size_t normalCount;
+}
+HlINOBJGlobalCounts;
+
+static int hlINMeshStoreFaceIndexOBJ(char types, unsigned short f,
+    const HlINOBJGlobalCounts* HL_RESTRICT globalOffset,
+    char* HL_RESTRICT buf)
+{
+    /* f 1 */
+    int idx, len;
+    len = sprintf(buf, HL_IN_OBJ_FACES_PRINTF_FORMAT,
+        (HL_IN_OBJ_FACES_CAST_T)f + globalOffset->vertexCount);
+
+    if (len < 0) return len;
+
+    idx = len;
+
+    if (types & HL_IN_OBJ_FACE_TYPE_TEXCOORD)
+    {
+        /* f 1/1 */
+        buf[idx++] = '/';
+        len = sprintf(&buf[idx], HL_IN_OBJ_FACES_PRINTF_FORMAT,
+            (HL_IN_OBJ_FACES_CAST_T)f + globalOffset->texcoordCount);
+
+        if (len < 0) return len;
+        
+        idx += len;
+
+        if (types & HL_IN_OBJ_FACE_TYPE_NORMAL)
+        {
+            /* f 1/1/1 */
+            buf[idx++] = '/';
+            len = sprintf(&buf[idx], HL_IN_OBJ_FACES_PRINTF_FORMAT,
+                (HL_IN_OBJ_FACES_CAST_T)f + globalOffset->normalCount);
+
+            if (len < 0) return len;
+
+            idx += len;
+        }
+    }
+    else if (types & HL_IN_OBJ_FACE_TYPE_NORMAL)
+    {
+        /* f 1//1 */
+        buf[idx++] = '/';
+        buf[idx++] = '/';
+
+        len = sprintf(&buf[idx], HL_IN_OBJ_FACES_PRINTF_FORMAT,
+            (HL_IN_OBJ_FACES_CAST_T)f + globalOffset->normalCount);
+
+        if (len < 0) return len;
+
+        idx += len;
+    }
+
+    return idx;
+}
+
+static int hlINMeshStoreFaceOBJ(char types,
+    unsigned short f1, unsigned short f2, unsigned short f3,
+    const HlINOBJGlobalCounts* HL_RESTRICT globalOffset,
+    char* HL_RESTRICT buf)
+{
+    int tmpLen, len = 2;
+
+    /* Store face #1 */
+    tmpLen = hlINMeshStoreFaceIndexOBJ(types, f1,
+        globalOffset, &buf[len]);
+
+    if (tmpLen < 0) return 0;
+
+    len += tmpLen;
+    buf[len++] = ' ';
+
+    /* Store face #2 */
+    tmpLen = hlINMeshStoreFaceIndexOBJ(types, f2,
+        globalOffset, &buf[len]);
+
+    if (tmpLen < 0) return 0;
+
+    len += tmpLen;
+    buf[len++] = ' ';
+
+    /* Store face #3 */
+    tmpLen = hlINMeshStoreFaceIndexOBJ(types, f3,
+        globalOffset, &buf[len]);
+
+    if (tmpLen < 0) return 0;
+
+    len += tmpLen;
+    buf[len++] = '\n';
+
+    return len;
+}
+
+static HlResult hlINMeshWriteFacesOBJStrips(const HlMesh* HL_RESTRICT mesh,
+    char types, const HlINOBJGlobalCounts* HL_RESTRICT globalOffset,
+    char* HL_RESTRICT buf, HlFile* HL_RESTRICT file)
+{
+    size_t i, bufLen;
+    HlResult result;
+    unsigned short f1, f2, f3;
+    HlBool reverse = HL_FALSE;
+
+    /* Return early if there aren't enough faces to properly convert. */
+    /* TODO: Should this be an error instead? */
+    if (mesh->faceCount <= 2) return HL_RESULT_SUCCESS;
+
+    /* Get initial f1 and f2 indices. */
+    f1 = mesh->faces[0];
+    f2 = mesh->faces[1];
+
+    /* Store type in buffer. */
+    buf[0] = 'f';
+    buf[1] = ' ';
+
+    /* Convert triangle strips to triangle indices and write. */
+    for (i = 2; i < mesh->faceCount; ++i)
+    {
+        /* Get f3 index. */
+        f3 = mesh->faces[i];
+
+        if (f3 == (unsigned short)(-1))
+        {
+            f1 = mesh->faces[i + 1];
+            f2 = mesh->faces[i + 2];
+
+            reverse = HL_FALSE;
+            i += 2;
+        }
+        else
+        {
+            /* Get f1 and f2 indices. */
+            if (f1 != f2 && f2 != f3 && f3 != f1)
+            {
+                /* Store data in buffer. */
+                if (reverse)
+                {
+                    bufLen = (size_t)hlINMeshStoreFaceOBJ(types,
+                        f1, f3, f2, globalOffset, buf);
+                }
+                else
+                {
+                    bufLen = (size_t)hlINMeshStoreFaceOBJ(types,
+                        f1, f2, f3, globalOffset, buf);
+                }
+
+                /* Multiply by sizeof(char). This should almost always be optimized-out. */
+                bufLen *= sizeof(char);
+
+                /* Write data to file. */
+                result = hlFileWrite(file, bufLen, buf, 0);
+                if (HL_FAILED(result)) return result;
+            }
+
+            f1 = f2;
+            f2 = f3;
+            reverse = !reverse;
+        }
+    }
+
+    return HL_RESULT_SUCCESS;
+}
+
 static HlResult hlINMeshesWriteOBJ(const HlMesh* HL_RESTRICT meshes,
     size_t meshCount, const HlVertexFormat* HL_RESTRICT vertexFormats,
     char* HL_RESTRICT buf, size_t* HL_RESTRICT globalIndex,
-    size_t* HL_RESTRICT globalVertexCount, HlFile* HL_RESTRICT file)
+    HlINOBJGlobalCounts* HL_RESTRICT globalCounts, HlFile* HL_RESTRICT file)
 {
-    /* TODO: Make this function not literal trash. */
-
     size_t i;
     HlResult result;
 
     for (i = 0; i < meshCount; ++i)
     {
-        const HlVertexFormat* vtxFmt = &vertexFormats[meshes[i].vertexFormatIndex];
-        size_t bufLen, globalVertexOffset, i2;
-        int len;
+        const HlINOBJGlobalCounts globalOffsets =
+        {
+            (globalCounts->vertexCount + 1),
+            (globalCounts->texcoordCount + 1),
+            (globalCounts->normalCount + 1)
+        };
 
-        /* Get global vertex offset. */
-        globalVertexOffset = (*globalVertexCount + 1);
+        const HlVertexFormat* vtxFmt = &vertexFormats[meshes[i].vertexFormatIndex];
+        size_t i2;
+        char types = 0;
+        int len;
 
         /* Store group name data in buffer. */
         len = sprintf(buf, "g group_%lu\n",
-            (unsigned long)(*globalIndex)++);
+            (unsigned long)(*globalIndex));
 
         if (len < 0) return HL_ERROR_UNKNOWN;
 
-        /* Get buffer length. */
-        bufLen = (size_t)len;
+        /* Increment global index. */
+        ++(*globalIndex);
 
         /* Write group name to file. */
-        result = hlFileWrite(file, bufLen, buf, 0);
+        result = hlFileWrite(file, (size_t)len, buf, 0);
         if (HL_FAILED(result)) return result;
 
         /* Write data. */
         for (i2 = 0; i2 < vtxFmt->vertexElementCount; ++i2)
         {
             const HlVertexElement* vtxElem = &vtxFmt->vertexElements[i2];
+            const HlVertexElementType vtxElemDimension = (vtxElem->type &
+                HL_VERTEX_ELEM_DIMENSION_MASK);
 
             /* Skip this vertex element if it's of an index that is greater than 0. */
             if ((vtxElem->type & HL_VERTEX_ELEM_INDEX_MASK) !=
@@ -55,82 +483,78 @@ static HlResult hlINMeshesWriteOBJ(const HlMesh* HL_RESTRICT meshes,
             switch (vtxElem->type & HL_VERTEX_ELEM_TYPE_MASK)
             {
             case HL_VERTEX_ELEM_TYPE_POSITION:
-            {
-                const void* verticesBufPtr;
-                size_t i3;
-
                 /* Skip this vertex element if it's not at least 3 dimensions. */
-                if ((vtxElem->type & HL_VERTEX_ELEM_DIMENSION_MASK) <
-                    HL_VERTEX_ELEM_DIMENSION_3D)
-                    continue;
+                if (vtxElemDimension < HL_VERTEX_ELEM_DIMENSION_3D) continue;
 
                 /* Store type in buffer. */
                 buf[0] = 'v';
                 buf[1] = ' ';
-                bufLen = 2;
 
                 /* Store data in buffer. */
-                for (i3 = 0; i3 < meshes[i].vertexCount; ++i3)
+                if (vtxElemDimension == HL_VERTEX_ELEM_DIMENSION_3D)
                 {
-                    /* Get pointer to data within vertices buffer. */
-                    verticesBufPtr = HL_ADD_OFFC(meshes[i].vertices,
-                         (i3 * vtxFmt->vertexFormatSize) + (size_t)vtxElem->offset);
-
-                    switch (vtxElem->type & HL_VERTEX_ELEM_FORMAT_MASK)
-                    {
-                    case HL_VERTEX_ELEM_FORMAT_FLOAT:
-                    {
-                        const float* data = (const float*)verticesBufPtr;
-                        double x, y, z;
-
-                        /* Store XYZ values. */
-                        x = (double)data[0];
-                        y = (double)data[1];
-                        z = (double)data[2];
-
-                        /* Check for NAN and infinity values. */
-                        if (HL_IS_NAN(x)) x = 0;
-                        if (HL_IS_NAN(y)) y = 0;
-                        if (HL_IS_NAN(z)) z = 0;
-
-                        /* Store data in buffer. */
-                        len = sprintf(&buf[2], "%f %f %f\n",
-                            x, y, z);
-
-                        if (len < 0) return HL_ERROR_UNKNOWN;
-
-                        /* Increase buffer length and global vertex count. */
-                        bufLen = (2 + (size_t)len);
-                        ++(*globalVertexCount);
-                        break;
-                    }
-
-                    /* TODO: Support other formats. */
-                    default: continue;
-                    }
-
-                    /* Write buffer contents to file. */
-                    result = hlFileWrite(file, bufLen * sizeof(char), buf, 0);
-                    if (HL_FAILED(result)) return result;
+                    result = hlINMeshWriteVerticesOBJVec3(&meshes[i], vtxFmt,
+                        vtxElem, 2, buf, &globalCounts->vertexCount, file);
                 }
+                else
+                {
+                    result = hlINMeshWriteVerticesOBJVec4(&meshes[i], vtxFmt,
+                        vtxElem, 2, buf, &globalCounts->vertexCount, file);
+                }
+
+                if (HL_FAILED(result)) return result;
+                
+                /* Store type. */
+                types |= HL_IN_OBJ_FACE_TYPE_POSITION;
                 break;
-            }
 
-            /* TODO */
+            case HL_VERTEX_ELEM_TYPE_NORMAL:
+                /* Skip this vertex element if it's not at least 3 dimensions. */
+                if (vtxElemDimension < HL_VERTEX_ELEM_DIMENSION_3D) continue;
 
-            /*case HL_VERTEX_ELEM_TYPE_NORMAL:
+                /* Store type in buffer. */
                 buf[0] = 'v';
                 buf[1] = 'n';
                 buf[2] = ' ';
-                bufLen = 3;
+
+                /* Store data in buffer. */
+                result = hlINMeshWriteVerticesOBJVec3(&meshes[i], vtxFmt,
+                    vtxElem, 3, buf, &globalCounts->normalCount, file);
+
+                if (HL_FAILED(result)) return result;
+
+                /* Store type. */
+                types |= HL_IN_OBJ_FACE_TYPE_NORMAL;
                 break;
 
             case HL_VERTEX_ELEM_TYPE_TEXCOORD:
+                /* Store type in buffer. */
                 buf[0] = 'v';
                 buf[1] = 't';
                 buf[2] = ' ';
-                bufLen = 3;
-                break;*/
+
+                /* Store data in buffer. */
+                if (vtxElemDimension == HL_VERTEX_ELEM_DIMENSION_2D)
+                {
+                    result = hlINMeshWriteVerticesOBJVec2(&meshes[i], vtxFmt,
+                        vtxElem, 3, buf, &globalCounts->texcoordCount, file);
+                }
+                else if (vtxElemDimension == HL_VERTEX_ELEM_DIMENSION_1D)
+                {
+                    result = hlINMeshWriteVerticesOBJVec1(&meshes[i], vtxFmt,
+                        vtxElem, 3, buf, &globalCounts->texcoordCount, file);
+                }
+                else
+                {
+                    result = hlINMeshWriteVerticesOBJVec3(&meshes[i], vtxFmt,
+                        vtxElem, 3, buf, &globalCounts->texcoordCount, file);
+                }
+
+                if (HL_FAILED(result)) return result;
+
+                /* Store type. */
+                types |= HL_IN_OBJ_FACE_TYPE_TEXCOORD;
+                break;
 
             /* Skip unknown/unsupported vertex element types. */
             default: continue;
@@ -138,74 +562,14 @@ static HlResult hlINMeshesWriteOBJ(const HlMesh* HL_RESTRICT meshes,
         }
 
         /* Write faces. */
-        /* TODO: Handle quads?? */
-        if (meshes[i].faceCount > 2)
+        if (types & HL_IN_OBJ_FACE_TYPE_POSITION)
         {
-            unsigned short f1, f2, f3;
-            HlBool reverse = HL_FALSE;
+            /* TODO: Handle quads?? */
+            /* TODO: Triangle lists. */
+            result = hlINMeshWriteFacesOBJStrips(&meshes[i],
+                types, &globalOffsets, buf, file);
 
-            /* Get initial f1 and f2 indices. */
-            f1 = meshes[i].faces[0];
-            f2 = meshes[i].faces[1];
-
-            for (i2 = 2; i2 < meshes[i].faceCount; ++i2)
-            {
-                /* Get f3 index. */
-                f3 = meshes[i].faces[i2];
-
-                if (f3 == (unsigned short)(-1))
-                {
-                    f1 = meshes[i].faces[i2 + 1];
-                    f2 = meshes[i].faces[i2 + 2];
-
-                    reverse = HL_FALSE;
-                    i2 += 2;
-                }
-                else
-                {
-                    /* Get f1 and f2 indices. */
-                    if (f1 != f2 && f2 != f3 && f3 != f1)
-                    {
-
-/* C89 doesn't support the printf z modifier, so fallback to l. */
-#if (defined(__cplusplus) || defined(_MSC_VER)) ||\
-    (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
-#define HL_IN_OBJ_FACES_PRINTF_FORMAT   "f %zu %zu %zu\n"
-#define HL_IN_OBJ_FACES_CAST_T          size_t
-#else
-#define HL_IN_OBJ_FACES_PRINTF_FORMAT   "f %lu %lu %lu\n"
-#define HL_IN_OBJ_FACES_CAST_T          unsigned long
-#endif
-
-                        /* Store data in buffer. */
-                        /* TODO: Write normal/texcoord indices. */
-                        if (reverse)
-                        {
-                            len = sprintf(buf, HL_IN_OBJ_FACES_PRINTF_FORMAT,
-                                (HL_IN_OBJ_FACES_CAST_T)(f1 + globalVertexOffset),
-                                (HL_IN_OBJ_FACES_CAST_T)(f3 + globalVertexOffset),
-                                (HL_IN_OBJ_FACES_CAST_T)(f2 + globalVertexOffset));
-                        }
-                        else
-                        {
-                            len = sprintf(buf, HL_IN_OBJ_FACES_PRINTF_FORMAT,
-                                (HL_IN_OBJ_FACES_CAST_T)(f1 + globalVertexOffset),
-                                (HL_IN_OBJ_FACES_CAST_T)(f2 + globalVertexOffset),
-                                (HL_IN_OBJ_FACES_CAST_T)(f3 + globalVertexOffset));
-                        }
-
-                        if (len < 0) return HL_ERROR_UNKNOWN;
-
-                        /* Write data to file. */
-                        result = hlFileWrite(file, (size_t)len * sizeof(char), buf, 0);
-                        if (HL_FAILED(result)) return result;
-                    }
-
-                    f1 = f2;
-                    f2 = f3;
-                    reverse = !reverse;
-                }
-            }
+            if (HL_FAILED(result)) return result;
         }
     }
 
@@ -240,29 +604,30 @@ static HlResult hlINModelWriteOBJ(const HlModel* HL_RESTRICT model,
 
     /* Write meshes. */
     {
+        HlINOBJGlobalCounts globalCounts = { 0, 0, 0 };
         char buf[255];
-        size_t globalIndex = 0, globalVertexCount = 0, i;
+        size_t globalIndex = 1, i;
 
         for (i = 0; i < model->meshGroupCount; ++i)
         {
             /* Write solid slot. */
             result = hlINMeshesWriteOBJ(model->meshGroups[i].solid.meshes,
                 model->meshGroups[i].solid.meshCount, model->vertexFormats,
-                buf, &globalIndex, &globalVertexCount, file);
+                buf, &globalIndex, &globalCounts, file);
 
             if (HL_FAILED(result)) return result;
 
             /* Write transparent slot. */
             result = hlINMeshesWriteOBJ(model->meshGroups[i].transparent.meshes,
                 model->meshGroups[i].transparent.meshCount, model->vertexFormats,
-                buf, &globalIndex, &globalVertexCount, file);
+                buf, &globalIndex, &globalCounts, file);
 
             if (HL_FAILED(result)) return result;
 
             /* Write boolean slot. */
             result = hlINMeshesWriteOBJ(model->meshGroups[i].boolean.meshes,
                 model->meshGroups[i].boolean.meshCount, model->vertexFormats,
-                buf, &globalIndex, &globalVertexCount, file);
+                buf, &globalIndex, &globalCounts, file);
 
             if (HL_FAILED(result)) return result;
 
