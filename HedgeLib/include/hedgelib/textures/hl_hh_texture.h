@@ -14,7 +14,7 @@ typedef struct HlHHTexture
 }
 HlHHTexture;
 
-HL_STATIC_ASSERT_SIZE(HlHHTexset, 8);
+HL_STATIC_ASSERT_SIZE(HlHHTexture, 12);
 
 typedef struct HlHHTexset
 {
