@@ -1,12 +1,10 @@
 #ifndef HL_HH_H_INCLUDED
 #define HL_HH_H_INCLUDED
-#include "../hl_internal.h"
+#include "../hl_blob.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef struct HlBlob HlBlob;
 
 #define HL_HH_MIRAGE_MAGIC      0x0133054AU
 
@@ -104,11 +102,14 @@ HL_API const HlHHMirageNode* hlHHMirageGetNode(
 
 HL_API const HlHHMirageNode* hlHHMirageGetDataNode(const HlBlob* blob);
 
-#define hlHHStandardGetData(blob) (const void*)hlOff32Get(\
-    &((const HlHHStandardHeader*)((blob)->data))->dataOffset);
+HL_API const void* hlHHStandardGetData(const HlBlob* HL_RESTRICT blob,
+    HlU32* HL_RESTRICT version);
 
-HL_API const void* hlHHMirageGetData(const HlBlob* blob);
-HL_API const void* hlHHGetData(const HlBlob* blob);
+HL_API const void* hlHHMirageGetData(const HlBlob* HL_RESTRICT blob,
+    HlU32* HL_RESTRICT version);
+
+#define hlHHGetData(blob, version) ((hlHHHeaderIsMirage((blob)->data)) ?\
+    hlHHMirageGetData(blob, version) : hlHHStandardGetData(blob, version))
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS
 HL_API HlBool hlHHHeaderIsMirageExt(const void* header);
@@ -117,7 +118,8 @@ HL_API const HlHHMirageNode* hlHHMirageHeaderGetNodesExt(const HlHHMirageHeader*
 HL_API HlU32 hlHHMirageNodeGetSizeExt(const HlHHMirageNode* node);
 HL_API const HlHHMirageNode* hlHHMirageNodeGetNextExt(const HlHHMirageNode* node);
 HL_API const HlHHMirageNode* hlHHMirageNodeGetChildrenExt(const HlHHMirageNode* node);
-HL_API const void* hlHHStandardGetDataExt(const HlBlob* blob);
+HL_API const void* hlHHGetDataExt(const HlBlob* HL_RESTRICT blob,
+    HlU32* HL_RESTRICT version);
 #endif
 
 #ifdef __cplusplus

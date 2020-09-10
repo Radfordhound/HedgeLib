@@ -209,22 +209,29 @@ const HlHHMirageNode* hlHHMirageGetDataNode(const HlBlob* blob)
         "Contexts", HL_TRUE);
 }
 
-const void* hlHHMirageGetData(const HlBlob* blob)
+const void* hlHHStandardGetData(const HlBlob* HL_RESTRICT blob,
+    HlU32* HL_RESTRICT version)
 {
-    const HlHHMirageNode* contextsNode = hlHHMirageGetDataNode(blob);
-    return (contextsNode) ? (contextsNode + 1) : NULL;
+    /* Set version number if requested. */
+    const HlHHStandardHeader* header = (const HlHHStandardHeader*)blob->data;
+    if (version) *version = header->version;
+
+    /* Get data pointer and return it. */
+    return (const void*)hlOff32Get(&header->dataOffset);
 }
 
-const void* hlHHGetData(const HlBlob* blob)
+const void* hlHHMirageGetData(const HlBlob* HL_RESTRICT blob,
+    HlU32* HL_RESTRICT version)
 {
-    if (hlHHHeaderIsMirage(blob->data))
-    {
-        return hlHHMirageGetData(blob);
-    }
-    else
-    {
-        return hlHHStandardGetData(blob);
-    }
+    /* Get contexts node; return NULL if there was none. */
+    const HlHHMirageNode* contextsNode = hlHHMirageGetDataNode(blob);
+    if (!contextsNode) return NULL;
+
+    /* Set version number if requested. */
+    if (version) *version = contextsNode->value;
+
+    /* Get data pointer and return it. */
+    return (contextsNode + 1);
 }
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS
@@ -258,8 +265,9 @@ const HlHHMirageNode* hlHHMirageNodeGetChildrenExt(const HlHHMirageNode* node)
     return hlHHMirageNodeGetChildren(node);
 }
 
-const void* hlHHStandardGetDataExt(const HlBlob* blob)
+const void* hlHHGetDataExt(const HlBlob* HL_RESTRICT blob,
+    HlU32* HL_RESTRICT version)
 {
-    return hlHHStandardGetData(blob);
+    return hlHHGetData(blob, version);
 }
 #endif

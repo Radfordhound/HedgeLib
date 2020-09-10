@@ -624,13 +624,17 @@ HlResult hlHHSkeletalModelParse(
 HlResult hlHHSkeletalModelRead(HlBlob* HL_RESTRICT blob,
     HlModel** HL_RESTRICT hlModel)
 {
-    /* Fix HH general data. */
     HlHHSkeletalModel* hhModel;
+    HlU32 version;
+
+    /* Fix HH general data. */
     hlHHFix(blob);
 
-    /* Get HH skeletal model pointer. */
-    hhModel = (HlHHSkeletalModel*)hlHHGetData(blob);
+    /* Get HH skeletal model pointer and version number. */
+    hhModel = (HlHHSkeletalModel*)hlHHGetData(blob, &version);
     if (!hhModel) return HL_ERROR_INVALID_DATA;
+
+    /* TODO: Take version number into account. */
 
     /* Fix HH skeletal model data. */
     hlHHSkeletalModelFix(hhModel);
@@ -698,13 +702,17 @@ HlResult hlHHTerrainModelParse(
 HlResult hlHHTerrainModelRead(HlBlob* HL_RESTRICT blob,
     HlModel** HL_RESTRICT hlModel)
 {
-    /* Fix HH general data. */
     HlHHTerrainModel* hhModel;
+    HlU32 version;
+
+    /* Fix HH general data. */
     hlHHFix(blob);
 
-    /* Get HH terrain model pointer. */
-    hhModel = (HlHHTerrainModel*)hlHHGetData(blob);
+    /* Get HH terrain model pointer and version number. */
+    hhModel = (HlHHTerrainModel*)hlHHGetData(blob, &version);
     if (!hhModel) return HL_ERROR_INVALID_DATA;
+
+    /* TODO: Take version number into account. */
 
     /* Fix HH terrain model data. */
     hlHHTerrainModelFix(hhModel);
