@@ -171,7 +171,7 @@ static HlResult hlINGensArchiveLoadSplits(const HlNChar* HL_RESTRICT filePath,
     /* Get valid file path. */
     {
         const size_t filePathLen = hlNStrLen(filePath);
-        const HlNChar* ext = hlPathGetExt(filePath, filePathLen);
+        const HlNChar* ext = hlPathGetExt(filePath);
 
         /* If the given file path is a split, create a copy of it we can iterate on. */
         if (ext[0] == HL_NTEXT('.') && HL_IS_DIGIT(ext[1]) &&

@@ -1,7 +1,7 @@
 #include "hedgelib/io/hl_path.h"
 #include "hedgelib/hl_memory.h"
+#include "hedgelib/hl_text.h"
 #include "../hl_in_assert.h"
-#include <string.h>
 
 #ifdef _WIN32
 #include "../hl_in_win32.h"
@@ -70,12 +70,14 @@ const HlNChar* hlPathGetName(const HlNChar* path)
     test.bin$           ->      test.bin$
     \test.bin$          ->      test.bin$
     \$                  ->      $
-    \\$                 ->      $
+    \\$                 ->      \$
     \\test.bin$         ->      test.bin$
     /home/rad/a.dds$    ->      a.dds$
     C:\tst\a.dds$       ->      a.dds$
     test.bin\$          ->      test.bin\$
     \test.bin\$         ->      test.bin\$
+    /home/rad$          ->      rad$
+    /home/rad/$         ->      rad/$
     */
 
     /* Get the name of the file/directory at the given path and return it. */
@@ -97,7 +99,7 @@ const HlNChar* hlPathGetName(const HlNChar* path)
     return path;
 }
 
-const HlNChar* hlPathGetExt(const HlNChar* path, size_t pathLen)
+const HlNChar* hlPathGetExt(const HlNChar* path)
 {
     /*
     =======================================
@@ -118,104 +120,33 @@ const HlNChar* hlPathGetExt(const HlNChar* path, size_t pathLen)
     const HlNChar* curChar = path;
     const HlNChar* ext = 0;
 
-    if (pathLen)
+    while (*curChar)
     {
-        const HlNChar* endPtr = (path + pathLen);
-        while (curChar < endPtr)
-        {
-            /*
-               If this character is a dot and the next 
-               character isn't a dot or a null terminator...
-            */
-            if (*curChar == HL_NTEXT('.') && *(curChar + 1) &&
-                *(curChar + 1) != HL_NTEXT('.'))
-            {
-                /* We've found a valid extension! */
-                ext = curChar;
-
-                /*
-                   Skip ahead by 2 characters here to avoid checking the
-                   next character again, since we've already checked it.
-                */
-                curChar += 2;
-                continue;
-            }
-
-            ++curChar;
-        }
-
-        return (ext) ? ext : curChar;
-    }
-    else
-    {
-        while (*curChar)
-        {
-            /*
-               If this character is a dot and the next
-               character isn't a dot or a null terminator...
-            */
-            if (*curChar == HL_NTEXT('.') && *(curChar + 1) &&
-                *(curChar + 1) != HL_NTEXT('.'))
-            {
-                /* We've found a valid extension! */
-                ext = curChar;
-
-                /*
-                   Skip ahead by 2 characters here to avoid checking the
-                   next character again, since we've already checked it.
-                */
-                curChar += 2;
-                continue;
-            }
-
-            ++curChar;
-        }
-
-        return (ext) ? ext : curChar;
-    }
-}
-
-/*const HlNChar* hlINPathGetExts(const HlNChar* path, size_t pathLen)
-{
-    /*
-    =======================================
-    == Examples:
-    == (Null terminator represented with $)
-    =======================================
-    test.bin$           ->      .bin$
-    test.ar.00$         ->      .ar.00$
-    .ar.00$             ->      .ar.00$
-    .bin$               ->      .bin$
-    test$               ->      $
-    test.$              ->      $
-    test..$             ->      $
-    test..a$            ->      .a$
-    *
-
-    /* TODO: THIS FUNCTION DOESN'T ACTUALLY WORK PROPERLY LOL *
-
-    // Find first extension within name, if any
-    const HlNChar* endPtr = (path + pathLen);
-    const HlNChar* curChar = (endPtr - 1);
-
-    while (curChar >= path)
-    {
-        // If this character is a dot and the next 
-        // character isn't a dot or the null terminator...
+        /*
+            If this character is a dot and the next
+            character isn't a dot or a null terminator...
+        */
         if (*curChar == HL_NTEXT('.') && *(curChar + 1) &&
             *(curChar + 1) != HL_NTEXT('.'))
         {
-            // We've found the first valid extension! Return it.
-            return curChar;
+            /* We've found a valid extension! */
+            ext = curChar;
+
+            /*
+                Skip ahead by 2 characters here to avoid checking the
+                next character again, since we've already checked it.
+            */
+            curChar += 2;
+            continue;
         }
 
-        --curChar;
+        ++curChar;
     }
 
-    return endPtr;
-}*/
+    return (ext) ? ext : curChar;
+}
 
-const HlNChar* hlPathGetExts(const HlNChar* path, size_t pathLen)
+const HlNChar* hlPathGetExts(const HlNChar* path)
 {
     /*
     =======================================
@@ -234,44 +165,27 @@ const HlNChar* hlPathGetExts(const HlNChar* path, size_t pathLen)
 
     /* Find first extension within path, if any. */
     const HlNChar* curChar = path;
-    if (pathLen)
+    while (*curChar)
     {
-        /* TODO */
-        HL_ASSERT(0);
-        return 0;
-    }
-    else
-    {
-        while (*curChar)
+        /*
+            If this character is a dot and the next
+            character isn't a dot or the null terminator...
+        */
+        if (*curChar == HL_NTEXT('.') && *(curChar + 1) &&
+            *(curChar + 1) != HL_NTEXT('.'))
         {
-            /*
-               If this character is a dot and the next
-               character isn't a dot or the null terminator...
-            */
-            if (*curChar == HL_NTEXT('.') && *(curChar + 1) &&
-                *(curChar + 1) != HL_NTEXT('.'))
-            {
-                /* We've found the first valid extension! Return it. */
-                return curChar;
-            }
-
-            ++curChar;
+            /* We've found the first valid extension! Return it. */
+            return curChar;
         }
 
-        return curChar;
+        ++curChar;
     }
+
+    return curChar;
 }
 
 size_t hlPathRemoveExtNoAlloc(const HlNChar* HL_RESTRICT path,
-    HlNChar* HL_RESTRICT result, size_t pathLen)
-{
-    /* TODO: Implement this function. */
-    HL_ASSERT(0);
-    return 0; /* So compiler doesn't complain. */
-}
-
-size_t hlPathRemoveExtsNoAlloc(const HlNChar* HL_RESTRICT path,
-    HlNChar* HL_RESTRICT result, size_t pathLen)
+    HlNChar* HL_RESTRICT result)
 {
     /*
     =======================================
@@ -279,14 +193,14 @@ size_t hlPathRemoveExtsNoAlloc(const HlNChar* HL_RESTRICT path,
     == (Null terminator represented with $)
     =======================================
     test.bin$           ->      test$
-    test.ar.00$         ->      test$
-    .ar.00$             ->      $
+    test.ar.00$         ->      test.ar$
+    .ar.00$             ->      .ar$
     .bin$               ->      $
     */
 
     /* Get extension pointer and compute result buffer length. */
-    const HlNChar* ext = hlPathGetExts(path, pathLen);
-    size_t resultLen = (size_t)(ext - path);
+    const HlNChar* ext = hlPathGetExt(path);
+    const size_t resultLen = (size_t)(ext - path);
 
     /* Copy stem into buffer (if provided), set null terminator, and return. */
     if (result)
@@ -298,14 +212,8 @@ size_t hlPathRemoveExtsNoAlloc(const HlNChar* HL_RESTRICT path,
     return resultLen;
 }
 
-HlNChar* hlPathRemoveExt(const HlNChar* path, size_t pathLen)
-{
-    /* TODO: Implement this function. */
-    HL_ASSERT(0);
-    return 0; /* So compiler doesn't complain. */
-}
-
-HlNChar* hlPathRemoveExts(const HlNChar* path, size_t pathLen)
+size_t hlPathRemoveExtsNoAlloc(const HlNChar* HL_RESTRICT path,
+    HlNChar* HL_RESTRICT result)
 {
     /*
     =======================================
@@ -319,8 +227,35 @@ HlNChar* hlPathRemoveExts(const HlNChar* path, size_t pathLen)
     */
 
     /* Get extension pointer and compute result buffer length. */
-    const HlNChar* ext = hlPathGetExts(path, pathLen);
-    size_t resultLen = (size_t)(ext - path);
+    const HlNChar* ext = hlPathGetExts(path);
+    const size_t resultLen = (size_t)(ext - path);
+
+    /* Copy stem into buffer (if provided), set null terminator, and return. */
+    if (result)
+    {
+        memcpy(result, path, resultLen * sizeof(HlNChar));
+        result[resultLen] = HL_NTEXT('\0');
+    }
+
+    return resultLen;
+}
+
+HlNChar* hlPathRemoveExt(const HlNChar* path)
+{
+    /*
+    =======================================
+    == Examples:
+    == (Null terminator represented with $)
+    =======================================
+    test.bin$           ->      test$
+    test.ar.00$         ->      test.ar$
+    .ar.00$             ->      .ar$
+    .bin$               ->      $
+    */
+
+    /* Get extension pointer and compute result buffer length. */
+    const HlNChar* ext = hlPathGetExt(path);
+    const size_t resultLen = (size_t)(ext - path);
 
     /* Allocate a buffer large enough to hold path. */
     HlNChar* result = HL_ALLOC_ARR(HlNChar, resultLen + 1);
@@ -333,6 +268,104 @@ HlNChar* hlPathRemoveExts(const HlNChar* path, size_t pathLen)
     return result;
 }
 
+HlNChar* hlPathRemoveExts(const HlNChar* path)
+{
+    /*
+    =======================================
+    == Examples:
+    == (Null terminator represented with $)
+    =======================================
+    test.bin$           ->      test$
+    test.ar.00$         ->      test$
+    .ar.00$             ->      $
+    .bin$               ->      $
+    */
+
+    /* Get extension pointer and compute result buffer length. */
+    const HlNChar* ext = hlPathGetExts(path);
+    const size_t resultLen = (size_t)(ext - path);
+
+    /* Allocate a buffer large enough to hold path. */
+    HlNChar* result = HL_ALLOC_ARR(HlNChar, resultLen + 1);
+    if (!result) return NULL;
+
+    /* Copy stem into buffer, set null terminator, and return. */
+    memcpy(result, path, resultLen * sizeof(HlNChar));
+    result[resultLen] = HL_NTEXT('\0');
+
+    return result;
+}
+
+size_t hlPathGetParentNoAlloc(const HlNChar* HL_RESTRICT path,
+    HlNChar* HL_RESTRICT result)
+{
+    /*
+    =======================================
+    == Examples:
+    == (Null terminator represented with $)
+    =======================================
+    test.bin$           ->      $
+    \test.bin$          ->      \$
+    \$                  ->      \$
+    \\$                 ->      \$
+    \\test.bin$         ->      \\$
+    /home/rad/a.dds$    ->      /home/rad/$
+    C:\tst\a.dds$       ->      C:\tst\$
+    test.bin\$          ->      $
+    \test.bin\$         ->      \$
+    /home/rad$          ->      /home/$
+    /home/rad/$         ->      /home/$
+    */
+
+    /* Get name pointer and parent length. */
+    const HlNChar* name = hlPathGetName(path);
+    size_t parentLen = (name - path);
+
+    /* Copy parent into buffer (if provided) and return. */
+    if (result)
+    {
+        memcpy(result, path, parentLen * sizeof(HlNChar));
+        result[parentLen] = HL_NTEXT('\0');
+    }
+
+    return parentLen;
+}
+
+HlNChar* hlPathGetParent(const HlNChar* path)
+{
+    /*
+    =======================================
+    == Examples:
+    == (Null terminator represented with $)
+    =======================================
+    test.bin$           ->      $
+    \test.bin$          ->      \$
+    \$                  ->      \$
+    \\$                 ->      \$
+    \\test.bin$         ->      \\$
+    /home/rad/a.dds$    ->      /home/rad/$
+    C:\tst\a.dds$       ->      C:\tst\$
+    test.bin\$          ->      $
+    \test.bin\$         ->      \$
+    /home/rad$          ->      /home/$
+    /home/rad/$         ->      /home/$
+    */
+
+    /* Get name pointer and parent length. */
+    const HlNChar* name = hlPathGetName(path);
+    size_t parentLen = (name - path);
+
+    /* Allocate a buffer large enough to hold parent. */
+    HlNChar* result = HL_ALLOC_ARR(HlNChar, parentLen + 1);
+    if (!result) return NULL;
+
+    /* Copy parent into buffer and return. */
+    memcpy(result, path, parentLen * sizeof(HlNChar));
+    result[parentLen] = HL_NTEXT('\0');
+
+    return result;
+}
+
 HlBool hlPathCombineNeedsSep(const HlNChar* HL_RESTRICT path1,
     const HlNChar* HL_RESTRICT path2, size_t path1Len)
 {
@@ -340,21 +373,78 @@ HlBool hlPathCombineNeedsSep(const HlNChar* HL_RESTRICT path1,
         hlINPathCombineNeedsSep2(path2));
 }
 
-void hlPathCombineNoAlloc(const HlNChar* HL_RESTRICT path1,
-    const HlNChar* HL_RESTRICT path2, HlNChar* HL_RESTRICT result,
-    size_t path1Len, size_t path2Len)
+size_t hlPathCombineNoAlloc(const HlNChar* HL_RESTRICT path1,
+    const HlNChar* HL_RESTRICT path2, size_t path1Len,
+    size_t path2Len, HlNChar* HL_RESTRICT result)
 {
-    /* TODO: Implement this function. */
-    HL_ASSERT(0);
+    size_t combinedLen;
+    HlBool needsSep;
+
+    /* Get path lengths if necessary. */
+    if (!path1Len) path1Len = hlNStrLen(path1);
+    if (!path2Len) path2Len = hlNStrLen(path2);
+
+    /* Determine whether combining the paths will require a path separator. */
+    needsSep = hlPathCombineNeedsSep(path1, path2, path1Len);
+    if (needsSep) ++path1Len;
+
+    /* Compute the length required to combine the two paths. */
+    combinedLen = (path1Len + path2Len);
+
+    /* Combine the two paths and store the result in the buffer (if provided), then return. */
+    if (result)
+    {
+        /* Copy path1 into buffer. */
+        memcpy(result, path1, path1Len * sizeof(HlNChar));
+
+        /* Append path separator if necessary. */
+        if (needsSep) result[path1Len - 1] = HL_PATH_SEP;
+
+        /* Copy path2 into buffer. */
+        memcpy(result + path1Len, path2, path2Len * sizeof(HlNChar));
+
+        /* Append null terminator. */
+        result[combinedLen] = HL_NTEXT('\0');
+    }
+
+    return combinedLen;
 }
 
 HlNChar* hlPathCombine(const HlNChar* HL_RESTRICT path1,
-    const HlNChar* HL_RESTRICT path2,
-    size_t path1Len, size_t path2Len)
+    const HlNChar* HL_RESTRICT path2, size_t path1Len,
+    size_t path2Len)
 {
-    /* TODO: Implement this function. */
-    HL_ASSERT(0);
-    return 0; /* So compiler doesn't complain. */
+    HlNChar* result;
+    size_t combinedLen;
+    HlBool needsSep;
+
+    /* Get path lengths if necessary. */
+    if (!path1Len) path1Len = hlNStrLen(path1);
+    if (!path2Len) path2Len = hlNStrLen(path2);
+
+    /* Determine whether combining the paths will require a path separator. */
+    needsSep = hlPathCombineNeedsSep(path1, path2, path1Len);
+    if (needsSep) ++path1Len;
+
+    /* Compute the length required to combine the two paths. */
+    combinedLen = (path1Len + path2Len);
+
+    /* Allocate buffer for combined path. */
+    result = HL_ALLOC_ARR(HlNChar, combinedLen + 1);
+    if (!result) return NULL;
+
+    /* Copy path1 into buffer. */
+    memcpy(result, path1, path1Len * sizeof(HlNChar));
+
+    /* Append path separator if necessary. */
+    if (needsSep) result[path1Len - 1] = HL_PATH_SEP;
+
+    /* Copy path2 into buffer. */
+    memcpy(result + path1Len, path2, path2Len * sizeof(HlNChar));
+
+    /* Append null terminator and return. */
+    result[combinedLen] = HL_NTEXT('\0');
+    return result;
 }
 
 size_t hlPathGetSize(const HlNChar* filePath)
@@ -392,6 +482,18 @@ size_t hlPathGetSize(const HlNChar* filePath)
 
     /* Return file size. */
     return (size_t)s.st_size;
+#endif
+}
+
+HlBool hlPathIsDirectory(const HlNChar* path)
+{
+#ifdef _WIN32
+    DWORD attrs = GetFileAttributesW(path);
+    return (attrs != INVALID_FILE_ATTRIBUTES &&
+        (attrs & FILE_ATTRIBUTE_DIRECTORY));
+#else
+    struct stat s;
+    return (!stat(path, &s) && S_ISDIR(s.st_mode));
 #endif
 }
 

@@ -24,29 +24,35 @@ extern "C" {
 #endif
 
 HL_API const HlNChar* hlPathGetName(const HlNChar* path);
-HL_API const HlNChar* hlPathGetExt(const HlNChar* path, size_t pathLen);
-HL_API const HlNChar* hlPathGetExts(const HlNChar* path, size_t pathLen);
+HL_API const HlNChar* hlPathGetExt(const HlNChar* path);
+HL_API const HlNChar* hlPathGetExts(const HlNChar* path);
 
 HL_API size_t hlPathRemoveExtNoAlloc(const HlNChar* HL_RESTRICT path,
-    HlNChar* HL_RESTRICT result, size_t pathLen);
+    HlNChar* HL_RESTRICT result);
 
 HL_API size_t hlPathRemoveExtsNoAlloc(const HlNChar* HL_RESTRICT path,
-    HlNChar* HL_RESTRICT result, size_t pathLen);
+    HlNChar* HL_RESTRICT result);
 
-HL_API HlNChar* hlPathRemoveExt(const HlNChar* path, size_t pathLen);
-HL_API HlNChar* hlPathRemoveExts(const HlNChar* path, size_t pathLen);
+HL_API HlNChar* hlPathRemoveExt(const HlNChar* path);
+HL_API HlNChar* hlPathRemoveExts(const HlNChar* path);
+
+HL_API size_t hlPathGetParentNoAlloc(const HlNChar* HL_RESTRICT path,
+    HlNChar* HL_RESTRICT result);
+
+HL_API HlNChar* hlPathGetParent(const HlNChar* path);
 
 HL_API HlBool hlPathCombineNeedsSep(const HlNChar* HL_RESTRICT path1,
     const HlNChar* HL_RESTRICT path2, size_t path1Len);
 
-HL_API void hlPathCombineNoAlloc(const HlNChar* HL_RESTRICT path1,
-    const HlNChar* HL_RESTRICT path2, HlNChar* HL_RESTRICT result,
-    size_t path1Len, size_t path2Len);
+HL_API size_t hlPathCombineNoAlloc(const HlNChar* HL_RESTRICT path1,
+    const HlNChar* HL_RESTRICT path2, size_t path1Len, size_t path2Len,
+    HlNChar* HL_RESTRICT result);
 
 HL_API HlNChar* hlPathCombine(const HlNChar* HL_RESTRICT path1,
     const HlNChar* HL_RESTRICT path2, size_t path1Len, size_t path2Len);
 
 HL_API size_t hlPathGetSize(const HlNChar* filePath);
+HL_API HlBool hlPathIsDirectory(const HlNChar* path);
 HL_API HlBool hlPathExists(const HlNChar* path);
 HL_API HlResult hlPathCreateDirectory(const HlNChar* dirPath, HlBool overwrite);
 

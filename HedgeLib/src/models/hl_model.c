@@ -959,13 +959,9 @@ HlResult hlModelExportOBJ(const HlModel** HL_RESTRICT models,
 
         if (writeMTL)
         {
-            /*
-               0123456789
-               test.obj$
-            */
             const HlNChar* fileName = hlPathGetName(filePath);
             size_t mtlNameLen, extPos = (size_t)((ext =
-                hlPathGetExt(fileName, 0)) - fileName);
+                hlPathGetExt(fileName)) - fileName);
 
 #ifdef HL_IN_WIN32_UNICODE
             size_t extPosU8 = extPos;

@@ -1077,7 +1077,7 @@ static HlResult hlINPACxV2LoadSplits(const HlNChar* HL_RESTRICT filePath,
     /* Allocate pac path buffer. */
     {
         size_t filePathLen = hlNStrLen(filePath);
-        const HlNChar* ext = hlPathGetExt(filePath, filePathLen);
+        const HlNChar* ext = hlPathGetExt(filePath);
         HlBool needsSep1;
         
         /* Get directory length. */
