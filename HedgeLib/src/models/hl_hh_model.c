@@ -1,8 +1,11 @@
 #include "hedgelib/models/hl_hh_model.h"
+#include "hedgelib/materials/hl_hh_material.h"
 #include "hedgelib/io/hl_hh.h"
+#include "hedgelib/io/hl_path.h"
 #include "hedgelib/hl_blob.h"
 #include "hedgelib/hl_endian.h"
 #include "hedgelib/hl_math.h"
+#include "../io/hl_in_path.h"
 
 void hlHHVertexElementSwap(HlHHVertexElement* vertexElement)
 {
@@ -250,6 +253,10 @@ static size_t hlINHHMeshSlotGetReqSize(const HlHHMeshSlot* slot)
         /* Account for mesh. */
         reqSize += sizeof(HlMesh);
 
+        /* Account for material name. */
+        reqSize += (strlen((const char*)hlOff32Get(
+            &mesh->materialNameOffset)) + 1);
+
         /* Account for faces. */
         reqSize += (sizeof(unsigned short) * mesh->faceCount);
 
@@ -486,12 +493,13 @@ static HlResult hlINHHMeshSlotRead(const HlHHMeshSlot* HL_RESTRICT hhMeshSlot,
             void* hlVertices = &hlFaces[hhMesh->faceCount];
 
             /* Setup HlMesh. */
-            /* TODO: Setup matRef. */
+            hlMesh->matRef.refType = HL_REF_TYPE_NAME;
             hlMesh->vertexFormatIndex = (size_t)i;
             hlMesh->vertexCount = (size_t)hhMesh->vertexCount;
             hlMesh->vertices = hlVertices;
             hlMesh->faceCount = (size_t)hhMesh->faceCount;
             hlMesh->faces = hlFaces;
+            hlMesh->clockwise = HL_FALSE;
 
             /* Copy faces. */
             {
@@ -504,15 +512,22 @@ static HlResult hlINHHMeshSlotRead(const HlHHMeshSlot* HL_RESTRICT hhMeshSlot,
                 }
             }
 
-            /* Copy vertices and set end pointer. */
+            /* Copy vertices/name and set end pointer. */
             {
                 /* Copy vertices. */
                 const void* hhVertices = (const void*)hlOff32Get(&hhMesh->verticesOffset);
                 const size_t vertexBufferSize = ((size_t)hhMesh->vertexSize * hhMesh->vertexCount);
+                char* matNamePtr = (char*)HL_ADD_OFF(hlVertices, vertexBufferSize);
+                
                 memcpy(hlVertices, hhVertices, vertexBufferSize);
 
+                /* Copy material name. */
+                hlMesh->matRef.data.name = matNamePtr;
+                matNamePtr += (hlStrCopyAndLen((const char*)hlOff32Get(
+                    &hhMesh->materialNameOffset), matNamePtr) + 1);
+
                 /* Set end pointer. */
-                *endPtr = HL_ADD_OFF(hlVertices, vertexBufferSize);
+                *endPtr = matNamePtr;
             }
         }
 
@@ -720,4 +735,162 @@ HlResult hlHHTerrainModelRead(HlBlob* HL_RESTRICT blob,
 
     /* Parse HH terrain model data into HlModel and return result. */
     return hlHHTerrainModelParse(hhModel, hlModel);
+}
+
+static HlResult hlINHHModelLoadMaterials(HlModel* HL_RESTRICT hlModel,
+    HlNChar** HL_RESTRICT bufPtr, const size_t dirLen, HlBool* HL_RESTRICT bufOnHeap,
+    size_t* HL_RESTRICT bufLen, HlMaterialList* HL_RESTRICT mats)
+{
+    HlMaterialNameList matNameRefs;
+    size_t i;
+    HlResult result = HL_RESULT_SUCCESS;
+
+    /* Get material name references. */
+    HL_LIST_INIT(matNameRefs);
+    result = hlModelGetMatNameRefs(hlModel, &matNameRefs);
+    if (HL_FAILED(result)) return result;
+
+    /* Load materials and fix references. */
+    for (i = 0; i < matNameRefs.count; ++i)
+    {
+        HlBlob* blob;
+        HlMaterial* mat;
+        size_t nameLen, extPos, totalLen;
+
+        /* Compute lengths. */
+#ifdef HL_IN_WIN32_UNICODE
+        nameLen = hlStrGetReqLenUTF8ToUTF16(matNameRefs.data[i], 0);
+        if (!nameLen)
+        {
+            result = HL_ERROR_UNKNOWN;
+            goto failed_loop;
+        }
+
+        --nameLen; /* We don't want the null terminator in nameLen. */
+#else
+        nameLen = strlen(matNameRefs.data[i]);
+#endif
+
+        extPos = (dirLen + nameLen);
+        totalLen = (extPos + 10); /* 9 characters in ".material" + null terminator. */
+
+        /* Resize path buffer if necessary. */
+        if (totalLen > *bufLen)
+        {
+            if (*bufOnHeap)
+            {
+                *bufPtr = HL_RESIZE_ARR(HlNChar, totalLen, *bufPtr);
+            }
+            else
+            {
+                *bufPtr = HL_ALLOC_ARR(HlNChar, totalLen);
+                *bufOnHeap = HL_TRUE;
+            }
+
+            if (!(*bufPtr))
+            {
+                result = HL_ERROR_OUT_OF_MEMORY;
+                goto failed_loop;
+            }
+
+            *bufLen = totalLen;
+        }
+
+        /* Copy name into buffer. */
+#ifdef HL_IN_WIN32_UNICODE
+        if (!hlStrConvUTF8ToUTF16NoAlloc(matNameRefs.data[i],
+            (HlChar16*)(*bufPtr + dirLen), nameLen, 0))
+        {
+            result = HL_ERROR_UNKNOWN;
+            goto failed_loop;
+        }
+#else
+        memcpy(*bufPtr + dirLen, matNameRefs.data[i],
+            nameLen * sizeof(char));
+#endif
+
+        /* Copy extension into buffer. */
+        memcpy(*bufPtr + extPos, HL_NTEXT(".material"), sizeof(HlNChar) * 10);
+
+        /* Load material from file. */
+        result = hlBlobLoad(*bufPtr, &blob);
+        /* TODO: Make it possible to ignore missing material files? */
+        if (HL_FAILED(result)) goto failed_loop;
+
+        /* Parse material data. */
+        result = hlHHMaterialRead(blob, matNameRefs.data[i], &mat);
+        hlFree(blob);
+
+        if (HL_FAILED(result)) goto failed_loop;
+
+        /* Add HlMaterial to list. */
+        result = HL_LIST_PUSH(*mats, mat);
+        if (HL_FAILED(result))
+        {
+            hlFree(mat);
+            goto failed_loop;
+        }
+
+        /* Fix material references within model. */
+        hlModelFixMatRefs(&hlModel, 1, mat);
+        continue;
+
+    failed_loop:
+        /* Free loaded materials, remove them from the mats list, and goto end. */
+        while (--i >= 0)
+        {
+            hlFree(mats->data[--mats->count]);
+        }
+
+        goto end;
+    }
+
+end:
+    /* Free list and return result. */
+    HL_LIST_FREE(matNameRefs);
+    return result;
+}
+
+HlResult hlHHModelLoadMaterials(HlModel* HL_RESTRICT hlModel,
+    const HlNChar* HL_RESTRICT dir, HlMaterialList* HL_RESTRICT mats)
+{
+    HlNChar buf[255];
+    HlNChar* bufPtr = buf;
+    size_t bufLen = 255, dirLen = hlNStrLen(dir);
+
+    /* Setup buffer and copy directory into it. */
+    {
+        /* Determine whether directory needs a path separator appended to it. */
+        const HlBool needsSep = hlINPathCombineNeedsSep1(dir, dirLen);
+        if (needsSep) ++dirLen;
+
+        /* Allocate heap buffer if necessary. */
+        if (dirLen > bufLen)
+        {
+            bufLen = (dirLen * 2);
+            bufPtr = HL_ALLOC_ARR(HlNChar, bufLen);
+            if (!bufPtr) return HL_ERROR_OUT_OF_MEMORY;
+        }
+
+        /* Copy directory into buffer. */
+        memcpy(bufPtr, dir, dirLen * sizeof(HlNChar));
+
+        /* Copy path separator into buffer if necessary. */
+        if (needsSep) bufPtr[dirLen - 1] = HL_PATH_SEP;
+    }
+
+    /*
+       Load materials, fix model references, free buffer
+       if necessary, and return result.
+    */
+    {
+        HlResult result;
+        HlBool bufOnHeap = (bufPtr != buf);
+
+        result = hlINHHModelLoadMaterials(hlModel, &bufPtr,
+            dirLen, &bufOnHeap, &bufLen, mats);
+
+        if (bufOnHeap) hlFree(bufPtr);
+        return result;
+    }
 }

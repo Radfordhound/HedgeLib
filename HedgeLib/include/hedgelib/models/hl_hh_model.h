@@ -182,6 +182,9 @@ HL_API HlResult hlHHTerrainModelParse(
 HL_API HlResult hlHHTerrainModelRead(HlBlob* HL_RESTRICT blob,
     HlModel** HL_RESTRICT hlModel);
 
+HL_API HlResult hlHHModelLoadMaterials(HlModel* HL_RESTRICT hlModel,
+    const HlNChar* HL_RESTRICT dir, HlMaterialList* HL_RESTRICT mats);
+
 #ifdef __cplusplus
 }
 #endif

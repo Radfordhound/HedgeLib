@@ -1,8 +1,251 @@
 #include "hedgelib/hl_math.h"
 #include "hedgelib/models/hl_model.h"
 #include "hedgelib/io/hl_file.h"
+#include "hedgelib/io/hl_path.h"
+#include "hedgelib/hl_list.h"
+#include "hedgelib/materials/hl_material.h"
 #include <string.h>
 #include <stdio.h>
+
+static size_t hlINMeshesFixMatRefs(HlMesh* HL_RESTRICT meshes,
+    size_t meshCount, HlMaterial* HL_RESTRICT mat)
+{
+    size_t fixedRefs = 0, i;
+    for (i = 0; i < meshCount; ++i)
+    {
+        if (meshes[i].matRef.refType == HL_REF_TYPE_NAME &&
+            !strcmp(mat->name, meshes[i].matRef.data.name))
+        {
+            /* We found a match! Fix it. */
+            meshes[i].matRef.refType = HL_REF_TYPE_PTR;
+            meshes[i].matRef.data.ptr = mat;
+            ++fixedRefs;
+        }
+    }
+
+    return fixedRefs;
+}
+
+static size_t hlINMeshGroupsFixMatRefs(HlMeshGroup* HL_RESTRICT meshGroups,
+    size_t meshGroupCount, HlMaterial* HL_RESTRICT mat)
+{
+    size_t fixedRefs = 0, i;
+    for (i = 0; i < meshGroupCount; ++i)
+    {
+        /* Get materials in solid slot. */
+        fixedRefs += hlINMeshesFixMatRefs(meshGroups[i].solid.meshes,
+            meshGroups[i].solid.meshCount, mat);
+
+        /* Get materials in transparent slot. */
+        fixedRefs += hlINMeshesFixMatRefs(meshGroups[i].transparent.meshes,
+            meshGroups[i].transparent.meshCount, mat);
+
+        /* Get materials in boolean slot. */
+        fixedRefs += hlINMeshesFixMatRefs(meshGroups[i].boolean.meshes,
+            meshGroups[i].boolean.meshCount, mat);
+
+        /* TODO: Special slots. */
+    }
+
+    return fixedRefs;
+}
+
+size_t hlModelFixMatRefs(HlModel** HL_RESTRICT models,
+    size_t modelCount, HlMaterial* HL_RESTRICT mat)
+{
+    size_t fixedRefs = 0, i;
+
+    /* We can't fix references if we don't know the material's name. */
+    if (!mat->name) return 0;
+
+    /* Fix references. */
+    for (i = 0; i < modelCount; ++i)
+    {
+        fixedRefs += hlINMeshGroupsFixMatRefs(models[i]->meshGroups,
+            models[i]->meshGroupCount, mat);
+    }
+    
+    return fixedRefs;
+}
+
+static HlResult hlINMeshesGetMatNameRefs(const HlMesh* HL_RESTRICT meshes,
+    size_t meshCount, HlMaterialNameList* HL_RESTRICT matNameRefs)
+{
+    size_t i;
+    HlResult result;
+
+    for (i = 0; i < meshCount; ++i)
+    {
+        if (meshes[i].matRef.refType == HL_REF_TYPE_NAME)
+        {
+            /* Skip duplicates. */
+            size_t i2;
+            HlBool isDuplicate = HL_FALSE;
+
+            for (i2 = 0; i2 < matNameRefs->count; ++i2)
+            {
+                if (matNameRefs->data[i2] == meshes[i].matRef.data.name ||
+                   !strcmp(meshes[i].matRef.data.name, matNameRefs->data[i2]))
+                {
+                    isDuplicate = HL_TRUE;
+                    break;
+                }
+            }
+
+            if (isDuplicate) continue;
+
+            /* Add material name reference to list. */
+            result = HL_LIST_PUSH(*matNameRefs, meshes[i].matRef.data.name);
+            if (HL_FAILED(result)) return result;
+        }
+    }
+
+    return HL_RESULT_SUCCESS;
+}
+
+HlResult hlModelGetMatNameRefs(const HlModel* HL_RESTRICT model,
+    HlMaterialNameList* HL_RESTRICT matNameRefs)
+{
+    size_t i;
+    HlResult result;
+
+    for (i = 0; i < model->meshGroupCount; ++i)
+    {
+        /* Get material name references in solid slot. */
+        result = hlINMeshesGetMatNameRefs(model->meshGroups[i].solid.meshes,
+            model->meshGroups[i].solid.meshCount, matNameRefs);
+
+        if (HL_FAILED(result)) return result;
+
+        /* Get material name references in transparent slot. */
+        result = hlINMeshesGetMatNameRefs(model->meshGroups[i].transparent.meshes,
+            model->meshGroups[i].transparent.meshCount, matNameRefs);
+
+        if (HL_FAILED(result)) return result;
+
+        /* Get material name references in boolean slot. */
+        result = hlINMeshesGetMatNameRefs(model->meshGroups[i].boolean.meshes,
+            model->meshGroups[i].boolean.meshCount, matNameRefs);
+
+        if (HL_FAILED(result)) return result;
+
+        /* TODO: Special slots. */
+    }
+
+    return HL_RESULT_SUCCESS;
+}
+
+static HlResult hlINMeshesGetMats(const HlMesh* HL_RESTRICT meshes,
+    size_t meshCount, HlMaterialList* HL_RESTRICT mats)
+{
+    size_t i;
+    HlResult result;
+
+    for (i = 0; i < meshCount; ++i)
+    {
+        if (meshes[i].matRef.refType == HL_REF_TYPE_PTR)
+        {
+            /* Skip duplicates. */
+            size_t i2;
+            HlBool isDuplicate = HL_FALSE;
+
+            for (i2 = 0; i2 < mats->count; ++i2)
+            {
+                if (mats->data[i2] == meshes[i].matRef.data.ptr ||
+                   (meshes[i].matRef.data.ptr->name && mats->data[i2]->name &&
+                   !strcmp(meshes[i].matRef.data.ptr->name, mats->data[i2]->name)))
+                {
+                    isDuplicate = HL_TRUE;
+                    break;
+                }
+            }
+
+            if (isDuplicate) continue;
+
+            /* Add material pointer to materials list. */
+            result = HL_LIST_PUSH(*mats, meshes[i].matRef.data.ptr);
+            if (HL_FAILED(result)) return result;
+        }
+    }
+
+    return HL_RESULT_SUCCESS;
+}
+
+HlResult hlModelGetMats(const HlModel* HL_RESTRICT model,
+    HlMaterialList* HL_RESTRICT mats)
+{
+    size_t i;
+    HlResult result;
+
+    for (i = 0; i < model->meshGroupCount; ++i)
+    {
+        /* Get materials in solid slot. */
+        result = hlINMeshesGetMats(model->meshGroups[i].solid.meshes,
+            model->meshGroups[i].solid.meshCount, mats);
+
+        if (HL_FAILED(result)) return result;
+
+        /* Get materials in transparent slot. */
+        result = hlINMeshesGetMats(model->meshGroups[i].transparent.meshes,
+            model->meshGroups[i].transparent.meshCount, mats);
+
+        if (HL_FAILED(result)) return result;
+
+        /* Get materials in boolean slot. */
+        result = hlINMeshesGetMats(model->meshGroups[i].boolean.meshes,
+            model->meshGroups[i].boolean.meshCount, mats);
+
+        if (HL_FAILED(result)) return result;
+
+        /* TODO: Special slots. */
+    }
+
+    return HL_RESULT_SUCCESS;
+}
+
+HlResult hlModelWriteMTL(const HlModel** HL_RESTRICT models,
+    size_t modelCount, HlFile* HL_RESTRICT file)
+{
+    HlMaterialList mats;
+    size_t i;
+    HlResult result;
+
+    /* Initialize materials list. */
+    HL_LIST_INIT(mats);
+
+    /* Generate materials list. */
+    for (i = 0; i < modelCount; ++i)
+    {
+        result = hlModelGetMats(models[i], &mats);
+        if (HL_FAILED(result)) return result;
+    }
+
+    /* Write MTL, free list, and return result. */
+    result = hlMaterialWriteMTL(mats.data, mats.count, file);
+    HL_LIST_FREE(mats);
+    return result;
+}
+
+HlResult hlModelExportMTL(const HlModel** HL_RESTRICT models,
+    size_t modelCount, const HlNChar* HL_RESTRICT filePath)
+{
+    HlFile* file;
+    HlResult result;
+
+    /* Open file. */
+    result = hlFileOpen(filePath, HL_FILE_MODE_WRITE, &file);
+    if (HL_FAILED(result)) return result;
+
+    /* Write MTL to file, close it, and return. */
+    result = hlModelWriteMTL(models, modelCount, file);
+    if (HL_FAILED(result))
+    {
+        hlFileClose(file);
+        return result;
+    }
+
+    return hlFileClose(file);
+}
 
 HlModel** hlModelReadOBJ(const HlBlob* blob, size_t* modelCount)
 {
@@ -435,7 +678,7 @@ static HlResult hlINMeshWriteFacesOBJStrips(const HlMesh* HL_RESTRICT mesh,
 
 static HlResult hlINMeshesWriteOBJ(const HlMesh* HL_RESTRICT meshes,
     size_t meshCount, const HlVertexFormat* HL_RESTRICT vertexFormats,
-    char* HL_RESTRICT buf, size_t* HL_RESTRICT globalIndex,
+    HlBool writeMats, char* HL_RESTRICT buf, size_t* HL_RESTRICT globalIndex,
     HlINOBJGlobalCounts* HL_RESTRICT globalCounts, HlFile* HL_RESTRICT file)
 {
     size_t i;
@@ -465,9 +708,28 @@ static HlResult hlINMeshesWriteOBJ(const HlMesh* HL_RESTRICT meshes,
         ++(*globalIndex);
 
         /* Write group name to file. */
-        result = hlFileWrite(file, (size_t)len, buf, 0);
+        result = hlFileWrite(file, len, buf, 0);
         if (HL_FAILED(result)) return result;
 
+        /* Store material name data in buffer if necessary. */
+        if (writeMats)
+        {
+            const char* matName;
+            matName = (meshes[i].matRef.refType == HL_REF_TYPE_NAME) ?
+                meshes[i].matRef.data.name : ((meshes[i].matRef.data.ptr) ?
+                meshes[i].matRef.data.ptr->name : NULL);
+
+            if (matName)
+            {
+                len = sprintf(buf, "usemtl %s\n", matName);
+                if (len < 0) return HL_ERROR_UNKNOWN;
+
+                /* Write material name to file. */
+                result = hlFileWrite(file, len, buf, 0);
+                if (HL_FAILED(result)) return result;
+            }
+        }
+        
         /* Write data. */
         for (i2 = 0; i2 < vtxFmt->vertexElementCount; ++i2)
         {
@@ -577,29 +839,29 @@ static HlResult hlINMeshesWriteOBJ(const HlMesh* HL_RESTRICT meshes,
 }
 
 static HlResult hlINModelWriteOBJ(const HlModel* HL_RESTRICT model,
-    HlFile* HL_RESTRICT file)
+    HlBool writeMats, HlFile* HL_RESTRICT file)
 {
     HlResult result;
 
     /* Write object. */
-    result = HL_FILE_WRITE_TEXT(file, "o ", 0);
+    result = HL_FILE_WRITE_TEXT(file, "o ", NULL);
     if (HL_FAILED(result)) return result;
 
     /* Write object name. */
     if (model->name)
     {
         result = hlFileWrite(file, strlen(model->name) *
-            sizeof(char), model->name, 0);
+            sizeof(char), model->name, NULL);
     }
     else
     {
-        result = HL_FILE_WRITE_TEXT(file, "default", 0);
+        result = HL_FILE_WRITE_TEXT(file, "default", NULL);
     }
 
     if (HL_FAILED(result)) return result;
 
     /* Write newline. */
-    result = HL_FILE_WRITE_TEXT(file, "\n", 0);
+    result = HL_FILE_WRITE_TEXT(file, "\n", NULL);
     if (HL_FAILED(result)) return result;
 
     /* Write meshes. */
@@ -613,21 +875,21 @@ static HlResult hlINModelWriteOBJ(const HlModel* HL_RESTRICT model,
             /* Write solid slot. */
             result = hlINMeshesWriteOBJ(model->meshGroups[i].solid.meshes,
                 model->meshGroups[i].solid.meshCount, model->vertexFormats,
-                buf, &globalIndex, &globalCounts, file);
+                writeMats, buf, &globalIndex, &globalCounts, file);
 
             if (HL_FAILED(result)) return result;
 
             /* Write transparent slot. */
             result = hlINMeshesWriteOBJ(model->meshGroups[i].transparent.meshes,
                 model->meshGroups[i].transparent.meshCount, model->vertexFormats,
-                buf, &globalIndex, &globalCounts, file);
+                writeMats, buf, &globalIndex, &globalCounts, file);
 
             if (HL_FAILED(result)) return result;
 
             /* Write boolean slot. */
             result = hlINMeshesWriteOBJ(model->meshGroups[i].boolean.meshes,
                 model->meshGroups[i].boolean.meshCount, model->vertexFormats,
-                buf, &globalIndex, &globalCounts, file);
+                writeMats, buf, &globalIndex, &globalCounts, file);
 
             if (HL_FAILED(result)) return result;
 
@@ -639,19 +901,36 @@ static HlResult hlINModelWriteOBJ(const HlModel* HL_RESTRICT model,
 }
 
 HlResult hlModelWriteOBJ(const HlModel** HL_RESTRICT models,
-    size_t modelCount, HlFile* HL_RESTRICT file)
+    size_t modelCount, const char* HL_RESTRICT mtlName,
+    HlFile* HL_RESTRICT file)
 {
     size_t i;
     HlResult result;
 
     /* Write "Generated by HedgeLib" comment. */
-    result = HL_FILE_WRITE_TEXT(file, "# Generated by HedgeLib\n", 0);
+    result = HL_FILE_WRITE_TEXT(file, "# Generated by HedgeLib\n", NULL);
     if (HL_FAILED(result)) return result;
+    
+    /* Write mtl name if necessary. */
+    if (mtlName)
+    {
+        /* Write mtllib. */
+        result = HL_FILE_WRITE_TEXT(file, "mtllib ", NULL);
+        if (HL_FAILED(result)) return result;
+
+        /* Write name of mtl. */
+        result = hlFileWrite(file, strlen(mtlName), mtlName, NULL);
+        if (HL_FAILED(result)) return result;
+
+        /* Write newline. */
+        result = HL_FILE_WRITE_TEXT(file, "\n", NULL);
+        if (HL_FAILED(result)) return result;
+    }
 
     /* Write objects. */
     for (i = 0; i < modelCount; ++i)
     {
-        result = hlINModelWriteOBJ(models[i], file);
+        result = hlINModelWriteOBJ(models[i], (mtlName != NULL), file);
         if (HL_FAILED(result)) return result;
     }
 
@@ -665,22 +944,119 @@ HlModel** hlModelImportOBJ(const HlNChar* filePath, size_t* modelCount)
 }
 
 HlResult hlModelExportOBJ(const HlModel** HL_RESTRICT models,
-    size_t modelCount, const HlNChar* HL_RESTRICT filePath)
+    size_t modelCount, HlBool writeMTL, const HlNChar* HL_RESTRICT filePath)
 {
     HlFile* file;
+    const HlNChar* ext;
     HlResult result;
 
-    /* Open file. */
-    result = hlFileOpen(filePath, HL_FILE_MODE_WRITE, &file);
-    if (HL_FAILED(result)) return result;
-
-    /* Write OBJ to file, close it, and return. */
-    result = hlModelWriteOBJ(models, modelCount, file);
-    if (HL_FAILED(result))
+    /* Write OBJ. */
     {
-        hlFileClose(file);
-        return result;
+        char buf[64];
+        char* mtlName = NULL;
+
+        if (writeMTL)
+        {
+            /*
+               0123456789
+               test.obj$
+            */
+            const HlNChar* fileName = hlPathGetName(filePath);
+            size_t mtlNameLen, extPos = (size_t)((ext =
+                hlPathGetExt(fileName, 0)) - fileName);
+
+#ifdef HL_IN_WIN32_UNICODE
+            size_t extPosU8 = extPos;
+            extPos = hlStrGetReqLenUTF16ToUTF8(fileName, extPosU8);
+#endif
+
+            mtlNameLen = (extPos + 5);
+
+            /* Allocate buffer if necessary. */
+            if (mtlNameLen > 64)
+            {
+                mtlName = HL_ALLOC_ARR(char, mtlNameLen);
+                if (!mtlName) return HL_ERROR_OUT_OF_MEMORY;
+            }
+            else
+            {
+                mtlName = buf;
+            }
+
+            /* Copy file name without extension into buffer. */
+#ifdef HL_IN_WIN32_UNICODE
+            if (!hlStrConvUTF16ToUTF8NoAlloc(fileName, mtlName, extPosU8, 0))
+            {
+                if (mtlName != buf) hlFree(mtlName);
+                return HL_ERROR_UNKNOWN;
+            }
+#else
+            memcpy(mtlName, fileName, extPos * sizeof(char));
+#endif
+
+            /* Copy new extension into buffer. */
+            strcpy(&mtlName[extPos], ".mtl");
+        }
+
+        /* Open OBJ file. */
+        result = hlFileOpen(filePath, HL_FILE_MODE_WRITE, &file);
+        if (HL_FAILED(result)) return result;
+
+        /* Write OBJ to file. */
+        result = hlModelWriteOBJ(models, modelCount, mtlName, file);
+        if (HL_FAILED(result))
+        {
+            hlFileClose(file);
+            return result;
+        }
+
+        /* Free MTL name buffer if necessary. */
+        if (writeMTL && mtlName != buf)
+            hlFree(mtlName);
+
+        /* Close OBJ file and return result if failed, or if we're not writing an MTL. */
+        result = hlFileClose(file);
+        if (!writeMTL || HL_FAILED(result))
+            return result;
     }
 
-    return hlFileClose(file);
+    /* Write MTL. */
+    {
+        HlNChar buf[255];
+        HlNChar* mtlPath = buf;
+        size_t extPos = (size_t)(ext - filePath),
+            mtlPathLen = (extPos + 5);
+
+        /* Allocate buffer if necessary. */
+        if (mtlPathLen > 255)
+        {
+            mtlPath = HL_ALLOC_ARR(HlNChar, mtlPathLen);
+            if (!mtlPath) return HL_ERROR_OUT_OF_MEMORY;
+        }
+
+        /* Copy file path without extension into buffer. */
+        memcpy(mtlPath, filePath, extPos * sizeof(HlNChar));
+
+        /* Copy new extension into buffer. */
+        hlNStrCopy(HL_NTEXT(".mtl"), &mtlPath[extPos]);
+
+        /* Open MTL file. */
+        result = hlFileOpen(mtlPath, HL_FILE_MODE_WRITE, &file);
+        if (HL_FAILED(result)) return result;
+
+        /* Write MTL to file. */
+        result = hlModelWriteMTL(models, modelCount, file);
+        if (HL_FAILED(result))
+        {
+            if (mtlPath != buf) hlFree(mtlPath);
+            hlFileClose(file);
+            return result;
+        }
+
+        /* Free MTL name buffer if necessary. */
+        if (mtlPath != buf) hlFree(mtlPath);
+
+        /* Close MTL file and return result. */
+        return hlFileClose(file);
+    }
 }
