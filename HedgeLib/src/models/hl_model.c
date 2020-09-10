@@ -570,7 +570,7 @@ static int hlINMeshStoreFaceIndexOBJ(char types, unsigned short f,
     return idx;
 }
 
-static int hlINMeshStoreFaceOBJ(char types,
+static int hlINMeshStoreFaceOBJ(char types, HlBool clockwise,
     unsigned short f1, unsigned short f2, unsigned short f3,
     const HlINOBJGlobalCounts* HL_RESTRICT globalOffset,
     char* HL_RESTRICT buf)
@@ -578,7 +578,8 @@ static int hlINMeshStoreFaceOBJ(char types,
     int tmpLen, len = 2;
 
     /* Store face #1 */
-    tmpLen = hlINMeshStoreFaceIndexOBJ(types, f1,
+    tmpLen = hlINMeshStoreFaceIndexOBJ(types,
+        (clockwise) ? f1 : f3,
         globalOffset, &buf[len]);
 
     if (tmpLen < 0) return 0;
@@ -596,7 +597,8 @@ static int hlINMeshStoreFaceOBJ(char types,
     buf[len++] = ' ';
 
     /* Store face #3 */
-    tmpLen = hlINMeshStoreFaceIndexOBJ(types, f3,
+    tmpLen = hlINMeshStoreFaceIndexOBJ(types,
+        (clockwise) ? f3 : f1,
         globalOffset, &buf[len]);
 
     if (tmpLen < 0) return 0;
@@ -651,12 +653,12 @@ static HlResult hlINMeshWriteFacesOBJStrips(const HlMesh* HL_RESTRICT mesh,
                 if (reverse)
                 {
                     bufLen = (size_t)hlINMeshStoreFaceOBJ(types,
-                        f1, f3, f2, globalOffset, buf);
+                        mesh->clockwise, f1, f3, f2, globalOffset, buf);
                 }
                 else
                 {
                     bufLen = (size_t)hlINMeshStoreFaceOBJ(types,
-                        f1, f2, f3, globalOffset, buf);
+                        mesh->clockwise, f1, f2, f3, globalOffset, buf);
                 }
 
                 /* Multiply by sizeof(char). This should almost always be optimized-out. */

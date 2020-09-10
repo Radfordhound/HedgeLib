@@ -18,6 +18,7 @@ typedef struct HlMesh
     void* vertices;
     size_t faceCount;
     unsigned short* faces;
+    HlBool clockwise;
 
     /* TODO: Texture stuff */
     /*size_t textureUnitCount;
