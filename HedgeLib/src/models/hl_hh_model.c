@@ -322,6 +322,7 @@ static HlResult hlINHHVertexFormatRead(const HlHHMeshSlot* HL_RESTRICT hhMeshSlo
 
         /* Setup HlVertexFormat. */
         hlVertexFormats[i].vertexFormatSize = (size_t)mesh->vertexSize;
+        hlVertexFormats[i].vertexElementCount = 0;
         hlVertexFormats[i].vertexElements = hlCurVertexElement;
 
         /* Setup HlVertexElements. */
