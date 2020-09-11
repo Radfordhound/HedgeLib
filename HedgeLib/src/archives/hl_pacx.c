@@ -1090,7 +1090,11 @@ static HlResult hlINPACxV2LoadSplits(HlBlob* HL_RESTRICT rootPac,
     splitFileTree = hlPACxV2DataGetFileTree(
         dataBlock, HlINPACxV2SplitType);
 
-    /* TODO: Ensure split file tree is not null. */
+    /* If there are no splits, simply parse root and return. */
+    if (!splitFileTree)
+    {
+        return hlPACxV2Read(&rootPac, 1, archive);
+    }
 
     /* Get split file nodes. */
     splitFileNodes = (HlPACxV2Node*)hlOff32Get(
@@ -1527,6 +1531,12 @@ static HlResult hlINPACxV3LoadSplits(HlBlob* HL_RESTRICT rootPac,
 
     /* Fix root pac. */
     hlPACxV3Fix(rootPac);
+
+    /* If there are no splits, simply parse root and return. */
+    if (!header->splitCount)
+    {
+        return hlPACxV3Read(&rootPac, 1, archive);
+    }
 
     /* Get split table. */
     splitTable = hlPACxV3GetSplitTable(header);
