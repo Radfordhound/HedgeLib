@@ -101,6 +101,8 @@ static void win32PromptIfNecessary(void)
         getchar();
     }
 }
+#else
+#define win32PromptIfNecessary()
 #endif
 
 static void printWarning(const HlNChar* warning)
@@ -111,6 +113,15 @@ static void printWarning(const HlNChar* warning)
 static void printError(const HlNChar* err)
 {
     fnprintf(stderr, GET_TEXT(ERROR_STRING), err);
+}
+
+static void printUsage(FILE* stream)
+{
+    fnprintf(stream, HL_NTEXT("%s"), GET_TEXT(HELP_STRING));
+
+#ifdef _WIN32
+    fnprintf(stream, HL_NTEXT("%s"), GET_TEXT(WIN32_HELP_STRING));
+#endif
 }
 
 static void NNPrintOffsets(HlBlob* blob)
@@ -336,20 +347,10 @@ static HlResult printOffsets(const HlNChar* filePath)
     }
 }
 
-static void printUsage(FILE* stream)
-{
-    fnprintf(stream, HL_NTEXT("%s"), GET_TEXT(HELP_STRING));
-
-#ifdef _WIN32
-    fnprintf(stream, HL_NTEXT("%s"), GET_TEXT(WIN32_HELP_STRING));
-#endif
-}
-
 int nmain(int argc, HlNChar* argv[])
 {
     const HlNChar* input = NULL;
     int i, returnCode = EXIT_SUCCESS;
-    HlBool showedHelp = HL_FALSE;
 
     /* Parse command-line arguments. */
     for (i = 1; i < argc; ++i)
@@ -358,7 +359,7 @@ int nmain(int argc, HlNChar* argv[])
         if (!nstrcmp(argv[i], HL_NTEXT("-?")))
         {
             printUsage(stdout);
-            showedHelp = HL_TRUE;
+            goto end;
         }
 
         /* Input file path. */
@@ -389,17 +390,13 @@ int nmain(int argc, HlNChar* argv[])
         }
     }
 
-    /* Print usage information if no valid file path was given and we haven't already shown it. */
-    else if (!showedHelp)
+    /* Print usage information if no valid file path was given. */
+    else
     {
         printUsage(stderr);
     }
 
 end:
-#ifdef _WIN32
-    /* Pause until the user presses enter if necessary. */
     win32PromptIfNecessary();
-#endif
-
     return returnCode;
 }
