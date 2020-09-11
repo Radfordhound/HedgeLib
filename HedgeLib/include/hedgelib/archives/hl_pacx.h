@@ -9,6 +9,8 @@ extern "C" {
 
 #define HL_PACX_SIG     HL_MAKE_SIG('P', 'A', 'C', 'x')
 
+HL_API extern const HlNChar HL_PACX_EXT[5];
+
 typedef HlBINAV2Header HlPACxV2Header;
 typedef HlBINAV2BlockHeader HlPACxV2BlockHeader;
 
@@ -387,6 +389,9 @@ HL_API HlResult hlPACxV4Read(HlBlob* HL_RESTRICT pac,
     HlBool loadSplits, HlArchive** HL_RESTRICT archive);
 
 HL_API HlResult hlPACxV4Load(const HlNChar* HL_RESTRICT filePath,
+    HlBool loadSplits, HlArchive** HL_RESTRICT archive);
+
+HL_API HlResult hlPACxLoad(const HlNChar* HL_RESTRICT filePath,
     HlBool loadSplits, HlArchive** HL_RESTRICT archive);
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS
