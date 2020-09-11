@@ -101,6 +101,8 @@ typedef struct HlArchive
 }
 HlArchive;
 
+HL_API size_t hlArchiveExtIsSplit(const HlNChar* ext);
+
 /**
    @brief Extracts all the files, and optionally, the directories in the given array of entries.
    @param[in] entries       The array of HlArchiveEntry structs to extract.

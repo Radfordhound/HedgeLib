@@ -6,6 +6,35 @@
 #include "hedgelib/archives/hl_archive.h"
 #include <string.h>
 
+size_t hlArchiveExtIsSplit(const HlNChar* ext)
+{
+    size_t numSplitChars = 0;
+
+    /* Account for dot at beginning of extension. */
+    if (*ext == HL_NTEXT('.')) ++ext;
+
+    /* Ensure there is at least one digit in the extension. */
+    if (!HL_IS_DIGIT(*ext)) return 0;
+
+    /* Loop through the remaining characters in the extension. */
+    while (1)
+    {
+        /* Increment numSplitChars. */
+        ++numSplitChars;
+
+        /* Return if we encounter a character which isn't a valid ASCII digit. */
+        if (!HL_IS_DIGIT(ext[numSplitChars]))
+        {
+            /*
+               If this non-digit character is the null-terminator, this
+               is a valid split extension. Otherwise, it isn't.
+            */
+            return (ext[numSplitChars] == HL_NTEXT('\0')) ?
+                numSplitChars : 0;
+        }
+    }
+}
+
 #define HL_INARC_PATH_BUF_LEN 255
 
 HlBool hlINArchiveNextSplit2(HlNChar* lastCharPtr)
