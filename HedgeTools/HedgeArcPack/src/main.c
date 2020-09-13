@@ -150,7 +150,7 @@ static void win32PromptIfNecessary(void)
     if (GetCurrentProcessId() == processID)
     {
         nprintf(GET_TEXT(PRESS_ENTER_STRING));
-        getchar();
+        getwchar();
     }
 }
 #else
