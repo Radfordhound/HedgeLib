@@ -35,7 +35,7 @@ STRING_ID;
 
 /* Auto-generate localized text arrays. */
 #define LOCALIZED_TEXT(languageID)\
-    static const HlNChar* const languageID##Text[STRING_CONSTANT_COUNT] =
+    static const HlNChar* const languageID##_Text[STRING_CONSTANT_COUNT] =
 
 #include "text.h"
 #undef LOCALIZED_TEXT
@@ -54,7 +54,7 @@ LANGUAGE_TYPE;
 static const HlNChar* const* Languages[] =
 {
 /* Auto-generate this array. */
-#define LANGUAGE(languageID) languageID##Text,
+#define LANGUAGE(languageID) languageID##_Text,
 #include "languages.h"
 #undef LANGUAGE
 
@@ -351,6 +351,8 @@ int nmain(int argc, HlNChar* argv[])
 {
     const HlNChar* input = NULL;
     int i, returnCode = EXIT_SUCCESS;
+
+    WIN32_SET_MODE_UTF16();
 
     /* Parse command-line arguments. */
     for (i = 1; i < argc; ++i)
