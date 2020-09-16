@@ -14,7 +14,7 @@ extern "C" {
     ((list).capacity = ((list).capacity) ? (list).capacity * 2 : 1,\
 \
     /* Reallocate the list's data buffer. */\
-    (HlBool)((*(void**)(&(list).data) = hlRealloc((list).data,\
+    (HlBool)((*(void**)(&(list).data) = hlRealloc((void*)(list).data,\
         sizeof(*((list).data)) * (list).capacity)) != 0))
 
 /*
@@ -36,10 +36,25 @@ extern "C" {
 
 #define HL_LIST_POP(list) --(list).count
 #define HL_LIST_GET_LAST(list) ((list).data[(list).count - 1])
-#define HL_LIST_FREE(list) hlFree((list).data)
+#define HL_LIST_FREE(list) hlFree((void*)((list).data))
 
 /* Offset table typedef. */
 typedef HL_LIST(size_t) HlOffTable;
+
+/* String table entry. */
+typedef struct HlStrTableEntry
+{
+    /** @brief The string being referenced. */
+    const char* str;
+    /** @brief The (absolute) position of the string offset within the file. */
+    size_t offPos;
+    /** @brief The length of the string, not counting the null-terminator. */
+    size_t len;
+}
+HlStrTableEntry;
+
+/* String table typedef. */
+typedef HL_LIST(HlStrTableEntry) HlStrTable;
 
 #ifdef __cplusplus
 }
