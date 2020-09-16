@@ -11,6 +11,7 @@
 #include <wchar.h>
 
 #define nstrcmp wcscmp
+#define nstrncmp wcsncmp
 #define nprintf wprintf
 #define fnprintf fwprintf
 #define nfgets fgetws
@@ -25,6 +26,7 @@
 }
 #else
 #define nstrcmp strcmp
+#define nstrncmp strncmp
 #define nprintf printf
 #define fnprintf fprintf
 #define nfgets fgets

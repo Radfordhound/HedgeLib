@@ -202,39 +202,39 @@ static ARC_TYPE getArcType(const HlNChar* HL_RESTRICT typeStr,
     HlBool* HL_RESTRICT generatePFI)
 {
     /* Unleashed/Generations .ar/.pfd files. */
-    if (!hlNStrCmp(typeStr, HL_NTEXT("su\n")) ||
-        !hlNStrCmp(typeStr, HL_NTEXT("sg\n")) ||
-        !hlNStrCmp(typeStr, HL_NTEXT("gens\n")) ||
-        !hlNStrCmp(typeStr, HL_NTEXT("ar\n")))
+    if (!nstrncmp(typeStr, HL_NTEXT("su"), 2) ||
+        !nstrncmp(typeStr, HL_NTEXT("sg"), 2) ||
+        !nstrncmp(typeStr, HL_NTEXT("gens"), 4) ||
+        !nstrncmp(typeStr, HL_NTEXT("ar"), 2))
     {
         return ARC_TYPE_AR;
     }
 
-    if (!hlNStrCmp(typeStr, HL_NTEXT("pfd\n")))
+    if (!nstrncmp(typeStr, HL_NTEXT("pfd"), 3))
     {
         if (generatePFI) *generatePFI = HL_TRUE;
         return ARC_TYPE_AR;
     }
 
     /* Lost World .pac files. */
-    if (!hlNStrCmp(typeStr, HL_NTEXT("lw\n")) ||
-        !hlNStrCmp(typeStr, HL_NTEXT("slw\n")) ||
-        !hlNStrCmp(typeStr, HL_NTEXT("pac2\n")))
+    if (!nstrncmp(typeStr, HL_NTEXT("lw"), 2) ||
+        !nstrncmp(typeStr, HL_NTEXT("slw"), 3) ||
+        !nstrncmp(typeStr, HL_NTEXT("pac2"), 4))
     {
         return ARC_TYPE_PACxV2;
     }
 
     /* Forces .pac files. */
-    if (!hlNStrCmp(typeStr, HL_NTEXT("wars\n")) ||
-        !hlNStrCmp(typeStr, HL_NTEXT("forces\n")) ||
-        !hlNStrCmp(typeStr, HL_NTEXT("pac3\n")))
+    if (!nstrncmp(typeStr, HL_NTEXT("wars"), 4) ||
+        !nstrncmp(typeStr, HL_NTEXT("forces"), 6) ||
+        !nstrncmp(typeStr, HL_NTEXT("pac3"), 4))
     {
         return ARC_TYPE_PACxV3;
     }
 
     /* Tokyo 2020/Sakura Wars .pac files. */
-    if (!hlNStrCmp(typeStr, HL_NTEXT("rings\n")) ||
-        !hlNStrCmp(typeStr, HL_NTEXT("pac4\n")))
+    if (!nstrncmp(typeStr, HL_NTEXT("rings"), 5) ||
+        !nstrncmp(typeStr, HL_NTEXT("pac4"), 4))
     {
         return ARC_TYPE_PACxV4;
     }
@@ -423,14 +423,14 @@ int nmain(int argc, HlNChar* argv[])
     for (i = 1; i < argc; ++i)
     {
         /* Help mode. */
-        if (!nstrcmp(argv[i], HL_NTEXT("-?")))
+        if (!nstrncmp(argv[i], HL_NTEXT("-?"), 2))
         {
             printUsage(stdout);
             goto end;
         }
 
         /* Extract mode. */
-        else if (!nstrcmp(argv[i], HL_NTEXT("-E")))
+        else if (!nstrncmp(argv[i], HL_NTEXT("-E"), 2))
         {
             if (mode != MODE_UNKNOWN)
             {
@@ -443,7 +443,7 @@ int nmain(int argc, HlNChar* argv[])
         }
 
         /* Pack mode. */
-        else if (!nstrcmp(argv[i], HL_NTEXT("-P")))
+        else if (!nstrncmp(argv[i], HL_NTEXT("-P"), 2))
         {
             if (mode != MODE_UNKNOWN)
             {
@@ -456,7 +456,7 @@ int nmain(int argc, HlNChar* argv[])
         }
 
         /* Type flag. */
-        else if (!nstrcmp(argv[i], HL_NTEXT("-T=")))
+        else if (!nstrncmp(argv[i], HL_NTEXT("-T="), 3))
         {
             type = getArcType(&argv[i][3], &generatePFI);
             if (type == ARC_TYPE_UNKNOWN)
@@ -468,7 +468,7 @@ int nmain(int argc, HlNChar* argv[])
         }
 
         /* Big endian flag. */
-        else if (!nstrcmp(argv[i], HL_NTEXT("-B")))
+        else if (!nstrncmp(argv[i], HL_NTEXT("-B"), 2))
         {
             bigEndian = HL_TRUE;
         }
@@ -476,7 +476,7 @@ int nmain(int argc, HlNChar* argv[])
         /* TODO: Split flag. */
 
         /* Generate PFI flag. */
-        else if (!nstrcmp(argv[i], HL_NTEXT("-I")))
+        else if (!nstrncmp(argv[i], HL_NTEXT("-I"), 2))
         {
             generatePFI = HL_TRUE;
         }

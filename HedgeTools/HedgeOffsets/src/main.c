@@ -358,7 +358,7 @@ int nmain(int argc, HlNChar* argv[])
     for (i = 1; i < argc; ++i)
     {
         /* Help flag. */
-        if (!nstrcmp(argv[i], HL_NTEXT("-?")))
+        if (!nstrncmp(argv[i], HL_NTEXT("-?"), 2))
         {
             printUsage(stdout);
             goto end;
