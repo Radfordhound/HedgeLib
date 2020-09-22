@@ -367,6 +367,40 @@ HlResult hlFileWriteNulls(HlFile* HL_RESTRICT file,
     return result;
 }
 
+HlResult hlFileWriteOff32(HlFile* HL_RESTRICT file,
+    size_t basePos, size_t offVal, HlOffTable* HL_RESTRICT offTable)
+{
+    /* Compute offset. */
+    const HlU32 off = (HlU32)(offVal - basePos);
+
+    /* Add offset position to offset table if requested by user. */
+    if (offTable)
+    {
+        HlResult result = HL_LIST_PUSH(*offTable, hlFileTell(file));
+        if (HL_FAILED(result)) return result;
+    }
+
+    /* Write offset to file and return result. */
+    return hlFileWrite(file, sizeof(off), &off, NULL);
+}
+
+HlResult hlFileWriteOff64(HlFile* HL_RESTRICT file,
+    size_t basePos, size_t offVal, HlOffTable* HL_RESTRICT offTable)
+{
+    /* Compute offset. */
+    const HlU32 off = (HlU32)(offVal - basePos);
+
+    /* Add offset position to offset table if requested by user. */
+    if (offTable)
+    {
+        HlResult result = HL_LIST_PUSH(*offTable, hlFileTell(file));
+        if (HL_FAILED(result)) return result;
+    }
+
+    /* Write offset to file and return result. */
+    return hlFileWrite(file, sizeof(off), &off, NULL);
+}
+
 HlResult hlFileAlign(HlFile* file, size_t stride)
 {
     /* If stride is < 2, we don't need to align; return success. */

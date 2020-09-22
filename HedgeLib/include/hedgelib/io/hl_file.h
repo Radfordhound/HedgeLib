@@ -1,6 +1,7 @@
 #ifndef HL_FILE_H_INCLUDED
 #define HL_FILE_H_INCLUDED
 #include "../hl_text.h"
+#include "../hl_list.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,6 +45,12 @@ HL_API HlResult hlFileWrite(HlFile* HL_RESTRICT file, size_t size,
 
 HL_API HlResult hlFileWriteNulls(HlFile* HL_RESTRICT file,
     size_t amount, size_t* HL_RESTRICT writtenByteCount);
+
+HL_API HlResult hlFileWriteOff32(HlFile* HL_RESTRICT file,
+    size_t basePos, size_t offVal, HlOffTable* HL_RESTRICT offTable);
+
+HL_API HlResult hlFileWriteOff64(HlFile* HL_RESTRICT file,
+    size_t basePos, size_t offVal, HlOffTable* HL_RESTRICT offTable);
 
 HL_API HlResult hlFileAlign(HlFile* file, size_t stride);
 HL_API HlResult hlFilePad(HlFile* file, size_t stride);
