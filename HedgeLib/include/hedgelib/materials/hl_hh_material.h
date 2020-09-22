@@ -32,7 +32,7 @@ typedef struct HlHHMaterialV1
     HL_OFF32_STR subShaderNameOffset;
     HL_OFF32_STR texsetNameOffset;
     HlU32 reserved1;
-    HlU8 flags;
+    HlU8 alphaThreshold;
     HlU8 noBackfaceCulling;
     HlU8 useAdditiveBlending;
     HlU8 unknownFlag1;
@@ -56,7 +56,7 @@ typedef struct HlHHMaterialV3
     HL_OFF32_STR subShaderNameOffset;
     HL_OFF32(HL_OFF32_STR) hhTextureNamesOffset;
     HL_OFF32(HL_OFF32(HlHHTexture)) texturesOffset;
-    HlU8 flags;
+    HlU8 alphaThreshold;
     HlU8 noBackfaceCulling;
     HlU8 useAdditiveBlending;
     HlU8 unknownFlag1;
