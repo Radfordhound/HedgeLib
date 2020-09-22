@@ -85,6 +85,28 @@ void hlSetAllocators(HlAllocFunc alloc,
     HlFreePtr = free;
 }
 
+void* hlCAlloc(size_t size)
+{
+    /* Allocate buffer. */
+    void* buf = hlAlloc(size);
+    if (!buf) return buf;
+
+    /* Clear the memory in the buffer and return it. */
+    memset(buf, 0, size);
+    return buf;
+}
+
+void* hlCRealloc(void* ptr, size_t size)
+{
+    /* Re-allocate buffer. */
+    ptr = hlRealloc(ptr, size);
+    if (!ptr) return ptr;
+
+    /* Clear the memory in the buffer and return it. */
+    memset(ptr, 0, size);
+    return ptr;
+}
+
 #ifndef HL_NO_EXTERNAL_WRAPPERS
 void* hlAllocExt(size_t size)
 {

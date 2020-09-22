@@ -21,6 +21,9 @@ HL_API void hlSetAllocators(HlAllocFunc alloc,
 #define hlRealloc(ptr, size)    HlReallocPtr(ptr, size)
 #define hlFree(ptr)             HlFreePtr(ptr)
 
+HL_API void* hlCAlloc(size_t size);
+HL_API void* hlCRealloc(void* ptr, size_t size);
+
 #ifndef HL_NO_EXTERNAL_WRAPPERS
 HL_API void* hlAllocExt(size_t size);
 HL_API void* hlReallocExt(void* ptr, size_t size);
