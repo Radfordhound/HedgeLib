@@ -1,6 +1,7 @@
 #ifndef HL_BINA_H_INCLUDED
 #define HL_BINA_H_INCLUDED
 #include "../hl_blob.h"
+#include "../hl_list.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -173,6 +174,36 @@ HL_API HlBINAV2BlockDataHeader* hlBINAV2GetDataBlock(const HlBlob* blob);
 #define hlBINAV1GetData(blob)   (void*)(((const HlBINAV1Header*)(blob)->data) + 1)
 HL_API void* hlBINAV2GetData(const HlBlob* blob);
 HL_API void* hlBINAGetData(const HlBlob* blob);
+
+HL_API HlResult hlBINAStringsWrite32(size_t dataPos, const HlStrTable* HL_RESTRICT strTable,
+    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file);
+
+HL_API HlResult hlBINAStringsWrite64(size_t dataPos, const HlStrTable* HL_RESTRICT strTable,
+    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file);
+
+HL_API HlResult hlBINAOffsetsWriteSorted(size_t dataPos,
+    const HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file);
+
+HL_API HlResult hlBINAOffsetsWrite(size_t dataPos,
+    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file);
+
+HL_API HlResult hlBINAV1StartWrite(HlBINAEndianFlag endianFlag, HlFile* file);
+
+HL_API HlResult hlBINAV2StartWrite(HlBool use64BitOffsets,
+    HlBINAEndianFlag endianFlag, HlFile* file);
+
+HL_API HlResult hlBINAV1FinishWrite(size_t headerPos,
+    HlOffTable* HL_RESTRICT offTable, HlBINAEndianFlag endianFlag,
+    HlFile* HL_RESTRICT file);
+
+HL_API HlResult hlBINAV2FinishWrite(size_t headerPos, HlU16 blockCount,
+    HlBINAEndianFlag endianFlag, HlFile* file);
+
+HL_API HlResult hlBINAV2DataBlockStartWrite(HlBINAEndianFlag endianFlag, HlFile* file);
+
+HL_API HlResult hlBINAV2DataBlockFinishWrite(size_t dataBlockPos, HlBool use64BitOffsets,
+    const HlStrTable* HL_RESTRICT strTable, HlOffTable* HL_RESTRICT offTable,
+    HlBINAEndianFlag endianFlag, HlFile* HL_RESTRICT file);
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS
 HL_API HlBool hlBINANeedsSwapExt(HlU8 endianFlag);

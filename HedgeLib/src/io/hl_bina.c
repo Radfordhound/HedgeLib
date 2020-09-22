@@ -318,6 +318,500 @@ void* hlBINAGetData(const HlBlob* blob)
         hlBINAV2GetData(blob) : hlBINAV1GetData(blob);
 }
 
+#define hlINBINAStringIsDuplicate(str1, str2)\
+    ((str1).len == (str2).len &&    /* length matches AND... */\
+    ((str1).str == (str2).str ||    /* (pointer matches OR... */\
+    !memcmp((str1).str, (str2).str, /* string matches) */\
+        (str1).len)))
+
+HlResult hlBINAStringsWrite32(size_t dataPos, const HlStrTable* HL_RESTRICT strTable,
+    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file)
+{
+    HlBool skipStrBuf[255];
+    HlBool* skipStr = skipStrBuf;
+    size_t i;
+    HlResult result;
+
+    /* Allocate string entry skip buffer on heap if necessary. */
+    if (strTable->count > 255)
+    {
+        skipStr = HL_ALLOC_ARR(HlBool, strTable->count);
+        if (!skipStr) return HL_ERROR_OUT_OF_MEMORY;
+    }
+
+    /* Write strings and fix offsets in string entries. */
+    for (i = 0; i < strTable->count; ++i)
+    {
+        size_t i2, curStrPos;
+        HlU32 off;
+
+        /* Skip the current string entry if it's a duplicate. */
+        if (skipStr[i]) continue;
+
+        /* Get current string position. */
+        curStrPos = hlFileTell(file);
+
+        /* Compute offset. */
+        off = (HlU32)(curStrPos - dataPos);
+
+        /* Add offset value to offset table. */
+        result = HL_LIST_PUSH(*offTable, strTable->data[i].offPos);
+        if (HL_FAILED(result)) return result;
+
+        /* Jump to offset position. */
+        result = hlFileJumpTo(file, strTable->data[i].offPos);
+        if (HL_FAILED(result)) return result;
+
+        /* Fix offset. */
+        result = hlFileWrite(file, sizeof(off), &off, NULL);
+        if (HL_FAILED(result)) return result;
+
+        /* Mark duplicate string entries and fix duplicate offsets. */
+        for (i2 = (i + 1); i2 < strTable->count; ++i2)
+        {
+            /* If we've found a duplicate string entry... */
+            if (hlINBINAStringIsDuplicate(strTable->data[i], strTable->data[i2]))
+            {
+                /* Add offset value to offset table. */
+                result = HL_LIST_PUSH(*offTable, strTable->data[i2].offPos);
+                if (HL_FAILED(result)) return result;
+
+                /* Jump to offset position. */
+                result = hlFileJumpTo(file, strTable->data[i2].offPos);
+                if (HL_FAILED(result)) return result;
+
+                /* Fix offset. */
+                result = hlFileWrite(file, sizeof(off), &off, NULL);
+                if (HL_FAILED(result)) return result;
+
+                /* Mark this string entry as a duplicate. */
+                skipStr[i2] = HL_TRUE;
+            }
+        }
+
+        /* Jump to string position. */
+        result = hlFileJumpTo(file, curStrPos);
+        if (HL_FAILED(result)) return result;
+
+        /* Write string. */
+        result = hlFileWrite(file, strTable->data[i].len,
+            strTable->data[i].str, NULL);
+
+        if (HL_FAILED(result)) return result;
+
+        /* Write null terminator. */
+        result = hlFileWriteNulls(file, 1, NULL);
+        if (HL_FAILED(result)) return result;
+    }
+
+    /* Write padding. */
+    result = hlFilePad(file, 4);
+
+    /* Free string entry skip buffer if necessary and return result. */
+    if (skipStr != skipStrBuf) hlFree(skipStr);
+    return result;
+}
+
+HlResult hlBINAStringsWrite64(size_t dataPos, const HlStrTable* HL_RESTRICT strTable,
+    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file)
+{
+    HlBool skipStrBuf[255];
+    HlBool* skipStr = skipStrBuf;
+    size_t i;
+    HlResult result;
+
+    /* Allocate string entry skip buffer on heap if necessary. */
+    if (strTable->count > 255)
+    {
+        skipStr = HL_ALLOC_ARR(HlBool, strTable->count);
+        if (!skipStr) return HL_ERROR_OUT_OF_MEMORY;
+    }
+
+    /* Write strings and fix offsets in string entries. */
+    for (i = 0; i < strTable->count; ++i)
+    {
+        size_t i2, curStrPos;
+        HlU64 off;
+
+        /* Skip the current string entry if it's a duplicate. */
+        if (skipStr[i]) continue;
+
+        /* Get current string position. */
+        curStrPos = hlFileTell(file);
+
+        /* Compute offset. */
+        off = (HlU64)(curStrPos - dataPos);
+
+        /* Add offset value to offset table. */
+        result = HL_LIST_PUSH(*offTable, strTable->data[i].offPos);
+        if (HL_FAILED(result)) return result;
+
+        /* Jump to offset position. */
+        result = hlFileJumpTo(file, strTable->data[i].offPos);
+        if (HL_FAILED(result)) return result;
+
+        /* Fix offset. */
+        result = hlFileWrite(file, sizeof(off), &off, NULL);
+        if (HL_FAILED(result)) return result;
+
+        /* Mark duplicate string entries and fix duplicate offsets. */
+        for (i2 = (i + 1); i2 < strTable->count; ++i2)
+        {
+            /* If we've found a duplicate string entry... */
+            if (hlINBINAStringIsDuplicate(strTable->data[i], strTable->data[i2]))
+            {
+                /* Add offset value to offset table. */
+                result = HL_LIST_PUSH(*offTable, strTable->data[i2].offPos);
+                if (HL_FAILED(result)) return result;
+
+                /* Jump to offset position. */
+                result = hlFileJumpTo(file, strTable->data[i2].offPos);
+                if (HL_FAILED(result)) return result;
+
+                /* Fix offset. */
+                result = hlFileWrite(file, sizeof(off), &off, NULL);
+                if (HL_FAILED(result)) return result;
+
+                /* Mark this string entry as a duplicate. */
+                skipStr[i2] = HL_TRUE;
+            }
+        }
+
+        /* Jump to string position. */
+        result = hlFileJumpTo(file, curStrPos);
+        if (HL_FAILED(result)) return result;
+
+        /* Write string. */
+        result = hlFileWrite(file, strTable->data[i].len,
+            strTable->data[i].str, NULL);
+
+        if (HL_FAILED(result)) return result;
+
+        /* Write null terminator. */
+        result = hlFileWriteNulls(file, 1, NULL);
+        if (HL_FAILED(result)) return result;
+    }
+
+    /* Write padding. */
+    result = hlFilePad(file, 4);
+
+    /* Free string entry skip buffer if necessary and return result. */
+    if (skipStr != skipStrBuf) hlFree(skipStr);
+    return result;
+}
+
+HlResult hlBINAOffsetsWriteSorted(size_t dataPos,
+    const HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file)
+{
+    size_t i, lastOffPos = dataPos;
+    for (i = 0; i < offTable->count; ++i)
+    {
+        const size_t curOffVal = ((offTable->data[i] - lastOffPos) >> 2);
+        size_t curOffSize;
+        HlU8 tmpOffVal[4];
+        HlResult result;
+
+        /* Ensure offset fits within thirty bits. */
+        HL_ASSERT(curOffVal <= 0x3FFFFFFF);
+
+        /* Compute offset value. */
+        if (curOffVal <= 0x3F)
+        {
+            tmpOffVal[0] = (HlU8)(curOffVal & HL_BINA_OFF_DATA_MASK);
+            tmpOffVal[0] |= HL_BINA_OFF_SIZE_SIX_BIT;
+            curOffSize = 1;
+        }
+        else if (curOffVal <= 0x3FFF)
+        {
+            tmpOffVal[0] = (HlU8)((curOffVal & 0x3F00) >> 8);
+            tmpOffVal[0] |= HL_BINA_OFF_SIZE_FOURTEEN_BIT;
+
+            tmpOffVal[1] = (HlU8)(curOffVal & 0xFF);
+            curOffSize = 2;
+        }
+        else
+        {
+            tmpOffVal[0] = (HlU8)((curOffVal & 0x3F000000) >> 24);
+            tmpOffVal[0] |= HL_BINA_OFF_SIZE_THIRTY_BIT;
+
+            tmpOffVal[1] = (HlU8)((curOffVal & 0xFF0000) >> 16);
+            tmpOffVal[2] = (HlU8)((curOffVal & 0xFF00) >> 8);
+            tmpOffVal[3] = (HlU8)(curOffVal & 0xFF);
+            curOffSize = 4;
+        }
+
+        /* Write offset value. */
+        result = hlFileWrite(file, curOffSize, tmpOffVal, NULL);
+        if (HL_FAILED(result)) return result;
+
+        /* Set lastOffPos for next iteration. */
+        lastOffPos = offTable->data[i];
+    }
+
+    /* Write padding and return result. */
+    return hlFilePad(file, 4);
+}
+
+static int hlINOffTableCompareOffsets(const void* a, const void* b)
+{
+    const size_t off1 = *(const size_t*)a;
+    const size_t off2 = *(const size_t*)b;
+
+    return ((off1 > off2) - (off1 < off2));
+}
+
+HlResult hlBINAOffsetsWrite(size_t dataPos,
+    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file)
+{
+    /* Sort offsets in offset table. */
+    qsort(offTable->data, offTable->count,
+        sizeof(size_t), hlINOffTableCompareOffsets);
+
+    /* Write sorted offsets. */
+    return hlBINAOffsetsWriteSorted(dataPos, offTable, file);
+}
+
+HlResult hlBINAV1StartWrite(HlBINAEndianFlag endianFlag, HlFile* file)
+{
+    /* Generate BINAV1 header. */
+    const HlBINAV1Header header =
+    {
+        0,                  /* fileSize */
+        0,                  /* offsetTableOffset */
+        0,                  /* offsetTableSize */
+        0,                  /* unknown1 */
+        0,                  /* unknownFlag1 */
+        0,                  /* unknownFlag2 */
+        0,                  /* unknown2 */
+        '1',                /* version */
+        (HlU8)endianFlag,   /* endianFlag */
+        HL_BINA_SIG,        /* signature */
+        0                   /* padding */
+    };
+
+    /*
+       NOTE: We don't need to swap the header yet since the only values
+       that ever need to be swapped are going to be filled-in later.
+    */
+
+    /* Write BINAV1 header and return result. */
+    return hlFileWrite(file, sizeof(header), &header, NULL);
+}
+
+HlResult hlBINAV2StartWrite(HlBool use64BitOffsets,
+    HlBINAEndianFlag endianFlag, HlFile* file)
+{
+    /* Generate BINAV2 header. */
+    const HlBINAV2Header header =
+    {
+        HL_BINA_SIG,                                        /* signature */
+        { '2', (use64BitOffsets) ? '1' : '0', '0' },        /* version */
+        (HlU8)endianFlag,                                   /* endianFlag */
+        0,                                                  /* fileSize */
+        0,                                                  /* blockCount */
+        0                                                   /* padding */
+    };
+
+    /*
+       NOTE: We don't need to swap the header yet since the only values
+       that ever need to be swapped are going to be filled-in later.
+    */
+
+    /* Write BINAV2 header and return result. */
+    return hlFileWrite(file, sizeof(header), &header, NULL);
+}
+
+HlResult hlBINAV1FinishWrite(size_t headerPos,
+    HlOffTable* HL_RESTRICT offTable, HlBINAEndianFlag endianFlag,
+    HlFile* HL_RESTRICT file)
+{
+    const size_t dataPos = (headerPos + sizeof(HlBINAV1Header));
+    size_t offTablePos, eofPos;
+    HlResult result;
+
+    /* Get offset table position. */
+    offTablePos = hlFileTell(file);
+    
+    /* Write offset table. */
+    result = hlBINAOffsetsWrite(dataPos, offTable, file);
+    if (HL_FAILED(result)) return result;
+
+    /* Get end of file position. */
+    eofPos = hlFileTell(file);
+
+    /* Jump to header fileSize position. */
+    result = hlFileJumpTo(file, headerPos);
+    if (HL_FAILED(result)) return result;
+
+    /* Fill-in header values. */
+    {
+        struct
+        {
+            HlU32 fileSize;
+            HlU32 offsetTableOffset;
+            HlU32 offsetTableSize;
+        }
+        values;
+
+        /* Compute header values. */
+        values.fileSize = (HlU32)(eofPos - headerPos);
+        values.offsetTableOffset = (HlU32)(offTablePos - dataPos);
+        values.offsetTableSize = (HlU32)(eofPos - offTablePos);
+
+        /* Endian-swap header values if necessary. */
+        if (hlBINANeedsSwap(endianFlag))
+        {
+            hlSwapU32P(&values.fileSize);
+            hlSwapU32P(&values.offsetTableOffset);
+            hlSwapU32P(&values.offsetTableSize);
+        }
+
+        /* Fill-in header values. */
+        result = hlFileWrite(file, sizeof(values), &values, NULL);
+        if (HL_FAILED(result)) return result;
+    }
+
+    /* Jump to end of file and return. */
+    return hlFileJumpTo(file, eofPos);
+}
+
+HlResult hlBINAV2FinishWrite(size_t headerPos, HlU16 blockCount,
+    HlBINAEndianFlag endianFlag, HlFile* file)
+{
+    size_t curPos;
+    HlResult result;
+    HlU32 fileSize;
+
+    /* Get current file position. */
+    curPos = hlFileTell(file);
+
+    /* Jump to header fileSize position. */
+    result = hlFileJumpTo(file, headerPos + 8);
+    if (HL_FAILED(result)) return result;
+
+    /* Compute file size. */
+    fileSize = (HlU32)(curPos - headerPos);
+
+    /* Swap file size and block count if necessary. */
+    if (hlBINANeedsSwap(endianFlag))
+    {
+        hlSwapU32P(&fileSize);
+        hlSwapU16P(&blockCount);
+    }
+
+    /* Fill-in file size. */
+    result = hlFileWrite(file, sizeof(HlU32), &fileSize, NULL);
+    if (HL_FAILED(result)) return result;
+
+    /* Fill-in block count. */
+    result = hlFileWrite(file, sizeof(HlU16), &blockCount, NULL);
+    if (HL_FAILED(result)) return result;
+
+    /* Jump back to end of file and return. */
+    return hlFileJumpTo(file, curPos);
+}
+
+HlResult hlBINAV2DataBlockStartWrite(HlBINAEndianFlag endianFlag, HlFile* file)
+{
+    /* Generate data block header. */
+    HlBINAV2BlockDataHeader dataBlock =
+    {
+        HL_BINAV2_BLOCK_TYPE_DATA,          /* signature */
+        0,                                  /* size */
+        0,                                  /* stringTableOffset */
+        0,                                  /* stringTableSize */
+        0,                                  /* offsetTableSize */
+        sizeof(HlBINAV2BlockDataHeader),    /* relativeDataOffset */
+        0                                   /* padding */
+    };
+
+    HlResult result;
+
+    /* Endian swap if necessary. */
+    if (hlBINANeedsSwap(endianFlag))
+    {
+        hlSwapU16P(&dataBlock.relativeDataOffset);
+    }
+
+    /* Write data block to file. */
+    result = hlFileWrite(file, sizeof(dataBlock), &dataBlock, NULL);
+    if (HL_FAILED(result)) return result;
+
+    /* HACK: Re-use dataBlock memory to write padding. */
+    dataBlock.signature = 0;
+    dataBlock.relativeDataOffset = 0;
+
+    /* Write padding and return result. */
+    return hlFileWrite(file, sizeof(dataBlock), &dataBlock, NULL);
+}
+
+HlResult hlBINAV2DataBlockFinishWrite(size_t dataBlockPos, HlBool use64BitOffsets,
+    const HlStrTable* HL_RESTRICT strTable, HlOffTable* HL_RESTRICT offTable,
+    HlBINAEndianFlag endianFlag, HlFile* HL_RESTRICT file)
+{
+    const size_t dataPos = (dataBlockPos + (sizeof(HlBINAV2BlockDataHeader) * 2));
+    size_t strTablePos, offTablePos, eofPos;
+    HlResult result;
+
+    /* Get string table position. */
+    strTablePos = hlFileTell(file);
+
+    /* Write string table. */
+    result = (use64BitOffsets) ?
+        hlBINAStringsWrite64(dataPos, strTable, offTable, file) :
+        hlBINAStringsWrite32(dataPos, strTable, offTable, file);
+
+    if (HL_FAILED(result)) return result;
+
+    /* Get offset table position. */
+    offTablePos = hlFileTell(file);
+
+    /* Write offset table. */
+    result = hlBINAOffsetsWrite(dataPos, offTable, file);
+    if (HL_FAILED(result)) return result;
+
+    /* Get end of file position. */
+    eofPos = hlFileTell(file);
+
+    /* Jump to data block size position. */
+    result = hlFileJumpTo(file, dataBlockPos + 4);
+    if (HL_FAILED(result)) return result;
+
+    /* Fill-in data block header values. */
+    {
+        struct
+        {
+            HlU32 blockSize;
+            HL_OFF32_STR stringTableOffset;
+            HlU32 stringTableSize;
+            HlU32 offsetTableSize;
+        }
+        values;
+
+        /* Compute data block header values. */
+        values.blockSize = (HlU32)(eofPos - dataBlockPos);
+        values.stringTableOffset = (HlU32)(strTablePos - dataPos);
+        values.stringTableSize = (HlU32)(offTablePos - strTablePos);
+        values.offsetTableSize = (HlU32)(eofPos - offTablePos);
+
+        /* Endian-swap data block header values if necessary. */
+        if (hlBINANeedsSwap(endianFlag))
+        {
+            hlSwapU32P(&values.blockSize);
+            hlSwapU32P(&values.stringTableOffset);
+            hlSwapU32P(&values.stringTableSize);
+            hlSwapU32P(&values.offsetTableSize);
+        }
+
+        /* Fill-in data block header values. */
+        result = hlFileWrite(file, sizeof(values), &values, NULL);
+        if (HL_FAILED(result)) return result;
+    }
+
+    /* Jump to end of file and return. */
+    return hlFileJumpTo(file, eofPos);
+}
+
 #ifndef HL_NO_EXTERNAL_WRAPPERS
 HlBool hlBINANeedsSwapExt(HlU8 endianFlag)
 {
