@@ -1068,10 +1068,10 @@ static HlResult hlINPACxV2LoadSingle(const HlNChar* HL_RESTRICT filePath,
     return result;
 }
 
-static HlResult hlINPACxV2LoadSplits(HlBlob* HL_RESTRICT rootPac,
+static HlResult hlINPACxV2LoadSplitBlobs(HlBlob* HL_RESTRICT rootPac,
     size_t dirLen, size_t pathBufCapacity, HlNChar** HL_RESTRICT pathBufPtr,
     HlBool* HL_RESTRICT pathBufOnHeap, HlBlob*** HL_RESTRICT pacs,
-    size_t* HL_RESTRICT pacCount, HlArchive** HL_RESTRICT archive)
+    size_t* HL_RESTRICT pacCount)
 {
     HlPACxV2BlockDataHeader* dataBlock;
     HlPACxV2NodeTree* splitFileTree;
@@ -1090,23 +1090,25 @@ static HlResult hlINPACxV2LoadSplits(HlBlob* HL_RESTRICT rootPac,
     splitFileTree = hlPACxV2DataGetFileTree(
         dataBlock, HlINPACxV2SplitType);
 
-    /* If there are no splits, simply parse root and return. */
-    if (!splitFileTree)
-    {
-        return hlPACxV2Read(&rootPac, 1, archive);
-    }
-
-    /* Get split file nodes. */
-    splitFileNodes = (HlPACxV2Node*)hlOff32Get(
-        &splitFileTree->nodes);
-
     /* Get splits count. */
-    for (i = 0; i < splitFileTree->nodeCount; ++i)
+    if (splitFileTree)
     {
-        HlPACxV2SplitTable* splitTable = (HlPACxV2SplitTable*)(
-            ((HlPACxV2DataEntry*)hlOff32Get(&splitFileNodes[i].data)) + 1);
+        /* Get split file nodes. */
+        splitFileNodes = (HlPACxV2Node*)hlOff32Get(
+            &splitFileTree->nodes);
 
-        *pacCount += (size_t)splitTable->splitCount;
+        /* Get splits count. */
+        for (i = 0; i < splitFileTree->nodeCount; ++i)
+        {
+            HlPACxV2SplitTable* splitTable = (HlPACxV2SplitTable*)(
+                ((HlPACxV2DataEntry*)hlOff32Get(&splitFileNodes[i].data)) + 1);
+
+            *pacCount = (size_t)splitTable->splitCount;
+        }
+    }
+    else
+    {
+        *pacCount = 0;
     }
 
     /* Allocate splits pointer array. */
@@ -1121,6 +1123,9 @@ static HlResult hlINPACxV2LoadSplits(HlBlob* HL_RESTRICT rootPac,
        This is so freeing can always work correctly.
     */
     *pacCount = 1;
+
+    /* Return early if there are no splits. */
+    if (!splitFileTree) return HL_RESULT_SUCCESS;
 
     /* Load splits. */
     for (i = 0; i < splitFileTree->nodeCount; ++i)
@@ -1184,8 +1189,7 @@ static HlResult hlINPACxV2LoadSplits(HlBlob* HL_RESTRICT rootPac,
         }
     }
 
-    /* Parse into HlArchive. */
-    return hlPACxV2Read(*pacs, *pacCount, archive);
+    return HL_RESULT_SUCCESS;
 }
 
 HlResult hlPACxV2Load(const HlNChar* HL_RESTRICT filePath,
@@ -1221,8 +1225,8 @@ void hlPACxV3Fix(HlBlob* blob)
 }
 
 #ifdef HL_IN_WIN32_UNICODE
-static size_t hlINPACxV3FileNodesGetReqSize(const HlPACxV3Node* HL_RESTRICT fileNodes,
-    const HlPACxV3Node* HL_RESTRICT fileNode, HlBool skipProxies,
+static size_t hlINPACxV3FileNodesGetReqSize(const HlPACxV3Node* fileNodes,
+    const HlPACxV3Node* fileNode, HlBool skipProxies,
     char* HL_RESTRICT pathBuf, size_t* HL_RESTRICT entryCount)
 {
     const HlS32* childIndices = (const HlS32*)hlOff64Get(&fileNode->childIndices);
@@ -1320,8 +1324,8 @@ static size_t hlINPACxV3FileTreeGetReqSize(
 #endif
 }
 
-static HlResult hlINPACxV3FileNodesSetupEntries(const HlPACxV3Node* HL_RESTRICT fileNodes,
-    const HlPACxV3Node* HL_RESTRICT fileNode, HlBool skipProxies,
+static HlResult hlINPACxV3FileNodesSetupEntries(const HlPACxV3Node* fileNodes,
+    const HlPACxV3Node* fileNode, HlBool skipProxies,
     char* HL_RESTRICT pathBuf, HlArchiveEntry** HL_RESTRICT curEntry,
     void** HL_RESTRICT curDataPtr)
 {
@@ -1412,6 +1416,90 @@ static HlResult hlINPACxV3FileNodesSetupEntries(const HlPACxV3Node* HL_RESTRICT 
     }
 
     return HL_RESULT_SUCCESS;
+}
+
+const HlPACxV3Node* hlPACxV3GetChildNode(const HlPACxV3Node* node,
+    const HlPACxV3Node* nodes, const char* HL_RESTRICT name)
+{
+    const HlS32* childIndices = (const HlS32*)hlOff64Get(&node->childIndices);
+    HlU16 i = 0, childCount = node->childCount;
+
+    while (i < childCount)
+    {
+        const HlPACxV3Node* childNode = &nodes[childIndices[i]];
+        const char* nodeName = (const char*)hlOff64Get(&childNode->name);
+        size_t nodeNameLen;
+
+        if (childNode->hasData) return childNode;
+        if (!nodeName) continue;
+
+        nodeNameLen = strlen(nodeName);
+
+        if (!strncmp(name, nodeName, nodeNameLen))
+        {
+            /* Increase name pointer. */
+            name += nodeNameLen;
+
+            /* If the entire name matched, return the node pointer. */
+            if (*name == '\0')
+            {
+                return childNode;
+            }
+
+            /* Start looping through this child node's children instead. */
+            childIndices = (const HlS32*)hlOff64Get(&childNode->childIndices);
+            childCount = childNode->childCount;
+            i = 0;
+        }
+        else
+        {
+            /*
+               TODO: Optimize this by returning NULL early if the first
+               character of nodeName is greater than the first character of name.
+            */
+        }
+
+        ++i;
+    }
+
+    return NULL;
+}
+
+const HlPACxV3Node* hlPACxV3GetNode(
+    const HlPACxV3NodeTree* HL_RESTRICT nodeTree,
+    const char* HL_RESTRICT name)
+{
+    const HlPACxV3Node* nodes = (const HlPACxV3Node*)hlOff64Get(&nodeTree->nodes);
+    HlU32 i = 0;
+
+    for (i = 0; i < nodeTree->nodeCount; ++i)
+    {
+        const char* nodeName = (const char*)hlOff64Get(&nodes[i].name);
+        size_t nodeNameLen;
+
+        if (nodes[i].hasData) return NULL;
+        if (!nodeName) continue;
+
+        nodeNameLen = strlen(nodeName);
+
+        if (!strncmp(name, nodeName, nodeNameLen))
+        {
+            /* Increase name pointer. */
+            name += nodeNameLen;
+
+            /* Recurse through child nodes. */
+            return hlPACxV3GetChildNode(&nodes[i], nodes, name);
+        }
+        else
+        {
+            /*
+               TODO: Optimize this by returning NULL early if the first
+               character of nodeName is greater than the first character of name.
+            */
+        }
+    }
+
+    return NULL;
 }
 
 HlResult hlPACxV3Read(const HlBlob** HL_RESTRICT pacs,
@@ -1518,10 +1606,10 @@ static HlResult hlINPACxV3LoadSingle(const HlNChar* HL_RESTRICT filePath,
     return result;
 }
 
-static HlResult hlINPACxV3LoadSplits(HlBlob* HL_RESTRICT rootPac,
+static HlResult hlINPACxV3LoadSplitBlobs(HlBlob* HL_RESTRICT rootPac,
     size_t dirLen, size_t pathBufCapacity, HlNChar** HL_RESTRICT pathBufPtr,
     HlBool* HL_RESTRICT pathBufOnHeap, HlBlob*** HL_RESTRICT pacs,
-    size_t* HL_RESTRICT pacCount, HlArchive** HL_RESTRICT archive)
+    size_t* HL_RESTRICT pacCount)
 {
     HlPACxV3Header* header = (HlPACxV3Header*)rootPac->data;
     HlPACxV3SplitTable* splitTable;
@@ -1532,24 +1620,8 @@ static HlResult hlINPACxV3LoadSplits(HlBlob* HL_RESTRICT rootPac,
     /* Fix root pac. */
     hlPACxV3Fix(rootPac);
 
-    /* If there are no splits, simply parse root and return. */
-    if (!header->splitCount)
-    {
-        return hlPACxV3Read(&rootPac, 1, archive);
-    }
-
-    /* Get split table. */
-    splitTable = hlPACxV3GetSplitTable(header);
-
-    /* Get split entries pointer. */
-    splitEntries = (HlPACxV3SplitEntry*)hlOff64Get(
-        &splitTable->splitEntries);
-
-    /* Get splits count. */
-    *pacCount += header->splitCount;
-
     /* Allocate splits pointer array. */
-    *pacs = HL_ALLOC_ARR(HlBlob*, *pacCount + 1);
+    *pacs = HL_ALLOC_ARR(HlBlob*, (size_t)header->splitCount + 1);
     if (!(*pacs)) return HL_ERROR_OUT_OF_MEMORY;
 
     /* Set root pointer. */
@@ -1560,6 +1632,16 @@ static HlResult hlINPACxV3LoadSplits(HlBlob* HL_RESTRICT rootPac,
        This is so freeing can always work correctly.
     */
     *pacCount = 1;
+
+    /* If there are no splits, return early. */
+    if (!header->splitCount) return HL_RESULT_SUCCESS;
+
+    /* Get split table. */
+    splitTable = hlPACxV3GetSplitTable(header);
+
+    /* Get split entries pointer. */
+    splitEntries = (HlPACxV3SplitEntry*)hlOff64Get(
+        &splitTable->splitEntries);
 
     /* Load splits. */
     for (i = 0; i < splitTable->splitCount; ++i)
@@ -1612,8 +1694,7 @@ static HlResult hlINPACxV3LoadSplits(HlBlob* HL_RESTRICT rootPac,
         hlPACxV3Fix((*pacs)[(*pacCount)++]);
     }
 
-    /* Parse into HlArchive. */
-    return hlPACxV3Read(*pacs, *pacCount, archive);
+    return HL_RESULT_SUCCESS;
 }
 
 HlResult hlPACxV3Load(const HlNChar* HL_RESTRICT filePath,
@@ -1905,14 +1986,14 @@ end:
     return result;
 }
 
-HlResult hlINPACxLoadSplits(const HlNChar* HL_RESTRICT filePath,
-    HlU8 majorVersion, HlArchive** HL_RESTRICT archive)
+HlResult hlINPACxLoadSplitBlobs(const HlNChar* HL_RESTRICT filePath,
+    HlU8 majorVersion, HlBlob*** HL_RESTRICT pacs, size_t* HL_RESTRICT pacCount)
 {
-    HlBlob** pacs = NULL;
+    HlBlob** pacPtrs = NULL;
     HlBlob* rootPac = NULL;
     HlNChar pathBuf[255];
     HlNChar* pathBufPtr = pathBuf;
-    size_t dirLen, pacCount = 0, pathBufCapacity = 255;
+    size_t dirLen, pacPtrCount = 0, pathBufCapacity = 255;
     HlResult result;
     HlBool pathBufOnHeap = HL_FALSE;
 
@@ -1975,6 +2056,7 @@ HlResult hlINPACxLoadSplits(const HlNChar* HL_RESTRICT filePath,
         if (header->signature != HL_PACX_SIG)
         {
             result = HL_ERROR_INVALID_DATA;
+            hlFree(rootPac);
             goto end;
         }
 
@@ -1986,42 +2068,131 @@ HlResult hlINPACxLoadSplits(const HlNChar* HL_RESTRICT filePath,
     switch (majorVersion)
     {
     case '2':
-        result = hlINPACxV2LoadSplits(rootPac, dirLen, pathBufCapacity,
-            &pathBufPtr, &pathBufOnHeap, &pacs, &pacCount, archive);
-        goto end;
+        result = hlINPACxV2LoadSplitBlobs(rootPac, dirLen, pathBufCapacity,
+            &pathBufPtr, &pathBufOnHeap, &pacPtrs, &pacPtrCount);
+        break;
 
     case '3':
-        result = hlINPACxV3LoadSplits(rootPac, dirLen, pathBufCapacity,
-            &pathBufPtr, &pathBufOnHeap, &pacs, &pacCount, archive);
-        goto end;
+        result = hlINPACxV3LoadSplitBlobs(rootPac, dirLen, pathBufCapacity,
+            &pathBufPtr, &pathBufOnHeap, &pacPtrs, &pacPtrCount);
+        break;
 
     case '4':
         hlPACxV4Fix(rootPac);
-        result = hlPACxV4Read(rootPac, HL_TRUE, archive);
-        goto end;
+
+        /* Allocate splits pointer array. */
+        pacPtrs = HL_ALLOC_ARR(HlBlob*, 1);
+        if (!pacPtrs)
+        {
+            result = HL_ERROR_OUT_OF_MEMORY;
+            break;
+        }
+
+        /* Set root pointer and pac count. */
+        pacPtrs[0] = rootPac;
+        pacPtrCount = 1;
+        break;
 
     default:
         result = HL_ERROR_UNSUPPORTED;
-        goto end;
+        break;
+    }
+
+    /* Free data if we failed. */
+    if (HL_FAILED(result))
+    {
+        /* Free splits. */
+        size_t i;
+        for (i = 1; i < pacPtrCount; ++i)
+        {
+            hlFree(pacPtrs[i]);
+        }
+
+        hlFree(pacPtrs);
+
+        /* Free root pac. */
+        hlFree(rootPac);
+    }
+
+    /* Otherwise, set pointers. */
+    else
+    {
+        *pacs = pacPtrs;
+        *pacCount = pacPtrCount;
     }
 
 end:
-    /* Free splits. */
+    /* Free path buffer if necessary and return result. */
+    if (pathBufOnHeap) hlFree(pathBufPtr);
+    return result;
+}
+
+HlResult hlPACxLoadBlobs(const HlNChar* HL_RESTRICT filePath,
+    HlBlob*** HL_RESTRICT pacs, size_t* HL_RESTRICT pacCount)
+{
+    return hlINPACxLoadSplitBlobs(filePath, 0, pacs, pacCount);
+}
+
+HlResult hlINPACxLoadSplits(const HlNChar* HL_RESTRICT filePath,
+    HlU8 majorVersion, HlArchive** HL_RESTRICT archive)
+{
+    HlBlob** pacs;
+    size_t pacCount;
+    HlResult result;
+
+    /* Load split blobs. */
+    result = hlINPACxLoadSplitBlobs(filePath, majorVersion, &pacs, &pacCount);
+    if (HL_FAILED(result)) return result;
+
+    /* Get version automatically if none was specified. */
+    if (!majorVersion)
     {
+        const HlBINAV2Header* header = (const HlBINAV2Header*)pacs[0]->data;
+
+        /* Ensure this is, in fact, a PACx file. */
+        if (header->signature != HL_PACX_SIG)
+        {
+            result = HL_ERROR_INVALID_DATA;
+            goto end;
+        }
+
+        /* Get major version number. */
+        majorVersion = header->version[0];
+    }
+
+    /* Parse pacs into single HlArchive based on version. */
+    switch (majorVersion)
+    {
+    case '2':
+        result = hlPACxV2Read(pacs, pacCount, archive);
+        break;
+
+    case '3':
+        result = hlPACxV3Read(pacs, pacCount, archive);
+        break;
+
+    case '4':
+        result = hlPACxV4Read(pacs[0], HL_TRUE, archive);
+        break;
+
+    default:
+        result = HL_ERROR_UNSUPPORTED;
+        break;
+    }
+
+    /* Free blobs and return result. */
+end:
+    {
+        /* Free pac blobs. */
         size_t i;
-        for (i = 1; i < pacCount; ++i)
+        for (i = 0; i < pacCount; ++i)
         {
             hlFree(pacs[i]);
         }
 
         hlFree(pacs);
     }
-
-    /* Free root pac. */
-    hlFree(rootPac);
-
-    /* Free path buffer if necessary and return result. */
-    if (pathBufOnHeap) hlFree(pathBufPtr);
+    
     return result;
 }
 

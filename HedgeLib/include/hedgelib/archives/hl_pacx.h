@@ -367,6 +367,13 @@ HL_API void hlPACxV3Fix(HlBlob* blob);
 #define hlPACxV3GetOffsetTable(header) HL_ADD_OFFC(\
     hlPACxV3GetData(header), (header)->dataSize)
 
+HL_API const HlPACxV3Node* hlPACxV3GetChildNode(const HlPACxV3Node* node,
+    const HlPACxV3Node* nodes, const char* HL_RESTRICT name);
+
+HL_API const HlPACxV3Node* hlPACxV3GetNode(
+    const HlPACxV3NodeTree* HL_RESTRICT nodeTree,
+    const char* HL_RESTRICT name);
+
 HL_API HlResult hlPACxV3Read(const HlBlob** HL_RESTRICT pacs,
     size_t pacCount, HlArchive** HL_RESTRICT archive);
 
@@ -390,6 +397,9 @@ HL_API HlResult hlPACxV4Read(HlBlob* HL_RESTRICT pac,
 
 HL_API HlResult hlPACxV4Load(const HlNChar* HL_RESTRICT filePath,
     HlBool loadSplits, HlArchive** HL_RESTRICT archive);
+
+HL_API HlResult hlPACxLoadBlobs(const HlNChar* HL_RESTRICT filePath,
+    HlBlob*** HL_RESTRICT pacs, size_t* HL_RESTRICT pacCount);
 
 HL_API HlResult hlPACxLoad(const HlNChar* HL_RESTRICT filePath,
     HlBool loadSplits, HlArchive** HL_RESTRICT archive);
