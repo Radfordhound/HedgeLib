@@ -427,6 +427,9 @@ HlResult hlBINAStringsWrite64(size_t dataPos, const HlStrTable* HL_RESTRICT strT
         if (!skipStr) return HL_ERROR_OUT_OF_MEMORY;
     }
 
+    /* Clear the skip string buffer so we don't have garbage data. */
+    memset(skipStr, 0, sizeof(HlBool) * strTable->count);
+
     /* Write strings and fix offsets in string entries. */
     for (i = 0; i < strTable->count; ++i)
     {
