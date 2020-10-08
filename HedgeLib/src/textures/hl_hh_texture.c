@@ -3,13 +3,10 @@
 
 void hlHHTextureSwap(HlHHTexture* tex, HlBool swapOffsets)
 {
-    if (swapOffsets)
-    {
-        hlSwapU32P(&tex->fileNameOffset);
-        hlSwapU32P(&tex->typeOffset);
-    }
-
-    hlSwapU32P(&tex->flags);
+    if (!swapOffsets) return;
+    
+    hlSwapU32P(&tex->fileNameOffset);
+    hlSwapU32P(&tex->typeOffset);
 }
 
 void hlHHTexsetSwap(HlHHTexset* texset, HlBool swapOffsets)

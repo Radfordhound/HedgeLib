@@ -6,10 +6,26 @@
 extern "C" {
 #endif
 
+/* Thanks to Skyth for cracking texture wrap modes and HHTexture flags! */
+typedef enum HlHHTextureWrapMode
+{
+    HL_HH_TEXTURE_WRAP_MODE_REPEAT = 0,
+    HL_HH_TEXTURE_WRAP_MODE_MIRROR = 1,
+    HL_HH_TEXTURE_WRAP_MODE_CLAMP = 2,
+    HL_HH_TEXTURE_WRAP_MODE_MIRROR_ONCE = 3,
+    HL_HH_TEXTURE_WRAP_MODE_BORDER = 4
+}
+HlHHTextureWrapMode;
+
 typedef struct HlHHTexture
 {
     HL_OFF32_STR fileNameOffset;
-    HlU32 flags;
+    HlU8 texCoordIndex;
+    /** @brief See HlHHTextureWrapMode. */
+    HlU8 wrapModeU;
+    /** @brief See HlHHTextureWrapMode. */
+    HlU8 wrapModeV;
+    HlU8 padding;
     HL_OFF32_STR typeOffset;
 }
 HlHHTexture;
