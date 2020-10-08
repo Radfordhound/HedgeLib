@@ -4,7 +4,7 @@ project("HedgeLib")
     targetdir("bin/%{cfg.platform}/%{cfg.buildcfg}")
     runpathdirs("bin/%{cfg.platform}/%{cfg.buildcfg}")
     
-    includedirs({ "include", "depends" })
+    includedirs({ "include" })
     files({ "include/**.h", "src/**.c", "src/**.h" })
 
     -- Options
@@ -14,18 +14,6 @@ project("HedgeLib")
         kind("SharedLib")
         defines({ "HL_IS_DLL", "HL_IS_BUILDING_DLL" })
     end
-    
-    -- Platform-Specifics
-    --[[if Target == "windows" then
-        defines("NOMINMAX")
-        buildoptions("/Zc:externConstexpr")
-    end--]]
-
-    -- LZ4
-    --files({ "depends/lz4/**.h", "depends/lz4/**.c" })
-
-    -- zlib
-    --files({ "depends/zlib/**.h", "depends/zlib/**.c", "depends/zlib/**.cc" })
     
     -- MSC Optimization
     filter("toolset:msc")
