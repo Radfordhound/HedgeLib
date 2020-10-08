@@ -1992,7 +1992,7 @@ HlResult hlNNMotionRead(HlBlob* HL_RESTRICT blob,
     hlNNFix(blob);
 
     /* Fix NN motion data. */
-    dataHeader = hlNNGetDataHeader(blob);;
+    dataHeader = hlNNGetDataHeader(blob);
     hlNNMotionFix(dataHeader);
 
     /* Parse NN motion data into HlAnim and return result. */
