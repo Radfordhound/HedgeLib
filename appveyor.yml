@@ -1,7 +1,7 @@
 version: 0.0.{build}
 image:
 - Visual Studio 2019
-- Ubuntu1804
+- Ubuntu
 - macos
 platform:
 - Win32
@@ -15,7 +15,7 @@ matrix:
     - platform: x86
       image: macos
     - platform: Win32
-      image: Ubuntu1804
+      image: Ubuntu
     - platform: Win32
       image: macos
 
@@ -66,17 +66,16 @@ for:
 -
   matrix:
     only:
-      - image: Ubuntu1804
+      - image: Ubuntu
 
   install:
     - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-linux.tar.gz", "/home/appveyor/projects/hedgelib/premake.tar.gz")
     - sh: tar -zvxf /home/appveyor/projects/hedgelib/premake.tar.gz -C /home/appveyor/projects/hedgelib
     - sh: /home/appveyor/projects/hedgelib/premake5 gmake2
-    - sh: sudo apt-get update
-    - sh: sudo apt-get install -yq gcc-8-multilib g++-8-multilib
+    - sh: if [ "$PLATFORM" == "x86" ]; then sudo apt-get update; sudo apt-get install -yq gcc-9-multilib g++-9-multilib; fi
   build: off
   build_script:
-    - sh: make CPP=g++-8 CXX=g++-8 LD=g++-8 config=release_$PLATFORM
+    - sh: make CPP=g++-9 CXX=g++-9 LD=g++-9 config=release_$PLATFORM
     - ps: |
         $projects = "HedgeLib","HedgeTools/HedgeOffsets","HedgeTools/HedgeArcPack"
         $binaries = "","HedgeOffsets","HedgeArcPack"
