@@ -1063,7 +1063,7 @@ static HlResult hlINPACxV2LoadSingle(const HlNChar* HL_RESTRICT filePath,
     hlPACxV2Fix(blob);
 
     /* Parse blob into HlArchive, free blob, and return. */
-    result = hlPACxV2Read(&blob, 1, archive);
+    result = hlPACxV2Read((const HlBlob**)&blob, 1, archive);
     hlFree(blob);
     return result;
 }
@@ -1601,7 +1601,7 @@ static HlResult hlINPACxV3LoadSingle(const HlNChar* HL_RESTRICT filePath,
     hlPACxV3Fix(blob);
 
     /* Parse blob into HlArchive, free blob, and return. */
-    result = hlPACxV3Read(&blob, 1, archive);
+    result = hlPACxV3Read((const HlBlob**)&blob, 1, archive);
     hlFree(blob);
     return result;
 }
@@ -1882,7 +1882,7 @@ HlResult hlPACxV4Read(HlBlob* HL_RESTRICT pac,
         }
 
         /* Generate HlArchive. */
-        result = hlPACxV3Read(pacs, pacCount, archive);
+        result = hlPACxV3Read((const HlBlob**)pacs, pacCount, archive);
     }
     else
     {
@@ -1959,7 +1959,7 @@ static HlResult hlINPACxLoadSingle(const HlNChar* HL_RESTRICT filePath,
             hlPACxV2Fix(blob);
 
             /* Parse blob into HlArchive, free blob, and return. */
-            result = hlPACxV2Read(&blob, 1, archive);
+            result = hlPACxV2Read((const HlBlob**)&blob, 1, archive);
             goto end;
 
         case '3':
@@ -1967,7 +1967,7 @@ static HlResult hlINPACxLoadSingle(const HlNChar* HL_RESTRICT filePath,
             hlPACxV3Fix(blob);
 
             /* Parse blob into HlArchive, free blob, and return. */
-            result = hlPACxV3Read(&blob, 1, archive);
+            result = hlPACxV3Read((const HlBlob**)&blob, 1, archive);
             goto end;
 
         case '4':
@@ -2167,11 +2167,11 @@ HlResult hlINPACxLoadSplits(const HlNChar* HL_RESTRICT filePath,
     switch (majorVersion)
     {
     case '2':
-        result = hlPACxV2Read(pacs, pacCount, archive);
+        result = hlPACxV2Read((const HlBlob**)pacs, pacCount, archive);
         break;
 
     case '3':
-        result = hlPACxV3Read(pacs, pacCount, archive);
+        result = hlPACxV3Read((const HlBlob**)pacs, pacCount, archive);
         break;
 
     case '4':

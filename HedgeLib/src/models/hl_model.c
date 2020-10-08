@@ -221,7 +221,7 @@ HlResult hlModelWriteMTL(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
     }
 
     /* Write MTL, free list, and return result. */
-    result = hlMaterialWriteMTL(mats.data, mats.count, file);
+    result = hlMaterialWriteMTL((const HlMaterial**)mats.data, mats.count, file);
     HL_LIST_FREE(mats);
     return result;
 }
