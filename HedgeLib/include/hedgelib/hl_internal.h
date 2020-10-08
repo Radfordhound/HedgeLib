@@ -140,8 +140,7 @@ typedef uintmax_t HlUMax;
 
 #define HL_SMAX_MAX INTMAX_MAX
 #define HL_UMAX_MAX UINTMAX_MAX
-#else
-#ifdef _MSC_VER
+#elif defined(_MSC_VER)
 /* Define typedefs for MSVC-specific fixed-width integral types. */
 typedef __int8 HlS8;
 typedef HlS8 HlLeastS8;
@@ -187,7 +186,6 @@ typedef HlUPtr HlUMax;
 #else
 /* Include hl_in_c89_stdint.h, which defines all the values we need. */
 #include "hl_in_c89_stdint.h"
-#endif
 #endif
 
 /* Native character type */
