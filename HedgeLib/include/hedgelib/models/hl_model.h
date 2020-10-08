@@ -47,7 +47,7 @@ typedef struct HlMeshGroup
 {
     HlMeshSlot solid;
     HlMeshSlot transparent;
-    HlMeshSlot boolean;
+    HlMeshSlot punch;
     size_t specialSlotCount;
     HlSpecialMeshSlot* specialSlots;
 }

@@ -104,7 +104,7 @@ typedef struct HlHHMeshGroup
 {
     HlHHMeshSlot solid;
     HlHHMeshSlot transparent;
-    HlHHMeshSlot boolean;
+    HlHHMeshSlot punch;
     HlHHSpecialMeshSlot special;
 }
 HlHHMeshGroup;

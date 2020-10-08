@@ -40,9 +40,9 @@ static size_t hlINMeshGroupsFixMatRefs(HlMeshGroup* HL_RESTRICT meshGroups,
         fixedRefs += hlINMeshesFixMatRefs(meshGroups[i].transparent.meshes,
             meshGroups[i].transparent.meshCount, mat);
 
-        /* Get materials in boolean slot. */
-        fixedRefs += hlINMeshesFixMatRefs(meshGroups[i].boolean.meshes,
-            meshGroups[i].boolean.meshCount, mat);
+        /* Get materials in punch slot. */
+        fixedRefs += hlINMeshesFixMatRefs(meshGroups[i].punch.meshes,
+            meshGroups[i].punch.meshCount, mat);
 
         /* TODO: Special slots. */
     }
@@ -123,9 +123,9 @@ HlResult hlModelGetMatNameRefs(const HlModel* HL_RESTRICT model,
 
         if (HL_FAILED(result)) return result;
 
-        /* Get material name references in boolean slot. */
-        result = hlINMeshesGetMatNameRefs(model->meshGroups[i].boolean.meshes,
-            model->meshGroups[i].boolean.meshCount, matNameRefs);
+        /* Get material name references in punch slot. */
+        result = hlINMeshesGetMatNameRefs(model->meshGroups[i].punch.meshes,
+            model->meshGroups[i].punch.meshCount, matNameRefs);
 
         if (HL_FAILED(result)) return result;
 
@@ -191,9 +191,9 @@ HlResult hlModelGetMats(const HlModel* HL_RESTRICT model,
 
         if (HL_FAILED(result)) return result;
 
-        /* Get materials in boolean slot. */
-        result = hlINMeshesGetMats(model->meshGroups[i].boolean.meshes,
-            model->meshGroups[i].boolean.meshCount, mats);
+        /* Get materials in punch slot. */
+        result = hlINMeshesGetMats(model->meshGroups[i].punch.meshes,
+            model->meshGroups[i].punch.meshCount, mats);
 
         if (HL_FAILED(result)) return result;
 
@@ -888,9 +888,9 @@ static HlResult hlINModelWriteOBJ(const HlModel* HL_RESTRICT model,
 
             if (HL_FAILED(result)) return result;
 
-            /* Write boolean slot. */
-            result = hlINMeshesWriteOBJ(model->meshGroups[i].boolean.meshes,
-                model->meshGroups[i].boolean.meshCount, model->vertexFormats,
+            /* Write punch slot. */
+            result = hlINMeshesWriteOBJ(model->meshGroups[i].punch.meshes,
+                model->meshGroups[i].punch.meshCount, model->vertexFormats,
                 writeMats, buf, &globalIndex, &globalCounts, file);
 
             if (HL_FAILED(result)) return result;

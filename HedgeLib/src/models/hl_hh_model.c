@@ -151,7 +151,7 @@ void hlHHMeshGroupSwap(HlHHMeshGroup* meshGroup, HlBool swapOffsets)
 {
     hlHHMeshSlotSwap(&meshGroup->solid, swapOffsets);
     hlHHMeshSlotSwap(&meshGroup->transparent, swapOffsets);
-    hlHHMeshSlotSwap(&meshGroup->boolean, swapOffsets);
+    hlHHMeshSlotSwap(&meshGroup->punch, swapOffsets);
 
     /* TODO: Swap special slot. */
 }
@@ -163,7 +163,7 @@ void hlHHMeshGroupSwapRecursive(HlHHMeshGroup* meshGroup, HlBool swapOffsets)
 
     /* Recursively swap the slots within the group. */
     hlHHMeshSlotSwapRecursive(&meshGroup->solid, swapOffsets);
-    hlHHMeshSlotSwapRecursive(&meshGroup->boolean, swapOffsets);
+    hlHHMeshSlotSwapRecursive(&meshGroup->punch, swapOffsets);
     hlHHMeshSlotSwapRecursive(&meshGroup->transparent, swapOffsets);
 
     /* TODO: Swap the special slots. */
@@ -305,7 +305,7 @@ static size_t hlINHHMeshGroupsGetReqSize(
         /* Account for mesh slots. */
         reqSize += hlINHHMeshSlotGetReqSize(&meshGroup->solid, totalMeshCount);
         reqSize += hlINHHMeshSlotGetReqSize(&meshGroup->transparent, totalMeshCount);
-        reqSize += hlINHHMeshSlotGetReqSize(&meshGroup->boolean, totalMeshCount);
+        reqSize += hlINHHMeshSlotGetReqSize(&meshGroup->punch, totalMeshCount);
 
         /* TODO: Account for special slots. */
     }
@@ -571,7 +571,7 @@ static HlResult hlINHHMeshGroupsRead(
 
         if (HL_FAILED(result)) return result;
 
-        result = hlINHHVertexFormatRead(&hhMeshGroup->boolean,
+        result = hlINHHVertexFormatRead(&hhMeshGroup->punch,
             &curHlVertexFormat, &endPtr);
 
         if (HL_FAILED(result)) return result;
@@ -597,8 +597,8 @@ static HlResult hlINHHMeshGroupsRead(
 
         if (HL_FAILED(result)) return result;
 
-        result = hlINHHMeshSlotRead(&hhMeshGroup->boolean,
-            &hlMeshGroups[i].boolean, &globalMeshIndex, &endPtr);
+        result = hlINHHMeshSlotRead(&hhMeshGroup->punch,
+            &hlMeshGroups[i].punch, &globalMeshIndex, &endPtr);
 
         if (HL_FAILED(result)) return result;
 
