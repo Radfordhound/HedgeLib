@@ -10,7 +10,8 @@ typedef struct HlFile HlFile;
 
 typedef enum HlMaterialParamFormat
 {
-    HL_MATERIAL_PARAM_FORMAT_U32,
+    HL_MATERIAL_PARAM_FORMAT_BOOL4,
+    HL_MATERIAL_PARAM_FORMAT_INT4,
     HL_MATERIAL_PARAM_FORMAT_FLOAT4
 }
 HlMaterialParamFormat;

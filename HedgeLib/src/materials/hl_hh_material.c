@@ -23,8 +23,8 @@ void hlHHMaterialV1Swap(HlHHMaterialV1* mat, HlBool swapOffsets)
     hlSwapU32P(&mat->subShaderNameOffset);
     hlSwapU32P(&mat->texsetNameOffset);
     hlSwapU32P(&mat->vec4ParamsOffset);
-    hlSwapU32P(&mat->unknown1sOffset);
-    hlSwapU32P(&mat->u32ParamsOffset);
+    hlSwapU32P(&mat->int4ParamsOffset);
+    hlSwapU32P(&mat->bool4ParamsOffset);
 }
 
 void hlHHMaterialV3Swap(HlHHMaterialV3* mat, HlBool swapOffsets)
@@ -36,8 +36,8 @@ void hlHHMaterialV3Swap(HlHHMaterialV3* mat, HlBool swapOffsets)
     hlSwapU32P(&mat->hhTextureNamesOffset);
     hlSwapU32P(&mat->texturesOffset);
     hlSwapU32P(&mat->vec4ParamsOffset);
-    hlSwapU32P(&mat->unknown1sOffset);
-    hlSwapU32P(&mat->u32ParamsOffset);
+    hlSwapU32P(&mat->int4ParamsOffset);
+    hlSwapU32P(&mat->bool4ParamsOffset);
 }
 
 #ifndef HL_IS_BIG_ENDIAN
@@ -63,7 +63,32 @@ static void hlINHHMaterialParametersFixVec4(HL_OFF32(
     }
 }
 
-static void hlINHHMaterialParametersFixU32(HL_OFF32(
+static void hlINHHMaterialParametersFixInt4(HL_OFF32(
+    HL_OFF32(HlHHMaterialParameter))* paramOffsets,
+    HlU8 paramCount)
+{
+    HL_OFF32(HlHHMaterialParameter)* params = (HL_OFF32(
+        HlHHMaterialParameter)*)hlOff32Get(paramOffsets);
+
+    HlU8 i;
+
+    for (i = 0; i < paramCount; ++i)
+    {
+        HlHHMaterialParameter* param = (HlHHMaterialParameter*)hlOff32Get(&params[i]);
+        HlS32* values = (HlS32*)hlOff32Get(&param->valuesOffset);
+        HlU8 i2;
+
+        for (i2 = 0; i2 < param->valueCount; ++i2)
+        {
+            hlSwapU32P(values++);
+            hlSwapU32P(values++);
+            hlSwapU32P(values++);
+            hlSwapU32P(values++);
+        }
+    }
+}
+
+static void hlINHHMaterialParametersFixBool4(HL_OFF32(
     HL_OFF32(HlHHMaterialParameter))* paramOffsets,
     HlU8 paramCount)
 {
@@ -80,14 +105,6 @@ static void hlINHHMaterialParametersFixU32(HL_OFF32(
 
         for (i2 = 0; i2 < param->valueCount; ++i2)
         {
-            /*
-               Crash if we stumble upon a u32 parameter that isn't 0 so we can see how these work.
-
-               If you encounter this crash, *please* create an issue stating such and including
-               the name of the .material you were trying to load on the HedgeLib repository so
-               we can figure out what these parameters truly are and fix the crash!
-            */
-            HL_ASSERT(values[i2] == 0);
             hlSwapU32P(&values[i2]);
         }
     }
@@ -112,16 +129,19 @@ void hlHHMaterialV1Fix(HlHHMaterialV1* mat)
     hlINHHMaterialParametersFixVec4(&mat->vec4ParamsOffset, mat->vec4ParamCount);
 
     /*
-       Crash if we stumble upon a material that has unknown1s so we can see how these work.
+       Crash if we stumble upon a material that has int4 params so we can see how these work.
 
        If you encounter this crash, *please* create an issue stating such and including
        the name of the .material you were trying to load on the HedgeLib repository so
-       we can figure out what unknown1s are and fix the crash!
+       we can figure out what these are for sure and fix the crash!
     */
-    HL_ASSERT(mat->unknown1Count == 0 && mat->unknown1sOffset == 0);
+    HL_ASSERT(mat->int4ParamCount == 0 && mat->int4ParamsOffset == 0);
 
-    /* Fix u32 parameters. */
-    hlINHHMaterialParametersFixU32(&mat->u32ParamsOffset, mat->u32ParamCount);
+    /* Fix int4 parameters. */
+    hlINHHMaterialParametersFixInt4(&mat->int4ParamsOffset, mat->int4ParamCount);
+
+    /* Fix bool4 parameters. */
+    hlINHHMaterialParametersFixBool4(&mat->bool4ParamsOffset, mat->bool4ParamCount);
 #endif
 }
 
@@ -135,16 +155,19 @@ void hlHHMaterialV3Fix(HlHHMaterialV3* mat)
     hlINHHMaterialParametersFixVec4(&mat->vec4ParamsOffset, mat->vec4ParamCount);
 
     /*
-       Crash if we stumble upon a material that has unknown1s so we can see how these work.
+       Crash if we stumble upon a material that has int4 params so we can see how these work.
 
        If you encounter this crash, *please* create an issue stating such and including
        the name of the .material you were trying to load on the HedgeLib repository so
-       we can figure out what unknown1s are and fix the crash!
+       we can figure out what these are for sure and fix the crash!
     */
-    HL_ASSERT(mat->unknown1Count == 0 && mat->unknown1sOffset == 0);
+    HL_ASSERT(mat->int4ParamCount == 0 && mat->int4ParamsOffset == 0);
 
-    /* Fix u32 parameters. */
-    hlINHHMaterialParametersFixU32(&mat->u32ParamsOffset, mat->u32ParamCount);
+    /* Fix int4 parameters. */
+    hlINHHMaterialParametersFixInt4(&mat->int4ParamsOffset, mat->int4ParamCount);
+
+    /* Fix bool4 parameters. */
+    hlINHHMaterialParametersFixBool4(&mat->bool4ParamsOffset, mat->bool4ParamCount);
 
     /* Swap HHTextures if necessary. */
     textures = (HL_OFF32(HlHHTexture)*)hlOff32Get(&mat->texturesOffset);
@@ -208,7 +231,7 @@ static size_t hlINHHMaterialV1GetReqSize(const HlHHMaterialV1* mat)
 
     /* Account for u32 parameters. */
     reqBufSize += hlINHHMaterialParametersGetReqSize(
-        &mat->u32ParamsOffset, mat->u32ParamCount,
+        &mat->bool4ParamsOffset, mat->bool4ParamCount,
         sizeof(HlU32));
 
     return reqBufSize;
@@ -265,9 +288,9 @@ static size_t hlINHHMaterialV3GetReqSize(const HlHHMaterialV3* mat)
         &mat->vec4ParamsOffset, mat->vec4ParamCount,
         sizeof(HlVector4));
 
-    /* Account for u32 parameters. */
+    /* Account for boolean parameters. */
     reqBufSize += hlINHHMaterialParametersGetReqSize(
-        &mat->u32ParamsOffset, mat->u32ParamCount,
+        &mat->bool4ParamsOffset, mat->bool4ParamCount,
         sizeof(HlU32));
 
     return reqBufSize;
@@ -412,17 +435,22 @@ HlResult hlHHMaterialV1Parse(const HlHHMaterialV1* HL_RESTRICT hhMat,
 
         /* Setup parameters. */
         hlMatBuf->params = (HlMaterialParam*)curDataPtr;
-        hlMatBuf->paramCount = (size_t)hhMat->vec4ParamCount + hhMat->u32ParamCount;
+        hlMatBuf->paramCount = (size_t)hhMat->vec4ParamCount + hhMat->bool4ParamCount;
         curDataPtr = &hlMatBuf->params[hlMatBuf->paramCount];
 
         hlINHHMaterialParametersParse(&hhMat->vec4ParamsOffset,
             hhMat->vec4ParamCount, HL_MATERIAL_PARAM_FORMAT_FLOAT4,
             sizeof(HlVector4), hlMatBuf->params, &curDataPtr);
 
-        hlINHHMaterialParametersParse(&hhMat->u32ParamsOffset,
-            hhMat->u32ParamCount, HL_MATERIAL_PARAM_FORMAT_U32,
-            sizeof(HlU32), &hlMatBuf->params[hhMat->vec4ParamCount],
+        hlINHHMaterialParametersParse(&hhMat->int4ParamsOffset,
+            hhMat->int4ParamCount, HL_MATERIAL_PARAM_FORMAT_INT4,
+            sizeof(HlS32) * 4, &hlMatBuf->params[hhMat->vec4ParamCount],
             &curDataPtr);
+
+        hlINHHMaterialParametersParse(&hhMat->bool4ParamsOffset,
+            hhMat->bool4ParamCount, HL_MATERIAL_PARAM_FORMAT_BOOL4,
+            sizeof(HlU32), &hlMatBuf->params[hhMat->vec4ParamCount +
+            hhMat->int4ParamCount], &curDataPtr);
 
         /* Setup texset. */
         hlMatBuf->texset.refType = HL_REF_TYPE_NAME;
@@ -483,17 +511,22 @@ HlResult hlHHMaterialV3Parse(const HlHHMaterialV3* HL_RESTRICT hhMat,
 
         /* Setup parameters. */
         hlMatBuf->params = (HlMaterialParam*)curDataPtr;
-        hlMatBuf->paramCount = (size_t)hhMat->vec4ParamCount + hhMat->u32ParamCount;
+        hlMatBuf->paramCount = (size_t)hhMat->vec4ParamCount + hhMat->bool4ParamCount;
         curDataPtr = &hlMatBuf->params[hlMatBuf->paramCount];
 
         hlINHHMaterialParametersParse(&hhMat->vec4ParamsOffset,
             hhMat->vec4ParamCount, HL_MATERIAL_PARAM_FORMAT_FLOAT4,
             sizeof(HlVector4), hlMatBuf->params, &curDataPtr);
 
-        hlINHHMaterialParametersParse(&hhMat->u32ParamsOffset,
-            hhMat->u32ParamCount, HL_MATERIAL_PARAM_FORMAT_U32,
-            sizeof(HlU32), &hlMatBuf->params[hhMat->vec4ParamCount],
+        hlINHHMaterialParametersParse(&hhMat->int4ParamsOffset,
+            hhMat->int4ParamCount, HL_MATERIAL_PARAM_FORMAT_INT4,
+            sizeof(HlS32) * 4, &hlMatBuf->params[hhMat->vec4ParamCount],
             &curDataPtr);
+
+        hlINHHMaterialParametersParse(&hhMat->bool4ParamsOffset,
+            hhMat->bool4ParamCount, HL_MATERIAL_PARAM_FORMAT_BOOL4,
+            sizeof(HlU32), &hlMatBuf->params[hhMat->vec4ParamCount +
+            hhMat->int4ParamCount], &curDataPtr);
 
         /* Setup texset. */
         hlMatBuf->texset.refType = HL_REF_TYPE_PTR;

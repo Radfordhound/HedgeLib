@@ -26,6 +26,8 @@ HlHHMaterialParameter;
 
 HL_STATIC_ASSERT_SIZE(HlHHMaterialParameter, 12);
 
+/* Thanks to Skyth for helping crack alphaThreshold and int4/bool4 param types! */
+
 typedef struct HlHHMaterialV1
 {
     HL_OFF32_STR shaderNameOffset;
@@ -37,14 +39,12 @@ typedef struct HlHHMaterialV1
     HlU8 useAdditiveBlending;
     HlU8 unknownFlag1;
     HlU8 vec4ParamCount;
-    /** @brief Another param count? */
-    HlU8 unknown1Count;
-    HlU8 u32ParamCount;
+    HlU8 int4ParamCount;
+    HlU8 bool4ParamCount;
     HlU8 reserved2;
     HL_OFF32(HL_OFF32(HlHHMaterialParameter)) vec4ParamsOffset;
-    /** @brief Another params offset? */
-    HL_OFF32(HL_OFF32(void)) unknown1sOffset;
-    HL_OFF32(HL_OFF32(HlHHMaterialParameter)) u32ParamsOffset;
+    HL_OFF32(HL_OFF32(HlHHMaterialParameter)) int4ParamsOffset;
+    HL_OFF32(HL_OFF32(HlHHMaterialParameter)) bool4ParamsOffset;
 }
 HlHHMaterialV1;
 
@@ -61,14 +61,12 @@ typedef struct HlHHMaterialV3
     HlU8 useAdditiveBlending;
     HlU8 unknownFlag1;
     HlU8 vec4ParamCount;
-    /** @brief Another param count? */
-    HlU8 unknown1Count;
-    HlU8 u32ParamCount;
+    HlU8 int4ParamCount;
+    HlU8 bool4ParamCount;
     HlU8 textureCount;
     HL_OFF32(HL_OFF32(HlHHMaterialParameter)) vec4ParamsOffset;
-    /** @brief Another params offset? */
-    HL_OFF32(HL_OFF32(void)) unknown1sOffset;
-    HL_OFF32(HL_OFF32(HlHHMaterialParameter)) u32ParamsOffset;
+    HL_OFF32(HL_OFF32(HlHHMaterialParameter)) int4ParamsOffset;
+    HL_OFF32(HL_OFF32(HlHHMaterialParameter)) bool4ParamsOffset;
 }
 HlHHMaterialV3;
 
