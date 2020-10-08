@@ -160,20 +160,20 @@ HL_API HlResult hlModelGetMatNameRefs(const HlModel* HL_RESTRICT model,
 HL_API HlResult hlModelGetMats(const HlModel* HL_RESTRICT model,
     HlMaterialList* HL_RESTRICT mats);
 
-HL_API HlResult hlModelWriteMTL(const HlModel* HL_RESTRICT * HL_RESTRICT models,
+HL_API HlResult hlModelWriteMTL(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
     size_t modelCount, HlFile* HL_RESTRICT file);
 
-HL_API HlResult hlModelExportMTL(const HlModel* HL_RESTRICT * HL_RESTRICT models,
+HL_API HlResult hlModelExportMTL(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
     size_t modelCount, const HlNChar* HL_RESTRICT filePath);
 
 HL_API HlModel** hlModelReadOBJ(const HlBlob* blob, size_t* modelCount);
 
-HL_API HlResult hlModelWriteOBJ(const HlModel* HL_RESTRICT * HL_RESTRICT models,
+HL_API HlResult hlModelWriteOBJ(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
     size_t modelCount, const char* HL_RESTRICT mtlName, HlFile* HL_RESTRICT file);
 
 HL_API HlModel** hlModelImportOBJ(const HlNChar* filePath, size_t* modelCount);
 
-HL_API HlResult hlModelExportOBJ(const HlModel* HL_RESTRICT * HL_RESTRICT models,
+HL_API HlResult hlModelExportOBJ(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
     size_t modelCount, HlBool writeMTL, const HlNChar* HL_RESTRICT filePath);
 
 #ifdef __cplusplus

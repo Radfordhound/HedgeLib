@@ -138,21 +138,21 @@ HlBool hlBINAOffsetsNext(const HlU8* HL_RESTRICT * HL_RESTRICT curOffsetPosPtr,
         return HL_FALSE;
 
     case HL_BINA_OFF_SIZE_SIX_BIT:
-        *curOffsetPtr += (*curOffsetPos++ & HL_BINA_OFF_DATA_MASK);
+        *curOffsetPtr += (*(curOffsetPos++) & HL_BINA_OFF_DATA_MASK);
         break;
 
     case HL_BINA_OFF_SIZE_FOURTEEN_BIT:
-        relOffPos = (((HlU32)*curOffsetPos++ & HL_BINA_OFF_DATA_MASK) << 8);
-        relOffPos |= ((HlU32)*curOffsetPos++);
+        relOffPos = (((HlU32)*(curOffsetPos++) & HL_BINA_OFF_DATA_MASK) << 8);
+        relOffPos |= ((HlU32)*(curOffsetPos++));
 
         *curOffsetPtr += relOffPos;
         break;
 
     case HL_BINA_OFF_SIZE_THIRTY_BIT:
-        relOffPos = (((HlU32)*curOffsetPos++ & HL_BINA_OFF_DATA_MASK) << 24);
-        relOffPos |= (((HlU32)*curOffsetPos++) << 16);
-        relOffPos |= (((HlU32)*curOffsetPos++) << 8);
-        relOffPos |= ((HlU32)*curOffsetPos++);
+        relOffPos = (((HlU32)*(curOffsetPos++) & HL_BINA_OFF_DATA_MASK) << 24);
+        relOffPos |= (((HlU32)*(curOffsetPos++)) << 16);
+        relOffPos |= (((HlU32)*(curOffsetPos++)) << 8);
+        relOffPos |= ((HlU32)*(curOffsetPos++));
 
         *curOffsetPtr += relOffPos;
         break;

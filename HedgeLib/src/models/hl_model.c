@@ -203,7 +203,7 @@ HlResult hlModelGetMats(const HlModel* HL_RESTRICT model,
     return HL_RESULT_SUCCESS;
 }
 
-HlResult hlModelWriteMTL(const HlModel* HL_RESTRICT * HL_RESTRICT models,
+HlResult hlModelWriteMTL(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
     size_t modelCount, HlFile* HL_RESTRICT file)
 {
     HlMaterialList mats;
@@ -226,7 +226,7 @@ HlResult hlModelWriteMTL(const HlModel* HL_RESTRICT * HL_RESTRICT models,
     return result;
 }
 
-HlResult hlModelExportMTL(const HlModel* HL_RESTRICT * HL_RESTRICT models,
+HlResult hlModelExportMTL(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
     size_t modelCount, const HlNChar* HL_RESTRICT filePath)
 {
     HlFile* file;
@@ -902,7 +902,7 @@ static HlResult hlINModelWriteOBJ(const HlModel* HL_RESTRICT model,
     }
 }
 
-HlResult hlModelWriteOBJ(const HlModel* HL_RESTRICT * HL_RESTRICT models,
+HlResult hlModelWriteOBJ(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
     size_t modelCount, const char* HL_RESTRICT mtlName,
     HlFile* HL_RESTRICT file)
 {
@@ -945,7 +945,7 @@ HlModel** hlModelImportOBJ(const HlNChar* filePath, size_t* modelCount)
     return NULL;
 }
 
-HlResult hlModelExportOBJ(const HlModel* HL_RESTRICT * HL_RESTRICT models,
+HlResult hlModelExportOBJ(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
     size_t modelCount, HlBool writeMTL, const HlNChar* HL_RESTRICT filePath)
 {
     HlFile* file;

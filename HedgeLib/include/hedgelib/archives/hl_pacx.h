@@ -343,7 +343,7 @@ HL_API HlPACxV2NodeTree* hlPACxV2DataGetFileTree(
 #define hlPACxV2DataGetOffsetTable(dataBlock) HL_ADD_OFFC(\
     hlPACxV2DataGetStringTable(dataBlock), (dataBlock)->stringTableSize)
 
-HL_API HlResult hlPACxV2Read(const HlBlob* HL_RESTRICT * HL_RESTRICT pacs,
+HL_API HlResult hlPACxV2Read(const HlBlob* const HL_RESTRICT * HL_RESTRICT pacs,
     size_t pacCount, HlArchive* HL_RESTRICT * HL_RESTRICT archive);
 
 HL_API HlResult hlPACxV2Load(const HlNChar* HL_RESTRICT filePath,
@@ -374,7 +374,7 @@ HL_API const HlPACxV3Node* hlPACxV3GetNode(
     const HlPACxV3NodeTree* HL_RESTRICT nodeTree,
     const char* HL_RESTRICT name);
 
-HL_API HlResult hlPACxV3Read(const HlBlob* HL_RESTRICT * HL_RESTRICT pacs,
+HL_API HlResult hlPACxV3Read(const HlBlob* const HL_RESTRICT * HL_RESTRICT pacs,
     size_t pacCount, HlArchive* HL_RESTRICT * HL_RESTRICT archive);
 
 HL_API HlResult hlPACxV3Load(const HlNChar* HL_RESTRICT filePath,

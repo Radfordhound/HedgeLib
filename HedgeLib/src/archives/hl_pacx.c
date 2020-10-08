@@ -834,7 +834,7 @@ static HlResult hlINPACxV2FileTreeSetupEntries(
     return HL_RESULT_SUCCESS;
 }
 
-HlResult hlPACxV2Read(const HlBlob* HL_RESTRICT * HL_RESTRICT pacs,
+HlResult hlPACxV2Read(const HlBlob* const HL_RESTRICT * HL_RESTRICT pacs,
     size_t pacCount, HlArchive* HL_RESTRICT * HL_RESTRICT archive)
 {
     void* hlArcBuf;
@@ -1502,7 +1502,7 @@ const HlPACxV3Node* hlPACxV3GetNode(
     return NULL;
 }
 
-HlResult hlPACxV3Read(const HlBlob* HL_RESTRICT * HL_RESTRICT pacs,
+HlResult hlPACxV3Read(const HlBlob* const HL_RESTRICT * HL_RESTRICT pacs,
     size_t pacCount, HlArchive* HL_RESTRICT * HL_RESTRICT archive)
 {
     void* hlArcBuf;

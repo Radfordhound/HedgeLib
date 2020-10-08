@@ -218,7 +218,7 @@ static void BINAPrintOffsets(const void* HL_RESTRICT offsets,
            Get the next offset's address - return early
            if we've reached the end of the offset table.
         */
-        if (!hlBINAOffsetsNext(&curOffPos, &curOff))
+        if (!hlBINAOffsetsNext(&curOffPos, (const HlU32**)&curOff))
             return;
 
         /* Endian swap the offset if necessary. */

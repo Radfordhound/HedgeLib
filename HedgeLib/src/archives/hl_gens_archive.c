@@ -17,7 +17,7 @@ HlResult hlGensArchiveStreamPFI(const HlNChar* HL_RESTRICT filePath,
     return HL_ERROR_UNKNOWN;
 }
 
-HlResult hlGensArchiveRead(const HlBlob* HL_RESTRICT * HL_RESTRICT splits,
+HlResult hlGensArchiveRead(const HlBlob* const HL_RESTRICT * HL_RESTRICT splits,
     size_t splitCount, HlArchive* HL_RESTRICT * HL_RESTRICT archive)
 {
     void* hlArcBuf;
