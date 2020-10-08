@@ -56,10 +56,33 @@ HlQuaternion;
 
 HL_STATIC_ASSERT_SIZE(HlVector4, 16);
 
+typedef struct HlAABB
+{
+    HlVector3 min;
+    HlVector3 max;
+}
+HlAABB;
+
+HL_STATIC_ASSERT_SIZE(HlAABB, 24);
+
+typedef struct HlMatrix4x4
+{
+    float m11, m12, m13, m14;
+    float m21, m22, m23, m24;
+    float m31, m32, m33, m34;
+    float m41, m42, m43, m44;
+}
+HlMatrix4x4;
+
+HL_STATIC_ASSERT_SIZE(HlMatrix4x4, 64);
+HL_API extern const HlMatrix4x4 HlMatrix4x4Identity;
+
 HL_API void hlVector2HalfSwap(HlVector2Half* vec);
 HL_API void hlVector2Swap(HlVector2* vec);
 HL_API void hlVector3Swap(HlVector3* vec);
 HL_API void hlVector4Swap(HlVector4* vec);
+HL_API void hlAABBSwap(HlAABB* aabb);
+HL_API void hlMatrix4x4Swap(HlMatrix4x4* matrix);
 
 #ifdef __cplusplus
 }
