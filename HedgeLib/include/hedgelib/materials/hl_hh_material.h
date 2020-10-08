@@ -55,7 +55,7 @@ typedef struct HlHHMaterialV3
     HL_OFF32_STR shaderNameOffset;
     HL_OFF32_STR subShaderNameOffset;
     HL_OFF32(HL_OFF32_STR) hhTextureNamesOffset;
-    HL_OFF32(HL_OFF32(HlHHTexture)) texturesOffset;
+    HL_OFF32(HL_OFF32(HlHHTextureV1)) texturesOffset;
     HlU8 alphaThreshold;
     HlU8 noBackfaceCulling;
     HlU8 useAdditiveBlending;

@@ -148,7 +148,7 @@ void hlHHMaterialV1Fix(HlHHMaterialV1* mat)
 void hlHHMaterialV3Fix(HlHHMaterialV3* mat)
 {
 #ifndef HL_IS_BIG_ENDIAN
-    HL_OFF32(HlHHTexture)* textures;
+    HL_OFF32(HlHHTextureV1)* textures;
     HlU8 i;
 
     /* Fix vector4 parameters. */
@@ -170,10 +170,10 @@ void hlHHMaterialV3Fix(HlHHMaterialV3* mat)
     hlINHHMaterialParametersFixBool4(&mat->bool4ParamsOffset, mat->bool4ParamCount);
 
     /* Swap HHTextures if necessary. */
-    textures = (HL_OFF32(HlHHTexture)*)hlOff32Get(&mat->texturesOffset);
+    textures = (HL_OFF32(HlHHTextureV1)*)hlOff32Get(&mat->texturesOffset);
     for (i = 0; i < mat->textureCount; ++i)
     {
-        HlHHTexture* tex = (HlHHTexture*)hlOff32Get(&textures[i]);
+        HlHHTextureV1* tex = (HlHHTextureV1*)hlOff32Get(&textures[i]);
         hlHHTextureSwap(tex, HL_FALSE);
     }
 #endif
@@ -243,8 +243,8 @@ static size_t hlINHHMaterialV3GetReqSize(const HlHHMaterialV3* mat)
     const HL_OFF32_STR* hhTextureNames = (const HL_OFF32_STR*)
         hlOff32Get(&mat->hhTextureNamesOffset);
 
-    const HL_OFF32(HlHHTexture)* hhTextureEntries =
-        (const HL_OFF32(HlHHTexture)*)hlOff32Get(&mat->texturesOffset);
+    const HL_OFF32(HlHHTextureV1)* hhTextureEntries =
+        (const HL_OFF32(HlHHTextureV1)*)hlOff32Get(&mat->texturesOffset);
 
     HlU8 i;
     
@@ -265,7 +265,7 @@ static size_t hlINHHMaterialV3GetReqSize(const HlHHMaterialV3* mat)
         const char* texEntryName = (const char*)
             hlOff32Get(&hhTextureNames[i]);
 
-        const HlHHTexture* texEntry = (const HlHHTexture*)
+        const HlHHTextureV1* texEntry = (const HlHHTextureV1*)
             hlOff32Get(&hhTextureEntries[i]);
 
         /* Account for texture entry. */
@@ -342,14 +342,14 @@ static void hlINHHMaterialParametersParse(const HL_OFF32(HL_OFF32(
 
 static void hlINHHTexturesParse(
     const HL_OFF32(HL_OFF32_STR)* HL_RESTRICT textureNamesOffset,
-    const HL_OFF32(HL_OFF32(HlHHTexture))* HL_RESTRICT textureOffsets,
+    const HL_OFF32(HL_OFF32(HlHHTextureV1))* HL_RESTRICT textureOffsets,
     HlU8 textureCount, void** HL_RESTRICT curDataPtr)
 {
     const HL_OFF32_STR* textureNames = (const HL_OFF32_STR*)
         hlOff32Get(textureNamesOffset);
 
-    const HL_OFF32(HlHHTexture)* textures = (const
-        HL_OFF32(HlHHTexture)*)hlOff32Get(textureOffsets);
+    const HL_OFF32(HlHHTextureV1)* textures = (const
+        HL_OFF32(HlHHTextureV1)*)hlOff32Get(textureOffsets);
 
     HlTextureEntry* hlTexEntries = (HlTextureEntry*)HL_ADD_OFF(
         *curDataPtr, sizeof(HlTexset));
@@ -367,7 +367,7 @@ static void hlINHHTexturesParse(
     /* Setup texture entries. */
     for (i = 0; i < textureCount; ++i)
     {
-        const HlHHTexture* hhTexEntry = (const HlHHTexture*)hlOff32Get(&textures[i]);
+        const HlHHTextureV1* hhTexEntry = (const HlHHTextureV1*)hlOff32Get(&textures[i]);
         HlTextureEntry* hlTexEntry = &hlTexEntries[i];
 
         /* Set entryName pointer, copy entry name, and increase curStrPtr. */

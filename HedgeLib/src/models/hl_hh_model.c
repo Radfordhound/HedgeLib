@@ -169,7 +169,7 @@ void hlHHMeshGroupSwapRecursive(HlHHMeshGroup* meshGroup, HlBool swapOffsets)
     /* TODO: Swap the special slots. */
 }
 
-void hlHHTerrainModelSwap(HlHHTerrainModel* model, HlBool swapOffsets)
+void hlHHTerrainModelV5Swap(HlHHTerrainModelV5* model, HlBool swapOffsets)
 {
     hlSwapU32P(&model->meshGroupCount);
 
@@ -187,7 +187,7 @@ void hlHHSkeletonSwap(HlHHSkeleton* skeleton)
     /* TODO */
 }
 
-void hlHHSkeletalModelSwap(HlHHSkeletalModel* model, HlBool swapOffsets)
+void hlHHSkeletalModelV5Swap(HlHHSkeletalModelV5* model, HlBool swapOffsets)
 {
     hlSwapU32P(&model->meshGroupCount);
     if (swapOffsets) hlSwapU32P(&model->meshGroupsOffset);
@@ -208,7 +208,7 @@ static void hlINHHMeshGroupsSwapRecursive(
     }
 }
 
-void hlHHSkeletalModelFix(HlHHSkeletalModel* model)
+void hlHHSkeletalModelV5Fix(HlHHSkeletalModelV5* model)
 {
     /* TODO: Have this just be a macro if HL_IS_BIG_ENDIAN is set? */
 
@@ -216,12 +216,12 @@ void hlHHSkeletalModelFix(HlHHSkeletalModel* model)
     HL_OFF32(HlHHMeshGroup)* meshGroupOffsets = (HL_OFF32(HlHHMeshGroup)*)
         hlOff32Get(&model->meshGroupsOffset);
 
-    hlHHSkeletalModelSwap(model, HL_FALSE);
+    hlHHSkeletalModelV5Swap(model, HL_FALSE);
     hlINHHMeshGroupsSwapRecursive(meshGroupOffsets, model->meshGroupCount);
 #endif
 }
 
-void hlHHTerrainModelFix(HlHHTerrainModel* model)
+void hlHHTerrainModelV5Fix(HlHHTerrainModelV5* model)
 {
     /* TODO: Have this just be a macro if HL_IS_BIG_ENDIAN is set? */
 
@@ -229,7 +229,7 @@ void hlHHTerrainModelFix(HlHHTerrainModel* model)
     HL_OFF32(HlHHMeshGroup)* meshGroupOffsets = (HL_OFF32(HlHHMeshGroup)*)
         hlOff32Get(&model->meshGroupsOffset);
 
-    hlHHTerrainModelSwap(model, HL_FALSE);
+    hlHHTerrainModelV5Swap(model, HL_FALSE);
     hlINHHMeshGroupsSwapRecursive(meshGroupOffsets, model->meshGroupCount);
 #endif
 }
@@ -609,8 +609,8 @@ static HlResult hlINHHMeshGroupsRead(
     return HL_RESULT_SUCCESS;
 }
 
-HlResult hlHHSkeletalModelParse(
-    const HlHHSkeletalModel* HL_RESTRICT hhModel,
+HlResult hlHHSkeletalModelV5Parse(
+    const HlHHSkeletalModelV5* HL_RESTRICT hhModel,
     HlModel** HL_RESTRICT hlModel)
 {
     const HL_OFF32(HlHHMeshGroup)* hhMeshGroups = (const HL_OFF32(HlHHMeshGroup)*)
@@ -661,27 +661,27 @@ HlResult hlHHSkeletalModelParse(
 HlResult hlHHSkeletalModelRead(HlBlob* HL_RESTRICT blob,
     HlModel** HL_RESTRICT hlModel)
 {
-    HlHHSkeletalModel* hhModel;
+    HlHHSkeletalModelV5* hhModel;
     HlU32 version;
 
     /* Fix HH general data. */
     hlHHFix(blob);
 
     /* Get HH skeletal model pointer and version number. */
-    hhModel = (HlHHSkeletalModel*)hlHHGetData(blob, &version);
+    hhModel = (HlHHSkeletalModelV5*)hlHHGetData(blob, &version);
     if (!hhModel) return HL_ERROR_INVALID_DATA;
 
     /* TODO: Take version number into account. */
 
     /* Fix HH skeletal model data. */
-    hlHHSkeletalModelFix(hhModel);
+    hlHHSkeletalModelV5Fix(hhModel);
 
     /* Parse HH skeletal model data into HlModel and return result. */
-    return hlHHSkeletalModelParse(hhModel, hlModel);
+    return hlHHSkeletalModelV5Parse(hhModel, hlModel);
 }
 
-HlResult hlHHTerrainModelParse(
-    const HlHHTerrainModel* HL_RESTRICT hhModel,
+HlResult hlHHTerrainModelV5Parse(
+    const HlHHTerrainModelV5* HL_RESTRICT hhModel,
     HlModel** HL_RESTRICT hlModel)
 {
     const HL_OFF32(HlHHMeshGroup)* hhMeshGroups = (const HL_OFF32(HlHHMeshGroup)*)
@@ -740,23 +740,23 @@ HlResult hlHHTerrainModelParse(
 HlResult hlHHTerrainModelRead(HlBlob* HL_RESTRICT blob,
     HlModel** HL_RESTRICT hlModel)
 {
-    HlHHTerrainModel* hhModel;
+    HlHHTerrainModelV5* hhModel;
     HlU32 version;
 
     /* Fix HH general data. */
     hlHHFix(blob);
 
     /* Get HH terrain model pointer and version number. */
-    hhModel = (HlHHTerrainModel*)hlHHGetData(blob, &version);
+    hhModel = (HlHHTerrainModelV5*)hlHHGetData(blob, &version);
     if (!hhModel) return HL_ERROR_INVALID_DATA;
 
     /* TODO: Take version number into account. */
 
     /* Fix HH terrain model data. */
-    hlHHTerrainModelFix(hhModel);
+    hlHHTerrainModelV5Fix(hhModel);
 
     /* Parse HH terrain model data into HlModel and return result. */
-    return hlHHTerrainModelParse(hhModel, hlModel);
+    return hlHHTerrainModelV5Parse(hhModel, hlModel);
 }
 
 static HlResult hlINHHModelLoadMaterials(HlModel* HL_RESTRICT hlModel,

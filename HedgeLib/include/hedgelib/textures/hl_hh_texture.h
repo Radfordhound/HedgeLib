@@ -17,7 +17,7 @@ typedef enum HlHHTextureWrapMode
 }
 HlHHTextureWrapMode;
 
-typedef struct HlHHTexture
+typedef struct HlHHTextureV1
 {
     HL_OFF32_STR fileNameOffset;
     HlU8 texCoordIndex;
@@ -28,23 +28,23 @@ typedef struct HlHHTexture
     HlU8 padding;
     HL_OFF32_STR typeOffset;
 }
-HlHHTexture;
+HlHHTextureV1;
 
-HL_STATIC_ASSERT_SIZE(HlHHTexture, 12);
+HL_STATIC_ASSERT_SIZE(HlHHTextureV1, 12);
 
-typedef struct HlHHTexset
+typedef struct HlHHTexsetV0
 {
     HlU32 hhTextureCount;
     HL_OFF32(HL_OFF32_STR) hhTextureNamesOffset;
 }
-HlHHTexset;
+HlHHTexsetV0;
 
-HL_STATIC_ASSERT_SIZE(HlHHTexset, 8);
+HL_STATIC_ASSERT_SIZE(HlHHTexsetV0, 8);
 
-HL_API void hlHHTextureSwap(HlHHTexture* tex, HlBool swapOffsets);
-HL_API void hlHHTexsetSwap(HlHHTexset* texset, HlBool swapOffsets);
+HL_API void hlHHTextureSwap(HlHHTextureV1* tex, HlBool swapOffsets);
+HL_API void hlHHTexsetSwap(HlHHTexsetV0* texset, HlBool swapOffsets);
 
-HL_API void hlHHTextureFix(HlHHTexture* tex);
+HL_API void hlHHTextureFix(HlHHTextureV1* tex);
 
 /** @brief HHTexsets don't need fixing; this macro is only here for consistency. */
 #define hlHHTexsetFix(texset)

@@ -111,16 +111,16 @@ HlHHMeshGroup;
 
 HL_STATIC_ASSERT_SIZE(HlHHMeshGroup, 0x28);
 
-typedef struct HlHHTerrainModel
+typedef struct HlHHTerrainModelV5
 {
     HlU32 meshGroupCount;
     HL_OFF32(HL_OFF32(HlHHMeshGroup)) meshGroupsOffset;
     HL_OFF32_STR nameOffset;
     HlU32 flags; /* TODO: Make this an enum */
 }
-HlHHTerrainModel;
+HlHHTerrainModelV5;
 
-HL_STATIC_ASSERT_SIZE(HlHHTerrainModel, 16);
+HL_STATIC_ASSERT_SIZE(HlHHTerrainModelV5, 16);
 
 typedef struct HlHHBone
 {
@@ -144,15 +144,15 @@ HlHHSkeleton;
 
 HL_STATIC_ASSERT_SIZE(HlHHSkeleton, 0x18);
 
-typedef struct HlHHSkeletalModel
+typedef struct HlHHSkeletalModelV5
 {
     HlU32 meshGroupCount;
     HL_OFF32(HL_OFF32(HlHHMeshGroup)) meshGroupsOffset;
     HlHHSkeleton skeleton;
 }
-HlHHSkeletalModel;
+HlHHSkeletalModelV5;
 
-HL_STATIC_ASSERT_SIZE(HlHHSkeletalModel, 0x20);
+HL_STATIC_ASSERT_SIZE(HlHHSkeletalModelV5, 0x20);
 
 /* TODO: Make the recursive swap functions internal since they don't work if offsets are swapped before they get accessed!! */
 
@@ -165,22 +165,22 @@ HL_API void hlHHMeshSlotSwap(HlHHMeshSlot* meshSlot, HlBool swapOffsets);
 HL_API void hlHHMeshSlotSwapRecursive(HlHHMeshSlot* meshSlot, HlBool swapOffsets);
 HL_API void hlHHMeshGroupSwap(HlHHMeshGroup* meshGroup, HlBool swapOffsets);
 HL_API void hlHHMeshGroupSwapRecursive(HlHHMeshGroup* meshGroup, HlBool swapOffsets);
-HL_API void hlHHTerrainModelSwap(HlHHTerrainModel* model, HlBool swapOffsets);
+HL_API void hlHHTerrainModelV5Swap(HlHHTerrainModelV5* model, HlBool swapOffsets);
 HL_API void hlHHSkeletonSwap(HlHHSkeleton* skeleton);
-HL_API void hlHHSkeletalModelSwap(HlHHSkeletalModel* model, HlBool swapOffsets);
+HL_API void hlHHSkeletalModelV5Swap(HlHHSkeletalModelV5* model, HlBool swapOffsets);
 
-HL_API void hlHHSkeletalModelFix(HlHHSkeletalModel* model);
-HL_API void hlHHTerrainModelFix(HlHHTerrainModel* model);
+HL_API void hlHHSkeletalModelV5Fix(HlHHSkeletalModelV5* model);
+HL_API void hlHHTerrainModelV5Fix(HlHHTerrainModelV5* model);
 
-HL_API HlResult hlHHSkeletalModelParse(
-    const HlHHSkeletalModel* HL_RESTRICT hhModel,
+HL_API HlResult hlHHSkeletalModelV5Parse(
+    const HlHHSkeletalModelV5* HL_RESTRICT hhModel,
     HlModel** HL_RESTRICT hlModel);
 
 HL_API HlResult hlHHSkeletalModelRead(HlBlob* HL_RESTRICT blob,
     HlModel** HL_RESTRICT hlModel);
 
-HL_API HlResult hlHHTerrainModelParse(
-    const HlHHTerrainModel *HL_RESTRICT hhModel,
+HL_API HlResult hlHHTerrainModelV5Parse(
+    const HlHHTerrainModelV5 *HL_RESTRICT hhModel,
     HlModel** HL_RESTRICT hlModel);
 
 HL_API HlResult hlHHTerrainModelRead(HlBlob* HL_RESTRICT blob,
