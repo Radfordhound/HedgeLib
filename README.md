@@ -13,12 +13,16 @@ As such, you don't have to manually build any of the tools/libraries in this rep
 - [Latest (development) builds](https://ci.appveyor.com/project/Radfordhound/hedgelib)
 
 ## HedgeLib
-HedgeLib is a C89 library [under the MIT license](License.txt) that aims to make modding games in the Sonic the Hedgehog franchise easier, similar to [Dario's excellent "LibGens"](https://github.com/DarioSamo/libgens-sonicglvl).
+HedgeLib is an ANSI C ("C89") library [under the MIT license](License.txt) that aims to make modding games in the Sonic the Hedgehog franchise easier, similar to [Dario's excellent "LibGens"](https://github.com/DarioSamo/libgens-sonicglvl).
 Right now, HedgeLib supports the following:
 
 ### Hedgehog Engine 1/2
 - "Mirage" headers (used in models/materials from Lost World and beyond)
-- Models (.model/.terrain-model; v5.0)
+- Models (.model/.terrain-model; v5)
+- Materials (.material; v1 and v3)
+- Texsets (.texset; v0)
+- Texture entries (.texture; v1)
+- Terrain instance infos (.terrain-instanceinfo; v0)
 
 **Used in:**
 - Sonic Unleashed (360/PS3)
