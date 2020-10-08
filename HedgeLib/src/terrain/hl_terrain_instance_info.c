@@ -21,12 +21,13 @@ HlTerrainInstanceInfo* hlTerrainInstanceInfoCreateDefault(
     {
         char* curStrPtr = (char*)(instInfoBuf + 1);
 
-        /* Setup default matrix. */
-        instInfoBuf->matrix = HlMatrix4x4Identity;
-
-        /* Copy model name. */
+        /* Setup terrain instance info. */
         instInfoBuf->name = curStrPtr;
         instInfoBuf->modelName = curStrPtr;
+        instInfoBuf->matrix = HlMatrix4x4Identity;
+        HL_LIST_INIT(instInfoBuf->litMeshGroups);
+
+        /* Copy model name. */
         strcpy(curStrPtr, modelName);
     }
 
@@ -35,7 +36,8 @@ HlTerrainInstanceInfo* hlTerrainInstanceInfoCreateDefault(
 }
 
 HlTerrainInstanceInfo* hlTerrainInstanceInfoCreate(
-    const char* HL_RESTRICT name, const char* HL_RESTRICT modelName)
+    const char* HL_RESTRICT name, const char* HL_RESTRICT modelName,
+    const HlMatrix4x4* HL_RESTRICT matrix)
 {
     HlTerrainInstanceInfo* instInfoBuf;
 
@@ -55,11 +57,12 @@ HlTerrainInstanceInfo* hlTerrainInstanceInfoCreate(
     {
         char* curStrPtr = (char*)(instInfoBuf + 1);
 
-        /* Setup default matrix. */
-        instInfoBuf->matrix = HlMatrix4x4Identity;
+        /* Setup terrain instance info. */
+        instInfoBuf->name = curStrPtr;
+        instInfoBuf->matrix = *matrix;
+        HL_LIST_INIT(instInfoBuf->litMeshGroups);
 
         /* Copy name. */
-        instInfoBuf->name = curStrPtr;
         curStrPtr += (hlStrCopyAndLen(name, curStrPtr) + 1);
 
         /* Copy model name. */
@@ -69,4 +72,49 @@ HlTerrainInstanceInfo* hlTerrainInstanceInfoCreate(
     
     /* Return pointer. */
     return instInfoBuf;
+}
+
+static void hlINLitElementsDestroy(HlLitElement* litElements,
+    size_t litElementCount)
+{
+    size_t i;
+    for (i = 0; i < litElementCount; ++i)
+    {
+        HL_LIST_FREE(litElements[i].lightIndices);
+        HL_LIST_FREE(litElements[i].litFaces);
+    }
+}
+
+static void hlINLitMeshSlotDestroy(HlLitMeshSlot* litSlot)
+{
+    /* Free elements. */
+    size_t i;
+    for (i = 0; i < litSlot->count; ++i)
+    {
+        /* Free elements. */
+        hlINLitElementsDestroy(litSlot->data[i].litElements.data,
+            litSlot->data[i].litElements.count);
+
+        /* Free elements list. */
+        HL_LIST_FREE(litSlot->data[i].litElements);
+    }
+
+    /* Free lit slot. */
+    HL_LIST_FREE(*litSlot);
+}
+
+void hlTerrainInstanceInfoDestroy(HlTerrainInstanceInfo* instInfo)
+{
+    /* Free mesh groups. */
+    size_t i;
+    for (i = 0; i < instInfo->litMeshGroups.count; ++i)
+    {
+        hlINLitMeshSlotDestroy(&instInfo->litMeshGroups.data[i].solid);
+        hlINLitMeshSlotDestroy(&instInfo->litMeshGroups.data[i].transparent);
+        hlINLitMeshSlotDestroy(&instInfo->litMeshGroups.data[i].punch);
+    }
+
+    /* Free mesh groups list and terrain instance info. */
+    HL_LIST_FREE(instInfo->litMeshGroups);
+    hlFree(instInfo);
 }

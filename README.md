@@ -22,7 +22,7 @@ Right now, HedgeLib supports the following:
 - Materials (.material; v1 and v3)
 - Texsets (.texset; v0)
 - Texture entries (.texture; v1)
-- Terrain instance infos (.terrain-instanceinfo; v0)
+- Terrain instance infos (.terrain-instanceinfo; v0 and v5)
 
 **Used in:**
 - Sonic Unleashed (360/PS3)
