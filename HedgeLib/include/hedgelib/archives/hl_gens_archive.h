@@ -62,13 +62,13 @@ typedef struct HlGensArchiveListHeader
 HlGensArchiveListHeader;
 
 HL_API HlResult hlGensArchiveStreamPFI(const HlNChar* HL_RESTRICT filePath,
-    HlArchive** HL_RESTRICT archive);
+    HlArchive* HL_RESTRICT * HL_RESTRICT archive);
 
-HL_API HlResult hlGensArchiveRead(const HlBlob** HL_RESTRICT splits,
-    size_t splitCount, HlArchive** HL_RESTRICT archive);
+HL_API HlResult hlGensArchiveRead(const HlBlob* HL_RESTRICT * HL_RESTRICT splits,
+    size_t splitCount, HlArchive* HL_RESTRICT * HL_RESTRICT archive);
 
 HL_API HlResult hlGensArchiveLoad(const HlNChar* HL_RESTRICT filePath,
-    HlBool loadSplits, HlArchive** HL_RESTRICT archive);
+    HlBool loadSplits, HlArchive* HL_RESTRICT * HL_RESTRICT archive);
 
 HL_API HlResult hlGensArchiveSave(const HlArchive* arc, HlU32 splitLimit,
     HlU32 padAmount, HlCompressType compressType, HlBool generateARL,

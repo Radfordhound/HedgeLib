@@ -118,7 +118,7 @@ HL_API HlResult hlArchiveEntriesExtract(const HlArchiveEntry* HL_RESTRICT entrie
     size_t entryCount, const HlNChar* HL_RESTRICT dirPath, HlBool recursive);
 
 HL_API HlResult hlArchiveCreateFromDir(const HlNChar* HL_RESTRICT dirPath,
-    HlArchive** HL_RESTRICT arc);
+    HlArchive* HL_RESTRICT * HL_RESTRICT arc);
 
 #define hlArchiveEntryIsStreaming(entry) (HlBool)((entry)->meta & HL_ARC_ENTRY_STREAMING_FLAG)
 

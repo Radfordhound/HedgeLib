@@ -35,7 +35,7 @@ HlSeekMode;
 typedef struct HlFile HlFile;
 
 HL_API HlResult hlFileOpen(const HlNChar* HL_RESTRICT filePath,
-    HlFileMode mode, HlFile** HL_RESTRICT file);
+    HlFileMode mode, HlFile* HL_RESTRICT * HL_RESTRICT file);
 
 HL_API HlResult hlFileRead(HlFile* HL_RESTRICT file, size_t size,
     void* HL_RESTRICT buf, size_t* HL_RESTRICT readByteCount);
@@ -60,7 +60,7 @@ HL_API HlResult hlFileClose(HlFile* file);
 HL_API HlResult hlFileGetSize(HlFile* HL_RESTRICT file, size_t* HL_RESTRICT fileSize);
 
 HL_API HlResult hlFileLoad(const HlNChar* HL_RESTRICT filePath,
-    void** HL_RESTRICT data, size_t* HL_RESTRICT dataSize);
+    void* HL_RESTRICT * HL_RESTRICT data, size_t* HL_RESTRICT dataSize);
 
 HL_API HlResult hlFileSave(const void* HL_RESTRICT data,
     size_t size, const HlNChar* HL_RESTRICT filePath);

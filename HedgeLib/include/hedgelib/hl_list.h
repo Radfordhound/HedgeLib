@@ -68,6 +68,8 @@ HL_API void* hlINListGrow(void* HL_RESTRICT data,
     size_t size, size_t count, size_t* HL_RESTRICT capacity);
 
 #ifdef __cplusplus
+}
+
 /*
    In C++, it's not valid to store a void* in an
    int*, for example, without casting. We could do
@@ -87,6 +89,8 @@ inline void hlINListSetDataCPP(T*& dataPtr, void* ptr)
 }
 
 #define HL_IN_LIST_SET_DATA(list, ptr) hlINListSetDataCPP((list).data, ptr)
+
+extern "C" {
 #else
 /*
    In C, void* can auto-cast to int*, for example, so we just do that.

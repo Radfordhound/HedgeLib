@@ -15,9 +15,11 @@ typedef struct HlBlob
 }
 HlBlob;
 
-HL_API HlResult hlBlobRead(HlFile* HL_RESTRICT file, HlBlob** HL_RESTRICT blob);
+HL_API HlResult hlBlobRead(HlFile* HL_RESTRICT file,
+    HlBlob* HL_RESTRICT * HL_RESTRICT blob);
+
 HL_API HlResult hlBlobLoad(const HlNChar* HL_RESTRICT filePath,
-    HlBlob** HL_RESTRICT blob);
+    HlBlob* HL_RESTRICT * HL_RESTRICT blob);
 
 #ifdef __cplusplus
 }

@@ -136,7 +136,7 @@ static HlResult hlINMaterialWriteMTL(const HlMaterial* HL_RESTRICT material,
     return HL_RESULT_SUCCESS;
 }
 
-HlResult hlMaterialWriteMTL(const HlMaterial** HL_RESTRICT materials,
+HlResult hlMaterialWriteMTL(const HlMaterial* HL_RESTRICT * HL_RESTRICT materials,
     size_t materialCount, HlFile* HL_RESTRICT file)
 {
     size_t i;
@@ -156,7 +156,7 @@ HlResult hlMaterialWriteMTL(const HlMaterial** HL_RESTRICT materials,
     return HL_RESULT_SUCCESS;
 }
 
-HlResult hlMaterialExportMTL(const HlMaterial** HL_RESTRICT materials,
+HlResult hlMaterialExportMTL(const HlMaterial* HL_RESTRICT * HL_RESTRICT materials,
     size_t materialCount, const HlNChar* HL_RESTRICT filePath)
 {
     HlFile* file;

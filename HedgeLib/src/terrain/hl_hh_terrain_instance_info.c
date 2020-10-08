@@ -45,7 +45,7 @@ void hlHHTerrainInstanceInfoV5Fix(HlHHTerrainInstanceInfoV5* instInfo)
 
 HlResult hlHHTerrainInstanceInfoV0Parse(
     const HlHHTerrainInstanceInfoV0* HL_RESTRICT hhInstInfo,
-    HlTerrainInstanceInfo** HL_RESTRICT hlInstInfo)
+    HlTerrainInstanceInfo* HL_RESTRICT * HL_RESTRICT hlInstInfo)
 {
     HlTerrainInstanceInfo* hlInstInfoBuf;
     const char* hlMdlName = (const char*)hlOff32Get(
@@ -115,7 +115,7 @@ HlResult hlHHTerrainInstanceInfoV0Parse(
 
 HlResult hlHHTerrainInstanceInfoV5Parse(
     const HlHHTerrainInstanceInfoV5* HL_RESTRICT hhInstInfo,
-    HlTerrainInstanceInfo** HL_RESTRICT hlInstInfo)
+    HlTerrainInstanceInfo* HL_RESTRICT * HL_RESTRICT hlInstInfo)
 {
     /* TODO: Implement this function! */
     HL_ASSERT(0);
@@ -123,7 +123,7 @@ HlResult hlHHTerrainInstanceInfoV5Parse(
 }
 
 HlResult hlHHTerrainInstanceInfoRead(HlBlob* HL_RESTRICT blob,
-    HlTerrainInstanceInfo** HL_RESTRICT hlInstInfo)
+    HlTerrainInstanceInfo* HL_RESTRICT * HL_RESTRICT hlInstInfo)
 {
     void* hhInstInfo;
     HlU32 version;

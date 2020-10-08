@@ -116,7 +116,7 @@ static HlNChar* hlINArchiveEnlargePathBuffer(size_t minAmount,
 }
 
 static HlResult hlINArchiveEntriesExtract(const HlArchiveEntry* HL_RESTRICT entries,
-    size_t entryCount, HlBool recursive, HlNChar** HL_RESTRICT pathBuf,
+    size_t entryCount, HlBool recursive, HlNChar* HL_RESTRICT * HL_RESTRICT pathBuf,
     size_t* HL_RESTRICT pathBufLen, size_t pathEndPos)
 {
     /* Extract entries. */
@@ -301,7 +301,7 @@ HlResult hlArchiveEntriesExtract(const HlArchiveEntry* HL_RESTRICT entries,
 }
 
 HlResult hlArchiveCreateFromDir(const HlNChar* HL_RESTRICT dirPath,
-    HlArchive** HL_RESTRICT arc)
+    HlArchive* HL_RESTRICT * HL_RESTRICT arc)
 {
     /* TODO: Implement this function. */
     HL_ASSERT(0);

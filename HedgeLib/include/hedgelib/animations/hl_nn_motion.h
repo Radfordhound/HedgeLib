@@ -488,10 +488,10 @@ HL_API void hlNNMotionSwap(HlNNMotion* motion, HlBool swapOffsets);
 HL_API void hlNNMotionFix(HlNNBinCnkDataHeader* dataHeader);
 
 HL_API HlResult hlNNMotionParse(const HlNNMotion* HL_RESTRICT motion,
-    HlAnimation** HL_RESTRICT hlAnim);
+    HlAnimation* HL_RESTRICT * HL_RESTRICT hlAnim);
 
 HL_API HlResult hlNNMotionRead(HlBlob* HL_RESTRICT blob,
-    HlAnimation** HL_RESTRICT hlAnim);
+    HlAnimation* HL_RESTRICT * HL_RESTRICT hlAnim);
 
 HL_API HlResult hlNNMotionWrite(const HlAnimation* HL_RESTRICT anim, size_t dataPos,
     HlNNPlatform platform, HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file);

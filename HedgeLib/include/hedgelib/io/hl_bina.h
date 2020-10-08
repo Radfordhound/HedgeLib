@@ -143,8 +143,8 @@ HL_API void hlBINAV2DataHeaderFix(HlBINAV2BlockDataHeader* dataHeader, HlU8 endi
 HL_API void hlBINAV2BlocksFix(HlBINAV2BlockHeader* blocks,
     HlU16 blockCount, HlU8 endianFlag, HlBool is64Bit);
 
-HL_API HlBool hlBINAOffsetsNext(const HlU8** HL_RESTRICT curOffsetPosPtr,
-    const HlU32** HL_RESTRICT curOffsetPtr);
+HL_API HlBool hlBINAOffsetsNext(const HlU8* HL_RESTRICT * HL_RESTRICT curOffsetPosPtr,
+    const HlU32* HL_RESTRICT * HL_RESTRICT curOffsetPtr);
 
 HL_API void hlBINAOffsetsFix32(const void* HL_RESTRICT offsets,
     HlU8 endianFlag, HlU32 offsetTableSize, void* HL_RESTRICT data);

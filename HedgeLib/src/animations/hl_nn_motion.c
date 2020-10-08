@@ -1895,7 +1895,7 @@ static void* hlINNNSubMotionReadKeyFrames(
 }
 
 HlResult hlNNMotionParse(const HlNNMotion* HL_RESTRICT motion,
-    HlAnimation** HL_RESTRICT hlAnim)
+    HlAnimation* HL_RESTRICT * HL_RESTRICT hlAnim)
 {
     HlAnimation* hlAnimBuf;
     const HlNNSubMotion* subMots;
@@ -1985,7 +1985,7 @@ HlResult hlNNMotionParse(const HlNNMotion* HL_RESTRICT motion,
 }
 
 HlResult hlNNMotionRead(HlBlob* HL_RESTRICT blob,
-    HlAnimation** HL_RESTRICT hlAnim)
+    HlAnimation* HL_RESTRICT * HL_RESTRICT hlAnim)
 {
     /* Fix NN general data. */
     HlNNBinCnkDataHeader* dataHeader;

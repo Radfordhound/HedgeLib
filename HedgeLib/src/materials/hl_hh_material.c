@@ -80,10 +80,11 @@ static void hlINHHMaterialParametersFixInt4(HL_OFF32(
 
         for (i2 = 0; i2 < param->valueCount; ++i2)
         {
-            hlSwapU32P(values++);
-            hlSwapU32P(values++);
-            hlSwapU32P(values++);
-            hlSwapU32P(values++);
+            hlSwapU32P(values);
+            hlSwapU32P(values + 1);
+            hlSwapU32P(values + 2);
+            hlSwapU32P(values + 3);
+            values += 4;
         }
     }
 }
@@ -300,7 +301,7 @@ static void hlINHHMaterialParametersParse(const HL_OFF32(HL_OFF32(
     HlHHMaterialParameter))* HL_RESTRICT paramOffsets,
     HlU8 paramCount, const HlMaterialParamFormat format,
     const size_t valueSize, HlMaterialParam* HL_RESTRICT hlParams,
-    void** HL_RESTRICT curDataPtr)
+    void* HL_RESTRICT * HL_RESTRICT curDataPtr)
 {
     const HL_OFF32(HlHHMaterialParameter)* params = (const
         HL_OFF32(HlHHMaterialParameter)*)hlOff32Get(paramOffsets);
@@ -343,7 +344,7 @@ static void hlINHHMaterialParametersParse(const HL_OFF32(HL_OFF32(
 static void hlINHHTexturesParse(
     const HL_OFF32(HL_OFF32_STR)* HL_RESTRICT textureNamesOffset,
     const HL_OFF32(HL_OFF32(HlHHTextureV1))* HL_RESTRICT textureOffsets,
-    HlU8 textureCount, void** HL_RESTRICT curDataPtr)
+    HlU8 textureCount, void* HL_RESTRICT * HL_RESTRICT curDataPtr)
 {
     const HL_OFF32_STR* textureNames = (const HL_OFF32_STR*)
         hlOff32Get(textureNamesOffset);
@@ -391,7 +392,7 @@ static void hlINHHTexturesParse(
 }
 
 HlResult hlHHMaterialV1Parse(const HlHHMaterialV1* HL_RESTRICT hhMat,
-    const char* HL_RESTRICT name, HlMaterial** HL_RESTRICT hlMat)
+    const char* HL_RESTRICT name, HlMaterial* HL_RESTRICT * HL_RESTRICT hlMat)
 {
     HlMaterial* hlMatBuf;
 
@@ -467,7 +468,7 @@ HlResult hlHHMaterialV1Parse(const HlHHMaterialV1* HL_RESTRICT hhMat,
 }
 
 HlResult hlHHMaterialV3Parse(const HlHHMaterialV3* HL_RESTRICT hhMat,
-    const char* HL_RESTRICT name, HlMaterial** HL_RESTRICT hlMat)
+    const char* HL_RESTRICT name, HlMaterial* HL_RESTRICT * HL_RESTRICT hlMat)
 {
     HlMaterial* hlMatBuf;
 
@@ -542,7 +543,7 @@ HlResult hlHHMaterialV3Parse(const HlHHMaterialV3* HL_RESTRICT hhMat,
 }
 
 HlResult hlHHMaterialRead(HlBlob* HL_RESTRICT blob,
-    const char* HL_RESTRICT name, HlMaterial** HL_RESTRICT hlMat)
+    const char* HL_RESTRICT name, HlMaterial* HL_RESTRICT * HL_RESTRICT hlMat)
 {
     void* hhMat;
     HlU32 version;

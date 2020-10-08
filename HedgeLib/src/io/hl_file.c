@@ -99,7 +99,7 @@ typedef struct HlFile
 HlFile;
 
 HlResult hlFileOpen(const HlNChar* HL_RESTRICT filePath,
-    HlFileMode mode, HlFile** HL_RESTRICT file)
+    HlFileMode mode, HlFile* HL_RESTRICT * HL_RESTRICT file)
 {
     HlINFileHandle fileHandle;
     HlFile* hlFile;
@@ -487,7 +487,7 @@ HlResult hlFileGetSize(HlFile* HL_RESTRICT file, size_t* HL_RESTRICT fileSize)
 }
 
 HlResult hlFileLoad(const HlNChar* HL_RESTRICT filePath,
-    void** HL_RESTRICT data, size_t* HL_RESTRICT dataSize)
+    void* HL_RESTRICT * HL_RESTRICT data, size_t* HL_RESTRICT dataSize)
 {
     void* buf;
     HlFile* file;

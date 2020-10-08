@@ -1,6 +1,7 @@
 #include "hedgelib/io/hl_bina.h"
 #include "hedgelib/hl_endian.h"
 #include "../hl_in_assert.h"
+#include <stdlib.h>
 
 void hlBINAV1HeaderSwap(HlBINAV1Header* header, HlBool swapOffsets)
 {
@@ -124,8 +125,8 @@ void hlBINAV2BlocksFix(HlBINAV2BlockHeader* curBlock, HlU16 blockCount,
     }
 }
 
-HlBool hlBINAOffsetsNext(const HlU8** HL_RESTRICT curOffsetPosPtr,
-    const HlU32** HL_RESTRICT curOffsetPtr)
+HlBool hlBINAOffsetsNext(const HlU8* HL_RESTRICT * HL_RESTRICT curOffsetPosPtr,
+    const HlU32* HL_RESTRICT * HL_RESTRICT curOffsetPtr)
 {
     const HlU8* curOffsetPos = *curOffsetPosPtr;
     HlU32 relOffPos;

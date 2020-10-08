@@ -11,7 +11,7 @@ const HlNChar HL_PACX_EXT[5] = HL_NTEXT(".pac");
 
 /* Forward-declaration for function that appears later in the file. */
 HlResult hlINPACxLoadSplits(const HlNChar* HL_RESTRICT filePath,
-    HlU8 majorVersion, HlArchive** HL_RESTRICT archive);
+    HlU8 majorVersion, HlArchive* HL_RESTRICT * HL_RESTRICT archive);
 
 void hlPACxV2NodeSwap(HlPACxV2Node* node, HlBool swapOffsets)
 {
@@ -442,8 +442,8 @@ static HlResult hlINPACxV2FileTreeSetupEntries(
     HlU8 endianFlag, const HlU32* HL_RESTRICT curOffset,
     const HlU8* HL_RESTRICT strings, const HlU8* HL_RESTRICT offsets,
     const HlU8* HL_RESTRICT eof, const char* HL_RESTRICT typeStr,
-    size_t extLen, HlArchiveEntry** HL_RESTRICT curEntry,
-    void** HL_RESTRICT curDataPtr)
+    size_t extLen, HlArchiveEntry* HL_RESTRICT * HL_RESTRICT curEntry,
+    void* HL_RESTRICT * HL_RESTRICT curDataPtr)
 {
     /* Get nodes pointer. */
     const HlPACxV2Node* nodes = (const HlPACxV2Node*)hlOff32Get(&fileTree->nodes);
@@ -834,8 +834,8 @@ static HlResult hlINPACxV2FileTreeSetupEntries(
     return HL_RESULT_SUCCESS;
 }
 
-HlResult hlPACxV2Read(const HlBlob** HL_RESTRICT pacs,
-    size_t pacCount, HlArchive** HL_RESTRICT archive)
+HlResult hlPACxV2Read(const HlBlob* HL_RESTRICT * HL_RESTRICT pacs,
+    size_t pacCount, HlArchive* HL_RESTRICT * HL_RESTRICT archive)
 {
     void* hlArcBuf;
     HlArchiveEntry* curEntry;
@@ -1050,7 +1050,7 @@ HlResult hlPACxV2Read(const HlBlob** HL_RESTRICT pacs,
 }
 
 static HlResult hlINPACxV2LoadSingle(const HlNChar* HL_RESTRICT filePath,
-    HlArchive** HL_RESTRICT archive)
+    HlArchive* HL_RESTRICT * HL_RESTRICT archive)
 {
     HlBlob* blob;
     HlResult result;
@@ -1069,8 +1069,8 @@ static HlResult hlINPACxV2LoadSingle(const HlNChar* HL_RESTRICT filePath,
 }
 
 static HlResult hlINPACxV2LoadSplitBlobs(HlBlob* HL_RESTRICT rootPac,
-    size_t dirLen, size_t pathBufCapacity, HlNChar** HL_RESTRICT pathBufPtr,
-    HlBool* HL_RESTRICT pathBufOnHeap, HlBlob*** HL_RESTRICT pacs,
+    size_t dirLen, size_t pathBufCapacity, HlNChar* HL_RESTRICT * HL_RESTRICT pathBufPtr,
+    HlBool* HL_RESTRICT pathBufOnHeap, HlBlob** HL_RESTRICT * HL_RESTRICT pacs,
     size_t* HL_RESTRICT pacCount)
 {
     HlPACxV2BlockDataHeader* dataBlock;
@@ -1193,7 +1193,7 @@ static HlResult hlINPACxV2LoadSplitBlobs(HlBlob* HL_RESTRICT rootPac,
 }
 
 HlResult hlPACxV2Load(const HlNChar* HL_RESTRICT filePath,
-    HlBool loadSplits, HlArchive** HL_RESTRICT archive)
+    HlBool loadSplits, HlArchive* HL_RESTRICT * HL_RESTRICT archive)
 {
     return (loadSplits) ?
         hlINPACxLoadSplits(filePath, '2', archive) :
@@ -1326,8 +1326,8 @@ static size_t hlINPACxV3FileTreeGetReqSize(
 
 static HlResult hlINPACxV3FileNodesSetupEntries(const HlPACxV3Node* fileNodes,
     const HlPACxV3Node* fileNode, HlBool skipProxies,
-    char* HL_RESTRICT pathBuf, HlArchiveEntry** HL_RESTRICT curEntry,
-    void** HL_RESTRICT curDataPtr)
+    char* HL_RESTRICT pathBuf, HlArchiveEntry* HL_RESTRICT * HL_RESTRICT curEntry,
+    void* HL_RESTRICT * HL_RESTRICT curDataPtr)
 {
     const HlS32* childIndices = (const HlS32*)hlOff64Get(&fileNode->childIndices);
     HlU16 i;
@@ -1502,8 +1502,8 @@ const HlPACxV3Node* hlPACxV3GetNode(
     return NULL;
 }
 
-HlResult hlPACxV3Read(const HlBlob** HL_RESTRICT pacs,
-    size_t pacCount, HlArchive** HL_RESTRICT archive)
+HlResult hlPACxV3Read(const HlBlob* HL_RESTRICT * HL_RESTRICT pacs,
+    size_t pacCount, HlArchive* HL_RESTRICT * HL_RESTRICT archive)
 {
     void* hlArcBuf;
     HlArchiveEntry* curEntry;
@@ -1588,7 +1588,7 @@ HlResult hlPACxV3Read(const HlBlob** HL_RESTRICT pacs,
 }
 
 static HlResult hlINPACxV3LoadSingle(const HlNChar* HL_RESTRICT filePath,
-    HlArchive** HL_RESTRICT archive)
+    HlArchive* HL_RESTRICT * HL_RESTRICT archive)
 {
     HlBlob* blob;
     HlResult result;
@@ -1607,8 +1607,8 @@ static HlResult hlINPACxV3LoadSingle(const HlNChar* HL_RESTRICT filePath,
 }
 
 static HlResult hlINPACxV3LoadSplitBlobs(HlBlob* HL_RESTRICT rootPac,
-    size_t dirLen, size_t pathBufCapacity, HlNChar** HL_RESTRICT pathBufPtr,
-    HlBool* HL_RESTRICT pathBufOnHeap, HlBlob*** HL_RESTRICT pacs,
+    size_t dirLen, size_t pathBufCapacity, HlNChar* HL_RESTRICT * HL_RESTRICT pathBufPtr,
+    HlBool* HL_RESTRICT pathBufOnHeap, HlBlob** HL_RESTRICT * HL_RESTRICT pacs,
     size_t* HL_RESTRICT pacCount)
 {
     HlPACxV3Header* header = (HlPACxV3Header*)rootPac->data;
@@ -1698,7 +1698,7 @@ static HlResult hlINPACxV3LoadSplitBlobs(HlBlob* HL_RESTRICT rootPac,
 }
 
 HlResult hlPACxV3Load(const HlNChar* HL_RESTRICT filePath,
-    HlBool loadSplits, HlArchive** HL_RESTRICT archive)
+    HlBool loadSplits, HlArchive* HL_RESTRICT * HL_RESTRICT archive)
 {
     return (loadSplits) ?
         hlINPACxLoadSplits(filePath, '3', archive) :
@@ -1752,7 +1752,7 @@ HlResult hlPACxV4DecompressNoAlloc(const void* HL_RESTRICT compressedData,
 
 HlResult hlPACxV4Decompress(const void* HL_RESTRICT compressedData,
     const HlPACxV4Chunk* HL_RESTRICT chunks, HlU32 chunkCount,
-    HlU32 uncompressedSize, void** HL_RESTRICT uncompressedData)
+    HlU32 uncompressedSize, void* HL_RESTRICT * HL_RESTRICT uncompressedData)
 {
     void* uncompressedDataBuf;
     HlResult result;
@@ -1812,7 +1812,7 @@ static HlResult hlINPACxV4DecompressAndFix(void* HL_RESTRICT data,
 }
 
 HlResult hlPACxV4Read(HlBlob* HL_RESTRICT pac,
-    HlBool loadSplits, HlArchive** HL_RESTRICT archive)
+    HlBool loadSplits, HlArchive* HL_RESTRICT * HL_RESTRICT archive)
 {
     const HlPACxV4Header* header = (const HlPACxV4Header*)pac->data;
     HlBlob** pacs = NULL;
@@ -1839,12 +1839,15 @@ HlResult hlPACxV4Read(HlBlob* HL_RESTRICT pac,
 
         HlU64 i;
 
+        /* Ensure split count will fit within a size_t. */
+        HL_ASSERT(splitTable->splitCount <= HL_SIZE_MAX);
+
         /* Set PAC count. */
         pacCount = (size_t)(splitTable->splitCount + 1);
 
         /* Allocate total PAC entries array. */
         pacs = (HlBlob**)hlAlloc((sizeof(HlBlob*) * pacCount) +
-            (sizeof(HlBlob) * splitTable->splitCount));
+            (sizeof(HlBlob) * (size_t)splitTable->splitCount));
 
         if (!pacs)
         {
@@ -1909,7 +1912,7 @@ end:
 }
 
 HlResult hlPACxV4Load(const HlNChar* HL_RESTRICT filePath,
-    HlBool loadSplits, HlArchive** HL_RESTRICT archive)
+    HlBool loadSplits, HlArchive* HL_RESTRICT * HL_RESTRICT archive)
 {
     HlBlob* blob;
     HlResult result;
@@ -1928,7 +1931,7 @@ HlResult hlPACxV4Load(const HlNChar* HL_RESTRICT filePath,
 }
 
 static HlResult hlINPACxLoadSingle(const HlNChar* HL_RESTRICT filePath,
-    HlArchive** HL_RESTRICT archive)
+    HlArchive* HL_RESTRICT * HL_RESTRICT archive)
 {
     HlBlob* blob;
     HlResult result;
@@ -1987,7 +1990,7 @@ end:
 }
 
 HlResult hlINPACxLoadSplitBlobs(const HlNChar* HL_RESTRICT filePath,
-    HlU8 majorVersion, HlBlob*** HL_RESTRICT pacs, size_t* HL_RESTRICT pacCount)
+    HlU8 majorVersion, HlBlob** HL_RESTRICT * HL_RESTRICT pacs, size_t* HL_RESTRICT pacCount)
 {
     HlBlob** pacPtrs = NULL;
     HlBlob* rootPac = NULL;
@@ -2128,13 +2131,13 @@ end:
 }
 
 HlResult hlPACxLoadBlobs(const HlNChar* HL_RESTRICT filePath,
-    HlBlob*** HL_RESTRICT pacs, size_t* HL_RESTRICT pacCount)
+    HlBlob** HL_RESTRICT * HL_RESTRICT pacs, size_t* HL_RESTRICT pacCount)
 {
     return hlINPACxLoadSplitBlobs(filePath, 0, pacs, pacCount);
 }
 
 HlResult hlINPACxLoadSplits(const HlNChar* HL_RESTRICT filePath,
-    HlU8 majorVersion, HlArchive** HL_RESTRICT archive)
+    HlU8 majorVersion, HlArchive* HL_RESTRICT * HL_RESTRICT archive)
 {
     HlBlob** pacs;
     size_t pacCount;
@@ -2197,7 +2200,7 @@ end:
 }
 
 HlResult hlPACxLoad(const HlNChar* HL_RESTRICT filePath,
-    HlBool loadSplits, HlArchive** HL_RESTRICT archive)
+    HlBool loadSplits, HlArchive* HL_RESTRICT * HL_RESTRICT archive)
 {
     return (loadSplits) ?
         hlINPACxLoadSplits(filePath, 0, archive) :

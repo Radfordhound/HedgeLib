@@ -343,11 +343,11 @@ HL_API HlPACxV2NodeTree* hlPACxV2DataGetFileTree(
 #define hlPACxV2DataGetOffsetTable(dataBlock) HL_ADD_OFFC(\
     hlPACxV2DataGetStringTable(dataBlock), (dataBlock)->stringTableSize)
 
-HL_API HlResult hlPACxV2Read(const HlBlob** HL_RESTRICT pacs,
-    size_t pacCount, HlArchive** HL_RESTRICT archive);
+HL_API HlResult hlPACxV2Read(const HlBlob* HL_RESTRICT * HL_RESTRICT pacs,
+    size_t pacCount, HlArchive* HL_RESTRICT * HL_RESTRICT archive);
 
 HL_API HlResult hlPACxV2Load(const HlNChar* HL_RESTRICT filePath,
-    HlBool loadSplits, HlArchive** HL_RESTRICT archive);
+    HlBool loadSplits, HlArchive* HL_RESTRICT * HL_RESTRICT archive);
 
 HL_API void hlPACxV3Fix(HlBlob* blob);
 
@@ -374,11 +374,11 @@ HL_API const HlPACxV3Node* hlPACxV3GetNode(
     const HlPACxV3NodeTree* HL_RESTRICT nodeTree,
     const char* HL_RESTRICT name);
 
-HL_API HlResult hlPACxV3Read(const HlBlob** HL_RESTRICT pacs,
-    size_t pacCount, HlArchive** HL_RESTRICT archive);
+HL_API HlResult hlPACxV3Read(const HlBlob* HL_RESTRICT * HL_RESTRICT pacs,
+    size_t pacCount, HlArchive* HL_RESTRICT * HL_RESTRICT archive);
 
 HL_API HlResult hlPACxV3Load(const HlNChar* HL_RESTRICT filePath,
-    HlBool loadSplits, HlArchive** HL_RESTRICT archive);
+    HlBool loadSplits, HlArchive* HL_RESTRICT * HL_RESTRICT archive);
 
 HL_API void hlPACxV4Fix(HlBlob* blob);
 
@@ -390,19 +390,19 @@ HL_API HlResult hlPACxV4DecompressNoAlloc(const void* HL_RESTRICT compressedData
 
 HL_API HlResult hlPACxV4Decompress(const void* HL_RESTRICT compressedData,
     const HlPACxV4Chunk* HL_RESTRICT chunks, HlU32 chunkCount,
-    HlU32 uncompressedSize, void** HL_RESTRICT uncompressedData);
+    HlU32 uncompressedSize, void* HL_RESTRICT * HL_RESTRICT uncompressedData);
 
 HL_API HlResult hlPACxV4Read(HlBlob* HL_RESTRICT pac,
-    HlBool loadSplits, HlArchive** HL_RESTRICT archive);
+    HlBool loadSplits, HlArchive* HL_RESTRICT * HL_RESTRICT archive);
 
 HL_API HlResult hlPACxV4Load(const HlNChar* HL_RESTRICT filePath,
-    HlBool loadSplits, HlArchive** HL_RESTRICT archive);
+    HlBool loadSplits, HlArchive* HL_RESTRICT * HL_RESTRICT archive);
 
 HL_API HlResult hlPACxLoadBlobs(const HlNChar* HL_RESTRICT filePath,
-    HlBlob*** HL_RESTRICT pacs, size_t* HL_RESTRICT pacCount);
+    HlBlob** HL_RESTRICT * HL_RESTRICT pacs, size_t* HL_RESTRICT pacCount);
 
 HL_API HlResult hlPACxLoad(const HlNChar* HL_RESTRICT filePath,
-    HlBool loadSplits, HlArchive** HL_RESTRICT archive);
+    HlBool loadSplits, HlArchive* HL_RESTRICT * HL_RESTRICT archive);
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS
 HL_API HlPACxV2NodeTree* hlPACxV2DataGetTypeTreeExt(HlPACxV2BlockDataHeader* dataBlock);

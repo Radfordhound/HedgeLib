@@ -314,7 +314,8 @@ static size_t hlINHHMeshGroupsGetReqSize(
 }
 
 static HlResult hlINHHVertexFormatRead(const HlHHMeshSlot* HL_RESTRICT hhMeshSlot,
-    HlVertexFormat** HL_RESTRICT curHlVertexFormat, void** HL_RESTRICT endPtr)
+    HlVertexFormat* HL_RESTRICT * HL_RESTRICT curHlVertexFormat,
+    void* HL_RESTRICT * HL_RESTRICT endPtr)
 {
     /* Get pointers. */
     const HL_OFF32(HlHHMesh)* meshOffsets = (const HL_OFF32(HlHHMesh)*)
@@ -474,7 +475,7 @@ static HlResult hlINHHVertexFormatRead(const HlHHMeshSlot* HL_RESTRICT hhMeshSlo
 
 static HlResult hlINHHMeshSlotRead(const HlHHMeshSlot* HL_RESTRICT hhMeshSlot,
     HlMeshSlot* HL_RESTRICT hlMeshSlot, size_t* HL_RESTRICT globalMeshIndex,
-    void** HL_RESTRICT endPtr)
+    void* HL_RESTRICT * HL_RESTRICT endPtr)
 {
     /* Get mesh offsets pointer. */
     const HL_OFF32(HlHHMesh)* meshOffsets = (const HL_OFF32(HlHHMesh)*)
@@ -611,7 +612,7 @@ static HlResult hlINHHMeshGroupsRead(
 
 HlResult hlHHSkeletalModelV5Parse(
     const HlHHSkeletalModelV5* HL_RESTRICT hhModel,
-    HlModel** HL_RESTRICT hlModel)
+    HlModel* HL_RESTRICT * HL_RESTRICT hlModel)
 {
     const HL_OFF32(HlHHMeshGroup)* hhMeshGroups = (const HL_OFF32(HlHHMeshGroup)*)
         hlOff32Get(&hhModel->meshGroupsOffset);
@@ -659,7 +660,7 @@ HlResult hlHHSkeletalModelV5Parse(
 }
 
 HlResult hlHHSkeletalModelRead(HlBlob* HL_RESTRICT blob,
-    HlModel** HL_RESTRICT hlModel)
+    HlModel* HL_RESTRICT * HL_RESTRICT hlModel)
 {
     HlHHSkeletalModelV5* hhModel;
     HlU32 version;
@@ -682,7 +683,7 @@ HlResult hlHHSkeletalModelRead(HlBlob* HL_RESTRICT blob,
 
 HlResult hlHHTerrainModelV5Parse(
     const HlHHTerrainModelV5* HL_RESTRICT hhModel,
-    HlModel** HL_RESTRICT hlModel)
+    HlModel* HL_RESTRICT * HL_RESTRICT hlModel)
 {
     const HL_OFF32(HlHHMeshGroup)* hhMeshGroups = (const HL_OFF32(HlHHMeshGroup)*)
         hlOff32Get(&hhModel->meshGroupsOffset);
@@ -738,7 +739,7 @@ HlResult hlHHTerrainModelV5Parse(
 }
 
 HlResult hlHHTerrainModelRead(HlBlob* HL_RESTRICT blob,
-    HlModel** HL_RESTRICT hlModel)
+    HlModel* HL_RESTRICT * HL_RESTRICT hlModel)
 {
     HlHHTerrainModelV5* hhModel;
     HlU32 version;
@@ -760,8 +761,9 @@ HlResult hlHHTerrainModelRead(HlBlob* HL_RESTRICT blob,
 }
 
 static HlResult hlINHHModelLoadMaterials(HlModel* HL_RESTRICT hlModel,
-    HlNChar** HL_RESTRICT bufPtr, const size_t dirLen, HlBool* HL_RESTRICT bufOnHeap,
-    size_t* HL_RESTRICT bufLen, HlMaterialList* HL_RESTRICT mats)
+    HlNChar* HL_RESTRICT * HL_RESTRICT bufPtr, const size_t dirLen,
+    HlBool* HL_RESTRICT bufOnHeap, size_t* HL_RESTRICT bufLen,
+    HlMaterialList* HL_RESTRICT mats)
 {
     HlMaterialNameList matNameRefs;
     size_t i;

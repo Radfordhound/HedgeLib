@@ -5,7 +5,8 @@
 /** @brief The size of an HlBlob, aligned to a 16-byte offset. */
 static const size_t hlINBlobAlignedSize = (sizeof(HlBlob) + (sizeof(HlBlob) % 16));
 
-HlResult hlBlobRead(HlFile* HL_RESTRICT file, HlBlob** HL_RESTRICT blob)
+HlResult hlBlobRead(HlFile* HL_RESTRICT file,
+    HlBlob* HL_RESTRICT * HL_RESTRICT blob)
 {
     HlBlob* blobBuf;
     size_t fileSize;
@@ -37,7 +38,7 @@ HlResult hlBlobRead(HlFile* HL_RESTRICT file, HlBlob** HL_RESTRICT blob)
 }
 
 HlResult hlBlobLoad(const HlNChar* HL_RESTRICT filePath,
-    HlBlob** HL_RESTRICT blob)
+    HlBlob* HL_RESTRICT * HL_RESTRICT blob)
 {
     HlFile* file;
     HlResult result;

@@ -11,14 +11,14 @@ const HlNChar HL_GENS_AR_EXT[4] = HL_NTEXT(".ar");
 const HlNChar HL_GENS_PFD_EXT[5] = HL_NTEXT(".pfd");
 
 HlResult hlGensArchiveStreamPFI(const HlNChar* HL_RESTRICT filePath,
-    HlArchive** HL_RESTRICT archive)
+    HlArchive* HL_RESTRICT * HL_RESTRICT archive)
 {
     /* TODO */
     return HL_ERROR_UNKNOWN;
 }
 
-HlResult hlGensArchiveRead(const HlBlob** HL_RESTRICT splits,
-    size_t splitCount, HlArchive** HL_RESTRICT archive)
+HlResult hlGensArchiveRead(const HlBlob* HL_RESTRICT * HL_RESTRICT splits,
+    size_t splitCount, HlArchive* HL_RESTRICT * HL_RESTRICT archive)
 {
     void* hlArcBuf;
     HlArchiveEntry* curEntry;
@@ -146,7 +146,7 @@ HlResult hlGensArchiveRead(const HlBlob** HL_RESTRICT splits,
 }
 
 static HlResult hlINGensArchiveLoadSingle(const HlNChar* HL_RESTRICT filePath,
-    HlArchive** HL_RESTRICT archive)
+    HlArchive* HL_RESTRICT * HL_RESTRICT archive)
 {
     HlBlob* blob;
     HlResult result;
@@ -162,7 +162,7 @@ static HlResult hlINGensArchiveLoadSingle(const HlNChar* HL_RESTRICT filePath,
 }
 
 static HlResult hlINGensArchiveLoadSplits(const HlNChar* HL_RESTRICT filePath,
-    HlArchive** HL_RESTRICT archive)
+    HlArchive* HL_RESTRICT * HL_RESTRICT archive)
 {
     HlNChar* pathBuf = NULL;
     HlNChar* lastCharPtr = NULL;
@@ -348,7 +348,7 @@ end:
 }
 
 HlResult hlGensArchiveLoad(const HlNChar* HL_RESTRICT filePath,
-    HlBool loadSplits, HlArchive** HL_RESTRICT archive)
+    HlBool loadSplits, HlArchive* HL_RESTRICT * HL_RESTRICT archive)
 {
     /* Load all splits or simply a single archive based on user request. */
     return (loadSplits) ?

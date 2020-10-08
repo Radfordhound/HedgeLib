@@ -41,14 +41,14 @@ HL_API void hlHHTerrainInstanceInfoV5Fix(HlHHTerrainInstanceInfoV5* instInfo);
 
 HL_API HlResult hlHHTerrainInstanceInfoV0Parse(
     const HlHHTerrainInstanceInfoV0* HL_RESTRICT hhInstInfo,
-    HlTerrainInstanceInfo** HL_RESTRICT hlInstInfo);
+    HlTerrainInstanceInfo* HL_RESTRICT * HL_RESTRICT hlInstInfo);
 
 HL_API HlResult hlHHTerrainInstanceInfoV5Parse(
     const HlHHTerrainInstanceInfoV5* HL_RESTRICT hhInstInfo,
-    HlTerrainInstanceInfo** HL_RESTRICT hlInstInfo);
+    HlTerrainInstanceInfo* HL_RESTRICT * HL_RESTRICT hlInstInfo);
 
 HL_API HlResult hlHHTerrainInstanceInfoRead(HlBlob* HL_RESTRICT blob,
-    HlTerrainInstanceInfo** HL_RESTRICT hlInstInfo);
+    HlTerrainInstanceInfo* HL_RESTRICT * HL_RESTRICT hlInstInfo);
 
 #ifdef __cplusplus
 }

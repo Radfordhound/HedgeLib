@@ -52,10 +52,10 @@ typedef struct HlMaterial
 }
 HlMaterial;
 
-HL_API HlResult hlMaterialWriteMTL(const HlMaterial** HL_RESTRICT materials,
+HL_API HlResult hlMaterialWriteMTL(const HlMaterial* HL_RESTRICT * HL_RESTRICT materials,
     size_t materialCount, HlFile* HL_RESTRICT file);
 
-HL_API HlResult hlMaterialExportMTL(const HlMaterial** HL_RESTRICT materials,
+HL_API HlResult hlMaterialExportMTL(const HlMaterial* HL_RESTRICT * HL_RESTRICT materials,
     size_t materialCount, const HlNChar* HL_RESTRICT filePath);
 
 #ifdef __cplusplus

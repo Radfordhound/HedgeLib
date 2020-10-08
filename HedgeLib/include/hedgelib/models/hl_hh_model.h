@@ -174,17 +174,17 @@ HL_API void hlHHTerrainModelV5Fix(HlHHTerrainModelV5* model);
 
 HL_API HlResult hlHHSkeletalModelV5Parse(
     const HlHHSkeletalModelV5* HL_RESTRICT hhModel,
-    HlModel** HL_RESTRICT hlModel);
+    HlModel* HL_RESTRICT * HL_RESTRICT hlModel);
 
 HL_API HlResult hlHHSkeletalModelRead(HlBlob* HL_RESTRICT blob,
-    HlModel** HL_RESTRICT hlModel);
+    HlModel* HL_RESTRICT * HL_RESTRICT hlModel);
 
 HL_API HlResult hlHHTerrainModelV5Parse(
     const HlHHTerrainModelV5 *HL_RESTRICT hhModel,
-    HlModel** HL_RESTRICT hlModel);
+    HlModel* HL_RESTRICT * HL_RESTRICT hlModel);
 
 HL_API HlResult hlHHTerrainModelRead(HlBlob* HL_RESTRICT blob,
-    HlModel** HL_RESTRICT hlModel);
+    HlModel* HL_RESTRICT * HL_RESTRICT hlModel);
 
 HL_API HlResult hlHHModelLoadMaterials(HlModel* HL_RESTRICT hlModel,
     const HlNChar* HL_RESTRICT dir, HlMaterialList* HL_RESTRICT mats);

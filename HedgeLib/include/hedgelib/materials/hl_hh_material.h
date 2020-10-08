@@ -80,13 +80,13 @@ HL_API void hlHHMaterialV1Fix(HlHHMaterialV1* mat);
 HL_API void hlHHMaterialV3Fix(HlHHMaterialV3* mat);
 
 HL_API HlResult hlHHMaterialV1Parse(const HlHHMaterialV1* HL_RESTRICT hhMat,
-    const char* HL_RESTRICT name, HlMaterial** HL_RESTRICT hlMat);
+    const char* HL_RESTRICT name, HlMaterial* HL_RESTRICT * HL_RESTRICT hlMat);
 
 HL_API HlResult hlHHMaterialV3Parse(const HlHHMaterialV3* HL_RESTRICT hhMat,
-    const char* HL_RESTRICT name, HlMaterial** HL_RESTRICT hlMat);
+    const char* HL_RESTRICT name, HlMaterial* HL_RESTRICT * HL_RESTRICT hlMat);
 
 HL_API HlResult hlHHMaterialRead(HlBlob* HL_RESTRICT blob,
-    const char* HL_RESTRICT name, HlMaterial** HL_RESTRICT hlMat);
+    const char* HL_RESTRICT name, HlMaterial* HL_RESTRICT * HL_RESTRICT hlMat);
 
 #ifdef __cplusplus
 }
