@@ -9,9 +9,9 @@
 
 void hlHHVertexElementSwap(HlHHVertexElement* vertexElement)
 {
-    hlSwapU32P(&vertexElement->offset);
+    hlSwapU16P(&vertexElement->stream);
+    hlSwapU16P(&vertexElement->offset);
     hlSwapU32P(&vertexElement->format);
-    hlSwapU16P(&vertexElement->type);
 }
 
 void hlHHVertexFormatSwap(HlHHMesh* mesh)
@@ -234,7 +234,9 @@ void hlHHTerrainModelFix(HlHHTerrainModel* model)
 #endif
 }
 
-static size_t hlINHHMeshSlotGetReqSize(const HlHHMeshSlot* slot)
+static size_t hlINHHMeshSlotGetReqSize(
+    const HlHHMeshSlot* HL_RESTRICT slot,
+    size_t* HL_RESTRICT totalMeshCount)
 {
     /* Get mesh offsets pointer. */
     const HL_OFF32(HlHHMesh)* meshOffsets = (const HL_OFF32(HlHHMesh)*)
@@ -280,12 +282,14 @@ static size_t hlINHHMeshSlotGetReqSize(const HlHHMeshSlot* slot)
         /* TODO: Account for other stuff like bones and texture units. */
     }
 
+    /* Increase total mesh count and return required size. */
+    *totalMeshCount += slot->meshCount;
     return reqSize;
 }
 
 static size_t hlINHHMeshGroupsGetReqSize(
-    const HL_OFF32(HlHHMeshGroup)* meshGroups,
-    HlU32 meshGroupCount)
+    const HL_OFF32(HlHHMeshGroup)* HL_RESTRICT meshGroups,
+    HlU32 meshGroupCount, size_t* HL_RESTRICT totalMeshCount)
 {
     size_t reqSize = 0;
     HlU32 i;
@@ -299,9 +303,9 @@ static size_t hlINHHMeshGroupsGetReqSize(
         reqSize += sizeof(HlMeshGroup);
 
         /* Account for mesh slots. */
-        reqSize += hlINHHMeshSlotGetReqSize(&meshGroup->solid);
-        reqSize += hlINHHMeshSlotGetReqSize(&meshGroup->transparent);
-        reqSize += hlINHHMeshSlotGetReqSize(&meshGroup->boolean);
+        reqSize += hlINHHMeshSlotGetReqSize(&meshGroup->solid, totalMeshCount);
+        reqSize += hlINHHMeshSlotGetReqSize(&meshGroup->transparent, totalMeshCount);
+        reqSize += hlINHHMeshSlotGetReqSize(&meshGroup->boolean, totalMeshCount);
 
         /* TODO: Account for special slots. */
     }
@@ -310,15 +314,13 @@ static size_t hlINHHMeshGroupsGetReqSize(
 }
 
 static HlResult hlINHHVertexFormatRead(const HlHHMeshSlot* HL_RESTRICT hhMeshSlot,
-    void** HL_RESTRICT endPtr)
+    HlVertexFormat** HL_RESTRICT curHlVertexFormat, void** HL_RESTRICT endPtr)
 {
     /* Get pointers. */
     const HL_OFF32(HlHHMesh)* meshOffsets = (const HL_OFF32(HlHHMesh)*)
         hlOff32Get(&hhMeshSlot->meshesOffset);
 
-    HlVertexFormat* hlVertexFormats = (HlVertexFormat*)(*endPtr);
-    HlVertexElement* hlCurVertexElement = (HlVertexElement*)
-        &hlVertexFormats[hhMeshSlot->meshCount];
+    HlVertexElement* hlCurVertexElement = (HlVertexElement*)(*endPtr);
 
     /* Read mesh slot. */
     HlU32 i;
@@ -328,9 +330,9 @@ static HlResult hlINHHVertexFormatRead(const HlHHMeshSlot* HL_RESTRICT hhMeshSlo
         const HlHHMesh* mesh = (const HlHHMesh*)hlOff32Get(&meshOffsets[i]);
 
         /* Setup HlVertexFormat. */
-        hlVertexFormats[i].vertexFormatSize = (size_t)mesh->vertexSize;
-        hlVertexFormats[i].vertexElementCount = 0;
-        hlVertexFormats[i].vertexElements = hlCurVertexElement;
+        (*curHlVertexFormat)[i].vertexFormatSize = (size_t)mesh->vertexSize;
+        (*curHlVertexFormat)[i].vertexElementCount = 0;
+        (*curHlVertexFormat)[i].vertexElements = hlCurVertexElement;
 
         /* Setup HlVertexElements. */
         {
@@ -453,7 +455,7 @@ static HlResult hlINHHVertexFormatRead(const HlHHMeshSlot* HL_RESTRICT hhMeshSlo
                 hlCurVertexElement->offset = (unsigned int)hhCurVertexElement->offset;
 
                 /* Increment vertex element count. */
-                ++hlVertexFormats[i].vertexElementCount;
+                ++((*curHlVertexFormat)[i].vertexElementCount);
 
                 /* Increment pointers. */
                 ++hlCurVertexElement;
@@ -462,13 +464,17 @@ static HlResult hlINHHVertexFormatRead(const HlHHMeshSlot* HL_RESTRICT hhMeshSlo
         }
     }
 
+    /* Inrease current vertex format pointer. */
+    *curHlVertexFormat += hhMeshSlot->meshCount;
+
     /* Set end pointer and return success. */
     *endPtr = hlCurVertexElement;
     return HL_RESULT_SUCCESS;
 }
 
 static HlResult hlINHHMeshSlotRead(const HlHHMeshSlot* HL_RESTRICT hhMeshSlot,
-    HlMeshSlot* HL_RESTRICT hlMeshSlot, void** HL_RESTRICT endPtr)
+    HlMeshSlot* HL_RESTRICT hlMeshSlot, size_t* HL_RESTRICT globalMeshIndex,
+    void** HL_RESTRICT endPtr)
 {
     /* Get mesh offsets pointer. */
     const HL_OFF32(HlHHMesh)* meshOffsets = (const HL_OFF32(HlHHMesh)*)
@@ -494,7 +500,7 @@ static HlResult hlINHHMeshSlotRead(const HlHHMeshSlot* HL_RESTRICT hhMeshSlot,
 
             /* Setup HlMesh. */
             hlMesh->matRef.refType = HL_REF_TYPE_NAME;
-            hlMesh->vertexFormatIndex = (size_t)i;
+            hlMesh->vertexFormatIndex = (*globalMeshIndex)++;
             hlMesh->vertexCount = (size_t)hhMesh->vertexCount;
             hlMesh->vertices = hlVertices;
             hlMesh->faceCount = (size_t)hhMesh->faceCount;
@@ -537,12 +543,16 @@ static HlResult hlINHHMeshSlotRead(const HlHHMeshSlot* HL_RESTRICT hhMeshSlot,
 
 static HlResult hlINHHMeshGroupsRead(
     const HL_OFF32(HlHHMeshGroup)* HL_RESTRICT hhMeshGroups,
-    HlU32 meshGroupCount, HlMeshGroup* HL_RESTRICT hlMeshGroups)
+    HlU32 meshGroupCount, size_t totalMeshCount,
+    HlMeshGroup* HL_RESTRICT hlMeshGroups)
 {
-    void* endPtr = &hlMeshGroups[meshGroupCount];
+    HlVertexFormat* curHlVertexFormat = (HlVertexFormat*)&hlMeshGroups[meshGroupCount];
+    void* endPtr = &curHlVertexFormat[totalMeshCount];
+    size_t globalMeshIndex = 0;
     HlU32 i;
     HlResult result;
 
+    /* Parse vertex formats. */
     for (i = 0; i < meshGroupCount; ++i)
     {
         /* Get mesh group pointer. */
@@ -550,18 +560,25 @@ static HlResult hlINHHMeshGroupsRead(
             hlOff32Get(&hhMeshGroups[i]);
 
         /* Read slots. */
-        result = hlINHHVertexFormatRead(&hhMeshGroup->solid, &endPtr);
+        result = hlINHHVertexFormatRead(&hhMeshGroup->solid,
+            &curHlVertexFormat, &endPtr);
+
         if (HL_FAILED(result)) return result;
 
-        result = hlINHHVertexFormatRead(&hhMeshGroup->transparent,  &endPtr);
+        result = hlINHHVertexFormatRead(&hhMeshGroup->transparent,
+            &curHlVertexFormat, &endPtr);
+
         if (HL_FAILED(result)) return result;
 
-        result = hlINHHVertexFormatRead(&hhMeshGroup->boolean, &endPtr);
+        result = hlINHHVertexFormatRead(&hhMeshGroup->boolean,
+            &curHlVertexFormat, &endPtr);
+
         if (HL_FAILED(result)) return result;
 
         /* TODO: Read special slots. */
     }
 
+    /* Parse meshes. */
     for (i = 0; i < meshGroupCount; ++i)
     {
         /* Get mesh group pointer. */
@@ -570,21 +587,23 @@ static HlResult hlINHHMeshGroupsRead(
 
         /* Read slots. */
         result = hlINHHMeshSlotRead(&hhMeshGroup->solid,
-            &hlMeshGroups[i].solid, &endPtr);
+            &hlMeshGroups[i].solid, &globalMeshIndex, &endPtr);
 
         if (HL_FAILED(result)) return result;
 
         result = hlINHHMeshSlotRead(&hhMeshGroup->transparent,
-            &hlMeshGroups[i].transparent, &endPtr);
+            &hlMeshGroups[i].transparent, &globalMeshIndex, &endPtr);
 
         if (HL_FAILED(result)) return result;
 
         result = hlINHHMeshSlotRead(&hhMeshGroup->boolean,
-            &hlMeshGroups[i].boolean, &endPtr);
+            &hlMeshGroups[i].boolean, &globalMeshIndex, &endPtr);
 
         if (HL_FAILED(result)) return result;
 
         /* TODO: Read special slots. */
+        hlMeshGroups[i].specialSlotCount = 0;
+        hlMeshGroups[i].specialSlots = NULL;
     }
 
     return HL_RESULT_SUCCESS;
@@ -598,14 +617,15 @@ HlResult hlHHSkeletalModelParse(
         hlOff32Get(&hhModel->meshGroupsOffset);
 
     HlModel* hlModelBuf;
+    size_t totalMeshCount = 0;
     HlResult result;
 
     /* Allocate HlModel buffer. */
     {
         /* Compute total required buffer size. */
         size_t reqBufSize = sizeof(HlModel);
-        reqBufSize += hlINHHMeshGroupsGetReqSize(
-            hhMeshGroups, hhModel->meshGroupCount);
+        reqBufSize += hlINHHMeshGroupsGetReqSize(hhMeshGroups,
+            hhModel->meshGroupCount, &totalMeshCount);
 
         /* Allocate HlModel buffer. */
         hlModelBuf = (HlModel*)hlAlloc(reqBufSize);
@@ -624,10 +644,11 @@ HlResult hlHHSkeletalModelParse(
         hlModelBuf->vertexFormats = (HlVertexFormat*)
             &hlModelBuf->meshGroups[hlModelBuf->meshGroupCount];
 
-        hlModelBuf->vertexFormatCount = hlModelBuf->meshGroupCount;
+        hlModelBuf->vertexFormatCount = totalMeshCount;
 
         result = hlINHHMeshGroupsRead(hhMeshGroups,
-            hhModel->meshGroupCount, hlModelBuf->meshGroups);
+            hhModel->meshGroupCount, totalMeshCount,
+            hlModelBuf->meshGroups);
 
         if (HL_FAILED(result)) return result;
 
@@ -668,15 +689,15 @@ HlResult hlHHTerrainModelParse(
 
     const char* hhModelName = (const char*)hlOff32Get(&hhModel->nameOffset);
     HlModel* hlModelBuf;
-    size_t modelNameLen;
+    size_t modelNameLen, totalMeshCount = 0;
     HlResult result;
 
     /* Allocate HlModel buffer. */
     {
         /* Compute total required buffer size. */
         size_t reqBufSize = sizeof(HlModel);
-        reqBufSize += hlINHHMeshGroupsGetReqSize(
-            hhMeshGroups, hhModel->meshGroupCount);
+        reqBufSize += hlINHHMeshGroupsGetReqSize(hhMeshGroups,
+            hhModel->meshGroupCount, &totalMeshCount);
 
         /* Account for model name. */
         modelNameLen = (strlen(hhModelName) + 1);
@@ -699,10 +720,11 @@ HlResult hlHHTerrainModelParse(
         hlModelBuf->vertexFormats = (HlVertexFormat*)
             &hlModelBuf->meshGroups[hlModelBuf->meshGroupCount];
 
-        hlModelBuf->vertexFormatCount = hlModelBuf->meshGroupCount;
+        hlModelBuf->vertexFormatCount = totalMeshCount;
 
         result = hlINHHMeshGroupsRead(hhMeshGroups,
-            hhModel->meshGroupCount, hlModelBuf->meshGroups);
+            hhModel->meshGroupCount, totalMeshCount,
+            hlModelBuf->meshGroups);
 
         if (HL_FAILED(result)) return result;
 
@@ -837,7 +859,7 @@ static HlResult hlINHHModelLoadMaterials(HlModel* HL_RESTRICT hlModel,
 
     failed_loop:
         /* Free loaded materials, remove them from the mats list, and goto end. */
-        while (--i >= 0)
+        while (i-- > 0)
         {
             hlFree(mats->data[--mats->count]);
         }

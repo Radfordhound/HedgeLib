@@ -50,9 +50,11 @@ HlHHVertexType;
 
 typedef struct HlHHVertexElement
 {
-    HlU32 offset;
+    HlU16 stream;
+    HlU16 offset;
     HlU32 format;
-    HlU16 type;
+    HlU8 method;
+    HlU8 type;
     HlU8 index;
     HlU8 padding;
 }
@@ -151,6 +153,8 @@ typedef struct HlHHSkeletalModel
 HlHHSkeletalModel;
 
 HL_STATIC_ASSERT_SIZE(HlHHSkeletalModel, 0x20);
+
+/* TODO: Make the recursive swap functions internal since they don't work if offsets are swapped before they get accessed!! */
 
 HL_API void hlHHVertexElementSwap(HlHHVertexElement* vertexElement);
 HL_API void hlHHVertexFormatSwap(HlHHMesh* mesh);
