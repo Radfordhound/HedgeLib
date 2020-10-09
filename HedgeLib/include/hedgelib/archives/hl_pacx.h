@@ -295,7 +295,21 @@ typedef struct HlPACxV4Header
     HlU32 unknown1;
     HlU32 fileSize;
     HL_OFF32(void) rootOffset;
+    /**
+       @brief The size, in bytes, of the compressed root
+       PACxV3 pac data within this PACxV4 file.
+       
+       If this is the same as rootUncompresedSize, it means
+       that the root PACxV3 pac data is uncompressed.
+    */
     HlU32 rootCompressedSize;
+    /**
+       @brief The size, in bytes, of the uncompressed root
+       PACxV3 pac data within this PACxV4 file.
+
+       If this is the same as rootCompresedSize, it means
+       that the root PACxV3 pac data is uncompressed.
+    */
     HlU32 rootUncompressedSize;
     /** @brief Bitwise-and this with values from the PACxV3Type enum. */
     HlU16 type;
@@ -386,11 +400,18 @@ HL_API void hlPACxV4Fix(HlBlob* blob);
 
 HL_API HlResult hlPACxV4DecompressNoAlloc(const void* HL_RESTRICT compressedData,
     const HlPACxV4Chunk* HL_RESTRICT chunks, HlU32 chunkCount,
-    HlU32 uncompressedSize, void* HL_RESTRICT uncompressedData);
+    HlU32 compressedSize, HlU32 uncompressedSize,
+    void* HL_RESTRICT uncompressedData);
 
 HL_API HlResult hlPACxV4Decompress(const void* HL_RESTRICT compressedData,
     const HlPACxV4Chunk* HL_RESTRICT chunks, HlU32 chunkCount,
-    HlU32 uncompressedSize, void* HL_RESTRICT * HL_RESTRICT uncompressedData);
+    HlU32 compressedSize, HlU32 uncompressedSize,
+    void* HL_RESTRICT * HL_RESTRICT uncompressedData);
+
+HL_API HlResult hlPACxV4DecompressBlob(const void* HL_RESTRICT compressedData,
+    const HlPACxV4Chunk* HL_RESTRICT chunks, HlU32 chunkCount,
+    HlU32 compressedSize, HlU32 uncompressedSize,
+    HlBlob* HL_RESTRICT* HL_RESTRICT uncompressedBlob);
 
 HL_API HlResult hlPACxV4Read(HlBlob* HL_RESTRICT pac,
     HlBool loadSplits, HlArchive* HL_RESTRICT * HL_RESTRICT archive);
@@ -399,7 +420,8 @@ HL_API HlResult hlPACxV4Load(const HlNChar* HL_RESTRICT filePath,
     HlBool loadSplits, HlArchive* HL_RESTRICT * HL_RESTRICT archive);
 
 HL_API HlResult hlPACxLoadBlobs(const HlNChar* HL_RESTRICT filePath,
-    HlBlob** HL_RESTRICT * HL_RESTRICT pacs, size_t* HL_RESTRICT pacCount);
+    HlBlob* HL_RESTRICT * HL_RESTRICT * HL_RESTRICT pacs,
+    size_t* HL_RESTRICT pacCount);
 
 HL_API HlResult hlPACxLoad(const HlNChar* HL_RESTRICT filePath,
     HlBool loadSplits, HlArchive* HL_RESTRICT * HL_RESTRICT archive);

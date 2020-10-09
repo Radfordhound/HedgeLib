@@ -1070,7 +1070,7 @@ static HlResult hlINPACxV2LoadSingle(const HlNChar* HL_RESTRICT filePath,
 
 static HlResult hlINPACxV2LoadSplitBlobs(HlBlob* HL_RESTRICT rootPac,
     size_t dirLen, size_t pathBufCapacity, HlNChar* HL_RESTRICT * HL_RESTRICT pathBufPtr,
-    HlBool* HL_RESTRICT pathBufOnHeap, HlBlob** HL_RESTRICT * HL_RESTRICT pacs,
+    HlBool* HL_RESTRICT pathBufOnHeap, HlBlob* HL_RESTRICT * HL_RESTRICT * HL_RESTRICT pacs,
     size_t* HL_RESTRICT pacCount)
 {
     HlPACxV2BlockDataHeader* dataBlock;
@@ -1608,7 +1608,7 @@ static HlResult hlINPACxV3LoadSingle(const HlNChar* HL_RESTRICT filePath,
 
 static HlResult hlINPACxV3LoadSplitBlobs(HlBlob* HL_RESTRICT rootPac,
     size_t dirLen, size_t pathBufCapacity, HlNChar* HL_RESTRICT * HL_RESTRICT pathBufPtr,
-    HlBool* HL_RESTRICT pathBufOnHeap, HlBlob** HL_RESTRICT * HL_RESTRICT pacs,
+    HlBool* HL_RESTRICT pathBufOnHeap, HlBlob* HL_RESTRICT * HL_RESTRICT * HL_RESTRICT pacs,
     size_t* HL_RESTRICT pacCount)
 {
     HlPACxV3Header* header = (HlPACxV3Header*)rootPac->data;
@@ -1722,12 +1722,21 @@ void hlPACxV4Fix(HlBlob* blob)
 
 HlResult hlPACxV4DecompressNoAlloc(const void* HL_RESTRICT compressedData,
     const HlPACxV4Chunk* HL_RESTRICT chunks, HlU32 chunkCount,
-    HlU32 uncompressedSize, void* HL_RESTRICT uncompressedData)
+    HlU32 compressedSize, HlU32 uncompressedSize,
+    void* HL_RESTRICT uncompressedData)
 {
     const char* compressedPtr = (const char*)compressedData;
     char* uncompressedPtr = (char*)uncompressedData;
     HlU32 i;
 
+    /* If the data is already uncompressed, just copy it and return success. */
+    if (compressedSize == uncompressedSize)
+    {
+        memcpy(uncompressedPtr, compressedPtr, uncompressedSize);
+        return HL_RESULT_SUCCESS;
+    }
+
+    /* Otherwise, decompress the data chunk-by-chunk. */
     for (i = 0; i < chunkCount; ++i)
     {
         /* Decompress the current chunk. */
@@ -1752,7 +1761,8 @@ HlResult hlPACxV4DecompressNoAlloc(const void* HL_RESTRICT compressedData,
 
 HlResult hlPACxV4Decompress(const void* HL_RESTRICT compressedData,
     const HlPACxV4Chunk* HL_RESTRICT chunks, HlU32 chunkCount,
-    HlU32 uncompressedSize, void* HL_RESTRICT * HL_RESTRICT uncompressedData)
+    HlU32 compressedSize, HlU32 uncompressedSize,
+    void* HL_RESTRICT * HL_RESTRICT uncompressedData)
 {
     void* uncompressedDataBuf;
     HlResult result;
@@ -1763,7 +1773,7 @@ HlResult hlPACxV4Decompress(const void* HL_RESTRICT compressedData,
 
     /* Decompress the data. */
     result = hlPACxV4DecompressNoAlloc(compressedData, chunks,
-        chunkCount, uncompressedSize, uncompressedDataBuf);
+        chunkCount, compressedSize, uncompressedSize, uncompressedDataBuf);
 
     if (HL_FAILED(result)) return result;
 
@@ -1772,42 +1782,106 @@ HlResult hlPACxV4Decompress(const void* HL_RESTRICT compressedData,
     return HL_RESULT_SUCCESS;
 }
 
-static HlResult hlINPACxV4DecompressAndFix(void* HL_RESTRICT data,
+HlResult hlPACxV4DecompressBlob(const void* HL_RESTRICT compressedData,
     const HlPACxV4Chunk* HL_RESTRICT chunks, HlU32 chunkCount,
     HlU32 compressedSize, HlU32 uncompressedSize,
-    HlBlob* HL_RESTRICT blob)
+    HlBlob* HL_RESTRICT * HL_RESTRICT uncompressedBlob)
 {
-    /* Decompress PAC first if necessary. */
-    if (compressedSize != uncompressedSize)
+    HlBlob* uncompressedBlobBuf;
+    HlResult result;
+
+    /* Allocate a buffer to hold the uncompressed data. */
+    uncompressedBlobBuf = (HlBlob*)hlAlloc(sizeof(HlBlob) + uncompressedSize); /* TODO: Align? */
+    if (!uncompressedBlobBuf) return HL_ERROR_OUT_OF_MEMORY;
+
+    /* Setup blob. */
+    uncompressedBlobBuf->data = (uncompressedBlobBuf + 1);
+    uncompressedBlobBuf->size = (size_t)uncompressedSize;
+
+    /* Decompress the data. */
+    result = hlPACxV4DecompressNoAlloc(compressedData, chunks,
+        chunkCount, compressedSize, uncompressedSize, uncompressedBlobBuf->data);
+
+    if (HL_FAILED(result)) return result;
+
+    /* Set uncompressedBlob pointer and return success. */
+    *uncompressedBlob = uncompressedBlobBuf;
+    return HL_RESULT_SUCCESS;
+}
+
+static HlResult hlINPACxV4DecompressToBlobs(HlBlob* HL_RESTRICT pac,
+    HlBlob* HL_RESTRICT * HL_RESTRICT * HL_RESTRICT pacs, size_t* HL_RESTRICT pacCount)
+{
+    const HlPACxV4Header* header = (const HlPACxV4Header*)pac->data;
+    const HlPACxV3Header* rootHeader;
+    HlBlob* root;
+    HlResult result;
+
+    /* Fix pac. */
+    hlPACxV4Fix(pac);
+
+    /* Setup root PAC entry, decompressing if necessary. */
+    result = hlPACxV4DecompressBlob(hlOff32Get(&header->rootOffset),
+        hlPACxV4GetRootChunks(header), header->chunkCount,
+        header->rootCompressedSize, header->rootUncompressedSize,
+        &root);
+
+    if (HL_FAILED(result)) return result;
+
+    /* Fix root pac. */
+    hlPACxV3Fix(root);
+
+    /* Get root header pointer. */
+    rootHeader = (const HlPACxV3Header*)root->data;
+
+    /* Allocate splits pointer array. */
+    *pacs = HL_ALLOC_ARR(HlBlob*, (size_t)rootHeader->splitCount + 1);
+    if (!(*pacs))
     {
-        void* uncompressedDataBuf;
-        HlResult result;
-
-        /* Decompress PAC. */
-        result = hlPACxV4Decompress(data, chunks,
-            chunkCount, uncompressedSize,
-            &uncompressedDataBuf);
-
-        if (HL_FAILED(result)) return result;
-
-        /* Setup blob. */
-        blob->data = uncompressedDataBuf;
-        blob->size = (size_t)uncompressedSize;
+        hlFree(root);
+        return HL_ERROR_OUT_OF_MEMORY;
     }
-    else
+
+    /* Set root pointer. */
+    (*pacs)[0] = root;
+
+    /*
+       Reset pac count. We'll increment it again in the next loop.
+       This is so freeing can always work correctly.
+    */
+    *pacCount = 1;
+
+    /* Set split blob pointers. */
+    if (rootHeader->splitCount)
     {
-        /* Setup PAC entry. */
-        blob->data = data;
+        HlPACxV3SplitTable* splitTable = hlPACxV3GetSplitTable(rootHeader);
+        HlPACxV4SplitEntry* splitEntries = (HlPACxV4SplitEntry*)
+            hlOff64Get(&splitTable->splitEntries);
 
-        /*
-           HACK: Set size to 0 to indicate uncompressed PAC since
-           hlPACxV3Read doesn't utilize size anyway.
-        */
-        blob->size = 0;
+        HlU64 i;
+
+        /* Ensure split count will fit within a size_t. */
+        HL_ASSERT(splitTable->splitCount <= HL_SIZE_MAX);
+
+        /* Setup split PAC entries, decompressing if necessary. */
+        for (i = 0; i < splitTable->splitCount; ++i)
+        {
+            const HlPACxV4Chunk* chunks = (const HlPACxV4Chunk*)
+                hlOff64Get(&splitEntries[i].chunksOffset);
+
+            /* Decompress split PAC. */
+            result = hlPACxV4DecompressBlob(HL_ADD_OFF(header,
+                splitEntries[i].offset), chunks, splitEntries[i].chunkCount,
+                splitEntries[i].compressedSize, splitEntries[i].uncompressedSize,
+                &((*pacs)[*pacCount]));
+
+            if (HL_FAILED(result)) return result;
+
+            /* Fix split. */
+            hlPACxV3Fix((*pacs)[(*pacCount)++]);
+        }
     }
 
-    /* Fix root PAC. */
-    hlPACxV3Fix(blob);
     return HL_RESULT_SUCCESS;
 }
 
@@ -1821,12 +1895,15 @@ HlResult hlPACxV4Read(HlBlob* HL_RESTRICT pac,
     HlResult result = HL_RESULT_SUCCESS;
 
     /* Setup root PAC entry, decompressing if necessary. */
-    result = hlINPACxV4DecompressAndFix(hlOff32Get(&header->rootOffset),
+    result = hlPACxV4Decompress(hlOff32Get(&header->rootOffset),
         hlPACxV4GetRootChunks(header), header->chunkCount,
         header->rootCompressedSize, header->rootUncompressedSize,
-        &root);
+        &root.data);
 
     if (HL_FAILED(result)) return result;
+
+    /* Fix root PAC. */
+    hlPACxV3Fix(&root);
 
     /* Generate HlArchive and return. */
     if (loadSplits && ((HlPACxV3Header*)root.data)->splitCount)
@@ -1870,15 +1947,19 @@ HlResult hlPACxV4Read(HlBlob* HL_RESTRICT pac,
         /* Setup split PAC entries, decompressing if necessary. */
         for (i = 0; i < splitTable->splitCount; ++i)
         {
+            /* Decompress split PAC. */
             const HlPACxV4Chunk* chunks = (const HlPACxV4Chunk*)
                 hlOff64Get(&splitEntries[i].chunksOffset);
 
-            result = hlINPACxV4DecompressAndFix(HL_ADD_OFF(header,
+            result = hlPACxV4Decompress(HL_ADD_OFF(header,
                 splitEntries[i].offset), chunks, splitEntries[i].chunkCount,
                 splitEntries[i].compressedSize, splitEntries[i].uncompressedSize,
-                pacs[i + 1]);
+                &pacs[i + 1]->data);
 
             if (HL_FAILED(result)) goto end;
+
+            /* Fix split PAC. */
+            hlPACxV3Fix(pacs[i + 1]);
         }
 
         /* Generate HlArchive. */
@@ -1990,7 +2071,8 @@ end:
 }
 
 HlResult hlINPACxLoadSplitBlobs(const HlNChar* HL_RESTRICT filePath,
-    HlU8 majorVersion, HlBlob** HL_RESTRICT * HL_RESTRICT pacs, size_t* HL_RESTRICT pacCount)
+    HlU8 majorVersion, HlBlob* HL_RESTRICT * HL_RESTRICT * HL_RESTRICT pacs,
+    size_t* HL_RESTRICT pacCount)
 {
     HlBlob** pacPtrs = NULL;
     HlBlob* rootPac = NULL;
@@ -2081,19 +2163,7 @@ HlResult hlINPACxLoadSplitBlobs(const HlNChar* HL_RESTRICT filePath,
         break;
 
     case '4':
-        hlPACxV4Fix(rootPac);
-
-        /* Allocate splits pointer array. */
-        pacPtrs = HL_ALLOC_ARR(HlBlob*, 1);
-        if (!pacPtrs)
-        {
-            result = HL_ERROR_OUT_OF_MEMORY;
-            break;
-        }
-
-        /* Set root pointer and pac count. */
-        pacPtrs[0] = rootPac;
-        pacPtrCount = 1;
+        result = hlINPACxV4DecompressToBlobs(rootPac, &pacPtrs, &pacPtrCount);
         break;
 
     default:
@@ -2131,7 +2201,8 @@ end:
 }
 
 HlResult hlPACxLoadBlobs(const HlNChar* HL_RESTRICT filePath,
-    HlBlob** HL_RESTRICT * HL_RESTRICT pacs, size_t* HL_RESTRICT pacCount)
+    HlBlob* HL_RESTRICT * HL_RESTRICT * HL_RESTRICT pacs,
+    size_t* HL_RESTRICT pacCount)
 {
     return hlINPACxLoadSplitBlobs(filePath, 0, pacs, pacCount);
 }
@@ -2171,11 +2242,8 @@ HlResult hlINPACxLoadSplits(const HlNChar* HL_RESTRICT filePath,
         break;
 
     case '3':
-        result = hlPACxV3Read((const HlBlob**)pacs, pacCount, archive);
-        break;
-
     case '4':
-        result = hlPACxV4Read(pacs[0], HL_TRUE, archive);
+        result = hlPACxV3Read((const HlBlob**)pacs, pacCount, archive);
         break;
 
     default:
