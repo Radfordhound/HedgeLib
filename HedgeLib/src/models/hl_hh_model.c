@@ -234,6 +234,48 @@ void hlHHTerrainModelV5Fix(HlHHTerrainModelV5* model)
 #endif
 }
 
+static const HlU8 hlINHHGetIndexType(const HlU32 topologyType)
+{
+    switch (topologyType)
+    {
+    default:
+    case HL_HH_TOPOLOGY_TYPE_TRIANGLE_STRIP:
+        return HL_INDEX_TYPE_TRIANGLE_STRIP;
+
+    case HL_HH_TOPOLOGY_TYPE_TRIANGLE_LIST:
+        return HL_INDEX_TYPE_TRIANGLE_LIST;
+    }
+}
+
+HlU32 hlHHModelGetTopologyType(const HlBlob* blob)
+{
+    /* Default topology type used in all games before Tokyo 2020 is triangle strip. */
+    HlU32 topologyType = HL_HH_TOPOLOGY_TYPE_TRIANGLE_STRIP;
+
+    /* Get topology type if one was specified. */
+    if (hlHHHeaderIsMirage(blob->data))
+    {
+        /* Get "Model" node. */
+        const HlHHMirageHeader* mirageHeader = (const HlHHMirageHeader*)blob->data;
+        const HlHHMirageNode* node = hlHHMirageGetNode(
+            hlHHMirageHeaderGetNodes(mirageHeader),
+            "Model   ", HL_FALSE);
+
+        if (!node) return topologyType;
+
+        /* Get "Topology" node. */
+        node = hlHHMirageGetNode(hlHHMirageNodeGetChildren(node),
+            "Topology", HL_FALSE);
+
+        if (!node) return topologyType;
+
+        /* Get topology type. */
+        topologyType = node->value;
+    }
+
+    return topologyType;
+}
+
 static size_t hlINHHMeshSlotGetReqSize(
     const HlHHMeshSlot* HL_RESTRICT slot,
     size_t* HL_RESTRICT totalMeshCount)
@@ -474,8 +516,8 @@ static HlResult hlINHHVertexFormatRead(const HlHHMeshSlot* HL_RESTRICT hhMeshSlo
 }
 
 static HlResult hlINHHMeshSlotRead(const HlHHMeshSlot* HL_RESTRICT hhMeshSlot,
-    HlMeshSlot* HL_RESTRICT hlMeshSlot, size_t* HL_RESTRICT globalMeshIndex,
-    void* HL_RESTRICT * HL_RESTRICT endPtr)
+    HlU8 indexType, HlMeshSlot* HL_RESTRICT hlMeshSlot,
+    size_t* HL_RESTRICT globalMeshIndex, void* HL_RESTRICT * HL_RESTRICT endPtr)
 {
     /* Get mesh offsets pointer. */
     const HL_OFF32(HlHHMesh)* meshOffsets = (const HL_OFF32(HlHHMesh)*)
@@ -507,6 +549,7 @@ static HlResult hlINHHMeshSlotRead(const HlHHMeshSlot* HL_RESTRICT hhMeshSlot,
             hlMesh->faceCount = (size_t)hhMesh->faceCount;
             hlMesh->faces = hlFaces;
             hlMesh->clockwise = HL_FALSE;
+            hlMesh->indexType = indexType;
 
             /* Copy faces. */
             {
@@ -544,7 +587,7 @@ static HlResult hlINHHMeshSlotRead(const HlHHMeshSlot* HL_RESTRICT hhMeshSlot,
 
 static HlResult hlINHHMeshGroupsRead(
     const HL_OFF32(HlHHMeshGroup)* HL_RESTRICT hhMeshGroups,
-    HlU32 meshGroupCount, size_t totalMeshCount,
+    HlU32 meshGroupCount, size_t totalMeshCount, HlU8 indexType,
     HlMeshGroup* HL_RESTRICT hlMeshGroups)
 {
     HlVertexFormat* curHlVertexFormat = (HlVertexFormat*)&hlMeshGroups[meshGroupCount];
@@ -587,17 +630,17 @@ static HlResult hlINHHMeshGroupsRead(
             hlOff32Get(&hhMeshGroups[i]);
 
         /* Read slots. */
-        result = hlINHHMeshSlotRead(&hhMeshGroup->solid,
+        result = hlINHHMeshSlotRead(&hhMeshGroup->solid, indexType,
             &hlMeshGroups[i].solid, &globalMeshIndex, &endPtr);
 
         if (HL_FAILED(result)) return result;
 
-        result = hlINHHMeshSlotRead(&hhMeshGroup->transparent,
+        result = hlINHHMeshSlotRead(&hhMeshGroup->transparent, indexType,
             &hlMeshGroups[i].transparent, &globalMeshIndex, &endPtr);
 
         if (HL_FAILED(result)) return result;
 
-        result = hlINHHMeshSlotRead(&hhMeshGroup->punch,
+        result = hlINHHMeshSlotRead(&hhMeshGroup->punch, indexType,
             &hlMeshGroups[i].punch, &globalMeshIndex, &endPtr);
 
         if (HL_FAILED(result)) return result;
@@ -612,7 +655,7 @@ static HlResult hlINHHMeshGroupsRead(
 
 HlResult hlHHSkeletalModelV5Parse(
     const HlHHSkeletalModelV5* HL_RESTRICT hhModel,
-    HlModel* HL_RESTRICT * HL_RESTRICT hlModel)
+    HlU32 hhTopologyType, HlModel* HL_RESTRICT * HL_RESTRICT hlModel)
 {
     const HL_OFF32(HlHHMeshGroup)* hhMeshGroups = (const HL_OFF32(HlHHMeshGroup)*)
         hlOff32Get(&hhModel->meshGroupsOffset);
@@ -649,7 +692,7 @@ HlResult hlHHSkeletalModelV5Parse(
 
         result = hlINHHMeshGroupsRead(hhMeshGroups,
             hhModel->meshGroupCount, totalMeshCount,
-            hlModelBuf->meshGroups);
+            hlINHHGetIndexType(hhTopologyType), hlModelBuf->meshGroups);
 
         if (HL_FAILED(result)) return result;
 
@@ -663,7 +706,7 @@ HlResult hlHHSkeletalModelRead(HlBlob* HL_RESTRICT blob,
     HlModel* HL_RESTRICT * HL_RESTRICT hlModel)
 {
     HlHHSkeletalModelV5* hhModel;
-    HlU32 version;
+    HlU32 version, hhTopologyType;
 
     /* Fix HH general data. */
     hlHHFix(blob);
@@ -672,18 +715,22 @@ HlResult hlHHSkeletalModelRead(HlBlob* HL_RESTRICT blob,
     hhModel = (HlHHSkeletalModelV5*)hlHHGetData(blob, &version);
     if (!hhModel) return HL_ERROR_INVALID_DATA;
 
+    /* Get HH topology type. */
+    hhTopologyType = hlHHModelGetTopologyType(blob);
+
     /* TODO: Take version number into account. */
 
     /* Fix HH skeletal model data. */
     hlHHSkeletalModelV5Fix(hhModel);
 
     /* Parse HH skeletal model data into HlModel and return result. */
-    return hlHHSkeletalModelV5Parse(hhModel, hlModel);
+    return hlHHSkeletalModelV5Parse(hhModel,
+        hhTopologyType, hlModel);
 }
 
 HlResult hlHHTerrainModelV5Parse(
     const HlHHTerrainModelV5* HL_RESTRICT hhModel,
-    HlModel* HL_RESTRICT * HL_RESTRICT hlModel)
+    HlU32 hhTopologyType, HlModel* HL_RESTRICT * HL_RESTRICT hlModel)
 {
     const HL_OFF32(HlHHMeshGroup)* hhMeshGroups = (const HL_OFF32(HlHHMeshGroup)*)
         hlOff32Get(&hhModel->meshGroupsOffset);
@@ -725,7 +772,7 @@ HlResult hlHHTerrainModelV5Parse(
 
         result = hlINHHMeshGroupsRead(hhMeshGroups,
             hhModel->meshGroupCount, totalMeshCount,
-            hlModelBuf->meshGroups);
+            hlINHHGetIndexType(hhTopologyType), hlModelBuf->meshGroups);
 
         if (HL_FAILED(result)) return result;
 
@@ -742,7 +789,7 @@ HlResult hlHHTerrainModelRead(HlBlob* HL_RESTRICT blob,
     HlModel* HL_RESTRICT * HL_RESTRICT hlModel)
 {
     HlHHTerrainModelV5* hhModel;
-    HlU32 version;
+    HlU32 version, hhTopologyType;
 
     /* Fix HH general data. */
     hlHHFix(blob);
@@ -751,13 +798,17 @@ HlResult hlHHTerrainModelRead(HlBlob* HL_RESTRICT blob,
     hhModel = (HlHHTerrainModelV5*)hlHHGetData(blob, &version);
     if (!hhModel) return HL_ERROR_INVALID_DATA;
 
+    /* Get HH topology type. */
+    hhTopologyType = hlHHModelGetTopologyType(blob);
+
     /* TODO: Take version number into account. */
 
     /* Fix HH terrain model data. */
     hlHHTerrainModelV5Fix(hhModel);
 
     /* Parse HH terrain model data into HlModel and return result. */
-    return hlHHTerrainModelV5Parse(hhModel, hlModel);
+    return hlHHTerrainModelV5Parse(hhModel,
+        hhTopologyType, hlModel);
 }
 
 static HlResult hlINHHModelLoadMaterials(HlModel* HL_RESTRICT hlModel,

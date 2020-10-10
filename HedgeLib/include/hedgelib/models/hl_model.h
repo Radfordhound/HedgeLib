@@ -10,6 +10,14 @@ typedef struct HlBlob HlBlob;
 typedef struct HlFile HlFile;
 typedef struct HlMaterial HlMaterial;
 
+typedef enum HlIndexType
+{
+    HL_INDEX_TYPE_TRIANGLE_LIST,
+    HL_INDEX_TYPE_TRIANGLE_STRIP,
+    HL_INDEX_TYPE_LINE_LIST
+}
+HlIndexType;
+
 typedef struct HlMesh
 {
     HL_REF(HlMaterial) matRef;
@@ -19,6 +27,8 @@ typedef struct HlMesh
     size_t faceCount;
     unsigned short* faces;
     HlBool clockwise;
+    /** @brief See HlIndexType. */
+    HlU8 indexType;
 
     /* TODO: Texture stuff */
     /*size_t textureUnitCount;

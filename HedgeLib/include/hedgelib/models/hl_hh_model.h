@@ -6,6 +6,14 @@
 extern "C" {
 #endif
 
+typedef enum HlHHTopologyType
+{
+    /* TODO: THIS TRIANGLE STRIP VALUE ISN'T RIGHT, WHAT IS THE ACTUAL VALUE?! */
+    HL_HH_TOPOLOGY_TYPE_TRIANGLE_STRIP = 0xFFFFFFFF,
+    HL_HH_TOPOLOGY_TYPE_TRIANGLE_LIST = 3
+}
+HlHHTopologyType;
+
 typedef struct HlHHTextureUnit
 {
     HL_OFF32_STR name;
@@ -172,16 +180,18 @@ HL_API void hlHHSkeletalModelV5Swap(HlHHSkeletalModelV5* model, HlBool swapOffse
 HL_API void hlHHSkeletalModelV5Fix(HlHHSkeletalModelV5* model);
 HL_API void hlHHTerrainModelV5Fix(HlHHTerrainModelV5* model);
 
+HL_API HlU32 hlHHModelGetTopologyType(const HlBlob* blob);
+
 HL_API HlResult hlHHSkeletalModelV5Parse(
     const HlHHSkeletalModelV5* HL_RESTRICT hhModel,
-    HlModel* HL_RESTRICT * HL_RESTRICT hlModel);
+    HlU32 hhTopologyType, HlModel* HL_RESTRICT * HL_RESTRICT hlModel);
 
 HL_API HlResult hlHHSkeletalModelRead(HlBlob* HL_RESTRICT blob,
     HlModel* HL_RESTRICT * HL_RESTRICT hlModel);
 
 HL_API HlResult hlHHTerrainModelV5Parse(
     const HlHHTerrainModelV5 *HL_RESTRICT hhModel,
-    HlModel* HL_RESTRICT * HL_RESTRICT hlModel);
+    HlU32 hhTopologyType, HlModel* HL_RESTRICT * HL_RESTRICT hlModel);
 
 HL_API HlResult hlHHTerrainModelRead(HlBlob* HL_RESTRICT blob,
     HlModel* HL_RESTRICT * HL_RESTRICT hlModel);
