@@ -105,8 +105,11 @@ static void hlINLitMeshSlotDestroy(HlLitMeshSlot* litSlot)
 
 void hlTerrainInstanceInfoDestroy(HlTerrainInstanceInfo* instInfo)
 {
-    /* Free mesh groups. */
+    /* Return early if instInfo is null. */
     size_t i;
+    if (!instInfo) return;
+
+    /* Free mesh groups. */
     for (i = 0; i < instInfo->litMeshGroups.count; ++i)
     {
         hlINLitMeshSlotDestroy(&instInfo->litMeshGroups.data[i].solid);
