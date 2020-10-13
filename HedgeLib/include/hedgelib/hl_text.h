@@ -10,6 +10,16 @@ extern "C" {
 /* Helper macros */
 #define HL_IS_DIGIT(c) ((c) >= '0' && (c) <= '9')
 
+/** @brief Auto-compute text length. Supports both pointers and string literals. */
+#define HL_IN_TEXT_GET_LEN(text)\
+    ((sizeof(text) == sizeof(char*)) ? strlen(text) :\
+    ((sizeof(text) / sizeof(char)) - 1))
+
+/** @brief Auto-compute text length. Supports both pointers and string literals. */
+#define HL_IN_NTEXT_GET_LEN(text)\
+    ((sizeof(text) == sizeof(HlNChar*)) ? hlNStrLen(text) :\
+    ((sizeof(text) / sizeof(HlNChar)) - 1))
+
 /* String helper functions */
 HL_API size_t hlStrCopyAndLen(const char* HL_RESTRICT src, char* HL_RESTRICT dst);
 HL_API HlBool hlStrCopyLimit(const char* HL_RESTRICT src,
