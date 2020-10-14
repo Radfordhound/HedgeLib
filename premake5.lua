@@ -3,6 +3,7 @@ workspace("HedgeLib")
     platforms({ "x86", "x64" })
 
     -- Get some variables
+    Host = os.host()
     Target = os.target()
 
     -- Define some functions
@@ -25,5 +26,6 @@ workspace("HedgeLib")
 
     -- Include Projects
     include("HedgeLib")
+    include("HedgeRender")
     include("HedgeTest")
     include("HedgeTools")

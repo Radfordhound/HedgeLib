@@ -31,6 +31,7 @@ Right now, HedgeLib supports the following:
 - Mario & Sonic at the Sochi 2014 Olympic Winter Games (Wii U)
 - Mario & Sonic at the Rio 2016 Olympic Games (Wii U)
 - Sonic Forces
+- Olympic Games Tokyo 2020 - The Official Video Game
 - Mario & Sonic at the Olympic Games Tokyo 2020
 - Sakura Wars
 - ...and more
@@ -90,16 +91,17 @@ Right now, HedgeLib supports the following:
 - Sonic Unleashed (360/PS3)
 - Sonic Generations (PC/360/PS3)
 
-## HedgeEdit
-A level editor built with DirectX/Qt designed to carry much of the same functionality as "SonicGlvl", but with support for a large number of games in the series, rather than just Generations. Uses HedgeLib for reading/writing archives, models, materials, object placement, etc.
-
-Right now it's a major WIP, though feel free to try it out!
+## HedgeRender
+A C++11 graphics/rendering engine with a fully-C89-compatible API designed around modern rendering APIs for speed and portability. Currently, it only supports Direct3D 11, but it has been designed from the ground up to work well with modern APIs such as Direct3D 12 and Vulkan, so porting it to those backends shouldn't be difficult.
 
 ## HedgeTools
 A collection of miscellaneous tools that utilize HedgeLib to allow editing a wide array of formats.
 
 Right now this includes the following:
 
+- [HedgeEdit](HedgeTools/HedgeEdit)
+  * A C89 level editor built on top of HedgeLib and HedgeRender that I ultimately hope to allow for quick and powerful editing of levels from every mainline 3D Sonic game in the series (think "SonicGlvl" but for more than just Generations).
+  Right now it's a major WIP, though feel free to try it out!
 - [HedgeArcPack](HedgeTools/HedgeArcPack)
   * A C89 Command-Line tool that allows quick and powerful extraction and generation of archiving formats from all games HedgeLib supports.
 - [HedgeOffsets](HedgeTools/HedgeOffsets)
@@ -121,29 +123,19 @@ HedgeLib uses Premake for easy Project/Makefile generation across different plat
 **Everything that follows is platform-specific.**
 
 ## Windows
-You'll need to install the following if you don't have them already:
-
-- [Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk) (Can also be downloaded from the Visual Studio Installer by selecting "Windows 10 SDK" from the "Individual Components" list)
-- [Qt](https://www.qt.io/download)*
-
-***NOTE:** Qt is only required for building HedgeEdit and the HedgeTools which have a GUI. It is NOT required to simply build HedgeLib or any of the command-line HedgeTools.
-
-
-Once you've got everything, simply:
+Make sure you have the [Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk) installed (it can be downloaded from the link or from the Visual Studio Installer by selecting "Windows 10 SDK" from the "Individual Components" list), then simply:
 
 **1: Open a cmd window in the folder you cloned HedgeLib to and run the following command:**
 ```
 premake5 vs2019
 ```
 
-If you're using an older version of Visual Studio, simply replace ```vs2019``` with the version you're using.
+If you're using a different version of Visual Studio, simply replace ```vs2019``` with the version you're using.
 (E.G. to use Visual Studio 2017, type ```premake5 vs2017``` instead.)
 
 MinGW/Cygwin/etc. aren't officially supported/tested, but should also work fine. Just type ```premake5 gmake2``` instead.
 
-**2: Follow the on-screen prompts, if any.**
-
-**3: Open the HedgeLib.sln file that Premake generated in Visual Studio and hit "Build Solution" (or Ctrl+Shift+B).**
+**2: Open the resulting HedgeLib.sln file in Visual Studio and hit "Build Solution" (or Ctrl+Shift+B).**
 
 Or, if you're using MinGW/Cygwin/etc., just run "make".
 
@@ -153,9 +145,7 @@ Or, if you're using MinGW/Cygwin/etc., just run "make".
 ./premake5 xcode4
 ```
 
-**2: Follow the on-screen prompts, if any.**
-
-**3: Open the resulting .xcworkspace in Xcode and build there.**
+**2: Open the resulting HedgeLib.xcworkspace file in Xcode and build there.**
 
 Alternatively, you can build from the terminal by ```cd```ing into the directory of the tool you want to build (e.g. HedgeTools/HedgeOffsets) and entering the following command:
 ```
@@ -173,11 +163,9 @@ xcodebuild -configuration Release
 ./premake5 gmake2
 ```
 
-If you wish to build using Clang instead of GCC, run ```./premake5 gmake2 --cc=clang``` instead.
+This will use GCC by default. If you wish to build using Clang instead of GCC, run ```./premake5 gmake2 --cc=clang``` instead.
 
-**2: Follow the on-screen prompts, if any.**
-
-**3: Run the following command:**
+**2: Run the following command:**
 ```
 make config=debug_x64
 ```
@@ -189,5 +177,5 @@ To build with a different configuration, simply replace ```debug_x64``` with any
 - release_x86   (Release build for 32-bit x86 Architecture)
 - release_x64   (Release build for 64-bit x86 Architecture)
 
-Building for non-x86 architectures (such as ARM) should work correctly, but it's currently not officially supported.
+Building for non-x86 architectures (such as ARM, PowerPC, etc.) should also work correctly, but currently it's not officially supported.
 If you'd like to help us change that, please let us know by [creating an issue](https://github.com/Radfordhound/HedgeLib/issues/new)!

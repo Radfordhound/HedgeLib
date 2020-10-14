@@ -18,6 +18,7 @@ HedgeTest/out/
 HedgeTest/tmp/
 HedgeTest/src/tests/tmp_tests.h
 HedgeTest/src/tmp_tests_depends.h
+imgui.ini
 
 # Visual Studio Code
 *.vscode/

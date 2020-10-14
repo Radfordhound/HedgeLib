@@ -1,4 +1,4 @@
-version: 0.0.{build}
+version: 0.1.{build}
 image:
 - Visual Studio 2019
 - Ubuntu
@@ -28,30 +28,31 @@ for:
   install:
     - ps: (New-Object System.Net.WebClient).DownloadFile("https://github.com/premake/premake-core/releases/download/v5.0.0-alpha15/premake-5.0.0-alpha15-windows.zip", "C:\projects\hedgelib\premake.zip")
     - ps: Expand-Archive -LiteralPath C:\projects\hedgelib\premake.zip -DestinationPath C:\projects\hedgelib\
-#    - ps: Set-Content -Path C:\projects\hedgelib\hedgeedit\depends.lua -Value 'return { QtDir32 = "C:/Qt/5.13/msvc2017", QtDir64 = "C:/Qt/5.13/msvc2017_64" }'
     - cmd: premake5 vs2019
   build:
     project: HedgeLib.sln
     verbosity: minimal
   after_build:
     - ps: |
-        $projects = "HedgeLib","HedgeTools\HedgeOffsets","HedgeTools\HedgeArcPack"
-        $binaries = "","HedgeOffsets.exe","HedgeArcPack.exe"
+        $projects = "HedgeLib","HedgeTools\HedgeOffsets","HedgeTools\HedgeArcPack","HedgeTools\HedgeEdit"
+        $binaries = "","HedgeOffsets.exe","HedgeArcPack.exe","HedgeEdit.exe"
         $dir = "C:\projects\hedgelib"
         if ($env:PLATFORM -imatch "Win32") {
           foreach ($project in $projects) {
             Rename-Item $dir\$project\bin\x86 $dir\$project\bin\Win32
           }
         }
-        Copy-Item "$dir\hedgelib\include" -Destination "$dir\hedgelib\bin\$env:PLATFORM\Release\include" -Recurse
+        Copy-Item "$dir\HedgeLib\include" -Destination "$dir\HedgeLib\bin\$env:PLATFORM\Release\include" -Recurse
+        robocopy /xc /xn /xo /nfl /njh /njs /ndl "$dir" "$dir\HedgeLib\bin\$env:PLATFORM\Release" License.txt
+        robocopy /xc /xn /xo /nfl /njh /njs /ndl "$dir" "$dir\HedgeLib\bin\$env:PLATFORM\Release" Third-Party-Licenses.txt
+        New-Item -ItemType Directory -Path "$dir\HedgeTools\bin\$env:PLATFORM" -Force
+        robocopy /xc /xn /xo /nfl /njh /njs /ndl "$dir" "$dir\HedgeTools\bin\$env:PLATFORM" License.txt
+        robocopy /xc /xn /xo /nfl /njh /njs /ndl "$dir" "$dir\HedgeTools\bin\$env:PLATFORM" Third-Party-Licenses.txt
         foreach ($project in $projects) {
-          robocopy /xc /xn /xo /nfl /njh /njs /ndl "$dir" "$dir\$project\bin\$env:PLATFORM\Release" License.txt
-          robocopy /xc /xn /xo /nfl /njh /njs /ndl "$dir" "$dir\$project\bin\$env:PLATFORM\Release" Third-Party-Licenses.txt
           del $dir\$project\bin\$env:PLATFORM\Release\*.iobj
           del $dir\$project\bin\$env:PLATFORM\Release\*.ipdb
           del $dir\$project\bin\$env:PLATFORM\Release\*.pdb
         }
-        New-Item -ItemType Directory -Path "$dir\HedgeTools\bin\$env:PLATFORM" -Force
         for($i = 1; $i -lt $projects.length; $i++) {
           $project = $projects[$i]
           $binary = $binaries[$i]
