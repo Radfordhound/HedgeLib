@@ -26,6 +26,11 @@ workspace("HedgeLib")
 
     -- Include Projects
     include("HedgeLib")
-    include("HedgeRender")
+
+    -- TODO: Also support non-Windows platforms
+    if Target == "windows" then
+        include("HedgeRender")
+    end
+
     include("HedgeTest")
     include("HedgeTools")
