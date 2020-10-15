@@ -23,7 +23,8 @@ extern "C" {
 /* String helper functions */
 HL_API size_t hlStrCopyAndLen(const char* HL_RESTRICT src, char* HL_RESTRICT dst);
 HL_API HlBool hlStrCopyLimit(const char* HL_RESTRICT src,
-    char* HL_RESTRICT dst, size_t dstBufLen, size_t* HL_RESTRICT len);
+    char* HL_RESTRICT dst, size_t dstBufLen,
+    size_t* HL_RESTRICT copiedCount);
 
 /* Native string helper functions */
 HL_API size_t hlNStrLen(const HlNChar* str);
@@ -34,7 +35,8 @@ HL_API int hlNStrCmp(const HlNChar* HL_RESTRICT str1, const HlNChar* HL_RESTRICT
 
 HL_API size_t hlNStrCopyAndLen(const HlNChar* HL_RESTRICT src, HlNChar* HL_RESTRICT dst);
 HL_API HlBool hlNStrCopyLimit(const HlNChar* HL_RESTRICT src,
-    HlNChar* HL_RESTRICT dst, size_t dstBufLen, size_t* HL_RESTRICT len);
+    HlNChar* HL_RESTRICT dst, size_t dstBufLen,
+    size_t* HL_RESTRICT copiedCount);
 
 /* String conversion functions */
 HL_API size_t hlStrGetReqLenUTF8ToUTF16(const char* src, size_t srcLen);

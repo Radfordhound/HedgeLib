@@ -53,21 +53,23 @@ size_t hlStrCopyAndLen(const char* HL_RESTRICT src, char* HL_RESTRICT dst)
 }
 
 HlBool hlStrCopyLimit(const char* HL_RESTRICT src,
-    char* HL_RESTRICT dst, size_t dstBufLen, size_t* HL_RESTRICT len)
+    char* HL_RESTRICT dst, size_t dstBufLen,
+    size_t* HL_RESTRICT copiedCount)
 {
     /* Copy up to dstBufLen characters from src into dst. */
     size_t copied = 0;
-    while (copied++ < dstBufLen)
+    while (copied < dstBufLen)
     {
+        ++copied;
         if (!(*dst++ = *src++))
         {
-            if (len) *len = copied;
-            return 1;
+            if (copiedCount) *copiedCount = copied;
+            return HL_TRUE;
         }
     }
 
-    if (len) *len = copied;
-    return 0;
+    if (copiedCount) *copiedCount = copied;
+    return HL_FALSE;
 }
 
 size_t hlNStrLen(const HlNChar* str)
@@ -125,20 +127,22 @@ size_t hlNStrCopyAndLen(const HlNChar* HL_RESTRICT src, HlNChar* HL_RESTRICT dst
 }
 
 HlBool hlNStrCopyLimit(const HlNChar* HL_RESTRICT src,
-    HlNChar* HL_RESTRICT dst, size_t dstBufLen, size_t* HL_RESTRICT len)
+    HlNChar* HL_RESTRICT dst, size_t dstBufLen,
+    size_t* HL_RESTRICT copiedCount)
 {
     /* Copy up to dstBufLen characters from src into dst. */
     size_t copied = 0;
-    while (copied++ < dstBufLen)
+    while (copied < dstBufLen)
     {
+        ++copied;
         if (!(*dst++ = *src++))
         {
-            if (len) *len = copied;
+            if (copiedCount) *copiedCount = copied;
             return 1;
         }
     }
 
-    if (len) *len = copied;
+    if (copiedCount) *copiedCount = copied;
     return 0;
 }
 
