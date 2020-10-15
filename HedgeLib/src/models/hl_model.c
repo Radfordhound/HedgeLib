@@ -955,7 +955,7 @@ HlResult hlModelExportOBJ(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
     /* Write OBJ. */
     {
         char buf[64];
-        char* mtlName = NULL;
+        char* mtlName = buf;
 
         if (writeMTL)
         {
@@ -976,14 +976,10 @@ HlResult hlModelExportOBJ(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
                 mtlName = HL_ALLOC_ARR(char, mtlNameLen);
                 if (!mtlName) return HL_ERROR_OUT_OF_MEMORY;
             }
-            else
-            {
-                mtlName = buf;
-            }
 
             /* Copy file name without extension into buffer. */
 #ifdef HL_IN_WIN32_UNICODE
-            if (!hlStrConvUTF16ToUTF8NoAlloc(fileName, mtlName, extPosU8, 0))
+            if (!hlStrConvUTF16ToUTF8NoAlloc(fileName, mtlName, extPosU8, mtlNameLen))
             {
                 if (mtlName != buf) hlFree(mtlName);
                 return HL_ERROR_UNKNOWN;

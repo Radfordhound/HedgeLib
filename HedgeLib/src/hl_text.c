@@ -146,7 +146,7 @@ size_t hlStrGetReqLenUTF8ToUTF16(const char* src, size_t srcLen)
 {
 #ifdef _WIN32
     /* Ensure casting srcLen to a signed integer will be valid. */
-    HL_ASSERT((srcLen == 0) || (srcLen <= INT_MAX));
+    HL_ASSERT(srcLen <= INT_MAX);
 
     /*
        Return the minimum required length of a UTF-16 buffer large
@@ -177,7 +177,7 @@ size_t hlStrGetReqLenUTF16ToUTF8(const HlChar16* src, size_t srcLen)
 {
 #ifdef _WIN32
     /* Ensure casting srcLen to a signed integer will be valid. */
-    HL_ASSERT((srcLen == 0) || (srcLen <= INT_MAX));
+    HL_ASSERT(srcLen <= INT_MAX);
 
     /*
        Return the minimum required length of a UTF-8 buffer large
@@ -225,8 +225,16 @@ size_t hlStrConvUTF8ToUTF16NoAlloc(const char* HL_RESTRICT src,
 {
 #ifdef _WIN32
     /* Ensure casting srcLen and dstBufLen to signed integers will be valid. */
-    HL_ASSERT(((srcLen == 0) || (srcLen <= INT_MAX)) &&
-        ((dstBufLen == 0) || (dstBufLen <= INT_MAX)));
+    HL_ASSERT((srcLen <= INT_MAX) && (dstBufLen <= INT_MAX));
+
+    /*
+       If the destination buffer size was not provided by the
+       user, compute the required destination buffer size.
+    */
+    if (!dstBufLen)
+    {
+        dstBufLen = hlStrGetReqLenUTF8ToUTF16(src, srcLen);
+    }
 
     /* Convert the UTF-8 string to UTF-16. */
     return (size_t)MultiByteToWideChar(
@@ -235,7 +243,7 @@ size_t hlStrConvUTF8ToUTF16NoAlloc(const char* HL_RESTRICT src,
         (const char*)src,                           /* lpMultiByteStr */
         (srcLen) ? (int)srcLen : -1,                /* cbMultiByte */
         (wchar_t*)dst,                              /* lpWideCharStr */
-        (dstBufLen) ? (int)dstBufLen : INT_MAX);    /* cchWideChar */
+        (int)dstBufLen);                            /* cchWideChar */
 #else
     /* TODO: Support for non-Windows platforms. */
     HL_ASSERT(0);
@@ -256,19 +264,27 @@ size_t hlStrConvUTF16ToUTF8NoAlloc(const HlChar16* HL_RESTRICT src,
 {
 #ifdef _WIN32
     /* Ensure casting srcLen and dstBufLen to signed integers will be valid. */
-    HL_ASSERT(((srcLen == 0) || (srcLen <= INT_MAX)) &&
-        ((dstBufLen == 0) || (dstBufLen <= INT_MAX)));
+    HL_ASSERT((srcLen <= INT_MAX) && (dstBufLen <= INT_MAX));
+
+    /*
+       If the destination buffer size was not provided by the
+       user, compute the required destination buffer size.
+    */
+    if (!dstBufLen)
+    {
+        dstBufLen = hlStrGetReqLenUTF8ToUTF16(src, srcLen);
+    }
 
     /* Convert the UTF-16 string to UTF-8. */
     return (size_t)WideCharToMultiByte(
-        CP_UTF8,                                    /* CodePage */
-        0,                                          /* dwFlags */
-        (const wchar_t*)src,                        /* lpWideCharStr */
-        (srcLen) ? (int)srcLen : -1,                /* cchWideChar */
-        (char*)dst,                                 /* lpMultiByteStr */
-        (dstBufLen) ? (int)dstBufLen : INT_MAX,     /* cbMultiByte */
-        0,                                          /* lpDefaultChar */
-        0);                                         /* lpUsedDefaultChar */
+        CP_UTF8,                        /* CodePage */
+        0,                              /* dwFlags */
+        (const wchar_t*)src,            /* lpWideCharStr */
+        (srcLen) ? (int)srcLen : -1,    /* cchWideChar */
+        (char*)dst,                     /* lpMultiByteStr */
+        (int)dstBufLen,                 /* cbMultiByte */
+        0,                              /* lpDefaultChar */
+        0);                             /* lpUsedDefaultChar */
 #else
     /* TODO: Support for non-Windows platforms. */
     HL_ASSERT(0);
@@ -307,14 +323,14 @@ HlChar16* hlStrConvUTF8ToUTF16(const char* src, size_t srcLen)
 
     /* Get required length for UTF-16 buffer. */
     dstBufLen = hlStrGetReqLenUTF8ToUTF16(src, srcLen);
-    if (!dstBufLen) return 0;
+    if (!dstBufLen) return NULL;
 
     /* Allocate UTF-16 buffer, convert src string, and store the result in that buffer. */
     dst = HL_ALLOC_ARR(HlChar16, dstBufLen);
-    if (!hlStrConvUTF8ToUTF16NoAlloc(src, dst, srcLen, 0))
+    if (!hlStrConvUTF8ToUTF16NoAlloc(src, dst, srcLen, dstBufLen))
     {
         hlFree(dst);
-        return 0;
+        return NULL;
     }
 
     return dst;
@@ -334,14 +350,14 @@ char* hlStrConvUTF16ToUTF8(const HlChar16* src, size_t srcLen)
 
     /* Get required length for UTF-8 buffer. */
     dstBufLen = hlStrGetReqLenUTF16ToUTF8(src, srcLen);
-    if (!dstBufLen) return 0;
+    if (!dstBufLen) return NULL;
 
     /* Allocate UTF-8 buffer, convert src string, and store the result in that buffer. */
     dst = HL_ALLOC_ARR(char, dstBufLen);
-    if (!hlStrConvUTF16ToUTF8NoAlloc(src, dst, srcLen, 0))
+    if (!hlStrConvUTF16ToUTF8NoAlloc(src, dst, srcLen, dstBufLen))
     {
         hlFree(dst);
-        return 0;
+        return NULL;
     }
 
     return dst;

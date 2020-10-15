@@ -64,7 +64,8 @@ static size_t hlINSVColGetReqLen(const HlSVColHeader* svcol)
             &shapes[i].nameOffset)) + 1);
 
         /* Account for sector references. */
-        reqBufLen += (sizeof(HlSectorRef) * shapes[i].sectorCount);
+        reqBufLen += (sizeof(HlSectorRef) *
+            (size_t)shapes[i].sectorCount);
     }
 
     return reqBufLen;

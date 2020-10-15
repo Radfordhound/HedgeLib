@@ -874,7 +874,7 @@ static HlResult hlINHHModelLoadMaterials(HlModel* HL_RESTRICT hlModel,
         /* Copy name into buffer. */
 #ifdef HL_IN_WIN32_UNICODE
         if (!hlStrConvUTF8ToUTF16NoAlloc(matNameRefs.data[i],
-            (HlChar16*)(*bufPtr + dirLen), nameLen, 0))
+            (HlChar16*)(*bufPtr + dirLen), nameLen, *bufLen))
         {
             result = HL_ERROR_UNKNOWN;
             goto failed_loop;
