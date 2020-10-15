@@ -41,12 +41,19 @@ HL_API HlBool hlNStrCopyLimit(const HlNChar* HL_RESTRICT src,
 /* String conversion functions */
 HL_API size_t hlStrGetReqLenUTF8ToUTF16(const char* src, size_t srcLen);
 HL_API size_t hlStrGetReqLenUTF8ToUTF32(const char* src, size_t srcLen);
+HL_API size_t hlStrGetReqLenUTF8ToNative(const char* src, size_t srcLen);
 
 HL_API size_t hlStrGetReqLenUTF16ToUTF8(const HlChar16* src, size_t srcLen);
 HL_API size_t hlStrGetReqLenUTF16ToUTF32(const HlChar16* src, size_t srcLen);
+HL_API size_t hlStrGetReqLenUTF16ToNative(const HlChar16* src, size_t srcLen);
 
 HL_API size_t hlStrGetReqLenUTF32ToUTF8(const HlChar32* src, size_t srcLen);
 HL_API size_t hlStrGetReqLenUTF32ToUTF16(const HlChar32* src, size_t srcLen);
+HL_API size_t hlStrGetReqLenUTF32ToNative(const HlChar32* src, size_t srcLen);
+
+HL_API size_t hlStrGetReqLenNativeToUTF8(const HlNChar* src, size_t srcLen);
+HL_API size_t hlStrGetReqLenNativeToUTF16(const HlNChar* src, size_t srcLen);
+HL_API size_t hlStrGetReqLenNativeToUTF32(const HlNChar* src, size_t srcLen);
 
 HL_API size_t hlStrConvUTF8ToUTF16NoAlloc(const char* HL_RESTRICT src,
     HlChar16* HL_RESTRICT dst, size_t srcLen, size_t dstBufLen);
@@ -54,11 +61,17 @@ HL_API size_t hlStrConvUTF8ToUTF16NoAlloc(const char* HL_RESTRICT src,
 HL_API size_t hlStrConvUTF8ToUTF32NoAlloc(const char* HL_RESTRICT src,
     HlChar32* HL_RESTRICT dst, size_t srcLen, size_t dstBufLen);
 
+HL_API size_t hlStrConvUTF8ToNativeNoAlloc(const char* HL_RESTRICT src,
+    HlNChar* HL_RESTRICT dst, size_t srcLen, size_t dstBufLen);
+
 HL_API size_t hlStrConvUTF16ToUTF8NoAlloc(const HlChar16* HL_RESTRICT src,
     char* HL_RESTRICT dst, size_t srcLen, size_t dstBufLen);
 
 HL_API size_t hlStrConvUTF16ToUTF32NoAlloc(const HlChar16* HL_RESTRICT src,
     HlChar32* HL_RESTRICT dst, size_t srcLen, size_t dstBufLen);
+
+HL_API size_t hlStrConvUTF16ToNativeNoAlloc(const HlChar16* HL_RESTRICT src,
+    HlNChar* HL_RESTRICT dst, size_t srcLen, size_t dstBufLen);
 
 HL_API size_t hlStrConvUTF32ToUTF8NoAlloc(const HlChar32* HL_RESTRICT src,
     char* HL_RESTRICT dst, size_t srcLen, size_t dstBufLen);
@@ -66,14 +79,33 @@ HL_API size_t hlStrConvUTF32ToUTF8NoAlloc(const HlChar32* HL_RESTRICT src,
 HL_API size_t hlStrConvUTF32ToUTF16NoAlloc(const HlChar32* HL_RESTRICT src,
     HlChar16* HL_RESTRICT dst, size_t srcLen, size_t dstBufLen);
 
+HL_API size_t hlStrConvUTF32ToNativeNoAlloc(const HlChar32* HL_RESTRICT src,
+    HlNChar* HL_RESTRICT dst, size_t srcLen, size_t dstBufLen);
+
+HL_API size_t hlStrConvNativeToUTF8NoAlloc(const HlNChar* HL_RESTRICT src,
+    char* HL_RESTRICT dst, size_t srcLen, size_t dstBufLen);
+
+HL_API size_t hlStrConvNativeToUTF16NoAlloc(const HlNChar* HL_RESTRICT src,
+    HlChar16* HL_RESTRICT dst, size_t srcLen, size_t dstBufLen);
+
+HL_API size_t hlStrConvNativeToUTF32NoAlloc(const HlNChar* HL_RESTRICT src,
+    HlChar32* HL_RESTRICT dst, size_t srcLen, size_t dstBufLen);
+
 HL_API HlChar16* hlStrConvUTF8ToUTF16(const char* src, size_t srcLen);
 HL_API HlChar32* hlStrConvUTF8ToUTF32(const char* src, size_t srcLen);
+HL_API HlNChar* hlStrConvUTF8ToNative(const char* src, size_t srcLen);
 
 HL_API char* hlStrConvUTF16ToUTF8(const HlChar16* src, size_t srcLen);
 HL_API HlChar32* hlStrConvUTF16ToUTF32(const HlChar16* src, size_t srcLen);
+HL_API HlNChar* hlStrConvUTF16ToNative(const HlChar16* src, size_t srcLen);
 
 HL_API char* hlStrConvUTF32ToUTF8(const HlChar32* src, size_t srcLen);
 HL_API HlChar16* hlStrConvUTF32ToUTF16(const HlChar32* src, size_t srcLen);
+HL_API HlNChar* hlStrConvUTF32ToNative(const HlChar32* src, size_t srcLen);
+
+HL_API char* hlStrConvNativeToUTF8(const HlNChar* src, size_t srcLen);
+HL_API HlChar16* hlStrConvNativeToUTF16(const HlNChar* src, size_t srcLen);
+HL_API HlChar32* hlStrConvNativeToUTF32(const HlNChar* src, size_t srcLen);
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS
 HL_API HlBool hlNStrsEqualExt(const HlNChar* HL_RESTRICT str1,

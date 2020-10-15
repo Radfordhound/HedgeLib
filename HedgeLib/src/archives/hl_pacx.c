@@ -426,12 +426,8 @@ static size_t hlINPACxV2FileTreeGetReqSize(
         }
 
         /* Account for name. */
-#ifdef HL_IN_WIN32_UNICODE
         reqBufSize += (hlStrGetReqLenUTF8ToUTF16(fileName, 0) *
             sizeof(HlNChar));
-#else
-        reqBufSize += (strlen(fileName) + 1);
-#endif
     }
 
     return reqBufSize;
@@ -467,32 +463,21 @@ static HlResult hlINPACxV2FileTreeSetupEntries(
 
         /* Copy file name. */
         {
+            /* Convert file name to native encoding and copy into buffer. */
             HlNChar* curNamePtr = (HlNChar*)(*curDataPtr);
-            size_t fileNameLen;
-
-#ifdef HL_IN_WIN32_UNICODE
-            /* Convert file name to UTF-16 and copy into buffer. */
-            fileNameLen = hlStrConvUTF8ToUTF16NoAlloc(fileName,
-                (HlChar16*)curNamePtr, 0, 0);
+            size_t fileNameLen = hlStrConvUTF8ToNativeNoAlloc(
+                fileName, (HlChar16*)curNamePtr, 0, 0);
 
             if (!fileNameLen) return HL_ERROR_UNKNOWN;
 
-            /* Convert extension to UTF-16 and copy into buffer. */
+            /* Convert extension to native encoding and copy into buffer. */
             curNamePtr[fileNameLen - 1] = HL_NTEXT('.');
 
-            if (!hlStrConvUTF8ToUTF16NoAlloc(typeStr,
+            if (!hlStrConvUTF8ToNativeNoAlloc(typeStr,
                 &curNamePtr[fileNameLen], extLen, 0))
             {
                 return HL_ERROR_UNKNOWN;
             }
-#else
-            /* Copy file name into buffer and get file name length. */
-            fileNameLen = hlStrCopyAndLen(fileName, curNamePtr);
-
-            /* Copy extension into buffer and increase fileNameLen. */
-            curNamePtr[fileNameLen++] = HL_NTEXT('.');
-            memcpy(&curNamePtr[fileNameLen], typeStr, extLen);
-#endif
 
             /* Increase fileNameLen. */
             fileNameLen += extLen;
@@ -912,14 +897,9 @@ HlResult hlPACxV2Read(const HlBlob* const HL_RESTRICT * HL_RESTRICT pacs,
                     /* Compute extension size. */
                     extSize = (size_t)(colonPtr - typeStr);
 
-#ifdef HL_IN_WIN32_UNICODE
-                    /* Account for UTF-8 -> UTF-16 conversion and dot. */
-                    extSize = ((hlStrGetReqLenUTF8ToUTF16(typeStr, extSize) +
+                    /* Account for UTF-8 -> native conversion and dot. */
+                    extSize = ((hlStrGetReqLenUTF8ToNative(typeStr, extSize) +
                         1) * sizeof(HlNChar));
-#else
-                    /* Account for dot. */
-                    ++extSize;
-#endif
 
                     /* Account for file trees. */
                     reqBufSize += hlINPACxV2FileTreeGetReqSize(
@@ -1023,10 +1003,8 @@ HlResult hlPACxV2Read(const HlBlob* const HL_RESTRICT * HL_RESTRICT pacs,
                     /* Compute extension length. */
                     extLen = (size_t)(colonPtr - typeStr);
 
-#ifdef HL_IN_WIN32_UNICODE
-                    /* Account for UTF-8 -> UTF-16 conversion. */
-                    extLen = hlStrGetReqLenUTF8ToUTF16(typeStr, extLen);
-#endif
+                    /* Account for UTF-8 -> native conversion. */
+                    extLen = hlStrGetReqLenUTF8ToNative(typeStr, extLen);
 
                     /* Setup file entries. */
                     result = hlINPACxV2FileTreeSetupEntries(fileTree,
@@ -1141,14 +1119,12 @@ static HlResult hlINPACxV2LoadSplitBlobs(HlBlob* HL_RESTRICT rootPac,
         for (i2 = 0; i2 < splitTable->splitCount; ++i2)
         {
             const char* splitName = (const char*)hlOff32Get(&splitNames[i2]);
-            size_t splitNameLen = (strlen(splitName) + 1), pathBufLen;
-
-#ifdef HL_IN_WIN32_UNICODE
-            splitNameLen = hlStrGetReqLenUTF8ToUTF16(splitName, splitNameLen);
-#endif
+            const size_t splitNameLenU8 = (strlen(splitName) + 1);
+            const size_t splitNameLen = hlStrGetReqLenUTF8ToNative(
+                splitName, splitNameLenU8);
 
             /* Account for directory. */
-            pathBufLen = (splitNameLen + dirLen);
+            const size_t pathBufLen = (splitNameLen + dirLen);
 
             /* Resize buffer if necessary. */
             if (pathBufLen > pathBufCapacity)
@@ -1166,19 +1142,16 @@ static HlResult hlINPACxV2LoadSplitBlobs(HlBlob* HL_RESTRICT rootPac,
                 }
 
                 if (!(*pathBufPtr)) return HL_ERROR_OUT_OF_MEMORY;
+                pathBufCapacity = pathBufLen;
             }
 
             /* Copy split name into buffer. */
-#ifdef HL_IN_WIN32_UNICODE
-            if (!hlStrConvUTF8ToUTF16NoAlloc(splitName,
-                (HlChar16*)&((*pathBufPtr)[dirLen]), 0, pathBufCapacity))
+            if (!hlStrConvUTF8ToNativeNoAlloc(splitName,
+                &((*pathBufPtr)[dirLen]), splitNameLenU8,
+                pathBufCapacity))
             {
                 return HL_ERROR_UNKNOWN;
             }
-#else
-            memcpy(&((*pathBufPtr)[dirLen]), splitName,
-                splitNameLen * sizeof(HlNChar));
-#endif
 
             /* Load split. */
             result = hlBlobLoad(*pathBufPtr, &((*pacs)[*pacCount]));
@@ -1341,34 +1314,33 @@ static HlResult hlINPACxV3FileNodesSetupEntries(const HlPACxV3Node* fileNodes,
         if (!skipProxies || dataEntry->dataType != HL_PACXV3_DATA_TYPE_NOT_HERE)
         {
             HlNChar* curStrPtr = (HlNChar*)(*curDataPtr);
+            size_t strLen;
 
             /* Set path and size within archive entry. */
             (*curEntry)->path = curStrPtr;
             (*curEntry)->size = (size_t)dataEntry->dataSize;
 
-#ifdef HL_IN_WIN32_UNICODE
-            /* Convert to UTF-16, copy into HlArchive buffer, and increment curStrPtr. */
-            curStrPtr += hlStrConvUTF8ToUTF16NoAlloc(pathBuf, curStrPtr,
-                fileNode->bufStartIndex, 0);
-#else
-            /* Copy name into HlArchive buffer. */
-            strcpy(curStrPtr, pathBuf);
+            /* Ensure node name length is > 0. */
+            if (!fileNode->bufStartIndex) return HL_ERROR_INVALID_DATA;
+
+            /* Convert to native encoding and copy into HlArchive buffer. */
+            strLen = hlStrConvUTF8ToNativeNoAlloc(pathBuf,
+                curStrPtr, fileNode->bufStartIndex, 0);
+
+            if (!strLen) return HL_ERROR_INVALID_DATA;
 
             /* Increment curStrPtr. */
-            curStrPtr += fileNode->bufStartIndex;
-#endif
+            curStrPtr += strLen;
 
             /* Put dot for extension in HlArchive buffer. */
-            *curStrPtr++ = HL_NTEXT('.');
+            *(curStrPtr++) = HL_NTEXT('.');
 
             /* Copy extension into HlArchive buffer and increase curStrPtr. */
-#ifdef HL_IN_WIN32_UNICODE
-            curStrPtr += hlStrConvUTF8ToUTF16NoAlloc((const char*)hlOff64Get(
+            strLen = hlStrConvUTF8ToNativeNoAlloc((const char*)hlOff64Get(
                 &dataEntry->extension), curStrPtr, 0, 0);
-#else
-            curStrPtr += (hlStrCopyAndLen((const char*)hlOff64Get(
-                &dataEntry->extension), curStrPtr) + 1);
-#endif
+
+            if (!strLen) return HL_ERROR_INVALID_DATA;
+            curStrPtr += strLen;
 
             /* Increase curDataPtr. */
             *curDataPtr = curStrPtr;
@@ -1647,14 +1619,12 @@ static HlResult hlINPACxV3LoadSplitBlobs(HlBlob* HL_RESTRICT rootPac,
     for (i = 0; i < splitTable->splitCount; ++i)
     {
         const char* splitName = (const char*)hlOff64Get(&splitEntries[i].name);
-        size_t splitNameLen = (strlen(splitName) + 1), pathBufLen;
-
-#ifdef HL_IN_WIN32_UNICODE
-        splitNameLen = hlStrGetReqLenUTF8ToUTF16(splitName, splitNameLen);
-#endif
+        const size_t splitNameLenU8 = (strlen(splitName) + 1);
+        const size_t splitNameLen = hlStrGetReqLenUTF8ToNative(
+            splitName, splitNameLenU8);
 
         /* Account for directory. */
-        pathBufLen = (splitNameLen + dirLen);
+        const size_t pathBufLen = (splitNameLen + dirLen);
 
         /* Resize buffer if necessary. */
         if (pathBufLen > pathBufCapacity)
@@ -1672,19 +1642,16 @@ static HlResult hlINPACxV3LoadSplitBlobs(HlBlob* HL_RESTRICT rootPac,
             }
 
             if (!(*pathBufPtr)) return HL_ERROR_OUT_OF_MEMORY;
+            pathBufCapacity = pathBufLen;
         }
 
         /* Copy split name into buffer. */
-#ifdef HL_IN_WIN32_UNICODE
-        if (!hlStrConvUTF8ToUTF16NoAlloc(splitName,
-            (HlChar16*)&((*pathBufPtr)[dirLen]), 0, pathBufCapacity))
+        if (!hlStrConvUTF8ToNativeNoAlloc(splitName,
+            &((*pathBufPtr)[dirLen]), splitNameLenU8,
+            pathBufCapacity))
         {
             return HL_ERROR_UNKNOWN;
         }
-#else
-        memcpy(&((*pathBufPtr)[dirLen]), splitName,
-            splitNameLen * sizeof(HlNChar));
-#endif
 
         /* Load split. */
         result = hlBlobLoad(*pathBufPtr, &((*pacs)[*pacCount]));

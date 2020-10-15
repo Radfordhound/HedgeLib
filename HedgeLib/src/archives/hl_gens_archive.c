@@ -49,12 +49,8 @@ HlResult hlGensArchiveRead(const HlBlob* const HL_RESTRICT * HL_RESTRICT splits,
                 reqBufSize += fileEntry->dataSize;
 
                 /* Account for text. */
-#ifdef HL_IN_WIN32_UNICODE
-                reqBufSize += (hlStrGetReqLenUTF8ToUTF16(fileName, 0) *
-                    sizeof(HlNChar));
-#else
-                reqBufSize += (strlen(fileName) + 1);
-#endif
+                reqBufSize += (sizeof(HlNChar) *
+                    hlStrGetReqLenUTF8ToNative(fileName, 0));
 
                 /* Go to next file entry within the archive. */
                 curPos += fileEntry->entrySize;
@@ -99,32 +95,25 @@ HlResult hlGensArchiveRead(const HlBlob* const HL_RESTRICT * HL_RESTRICT splits,
                 const HlGensArchiveFileEntry* fileEntry = (const HlGensArchiveFileEntry*)curPos;
                 const char* fileName = (const char*)(fileEntry + 1);
                 const void* fileData = HL_ADD_OFFC(fileEntry, fileEntry->dataOffset);
+                size_t nameLen;
 
                 /* Setup file entry. */
                 curEntry->path = (const HlNChar*)curDataPtr;
                 curEntry->size = (size_t)fileEntry->dataSize;
                 curEntry->meta = 0;
                 
-                /* Copy file name. */
-#ifdef HL_IN_WIN32_UNICODE
+                /* Convert file name to native encoding and copy into buffer. */
+                nameLen = hlStrConvUTF8ToNativeNoAlloc(fileName,
+                    (HlNChar*)curDataPtr, 0, 0);
+
+                if (!nameLen)
                 {
-                    /* Convert file name to UTF-16 and copy into buffer. */
-                    size_t utf16StrLen = hlStrConvUTF8ToUTF16NoAlloc(fileName,
-                        (HlChar16*)curDataPtr, 0, 0);
-
-                    if (!utf16StrLen)
-                    {
-                        hlFree(hlArcBuf);
-                        return HL_ERROR_UNKNOWN;
-                    }
-
-                    /* Increase pointer. */
-                    curDataPtr += (utf16StrLen * sizeof(HlNChar));
+                    hlFree(hlArcBuf);
+                    return HL_ERROR_UNKNOWN;
                 }
-#else
-                /* Copy file name into buffer and increase pointer. */
-                curDataPtr += (hlStrCopyAndLen(fileName, curDataPtr) + 1);
-#endif
+
+                /* Increase pointer. */
+                curDataPtr += (nameLen * sizeof(HlNChar));
 
                 /* Set data pointer. */
                 curEntry->data = (HlUMax)((HlUPtr)curDataPtr);

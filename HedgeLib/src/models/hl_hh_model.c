@@ -833,21 +833,16 @@ static HlResult hlINHHModelLoadMaterials(HlModel* HL_RESTRICT hlModel,
         size_t nameLen, extPos, totalLen;
 
         /* Compute lengths. */
-#ifdef HL_IN_WIN32_UNICODE
-        nameLen = hlStrGetReqLenUTF8ToUTF16(matNameRefs.data[i], 0);
+        nameLen = hlStrGetReqLenUTF8ToNative(matNameRefs.data[i], 0);
         if (!nameLen)
         {
             result = HL_ERROR_UNKNOWN;
             goto failed_loop;
         }
 
-        --nameLen; /* We don't want the null terminator in nameLen. */
-#else
-        nameLen = strlen(matNameRefs.data[i]);
-#endif
-
+        --nameLen;                      /* We don't want the null terminator in nameLen. */
         extPos = (dirLen + nameLen);
-        totalLen = (extPos + 10); /* 9 characters in ".material" + null terminator. */
+        totalLen = (extPos + 10);       /* 9 characters in ".material" + null terminator. */
 
         /* Resize path buffer if necessary. */
         if (totalLen > *bufLen)
@@ -872,17 +867,12 @@ static HlResult hlINHHModelLoadMaterials(HlModel* HL_RESTRICT hlModel,
         }
 
         /* Copy name into buffer. */
-#ifdef HL_IN_WIN32_UNICODE
-        if (!hlStrConvUTF8ToUTF16NoAlloc(matNameRefs.data[i],
-            (HlChar16*)(*bufPtr + dirLen), nameLen, *bufLen))
+        if (!hlStrConvUTF8ToNativeNoAlloc(matNameRefs.data[i],
+            (*bufPtr + dirLen), nameLen, *bufLen))
         {
             result = HL_ERROR_UNKNOWN;
             goto failed_loop;
         }
-#else
-        memcpy(*bufPtr + dirLen, matNameRefs.data[i],
-            nameLen * sizeof(char));
-#endif
 
         /* Copy extension into buffer. */
         memcpy(*bufPtr + extPos, HL_NTEXT(".material"), sizeof(HlNChar) * 10);

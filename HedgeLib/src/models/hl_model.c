@@ -960,15 +960,9 @@ HlResult hlModelExportOBJ(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
         if (writeMTL)
         {
             const HlNChar* fileName = hlPathGetName(filePath);
-            size_t mtlNameLen, extPos = (size_t)((ext =
-                hlPathGetExt(fileName)) - fileName);
-
-#ifdef HL_IN_WIN32_UNICODE
-            size_t extPosU8 = extPos;
-            extPos = hlStrGetReqLenUTF16ToUTF8(fileName, extPosU8);
-#endif
-
-            mtlNameLen = (extPos + 5);
+            const size_t extPosU8 = (size_t)((ext = hlPathGetExt(fileName)) - fileName);
+            const size_t extPos = hlStrGetReqLenNativeToUTF8(fileName, extPosU8);
+            const size_t mtlNameLen = (extPos + 5);
 
             /* Allocate buffer if necessary. */
             if (mtlNameLen > 64)
@@ -978,15 +972,11 @@ HlResult hlModelExportOBJ(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
             }
 
             /* Copy file name without extension into buffer. */
-#ifdef HL_IN_WIN32_UNICODE
-            if (!hlStrConvUTF16ToUTF8NoAlloc(fileName, mtlName, extPosU8, mtlNameLen))
+            if (!hlStrConvNativeToUTF8NoAlloc(fileName, mtlName, extPosU8, mtlNameLen))
             {
                 if (mtlName != buf) hlFree(mtlName);
                 return HL_ERROR_UNKNOWN;
             }
-#else
-            memcpy(mtlName, fileName, extPos * sizeof(char));
-#endif
 
             /* Copy new extension into buffer. */
             strcpy(&mtlName[extPos], ".mtl");

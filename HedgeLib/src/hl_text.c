@@ -177,6 +177,15 @@ size_t hlStrGetReqLenUTF8ToUTF32(const char* src, size_t srcLen)
     return 0; /* So compiler doesn't complain. */
 }
 
+size_t hlStrGetReqLenUTF8ToNative(const char* src, size_t srcLen)
+{
+#ifdef HL_IN_WIN32_UNICODE
+    return hlStrGetReqLenUTF8ToUTF16(src, srcLen);
+#else
+    return (srcLen) ? srcLen : (strlen(src) + 1);
+#endif
+}
+
 size_t hlStrGetReqLenUTF16ToUTF8(const HlChar16* src, size_t srcLen)
 {
 #ifdef _WIN32
@@ -210,6 +219,15 @@ size_t hlStrGetReqLenUTF16ToUTF32(const HlChar16* src, size_t srcLen)
     return 0; /* So compiler doesn't complain. */
 }
 
+size_t hlStrGetReqLenUTF16ToNative(const HlChar16* src, size_t srcLen)
+{
+#ifdef HL_IN_WIN32_UNICODE
+    return (srcLen) ? srcLen : (wcslen((const wchar_t*)src) + 1);
+#else
+    return hlStrGetReqLenUTF16ToUTF8(src, srcLen);
+#endif
+}
+
 size_t hlStrGetReqLenUTF32ToUTF8(const HlChar32* src, size_t srcLen)
 {
     /* TODO: Implement this function. */
@@ -222,6 +240,42 @@ size_t hlStrGetReqLenUTF32ToUTF16(const HlChar32* src, size_t srcLen)
     /* TODO: Implement this function. */
     HL_ASSERT(0);
     return 0; /* So compiler doesn't complain. */
+}
+
+size_t hlStrGetReqLenUTF32ToNative(const HlChar32* src, size_t srcLen)
+{
+#ifdef HL_IN_WIN32_UNICODE
+    return hlStrGetReqLenUTF32ToUTF16(src, srcLen);
+#else
+    return hlStrGetReqLenUTF32ToUTF8(src, srcLen);
+#endif
+}
+
+size_t hlStrGetReqLenNativeToUTF8(const HlNChar* src, size_t srcLen)
+{
+#ifdef HL_IN_WIN32_UNICODE
+    return hlStrGetReqLenUTF16ToUTF8((const HlChar16*)src, srcLen);
+#else
+    return (srcLen) ? srcLen : (strlen(src) + 1);
+#endif
+}
+
+size_t hlStrGetReqLenNativeToUTF16(const HlNChar* src, size_t srcLen)
+{
+#ifdef HL_IN_WIN32_UNICODE
+    return (srcLen) ? srcLen : (wcslen((const wchar_t*)src) + 1);
+#else
+    return hlStrGetReqLenUTF8ToUTF16(src, srcLen);
+#endif
+}
+
+size_t hlStrGetReqLenNativeToUTF32(const HlNChar* src, size_t srcLen)
+{
+#ifdef HL_IN_WIN32_UNICODE
+    return hlStrGetReqLenUTF16ToUTF32((const HlChar16*)src, srcLen);
+#else
+    return hlStrGetReqLenUTF8ToUTF32(src, srcLen);
+#endif
 }
 
 size_t hlStrConvUTF8ToUTF16NoAlloc(const char* HL_RESTRICT src,
@@ -249,6 +303,9 @@ size_t hlStrConvUTF8ToUTF16NoAlloc(const char* HL_RESTRICT src,
         (wchar_t*)dst,                              /* lpWideCharStr */
         (int)dstBufLen);                            /* cchWideChar */
 #else
+    /* NOTE: We assume dst is NULL-checked in this function throughout HedgeLib. */
+    if (!dst) return 0;
+
     /* TODO: Support for non-Windows platforms. */
     HL_ASSERT(0);
     return 0; /* So compiler doesn't complain. */
@@ -258,9 +315,47 @@ size_t hlStrConvUTF8ToUTF16NoAlloc(const char* HL_RESTRICT src,
 size_t hlStrConvUTF8ToUTF32NoAlloc(const char* HL_RESTRICT src,
     HlChar32* HL_RESTRICT dst, size_t srcLen, size_t dstBufLen)
 {
+    /* NOTE: We assume dst is NULL-checked in this function throughout HedgeLib. */
+    if (!dst) return 0;
+
     /* TODO: Implement this function. */
     HL_ASSERT(0);
     return 0; /* So compiler doesn't complain. */
+}
+
+size_t hlStrConvUTF8ToNativeNoAlloc(const char* HL_RESTRICT src,
+    HlNChar* HL_RESTRICT dst, size_t srcLen, size_t dstBufLen)
+{
+#ifdef HL_IN_WIN32_UNICODE
+    return hlStrConvUTF8ToUTF16NoAlloc(src,
+        (HlChar16*)dst, srcLen, dstBufLen);
+#else
+    /* Ensure dst is not NULL. */
+    if (!dst) return 0;
+
+    /* Copy src into dst as necessary with the given arguments. */
+    if (srcLen)
+    {
+        /* Ensure src can fit within dst. */
+        if (dstBufLen && srcLen > dstBufLen) return 0;
+
+        /* Copy src into dst and return copied length. */
+        memcpy(dst, src, sizeof(char) * srcLen);
+        return srcLen;
+    }
+    else if (dstBufLen)
+    {
+        /* Copy src into dst, stopping if we exceed dstBufLen, and return copied length. */
+        size_t copiedLen;
+        return ((hlStrCopyLimit(src, dst, dstBufLen,
+            &copiedLen)) ? copiedLen : 0);
+    }
+    else
+    {
+        /* Copy src into dst and return src length + 1 for null terminator. */
+        return (hlStrCopyAndLen(src, dst) + 1);
+    }
+#endif
 }
 
 size_t hlStrConvUTF16ToUTF8NoAlloc(const HlChar16* HL_RESTRICT src,
@@ -276,7 +371,7 @@ size_t hlStrConvUTF16ToUTF8NoAlloc(const HlChar16* HL_RESTRICT src,
     */
     if (!dstBufLen)
     {
-        dstBufLen = hlStrGetReqLenUTF8ToUTF16(src, srcLen);
+        dstBufLen = hlStrGetReqLenUTF16ToUTF8(src, srcLen);
     }
 
     /* Convert the UTF-16 string to UTF-8. */
@@ -290,6 +385,9 @@ size_t hlStrConvUTF16ToUTF8NoAlloc(const HlChar16* HL_RESTRICT src,
         0,                              /* lpDefaultChar */
         0);                             /* lpUsedDefaultChar */
 #else
+    /* NOTE: We assume dst is NULL-checked in this function throughout HedgeLib. */
+    if (!dst) return 0;
+
     /* TODO: Support for non-Windows platforms. */
     HL_ASSERT(0);
     return 0; /* So compiler doesn't complain. */
@@ -299,14 +397,54 @@ size_t hlStrConvUTF16ToUTF8NoAlloc(const HlChar16* HL_RESTRICT src,
 size_t hlStrConvUTF16ToUTF32NoAlloc(const HlChar16* HL_RESTRICT src,
     HlChar32* HL_RESTRICT dst, size_t srcLen, size_t dstBufLen)
 {
+    /* NOTE: We assume dst is NULL-checked in this function throughout HedgeLib. */
+    if (!dst) return 0;
+
     /* TODO: Implement this function. */
     HL_ASSERT(0);
     return 0; /* So compiler doesn't complain. */
 }
 
+size_t hlStrConvUTF16ToNativeNoAlloc(const HlChar16* HL_RESTRICT src,
+    HlNChar* HL_RESTRICT dst, size_t srcLen, size_t dstBufLen)
+{
+#ifdef HL_IN_WIN32_UNICODE
+    /* Ensure dst is not NULL. */
+    if (!dst) return 0;
+
+    /* Copy src into dst as necessary with the given arguments. */
+    if (srcLen)
+    {
+        /* Ensure src can fit within dst. */
+        if (dstBufLen && srcLen > dstBufLen) return 0;
+
+        /* Copy src into dst and return copied length. */
+        memcpy(dst, src, srcLen * sizeof(HlChar16));
+        return srcLen;
+    }
+    else if (dstBufLen)
+    {
+        /* Copy src into dst, stopping if we exceed dstBufLen, and return copied length. */
+        size_t copiedLen;
+        return ((hlNStrCopyLimit((const HlNChar*)src,
+            dst, dstBufLen, &copiedLen)) ? copiedLen : 0);
+    }
+    else
+    {
+        /* Copy src into dst and return src length + 1 for null terminator. */
+        return (hlNStrCopyAndLen((const HlNChar*)src, dst) + 1);
+    }
+#else
+    return hlStrConvUTF16ToUTF8NoAlloc(src, dst, srcLen, dstBufLen);
+#endif
+}
+
 size_t hlStrConvUTF32ToUTF8NoAlloc(const HlChar32* HL_RESTRICT src,
     char* HL_RESTRICT dst, size_t srcLen, size_t dstBufLen)
 {
+    /* NOTE: We assume dst is NULL-checked in this function throughout HedgeLib. */
+    if (!dst) return 0;
+
     /* TODO: Implement this function. */
     HL_ASSERT(0);
     return 0; /* So compiler doesn't complain. */
@@ -315,9 +453,105 @@ size_t hlStrConvUTF32ToUTF8NoAlloc(const HlChar32* HL_RESTRICT src,
 size_t hlStrConvUTF32ToUTF16NoAlloc(const HlChar32* HL_RESTRICT src,
     HlChar16* HL_RESTRICT dst, size_t srcLen, size_t dstBufLen)
 {
+    /* NOTE: We assume dst is NULL-checked in this function throughout HedgeLib. */
+    if (!dst) return 0;
+
     /* TODO: Implement this function. */
     HL_ASSERT(0);
     return 0; /* So compiler doesn't complain. */
+}
+
+size_t hlStrConvUTF32ToNativeNoAlloc(const HlChar32* HL_RESTRICT src,
+    HlNChar* HL_RESTRICT dst, size_t srcLen, size_t dstBufLen)
+{
+#ifdef HL_IN_WIN32_UNICODE
+    return hlStrConvUTF32ToUTF16NoAlloc(src,
+        (HlChar16*)dst, srcLen, dstBufLen);
+#else
+    return hlStrConvUTF32ToUTF8NoAlloc(src,
+        dst, srcLen, dstBufLen);
+#endif
+}
+
+size_t hlStrConvNativeToUTF8NoAlloc(const HlNChar* HL_RESTRICT src,
+    char* HL_RESTRICT dst, size_t srcLen, size_t dstBufLen)
+{
+#ifdef HL_IN_WIN32_UNICODE
+    return hlStrConvUTF16ToUTF8NoAlloc((const HlChar16*)src,
+        dst, srcLen, dstBufLen);
+#else
+    /* NOTE: We assume dst is NULL-checked in this function throughout HedgeLib. */
+    if (!dst) return 0;
+
+    /* Copy src into dst as necessary with the given arguments. */
+    if (srcLen)
+    {
+        /* Ensure src can fit within dst. */
+        if (dstBufLen && srcLen > dstBufLen) return 0;
+
+        /* Copy src into dst and return copied length. */
+        memcpy(dst, src, sizeof(HlNChar) * srcLen);
+        return srcLen;
+    }
+    else if (dstBufLen)
+    {
+        /* Copy src into dst, stopping if we exceed dstBufLen, and return copied length. */
+        size_t copiedLen;
+        return ((hlNStrCopyLimit(src, dst, dstBufLen,
+            &copiedLen)) ? copiedLen : 0);
+    }
+    else
+    {
+        /* Copy src into dst and return src length + 1 for null terminator. */
+        return (hlNStrCopyAndLen(src, dst) + 1);
+    }
+#endif
+}
+
+size_t hlStrConvNativeToUTF16NoAlloc(const HlNChar* HL_RESTRICT src,
+    HlChar16* HL_RESTRICT dst, size_t srcLen, size_t dstBufLen)
+{
+#ifdef HL_IN_WIN32_UNICODE
+    /* NOTE: We assume dst is NULL-checked in this function throughout HedgeLib. */
+    if (!dst) return 0;
+
+    /* Copy src into dst as necessary with the given arguments. */
+    if (srcLen)
+    {
+        /* Ensure src can fit within dst. */
+        if (dstBufLen && srcLen > dstBufLen) return 0;
+
+        /* Copy src into dst and return copied length. */
+        memcpy(dst, src, sizeof(HlNChar) * srcLen);
+        return srcLen;
+    }
+    else if (dstBufLen)
+    {
+        /* Copy src into dst, stopping if we exceed dstBufLen, and return copied length. */
+        size_t copiedLen;
+        return ((hlNStrCopyLimit(src, (HlNChar*)dst, dstBufLen,
+            &copiedLen)) ? copiedLen : 0);
+    }
+    else
+    {
+        /* Copy src into dst and return src length + 1 for null terminator. */
+        return (hlNStrCopyAndLen(src, (HlNChar*)dst) + 1);
+    }
+#else
+    return hlStrConvUTF8ToUTF16NoAlloc(src, dst, srcLen, dstBufLen);
+#endif
+}
+
+size_t hlStrConvNativeToUTF32NoAlloc(const HlNChar* HL_RESTRICT src,
+    HlChar32* HL_RESTRICT dst, size_t srcLen, size_t dstBufLen)
+{
+#ifdef HL_IN_WIN32_UNICODE
+    return hlStrConvUTF16ToUTF32NoAlloc((const HlChar16*)src,
+        dst, srcLen, dstBufLen);
+#else
+    return hlStrConvUTF8ToUTF32NoAlloc(src,
+        dst, srcLen, dstBufLen);
+#endif
 }
 
 HlChar16* hlStrConvUTF8ToUTF16(const char* src, size_t srcLen)
@@ -342,9 +576,41 @@ HlChar16* hlStrConvUTF8ToUTF16(const char* src, size_t srcLen)
 
 HlChar32* hlStrConvUTF8ToUTF32(const char* src, size_t srcLen)
 {
-    /* TODO: Implement this function. */
-    HL_ASSERT(0);
-    return 0; /* So compiler doesn't complain. */
+    HlChar32* dst;
+    size_t dstBufLen;
+
+    /* Get required length for UTF-32 buffer. */
+    dstBufLen = hlStrGetReqLenUTF8ToUTF32(src, srcLen);
+    if (!dstBufLen) return NULL;
+
+    /* Allocate UTF-32 buffer, convert src string, and store the result in that buffer. */
+    dst = HL_ALLOC_ARR(HlChar32, dstBufLen);
+    if (!hlStrConvUTF8ToUTF32NoAlloc(src, dst, srcLen, dstBufLen))
+    {
+        hlFree(dst);
+        return NULL;
+    }
+
+    return dst;
+}
+
+HlNChar* hlStrConvUTF8ToNative(const char* src, size_t srcLen)
+{
+#ifdef HL_IN_WIN32_UNICODE
+    return (HlNChar*)hlStrConvUTF8ToUTF16(src, srcLen);
+#else
+    HlNChar* dst;
+
+    /* Get src length if necessary. */
+    if (!srcLen) srcLen = (strlen(src) + 1);
+
+    /* Allocate native buffer, copy src string into buffer, and return buffer. */
+    dst = HL_ALLOC_ARR(HlNChar, srcLen);
+    if (!dst) return NULL;
+
+    memcpy(dst, src, sizeof(char) * srcLen);
+    return dst;
+#endif
 }
 
 char* hlStrConvUTF16ToUTF8(const HlChar16* src, size_t srcLen)
@@ -369,23 +635,137 @@ char* hlStrConvUTF16ToUTF8(const HlChar16* src, size_t srcLen)
 
 HlChar32* hlStrConvUTF16ToUTF32(const HlChar16* src, size_t srcLen)
 {
-    /* TODO: Implement this function. */
-    HL_ASSERT(0);
-    return 0; /* So compiler doesn't complain. */
+    HlChar32* dst;
+    size_t dstBufLen;
+
+    /* Get required length for UTF-32 buffer. */
+    dstBufLen = hlStrGetReqLenUTF16ToUTF32(src, srcLen);
+    if (!dstBufLen) return NULL;
+
+    /* Allocate UTF-32 buffer, convert src string, and store the result in that buffer. */
+    dst = HL_ALLOC_ARR(HlChar32, dstBufLen);
+    if (!hlStrConvUTF16ToUTF32NoAlloc(src, dst, srcLen, dstBufLen))
+    {
+        hlFree(dst);
+        return NULL;
+    }
+
+    return dst;
+}
+
+HlNChar* hlStrConvUTF16ToNative(const HlChar16* src, size_t srcLen)
+{
+#ifdef HL_IN_WIN32_UNICODE
+    HlNChar* dst;
+
+    /* Get src length if necessary. */
+    if (!srcLen) srcLen = (wcslen((const wchar_t*)src) + 1);
+
+    /* Allocate native buffer, copy src string into buffer, and return buffer. */
+    dst = HL_ALLOC_ARR(HlNChar, srcLen);
+    if (!dst) return NULL;
+
+    memcpy(dst, src, sizeof(HlChar16) * srcLen);
+    return dst;
+#else
+    return hlStrConvUTF16ToUTF8(src, srcLen);
+#endif
 }
 
 char* hlStrConvUTF32ToUTF8(const HlChar32* src, size_t srcLen)
 {
-    /* TODO: Implement this function. */
-    HL_ASSERT(0);
-    return 0; /* So compiler doesn't complain. */
+    char* dst;
+    size_t dstBufLen;
+
+    /* Get required length for UTF-8 buffer. */
+    dstBufLen = hlStrGetReqLenUTF32ToUTF8(src, srcLen);
+    if (!dstBufLen) return NULL;
+
+    /* Allocate UTF-8 buffer, convert src string, and store the result in that buffer. */
+    dst = HL_ALLOC_ARR(char, dstBufLen);
+    if (!hlStrConvUTF32ToUTF8NoAlloc(src, dst, srcLen, dstBufLen))
+    {
+        hlFree(dst);
+        return NULL;
+    }
+
+    return dst;
 }
 
 HlChar16* hlStrConvUTF32ToUTF16(const HlChar32* src, size_t srcLen)
 {
-    /* TODO: Implement this function. */
-    HL_ASSERT(0);
-    return 0; /* So compiler doesn't complain. */
+    HlChar16* dst;
+    size_t dstBufLen;
+
+    /* Get required length for UTF-16 buffer. */
+    dstBufLen = hlStrGetReqLenUTF32ToUTF16(src, srcLen);
+    if (!dstBufLen) return NULL;
+
+    /* Allocate UTF-16 buffer, convert src string, and store the result in that buffer. */
+    dst = HL_ALLOC_ARR(HlChar16, dstBufLen);
+    if (!hlStrConvUTF32ToUTF16NoAlloc(src, dst, srcLen, dstBufLen))
+    {
+        hlFree(dst);
+        return NULL;
+    }
+
+    return dst;
+}
+
+HlNChar* hlStrConvUTF32ToNative(const HlChar32* src, size_t srcLen)
+{
+#ifdef HL_IN_WIN32_UNICODE
+    return (HlNChar*)hlStrConvUTF32ToUTF16(src, srcLen);
+#else
+    return hlStrConvUTF32ToUTF8(src, srcLen);
+#endif
+}
+
+char* hlStrConvNativeToUTF8(const HlNChar* src, size_t srcLen)
+{
+#ifdef HL_IN_WIN32_UNICODE
+    return hlStrConvUTF16ToUTF8((const HlChar16*)src, srcLen);
+#else
+    HlNChar* dst;
+
+    /* Get src length if necessary. */
+    if (!srcLen) srcLen = (strlen(src) + 1);
+
+    /* Allocate native buffer, copy src string into buffer, and return buffer. */
+    dst = HL_ALLOC_ARR(HlNChar, srcLen);
+    if (!dst) return NULL;
+
+    memcpy(dst, src, sizeof(HlNChar) * srcLen);
+    return dst;
+#endif
+}
+
+HlChar16* hlStrConvNativeToUTF16(const HlNChar* src, size_t srcLen)
+{
+#ifdef HL_IN_WIN32_UNICODE
+    HlChar16* dst;
+
+    /* Get src length if necessary. */
+    if (!srcLen) srcLen = (wcslen((const wchar_t*)src) + 1);
+
+    /* Allocate native buffer, copy src string into buffer, and return buffer. */
+    dst = HL_ALLOC_ARR(HlChar16, srcLen);
+    if (!dst) return NULL;
+
+    memcpy(dst, src, sizeof(HlNChar) * srcLen);
+    return dst;
+#else
+    return hlStrConvUTF8ToUTF16(src, srcLen);
+#endif
+}
+
+HlChar32* hlStrConvNativeToUTF32(const HlNChar* src, size_t srcLen)
+{
+#ifdef HL_IN_WIN32_UNICODE
+    return hlStrConvUTF16ToUTF32((const HlChar16*)src, srcLen);
+#else
+    return hlStrConvUTF8ToUTF32(src, srcLen);
+#endif
 }
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS

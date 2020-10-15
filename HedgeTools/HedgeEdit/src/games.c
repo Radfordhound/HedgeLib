@@ -763,10 +763,8 @@ void startLoadingStageUTF8(HrInstance* HL_RESTRICT instance, GameType gameType,
     HrResMgr* HL_RESTRICT resMgr)
 {
 #ifdef HL_IN_WIN32_UNICODE
-    HlNChar *nativeDir, *nativeStageID;
-
-    nativeDir = (HlNChar*)hlStrConvUTF8ToUTF16(dir, 0);
-    nativeStageID = (HlNChar*)hlStrConvUTF8ToUTF16(stageID, 0);
+    HlNChar* const nativeDir = hlStrConvUTF8ToNative(dir, 0);
+    HlNChar* const nativeStageID = hlStrConvUTF8ToNative(stageID, 0);
 
     startLoadingStage(instance, gameType,
         nativeDir, nativeStageID, resMgr);
