@@ -165,7 +165,7 @@ HL_API size_t hlModelFixMatRefs(HlModel* HL_RESTRICT * HL_RESTRICT models,
     size_t modelCount, HlMaterial* HL_RESTRICT mat);
 
 HL_API HlResult hlModelGetMatNameRefs(const HlModel* HL_RESTRICT model,
-    HlMaterialNameList* HL_RESTRICT matNameRefs);
+    HlBool skipPtrRefs, HlMaterialNameList* HL_RESTRICT matNames);
 
 HL_API HlResult hlModelGetMats(const HlModel* HL_RESTRICT model,
     HlMaterialList* HL_RESTRICT mats);

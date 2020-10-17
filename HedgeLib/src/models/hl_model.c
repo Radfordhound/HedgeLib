@@ -69,7 +69,7 @@ size_t hlModelFixMatRefs(HlModel* HL_RESTRICT * HL_RESTRICT models,
 }
 
 static HlResult hlINMeshesGetMatNameRefs(const HlMesh* HL_RESTRICT meshes,
-    size_t meshCount, HlMaterialNameList* HL_RESTRICT matNameRefs)
+    size_t meshCount, HlBool skipPtrRefs, HlMaterialNameList* HL_RESTRICT matNames)
 {
     size_t i;
     HlResult result;
@@ -80,52 +80,68 @@ static HlResult hlINMeshesGetMatNameRefs(const HlMesh* HL_RESTRICT meshes,
         {
             /* Skip duplicates. */
             size_t i2;
-            HlBool isDuplicate = HL_FALSE;
-
-            for (i2 = 0; i2 < matNameRefs->count; ++i2)
+            for (i2 = 0; i2 < matNames->count; ++i2)
             {
-                if (matNameRefs->data[i2] == meshes[i].matRef.data.name ||
-                   !strcmp(meshes[i].matRef.data.name, matNameRefs->data[i2]))
+                if (matNames->data[i2] == meshes[i].matRef.data.name ||
+                   !strcmp(meshes[i].matRef.data.name, matNames->data[i2]))
                 {
-                    isDuplicate = HL_TRUE;
-                    break;
+                    goto next_loop_iteration;
                 }
             }
 
-            if (isDuplicate) continue;
-
-            /* Add material name reference to list. */
-            result = HL_LIST_PUSH(*matNameRefs, meshes[i].matRef.data.name);
+            /* Add material name to list. */
+            result = HL_LIST_PUSH(*matNames, meshes[i].matRef.data.name);
             if (HL_FAILED(result)) return result;
         }
+        else if (!skipPtrRefs && meshes[i].matRef.data.ptr)
+        {
+            /* Skip duplicates. */
+            size_t i2;
+            for (i2 = 0; i2 < matNames->count; ++i2)
+            {
+                if (meshes[i].matRef.data.ptr->name &&
+                    (matNames->data[i2] == meshes[i].matRef.data.ptr->name ||
+                    !strcmp(meshes[i].matRef.data.ptr->name, matNames->data[i2])))
+                {
+                    goto next_loop_iteration;
+                }
+            }
+
+            /* Add material name to list. */
+            result = HL_LIST_PUSH(*matNames, meshes[i].matRef.data.ptr->name);
+            if (HL_FAILED(result)) return result;
+        }
+
+    next_loop_iteration:
+        continue;
     }
 
     return HL_RESULT_SUCCESS;
 }
 
 HlResult hlModelGetMatNameRefs(const HlModel* HL_RESTRICT model,
-    HlMaterialNameList* HL_RESTRICT matNameRefs)
+    HlBool skipPtrRefs, HlMaterialNameList* HL_RESTRICT matNameRefs)
 {
     size_t i;
     HlResult result;
 
     for (i = 0; i < model->meshGroupCount; ++i)
     {
-        /* Get material name references in solid slot. */
+        /* Get material names in solid slot. */
         result = hlINMeshesGetMatNameRefs(model->meshGroups[i].solid.meshes,
-            model->meshGroups[i].solid.meshCount, matNameRefs);
+            model->meshGroups[i].solid.meshCount, skipPtrRefs, matNameRefs);
 
         if (HL_FAILED(result)) return result;
 
-        /* Get material name references in transparent slot. */
+        /* Get material names in transparent slot. */
         result = hlINMeshesGetMatNameRefs(model->meshGroups[i].transparent.meshes,
-            model->meshGroups[i].transparent.meshCount, matNameRefs);
+            model->meshGroups[i].transparent.meshCount, skipPtrRefs, matNameRefs);
 
         if (HL_FAILED(result)) return result;
 
-        /* Get material name references in punch slot. */
+        /* Get material names in punch slot. */
         result = hlINMeshesGetMatNameRefs(model->meshGroups[i].punch.meshes,
-            model->meshGroups[i].punch.meshCount, matNameRefs);
+            model->meshGroups[i].punch.meshCount, skipPtrRefs, matNameRefs);
 
         if (HL_FAILED(result)) return result;
 

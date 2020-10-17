@@ -822,7 +822,7 @@ static HlResult hlINHHModelLoadMaterials(HlModel* HL_RESTRICT hlModel,
 
     /* Get material name references. */
     HL_LIST_INIT(matNameRefs);
-    result = hlModelGetMatNameRefs(hlModel, &matNameRefs);
+    result = hlModelGetMatNameRefs(hlModel, HL_TRUE, &matNameRefs);
     if (HL_FAILED(result)) return result;
 
     /* Load materials and fix references. */
