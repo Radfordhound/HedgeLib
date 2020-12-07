@@ -270,7 +270,7 @@ HlPACxV4Chunk;
 
 HL_STATIC_ASSERT_SIZE(HlPACxV4Chunk, 8);
 
-typedef struct HlPACxV4SplitEntry
+typedef struct HlPACxV402SplitEntry
 {
     HL_OFF64_STR name;
     HlU32 compressedSize;
@@ -279,11 +279,23 @@ typedef struct HlPACxV4SplitEntry
     HlU32 chunkCount;
     HL_OFF64(HlPACxV4Chunk) chunksOffset;
 }
-HlPACxV4SplitEntry;
+HlPACxV402SplitEntry;
 
-HL_STATIC_ASSERT_SIZE(HlPACxV4SplitEntry, 0x20);
+HL_STATIC_ASSERT_SIZE(HlPACxV402SplitEntry, 0x20);
 
-typedef struct HlPACxV4Header
+typedef struct HlPACxV403SplitEntry
+{
+    HL_OFF64_STR name;
+    HlU32 compressedSize;
+    HlU32 uncompressedSize;
+    HlU32 offset;
+    HlU32 padding;
+}
+HlPACxV403SplitEntry;
+
+HL_STATIC_ASSERT_SIZE(HlPACxV403SplitEntry, 0x18);
+
+typedef struct HlPACxV402Header
 {
     /** @brief "PACx" */
     HlU32 signature;
@@ -317,9 +329,49 @@ typedef struct HlPACxV4Header
     HlU16 unknown2;
     HlU32 chunkCount;
 }
-HlPACxV4Header;
+HlPACxV402Header;
 
-HL_STATIC_ASSERT_SIZE(HlPACxV4Header, 0x24);
+HL_STATIC_ASSERT_SIZE(HlPACxV402Header, 0x24);
+
+typedef struct c
+{
+    /** @brief "PACx" */
+    HlU32 signature;
+    /** @brief Version Number. */
+    HlU8 version[3];
+    /** @brief 'B' for Big Endian, 'L' for Little Endian. */
+    HlU8 endianFlag;
+    /** @brief Date Modified or Hash?? */
+    HlU32 unknown1;
+    HlU32 fileSize;
+    HL_OFF32(void) rootOffset;
+    /**
+       @brief The size, in bytes, of the compressed root
+       PACxV3 pac data within this PACxV4 file.
+       
+       If this is the same as rootUncompresedSize, it means
+       that the root PACxV3 pac data is uncompressed.
+    */
+    HlU32 rootCompressedSize;
+    /**
+       @brief The size, in bytes, of the uncompressed root
+       PACxV3 pac data within this PACxV4 file.
+
+       If this is the same as rootCompresedSize, it means
+       that the root PACxV3 pac data is uncompressed.
+    */
+    HlU32 rootUncompressedSize;
+    /** @brief Bitwise-and this with values from the PACxV3Type enum. */
+    HlU16 type;
+    /** @brief Always 0x208? */
+    HlU16 unknown2;
+}
+HlPACxV403Header;
+
+HL_STATIC_ASSERT_SIZE(HlPACxV403Header, 0x20);
+
+/* This type is a "subset" of all V4 revision headers. */
+typedef HlPACxV403Header HlPACxV4Header;
 
 HL_API void hlPACxV2NodeSwap(HlPACxV2Node* node, HlBool swapOffsets);
 HL_API void hlPACxV2NodeTreeSwap(HlPACxV2NodeTree* nodeTree, HlBool swapOffsets);
@@ -398,18 +450,30 @@ HL_API void hlPACxV4Fix(HlBlob* blob);
 
 #define hlPACxV4GetRootChunks(header) (HlPACxV4Chunk*)((header) + 1)
 
-HL_API HlResult hlPACxV4DecompressNoAlloc(const void* HL_RESTRICT compressedData,
+HL_API HlResult hlPACxV402DecompressNoAlloc(const void* HL_RESTRICT compressedData,
     const HlPACxV4Chunk* HL_RESTRICT chunks, HlU32 chunkCount,
     HlU32 compressedSize, HlU32 uncompressedSize,
     void* HL_RESTRICT uncompressedData);
 
-HL_API HlResult hlPACxV4Decompress(const void* HL_RESTRICT compressedData,
+HL_API HlResult hlPACxV402Decompress(const void* HL_RESTRICT compressedData,
     const HlPACxV4Chunk* HL_RESTRICT chunks, HlU32 chunkCount,
     HlU32 compressedSize, HlU32 uncompressedSize,
     void* HL_RESTRICT * HL_RESTRICT uncompressedData);
 
-HL_API HlResult hlPACxV4DecompressBlob(const void* HL_RESTRICT compressedData,
+HL_API HlResult hlPACxV402DecompressBlob(const void* HL_RESTRICT compressedData,
     const HlPACxV4Chunk* HL_RESTRICT chunks, HlU32 chunkCount,
+    HlU32 compressedSize, HlU32 uncompressedSize,
+    HlBlob* HL_RESTRICT* HL_RESTRICT uncompressedBlob);
+
+HL_API HlResult hlPACxV403DecompressNoAlloc(const void* HL_RESTRICT compressedData,
+    HlU32 compressedSize, HlU32 uncompressedSize,
+    void* HL_RESTRICT uncompressedData);
+
+HL_API HlResult hlPACxV403Decompress(const void* HL_RESTRICT compressedData,
+    HlU32 compressedSize, HlU32 uncompressedSize,
+    void* HL_RESTRICT * HL_RESTRICT uncompressedData);
+
+HL_API HlResult hlPACxV403DecompressBlob(const void* HL_RESTRICT compressedData,
     HlU32 compressedSize, HlU32 uncompressedSize,
     HlBlob* HL_RESTRICT* HL_RESTRICT uncompressedBlob);
 
