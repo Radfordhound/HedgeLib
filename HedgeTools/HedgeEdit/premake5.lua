@@ -9,7 +9,8 @@ project("HedgeEdit")
     includedirs({
         "../../HedgeLib/include",
         "../../HedgeRender/include",
-        "../../depends"
+        "../../depends",
+        "../../depends/cglm/include"
     })
 
     -- Link to HedgeLib and HedgeRender
@@ -17,6 +18,7 @@ project("HedgeEdit")
         defines({ "HL_IS_DLL", "HR_IS_DLL" })
     end
 
+    links("cglm")
     dofile("../../HedgeRender/link.lua")
     
     -- Platform-Specifics

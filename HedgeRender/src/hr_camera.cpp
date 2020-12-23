@@ -4,9 +4,15 @@ void hrCameraInit(HrCamera* camera, float x, float y, float z,
     float nearDist, float farDist, float fov, float width, float height)
 {
     /* Setup position vectors. */
-    camera->pos = hlVectorZero();
-    camera->forward = hlVectorSet(0.0f, 0.0f, -1.0f, 0.0f);
-    camera->up = hlVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    glm_vec3_zero(camera->pos);
+    
+    camera->forward[0] = 0.0f;
+    camera->forward[1] = 0.0f;
+    camera->forward[2] = -1.0f;
+
+    camera->up[0] = 0.0f;
+    camera->up[1] = 1.0f;
+    camera->up[2] = 0.0f;
 
     /* Set rotation values. */
     camera->yaw = -90.0f;
@@ -19,9 +25,8 @@ void hrCameraInit(HrCamera* camera, float x, float y, float z,
     camera->fov = fov;
 
     /* Setup projection matrix. */
-    camera->proj = hlMatrixPerspectiveFovRH(
-        (float)hlDegreesToRadians(fov), (width / height),
-        nearDist, farDist);
+    glm_perspective_zo((float)hlDegreesToRadians(fov),
+        (width / height), nearDist, farDist, camera->proj);
 
     /* Setup view projection matrix. */
     hrCameraUpdate(camera);
@@ -33,15 +38,20 @@ void hrCameraUpdate(HrCamera* camera)
     const float pitchRads = (float)hlDegreesToRadians(camera->pitch);
     const float pitchCos = (float)cos(pitchRads);
 
-    camera->forward = hlVector3Normalize(hlVectorSet(
-        (float)cos(yawRads) * pitchCos,
-        (float)sin(pitchRads),
-        (float)sin(yawRads) * pitchCos,
-        0.0f));
+    /* Setup camera forward. */
+    camera->forward[0] = ((float)cos(yawRads) * pitchCos);
+    camera->forward[1] = (float)sin(pitchRads);
+    camera->forward[2] = ((float)sin(yawRads) * pitchCos);
 
-    camera->view = hlMatrixLookAtRH(camera->pos,
-        hlVectorAdd(camera->pos, camera->forward),
-        camera->up);
+    glm_vec3_normalize(camera->forward);
 
-    camera->viewProj = hlMatrixMultiply(camera->view, &camera->proj);
+    /* Setup camera view matrix. */
+    {
+        vec3 center;
+        glm_vec3_add(camera->pos, camera->forward, center);
+        glm_lookat(camera->pos, center, camera->up, camera->view);
+    }
+
+    /* Setup camera view projection matrix. */
+    glm_mul(camera->proj, camera->view, camera->viewProj);
 }

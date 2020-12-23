@@ -24,7 +24,10 @@ workspace("HedgeLib")
         disablewarnings("4996") -- please use wcscpy_s even though it's not in the C++ standard we're begging you
     end
 
-    -- Include Projects
+    -- Include dependency projects
+    include("depends/cglm")
+
+    -- Include projects
     include("HedgeLib")
 
     -- TODO: Also support non-Windows platforms

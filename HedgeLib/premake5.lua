@@ -4,8 +4,9 @@ project("HedgeLib")
     targetdir("bin/%{cfg.platform}/%{cfg.buildcfg}")
     runpathdirs("bin/%{cfg.platform}/%{cfg.buildcfg}")
     
-    includedirs({ "include" })
+    includedirs({ "include", "../depends/cglm/include" })
     files({ "include/**.h", "src/**.c", "src/**.h" })
+    links("cglm")
 
     -- Options
     if LibType == "static" then

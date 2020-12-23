@@ -2,6 +2,7 @@
 #define HR_CAMERA_H_INCLUDED
 #include "hedgelib/hl_math.h"
 #include "hr_internal.h"
+#include "cglm/cglm.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -9,10 +10,10 @@ extern "C" {
 
 typedef struct HrCamera
 {
-    HlVector pos, forward, up;
+    vec3 pos, forward, up;
     float yaw, pitch, roll;
     float nearDist, farDist, fov;
-    HlMatrix view, proj, viewProj;
+    mat4 view, proj, viewProj;
 }
 HrCamera;
 

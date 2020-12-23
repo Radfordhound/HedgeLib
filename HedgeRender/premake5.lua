@@ -15,7 +15,14 @@ project("HedgeRender")
     targetdir("bin/%{cfg.platform}/%{cfg.buildcfg}")
     runpathdirs("bin/%{cfg.platform}/%{cfg.buildcfg}")
     
-    includedirs({ "include", "../HedgeLib/include", "../depends", "depends" })
+    includedirs({
+        "include",
+        "../HedgeLib/include",
+        "depends",
+        "../depends",
+        "../depends/cglm/include"
+    })
+
     files({
         "include/**.h", "src/**.cpp", "src/**.h",
         "depends/**.h", "depends/**.cpp", "depends/**.c"
@@ -24,7 +31,7 @@ project("HedgeRender")
     -- Options
     if LibType == "shared" then
         defines({ "HR_IS_DLL", "HR_IS_BUILDING_DLL" })
-        links({ "HedgeLib", "imgui" })
+        links({ "HedgeLib", "imgui", "cglm" })
 
         if Target == "windows" then
             -- TODO: Copy dll to correct location
@@ -68,7 +75,12 @@ project("HedgeRender_" .. Backend.Dir)
     kind(hedgeRenderKind)
     targetdir("bin/%{cfg.platform}/%{cfg.buildcfg}")
     runpathdirs("bin/%{cfg.platform}/%{cfg.buildcfg}")
-    includedirs({ "include", "../HedgeLib/include", "../depends" })
+    includedirs({
+        "include",
+        "../HedgeLib/include",
+        "../depends",
+        "../depends/cglm/include"
+    })
 
     files(
     {

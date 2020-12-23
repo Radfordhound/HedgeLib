@@ -18,6 +18,7 @@ void initCamera(void)
 
 void updateCamera(void)
 {
+    vec3 dir;
     const float speed = (hrWindowIsKeyDown(&Window, HR_INPUT_KEY_SHIFT)) ?
         8 : ((hrWindowIsKeyDown(&Window, HR_INPUT_KEY_ALT)) ? 0.05f : 0.5f);
 
@@ -28,32 +29,34 @@ void updateCamera(void)
     if (hrWindowIsKeyDown(&Window, HR_INPUT_KEY_UP) ||
         hrWindowIsKeyDown(&Window, HR_INPUT_KEY_W))
     {
-        MainCamera.pos = hlVectorAdd(MainCamera.pos,
-            hlVectorScale(MainCamera.forward, speed));
+        glm_vec3_scale(MainCamera.forward, speed, dir);
+        glm_vec3_add(MainCamera.pos, dir, MainCamera.pos);
     }
 
     if (hrWindowIsKeyDown(&Window, HR_INPUT_KEY_DOWN) ||
         hrWindowIsKeyDown(&Window, HR_INPUT_KEY_S))
     {
-        MainCamera.pos = hlVectorSubtract(MainCamera.pos,
-            hlVectorScale(MainCamera.forward, speed));
+        glm_vec3_scale(MainCamera.forward, speed, dir);
+        glm_vec3_sub(MainCamera.pos, dir, MainCamera.pos);
     }
 
     /* Left/Right. */
     if (hrWindowIsKeyDown(&Window, HR_INPUT_KEY_LEFT) ||
         hrWindowIsKeyDown(&Window, HR_INPUT_KEY_A))
     {
-        MainCamera.pos = hlVectorSubtract(MainCamera.pos, hlVectorScale(
-            hlVector3Normalize(hlVector3Cross(MainCamera.forward,
-            MainCamera.up)), speed));
+        glm_vec3_cross(MainCamera.forward, MainCamera.up, dir);
+        glm_vec3_normalize(dir);
+        glm_vec3_scale(dir, speed, dir);
+        glm_vec3_sub(MainCamera.pos, dir, MainCamera.pos);
     }
 
     if (hrWindowIsKeyDown(&Window, HR_INPUT_KEY_RIGHT) ||
         hrWindowIsKeyDown(&Window, HR_INPUT_KEY_D))
     {
-        MainCamera.pos = hlVectorAdd(MainCamera.pos, hlVectorScale(
-            hlVector3Normalize(hlVector3Cross(MainCamera.forward,
-            MainCamera.up)), speed));
+        glm_vec3_cross(MainCamera.forward, MainCamera.up, dir);
+        glm_vec3_normalize(dir);
+        glm_vec3_scale(dir, speed, dir);
+        glm_vec3_add(MainCamera.pos, dir, MainCamera.pos);
     }
 
     /* Mouse looking. */

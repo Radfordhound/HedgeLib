@@ -10,6 +10,7 @@
 #include "hedgelib/models/hl_model.h"
 #include "hedgelib/materials/hl_material.h"
 #include "hedgelib/terrain/hl_terrain_group.h"
+#include "cglm/cglm.h"
 
 HrRenderer* Renderer = NULL;
 
@@ -34,24 +35,51 @@ HlResult updateSVColInstances(const HlSectorCollision* svcol, float posScale)
 
     for (i = 0; i < svcol->shapes.count; ++i)\
     {
-        HlMatrix4x4 matrix4x4;
-        HlMatrix matrix;
+        mat4 matrix = GLM_MAT4_IDENTITY_INIT;
 
-        matrix = hlMatrixTranslation(
-            svcol->shapes.data[i].pos.x * posScale,
-            svcol->shapes.data[i].pos.y * posScale,
-            svcol->shapes.data[i].pos.z * posScale);
+        /* Apply shape position. */
+        {
+            vec3 shapePos =
+            {
+                svcol->shapes.data[i].pos.x * posScale,
+                svcol->shapes.data[i].pos.y * posScale,
+                svcol->shapes.data[i].pos.z * posScale
+            };
 
-        matrix = hlMatrixMultiply(hlMatrixRotationQuaternion(
-            hlVectorLoad4(&svcol->shapes.data[i].rot)), &matrix);
+            glm_translate(matrix, shapePos);
+        }
 
-        matrix = hlMatrixMultiply(hlMatrixScaling(
-            svcol->shapes.data[i].size.y * sizeScale,
-            svcol->shapes.data[i].size.z * sizeScale,
-            svcol->shapes.data[i].size.x * sizeScale), &matrix);
+        /* Apply shape rotation. */
+        {
+            /* NOTE: We create a copy of the rotation here to avoid SIMD alignment issues. */
+            versor rot =
+            {
+                svcol->shapes.data[i].rot.x,
+                svcol->shapes.data[i].rot.y,
+                svcol->shapes.data[i].rot.z,
+                svcol->shapes.data[i].rot.w
+            };
 
-        hlMatrixStore4x4(matrix, &matrix4x4);
-        result = HL_LIST_PUSH(cubeMdl->instances, matrix4x4);
+            mat4 tmp;
+
+            glm_quat_mat4(rot, tmp);
+            glm_mul_rot(matrix, tmp, matrix);
+        }
+
+        /* Apply shape size. */
+        {
+            vec3 shapeSize =
+            {
+                svcol->shapes.data[i].size.y * sizeScale,
+                svcol->shapes.data[i].size.z * sizeScale,
+                svcol->shapes.data[i].size.x * sizeScale
+            };
+
+            glm_scale(matrix, shapeSize);
+        }
+
+        /* Add shape matrix to instances list. */
+        result = HL_LIST_PUSH(cubeMdl->instances, *(HlMatrix4x4*)matrix);
         if (HL_FAILED(result)) return result;
     }
 

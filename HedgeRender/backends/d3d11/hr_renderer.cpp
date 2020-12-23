@@ -626,11 +626,7 @@ HlResult hrRendererBeginFrame(HrRenderer* HL_RESTRICT renderer,
 
     /* Setup world constant buffer. */
     {
-        HlMatrix4x4 viewProj;
         D3D11_MAPPED_SUBRESOURCE subRes;
-
-        /* Store viewProj matrix. */
-        hlMatrixStore4x4(camera->viewProj, &viewProj);
 
         /* Map constant buffer. */
         result = hlINWin32GetResult(renderer->instance->context->Map(
@@ -639,7 +635,7 @@ HlResult hrRendererBeginFrame(HrRenderer* HL_RESTRICT renderer,
         if (HL_FAILED(result)) return result;
 
         /* Update constant buffer data. */
-        memcpy(subRes.pData, &viewProj, sizeof(HlMatrix4x4));
+        memcpy(subRes.pData, camera->viewProj, sizeof(mat4));
 
         /* Unmap constant buffer. */
         renderer->instance->context->Unmap(renderer->cbWorld, 0);
