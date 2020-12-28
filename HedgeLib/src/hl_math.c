@@ -2,12 +2,6 @@
 #include "hedgelib/hl_endian.h"
 #include "hl_in_assert.h"
 
-HL_REFLECT_STRUCT_DEF(HlAABB, 2)
-{
-    HL_REFLECT_MEMBER_VECTOR3("min"),
-    HL_REFLECT_MEMBER_VECTOR3("max")
-};
-
 const HlVector2 HlVector2Zero = { 0, 0 };
 const HlVector3 HlVector3Zero = { 0, 0, 0 };
 const HlVector4 HlVector4Zero = { 0, 0, 0, 0 };

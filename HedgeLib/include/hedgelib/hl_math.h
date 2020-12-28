@@ -1,6 +1,6 @@
 #ifndef HL_MATH_H_INCLUDED
 #define HL_MATH_H_INCLUDED
-#include "hl_reflection.h"
+#include "hl_internal.h"
 #include <math.h>
 
 #ifdef __cplusplus
@@ -75,7 +75,6 @@ typedef struct HlAABB
 HlAABB;
 
 HL_STATIC_ASSERT_SIZE(HlAABB, 24);
-HL_REFLECT_STRUCT_DEC(HlAABB);
 
 typedef struct HlBoundingSphere
 {

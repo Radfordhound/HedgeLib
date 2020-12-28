@@ -427,7 +427,7 @@ static size_t hlINPACxV2FileTreeGetReqSize(
         }
 
         /* Account for name. */
-        reqBufSize += (hlStrGetReqLenUTF8ToUTF16(fileName, 0) *
+        reqBufSize += (hlStrGetReqLenUTF8ToNative(fileName, 0) *
             sizeof(HlNChar));
     }
 
