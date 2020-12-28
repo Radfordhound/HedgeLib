@@ -15,6 +15,12 @@ project("HedgeLib")
         kind("SharedLib")
         defines({ "HL_IS_DLL", "HL_IS_BUILDING_DLL" })
     end
+
+    -- macOS zlib fix
+    -- TODO: We're supposed to use zlib's configure script but
+    -- djophgdnzoANDgoSDPGSGNs;JIKL DNGjkSPDGnS it's a pain so we'll just do this for now
+    filter("system:macosx")
+        defines("HAVE_UNISTD_H")
     
     -- MSC Optimization
     filter("toolset:msc")

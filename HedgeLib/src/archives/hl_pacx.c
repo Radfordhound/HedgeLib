@@ -467,7 +467,7 @@ static HlResult hlINPACxV2FileTreeSetupEntries(
             /* Convert file name to native encoding and copy into buffer. */
             HlNChar* curNamePtr = (HlNChar*)(*curDataPtr);
             size_t fileNameLen = hlStrConvUTF8ToNativeNoAlloc(
-                fileName, (HlChar16*)curNamePtr, 0, 0);
+                fileName, curNamePtr, 0, 0);
 
             if (!fileNameLen) return HL_ERROR_UNKNOWN;
 
