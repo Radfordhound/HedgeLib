@@ -95,7 +95,7 @@ public:
 
     inline void deallocate(pointer p, size_t n)
     {
-        hlFree(ptr);
+        hlFree(p);
     }
 
 #ifndef HL_IN_HAS_CPP11

@@ -5,6 +5,7 @@
 #include "../io/hl_in_path.h"
 #include "../hl_in_assert.h"
 #include "../depends/lz4/lz4.h"
+#include "../depends/zlib/zlib.h"
 
 static const char* const HlINPACxV2SplitType = "ResPacDepend";
 const HlNChar HL_PACX_EXT[5] = HL_NTEXT(".pac");
@@ -1687,7 +1688,7 @@ void hlPACxV4Fix(HlBlob* blob)
     hlOff32Fix(&header->rootOffset, header);
 }
 
-HlResult hlPACxV4DecompressNoAlloc(const void* HL_RESTRICT compressedData,
+HlResult hlPACxV402DecompressNoAlloc(const void* HL_RESTRICT compressedData,
     const HlPACxV4Chunk* HL_RESTRICT chunks, HlU32 chunkCount,
     HlU32 compressedSize, HlU32 uncompressedSize,
     void* HL_RESTRICT uncompressedData)
@@ -1726,7 +1727,7 @@ HlResult hlPACxV4DecompressNoAlloc(const void* HL_RESTRICT compressedData,
     return HL_RESULT_SUCCESS;
 }
 
-HlResult hlPACxV4Decompress(const void* HL_RESTRICT compressedData,
+HlResult hlPACxV402Decompress(const void* HL_RESTRICT compressedData,
     const HlPACxV4Chunk* HL_RESTRICT chunks, HlU32 chunkCount,
     HlU32 compressedSize, HlU32 uncompressedSize,
     void* HL_RESTRICT * HL_RESTRICT uncompressedData)
@@ -1739,7 +1740,7 @@ HlResult hlPACxV4Decompress(const void* HL_RESTRICT compressedData,
     if (!uncompressedDataBuf) return HL_ERROR_OUT_OF_MEMORY;
 
     /* Decompress the data. */
-    result = hlPACxV4DecompressNoAlloc(compressedData, chunks,
+    result = hlPACxV402DecompressNoAlloc(compressedData, chunks,
         chunkCount, compressedSize, uncompressedSize, uncompressedDataBuf);
 
     if (HL_FAILED(result)) return result;
@@ -1749,7 +1750,7 @@ HlResult hlPACxV4Decompress(const void* HL_RESTRICT compressedData,
     return HL_RESULT_SUCCESS;
 }
 
-HlResult hlPACxV4DecompressBlob(const void* HL_RESTRICT compressedData,
+HlResult hlPACxV402DecompressBlob(const void* HL_RESTRICT compressedData,
     const HlPACxV4Chunk* HL_RESTRICT chunks, HlU32 chunkCount,
     HlU32 compressedSize, HlU32 uncompressedSize,
     HlBlob* HL_RESTRICT * HL_RESTRICT uncompressedBlob)
@@ -1766,8 +1767,88 @@ HlResult hlPACxV4DecompressBlob(const void* HL_RESTRICT compressedData,
     uncompressedBlobBuf->size = (size_t)uncompressedSize;
 
     /* Decompress the data. */
-    result = hlPACxV4DecompressNoAlloc(compressedData, chunks,
+    result = hlPACxV402DecompressNoAlloc(compressedData, chunks,
         chunkCount, compressedSize, uncompressedSize, uncompressedBlobBuf->data);
+
+    if (HL_FAILED(result)) return result;
+
+    /* Set uncompressedBlob pointer and return success. */
+    *uncompressedBlob = uncompressedBlobBuf;
+    return HL_RESULT_SUCCESS;
+}
+
+HlResult hlPACxV403DecompressNoAlloc(const void* HL_RESTRICT compressedData,
+    HlU32 compressedSize, HlU32 uncompressedSize,
+    void* HL_RESTRICT uncompressedData)
+{
+    unsigned char* compressedPtr = (unsigned char*)compressedData;
+    unsigned char* uncompressedPtr = (unsigned char*)uncompressedData;
+    z_stream stream;
+    int result;
+
+    /* If the data is already uncompressed, just copy it and return success. */
+    if (compressedSize == uncompressedSize)
+    {
+        memcpy(uncompressedPtr, compressedPtr, uncompressedSize);
+        return HL_RESULT_SUCCESS;
+    }
+
+    /* Otherwise, decompress the data. */
+    memset(&stream, 0, sizeof(z_stream));
+
+    result = inflateInit2(&stream, -MAX_WBITS);
+    if (result < Z_OK)
+        return HL_ERROR_UNKNOWN;
+
+    stream.next_in = (unsigned char*)compressedPtr;
+    stream.avail_in = compressedSize;
+
+    stream.next_out = (unsigned char*)uncompressedPtr;
+    stream.avail_out = uncompressedSize;
+
+    result = inflate(&stream, Z_SYNC_FLUSH);
+
+    return result < Z_OK ? HL_ERROR_UNKNOWN : HL_RESULT_SUCCESS;
+}
+
+HlResult hlPACxV403Decompress(const void* HL_RESTRICT compressedData,
+    HlU32 compressedSize, HlU32 uncompressedSize,
+    void* HL_RESTRICT* HL_RESTRICT uncompressedData)
+{
+    void* uncompressedDataBuf;
+    HlResult result;
+
+    /* Allocate a buffer to hold the uncompressed data. */
+    uncompressedDataBuf = hlAlloc(uncompressedSize);
+    if (!uncompressedDataBuf) return HL_ERROR_OUT_OF_MEMORY;
+
+    /* Decompress the data. */
+    result = hlPACxV403DecompressNoAlloc(compressedData, compressedSize, uncompressedSize, uncompressedDataBuf);
+
+    if (HL_FAILED(result)) return result;
+
+    /* Set uncompressedData pointer and return success. */
+    *uncompressedData = uncompressedDataBuf;
+    return HL_RESULT_SUCCESS;
+}
+
+HlResult hlPACxV403DecompressBlob(const void* HL_RESTRICT compressedData,
+    HlU32 compressedSize, HlU32 uncompressedSize,
+    HlBlob* HL_RESTRICT * HL_RESTRICT uncompressedBlob)
+{
+    HlBlob* uncompressedBlobBuf;
+    HlResult result;
+
+    /* Allocate a buffer to hold the uncompressed data. */
+    uncompressedBlobBuf = (HlBlob*)hlAlloc(sizeof(HlBlob) + uncompressedSize); /* TODO: Align? */
+    if (!uncompressedBlobBuf) return HL_ERROR_OUT_OF_MEMORY;
+
+    /* Setup blob. */
+    uncompressedBlobBuf->data = (uncompressedBlobBuf + 1);
+    uncompressedBlobBuf->size = (size_t)uncompressedSize;
+
+    /* Decompress the data. */
+    result = hlPACxV403DecompressNoAlloc(compressedData, compressedSize, uncompressedSize, uncompressedBlobBuf->data);
 
     if (HL_FAILED(result)) return result;
 
@@ -1784,14 +1865,27 @@ static HlResult hlINPACxV4DecompressToBlobs(HlBlob* HL_RESTRICT pac,
     HlBlob* root;
     HlResult result;
 
+    /* PACx403 uses Deflate with no separate chunks. */
+    const HlBool isV403 = header->version[1] == '0' && header->version[2] == '3';
+
     /* Fix pac. */
     hlPACxV4Fix(pac);
 
     /* Setup root PAC entry, decompressing if necessary. */
-    result = hlPACxV4DecompressBlob(hlOff32Get(&header->rootOffset),
-        hlPACxV4GetRootChunks(header), header->chunkCount,
-        header->rootCompressedSize, header->rootUncompressedSize,
-        &root);
+    if (isV403)
+    {
+        result = hlPACxV403DecompressBlob(hlOff32Get(&header->rootOffset),
+            header->rootCompressedSize, header->rootUncompressedSize, &root);
+    }
+    else
+    {
+        const HlPACxV402Header* headerV402 = (HlPACxV402Header*)header;
+
+        result = hlPACxV402DecompressBlob(hlOff32Get(&headerV402->rootOffset),
+            hlPACxV4GetRootChunks(headerV402), headerV402->chunkCount,
+            headerV402->rootCompressedSize, headerV402->rootUncompressedSize,
+            &root);
+    }
 
     if (HL_FAILED(result)) return result;
 
@@ -1822,8 +1916,8 @@ static HlResult hlINPACxV4DecompressToBlobs(HlBlob* HL_RESTRICT pac,
     if (rootHeader->splitCount)
     {
         HlPACxV3SplitTable* splitTable = hlPACxV3GetSplitTable(rootHeader);
-        HlPACxV4SplitEntry* splitEntries = (HlPACxV4SplitEntry*)
-            hlOff64Get(&splitTable->splitEntries);
+
+        void* splitEntries = hlOff64Get(&splitTable->splitEntries);
 
         HlU64 i;
 
@@ -1833,14 +1927,28 @@ static HlResult hlINPACxV4DecompressToBlobs(HlBlob* HL_RESTRICT pac,
         /* Setup split PAC entries, decompressing if necessary. */
         for (i = 0; i < splitTable->splitCount; ++i)
         {
-            const HlPACxV4Chunk* chunks = (const HlPACxV4Chunk*)
-                hlOff64Get(&splitEntries[i].chunksOffset);
+            if (isV403)
+            {
+                HlPACxV403SplitEntry* splitEntriesV403 = (HlPACxV403SplitEntry*)splitEntries;
 
-            /* Decompress split PAC. */
-            result = hlPACxV4DecompressBlob(HL_ADD_OFF(header,
-                splitEntries[i].offset), chunks, splitEntries[i].chunkCount,
-                splitEntries[i].compressedSize, splitEntries[i].uncompressedSize,
-                &((*pacs)[*pacCount]));
+                result = hlPACxV403DecompressBlob(HL_ADD_OFF(header,
+                    splitEntriesV403[i].offset), splitEntriesV403[i].compressedSize, splitEntriesV403[i].uncompressedSize,
+                    &((*pacs)[*pacCount]));
+            }
+            else 
+            {
+                HlPACxV402SplitEntry* splitEntriesV402 = (HlPACxV402SplitEntry*)splitEntries;
+
+                const HlPACxV4Chunk* chunks = (const HlPACxV4Chunk*)
+                    hlOff64Get(&splitEntriesV402[i].chunksOffset);
+
+                /* Decompress split PAC. */
+                result = hlPACxV402DecompressBlob(HL_ADD_OFF(header,
+                    splitEntriesV402[i].offset), chunks, splitEntriesV402[i].chunkCount,
+                    splitEntriesV402[i].compressedSize, splitEntriesV402[i].uncompressedSize,
+                    &((*pacs)[*pacCount]));
+            }
+
 
             if (HL_FAILED(result)) return result;
 
@@ -1861,11 +1969,24 @@ HlResult hlPACxV4Read(HlBlob* HL_RESTRICT pac,
     size_t pacCount;
     HlResult result = HL_RESULT_SUCCESS;
 
+    /* PACx403 uses Deflate with no separate chunks. */
+    const HlBool isV403 = header->version[1] == '0' && header->version[2] == '3';
+
     /* Setup root PAC entry, decompressing if necessary. */
-    result = hlPACxV4Decompress(hlOff32Get(&header->rootOffset),
-        hlPACxV4GetRootChunks(header), header->chunkCount,
-        header->rootCompressedSize, header->rootUncompressedSize,
-        &root.data);
+    if (isV403)
+    {
+        result = hlPACxV403Decompress(hlOff32Get(&header->rootOffset),
+            header->rootCompressedSize, header->rootUncompressedSize, &root.data);
+    }
+    else
+    {
+        const HlPACxV402Header* headerV402 = (HlPACxV402Header*)header;
+
+        result = hlPACxV402Decompress(hlOff32Get(&headerV402->rootOffset),
+            hlPACxV4GetRootChunks(headerV402), headerV402->chunkCount,
+            headerV402->rootCompressedSize, headerV402->rootUncompressedSize,
+            &root.data);
+    }
 
     if (HL_FAILED(result)) return result;
 
@@ -1878,8 +1999,7 @@ HlResult hlPACxV4Read(HlBlob* HL_RESTRICT pac,
         HlPACxV3SplitTable* splitTable = hlPACxV3GetSplitTable(
             (HlPACxV3Header*)root.data);
 
-        HlPACxV4SplitEntry* splitEntries = (HlPACxV4SplitEntry*)
-            hlOff64Get(&splitTable->splitEntries);
+        void* splitEntries = hlOff64Get(&splitTable->splitEntries);
 
         HlU64 i;
 
@@ -1915,13 +2035,27 @@ HlResult hlPACxV4Read(HlBlob* HL_RESTRICT pac,
         for (i = 0; i < splitTable->splitCount; ++i)
         {
             /* Decompress split PAC. */
-            const HlPACxV4Chunk* chunks = (const HlPACxV4Chunk*)
-                hlOff64Get(&splitEntries[i].chunksOffset);
+            if (isV403)
+            {
+                HlPACxV403SplitEntry* splitEntriesV403 = (HlPACxV403SplitEntry*)splitEntries;
 
-            result = hlPACxV4Decompress(HL_ADD_OFF(header,
-                splitEntries[i].offset), chunks, splitEntries[i].chunkCount,
-                splitEntries[i].compressedSize, splitEntries[i].uncompressedSize,
-                &pacs[i + 1]->data);
+                result = hlPACxV403Decompress(HL_ADD_OFF(header, splitEntriesV403[i].offset),
+                    splitEntriesV403[i].compressedSize, splitEntriesV403[i].uncompressedSize,
+                    &pacs[i + 1]->data);
+            }
+
+            else 
+            {
+                HlPACxV402SplitEntry* splitEntriesV402 = (HlPACxV402SplitEntry*)splitEntries;
+
+                const HlPACxV4Chunk* chunks = (const HlPACxV4Chunk*)
+                    hlOff64Get(&splitEntriesV402[i].chunksOffset);
+
+                result = hlPACxV402Decompress(HL_ADD_OFF(header,
+                    splitEntriesV402[i].offset), chunks, splitEntriesV402[i].chunkCount,
+                    splitEntriesV402[i].compressedSize, splitEntriesV402[i].uncompressedSize,
+                    &pacs[i + 1]->data);
+            }
 
             if (HL_FAILED(result)) goto end;
 
