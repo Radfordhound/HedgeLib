@@ -324,6 +324,11 @@ HL_API void hlOff64Set(HlU64* offPtr, void* ptr);
 #define hlOff32Fix(offPtr, base)    hlOff32Set(offPtr, HL_ADD_OFF(base, *(offPtr)))
 #define hlOff64Fix(offPtr, base)    hlOff64Set(offPtr, HL_ADD_OFF(base, *(offPtr)))
 
+/* Alignment helpers. */
+#define HL_ALIGN(value, stride)\
+    (((stride) < 2) ? (value) :                         /* If stride is < 2, just return value. */\
+    ((((value) + ((stride) - 1)) & ~((stride) - 1))))   /* Align value by stride and return. */
+
 #ifndef HL_NO_EXTERNAL_WRAPPERS
 HL_API void* hlOff32GetExt(const HlU32* offPtr);
 HL_API void hlOff32SetExt(HlU32* offPtr, void* ptr);
