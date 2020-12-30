@@ -4,7 +4,7 @@
 */
 #ifndef HL_ARCHIVE_H_INCLUDED
 #define HL_ARCHIVE_H_INCLUDED
-#include "../hl_internal.h"
+#include "../hl_list.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,29 +25,7 @@ extern "C" {
 
 #define HL_ARC_ENTRY_IS_DIR_FLAG            HL_BIT_FLAG(HL_BIT_COUNT(size_t) - 2U)
 
-/**
-   @brief Creates an HlArchiveEntry in-place which represents a file.
-   @param[in] path  The name of the file, or the absolute path to the file if this is a reference.
-   @param[in] size  The uncompressed size of the file.
-   @param[in] data  Pointer to the file's data, or NULL if this is a reference.
-   @return An HlArchiveEntry representing the given file.
-   @ingroup archives
-*/
-#define HL_ARC_ENTRY_MAKE_FILE(path, size, data)\
-    { path, size, 0, (HlUMax)(data) }
-
-/**
-   @brief Creates an HlArchiveEntry in-place which represents a directory.
-   @param[in] name          The name of the directory.
-   @param[in] childCount    The number of "child" entries contained within the directory.
-   @param[in] children      Pointer to an array of HlArchiveEntry structs representing
-                            the "child" entries contained within the directory.
-
-   @return An HlArchiveEntry representing the given file.
-   @ingroup archives
-*/
-#define HL_ARC_ENTRY_MAKE_DIR(name, childCount, children)\
-    { name, childCount, HL_ARC_ENTRY_IS_DIR_FLAG, (HlUMax)(children) }
+#define HL_ARC_ENTRY_NOT_OWNS_DATA_FLAG     HL_BIT_FLAG(HL_BIT_COUNT(size_t) - 3U)
 
 /**
    @brief An entry structure representing a file or directory stored within an archive.
@@ -59,7 +37,7 @@ typedef struct HlArchiveEntry
        @brief The name of the file or directory represented by this entry, or the
        absolute path to the file if this entry is a file reference.
     */
-    const HlNChar* path;
+    HlNChar* path;
     /**
        @brief The uncompressed size of the file if this entry represents a file, or
        the number of entries in the directory if this entry represents a directory.
@@ -70,8 +48,8 @@ typedef struct HlArchiveEntry
        specifying what type of entry this is.
 
        If HL_ARC_ENTRY_STREAMING_FLAG is set, this entry represents a file which has not
-       yet been loaded into memory, and data is a size_t which represents the location of
-       the file's (compressed) data within the archive. Use HL_ARC_ENTRY_COMPRESSED_SIZE_MASK
+       yet been loaded into memory, and data is format-specific information which can be
+       used to quickly locate/load the data at a later time. Use HL_ARC_ENTRY_COMPRESSED_SIZE_MASK
        on meta when the HL_ARC_ENTRY_STREAMING_FLAG is set to get the file's compressed
        size, or 0 if the data is not compressed.
 
@@ -83,6 +61,9 @@ typedef struct HlArchiveEntry
        entry represents a "normal" file which is not being streamed-in from an archive, and data
        is either a pointer to the file's data, or NULL if this is a file reference, in which case,
        path is the absolute file path to said file on the user's machine.
+
+       If HL_ARC_ENTRY_STREAMING_FLAG is not set, and HL_ARC_ENTRY_NOT_OWNS_DATA_FLAG is set, this
+       entry's data pointer is not owned by this entry, and should not be freed with the entry.
     */
     size_t meta;
     /**
@@ -96,12 +77,56 @@ HlArchiveEntry;
 
 typedef struct HlArchive
 {
-    const HlArchiveEntry* entries;
-    size_t entryCount;
+    HL_LIST(HlArchiveEntry) entries;
 }
 HlArchive;
 
 HL_API size_t hlArchiveExtIsSplit(const HlNChar* ext);
+
+/**
+   @brief Creates an HlArchiveEntry which represents a file.
+   @param[in] path      The name of the file, or the absolute path to the file if this is a reference.
+   @param[in] size      The uncompressed size of the file, in bytes.
+   @param[in] data      A pointer to the file's data, or NULL if this is a reference.
+   @param[in] dontFree  Just pass in HL_FALSE unless you know what you're doing.
+                        If set to HL_TRUE, this entry *won't* create its own copy of data,
+                        meaning it will *not* automatically be freed when hlArchiveEntryDestruct
+                        is called; you will have to free data yourself manually later on when it
+                        will no longer be used. path is not affected by this argument and will be
+                        automatically freed regardless.
+
+   @return An HlArchiveEntry representing the given file.
+   @ingroup archives
+*/
+HL_API HlArchiveEntry hlArchiveEntryMakeFile(const HlNChar* HL_RESTRICT path,
+    size_t size, const void* HL_RESTRICT data, HlBool dontFree);
+
+/**
+   @brief Creates an HlArchiveEntry which represents a directory.
+   @param[in] name  The name of the directory.
+
+   @return An HlArchiveEntry representing the given directory.
+   @ingroup archives
+*/
+HL_API HlArchiveEntry hlArchiveEntryMakeDir(const HlNChar* name);
+
+/**
+   @brief Modifies the data within an HlArchiveEntry which represents a file.
+   @param[in] entry     The file entry to be modified.
+   @param[in] size      The new uncompressed size of the file, in bytes.
+   @param[in] data      A pointer to the file's data, or NULL if this is a reference.
+   @param[in] dontFree  Just pass in HL_FALSE unless you know what you're doing.
+                        If set to HL_TRUE, this entry *won't* create its own copy of data,
+                        meaning it will *not* automatically be freed when hlArchiveEntryDestruct
+                        is called; you will have to free data yourself manually later on when it
+                        will no longer be used. path is not affected by this argument and will be
+                        automatically freed regardless.
+
+   @return An HlResult indicating whether data buffer allocation succeeded or not.
+   @ingroup archives
+*/
+HL_API HlResult hlArchiveEntryFileSetData(HlArchiveEntry* HL_RESTRICT entry,
+    size_t size, const void* HL_RESTRICT data, HlBool dontFree);
 
 /**
    @brief Extracts all the files, and optionally, the directories in the given array of entries.
@@ -120,10 +145,11 @@ HL_API HlResult hlArchiveEntriesExtract(const HlArchiveEntry* HL_RESTRICT entrie
 HL_API HlResult hlArchiveCreateFromDir(const HlNChar* HL_RESTRICT dirPath,
     HlArchive* HL_RESTRICT * HL_RESTRICT arc);
 
-#define hlArchiveEntryIsStreaming(entry) (HlBool)((entry)->meta & HL_ARC_ENTRY_STREAMING_FLAG)
+#define hlArchiveEntryIsStreaming(entry) (HlBool)(\
+    ((entry)->meta & HL_ARC_ENTRY_STREAMING_FLAG) != 0)
 
 #define hlArchiveEntryIsDir(entry) (HlBool)(!hlArchiveEntryIsStreaming(entry) &&\
-    (entry)->meta & HL_ARC_ENTRY_IS_DIR_FLAG)
+    ((entry)->meta & HL_ARC_ENTRY_IS_DIR_FLAG) != 0)
 
 #define hlArchiveEntryIsFile(entry)\
     (HlBool)(hlArchiveEntryIsStreaming(entry) ||\
@@ -136,10 +162,14 @@ HL_API HlResult hlArchiveCreateFromDir(const HlNChar* HL_RESTRICT dirPath,
 #define hlArchiveEntryIsReference(entry)\
     (HlBool)(!hlArchiveEntryIsStreaming(entry) &&\
     ((entry)->meta & HL_ARC_ENTRY_IS_DIR_FLAG) == 0 &&\
-    !(entry)->data)
+    (entry)->data == 0)
 
 #define hlArchiveExtract(arc, dirPath, recursive) hlArchiveEntriesExtract(\
-    (arc)->entries, (arc)->entryCount, dirPath, recursive)
+    (arc)->entries.data, (arc)->entries.count, dirPath, recursive)
+
+HL_API void hlArchiveEntryDestruct(HlArchiveEntry* entry);
+HL_API void hlArchiveDestruct(HlArchive* arc);
+HL_API void hlArchiveFree(HlArchive* arc);
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS
 HL_API HlBool hlArchiveEntryIsStreamingExt(const HlArchiveEntry* entry);

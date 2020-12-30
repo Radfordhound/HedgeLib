@@ -10,75 +10,22 @@ const HlNChar HL_GENS_ARL_EXT[5] = HL_NTEXT(".arl");
 const HlNChar HL_GENS_AR_EXT[4] = HL_NTEXT(".ar");
 const HlNChar HL_GENS_PFD_EXT[5] = HL_NTEXT(".pfd");
 
-HlResult hlGensArchiveStreamPFI(const HlNChar* HL_RESTRICT filePath,
-    HlArchive* HL_RESTRICT * HL_RESTRICT archive)
-{
-    /* TODO */
-    return HL_ERROR_UNKNOWN;
-}
-
 HlResult hlGensArchiveRead(const HlBlob* const HL_RESTRICT * HL_RESTRICT splits,
     size_t splitCount, HlArchive* HL_RESTRICT * HL_RESTRICT archive)
 {
-    void* hlArcBuf;
-    HlArchiveEntry* curEntry;
-    size_t entryCount = 0;
+    HlArchive* hlArcBuf;
+    HlResult result;
 
     /* Allocate HlArchive buffer. */
-    {
-        /* Calculate required size for HlArchive buffer. */
-        size_t i, reqBufSize = sizeof(HlArchive);
-        for (i = 0; i < splitCount; ++i)
-        {
-            /* Get start position and end position. */
-            const HlGensArchiveHeader* header = (const HlGensArchiveHeader*)splits[i]->data;
-            const unsigned char* curPos = HL_ADD_OFFC(header, sizeof(*header));
-            const unsigned char* endPos = HL_ADD_OFFC(header, splits[i]->size);
+    hlArcBuf = HL_ALLOC_OBJ(HlArchive);
+    if (!hlArcBuf) return HL_ERROR_OUT_OF_MEMORY;
 
-            /* Account for entries in this split. */
-            while (curPos < endPos)
-            {
-                /* Get file entry and file name pointers. */
-                const HlGensArchiveFileEntry* fileEntry = (const HlGensArchiveFileEntry*)curPos;
-                const char* fileName = (const char*)(fileEntry + 1);
-
-                /* Increment entry count. */
-                ++entryCount;
-
-                /* Account for data. */
-                reqBufSize += fileEntry->dataSize;
-
-                /* Account for text. */
-                reqBufSize += (sizeof(HlNChar) *
-                    hlStrGetReqLenUTF8ToNative(fileName, 0));
-
-                /* Go to next file entry within the archive. */
-                curPos += fileEntry->entrySize;
-            }
-        }
-
-        /* Account for archive entries. */
-        reqBufSize += (sizeof(HlArchiveEntry) * entryCount);
-
-        /* Allocate archive buffer. */
-        hlArcBuf = hlAlloc(reqBufSize);
-        if (!hlArcBuf) return HL_ERROR_OUT_OF_MEMORY;
-    }
 
     /* Setup archive. */
-    {
-        /* Get pointers. */
-        HlArchive* arc = (HlArchive*)hlArcBuf;
-        curEntry = (HlArchiveEntry*)(arc + 1);
-
-        /* Setup archive. */
-        arc->entries = curEntry;
-        arc->entryCount = entryCount;
-    }
+    HL_LIST_INIT(hlArcBuf->entries);
 
     /* Setup archive entries. */
     {
-        char* curDataPtr = (char*)(&curEntry[entryCount]);
         size_t i;
 
         for (i = 0; i < splitCount; ++i)
@@ -95,42 +42,59 @@ HlResult hlGensArchiveRead(const HlBlob* const HL_RESTRICT * HL_RESTRICT splits,
                 const HlGensArchiveFileEntry* fileEntry = (const HlGensArchiveFileEntry*)curPos;
                 const char* fileName = (const char*)(fileEntry + 1);
                 const void* fileData = HL_ADD_OFFC(fileEntry, fileEntry->dataOffset);
-                size_t nameLen;
+                /*size_t nameLen;*/
+                HlArchiveEntry entry;
+                void* dataBuf;
 
-                /* Setup file entry. */
-                curEntry->path = (const HlNChar*)curDataPtr;
-                curEntry->size = (size_t)fileEntry->dataSize;
-                curEntry->meta = 0;
-                
                 /* Convert file name to native encoding and copy into buffer. */
-                nameLen = hlStrConvUTF8ToNativeNoAlloc(fileName,
-                    (HlNChar*)curDataPtr, 0, 0);
-
-                if (!nameLen)
+                entry.path = hlStrConvUTF8ToNative(fileName, 0);
+                
+                if (!entry.path)
                 {
-                    hlFree(hlArcBuf);
-                    return HL_ERROR_UNKNOWN;
+                    hlArchiveFree(hlArcBuf);
+                    return HL_ERROR_OUT_OF_MEMORY;
                 }
 
-                /* Increase pointer. */
-                curDataPtr += (nameLen * sizeof(HlNChar));
+                /* Allocate new data buffer. */
+                entry.size = (size_t)fileEntry->dataSize;
+                dataBuf = hlAlloc(entry.size);
 
-                /* Set data pointer. */
-                curEntry->data = (HlUMax)((HlUPtr)curDataPtr);
+                if (!dataBuf)
+                {
+                    hlFree(entry.path);
+                    hlArchiveFree(hlArcBuf);
+                    return HL_ERROR_OUT_OF_MEMORY;
+                }
 
                 /* Copy data. */
-                memcpy(curDataPtr, fileData, curEntry->size);
-                curDataPtr += curEntry->size;
+                memcpy(dataBuf, fileData, entry.size);
+
+                /* Finish setting up entry. */
+                entry.meta = 0;
+                entry.data = (HlUMax)((HlUPtr)dataBuf);
+                
+                /* Add new entry to archive. */
+                {
+                    HlArchiveEntry* oldDataPtr = hlArcBuf->entries.data;
+                    result = HL_LIST_PUSH(hlArcBuf->entries, entry);
+
+                    if (HL_FAILED(result))
+                    {
+                        hlArcBuf->entries.data = oldDataPtr;
+                        hlArchiveEntryDestruct(&entry);
+                        hlArchiveFree(hlArcBuf);
+                        return result;
+                    }
+                }
 
                 /* Go to next file entry within the archive. */
-                ++curEntry;
                 curPos += fileEntry->entrySize;
             }
         }
     }
 
     /* Set archive pointer and return success. */
-    *archive = (HlArchive*)hlArcBuf;
+    *archive = hlArcBuf;
     return HL_RESULT_SUCCESS;
 }
 

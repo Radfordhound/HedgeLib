@@ -355,7 +355,7 @@ static HlResult extract(const HlNChar* HL_RESTRICT input,
 
     /* Extract the given archive and return result. */
     result = hlArchiveExtract(arc, output, HL_TRUE);
-    hlFree(arc);
+    hlArchiveFree(arc);
     return result;
 }
 

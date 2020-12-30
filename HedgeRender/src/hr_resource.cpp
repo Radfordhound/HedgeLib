@@ -8,8 +8,8 @@
 #include "hedgerender/hr_blend_state.h"
 #include "hedgerender/hr_depth_stencil_state.h"
 
-#include "hedgelib/hl_list.h"
 #include "hedgelib/hl_math.h"
+#include "hedgelib/archives/hl_archive.h"
 #include "hedgelib/materials/hl_material.h"
 #include "hedgelib/models/hl_model.h"
 #include "hedgelib/terrain/hl_terrain_group.h"
@@ -351,6 +351,12 @@ static void hrINResDestroy(void* res)
 }
 
 template<>
+static void hrINResDestroy<HlArchive>(void* res)
+{
+    hlArchiveFree((HlArchive*)res);
+}
+
+template<>
 static void hrINResDestroy<HlTerrainGroup>(void* res)
 {
     hlTerrainGroupDestroy((HlTerrainGroup*)res);
@@ -408,7 +414,7 @@ static const HlFreeFunc HrINResDestructors[HR_RES_TYPE_COUNT] =
 {
     /* CPU Types */
     hrINResDestroy<void>,                   // HR_RES_TYPE_USER_DATA
-    hrINResDestroy<void>,                   // HR_RES_TYPE_ARCHIVE
+    hrINResDestroy<HlArchive>,              // HR_RES_TYPE_ARCHIVE
     hrINResDestroy<void>,                   // HR_RES_TYPE_MODEL
     hrINResDestroy<void>,                   // HR_RES_TYPE_MATERIAL
     hrINResDestroy<HlTerrainGroup>,         // HR_RES_TYPE_TERRAIN_GROUP

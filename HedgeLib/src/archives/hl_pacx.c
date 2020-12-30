@@ -245,206 +245,23 @@ HlPACxV2NodeTree* hlPACxV2DataGetFileTree(
 
 typedef struct HlINPACxV2MergedStrEntry
 {
-    const char* srcStrPtr;
-    HlU8* dstStrPtr;
+    const char* str;
+    size_t size;
+    HlU32 off;
 }
 HlINPACxV2MergedStrEntry;
-
-static size_t hlINPACxV2FileTreeGetReqSize(
-    const HlPACxV2NodeTree* HL_RESTRICT fileTree,
-    HlBool skipProxies, const HlU32* HL_RESTRICT curOffset,
-    const HlU8* HL_RESTRICT strings, const HlU8* HL_RESTRICT offsets,
-    const HlU8* HL_RESTRICT eof, size_t* HL_RESTRICT entryCount)
-{
-    /* Get nodes pointer. */
-    const HlPACxV2Node* nodes = (const HlPACxV2Node*)hlOff32Get(&fileTree->nodes);
-    size_t reqBufSize = 0;
-    HlU32 i;
-
-    for (i = 0; i < fileTree->nodeCount; ++i)
-    {
-        /* Get pointers. */
-        const HlPACxV2DataEntry* dataEntry = (const HlPACxV2DataEntry*)
-            hlOff32Get(&nodes[i].data);
-
-        const char* fileName;
-
-        /* Skip proxies if requested. */
-        if (skipProxies && (dataEntry->flags & HL_PACXV2_DATA_FLAGS_NOT_HERE))
-            continue;
-
-        /* Get file name pointer. */
-        fileName = (const char*)hlOff32Get(&nodes[i].name);
-
-        /* Increment entry count. */
-        ++(*entryCount);
-
-        /* Account for data. */
-        if (!(dataEntry->flags & HL_PACXV2_DATA_FLAGS_NOT_HERE))
-        {
-            const HlU32* data = (const HlU32*)(dataEntry + 1);
-            const HlU32* dataEnd = (const HlU32*)HL_ADD_OFFC(
-                data, dataEntry->dataSize);
-
-            HlBool isMergedBINA = HL_FALSE;
-
-            /* Account for data. */
-            reqBufSize += dataEntry->dataSize;
-
-            /* Determine if this is a "merged" BINA file. */
-            while (HL_TRUE)
-            {
-                if (curOffset >= data)
-                {
-                    if (curOffset < dataEnd)
-                    {
-                        /* This is a merged BINA file. */
-                        isMergedBINA = HL_TRUE;
-                    }
-
-                    /* Now we know if this is a merged BINA file or not; we can stop checking. */
-                    break;
-                }
-
-                /*
-                    Get the next offset's address - return early
-                    if we've reached the end of the offset table.
-                */
-                if (offsets >= eof || !hlBINAOffsetsNext(&offsets, &curOffset))
-                    break;
-            }
-
-            /* Account for size required to "unmerge" this "merged" BINA file. */
-            if (isMergedBINA)
-            {
-                HL_LIST(const char*) strPtrs;
-                const HlU32* prevOffset = data;
-                size_t strTableSize = 0, offTableSize = 0;
-
-                /* Initialize string pointers list. */
-                /* TODO: Use stack unless we run out of space, then switch to heap. */
-                HL_LIST_INIT(strPtrs);
-
-                /* Account for BINA header. */
-                reqBufSize += sizeof(HlBINAV2Header);
-
-                /* Account for BINA data block header and padding. */
-                reqBufSize += (sizeof(HlBINAV2BlockDataHeader) * 2);
-
-                while (HL_TRUE)
-                {
-                    /* Stop if this offset is not part of the current file. */
-                    if (curOffset >= dataEnd) break;
-
-                    /* Account for strings. */
-                    {
-                        /* Get the value the current offset points to. */
-                        const HlU8* curOffsetVal = (const HlU8*)hlOff32Get(curOffset);
-
-                        /* Account for strings. */
-                        if (curOffsetVal >= strings)
-                        {
-                            /*
-                                Ensure this string pointer is not already
-                                in the string pointers list.
-                            */
-                            size_t i2;
-                            HlBool skipString = HL_FALSE;
-
-                            for (i2 = 0; i2 < strPtrs.count; ++i2)
-                            {
-                                if (strPtrs.data[i2] == (const char*)curOffsetVal)
-                                {
-                                    skipString = HL_TRUE;
-                                    break;
-                                }
-                            }
-
-                            if (!skipString)
-                            {
-                                /* Add string pointer to string pointers list. */
-                                if (HL_FAILED(HL_LIST_PUSH(strPtrs,
-                                    (const char*)curOffsetVal)))
-                                {
-                                    HL_ASSERT(HL_FALSE);
-                                    return 0;
-                                }
-
-                                strTableSize += (strlen((const char*)curOffsetVal) + 1);
-                            }
-                        }
-                    }
-
-                    /* Account for offset table entry. */
-                    {
-                        const HlU32 offDiff = (HlU32)(curOffset - prevOffset);
-                        if (offDiff <= 0x3FU)
-                        {
-                            /* Account for six-bit BINA offset table entry. */
-                            ++offTableSize;
-                        }
-                        else if (offDiff <= 0x3FFFU)
-                        {
-                            /* Account for fourteen-bit BINA offset table entry. */
-                            offTableSize += 2;
-                        }
-                        else
-                        {
-                            /*
-                                Ensure offset difference is within 30 bits.
-                                (This *ALWAYS* should be true, so if it's false,
-                                something has seriously gone wrong.)
-                            */
-                            HL_ASSERT(offDiff <= 0x3FFFFFFFU);
-
-                            /* Account for thirty-bit BINA offset table entry. */
-                            offTableSize += 4;
-                        }
-                    }
-
-                    /* Set previous offset pointer. */
-                    prevOffset = curOffset;
-
-                    /*
-                        Get the next offset's address - return early
-                        if we've reached the end of the offset table.
-                    */
-                    if (offsets >= eof || !hlBINAOffsetsNext(&offsets, &curOffset))
-                        break;
-                }
-
-                /* Free string pointers list. */
-                HL_LIST_FREE(strPtrs);
-
-                /* Account for string table and padding. */
-                reqBufSize += (strTableSize + ((((strTableSize + 3) &
-                    ~((size_t)3))) - strTableSize));
-
-                /* Account for offset table and padding. */
-                reqBufSize += (offTableSize + ((((offTableSize + 3) &
-                    ~((size_t)3))) - offTableSize));
-            }
-        }
-
-        /* Account for name. */
-        reqBufSize += (hlStrGetReqLenUTF8ToNative(fileName, 0) *
-            sizeof(HlNChar));
-    }
-
-    return reqBufSize;
-}
 
 static HlResult hlINPACxV2FileTreeSetupEntries(
     const HlPACxV2NodeTree* HL_RESTRICT fileTree, HlBool skipProxies,
     HlU8 endianFlag, const HlU32* HL_RESTRICT curOffset,
-    const HlU8* HL_RESTRICT strings, const HlU8* HL_RESTRICT offsets,
+    const char* HL_RESTRICT strings, const HlU8* HL_RESTRICT offsets,
     const HlU8* HL_RESTRICT eof, const char* HL_RESTRICT typeStr,
-    size_t extLen, HlArchiveEntry* HL_RESTRICT * HL_RESTRICT curEntry,
-    void* HL_RESTRICT * HL_RESTRICT curDataPtr)
+    size_t extSrcLen, size_t extDstLen, HlArchive* HL_RESTRICT hlArcBuf)
 {
     /* Get nodes pointer. */
     const HlPACxV2Node* nodes = (const HlPACxV2Node*)hlOff32Get(&fileTree->nodes);
     HlU32 i;
+    HlResult result;
 
     for (i = 0; i < fileTree->nodeCount; ++i)
     {
@@ -453,55 +270,62 @@ static HlResult hlINPACxV2FileTreeSetupEntries(
             hlOff32Get(&nodes[i].data);
 
         const char* fileName = (const char*)hlOff32Get(&nodes[i].name);
+        HlArchiveEntry entry;
 
         /* Skip proxies if requested. */
         if (skipProxies && (dataEntry->flags & HL_PACXV2_DATA_FLAGS_NOT_HERE))
             continue;
 
-        /* Set path and size within file entry. */
-        (*curEntry)->path = (const HlNChar*)(*curDataPtr);
-        (*curEntry)->size = (size_t)dataEntry->dataSize;
-
-        /* Copy file name. */
+        /* Setup path buffer. */
         {
-            /* Convert file name to native encoding and copy into buffer. */
-            HlNChar* curNamePtr = (HlNChar*)(*curDataPtr);
-            size_t fileNameLen = hlStrConvUTF8ToNativeNoAlloc(
-                fileName, curNamePtr, 0, 0);
+            /* Get required length for native path buffer. */
+            const size_t fileNameSize = hlStrGetReqLenUTF8ToNative(fileName, 0);
+            if (!fileNameSize) return HL_ERROR_INVALID_DATA;
 
-            if (!fileNameLen) return HL_ERROR_UNKNOWN;
+            /* Allocate native path buffer, convert fileName, and store the result. */
 
-            /* Convert extension to native encoding and copy into buffer. */
-            curNamePtr[fileNameLen - 1] = HL_NTEXT('.');
+            /*
+              NOTE: We add one to account for the dot in the extension.
+              The null-terminator is already accounted for by hlStrGetReqLenUTF8ToNative.
+            */
+            entry.path = HL_ALLOC_ARR(HlNChar, fileNameSize + extDstLen + 1);
+            if (!entry.path) return HL_ERROR_OUT_OF_MEMORY;
 
-            if (!hlStrConvUTF8ToNativeNoAlloc(typeStr,
-                &curNamePtr[fileNameLen], extLen, 0))
+            if (!hlStrConvUTF8ToNativeNoAlloc(fileName,
+                entry.path, 0, fileNameSize))
             {
+                hlFree(entry.path);
                 return HL_ERROR_UNKNOWN;
             }
 
-            /* Increase fileNameLen. */
-            fileNameLen += extLen;
+            /* Convert extension to native encoding and copy into buffer. */
+            entry.path[fileNameSize - 1] = HL_NTEXT('.');
 
-            /* Set null terminator and increase curDataPtr. */
-            curNamePtr[fileNameLen++] = HL_NTEXT('\0');
-            *curDataPtr = &curNamePtr[fileNameLen];
+            if (!hlStrConvUTF8ToNativeNoAlloc(typeStr,
+                &entry.path[fileNameSize], extSrcLen, 0))
+            {
+                hlFree(entry.path);
+                return HL_ERROR_UNKNOWN;
+            }
+
+            /* Set null terminator. */
+            entry.path[fileNameSize + extDstLen] = HL_NTEXT('\0');
         }
 
+        /* Set entry size and meta. */
+        entry.size = (size_t)dataEntry->dataSize;
+        entry.meta = 0;
+
         /* Set meta and data within file entry. */
-        if (!(dataEntry->flags & HL_PACXV2_DATA_FLAGS_NOT_HERE))
+        if ((dataEntry->flags & HL_PACXV2_DATA_FLAGS_NOT_HERE) == 0)
         {
             /* Copy data and "unmerge" merged BINA data if necessary. */
             const HlU32* data = (const HlU32*)(dataEntry + 1);
             const HlU32* dataEnd = (const HlU32*)HL_ADD_OFFC(
                 data, dataEntry->dataSize);
 
-            void* dstData;
+            HlU8 *dstDataBuf, *curDataPtr;
             HlBool isMergedBINA = HL_FALSE;
-
-            /* Set meta and data within file entry. */
-            (*curEntry)->meta = 0;
-            (*curEntry)->data = (HlUMax)((HlUPtr)(*curDataPtr));
 
             /* Determine if this is a "merged" BINA file. */
             while (HL_TRUE)
@@ -513,11 +337,9 @@ static HlResult hlINPACxV2FileTreeSetupEntries(
                         /* This is a merged BINA file. */
                         isMergedBINA = HL_TRUE;
 
-                        /* Set dstData and increase curDataPtr. */
-                        dstData = HL_ADD_OFF(*curDataPtr, sizeof(HlBINAV2Header) +
+                        /* Increase entry size to account for BINA header, DATA block, and padding. */
+                        entry.size += (sizeof(HlBINAV2Header) +
                             (sizeof(HlBINAV2BlockDataHeader) * 2));
-
-                        *curDataPtr = dstData;
                     }
 
                     /* Now we know if this is a merged BINA file or not; we can stop checking. */
@@ -532,105 +354,118 @@ static HlResult hlINPACxV2FileTreeSetupEntries(
                     break;
             }
 
-            /* Copy data. */
-            memcpy(*curDataPtr, data, dataEntry->dataSize);
-
-            /* Increase curDataPtr. */
-            *curDataPtr = HL_ADD_OFF(*curDataPtr, dataEntry->dataSize);
-
             /* "Unmerge" this "merged" BINA file. */
             if (isMergedBINA)
             {
+                HL_LIST(HlINPACxV2MergedStrEntry) mergedStrs;
                 const HlU32* prevOffset = data;
-                size_t strTableSize = 0, offTableSize = 0;
+                size_t strTablePadding, offTablePadding,
+                    strTableSize = 0, offTableSize = 0;
 
-                /* Copy strings and fix string offsets. */
+                HlU32 curStrTableOff = dataEntry->dataSize;
+
+                /* Initialize merged string entry list. */
+                /* TODO: Use stack unless we run out of space, then switch to heap. */
+                HL_LIST_INIT(mergedStrs);
+
+                /* Compute table sizes and setup merged string entries. */
                 {
-                    HL_LIST(HlINPACxV2MergedStrEntry) strPtrs;
                     const HlU32* firstDataOffset = curOffset;
                     const HlU8* firstDataOffsetPos = offsets;
 
-                    /* Initialize string pointers list. */
-                    /* TODO: Use stack unless we run out of space, then switch to heap. */
-                    HL_LIST_INIT(strPtrs);
-
                     while (HL_TRUE)
                     {
-                        const HlU8* curOffsetVal;
-
                         /* Stop if this offset is not part of the current file. */
                         if (curOffset >= dataEnd) break;
 
-                        /* Get the value the current offset points to. */
-                        curOffsetVal = (const HlU8*)hlOff32Get(curOffset);
-
-                        /* Copy strings. */
-                        if (curOffsetVal >= strings)
+                        /* Account for strings. */
                         {
-                            /*
-                                Ensure this string pointer is not already
-                                in the string pointers list.
-                            */
-                            size_t i2;
-                            HlBool skipString = HL_FALSE;
+                            /* Get the value the current offset points to. */
+                            const char* curOffsetVal = (const char*)hlOff32Get(curOffset);
 
-                            for (i2 = 0; i2 < strPtrs.count; ++i2)
+                            /* Ensure this is a string. */
+                            if (curOffsetVal >= strings)
                             {
-                                if (strPtrs.data[i2].srcStrPtr == (const char*)curOffsetVal)
+                                /*
+                                   Ensure this string is not already
+                                   in the merged string entries list.
+                                */
+                                size_t i2;
+                                HlBool skipString = HL_FALSE;
+
+                                for (i2 = 0; i2 < mergedStrs.count; ++i2)
                                 {
-                                    /* Fix string offset. */
-                                    const HlU32 newStrOffset = (HlU32)(
-                                        strPtrs.data[i2].dstStrPtr - (HlU8*)dstData);
-
-                                    ((HlU32*)dstData)[curOffset - data] =
-                                        (hlBINANeedsSwap(endianFlag)) ?
-                                        hlSwapU32(newStrOffset) : newStrOffset;
-
-                                    /* Skip this string. */
-                                    skipString = HL_TRUE;
-                                    break;
-                                }
-                            }
-
-                            if (!skipString)
-                            {
-                                {
-                                    const HlINPACxV2MergedStrEntry strPtrEntry =
+                                    if (mergedStrs.data[i2].str == curOffsetVal)
                                     {
-                                        (const char*)curOffsetVal,
-                                        (HlU8*)(*curDataPtr)
+                                        skipString = HL_TRUE;
+                                        break;
+                                    }
+                                }
+
+                                if (!skipString)
+                                {
+                                    /*
+                                       Make a temporary "merged string entry" full of information
+                                       we'll need later to set up this string in the BINA data.
+                                    */
+                                    const HlINPACxV2MergedStrEntry mergedStr =
+                                    {
+                                        curOffsetVal,               /* str */
+                                        strlen(curOffsetVal) + 1,   /* size */
+                                        curStrTableOff              /* off */
                                     };
 
-                                    const HlU32 newStrOffset = (HlU32)(
-                                        strPtrEntry.dstStrPtr - (HlU8*)dstData);
-
-                                    /* Add string pointer to string pointers list. */
-                                    if (HL_FAILED(HL_LIST_PUSH(strPtrs, strPtrEntry)))
+                                    /* Add merged string entry to string list. */
                                     {
-                                        HL_ASSERT(HL_FALSE);
-                                        return 0;
+                                        HlINPACxV2MergedStrEntry* oldDataPtr = mergedStrs.data;
+                                        result = HL_LIST_PUSH(mergedStrs, mergedStr);
+
+                                        if (HL_FAILED(result))
+                                        {
+                                            mergedStrs.data = oldDataPtr;
+                                            HL_LIST_FREE(mergedStrs);
+                                            hlFree(entry.path);
+                                            return result;
+                                        }
                                     }
 
-                                    /* Fix string offset. */
-                                    ((HlU32*)dstData)[curOffset - data] =
-                                        (hlBINANeedsSwap(endianFlag)) ?
-                                        hlSwapU32(newStrOffset) : newStrOffset;
-                                }
-
-                                {
-                                    /* Copy string and get length. */
-                                    char* curStr = (char*)(*curDataPtr);
-                                    size_t strSize = (hlStrCopyAndLen(
-                                        (const char*)curOffsetVal,
-                                        curStr) + 1);
-
-                                    /* Increase strTableSize and curDataPtr. */
-                                    strTableSize += strSize;
-                                    curStr += strSize;
-                                    *curDataPtr = curStr;
+                                    /* Increase current string offset and string table size. */
+                                    curStrTableOff += (HlU32)mergedStr.size;
+                                    strTableSize += mergedStr.size;
                                 }
                             }
                         }
+
+                        /* Account for offset table entries. */
+                        {
+                            const HlU32 offDiff = (HlU32)(curOffset - prevOffset);
+                            
+                            if (offDiff <= 0x3FU)
+                            {
+                                /* Account for six-bit BINA offset table entry. */
+                                ++offTableSize;
+                            }
+                            else if (offDiff <= 0x3FFFU)
+                            {
+                                /* Account for fourteen-bit BINA offset table entry. */
+                                offTableSize += 2;
+                            }
+                            else
+                            {
+                                /*
+                                    Ensure offset difference is within 30 bits.
+                                    (This *ALWAYS* should be true, so if it's false,
+                                    something has seriously gone wrong.)
+                                */
+                                HL_ASSERT(offDiff <= 0x3FFFFFFFU);
+
+                                /* Account for thirty-bit BINA offset table entry. */
+                                offTableSize += 4;
+                            }
+                        }
+
+                        /* Set previous offset pointer. */
+                        prevOffset = curOffset;
 
                         /*
                             Get the next offset's address - return early
@@ -640,73 +475,177 @@ static HlResult hlINPACxV2FileTreeSetupEntries(
                             break;
                     }
 
-                    /* Free string pointers list. */
-                    HL_LIST_FREE(strPtrs);
-
-                    /* Reset curOffset and offsets pointers. */
+                    /* Reset curOffset, offsets, and prevOffset pointers. */
                     curOffset = firstDataOffset;
                     offsets = firstDataOffsetPos;
+                    prevOffset = data;
                 }
 
-                /* Pad string table. */
+                /* Compute table padding amounts and setup data buffer. */
                 {
-                    /* Compute string table padding. */
-                    const size_t strTablePadding = ((((strTableSize + 3) &
-                        ~((size_t)3))) - strTableSize);
+                    HlBINAV2Header* dstHeader;
+                    HlBINAV2BlockDataHeader* dstDataBlock;
+
+                    /* Compute string and offset table padding amount. */
+                    strTablePadding = (HL_ALIGN(strTableSize, 4) - strTableSize);
+                    offTablePadding = (HL_ALIGN(offTableSize, 4) - offTableSize);
+
+                    /* Increase string and offset table size to account for padding. */
+                    strTableSize += strTablePadding;
+                    offTableSize += offTablePadding;
+
+                    /* Increase entry size to account for string and offset tables. */
+                    entry.size += strTableSize;
+                    entry.size += offTableSize;
+
+                    /* Allocate data buffer. */
+                    dstDataBuf = (HlU8*)hlAlloc(entry.size);
+
+                    if (!dstDataBuf)
+                    {
+                        HL_LIST_FREE(mergedStrs);
+                        hlFree(entry.path);
+                        return HL_ERROR_OUT_OF_MEMORY;
+                    }
+
+                    /* Set data pointer within file entry. */
+                    entry.data = (HlUMax)((HlUPtr)dstDataBuf);
+
+                    /* Setup BINA header. */
+                    dstHeader = (HlBINAV2Header*)dstDataBuf;
+                    dstHeader->signature = HL_BINA_SIG;
+                    dstHeader->version[0] = '2';
+                    dstHeader->version[1] = '0';
+                    dstHeader->version[2] = '0';
+                    dstHeader->endianFlag = endianFlag;
+                    dstHeader->fileSize = (HlU32)entry.size;
+                    dstHeader->blockCount = 1;
+                    dstHeader->padding = 0;
+
+                    /* Setup BINA data block header. */
+                    dstDataBlock = (HlBINAV2BlockDataHeader*)(dstHeader + 1);
+                    dstDataBlock->signature = HL_BINAV2_BLOCK_TYPE_DATA;
+                    dstDataBlock->size = (dstHeader->fileSize - sizeof(HlBINAV2Header));
+                    dstDataBlock->stringTableOffset = dataEntry->dataSize;
+                    dstDataBlock->stringTableSize = (HlU32)strTableSize;
+                    dstDataBlock->offsetTableSize = (HlU32)offTableSize;
+                    dstDataBlock->relativeDataOffset = sizeof(HlBINAV2BlockDataHeader);
+                    dstDataBlock->padding = 0;
+
+                    /* Endian swap header and data block header if necessary. */
+                    if (hlBINANeedsSwap(endianFlag))
+                    {
+                        hlBINAV2HeaderSwap(dstHeader);
+                        hlBINAV2DataHeaderSwap(dstDataBlock, HL_TRUE);
+                    }
+
+                    /* Increase curDataPtr pointer past header and data block. */
+                    curDataPtr = (HlU8*)(dstDataBlock + 1);
+
+                    /* Pad BINA data block. */
+                    memset(curDataPtr, 0, sizeof(HlBINAV2BlockDataHeader));
+
+                    /* Increase curDataPtr pointer past BINA data block padding. */
+                    curDataPtr += sizeof(HlBINAV2BlockDataHeader);
+
+                    /* Increase dstDataBuf past curDataPtr. */
+                    dstDataBuf = curDataPtr;
+
+                    /* Copy data. */
+                    memcpy(curDataPtr, data, dataEntry->dataSize);
+
+                    /* Increase curDataPtr pointer past data. */
+                    curDataPtr += dataEntry->dataSize;
+
+                    /* TODO: Pad data? */
+                }
+
+                /* Setup string table. */
+                {
+                    /* Copy strings into data buffer. */
+                    size_t i2;
+                    for (i2 = 0; i2 < mergedStrs.count; ++i2)
+                    {
+                        /* Copy strings (and null terminators) into data buffer. */
+                        memcpy(curDataPtr, mergedStrs.data[i2].str,
+                            mergedStrs.data[i2].size);
+
+                        /* Increase curDataPtr pointer past string. */
+                        curDataPtr += mergedStrs.data[i2].size;
+                    }
 
                     /* Pad string table. */
-                    memset(*curDataPtr, 0, strTablePadding);
-                    
-                    /* Increase strTableSize and curDataPtr. */
-                    strTableSize += strTablePadding;
-                    *curDataPtr = HL_ADD_OFF(*curDataPtr, strTablePadding);
+                    memset(curDataPtr, 0, strTablePadding);
+
+                    /* Increase curDataPtr pointer past string table padding. */
+                    curDataPtr += strTablePadding;
                 }
 
-                /* Setup offset table entries and fix non-string offsets. */
+                /* Fix offsets and setup offset table. */
                 while (HL_TRUE)
                 {
-                    const HlU8* curOffsetVal;
+                    const char* curOffVal;
+                    HlU32* dstOffPtr;
 
                     /* Stop if this offset is not part of the current file. */
                     if (curOffset >= dataEnd) break;
 
                     /* Get the value the current offset points to. */
-                    curOffsetVal = (const HlU8*)hlOff32Get(curOffset);
+                    curOffVal = (const char*)hlOff32Get(curOffset);
+
+                    /* Get a pointer to the destination offset in the data buffer. */
+                    dstOffPtr = (((HlU32*)dstDataBuf) +
+                        (curOffset - data));
+
+                    /* Copy strings and fix string offsets. */
+                    if (curOffVal >= strings)
+                    {
+                        /*
+                           Ensure this string is not already
+                           in the merged string entries list.
+                        */
+                        size_t i2;
+                        for (i2 = 0; i2 < mergedStrs.count; ++i2)
+                        {
+                            /* Fix string offsets. */
+                            if (mergedStrs.data[i2].str == curOffVal)
+                            {
+                                *dstOffPtr = mergedStrs.data[i2].off;
+                                break;
+                            }
+                        }
+                    }
 
                     /* Fix non-string offsets. */
-                    if (curOffsetVal < strings)
+                    else
                     {
-                        const HlU32 newOffset = (HlU32)(
-                            curOffsetVal - (const HlU8*)data);
+                        *dstOffPtr = (HlU32)(
+                            (const HlU8*)curOffVal -
+                            (const HlU8*)data);
+                    }
 
-                        ((HlU32*)dstData)[curOffset - data] =
-                            (hlBINANeedsSwap(endianFlag)) ?
-                            hlSwapU32(newOffset) : newOffset;
+                    /* Endian-swap offset if necessary. */
+                    if (hlBINANeedsSwap(endianFlag))
+                    {
+                        hlSwapU32P(dstOffPtr);
                     }
 
                     /* Setup offset table entry. */
                     {
-                        HlU8* offEntry = (HlU8*)(*curDataPtr);
                         const HlU32 offDiff = (HlU32)(curOffset - prevOffset);
 
                         if (offDiff <= 0x3FU)
                         {
                             /* Setup six-bit BINA offset table entry. */
-                            *(offEntry++) = (HL_BINA_OFF_SIZE_SIX_BIT | (HlU8)offDiff);
-
-                            /* Increase offTableSize. */
-                            ++offTableSize;
+                            *(curDataPtr++) = (HL_BINA_OFF_SIZE_SIX_BIT | (HlU8)offDiff);
                         }
                         else if (offDiff <= 0x3FFFU)
                         {
                             /* Setup fourteen-bit BINA offset table entry. */
-                            *(offEntry++) = (HL_BINA_OFF_SIZE_FOURTEEN_BIT |
+                            *(curDataPtr++) = (HL_BINA_OFF_SIZE_FOURTEEN_BIT |
                                 (HlU8)(offDiff >> 8));
 
-                            *(offEntry++) = (HlU8)(offDiff & 0xFF);
-
-                            /* Increase offTableSize. */
-                            offTableSize += 2;
+                            *(curDataPtr++) = (HlU8)(offDiff & 0xFF);
                         }
                         else
                         {
@@ -718,19 +657,13 @@ static HlResult hlINPACxV2FileTreeSetupEntries(
                             HL_ASSERT(offDiff <= 0x3FFFFFFFU);
 
                             /* Setup thirty-bit BINA offset table entry. */
-                            *(offEntry++) = (HL_BINA_OFF_SIZE_THIRTY_BIT |
+                            *(curDataPtr++) = (HL_BINA_OFF_SIZE_THIRTY_BIT |
                                 (HlU8)(offDiff >> 24));
 
-                            *(offEntry++) = (HlU8)((offDiff & 0xFF0000) >> 16);
-                            *(offEntry++) = (HlU8)((offDiff & 0xFF00) >> 8);
-                            *(offEntry++) = (HlU8)(offDiff & 0xFF);
-
-                            /* Increase offTableSize. */
-                            offTableSize += 4;
+                            *(curDataPtr++) = (HlU8)((offDiff & 0xFF0000) >> 16);
+                            *(curDataPtr++) = (HlU8)((offDiff & 0xFF00) >> 8);
+                            *(curDataPtr++) = (HlU8)(offDiff & 0xFF);
                         }
-
-                        /* Increase curDataPtr. */
-                        *curDataPtr = offEntry;
                     }
 
                     /* Set previous offset pointer. */
@@ -744,77 +677,49 @@ static HlResult hlINPACxV2FileTreeSetupEntries(
                         break;
                 }
 
+                /* Free merged string entry list. */
+                HL_LIST_FREE(mergedStrs);
+
                 /* Pad offset table. */
+                memset(curDataPtr, 0, offTablePadding);
+            }
+            else
+            {
+                /* Allocate data buffer. */
+                dstDataBuf = (HlU8*)hlAlloc(entry.size);
+
+                if (!dstDataBuf)
                 {
-                    /* Compute string table padding. */
-                    const size_t offTablePadding = ((((offTableSize + 3) &
-                        ~((size_t)3))) - offTableSize);
-
-                    /* Pad offset table. */
-                    memset(*curDataPtr, 0, offTablePadding);
-
-                    /* Increase offTableSize and curDataPtr. */
-                    offTableSize += offTablePadding;
-                    *curDataPtr = HL_ADD_OFF(*curDataPtr, offTablePadding);
+                    hlFree(entry.path);
+                    return HL_ERROR_OUT_OF_MEMORY;
                 }
 
-                /*
-                   Increase current entry size to account for header,
-                   data block, and string/offset tables.
-                */
-                (*curEntry)->size += sizeof(HlBINAV2Header) +
-                    (sizeof(HlBINAV2BlockDataHeader) * 2);
+                /* Copy data. */
+                memcpy(dstDataBuf, data, entry.size);
 
-                (*curEntry)->size += (strTableSize + offTableSize);
-
-                /* Setup BINA header and data block header. */
-                {
-                    HlBINAV2Header* dstHeader = (HlBINAV2Header*)(
-                        (HlUPtr)((*curEntry)->data));
-
-                    HlBINAV2BlockDataHeader* dstDataBlock =
-                        (HlBINAV2BlockDataHeader*)(dstHeader + 1);
-
-                    /* Setup BINA header. */
-                    dstHeader->signature = HL_BINA_SIG;
-                    dstHeader->version[0] = '2';
-                    dstHeader->version[1] = '0';
-                    dstHeader->version[2] = '0';
-                    dstHeader->endianFlag = endianFlag;
-                    dstHeader->fileSize = (HlU32)((*curEntry)->size);
-                    dstHeader->blockCount = 1;
-                    dstHeader->padding = 0;
-
-                    /* Setup BINA data block header. */
-                    dstDataBlock->signature = HL_BINAV2_BLOCK_TYPE_DATA;
-                    dstDataBlock->size = (dstHeader->fileSize - sizeof(HlBINAV2Header));
-                    dstDataBlock->stringTableOffset = dataEntry->dataSize;
-                    dstDataBlock->stringTableSize = (HlU32)strTableSize;
-                    dstDataBlock->offsetTableSize = (HlU32)offTableSize;
-                    dstDataBlock->relativeDataOffset = sizeof(HlBINAV2BlockDataHeader);
-                    dstDataBlock->padding = 0;
-
-                    /* Set padding. */
-                    memset(dstDataBlock + 1, 0, sizeof(HlBINAV2BlockDataHeader));
-
-                    /* Endian swap header and data block header if necessary. */
-                    if (hlBINANeedsSwap(endianFlag))
-                    {
-                        hlBINAV2HeaderSwap(dstHeader);
-                        hlBINAV2DataHeaderSwap(dstDataBlock, HL_TRUE);
-                    }
-                }
+                /* Set data pointer within file entry. */
+                entry.data = (HlUMax)((HlUPtr)dstDataBuf);
             }
         }
         else
         {
             /* Set meta and data within file entry. */
-            (*curEntry)->meta = HL_ARC_ENTRY_STREAMING_FLAG;
-            (*curEntry)->data = 0;
+            entry.meta = HL_ARC_ENTRY_STREAMING_FLAG;
+            entry.data = (HlUMax)((HlUPtr)NULL);
         }
 
-        /* Increase current entry pointer. */
-        ++(*curEntry);
+        /* Add entry to archive. */
+        {
+            HlArchiveEntry* oldDataPtr = hlArcBuf->entries.data;
+            result = HL_LIST_PUSH(hlArcBuf->entries, entry);
+
+            if (HL_FAILED(result))
+            {
+                hlArcBuf->entries.data = oldDataPtr;
+                hlArchiveEntryDestruct(&entry);
+                return result;
+            }
+        }
     }
 
     return HL_RESULT_SUCCESS;
@@ -823,118 +728,18 @@ static HlResult hlINPACxV2FileTreeSetupEntries(
 HlResult hlPACxV2Read(const HlBlob* const HL_RESTRICT * HL_RESTRICT pacs,
     size_t pacCount, HlArchive* HL_RESTRICT * HL_RESTRICT archive)
 {
-    void* hlArcBuf;
-    HlArchiveEntry* curEntry;
-    size_t entryCount = 0;
+    HlArchive* hlArcBuf;
     const HlBool skipProxies = (pacCount > 1);
 
     /* Allocate HlArchive buffer. */
-    {
-        /* Compute required size for HlArchive buffer. */
-        size_t i, reqBufSize = sizeof(HlArchive);
-        for (i = 0; i < pacCount; ++i)
-        {
-            /* Get data block pointer. */
-            const HlPACxV2BlockDataHeader* dataBlock = (const
-                HlPACxV2BlockDataHeader*)hlBINAV2GetDataBlock(pacs[i]);
-
-            const HlU32* firstDataOffset;
-            const HlU8 *strings, *offsets, *eof;
-
-            if (!dataBlock) return HL_ERROR_INVALID_DATA;
-
-            /* Get current offset pointer. */
-            firstDataOffset = (const HlU32*)pacs[i]->data;
-
-            /* Get strings, offsets, and eof pointers. */
-            strings = (const HlU8*)hlPACxV2DataGetStringTable(dataBlock);
-            offsets = (const HlU8*)hlPACxV2DataGetOffsetTable(dataBlock);
-            eof = (offsets + dataBlock->offsetTableSize);
-
-            /* OPTIMIZATION: Skip through all offsets that aren't part of the data. */
-            {
-                const HlU32* dataEntries = (const HlU32*)
-                    hlPACxV2DataGetDataEntries(dataBlock);
-
-                while (offsets < eof)
-                {
-                    /* Break if we've reached an offset within the data entries. */
-                    if (firstDataOffset >= dataEntries) break;
-
-                    /*
-                        Get the next offset's address - break if
-                        we've reached the end of the offset table.
-                    */
-                    if (!hlBINAOffsetsNext(&offsets, &firstDataOffset))
-                        break;
-                }
-            }
-
-            /* Account for file trees. */
-            {
-                /* Get pointers. */
-                const HlPACxV2NodeTree* typeTree = (const HlPACxV2NodeTree*)
-                    (dataBlock + 1);
-
-                const HlPACxV2Node* typeNodes = (const HlPACxV2Node*)
-                    hlOff32Get(&typeTree->nodes);
-
-                HlU32 i2;
-
-                /* Account for file trees. */
-                for (i2 = 0; i2 < typeTree->nodeCount; ++i2)
-                {
-                    const HlPACxV2NodeTree* fileTree;
-                    const char* typeStr = (const char*)hlOff32Get(&typeNodes[i2].name);
-                    const char* colonPtr = strchr(typeStr, ':');
-                    size_t extSize;
-
-                    /* Skip ResPacDepend file trees. */
-                    if (!strcmp(colonPtr + 1, HlINPACxV2SplitType)) continue;
-
-                    /* Get fileTree pointer. */
-                    fileTree = (const HlPACxV2NodeTree*)hlOff32Get(&typeNodes[i2].data);
-
-                    /* Compute extension size. */
-                    extSize = (size_t)(colonPtr - typeStr);
-
-                    /* Account for UTF-8 -> native conversion and dot. */
-                    extSize = ((hlStrGetReqLenUTF8ToNative(typeStr, extSize) +
-                        1) * sizeof(HlNChar));
-
-                    /* Account for file trees. */
-                    reqBufSize += hlINPACxV2FileTreeGetReqSize(
-                        fileTree, skipProxies, firstDataOffset, strings,
-                        offsets, eof, &entryCount);
-
-                    /* Account for extension size. */
-                    reqBufSize += (extSize * fileTree->nodeCount);
-                }
-            }
-        }
-
-        /* Account for archive entries. */
-        reqBufSize += (sizeof(HlArchiveEntry) * entryCount);
-
-        /* Allocate archive buffer. */
-        hlArcBuf = hlAlloc(reqBufSize);
-        if (!hlArcBuf) return HL_ERROR_OUT_OF_MEMORY;
-    }
+    hlArcBuf = HL_ALLOC_OBJ(HlArchive);
+    if (!hlArcBuf) return HL_ERROR_OUT_OF_MEMORY;
 
     /* Setup HlArchive. */
-    {
-        /* Get pointers. */
-        HlArchive* arc = (HlArchive*)hlArcBuf;
-        curEntry = (HlArchiveEntry*)(arc + 1);
-
-        /* Setup HlArchive. */
-        arc->entries = curEntry;
-        arc->entryCount = entryCount;
-    }
+    HL_LIST_INIT(hlArcBuf->entries);
 
     /* Setup archive entries. */
     {
-        void* curDataPtr = &curEntry[entryCount];
         size_t i;
         HlResult result;
 
@@ -945,7 +750,8 @@ HlResult hlPACxV2Read(const HlBlob* const HL_RESTRICT * HL_RESTRICT pacs,
                 HlPACxV2BlockDataHeader*)hlBINAV2GetDataBlock(pacs[i]);
 
             const HlU32* firstDataOffset;
-            const HlU8 *strings, *offsets, *eof;
+            const char* strings;
+            const HlU8 *offsets, *eof;
 
             if (!dataBlock) return HL_ERROR_INVALID_DATA;
 
@@ -953,7 +759,7 @@ HlResult hlPACxV2Read(const HlBlob* const HL_RESTRICT * HL_RESTRICT pacs,
             firstDataOffset = (const HlU32*)pacs[i]->data;
 
             /* Get strings, offsets, and eof pointers. */
-            strings = (const HlU8*)hlPACxV2DataGetStringTable(dataBlock);
+            strings = hlPACxV2DataGetStringTable(dataBlock);
             offsets = (const HlU8*)hlPACxV2DataGetOffsetTable(dataBlock);
             eof = (offsets + dataBlock->offsetTableSize);
 
@@ -993,7 +799,7 @@ HlResult hlPACxV2Read(const HlBlob* const HL_RESTRICT * HL_RESTRICT pacs,
                     const HlPACxV2NodeTree* fileTree;
                     const char* typeStr = (const char*)hlOff32Get(&typeNodes[i2].name);
                     const char* colonPtr = strchr(typeStr, ':');
-                    size_t extLen;
+                    size_t extSrcLen, extDstLen;
 
                     /* Skip ResPacDepend file trees. */
                     if (!strcmp(colonPtr + 1, HlINPACxV2SplitType)) continue;
@@ -1002,20 +808,20 @@ HlResult hlPACxV2Read(const HlBlob* const HL_RESTRICT * HL_RESTRICT pacs,
                     fileTree = (const HlPACxV2NodeTree*)hlOff32Get(&typeNodes[i2].data);
 
                     /* Compute extension length. */
-                    extLen = (size_t)(colonPtr - typeStr);
+                    extSrcLen = (size_t)(colonPtr - typeStr);
 
                     /* Account for UTF-8 -> native conversion. */
-                    extLen = hlStrGetReqLenUTF8ToNative(typeStr, extLen);
+                    extDstLen = hlStrGetReqLenUTF8ToNative(typeStr, extSrcLen);
 
                     /* Setup file entries. */
                     result = hlINPACxV2FileTreeSetupEntries(fileTree,
                         skipProxies, ((const HlPACxV2Header*)pacs[i]->data)->endianFlag,
-                        firstDataOffset, strings, offsets, eof, typeStr, extLen,
-                        &curEntry, &curDataPtr);
+                        firstDataOffset, strings, offsets, eof, typeStr, extSrcLen,
+                        extDstLen, hlArcBuf);
 
                     if (HL_FAILED(result))
                     {
-                        hlFree(hlArcBuf);
+                        hlArchiveFree(hlArcBuf);
                         return result;
                     }
                 }
@@ -1024,7 +830,7 @@ HlResult hlPACxV2Read(const HlBlob* const HL_RESTRICT * HL_RESTRICT pacs,
     }
 
     /* Set archive pointer and return success. */
-    *archive = (HlArchive*)hlArcBuf;
+    *archive = hlArcBuf;
     return HL_RESULT_SUCCESS;
 }
 
@@ -1198,199 +1004,6 @@ void hlPACxV3Fix(HlBlob* blob)
     }
 }
 
-#ifdef HL_IN_WIN32_UNICODE
-static size_t hlINPACxV3FileNodesGetReqSize(const HlPACxV3Node* fileNodes,
-    const HlPACxV3Node* fileNode, HlBool skipProxies,
-    char* HL_RESTRICT pathBuf, size_t* HL_RESTRICT entryCount)
-{
-    const HlS32* childIndices = (const HlS32*)hlOff64Get(&fileNode->childIndices);
-    size_t reqBufSize = 0;
-    HlU16 i;
-
-    if (fileNode->hasData)
-    {
-        const HlPACxV3DataEntry* dataEntry = (const HlPACxV3DataEntry*)
-            hlOff64Get(&fileNode->data);
-
-        /* Skip proxies if requested. */
-        if (!skipProxies || dataEntry->dataType != HL_PACXV3_DATA_TYPE_NOT_HERE)
-        {
-            /* Account for name without null terminator. */
-            reqBufSize += (hlStrGetReqLenUTF8ToUTF16(pathBuf,
-                (size_t)fileNode->bufStartIndex) * sizeof(HlNChar));
-
-            /* Account for extension and null terminator (add 1 for dot). */
-            reqBufSize += ((hlStrGetReqLenUTF8ToUTF16((const char*)
-                hlOff64Get(&dataEntry->extension), 0) + 1) * sizeof(HlNChar));
-
-            /* Account for data. */
-            if (dataEntry->dataType != HL_PACXV3_DATA_TYPE_NOT_HERE)
-                reqBufSize += (size_t)dataEntry->dataSize;
-
-            /* Increment entry count. */
-            ++(*entryCount);
-        }
-    }
-    else if (fileNode->name)
-    {
-        /* Copy name into path buffer. */
-        strcpy(&pathBuf[fileNode->bufStartIndex],
-            (const char*)hlOff64Get(&fileNode->name));
-    }
-
-    /* Recurse through children. */
-    for (i = 0; i < fileNode->childCount; ++i)
-    {
-        reqBufSize += hlINPACxV3FileNodesGetReqSize(fileNodes,
-            &fileNodes[childIndices[i]], skipProxies, pathBuf,
-            entryCount);
-    }
-
-    return reqBufSize;
-}
-#endif
-
-static size_t hlINPACxV3FileTreeGetReqSize(
-    const HlPACxV3NodeTree* HL_RESTRICT fileTree,
-    HlBool skipProxies, size_t* HL_RESTRICT entryCount)
-{
-    const HlPACxV3Node* fileNodes = (const HlPACxV3Node*)hlOff64Get(&fileTree->nodes);
-
-#ifdef HL_IN_WIN32_UNICODE
-    char pathBuf[256]; /* PACxV3 names are hard-limited to 255, not including null terminator. */
-
-    /* Set first character in path buffer to null terminator, just in-case(TM). */
-    pathBuf[0] = '\0';
-
-    /* Recursively get required size. */
-    return hlINPACxV3FileNodesGetReqSize(fileNodes,
-        fileNodes, skipProxies, pathBuf, entryCount);
-#else
-    const HlS32* fileDataIndices = (const HlS32*)hlOff64Get(&fileTree->dataNodeIndices);
-    size_t reqBufSize = 0;
-    HlU64 i;
-
-    for (i = 0; i < fileTree->dataNodeCount; ++i)
-    {
-        const HlPACxV3Node* fileNode = &fileNodes[fileDataIndices[i]];
-        const HlPACxV3DataEntry* dataEntry = (const HlPACxV3DataEntry*)
-            hlOff64Get(&fileNode->data);
-
-        /* Skip proxies if requested. */
-        if (skipProxies && dataEntry->dataType == HL_PACXV3_DATA_TYPE_NOT_HERE)
-            continue;
-
-        /* Account for name without null terminator. */
-        reqBufSize += (size_t)fileNode->bufStartIndex;
-
-        /* Account for extension and null terminator (add 2 for dot and null terminator). */
-        reqBufSize += (strlen((const char*)hlOff64Get(&dataEntry->extension)) + 2);
-
-        /* Account for data. */
-        if (dataEntry->dataType != HL_PACXV3_DATA_TYPE_NOT_HERE)
-            reqBufSize += (size_t)dataEntry->dataSize;
-
-        /* Increment entry count. */
-        ++(*entryCount);
-    }
-
-    return reqBufSize;
-#endif
-}
-
-static HlResult hlINPACxV3FileNodesSetupEntries(const HlPACxV3Node* fileNodes,
-    const HlPACxV3Node* fileNode, HlBool skipProxies,
-    char* HL_RESTRICT pathBuf, HlArchiveEntry* HL_RESTRICT * HL_RESTRICT curEntry,
-    void* HL_RESTRICT * HL_RESTRICT curDataPtr)
-{
-    const HlS32* childIndices = (const HlS32*)hlOff64Get(&fileNode->childIndices);
-    HlU16 i;
-
-    if (fileNode->hasData)
-    {
-        const HlPACxV3DataEntry* dataEntry = (const HlPACxV3DataEntry*)
-            hlOff64Get(&fileNode->data);
-
-        /* Skip proxies if requested. */
-        if (!skipProxies || dataEntry->dataType != HL_PACXV3_DATA_TYPE_NOT_HERE)
-        {
-            HlNChar* curStrPtr = (HlNChar*)(*curDataPtr);
-            size_t strLen;
-
-            /* Set path and size within archive entry. */
-            (*curEntry)->path = curStrPtr;
-            (*curEntry)->size = (size_t)dataEntry->dataSize;
-
-            /* Ensure node name length is > 0. */
-            if (!fileNode->bufStartIndex) return HL_ERROR_INVALID_DATA;
-
-            /* Convert to native encoding and copy into HlArchive buffer. */
-            strLen = hlStrConvUTF8ToNativeNoAlloc(pathBuf,
-                curStrPtr, fileNode->bufStartIndex, 0);
-
-            if (!strLen) return HL_ERROR_INVALID_DATA;
-
-            /* Increment curStrPtr. */
-            curStrPtr += strLen;
-
-            /* Put dot for extension in HlArchive buffer. */
-            *(curStrPtr++) = HL_NTEXT('.');
-
-            /* Copy extension into HlArchive buffer and increase curStrPtr. */
-            strLen = hlStrConvUTF8ToNativeNoAlloc((const char*)hlOff64Get(
-                &dataEntry->extension), curStrPtr, 0, 0);
-
-            if (!strLen) return HL_ERROR_INVALID_DATA;
-            curStrPtr += strLen;
-
-            /* Increase curDataPtr. */
-            *curDataPtr = curStrPtr;
-
-            /* Set meta and data within archive entry and copy data if necessary. */
-            if (dataEntry->dataType != HL_PACXV3_DATA_TYPE_NOT_HERE)
-            {
-                /* Set meta and data within archive entry. */
-                (*curEntry)->meta = 0;
-                (*curEntry)->data = (HlUMax)((HlUPtr)(*curDataPtr));
-
-                /* Copy data. */
-                memcpy(*curDataPtr, hlOff64Get(&dataEntry->data),
-                    (size_t)dataEntry->dataSize);
-                
-                /* Increase curDataPtr. */
-                *curDataPtr = HL_ADD_OFF(*curDataPtr, dataEntry->dataSize);
-            }
-            else
-            {
-                /* Set meta and data within archive entry. */
-                (*curEntry)->meta = HL_ARC_ENTRY_STREAMING_FLAG;
-                (*curEntry)->data = 0; /* TODO: Set this to something else? */
-            }
-
-            /* Increment current entry pointer. */
-            ++(*curEntry);
-        }
-    }
-    else if (fileNode->name)
-    {
-        /* Copy name into path buffer. */
-        strcpy(&pathBuf[fileNode->bufStartIndex],
-            (const char*)hlOff64Get(&fileNode->name));
-    }
-
-    /* Recurse through children. */
-    for (i = 0; i < fileNode->childCount; ++i)
-    {
-        HlResult result = hlINPACxV3FileNodesSetupEntries(fileNodes,
-            &fileNodes[childIndices[i]], skipProxies, pathBuf,
-            curEntry, curDataPtr);
-
-        if (HL_FAILED(result)) return result;
-    }
-
-    return HL_RESULT_SUCCESS;
-}
-
 const HlPACxV3Node* hlPACxV3GetChildNode(const HlPACxV3Node* node,
     const HlPACxV3Node* nodes, const char* HL_RESTRICT name)
 {
@@ -1475,59 +1088,145 @@ const HlPACxV3Node* hlPACxV3GetNode(
     return NULL;
 }
 
+static HlResult hlINPACxV3FileNodesSetupEntries(const HlPACxV3Node* fileNodes,
+    const HlPACxV3Node* fileNode, HlBool skipProxies,
+    char* HL_RESTRICT pathBuf, HlArchive* HL_RESTRICT hlArcBuf)
+{
+    const HlS32* childIndices = (const HlS32*)hlOff64Get(&fileNode->childIndices);
+    HlU16 i;
+    HlResult result;
+
+    if (fileNode->hasData)
+    {
+        const HlPACxV3DataEntry* dataEntry = (const HlPACxV3DataEntry*)
+            hlOff64Get(&fileNode->data);
+
+        /* Skip proxies if requested. */
+        if (!skipProxies || dataEntry->dataType != HL_PACXV3_DATA_TYPE_NOT_HERE)
+        {
+            HlArchiveEntry entry;
+            const char* ext = (const char*)hlOff64Get(&dataEntry->extension);
+            size_t nameLen, extSize, pathBufSize;
+
+            /* Ensure node name length is > 0. */
+            if (!fileNode->bufStartIndex) return HL_ERROR_INVALID_DATA;
+
+            /* Get required length for native path buffer. */
+            nameLen = hlStrGetReqLenUTF8ToNative(pathBuf,
+                fileNode->bufStartIndex);
+
+            if (!nameLen) return HL_ERROR_INVALID_DATA;
+
+            extSize = hlStrGetReqLenUTF8ToNative(ext, 0);
+            if (!extSize) return HL_ERROR_INVALID_DATA;
+
+            /* Allocate native path buffer, convert fileName, and store the result. */
+
+            /*
+              NOTE: We add one to account for the dot in the extension.
+              The null-terminator is already accounted for by hlStrGetReqLenUTF8ToNative.
+            */
+            pathBufSize = (nameLen + extSize + 1);
+            entry.path = HL_ALLOC_ARR(HlNChar, pathBufSize);
+
+            if (!entry.path) return HL_ERROR_OUT_OF_MEMORY;
+
+            if (!hlStrConvUTF8ToNativeNoAlloc(pathBuf,
+                entry.path, fileNode->bufStartIndex, pathBufSize))
+            {
+                hlFree(entry.path);
+                return HL_ERROR_UNKNOWN;
+            }
+
+            /* Convert extension to native encoding and copy into buffer. */
+            entry.path[nameLen] = HL_NTEXT('.');
+
+            if (!hlStrConvUTF8ToNativeNoAlloc(ext,
+                &entry.path[nameLen + 1], 0, pathBufSize -
+                (nameLen + 1)))
+            {
+                hlFree(entry.path);
+                return HL_ERROR_UNKNOWN;
+            }
+
+            /* Setup rest of archive entry and copy data if necessary. */
+            entry.size = (size_t)dataEntry->dataSize;
+
+            if (dataEntry->dataType != HL_PACXV3_DATA_TYPE_NOT_HERE)
+            {
+                /* Allocate data buffer. */
+                void* dstDataBuf = (HlU8*)hlAlloc(entry.size);
+
+                if (!dstDataBuf)
+                {
+                    hlFree(dstDataBuf);
+                    hlFree(entry.path);
+                    return HL_ERROR_OUT_OF_MEMORY;
+                }
+
+                /* Copy data. */
+                memcpy(dstDataBuf, hlOff64Get(&dataEntry->data), entry.size);
+
+                /* Set meta and data within archive entry. */
+                entry.meta = 0;
+                entry.data = (HlUMax)((HlUPtr)dstDataBuf);
+            }
+            else
+            {
+                /* Set meta and data within archive entry. */
+                entry.meta = HL_ARC_ENTRY_STREAMING_FLAG;
+                entry.data = (HlUMax)((HlUPtr)NULL); /* TODO: Set this to something else? */
+            }
+
+            /* Add entry to archive. */
+            {
+                HlArchiveEntry* oldDataPtr = hlArcBuf->entries.data;
+                result = HL_LIST_PUSH(hlArcBuf->entries, entry);
+
+                if (HL_FAILED(result))
+                {
+                    hlArcBuf->entries.data = oldDataPtr;
+                    hlArchiveEntryDestruct(&entry);
+                    return result;
+                }
+            }
+        }
+    }
+    else if (fileNode->name)
+    {
+        /* Copy name into path buffer. */
+        strcpy(&pathBuf[fileNode->bufStartIndex],
+            (const char*)hlOff64Get(&fileNode->name));
+    }
+
+    /* Recurse through children. */
+    for (i = 0; i < fileNode->childCount; ++i)
+    {
+        result = hlINPACxV3FileNodesSetupEntries(fileNodes,
+            &fileNodes[childIndices[i]], skipProxies, pathBuf,
+            hlArcBuf);
+
+        if (HL_FAILED(result)) return result;
+    }
+
+    return HL_RESULT_SUCCESS;
+}
+
 HlResult hlPACxV3Read(const HlBlob* const HL_RESTRICT * HL_RESTRICT pacs,
     size_t pacCount, HlArchive* HL_RESTRICT * HL_RESTRICT archive)
 {
-    void* hlArcBuf;
-    HlArchiveEntry* curEntry;
-    size_t entryCount = 0;
+    HlArchive* hlArcBuf;
     const HlBool skipProxies = (pacCount > 1);
 
     /* Allocate HlArchive buffer. */
-    {
-        /* Get required buffer size. */
-        size_t i, reqBufSize = sizeof(HlArchive);
-        for (i = 0; i < pacCount; ++i)
-        {
-            const HlPACxV3Header* header = (const HlPACxV3Header*)pacs[i]->data;
-            const HlPACxV3NodeTree* typeTree = hlPACxV3GetTypeTree(header);
-            const HlPACxV3Node* typeNodes = (const HlPACxV3Node*)hlOff64Get(&typeTree->nodes);
-            const HlS32* typeDataIndices = (const HlS32*)hlOff64Get(&typeTree->dataNodeIndices);
-            HlU64 i2;
-
-            for (i2 = 0; i2 < typeTree->dataNodeCount; ++i2)
-            {
-                /* Account for file nodes. */
-                const HlPACxV3NodeTree* fileTree = (const HlPACxV3NodeTree*)
-                    hlOff64Get(&typeNodes[typeDataIndices[i2]].data);
-
-                reqBufSize += hlINPACxV3FileTreeGetReqSize(fileTree,
-                    skipProxies, &entryCount);
-            }
-        }
-
-        /* Account for archive entries. */
-        reqBufSize += (sizeof(HlArchiveEntry) * entryCount);
-
-        /* Allocate HlArchive buffer. */
-        hlArcBuf = hlAlloc(reqBufSize);
-        if (!hlArcBuf) return HL_ERROR_OUT_OF_MEMORY;
-    }
+    hlArcBuf = HL_ALLOC_OBJ(HlArchive);
+    if (!hlArcBuf) return HL_ERROR_OUT_OF_MEMORY;
 
     /* Setup HlArchive. */
-    {
-        /* Get pointers. */
-        HlArchive* arc = (HlArchive*)hlArcBuf;
-        curEntry = (HlArchiveEntry*)(arc + 1);
-
-        /* Setup HlArchive. */
-        arc->entries = curEntry;
-        arc->entryCount = entryCount;
-    }
+    HL_LIST_INIT(hlArcBuf->entries);
 
     /* Setup archive entries. */
     {
-        void* curDataPtr = &curEntry[entryCount];
         char pathBuf[256]; /* PACxV3 names are hard-limited to 255, not including null terminator. */
         size_t i;
         HlResult result;
@@ -1549,14 +1248,20 @@ HlResult hlPACxV3Read(const HlBlob* const HL_RESTRICT * HL_RESTRICT pacs,
                 const HlPACxV3Node* fileNodes = (const HlPACxV3Node*)
                     hlOff64Get(&fileTree->nodes);
 
-                result = hlINPACxV3FileNodesSetupEntries(fileNodes, fileNodes,
-                    skipProxies, pathBuf, &curEntry, &curDataPtr);
+                result = hlINPACxV3FileNodesSetupEntries(fileNodes,
+                    fileNodes, skipProxies, pathBuf, hlArcBuf);
+
+                if (HL_FAILED(result))
+                {
+                    hlArchiveFree(hlArcBuf);
+                    return result;
+                }
             }
         }
     }
 
     /* Set archive pointer and return success. */
-    *archive = (HlArchive*)hlArcBuf;
+    *archive = hlArcBuf;
     return HL_RESULT_SUCCESS;
 }
 
@@ -1768,7 +1473,8 @@ HlResult hlPACxV402DecompressBlob(const void* HL_RESTRICT compressedData,
 
     /* Decompress the data. */
     result = hlPACxV402DecompressNoAlloc(compressedData, chunks,
-        chunkCount, compressedSize, uncompressedSize, uncompressedBlobBuf->data);
+        chunkCount, compressedSize, uncompressedSize,
+        uncompressedBlobBuf->data);
 
     if (HL_FAILED(result)) return result;
 
@@ -1797,8 +1503,7 @@ HlResult hlPACxV403DecompressNoAlloc(const void* HL_RESTRICT compressedData,
     memset(&stream, 0, sizeof(z_stream));
 
     result = inflateInit2(&stream, -MAX_WBITS);
-    if (result < Z_OK)
-        return HL_ERROR_UNKNOWN;
+    if (result < Z_OK) return HL_ERROR_UNKNOWN;
 
     stream.next_in = (unsigned char*)compressedPtr;
     stream.avail_in = compressedSize;
@@ -1808,7 +1513,7 @@ HlResult hlPACxV403DecompressNoAlloc(const void* HL_RESTRICT compressedData,
 
     result = inflate(&stream, Z_SYNC_FLUSH);
 
-    return result < Z_OK ? HL_ERROR_UNKNOWN : HL_RESULT_SUCCESS;
+    return (result < Z_OK) ? HL_ERROR_UNKNOWN : HL_RESULT_SUCCESS;
 }
 
 HlResult hlPACxV403Decompress(const void* HL_RESTRICT compressedData,
@@ -1823,7 +1528,8 @@ HlResult hlPACxV403Decompress(const void* HL_RESTRICT compressedData,
     if (!uncompressedDataBuf) return HL_ERROR_OUT_OF_MEMORY;
 
     /* Decompress the data. */
-    result = hlPACxV403DecompressNoAlloc(compressedData, compressedSize, uncompressedSize, uncompressedDataBuf);
+    result = hlPACxV403DecompressNoAlloc(compressedData,
+        compressedSize, uncompressedSize, uncompressedDataBuf);
 
     if (HL_FAILED(result)) return result;
 
@@ -1848,7 +1554,8 @@ HlResult hlPACxV403DecompressBlob(const void* HL_RESTRICT compressedData,
     uncompressedBlobBuf->size = (size_t)uncompressedSize;
 
     /* Decompress the data. */
-    result = hlPACxV403DecompressNoAlloc(compressedData, compressedSize, uncompressedSize, uncompressedBlobBuf->data);
+    result = hlPACxV403DecompressNoAlloc(compressedData,
+        compressedSize, uncompressedSize, uncompressedBlobBuf->data);
 
     if (HL_FAILED(result)) return result;
 
@@ -1932,8 +1639,8 @@ static HlResult hlINPACxV4DecompressToBlobs(HlBlob* HL_RESTRICT pac,
                 HlPACxV403SplitEntry* splitEntriesV403 = (HlPACxV403SplitEntry*)splitEntries;
 
                 result = hlPACxV403DecompressBlob(HL_ADD_OFF(header,
-                    splitEntriesV403[i].offset), splitEntriesV403[i].compressedSize, splitEntriesV403[i].uncompressedSize,
-                    &((*pacs)[*pacCount]));
+                    splitEntriesV403[i].offset), splitEntriesV403[i].compressedSize,
+                    splitEntriesV403[i].uncompressedSize, &((*pacs)[*pacCount]));
             }
             else 
             {

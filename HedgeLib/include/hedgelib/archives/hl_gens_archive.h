@@ -61,8 +61,7 @@ typedef struct HlGensArchiveListHeader
 }
 HlGensArchiveListHeader;
 
-HL_API HlResult hlGensArchiveStreamPFI(const HlNChar* HL_RESTRICT filePath,
-    HlArchive* HL_RESTRICT * HL_RESTRICT archive);
+HL_STATIC_ASSERT_SIZE(HlGensArchiveListHeader, 8);
 
 HL_API HlResult hlGensArchiveRead(const HlBlob* const HL_RESTRICT * HL_RESTRICT splits,
     size_t splitCount, HlArchive* HL_RESTRICT * HL_RESTRICT archive);

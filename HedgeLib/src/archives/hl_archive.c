@@ -35,6 +35,81 @@ size_t hlArchiveExtIsSplit(const HlNChar* ext)
     }
 }
 
+HlArchiveEntry hlArchiveEntryMakeFile(const HlNChar* HL_RESTRICT path,
+    size_t size, const void* HL_RESTRICT data, HlBool dontFree)
+{
+    /* Get path buffer length. */
+    const size_t pathBufLen = (hlNStrLen(path) + 1);
+    HlArchiveEntry entry;
+    HlResult result;
+
+    /* Allocate new path buffer. */
+    entry.path = HL_ALLOC_ARR(HlNChar, pathBufLen);
+    
+    /* Ensure path buffer allocation didn't fail. */
+    HL_ASSERT(entry.path != NULL);
+
+    /* Copy the given name into our new path buffer. */
+    memcpy(entry.path, path, pathBufLen);
+
+    /* Setup data and return the entry. */
+    result = hlArchiveEntryFileSetData(&entry, size, data, dontFree);
+    HL_ASSERT(HL_OK(result));
+
+    return entry;
+}
+
+HlArchiveEntry hlArchiveEntryMakeDir(const HlNChar* name)
+{
+    /* Get path buffer length. */
+    const size_t pathBufLen = (hlNStrLen(name) + 1);
+
+    /* Setup entry. */
+    HlArchiveEntry entry =
+    {
+        HL_ALLOC_ARR(HlNChar, pathBufLen),      /* path */
+        0,                                      /* size */
+        HL_ARC_ENTRY_IS_DIR_FLAG,               /* meta */
+        (HlUMax)((HlUPtr)NULL)                  /* data */
+    };
+    
+    /* Ensure path buffer allocation didn't fail. */
+    HL_ASSERT(entry.path != NULL);
+
+    /* Copy the given name into our new path buffer and return the entry. */
+    memcpy(entry.path, name, pathBufLen);
+    return entry;
+}
+
+HlResult hlArchiveEntryFileSetData(HlArchiveEntry* HL_RESTRICT entry,
+    size_t size, const void* HL_RESTRICT data, HlBool dontFree)
+{
+    /* Set new entry data size. */
+    entry->size = size;
+
+    if (dontFree)
+    {
+        /* Setup reference to data that is not owned by this entry. */
+        entry->meta = HL_ARC_ENTRY_NOT_OWNS_DATA_FLAG;
+        entry->data = (HlUMax)((HlUPtr)data);
+    }
+    else
+    {
+        /* Allocate new buffer that is owned by this entry. */
+        void* newDataBuf = hlAlloc(size);
+        if (!newDataBuf) return HL_ERROR_OUT_OF_MEMORY;
+
+        /* Copy the given data into newly-allocated data buffer. */
+        memcpy(newDataBuf, data, size);
+
+        /* Setup entry. */
+        entry->meta = 0;
+        entry->data = (HlUMax)((HlUPtr)newDataBuf);
+    }
+
+    return HL_RESULT_SUCCESS;
+}
+
 #define HL_INARC_PATH_BUF_LEN 255
 
 HlBool hlINArchiveNextSplit2(HlNChar* lastCharPtr)
@@ -306,6 +381,56 @@ HlResult hlArchiveCreateFromDir(const HlNChar* HL_RESTRICT dirPath,
     /* TODO: Implement this function. */
     HL_ASSERT(0);
     return HL_ERROR_UNKNOWN; /* So compiler doesn't complain. */
+}
+
+void hlArchiveEntryDestruct(HlArchiveEntry* entry)
+{
+    /* Free path buffer. */
+    hlFree(entry->path);
+
+    /* Skip streaming entries. */
+    if (hlArchiveEntryIsStreaming(entry))
+        return;
+
+    /* Recursively destruct directory sub-entries. */
+    if ((entry->meta & HL_ARC_ENTRY_IS_DIR_FLAG) != 0)
+    {
+        HlArchiveEntry* subEntries;
+        size_t i;
+
+        /* Get sub-entry list pointer. */
+        subEntries = (HlArchiveEntry*)((HlUPtr)entry->data);
+
+        /* Recursively destruct sub-entries. */
+        for (i = 0; i < entry->size; ++i)
+        {
+            hlArchiveEntryDestruct(&(subEntries[i]));
+        }
+    }
+
+    /* Free entry data that is owned by the entry. */
+    if ((entry->meta & HL_ARC_ENTRY_NOT_OWNS_DATA_FLAG) == 0)
+    {
+        hlFree((void*)((HlUPtr)entry->data));
+    }
+}
+
+void hlArchiveDestruct(HlArchive* arc)
+{
+    size_t i;
+
+    for (i = 0; i < arc->entries.count; ++i)
+    {
+        hlArchiveEntryDestruct(&(arc->entries.data[i]));
+    }
+
+    HL_LIST_FREE(arc->entries);
+}
+
+void hlArchiveFree(HlArchive* arc)
+{
+    hlArchiveDestruct(arc);
+    hlFree(arc);
 }
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS
