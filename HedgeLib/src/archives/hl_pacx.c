@@ -1,7 +1,7 @@
 #include "hedgelib/archives/hl_pacx.h"
 #include "hedgelib/io/hl_path.h"
 #include "hedgelib/hl_endian.h"
-#include "hedgelib/hl_list.h"
+#include "hedgelib/hl_text.h"
 #include "../io/hl_in_path.h"
 #include "../hl_in_assert.h"
 #include "../depends/lz4/lz4.h"
@@ -1446,7 +1446,8 @@ HlResult hlPACxV402Decompress(const void* HL_RESTRICT compressedData,
 
     /* Decompress the data. */
     result = hlPACxV402DecompressNoAlloc(compressedData, chunks,
-        chunkCount, compressedSize, uncompressedSize, uncompressedDataBuf);
+        chunkCount, compressedSize, uncompressedSize,
+        uncompressedDataBuf);
 
     if (HL_FAILED(result)) return result;
 
@@ -1464,11 +1465,11 @@ HlResult hlPACxV402DecompressBlob(const void* HL_RESTRICT compressedData,
     HlResult result;
 
     /* Allocate a buffer to hold the uncompressed data. */
-    uncompressedBlobBuf = (HlBlob*)hlAlloc(sizeof(HlBlob) + uncompressedSize); /* TODO: Align? */
+    uncompressedBlobBuf = (HlBlob*)hlAlloc(HL_BLOB_ALIGNED_SIZE + uncompressedSize);
     if (!uncompressedBlobBuf) return HL_ERROR_OUT_OF_MEMORY;
 
     /* Setup blob. */
-    uncompressedBlobBuf->data = (uncompressedBlobBuf + 1);
+    uncompressedBlobBuf->data = HL_ADD_OFF(uncompressedBlobBuf, HL_BLOB_ALIGNED_SIZE);
     uncompressedBlobBuf->size = (size_t)uncompressedSize;
 
     /* Decompress the data. */
@@ -1518,7 +1519,7 @@ HlResult hlPACxV403DecompressNoAlloc(const void* HL_RESTRICT compressedData,
 
 HlResult hlPACxV403Decompress(const void* HL_RESTRICT compressedData,
     HlU32 compressedSize, HlU32 uncompressedSize,
-    void* HL_RESTRICT* HL_RESTRICT uncompressedData)
+    void* HL_RESTRICT * HL_RESTRICT uncompressedData)
 {
     void* uncompressedDataBuf;
     HlResult result;
@@ -1573,7 +1574,7 @@ static HlResult hlINPACxV4DecompressToBlobs(HlBlob* HL_RESTRICT pac,
     HlResult result;
 
     /* PACx403 uses Deflate with no separate chunks. */
-    const HlBool isV403 = header->version[1] == '0' && header->version[2] == '3';
+    const HlBool isV403 = (header->version[1] == '0' && header->version[2] == '3');
 
     /* Fix pac. */
     hlPACxV4Fix(pac);

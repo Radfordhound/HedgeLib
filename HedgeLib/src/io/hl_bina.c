@@ -1,4 +1,5 @@
 #include "hedgelib/io/hl_bina.h"
+#include "hedgelib/io/hl_file.h"
 #include "hedgelib/hl_endian.h"
 #include "../hl_in_assert.h"
 #include <stdlib.h>

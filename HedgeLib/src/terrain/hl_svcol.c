@@ -1,5 +1,6 @@
 #include "hedgelib/terrain/hl_svcol.h"
 #include "hedgelib/io/hl_bina.h"
+#include "hedgelib/io/hl_file.h"
 #include "hedgelib/hl_endian.h"
 
 void hlSVShapeSwap(HlSVShape* shape, HlBool swapOffsets)

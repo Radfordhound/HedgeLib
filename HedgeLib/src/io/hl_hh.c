@@ -2,6 +2,7 @@
 #include "hedgelib/hl_endian.h"
 #include "hedgelib/hl_blob.h"
 #include "../hl_in_assert.h" /* TODO: Remove this? */
+#include <string.h>
 
 void hlHHStandardHeaderSwap(HlHHStandardHeader* header, HlBool swapOffsets)
 {

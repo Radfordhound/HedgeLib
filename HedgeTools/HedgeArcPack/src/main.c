@@ -1,8 +1,9 @@
+#include "../../hedgetools_helpers.h"
+#include "hedgelib/hl_text.h"
+#include "hedgelib/hl_blob.h"
+#include "hedgelib/io/hl_path.h"
 #include "hedgelib/archives/hl_gens_archive.h"
 #include "hedgelib/archives/hl_pacx.h"
-#include "hedgelib/io/hl_path.h"
-#include "hedgelib/hl_blob.h"
-#include "../../hedgetools_helpers.h"
 #include <stdlib.h>
 
 typedef enum STRING_ID

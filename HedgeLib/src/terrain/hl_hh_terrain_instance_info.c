@@ -1,5 +1,6 @@
 #include "hedgelib/terrain/hl_hh_terrain_instance_info.h"
 #include "hedgelib/hl_endian.h"
+#include "hedgelib/hl_text.h"
 #include "hedgelib/io/hl_hh.h"
 #include "../hl_in_assert.h"
 

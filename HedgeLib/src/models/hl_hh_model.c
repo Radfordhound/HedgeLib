@@ -5,6 +5,7 @@
 #include "hedgelib/hl_blob.h"
 #include "hedgelib/hl_endian.h"
 #include "hedgelib/hl_math.h"
+#include "hedgelib/hl_text.h"
 #include "../io/hl_in_path.h"
 
 void hlHHVertexElementSwap(HlHHVertexElement* vertexElement)
@@ -884,7 +885,7 @@ static HlResult hlINHHModelLoadMaterials(HlModel* HL_RESTRICT hlModel,
 
         /* Parse material data. */
         result = hlHHMaterialRead(blob, matNameRefs.data[i], &mat);
-        hlFree(blob);
+        hlBlobFree(blob);
 
         if (HL_FAILED(result)) goto failed_loop;
 
