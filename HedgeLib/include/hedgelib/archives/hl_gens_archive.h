@@ -1,7 +1,7 @@
 #ifndef HL_GENS_ARCHIVE_H_INCLUDED
 #define HL_GENS_ARCHIVE_H_INCLUDED
 #include "hl_archive.h"
-#include "../hl_compress_type.h"
+#include "../hl_compression.h"
 
 #ifdef __cplusplus
 extern "C" {

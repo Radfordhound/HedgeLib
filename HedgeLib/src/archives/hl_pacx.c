@@ -1,11 +1,11 @@
 #include "hedgelib/archives/hl_pacx.h"
 #include "hedgelib/io/hl_path.h"
 #include "hedgelib/hl_endian.h"
+#include "hedgelib/hl_compression.h"
 #include "hedgelib/hl_text.h"
 #include "../io/hl_in_path.h"
 #include "../hl_in_assert.h"
 #include "../depends/lz4/lz4.h"
-#include "../depends/zlib/zlib.h"
 
 static const char* const HlINPACxV2SplitType = "ResPacDepend";
 const HlNChar HL_PACX_EXT[5] = HL_NTEXT(".pac");
@@ -849,7 +849,7 @@ static HlResult hlINPACxV2LoadSingle(const HlNChar* HL_RESTRICT filePath,
 
     /* Parse blob into HlArchive, free blob, and return. */
     result = hlPACxV2Read((const HlBlob**)&blob, 1, archive);
-    hlFree(blob);
+    hlBlobFree(blob);
     return result;
 }
 
@@ -1280,7 +1280,7 @@ static HlResult hlINPACxV3LoadSingle(const HlNChar* HL_RESTRICT filePath,
 
     /* Parse blob into HlArchive, free blob, and return. */
     result = hlPACxV3Read((const HlBlob**)&blob, 1, archive);
-    hlFree(blob);
+    hlBlobFree(blob);
     return result;
 }
 
@@ -1488,81 +1488,26 @@ HlResult hlPACxV403DecompressNoAlloc(const void* HL_RESTRICT compressedData,
     HlU32 compressedSize, HlU32 uncompressedSize,
     void* HL_RESTRICT uncompressedData)
 {
-    unsigned char* compressedPtr = (unsigned char*)compressedData;
-    unsigned char* uncompressedPtr = (unsigned char*)uncompressedData;
-    z_stream stream;
-    int result;
-
-    /* If the data is already uncompressed, just copy it and return success. */
-    if (compressedSize == uncompressedSize)
-    {
-        memcpy(uncompressedPtr, compressedPtr, uncompressedSize);
-        return HL_RESULT_SUCCESS;
-    }
-
-    /* Otherwise, decompress the data. */
-    memset(&stream, 0, sizeof(z_stream));
-
-    result = inflateInit2(&stream, -MAX_WBITS);
-    if (result < Z_OK) return HL_ERROR_UNKNOWN;
-
-    stream.next_in = (unsigned char*)compressedPtr;
-    stream.avail_in = compressedSize;
-
-    stream.next_out = (unsigned char*)uncompressedPtr;
-    stream.avail_out = uncompressedSize;
-
-    result = inflate(&stream, Z_SYNC_FLUSH);
-
-    return (result < Z_OK) ? HL_ERROR_UNKNOWN : HL_RESULT_SUCCESS;
+    return hlZLibDecompressNoAlloc(compressedData,
+        compressedSize, uncompressedSize, uncompressedData);
 }
 
 HlResult hlPACxV403Decompress(const void* HL_RESTRICT compressedData,
     HlU32 compressedSize, HlU32 uncompressedSize,
     void* HL_RESTRICT * HL_RESTRICT uncompressedData)
 {
-    void* uncompressedDataBuf;
-    HlResult result;
-
-    /* Allocate a buffer to hold the uncompressed data. */
-    uncompressedDataBuf = hlAlloc(uncompressedSize);
-    if (!uncompressedDataBuf) return HL_ERROR_OUT_OF_MEMORY;
-
-    /* Decompress the data. */
-    result = hlPACxV403DecompressNoAlloc(compressedData,
-        compressedSize, uncompressedSize, uncompressedDataBuf);
-
-    if (HL_FAILED(result)) return result;
-
-    /* Set uncompressedData pointer and return success. */
-    *uncompressedData = uncompressedDataBuf;
-    return HL_RESULT_SUCCESS;
+    return hlDecompress(HL_COMPRESS_TYPE_ZLIB,
+        compressedData, compressedSize,
+        uncompressedSize, uncompressedData);
 }
 
 HlResult hlPACxV403DecompressBlob(const void* HL_RESTRICT compressedData,
     HlU32 compressedSize, HlU32 uncompressedSize,
     HlBlob* HL_RESTRICT * HL_RESTRICT uncompressedBlob)
 {
-    HlBlob* uncompressedBlobBuf;
-    HlResult result;
-
-    /* Allocate a buffer to hold the uncompressed data. */
-    uncompressedBlobBuf = (HlBlob*)hlAlloc(sizeof(HlBlob) + uncompressedSize); /* TODO: Align? */
-    if (!uncompressedBlobBuf) return HL_ERROR_OUT_OF_MEMORY;
-
-    /* Setup blob. */
-    uncompressedBlobBuf->data = (uncompressedBlobBuf + 1);
-    uncompressedBlobBuf->size = (size_t)uncompressedSize;
-
-    /* Decompress the data. */
-    result = hlPACxV403DecompressNoAlloc(compressedData,
-        compressedSize, uncompressedSize, uncompressedBlobBuf->data);
-
-    if (HL_FAILED(result)) return result;
-
-    /* Set uncompressedBlob pointer and return success. */
-    *uncompressedBlob = uncompressedBlobBuf;
-    return HL_RESULT_SUCCESS;
+    return hlDecompressBlob(HL_COMPRESS_TYPE_ZLIB,
+        compressedData, compressedSize,
+        uncompressedSize, uncompressedBlob);
 }
 
 static HlResult hlINPACxV4DecompressToBlobs(HlBlob* HL_RESTRICT pac,
@@ -1607,7 +1552,7 @@ static HlResult hlINPACxV4DecompressToBlobs(HlBlob* HL_RESTRICT pac,
     *pacs = HL_ALLOC_ARR(HlBlob*, (size_t)rootHeader->splitCount + 1);
     if (!(*pacs))
     {
-        hlFree(root);
+        hlBlobFree(root);
         return HL_ERROR_OUT_OF_MEMORY;
     }
 
@@ -1816,7 +1761,7 @@ HlResult hlPACxV4Load(const HlNChar* HL_RESTRICT filePath,
 
     /* Parse blob into HlArchive, free blob, and return. */
     result = hlPACxV4Read(blob, loadSplits, archive);
-    hlFree(blob);
+    hlBlobFree(blob);
     return result;
 }
 
@@ -1875,7 +1820,7 @@ static HlResult hlINPACxLoadSingle(const HlNChar* HL_RESTRICT filePath,
     }
 
 end:
-    hlFree(blob);
+    hlBlobFree(blob);
     return result;
 }
 
@@ -1950,7 +1895,7 @@ HlResult hlINPACxLoadSplitBlobs(const HlNChar* HL_RESTRICT filePath,
         if (header->signature != HL_PACX_SIG)
         {
             result = HL_ERROR_INVALID_DATA;
-            hlFree(rootPac);
+            hlBlobFree(rootPac);
             goto end;
         }
 
@@ -1987,13 +1932,13 @@ HlResult hlINPACxLoadSplitBlobs(const HlNChar* HL_RESTRICT filePath,
         size_t i;
         for (i = 1; i < pacPtrCount; ++i)
         {
-            hlFree(pacPtrs[i]);
+            hlBlobFree(pacPtrs[i]);
         }
 
         hlFree(pacPtrs);
 
         /* Free root pac. */
-        hlFree(rootPac);
+        hlBlobFree(rootPac);
     }
 
     /* Otherwise, set pointers. */
@@ -2067,7 +2012,7 @@ end:
         size_t i;
         for (i = 0; i < pacCount; ++i)
         {
-            hlFree(pacs[i]);
+            hlBlobFree(pacs[i]);
         }
 
         hlFree(pacs);
