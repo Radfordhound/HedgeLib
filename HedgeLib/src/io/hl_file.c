@@ -437,13 +437,21 @@ HlResult hlFileClose(HlFile* file)
 {
     /* Close the given file and return whether closing was successful or not. */
 #ifdef _WIN32
-    BOOL succeeded = CloseHandle(file->handle);
+    BOOL succeeded;
+    
+    if (!file) return HL_RESULT_SUCCESS;
+
+    succeeded = CloseHandle(file->handle);
     hlFree(file);
 
     return (succeeded) ? HL_RESULT_SUCCESS :
         hlINWin32GetResultLastError();
 #else
-    int result = close(file->handle);
+    int result;
+    
+    if (!file) return HL_RESULT_SUCCESS;
+
+    result = close(file->handle);
     hlFree(file);
 
     return (result != -1) ? HL_RESULT_SUCCESS :
