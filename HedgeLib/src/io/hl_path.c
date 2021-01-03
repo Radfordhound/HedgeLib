@@ -9,6 +9,7 @@
 #include "../hl_in_posix.h"
 #include <sys/stat.h>
 #include <unistd.h>
+#include <dirent.h>
 #else
 #error "HedgeLib currently only supports Windows and POSIX-compliant platforms."
 #endif
@@ -509,36 +510,287 @@ HlBool hlPathExists(const HlNChar* path)
 HlResult hlPathCreateDirectory(const HlNChar* dirPath, HlBool overwrite)
 {
 #ifdef _WIN32
-    /* Create the directory with default permissions. */
+/* Create the directory with default permissions. */
+if (
+#ifdef HL_IN_WIN32_UNICODE
+    !CreateDirectoryW(dirPath, 0))
+#else
+    !CreateDirectoryA(dirPath, 0))
+#endif
+{
+    /*
+       Directory creation failed; return failure unless the error is simply that the
+       given directory already existed, and we wanted to overwrite it, in which
+       case, it's not actually an error, so return success.
+    */
+    return (overwrite && GetLastError() == ERROR_ALREADY_EXISTS) ?
+        HL_RESULT_SUCCESS : hlINWin32GetResultLastError();
+}
+#else
+/* Create the directory with user read/write/execute permissions. */
+if (mkdir(dirPath, S_IRWXU) == -1)
+{
+    /*
+       Directory creation failed; return failure unless the error is simply that the
+       given directory already existed, and we wanted to overwrite it, in which
+       case, it's not actually an error, so return success.
+    */
+    return (overwrite && errno == EEXIST) ?
+        HL_RESULT_SUCCESS : hlINPosixGetResultErrno();
+}
+#endif
+
+/* Directory creation succeeded; return success. */
+return HL_RESULT_SUCCESS;
+}
+
+#ifdef _WIN32
+typedef struct HlINWin32Dir
+{
+    HANDLE handle;
+    HlResult lastResult;
+    HlNChar nameBuf[MAX_PATH];
+
+#ifdef HL_IN_WIN32_UNICODE
+    WIN32_FIND_DATAW fileData;
+#else
+    WIN32_FIND_DATAA fileData;
+#endif
+}
+HlINWin32Dir;
+#endif
+
+HlResult hlPathDirOpen(const HlNChar* HL_RESTRICT dirPath,
+    HlDirHandle HL_RESTRICT * HL_RESTRICT dir)
+{
+#ifdef _WIN32
+    HlINWin32Dir* win32Dir;
+    HlNChar dirBuf[260];
+    HlNChar* dirBufPtr = dirBuf;
+
+    /*
+       Compute directory path length and whether an additional
+       path separator is required to add the filter.
+    */
+    const size_t dirPathLen = hlNStrLen(dirPath);
+    const HlBool needsSep = hlPathCombineNeedsSep(
+        dirPath, HL_NTEXT("*"), dirPathLen);
+
+    size_t dirBufFilterPos = dirPathLen;
+
+    /* Allocate HlINWin32Dir object. */
+    win32Dir = HL_ALLOC_OBJ(HlINWin32Dir);
+    if (!win32Dir) return HL_ERROR_OUT_OF_MEMORY;
+
+    /* Account for path separator if necessary. */
+    if (needsSep) ++dirBufFilterPos;
+
+    /* Allocate new directory path buffer if necessary. */
+    if (dirBufFilterPos > 258) /* (260 - 2) since we need to account for filter/null terminator. */
+    {
+        dirBufPtr = HL_ALLOC_ARR(HlNChar, dirBufFilterPos + 2);
+        if (!dirBufPtr)
+        {
+            hlFree(win32Dir);
+            return HL_ERROR_OUT_OF_MEMORY;
+        }
+    }
+
+    /* Copy directory into directory path buffer. */
+    memcpy(dirBufPtr, dirPath, dirPathLen * sizeof(HlNChar));
+
+    /* Append path separator if necessary. */
+    if (needsSep) dirBufPtr[dirPathLen] = HL_PATH_SEP;
+
+    /* Copy filter and null terminator into directory path buffer. */
+    memcpy(&dirBufPtr[dirBufFilterPos], HL_NTEXT("*"),
+        sizeof(HL_NTEXT("*")));
+
+    /* Open directory and store handle and first file data into HlINWin32Dir. */
+    win32Dir->handle =
+#ifdef HL_IN_WIN32_UNICODE
+        FindFirstFileExW
+#else
+        FindFirstFileExA
+#endif
+            (dirBufPtr, FindExInfoStandard, & win32Dir->fileData,
+            FindExSearchNameMatch, NULL, 0);
+
+    /* Free directory path buffer if necessary. */
+    if (dirBufPtr != dirBuf) hlFree(dirBufPtr);
+
+    /* Handle any errors encountered when opening directory. */
+    if (win32Dir->handle == INVALID_HANDLE_VALUE)
+    {
+        hlFree(win32Dir);
+        return hlINWin32GetResultLastError();
+    }
+
+    /*
+       Skip first few win32 "dot" entries.
+       
+       This is a bit of a garbage hack, but how else should
+       we do it? Microsoft actually does this too in their
+       C++17 std::filesystem implementation, believe it or not.
+    */
+    win32Dir->lastResult = HL_RESULT_SUCCESS;
+
+    while (hlNStrsEqual(win32Dir->fileData.cFileName, HL_NTEXT(".")) ||
+        hlNStrsEqual(win32Dir->fileData.cFileName, HL_NTEXT("..")))
+    {
+        if (
+#ifdef HL_IN_WIN32_UNICODE
+            !FindNextFileW(win32Dir->handle, &win32Dir->fileData))
+#else
+            !FindNextFileA(win32Dir->handle, &win32Dir->fileData))
+#endif
+        {
+            win32Dir->lastResult = hlINWin32GetResultLastError();
+            break;
+        }
+    }
+
+    /* Set pointer and return success. */
+    *dir = win32Dir;
+    return HL_RESULT_SUCCESS;
+#else
+    /* Open directory. */
+    DIR* posixDir = opendir(dirPath);
+    if (posixDir == NULL)
+    {
+        return hlINPosixGetResultErrno();
+    }
+
+    /* Set pointer and return success. */
+    *dir = posixDir;
+    return HL_RESULT_SUCCESS;
+#endif
+}
+
+HlResult hlPathDirGetNextEntry(HlDirHandle HL_RESTRICT dir,
+    HlDirEntry* HL_RESTRICT entry)
+{
+#ifdef _WIN32
+    HlINWin32Dir* win32Dir = (HlINWin32Dir*)dir;
+
+    /* Return last result if it was an error. */
+    if (HL_FAILED(win32Dir->lastResult))
+        return win32Dir->lastResult;
+    
+    /* Copy file name into name buffer. */
+    memcpy(win32Dir->nameBuf, win32Dir->fileData.cFileName,
+        sizeof(win32Dir->fileData.cFileName));
+
+    entry->name = win32Dir->nameBuf;
+
+    /* Set type. */
+    entry->type = HL_DIR_ENTRY_TYPE_UNKNOWN;
+
+    if (win32Dir->fileData.dwFileAttributes & FILE_ATTRIBUTE_DEVICE)
+    {
+        entry->type = HL_DIR_ENTRY_TYPE_CHAR_DEV;
+    }
+    else if (win32Dir->fileData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
+    {
+        entry->type = HL_DIR_ENTRY_TYPE_SYMBOLIC_LINK;
+    }
+    else if (win32Dir->fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+    {
+        entry->type = HL_DIR_ENTRY_TYPE_DIRECTORY;
+    }
+    else
+    {
+        entry->type = HL_DIR_ENTRY_TYPE_FILE;
+    }
+
+    /* TODO: Handle other types of entries. */
+
+    /* Get next entry. */
     if (
 #ifdef HL_IN_WIN32_UNICODE
-        !CreateDirectoryW(dirPath, 0))
+        !FindNextFileW(win32Dir->handle, &win32Dir->fileData))
 #else
-        !CreateDirectoryA(dirPath, 0))
+        !FindNextFileA(win32Dir->handle, &win32Dir->fileData))
 #endif
     {
         /*
-           Directory creation failed; return failure unless the error is simply that the
-           given directory already existed, and we wanted to overwrite it, in which
-           case, it's not actually an error, so return success.
+           HACK: Basically, the entries returned to the user are "buffered"
+           by 1 to cope with the fact that the initial directory opening
+           also returns a file handle. So, we "buffer" the error codes as
+           well.
         */
-        return (overwrite && GetLastError() == ERROR_ALREADY_EXISTS) ?
-            HL_RESULT_SUCCESS : hlINWin32GetResultLastError();
+        win32Dir->lastResult = hlINWin32GetResultLastError();
     }
 #else
-    /* Create the directory with user read/write/execute permissions. */
-    if (mkdir(dirPath, S_IRWXU) == -1)
+    DIR* posixDir = (DIR*)dir;
+    struct dirent* posixEntry;
+
+    /* Get next entry. */
+    errno = 0;
+    posixEntry = readdir(posixDir);
+
+    if (!posixEntry)
     {
-        /*
-           Directory creation failed; return failure unless the error is simply that the
-           given directory already existed, and we wanted to overwrite it, in which
-           case, it's not actually an error, so return success.
-        */
-        return (overwrite && errno == EEXIST) ?
-            HL_RESULT_SUCCESS : hlINPosixGetResultErrno();
+        return (errno == 0) ? HL_ERROR_NO_MORE_ENTRIES :
+            hlINPosixGetResultErrno();
+    }
+
+    /* Set name. */
+    entry->name = posixEntry->d_name;
+
+    /* Set type. */
+    switch (posixEntry->d_type)
+    {
+    default:
+    case DT_UNKNOWN:
+        entry->type = HL_DIR_ENTRY_TYPE_UNKNOWN;
+        break;
+
+    case DT_FIFO:
+        entry->type = HL_DIR_ENTRY_TYPE_PIPE;
+        break;
+
+    case DT_CHR:
+        entry->type = HL_DIR_ENTRY_TYPE_CHAR_DEV;
+        break;
+
+    case DT_DIR:
+        entry->type = HL_DIR_ENTRY_TYPE_DIRECTORY;
+        break;
+
+    case DT_BLK:
+        entry->type = HL_DIR_ENTRY_TYPE_BLOCK_DEV;
+        break;
+
+    case DT_REG:
+        entry->type = HL_DIR_ENTRY_TYPE_FILE;
+        break;
+
+    case DT_LNK:
+        entry->type = HL_DIR_ENTRY_TYPE_SYMBOLIC_LINK;
+        break;
+
+    case DT_SOCK:
+        entry->type = HL_DIR_ENTRY_TYPE_SOCKET;
+        break;
     }
 #endif
 
-    /* Directory creation succeeded; return success. */
     return HL_RESULT_SUCCESS;
+}
+
+HlResult hlPathDirClose(HlDirHandle dir)
+{
+#ifdef _WIN32
+    HlINWin32Dir* win32Dir = (HlINWin32Dir*)dir;
+    const HlResult result = (FindClose(win32Dir->handle) == 0) ?
+        hlINWin32GetResultLastError() : HL_RESULT_SUCCESS;
+
+    hlFree(dir);
+    return result;
+#else
+    DIR* posixDir = (DIR*)dir;
+    return (closedir(posixDir) == 0) ?
+        HL_RESULT_SUCCESS : hlINPosixGetResultErrno();
+#endif
 }
