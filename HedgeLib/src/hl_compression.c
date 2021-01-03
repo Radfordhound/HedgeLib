@@ -75,7 +75,7 @@ HlResult hlDecompress(HlCompressType compressionType,
 
 HlResult hlDecompressBlob(HlCompressType compressionType,
     const void* HL_RESTRICT compressedData,
-    HlU32 compressedSize, HlU32 uncompressedSize,
+    size_t compressedSize, size_t uncompressedSize,
     HlBlob* HL_RESTRICT * HL_RESTRICT uncompressedBlob)
 {
     HlBlob* uncompressedBlobBuf;

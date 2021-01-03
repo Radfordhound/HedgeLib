@@ -13,6 +13,9 @@ HlResult hlINWin32GetResult(HRESULT hresult)
     case __HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND):
         return HL_ERROR_NOT_FOUND;
 
+    case __HRESULT_FROM_WIN32(ERROR_NO_MORE_FILES):
+        return HL_ERROR_NO_MORE_ENTRIES;
+
     /* TODO: More errors. */
 
     default: return HL_ERROR_UNKNOWN;

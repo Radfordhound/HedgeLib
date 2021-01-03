@@ -39,7 +39,7 @@ HL_API HlResult hlDecompress(HlCompressType compressionType,
 
 HL_API HlResult hlDecompressBlob(HlCompressType compressionType,
     const void* HL_RESTRICT compressedData,
-    HlU32 compressedSize, HlU32 uncompressedSize,
+    size_t compressedSize, size_t uncompressedSize,
     HlBlob* HL_RESTRICT* HL_RESTRICT uncompressedBlob);
 
 #ifdef __cplusplus
