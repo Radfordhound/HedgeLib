@@ -110,7 +110,7 @@ HlResult hlArchiveEntryFileSetData(HlArchiveEntry* HL_RESTRICT entry,
     return HL_RESULT_SUCCESS;
 }
 
-#define HL_INARC_PATH_BUF_LEN 255
+#define HL_IN_ARC_PATH_BUF_LEN 255
 
 HlBool hlINArchiveNextSplit2(HlNChar* lastCharPtr)
 {
@@ -152,12 +152,13 @@ HlBool hlINArchiveNextSplit2(HlNChar* lastCharPtr)
 }
 
 static HlNChar* hlINArchiveEnlargePathBuffer(size_t minAmount,
-    HlNChar* HL_RESTRICT pathBuf, size_t* HL_RESTRICT pathBufLen)
+    HlBool* HL_RESTRICT pathBufOnHeap, HlNChar* HL_RESTRICT pathBuf,
+    size_t* HL_RESTRICT pathBufCap)
 {
     size_t pathBufEnlargeAmount;
 
     /* Ensure path buffer can still be enlargened. */
-    if ((sizeof(HlNChar) * (*pathBufLen)) > (HL_SIZE_MAX -
+    if ((sizeof(HlNChar) * (*pathBufCap)) > (HL_SIZE_MAX -
         (sizeof(HlNChar) * minAmount)))
     {
         return NULL;
@@ -168,31 +169,43 @@ static HlNChar* hlINArchiveEnlargePathBuffer(size_t minAmount,
 
        We want to enlarge the path buffer by a decent amount to lower
        the amount of necessary subsequent re-allocations, therefore we
-       enlarge it by whichever is larger: 255 or minAmount.
+       enlarge it by whichever is larger: HL_IN_ARC_PATH_BUF_LEN or minAmount.
 
-       If 255 is larger than minAmount, we also have to ensure, once again,
-       that the path buffer can still be enlargened - this time by 255.
+       If HL_IN_ARC_PATH_BUF_LEN is larger than minAmount, we also have to
+       ensure, once again, that the path buffer can still be enlargened - this
+       time by HL_IN_ARC_PATH_BUF_LEN.
     */
+    pathBufEnlargeAmount = HL_IN_ARC_PATH_BUF_LEN;
 
-    pathBufEnlargeAmount = 255;
     if (pathBufEnlargeAmount < minAmount ||
-        (sizeof(HlNChar) * (*pathBufLen)) > (HL_SIZE_MAX -
+        (sizeof(HlNChar) * (*pathBufCap)) > (HL_SIZE_MAX -
         (sizeof(HlNChar) * pathBufEnlargeAmount)))
     {
         pathBufEnlargeAmount = minAmount;
     }
 
     /* Enlarge path buffer. */
-    *pathBufLen += pathBufEnlargeAmount;
-    pathBuf = HL_RESIZE_ARR(HlNChar, *pathBufLen, pathBuf);
-    if (!pathBuf) return NULL;
-    
-    return pathBuf;
+    *pathBufCap += pathBufEnlargeAmount;
+
+    if (*pathBufOnHeap)
+    {
+        return HL_RESIZE_ARR(HlNChar, *pathBufCap, pathBuf);
+    }
+    else
+    {
+        HlNChar* newPathBuf = HL_ALLOC_ARR(HlNChar, *pathBufCap);
+        if (!newPathBuf) return NULL;
+
+        memcpy(newPathBuf, pathBuf, *pathBufCap * sizeof(HlNChar));
+        *pathBufOnHeap = HL_TRUE;
+        return newPathBuf;
+    }
 }
 
 static HlResult hlINArchiveEntriesExtract(const HlArchiveEntry* HL_RESTRICT entries,
-    size_t entryCount, HlBool recursive, HlNChar* HL_RESTRICT * HL_RESTRICT pathBuf,
-    size_t* HL_RESTRICT pathBufLen, size_t pathEndPos)
+    size_t entryCount, HlBool recursive, HlBool* HL_RESTRICT pathBufOnHeap,
+    HlNChar* HL_RESTRICT * HL_RESTRICT pathBuf,
+    size_t* HL_RESTRICT pathBufCap, size_t pathEndPos)
 {
     /* Extract entries. */
     size_t i;
@@ -201,7 +214,7 @@ static HlResult hlINArchiveEntriesExtract(const HlArchiveEntry* HL_RESTRICT entr
     for (i = 0; i < entryCount; ++i)
     {
         const HlNChar* entryName;
-        size_t entryNameLen;
+        size_t entryNameSize;
 
         /* Skip streaming file entries. */
         if (hlArchiveEntryIsStreaming(&entries[i]))
@@ -229,10 +242,10 @@ static HlResult hlINArchiveEntriesExtract(const HlArchiveEntry* HL_RESTRICT entr
         /* Append archive entry name to end of path buffer. */
         {
             HlNChar* pathBufEnd = (*pathBuf + pathEndPos);
-            size_t pathBufFreeLen = (*pathBufLen - pathEndPos);
+            const size_t pathBufFreeSpace = (*pathBufCap - pathEndPos);
             
             if (!hlNStrCopyLimit(entryName, pathBufEnd,
-                pathBufFreeLen, &entryNameLen))
+                pathBufFreeSpace, &entryNameSize))
             {
                 /*
                    The archive entry name won't fit within the path buffer...
@@ -243,18 +256,20 @@ static HlResult hlINArchiveEntriesExtract(const HlArchiveEntry* HL_RESTRICT entr
                    Get entry name length.
                    (hlNStrCopyLimit doesn't set this for us if it fails.)
                 */
-                entryNameLen = hlNStrLen(entryName);
+                entryNameSize = (hlNStrLen(entryName) + 1);
 
                 /* Enlarge path buffer. */
-                *pathBuf = hlINArchiveEnlargePathBuffer(entryNameLen + 1, *pathBuf, pathBufLen);
+                *pathBuf = hlINArchiveEnlargePathBuffer(
+                    entryNameSize, pathBufOnHeap,
+                    *pathBuf, pathBufCap);
+
                 if (!(*pathBuf)) return HL_ERROR_OUT_OF_MEMORY;
 
-                /* Get pathBufEnd and pathBufFreeLen again since pathBuf may have changed. */
+                /* Get pathBufEnd again since pathBuf may have changed. */
                 pathBufEnd = (*pathBuf + pathEndPos);
-                pathBufFreeLen = (*pathBufLen - pathEndPos);
 
                 /* Append archive entry name to end of path buffer. */
-                memcpy(pathBufEnd, entryName, entryNameLen + 1);
+                memcpy(pathBufEnd, entryName, entryNameSize * sizeof(HlNChar));
             }
         }
 
@@ -266,6 +281,7 @@ static HlResult hlINArchiveEntriesExtract(const HlArchiveEntry* HL_RESTRICT entr
             {
                 /* TODO: Copy referenced file? Or should we just skip file references? */
                 HL_ASSERT(0);
+                return HL_ERROR_UNSUPPORTED;
             }
 
             /* Extract file. */
@@ -300,14 +316,16 @@ static HlResult hlINArchiveEntriesExtract(const HlArchiveEntry* HL_RESTRICT entr
             if (HL_FAILED(result)) return result;
 
             /* Append path combine separator if necessary. */
-            fullPathLen = (pathEndPos + entryNameLen);
+            fullPathLen = (pathEndPos + (entryNameSize - 1));
             if (hlINPathCombineNeedsSep1(*pathBuf, fullPathLen))
             {
                 /* Enlarge path buffer if necessary to append path combine separator. */
-                if ((fullPathLen + 2) > *pathBufLen)
+                if ((fullPathLen + 2) > *pathBufCap)
                 {
                     /* Enlarge path buffer. */
-                    *pathBuf = hlINArchiveEnlargePathBuffer(1, *pathBuf, pathBufLen);
+                    *pathBuf = hlINArchiveEnlargePathBuffer(1,
+                        pathBufOnHeap, *pathBuf, pathBufCap);
+
                     if (!(*pathBuf)) return HL_ERROR_OUT_OF_MEMORY;
                 }
 
@@ -319,7 +337,7 @@ static HlResult hlINArchiveEntriesExtract(const HlArchiveEntry* HL_RESTRICT entr
             /* Recursively extract archive entries within this directory. */
             result = hlINArchiveEntriesExtract(
                 (HlArchiveEntry*)((HlUPtr)entries[i].data), entries[i].size,
-                recursive, pathBuf, pathBufLen, fullPathLen);
+                recursive, pathBufOnHeap, pathBuf, pathBufCap, fullPathLen);
 
             if (HL_FAILED(result)) return result;
         }
@@ -331,9 +349,11 @@ static HlResult hlINArchiveEntriesExtract(const HlArchiveEntry* HL_RESTRICT entr
 HlResult hlArchiveEntriesExtract(const HlArchiveEntry* HL_RESTRICT entries,
     size_t entryCount, const HlNChar* HL_RESTRICT dirPath, HlBool recursive)
 {
-    HlNChar* pathBuf;
-    size_t dirPathLen, pathBufLen;
+    HlNChar pathBuf[HL_IN_ARC_PATH_BUF_LEN];
+    HlNChar* pathBufPtr = pathBuf;
+    size_t pathBufCap = HL_IN_ARC_PATH_BUF_LEN, dirPathLen;
     HlResult result;
+    HlBool pathBufOnHeap;
 
     /* Return early if entryCount == 0 to avoid unnecessary work. */
     if (!entryCount) return HL_RESULT_SUCCESS;
@@ -345,42 +365,374 @@ HlResult hlArchiveEntriesExtract(const HlArchiveEntry* HL_RESTRICT entries,
     /* Get dirPath length. */
     dirPathLen = hlNStrLen(dirPath);
 
-    /* Ensure we can safely create a path buffer without integral overflow. */
-    HL_ASSERT((HL_SIZE_MAX - (sizeof(HlNChar) * HL_INARC_PATH_BUF_LEN)) >=
-        (sizeof(HlNChar) * dirPathLen));
-
-    /* Compute path buffer length. */
-    pathBufLen = (dirPathLen + 255);
-
-    /* Create path buffer and copy directory into it. */
-    pathBuf = HL_ALLOC_ARR(HlNChar, pathBufLen);
-    if (!pathBuf) return HL_ERROR_OUT_OF_MEMORY;
-
-    memcpy(pathBuf, dirPath, dirPathLen * sizeof(HlNChar));
-
-    /* Append path combine separator if necessary. */
-    if (hlINPathCombineNeedsSep1(pathBuf, dirPathLen))
+    /* Allocate path buffer if necessary. */
+    if ((dirPathLen + 2) > pathBufCap)
     {
-        pathBuf[dirPathLen++] = HL_PATH_SEP;
+        pathBufCap = (dirPathLen + HL_IN_ARC_PATH_BUF_LEN);
+        pathBufPtr = HL_ALLOC_ARR(HlNChar, pathBufCap);
+        pathBufOnHeap = HL_TRUE;
+
+        if (!pathBufPtr) return HL_ERROR_OUT_OF_MEMORY;
+    }
+    else
+    {
+        pathBufOnHeap = HL_FALSE;
     }
 
-    /* Append null terminator. */
-    pathBuf[dirPathLen] = HL_NTEXT('\0');
+    /* Copy directory into path buffer. */
+    memcpy(pathBufPtr, dirPath, dirPathLen * sizeof(HlNChar));
 
-    /* Extract entries, free path buffer, and return. */
+    /* Append path combine separator if necessary. */
+    if (hlINPathCombineNeedsSep1(pathBufPtr, dirPathLen))
+    {
+        pathBufPtr[dirPathLen++] = HL_PATH_SEP;
+    }
+
+    /* Extract entries, free path buffer if necessary, and return result. */
     result = hlINArchiveEntriesExtract(entries, entryCount,
-        recursive, &pathBuf, &pathBufLen, dirPathLen);
+        recursive, &pathBufOnHeap, &pathBufPtr,
+        &pathBufCap, dirPathLen);
 
-    hlFree(pathBuf);
+    if (pathBufOnHeap) hlFree(pathBuf);
+
+    return result;
+}
+
+HlResult hlArchiveConstruct(HlArchive* arc)
+{
+    HL_LIST_INIT(arc->entries);
+    return HL_RESULT_SUCCESS;
+}
+
+HlResult hlArchiveCreate(HlArchive** arc)
+{
+    HlArchive* hlArcBuf;
+    HlResult result;
+    
+    /* Allocate HlArchive. */
+    hlArcBuf = HL_ALLOC_OBJ(HlArchive);
+    if (!hlArcBuf) return HL_ERROR_OUT_OF_MEMORY;
+
+    /* Construct HlArchive. */
+    result = hlArchiveConstruct(hlArcBuf);
+    if (HL_FAILED(result))
+    {
+        hlFree(hlArcBuf);
+        return result;
+    }
+
+    /* Set HlArchive pointer and return. */
+    *arc = hlArcBuf;
+    return result;
+}
+
+static HlResult hlINArchiveAddDir(
+    HlNChar* HL_RESTRICT * HL_RESTRICT pathBuf,
+    size_t* HL_RESTRICT pathBufCap, size_t pathBufLen,
+    HlBool* HL_RESTRICT pathBufOnHeap, HlBool loadData,
+    HlBool recursive, HlArchiveEntryList* HL_RESTRICT arcEntries)
+{
+    HlDirEntry dirEntry;
+    HlDirHandle dir;
+    HlResult result;
+
+    /* Open the given directory. */
+    (*pathBuf)[pathBufLen] = HL_NTEXT('\0');
+    result = hlPathDirOpen(*pathBuf, &dir);
+    if (HL_FAILED(result)) return result;
+
+    /* Iterate through the files in the given directory. */
+    while (result = hlPathDirGetNextEntry(dir, &dirEntry),
+        HL_OK(result))
+    {
+        HlArchiveEntry arcEntry;
+        const HlNChar* name = dirEntry.name;
+        size_t nameSize;
+
+        /* Ensure name doesn't begin with a path separator. */
+        if (!hlINPathCombineNeedsSep2(name)) ++name;
+
+        /* Append name to the end of the path buffer. */
+        {
+            HlNChar* pathBufEnd = (*pathBuf + pathBufLen);
+            const size_t pathBufFreeSpace = (*pathBufCap - pathBufLen);
+            
+            if (!hlNStrCopyLimit(name, pathBufEnd,
+                pathBufFreeSpace, &nameSize))
+            {
+                /*
+                   The archive entry name won't fit within the path buffer...
+                   We need to resize the path buffer to make it fit.
+                */
+
+                /*
+                   Get entry name length.
+                   (hlNStrCopyLimit doesn't set this for us if it fails.)
+                */
+                nameSize = (hlNStrLen(name) + 1);
+
+                /* Enlarge path buffer. */
+                *pathBuf = hlINArchiveEnlargePathBuffer(
+                    nameSize, pathBufOnHeap,
+                    *pathBuf, pathBufCap);
+
+                if (!(*pathBuf))
+                {
+                    result = HL_ERROR_OUT_OF_MEMORY;
+                    break;
+                }
+
+                /* Get pathBufEnd again since pathBuf may have changed. */
+                pathBufEnd = (*pathBuf + pathBufLen);
+
+                /* Append archive entry name to end of path buffer. */
+                memcpy(pathBufEnd, name, nameSize * sizeof(HlNChar));
+            }
+        }
+
+        if (dirEntry.type == HL_DIR_ENTRY_TYPE_FILE)
+        {
+            arcEntry.size = hlPathGetSize(*pathBuf);
+
+            if (loadData)
+            {
+                void* fileData;
+                HlFile* file;
+
+                /* Open file. */
+                result = hlFileOpen(*pathBuf, HL_FILE_MODE_READ, &file);
+                if (HL_FAILED(result)) break;
+
+                /* Allocate name buffer. */
+                arcEntry.path = HL_ALLOC_ARR(HlNChar, nameSize);
+                if (!arcEntry.path)
+                {
+                    hlFileClose(file);
+                    result = HL_ERROR_OUT_OF_MEMORY;
+                    break;
+                }
+
+                /* Copy name and null terminator into name buffer. */
+                memcpy(arcEntry.path, name, nameSize * sizeof(HlNChar));
+
+                /* Allocate data buffer. */
+                fileData = hlAlloc(arcEntry.size);
+                if (!fileData)
+                {
+                    hlFree(arcEntry.path);
+                    hlFileClose(file);
+                    result = HL_ERROR_OUT_OF_MEMORY;
+                    break;
+                }
+
+                /* Read data into buffer. */
+                result = hlFileRead(file, arcEntry.size, fileData, NULL);
+                if (HL_FAILED(result))
+                {
+                    hlFree(fileData);
+                    hlFree(arcEntry.path);
+                    hlFileClose(file);
+                    break;
+                }
+
+                /* Close file. */
+                result = hlFileClose(file);
+                if (HL_FAILED(result))
+                {
+                    hlFree(fileData);
+                    hlFree(arcEntry.path);
+                    break;
+                }
+                
+                /* Finish setting up entry. */
+                arcEntry.meta = 0;
+                arcEntry.data = (HlUMax)((HlUPtr)fileData);
+            }
+            else
+            {
+                /* Allocate path buffer. */
+                arcEntry.path = HL_ALLOC_ARR(HlNChar, pathBufLen + nameSize);
+                if (!arcEntry.path)
+                {
+                    result = HL_ERROR_OUT_OF_MEMORY;
+                    break;
+                }
+
+                /* Copy path and null terminator into path buffer. */
+                memcpy(arcEntry.path, *pathBuf,
+                    (pathBufLen + nameSize) * sizeof(HlNChar));
+
+                /* Finish setting up entry. */
+                arcEntry.meta = 0;
+                arcEntry.data = (HlUMax)((HlUPtr)NULL);
+            }
+
+            /* Add entry to entries list. */
+            result = HL_LIST_PUSH(*arcEntries, arcEntry);
+            if (HL_FAILED(result))
+            {
+                hlArchiveEntryDestruct(&arcEntry);
+                break;
+            }
+        }
+        else if (recursive && dirEntry.type == HL_DIR_ENTRY_TYPE_DIRECTORY)
+        {
+            HlArchiveEntryList subDirEntries;
+            size_t fullPathLen;
+
+            /* Append path combine separator if necessary. */
+            fullPathLen = (pathBufLen + (nameSize - 1));
+            if (hlINPathCombineNeedsSep1(*pathBuf, fullPathLen))
+            {
+                /* Enlarge path buffer if necessary to append path combine separator. */
+                if ((fullPathLen + 2) > *pathBufCap)
+                {
+                    /* Enlarge path buffer. */
+                    *pathBuf = hlINArchiveEnlargePathBuffer(1,
+                        pathBufOnHeap, *pathBuf, pathBufCap);
+
+                    if (!(*pathBuf))
+                    {
+                        result = HL_ERROR_OUT_OF_MEMORY;
+                        break;
+                    }
+                }
+
+                /* Append path combine separator (and new null terminator). */
+                (*pathBuf)[fullPathLen++] = HL_PATH_SEP;
+                (*pathBuf)[fullPathLen] = HL_NTEXT('\0');
+            }
+
+            /* Initialize sub-directory entries list. */
+            HL_LIST_INIT(subDirEntries);
+
+            /* Recursively add archive entries within this sub-directory. */
+            result = hlINArchiveAddDir(pathBuf,
+                pathBufCap, fullPathLen, pathBufOnHeap,
+                loadData, recursive, &subDirEntries);
+
+            if (HL_FAILED(result))
+            {
+                HL_LIST_FREE(subDirEntries);
+                break;
+            }
+
+            /* Allocate name buffer. */
+            arcEntry.path = HL_ALLOC_ARR(HlNChar, nameSize);
+            if (!arcEntry.path)
+            {
+                HL_LIST_FREE(subDirEntries);
+                result = HL_ERROR_OUT_OF_MEMORY;
+                break;
+            }
+
+            /* Copy name and null terminator into name buffer. */
+            memcpy(arcEntry.path, name, nameSize * sizeof(HlNChar));
+
+            /* Finish setting up entry. */
+            arcEntry.size = subDirEntries.count;
+            arcEntry.meta = HL_ARC_ENTRY_IS_DIR_FLAG;
+            arcEntry.data = (HlUMax)((HlUPtr)subDirEntries.data);
+
+            /*
+                NOTE: From here on out we do NOT need to free the subDirEntries list
+                manually; its data is now contained within arcEntry, so it can be
+                freed just by freeing arcEntry.
+            */
+
+            /* Add directory entry to entries list. */
+            result = HL_LIST_PUSH(*arcEntries, arcEntry);
+            if (HL_FAILED(result))
+            {
+                hlArchiveEntryDestruct(&arcEntry);
+                break;
+            }
+        }
+    }
+
+    /* Free resources and return result. */
+    if (result != HL_ERROR_NO_MORE_ENTRIES)
+    {
+        hlPathDirClose(dir);
+        return result;
+    }
+
+    return hlPathDirClose(dir);
+}
+
+HlResult hlArchiveAddDir(const HlNChar* HL_RESTRICT dirPath,
+    HlBool loadData, HlBool recursive, HlArchive* HL_RESTRICT arc)
+{
+    HlNChar pathBuf[HL_IN_ARC_PATH_BUF_LEN];
+    HlNChar* pathBufPtr = pathBuf;
+    size_t pathBufLen, pathBufCap = HL_IN_ARC_PATH_BUF_LEN;
+    HlResult result;
+    HlBool pathBufOnHeap;
+
+    /* Get directory path length. */
+    pathBufLen = hlNStrLen(dirPath);
+
+    /* Allocate path buffer if necessary. */
+    if ((pathBufLen + 2) > pathBufCap)
+    {
+        pathBufCap = (pathBufLen + HL_IN_ARC_PATH_BUF_LEN);
+        pathBufPtr = HL_ALLOC_ARR(HlNChar, pathBufCap);
+        pathBufOnHeap = HL_TRUE;
+
+        if (!pathBufPtr) return HL_ERROR_OUT_OF_MEMORY;
+    }
+    else
+    {
+        pathBufOnHeap = HL_FALSE;
+    }
+
+    /* Copy directory into path buffer. */
+    memcpy(pathBufPtr, dirPath, pathBufLen * sizeof(HlNChar));
+
+    /* Append path combine separator if necessary. */
+    if (hlINPathCombineNeedsSep1(pathBufPtr, pathBufLen))
+    {
+        pathBufPtr[pathBufLen++] = HL_PATH_SEP;
+    }
+
+    /* Add files/directories within the given directory. */
+    result = hlINArchiveAddDir(&pathBufPtr,
+        &pathBufCap, pathBufLen, &pathBufOnHeap,
+        loadData, recursive, &arc->entries);
+
+    /* Free path buffer if necessary and return result. */
+    if (pathBufOnHeap) hlFree(pathBuf);
+
     return result;
 }
 
 HlResult hlArchiveCreateFromDir(const HlNChar* HL_RESTRICT dirPath,
-    HlArchive* HL_RESTRICT * HL_RESTRICT arc)
+    HlBool loadData, HlBool recursive, HlArchive* HL_RESTRICT * HL_RESTRICT arc)
 {
-    /* TODO: Implement this function. */
-    HL_ASSERT(0);
-    return HL_ERROR_UNKNOWN; /* So compiler doesn't complain. */
+    HlArchive* hlArcBuf;
+    HlResult result;
+    
+    /* Create an HlArchive. */
+    result = hlArchiveCreate(&hlArcBuf);
+    if (HL_FAILED(result)) return result;
+
+    /* Add all the entries in the given directory. */
+    result = hlArchiveAddDir(dirPath, loadData, recursive, hlArcBuf);
+    if (HL_FAILED(result))
+    {
+        hlArchiveFree(hlArcBuf);
+        return result;
+    }
+
+    /* Set pointer and return result. */
+    *arc = hlArcBuf;
+    return result;
+}
+
+const HlNChar* hlArchiveEntryGetName(const HlArchiveEntry* entry)
+{
+    return (hlArchiveEntryIsReference(entry)) ?
+        hlPathGetName(entry->path) : entry->path;
 }
 
 void hlArchiveEntryDestruct(HlArchiveEntry* entry)
@@ -447,6 +799,11 @@ HlBool hlArchiveEntryIsDirExt(const HlArchiveEntry* entry)
 HlBool hlArchiveEntryIsFileExt(const HlArchiveEntry* entry)
 {
     return hlArchiveEntryIsFile(entry);
+}
+
+HlBool hlArchiveEntryIsRegularFileExt(const HlArchiveEntry* entry)
+{
+    return hlArchiveEntryIsRegularFile(entry);
 }
 
 size_t hlArchiveEntryGetCompressedSizeExt(const HlArchiveEntry* entry)

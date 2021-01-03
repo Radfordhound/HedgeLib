@@ -6,6 +6,10 @@
 #include "hedgelib/archives/hl_pacx.h"
 #include <stdlib.h>
 
+/* TODO: Take this out of BETA and make the version numbering system for HedgeLib not utter garbage pls. */
+/* TODO: Remove [INDEV] before release. */
+static const HlNChar* const VersionString = HL_NTEXT("1.2 (BETA) [INDEV]");
+
 typedef enum STRING_ID
 {
     USAGE_STRING,
@@ -180,8 +184,7 @@ static void printTypes(const HlNChar* HL_RESTRICT fmt, FILE* HL_RESTRICT stream)
 static void printUsage(FILE* stream)
 {
     /* Print usage and help1. */
-    /* TODO: Remove [INDEV] before release. */
-    fnprintf(stream, HL_NTEXT("HedgeArcPack v%s\n"), HL_NTEXT("1.2 (BETA) [INDEV]"));
+    fnprintf(stream, HL_NTEXT("HedgeArcPack v%s\n"), VersionString);
     fnprintf(stream, GET_TEXT(USAGE_STRING));
     fnprintf(stream, GET_TEXT(HELP1_STRING));
 
@@ -348,7 +351,7 @@ static HlResult extract(const HlNChar* HL_RESTRICT input,
         result = hlPACxV4Load(input, loadSplits, &arc);
         break;
 
-    default: return HL_ERROR_UNKNOWN;
+    default: return HL_ERROR_UNSUPPORTED;
     }
 
     /* Return result if archive loading failed. */
@@ -362,7 +365,7 @@ static HlResult extract(const HlNChar* HL_RESTRICT input,
 
 static HlResult pack(const HlNChar* HL_RESTRICT input,
     ARC_TYPE type, const HlU32* HL_RESTRICT splitLimit,
-    const HlU32* HL_RESTRICT padAmount, HlBool bigEndian,
+    const HlU32* HL_RESTRICT alignment, HlBool bigEndian,
     HlBool generatePFI, HlCompressType compressType,
     const HlNChar* HL_RESTRICT output)
 {
@@ -373,7 +376,7 @@ static HlResult pack(const HlNChar* HL_RESTRICT input,
     nprintf(GET_TEXT(PACKING_STRING));
 
     /* Create archive from directory. */
-    result = hlArchiveCreateFromDir(input, &arc);
+    result = hlArchiveCreateFromDir(input, HL_FALSE, HL_TRUE, &arc);
     if (HL_FAILED(result)) return result;
 
     /* Pack archive in the format specified by type. */
@@ -381,9 +384,13 @@ static HlResult pack(const HlNChar* HL_RESTRICT input,
     {
     case ARC_TYPE_AR:
         result = hlGensArchiveSave(arc,
-            (splitLimit) ? *splitLimit : HL_GENS_DEFAULT_SPLIT_LIMIT,
-            (padAmount) ? *padAmount : (generatePFI) ?
-            HL_GENS_DEFAULT_PAD_AMOUNT_PFD : HL_GENS_DEFAULT_PAD_AMOUNT,
+            (splitLimit) ? *splitLimit : ((generatePFI) ?
+                0 : HL_GENS_DEFAULT_SPLIT_LIMIT),
+
+            (alignment) ? *alignment : ((generatePFI) ?
+                HL_GENS_DEFAULT_ALIGNMENT_PFD :
+                HL_GENS_DEFAULT_ALIGNMENT),
+
             compressType, !generatePFI, output);
         break;
 
@@ -398,7 +405,7 @@ static HlResult pack(const HlNChar* HL_RESTRICT input,
     case ARC_TYPE_PACV4:
         break;*/
 
-    default: return HL_ERROR_UNKNOWN;
+    default: return HL_ERROR_UNSUPPORTED;
     }
 
     /* TODO: Generate PFI if requested. */
@@ -410,8 +417,8 @@ int nmain(int argc, HlNChar* argv[])
 {
     HlNChar buf[255];
     const HlNChar *input = NULL, *output = NULL;
-    HlU32* splitLimitPtr = NULL, * padAmountPtr = NULL;
-    HlU32 splitLimit, padAmount;
+    HlU32 *splitLimitPtr = NULL, *alignmentPtr = NULL;
+    HlU32 splitLimit, alignment;
     int i, returnCode = EXIT_SUCCESS;
     HlCompressType compressType = HL_COMPRESS_TYPE_NONE;
     MODE mode = MODE_UNKNOWN;
@@ -599,7 +606,7 @@ int nmain(int argc, HlNChar* argv[])
         /* Extract or pack based on mode. */
         if (mode == MODE_PACK)
         {
-            result = pack(input, type, splitLimitPtr, padAmountPtr,
+            result = pack(input, type, splitLimitPtr, alignmentPtr,
                 bigEndian, generatePFI, compressType, output);
         }
         else

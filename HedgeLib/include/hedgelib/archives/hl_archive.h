@@ -58,7 +58,7 @@ typedef struct HlArchiveEntry
        structs which represent the contents of the directory.
 
        If HL_ARC_ENTRY_STREAMING_FLAG is not set, and HL_ARC_ENTRY_IS_DIR_FLAG is not set, this
-       entry represents a "normal" file which is not being streamed-in from an archive, and data
+       entry represents a "regular" file which is not being streamed-in from an archive, and data
        is either a pointer to the file's data, or NULL if this is a file reference, in which case,
        path is the absolute file path to said file on the user's machine.
 
@@ -75,9 +75,11 @@ typedef struct HlArchiveEntry
 }
 HlArchiveEntry;
 
+typedef HL_LIST(HlArchiveEntry) HlArchiveEntryList;
+
 typedef struct HlArchive
 {
-    HL_LIST(HlArchiveEntry) entries;
+    HlArchiveEntryList entries;
 }
 HlArchive;
 
@@ -142,17 +144,28 @@ HL_API HlResult hlArchiveEntryFileSetData(HlArchiveEntry* HL_RESTRICT entry,
 HL_API HlResult hlArchiveEntriesExtract(const HlArchiveEntry* HL_RESTRICT entries,
     size_t entryCount, const HlNChar* HL_RESTRICT dirPath, HlBool recursive);
 
+HL_API HlResult hlArchiveConstruct(HlArchive* arc);
+HL_API HlResult hlArchiveCreate(HlArchive** arc);
+
+HL_API HlResult hlArchiveAddDir(const HlNChar* HL_RESTRICT dirPath,
+    HlBool loadData, HlBool recursive, HlArchive* HL_RESTRICT arc);
+
 HL_API HlResult hlArchiveCreateFromDir(const HlNChar* HL_RESTRICT dirPath,
-    HlArchive* HL_RESTRICT * HL_RESTRICT arc);
+    HlBool loadData, HlBool recursive, HlArchive* HL_RESTRICT * HL_RESTRICT arc);
 
 #define hlArchiveEntryIsStreaming(entry) (HlBool)(\
     ((entry)->meta & HL_ARC_ENTRY_STREAMING_FLAG) != 0)
 
-#define hlArchiveEntryIsDir(entry) (HlBool)(!hlArchiveEntryIsStreaming(entry) &&\
+#define hlArchiveEntryIsDir(entry)\
+    (HlBool)(!hlArchiveEntryIsStreaming(entry) &&\
     ((entry)->meta & HL_ARC_ENTRY_IS_DIR_FLAG) != 0)
 
 #define hlArchiveEntryIsFile(entry)\
     (HlBool)(hlArchiveEntryIsStreaming(entry) ||\
+    ((entry)->meta & HL_ARC_ENTRY_IS_DIR_FLAG) == 0)
+
+#define hlArchiveEntryIsRegularFile(entry)\
+    (HlBool)(!hlArchiveEntryIsStreaming(entry) &&\
     ((entry)->meta & HL_ARC_ENTRY_IS_DIR_FLAG) == 0)
 
 #define hlArchiveEntryGetCompressedSize(entry)\
@@ -163,6 +176,8 @@ HL_API HlResult hlArchiveCreateFromDir(const HlNChar* HL_RESTRICT dirPath,
     (HlBool)(!hlArchiveEntryIsStreaming(entry) &&\
     ((entry)->meta & HL_ARC_ENTRY_IS_DIR_FLAG) == 0 &&\
     (entry)->data == 0)
+
+HL_API const HlNChar* hlArchiveEntryGetName(const HlArchiveEntry* entry);
 
 #define hlArchiveExtract(arc, dirPath, recursive) hlArchiveEntriesExtract(\
     (arc)->entries.data, (arc)->entries.count, dirPath, recursive)
@@ -175,6 +190,7 @@ HL_API void hlArchiveFree(HlArchive* arc);
 HL_API HlBool hlArchiveEntryIsStreamingExt(const HlArchiveEntry* entry);
 HL_API HlBool hlArchiveEntryIsDirExt(const HlArchiveEntry* entry);
 HL_API HlBool hlArchiveEntryIsFileExt(const HlArchiveEntry* entry);
+HL_API HlBool hlArchiveEntryIsRegularFileExt(const HlArchiveEntry* entry);
 HL_API size_t hlArchiveEntryGetCompressedSizeExt(const HlArchiveEntry* entry);
 HL_API HlBool hlArchiveEntryIsReferenceExt(const HlArchiveEntry* entry);
 

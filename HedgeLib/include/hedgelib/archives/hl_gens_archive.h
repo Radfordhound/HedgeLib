@@ -10,9 +10,9 @@ extern "C" {
 typedef struct HlFile HlFile;
 typedef struct HlBlob HlBlob;
 
-#define HL_GENS_DEFAULT_SPLIT_LIMIT     0xA00000
-#define HL_GENS_DEFAULT_PAD_AMOUNT      0x40
-#define HL_GENS_DEFAULT_PAD_AMOUNT_PFD  0x800
+#define HL_GENS_DEFAULT_SPLIT_LIMIT     0xA01000
+#define HL_GENS_DEFAULT_ALIGNMENT       0x40
+#define HL_GENS_DEFAULT_ALIGNMENT_PFD   0x800
 
 #define HL_GENS_ARL_SIG                 HL_MAKE_SIG('A', 'R', 'L', '2')
 
@@ -24,12 +24,12 @@ typedef struct HlGensArchiveHeader
 {
     /** @brief Always 0? */
     HlU32 unknown1;
-    /** @brief Offset to the first file entry? The game doesn't seem to use it? */
-    HlU32 fileEntriesOffset;
-    /** @brief Always 0x14? */
-    HlU32 unknown2;
-    /** @brief The amount of padding written before each file. */
-    HlU32 padAmount;
+    /** @brief Size of this header. Always 0x10. The game doesn't seem to use it. */
+    HlU32 headerSize;
+    /** @brief Size of a single file entry struct. Always 0x14. The game doesn't seem to use it. */
+    HlU32 entrySize;
+    /** @brief The multiple all the data within the archive is aligned to. */
+    HlU32 dataAlignment;
 }
 HlGensArchiveHeader;
 
@@ -50,7 +50,7 @@ typedef struct HlGensArchiveFileEntry
 }
 HlGensArchiveFileEntry;
 
-HL_STATIC_ASSERT_SIZE(HlGensArchiveFileEntry, 20);
+HL_STATIC_ASSERT_SIZE(HlGensArchiveFileEntry, 0x14);
 
 typedef struct HlGensArchiveListHeader
 {
@@ -69,9 +69,9 @@ HL_API HlResult hlGensArchiveRead(const HlBlob* const HL_RESTRICT * HL_RESTRICT 
 HL_API HlResult hlGensArchiveLoad(const HlNChar* HL_RESTRICT filePath,
     HlBool loadSplits, HlArchive* HL_RESTRICT * HL_RESTRICT archive);
 
-HL_API HlResult hlGensArchiveSave(const HlArchive* arc, HlU32 splitLimit,
-    HlU32 padAmount, HlCompressType compressType, HlBool generateARL,
-    const HlNChar* filePath);
+HL_API HlResult hlGensArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
+    HlU32 dataAlignment, HlCompressType compressType, HlBool generateARL,
+    const HlNChar* HL_RESTRICT filePath);
 
 #ifdef __cplusplus
 }

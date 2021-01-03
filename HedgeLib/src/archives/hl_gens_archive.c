@@ -20,9 +20,10 @@ HlResult hlGensArchiveRead(const HlBlob* const HL_RESTRICT * HL_RESTRICT splits,
     hlArcBuf = HL_ALLOC_OBJ(HlArchive);
     if (!hlArcBuf) return HL_ERROR_OUT_OF_MEMORY;
 
-
     /* Setup archive. */
     HL_LIST_INIT(hlArcBuf->entries);
+
+    /* TODO: Account for endianness on big-endian machines. */
 
     /* Setup archive entries. */
     {
@@ -138,6 +139,20 @@ static HlResult hlINGensArchiveLoadSplits(const HlNChar* HL_RESTRICT filePath,
 
             /* Set lastCharPtr. */
             lastCharPtr = &pathBuf[filePathLen - 1];
+
+            /* If this is not the .00 split, check if the .00 split exists. */
+            if (ext[1] != HL_NTEXT('0') || ext[2] != HL_NTEXT('0'))
+            {
+                *(lastCharPtr - 1) = HL_NTEXT('0');
+                *lastCharPtr = HL_NTEXT('0');
+
+                /* Fallback to the given file path if .00 split does not exist. */
+                if (!hlPathExists(pathBuf))
+                {
+                    *(lastCharPtr - 1) = ext[1];
+                    *lastCharPtr = ext[2];
+                }
+            }
         }
         
         /* If the given file path is an arl, get the path to the corresponding .ar or .ar.00 */
@@ -309,10 +324,429 @@ HlResult hlGensArchiveLoad(const HlNChar* HL_RESTRICT filePath,
         hlINGensArchiveLoadSingle(filePath, archive);
 }
 
-HlResult hlGensArchiveSave(const HlArchive* arc, HlU32 splitLimit,
-    HlU32 padAmount, HlCompressType compressType, HlBool generateARL,
-    const HlNChar* filePath)
+HlResult hlGensArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
+    HlU32 dataAlignment, HlCompressType compressType, HlBool generateARL,
+    const HlNChar* HL_RESTRICT filePath)
 {
-    /* TODO */
-    return HL_ERROR_UNKNOWN;
+    /*
+        input           splits          arl             no splits           max reqBufLen
+        
+        #ghz101.ar      #ghz101.ar.00   #ghz101.arl     #ghz101.ar          +6
+        #ghz101.ar.00   #ghz101.ar.00   #ghz101.arl     #ghz101.ar.00       +6
+        #ghz101.pfd     #ghz101.pfd.00  #ghz101.arl     #ghz101.pfd         +7
+        #ghz101.a.b     #ghz101.a.b.00  #ghz101.arl     #ghz101.a.b         +7
+        #ghz101.00      #ghz101.00      #ghz101.arl     #ghz101.00          +4
+        #ghz101         #ghz101.00      #ghz101.arl     #ghz101             +4
+    */
+    HlNChar pathBuf[255];
+    HlNChar* pathBufPtr = pathBuf;
+    HlFile *arcFile = NULL, *arlFile = NULL;
+    const HlNChar* exts = hlPathGetExts(filePath);
+    const size_t filePathLen = (size_t)(exts - filePath);
+    size_t nonSplitExtsLen, pathBufCount, pathBufCap = 255;
+    HlU32 splitCount = 0, arcSize;
+    HlResult result = HL_RESULT_SUCCESS;
+
+    /* Setup path buffer. */
+    {
+        /* Account for the extensions we'll need to place at the end of the path. */
+        size_t reqPathBufLen;
+
+        if (splitLimit)
+        {
+            /* Account for non-split extensions. */
+            const HlNChar* finalExt = hlPathGetExt(exts);
+            nonSplitExtsLen = (size_t)(finalExt - exts);
+
+            if (*finalExt && !hlArchiveExtIsSplit(finalExt))
+            {
+                nonSplitExtsLen += hlNStrLen(finalExt);
+            }
+
+            /* Account for 2-digit split extension. */
+            reqPathBufLen = (nonSplitExtsLen + 3);
+        }
+        else
+        {
+            /* We won't be generating splits; account for all extensions in filePath. */
+            reqPathBufLen = nonSplitExtsLen = hlNStrLen(exts);
+        }
+
+        /* Account for .arl extension. */
+        if (generateARL && reqPathBufLen < 4)
+        {
+            reqPathBufLen = 4;
+        }
+
+        /* Account for the rest of the path. */
+        reqPathBufLen += filePathLen;
+
+        /* Allocate path buffer if necessary. */
+        pathBufCount = (reqPathBufLen + 1);
+
+        if (pathBufCount > pathBufCap)
+        {
+            pathBufPtr = HL_ALLOC_ARR(HlNChar, pathBufCount);
+            if (!pathBufPtr) return HL_ERROR_OUT_OF_MEMORY;
+        }
+
+        /* Copy all but the extension and null-terminator into the path buffer. */
+        memcpy(pathBufPtr, filePath, filePathLen * sizeof(HlNChar));
+    }
+
+    /* Begin writing ARL if requested. */
+    if (generateARL)
+    {
+        /*
+           Generate placeholder ARL header (splitCount will be filled-in later).
+           
+           NOTE: Endianness doesn't matter here; the signature's endianness will
+           always be correct, and splitCount is going to filled-in later.
+        */
+        const HlGensArchiveListHeader arlHeader =
+        {
+            HL_GENS_ARL_SIG,    /* signature */
+            0                   /* splitCount */
+        };
+
+        /* Copy ARL extension and null terminator into path buffer. */
+        memcpy(&pathBufPtr[filePathLen], HL_GENS_ARL_EXT, sizeof(HL_GENS_ARL_EXT));
+
+        /* Open ARL for writing. */
+        result = hlFileOpen(pathBufPtr, HL_FILE_MODE_WRITE, &arlFile);
+        if (HL_FAILED(result)) goto failed_open_arl;
+
+        /* Write placeholder ARL header. */
+        result = hlFileWrite(arlFile, sizeof(arlHeader), &arlHeader, NULL);
+        if (HL_FAILED(result)) goto failed;
+    }
+
+    /* Write archive(s) and ARL split sizes as requested. */
+    {
+        /* Generate the header that will be written to every split. */
+        const HlGensArchiveHeader arcHeader =
+        {
+            0,                              /* unknown1 */
+            sizeof(HlGensArchiveHeader),    /* headerSize */
+            sizeof(HlGensArchiveFileEntry), /* entrySize */
+            dataAlignment                   /* dataAlignment */
+        };
+
+        HlNChar* lastCharPtr = &pathBufPtr[filePathLen + nonSplitExtsLen];
+        size_t i;
+        HlBool wroteEntryToCurArc = HL_FALSE;
+        
+        /* Account for AR header. */
+        arcSize = sizeof(HlGensArchiveHeader);
+
+        /* Copy extension(s) from filePath into path buffer. */
+        memcpy(&pathBufPtr[filePathLen], exts, nonSplitExtsLen * sizeof(HlNChar));
+
+        if (splitLimit)
+        {
+            /* Copy 2-digit split extension and null terminator into buffer. */
+            memcpy(lastCharPtr, HL_NTEXT(".00"), sizeof(HL_NTEXT(".00")));
+
+            /* Increase last character pointer so that it points to the last split digit. */
+            lastCharPtr += 2;
+        }
+        else
+        {
+            /* Copy null-terminator into buffer. */
+            *lastCharPtr = HL_NTEXT('\0');
+        }
+
+        /* Open first archive for writing. */
+        result = hlFileOpen(pathBufPtr, HL_FILE_MODE_WRITE, &arcFile);
+        if (HL_FAILED(result)) goto failed_open_arc;
+
+        /* Write AR header. */
+        result = hlFileWrite(arcFile, sizeof(arcHeader), &arcHeader, NULL);
+        if (HL_FAILED(result)) goto failed;
+
+        /* Write archive(s) and ARL split sizes as requested. */
+        for (i = 0; i < arc->entries.count; ++i)
+        {
+#ifdef HL_IN_WIN32_UNICODE
+            char fileNameUTF8Buf[256];
+#endif
+
+            HlGensArchiveFileEntry fileEntry;
+            const HlArchiveEntry* entry = &arc->entries.data[i];
+            const HlNChar* entryName;
+            void* entryData;
+            const char* fileNameUTF8;
+            size_t fileNameUTF8Size;
+
+            /* Skip streaming and directory entries. */
+            if (!hlArchiveEntryIsRegularFile(entry))
+                continue;
+
+            /* Ensure file size can fit within a 32-bit unsigned integer. */
+            if (entry->size > 0xFFFFFFFFU)
+            {
+                result = HL_ERROR_OUT_OF_RANGE;
+                goto failed;
+            }
+            
+            fileEntry.dataSize = (HlU32)entry->size;
+
+            /* Get entry name and compute required size to convert to UTF-8. */
+            entryName = hlArchiveEntryGetName(entry);
+            fileNameUTF8Size = hlStrGetReqLenNativeToUTF8(entryName, 0);
+
+            /*
+               Ensure required length (size - 1) to convert entry name to UTF-8 fits
+               within 255 characters, as this appears to be the limit for how long a
+               file name can be within an ARL file (which probably applies to ARs/PFDs too).
+
+               NOTE: That 256 is not a typo. fileNameUTF8Size includes the null-terminator
+               which is not included in ARL files, so a fileNameUTF8Size value of 255 is
+               okay.
+            */
+            if (fileNameUTF8Size > 256)
+            {
+                result = HL_ERROR_OUT_OF_RANGE;
+                goto failed;
+            }
+
+            /* Account for entry and file name (including null terminator). */
+            fileEntry.dataOffset = (HlU32)(sizeof(HlGensArchiveFileEntry) + fileNameUTF8Size);
+
+            /* Account for file data alignment. */
+            fileEntry.dataOffset = HL_ALIGN(fileEntry.dataOffset + arcSize, dataAlignment);
+            fileEntry.dataOffset -= arcSize;
+
+            /* Account for file size. */
+            fileEntry.entrySize = (fileEntry.dataOffset + fileEntry.dataSize);
+
+            /* Increase total archive size. */
+            arcSize += fileEntry.entrySize;
+
+            /* Set unknown values. */
+            /* TODO: Find out what these are and set them properly. */
+            fileEntry.unknown1 = 0;
+            fileEntry.unknown2 = 0;
+
+            /* Break off into next split if necessary. */
+            if (splitLimit && arcSize > splitLimit && wroteEntryToCurArc)
+            {
+                /* Close the current split. */
+                result = hlFileClose(arcFile);
+                if (HL_FAILED(result)) goto failed_close_arc;
+
+                /* Write current split archive size to ARL if necessary. */
+                if (generateARL)
+                {
+                    result = hlFileWrite(arlFile, sizeof(arcSize), &arcSize, NULL);
+                    if (HL_FAILED(result)) goto failed_close_arc;
+                }
+
+                /* Increase the number in the split extension. */
+                if (!hlINArchiveNextSplit2(lastCharPtr))
+                {
+                    /* Error out if we went over 99 splits. */
+                    result = HL_ERROR_OUT_OF_RANGE;
+                    goto failed_open_arc;
+                }
+
+                /* Open the next split for writing. */
+                result = hlFileOpen(pathBufPtr, HL_FILE_MODE_WRITE, &arcFile);
+                if (HL_FAILED(result)) goto failed_open_arc;
+
+                /* Write AR header. */
+                result = hlFileWrite(arcFile, sizeof(arcHeader), &arcHeader, NULL);
+                if (HL_FAILED(result)) goto failed;
+
+                /* Reset arcSize. */
+                arcSize = sizeof(HlGensArchiveHeader);
+
+                /* Indicate that we have not yet written an entry to this new split. */
+                wroteEntryToCurArc = HL_FALSE;
+
+                /* Increment split count. */
+                ++splitCount;
+
+                /* Account for entry and file name (including null terminator). */
+                fileEntry.dataOffset = (HlU32)(sizeof(HlGensArchiveFileEntry) + fileNameUTF8Size);
+
+                /* Account for file data alignment. */
+                fileEntry.dataOffset = HL_ALIGN(fileEntry.dataOffset + arcSize, dataAlignment);
+                fileEntry.dataOffset -= arcSize;
+
+                /* Account for file size. */
+                fileEntry.entrySize = (fileEntry.dataOffset + fileEntry.dataSize);
+
+                /* Increase total archive size. */
+                arcSize += fileEntry.entrySize;
+            }
+
+            /* Convert file name to UTF-8 if necessary. */
+#ifdef HL_IN_WIN32_UNICODE
+            if (!hlStrConvNativeToUTF8NoAlloc(entryName,
+                fileNameUTF8Buf, fileNameUTF8Size, 256))
+            {
+                result = HL_ERROR_INVALID_DATA;
+                goto failed;
+            }
+
+            fileNameUTF8 = fileNameUTF8Buf;
+#else
+            fileNameUTF8 = entryName;
+#endif
+
+            /* Get entry data pointer. */
+            if (entry->data == 0)
+            {
+                /* This entry is a file reference; load data into memory. */
+                result = hlFileLoad(entry->path, &entryData, NULL);
+                if (HL_FAILED(result)) goto failed;
+            }
+            else
+            {
+                entryData = (void*)((HlUPtr)entry->data);
+            }
+
+            /* Write file entry to archive. */
+            result = hlFileWrite(arcFile, sizeof(fileEntry), &fileEntry, NULL);
+            if (HL_FAILED(result))
+            {
+                if (entry->data == 0) hlFree(entryData);
+                goto failed;
+            }
+
+            /* Write file name to archive. */
+            result = hlFileWrite(arcFile, fileNameUTF8Size, fileNameUTF8, NULL);
+            if (HL_FAILED(result))
+            {
+                if (entry->data == 0) hlFree(entryData);
+                goto failed;
+            }
+
+            /* Write file data padding to archive. */
+            result = hlFilePad(arcFile, dataAlignment);
+            if (HL_FAILED(result))
+            {
+                if (entry->data == 0) hlFree(entryData);
+                goto failed;
+            }
+
+            /* Write file data to archive. */
+            result = hlFileWrite(arcFile, entry->size, entryData, NULL);
+
+            /* Free entry data if necessary. */
+            if (entry->data == 0) hlFree(entryData);
+            if (HL_FAILED(result)) goto failed; /* NOTE: From the hlFileWrite above. */
+
+            /* Indicate that we have written at least one entry to this archive. */
+            wroteEntryToCurArc = HL_TRUE;
+        }
+        
+        /* Close archive. */
+        result = hlFileClose(arcFile);
+        if (HL_FAILED(result)) goto failed_close_arc;
+    }
+
+    /* Finish writing ARL if necessary. */
+    if (generateARL)
+    {
+        size_t i, arlEOF;
+
+        /* Write final split archive size to ARL. */
+        result = hlFileWrite(arlFile, sizeof(arcSize), &arcSize, NULL);
+        if (HL_FAILED(result)) goto failed_finishing_arl;
+
+        /* Increment split count. */
+        ++splitCount;
+
+        /* Get ARL EOF position. */
+        arlEOF = hlFileTell(arlFile);
+
+        /* Jump to ARL split count position. */
+        result = hlFileJumpTo(arlFile, 4);
+        if (HL_FAILED(result)) goto failed_finishing_arl;
+
+        /* Fill-in ARL split count. */
+        result = hlFileWrite(arlFile, sizeof(splitCount), &splitCount, NULL);
+        if (HL_FAILED(result)) goto failed_finishing_arl;
+
+        /* Jump to end of ARL. */
+        result = hlFileJumpTo(arlFile, arlEOF);
+        if (HL_FAILED(result)) goto failed_finishing_arl;
+
+        /* Write file names to ARL. */
+        for (i = 0; i < arc->entries.count; ++i)
+        {
+#ifdef HL_IN_WIN32_UNICODE
+            char fileNameUTF8Buf[255];
+#endif
+
+            const HlArchiveEntry* entry = &arc->entries.data[i];
+            const HlNChar* entryName;
+            const char* fileNameUTF8;
+            size_t fileNameUTF8Size;
+            HlU8 fileNameUTF8Len;
+
+            /* Skip streaming and directory entries. */
+            if (!hlArchiveEntryIsRegularFile(entry))
+                continue;
+
+            /* Get entry name and compute required size to convert to UTF-8. */
+            entryName = hlArchiveEntryGetName(entry);
+            fileNameUTF8Size = hlStrGetReqLenNativeToUTF8(entryName, 0);
+
+            /*
+               Get entry name length (size - 1) as a single byte we can write to the ARL.
+
+               NOTE: We already verified the names could all fit within 255 characters
+               when we wrote the archives, so this should be safe.
+            */
+            fileNameUTF8Len = (HlU8)(fileNameUTF8Size - 1);
+
+            /* Convert file name to UTF-8 if necessary. */
+#ifdef HL_IN_WIN32_UNICODE
+            if (!hlStrConvNativeToUTF8NoAlloc(entryName,
+                fileNameUTF8Buf, fileNameUTF8Size, 256))
+            {
+                result = HL_ERROR_INVALID_DATA;
+                goto failed_finishing_arl;
+            }
+
+            fileNameUTF8 = fileNameUTF8Buf;
+#else
+            fileNameUTF8 = entryName;
+#endif
+
+            /* Write file name length (size - 1) to ARL. */
+            result = hlFileWrite(arlFile, 1, &fileNameUTF8Len, NULL);
+            if (HL_FAILED(result)) goto failed_finishing_arl;
+
+            /* Write file name to ARL without null terminator. */
+            result = hlFileWrite(arlFile, fileNameUTF8Size - 1, fileNameUTF8, NULL);
+            if (HL_FAILED(result)) goto failed_finishing_arl;
+        }
+        
+        /* Close ARL. */
+        result = hlFileClose(arlFile);
+    }
+
+    /* Close/free everything and return result. */
+    goto end;
+
+failed:
+    hlFileClose(arcFile);
+
+failed_open_arc:
+failed_close_arc:
+failed_finishing_arl:
+    hlFileClose(arlFile);
+
+failed_open_arl:
+end:
+    if (pathBufPtr != pathBuf)
+    {
+        hlFree(pathBufPtr);
+    }
+
+    return result;
 }
