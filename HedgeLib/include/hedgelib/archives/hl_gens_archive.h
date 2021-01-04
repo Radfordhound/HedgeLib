@@ -19,6 +19,7 @@ typedef struct HlBlob HlBlob;
 HL_API extern const HlNChar HL_GENS_ARL_EXT[5];
 HL_API extern const HlNChar HL_GENS_AR_EXT[4];
 HL_API extern const HlNChar HL_GENS_PFD_EXT[5];
+HL_API extern const HlNChar HL_GENS_PFI_EXT[5];
 
 typedef struct HlGensArchiveHeader
 {
@@ -63,6 +64,31 @@ HlGensArchiveListHeader;
 
 HL_STATIC_ASSERT_SIZE(HlGensArchiveListHeader, 8);
 
+typedef struct HlHHPackedFileEntry
+{
+    /** @brief Offset to the name of the file this entry represents. */
+    HL_OFF32_STR nameOffset;
+    /** @brief The absolute position of the file within the packed data (e.g. within the .pfd). */
+    HlU32 dataPos;
+    /** @brief The size of the file within the packed data (e.g. within the .pfd). */
+    HlU32 dataSize;
+}
+HlHHPackedFileEntry;
+
+HL_STATIC_ASSERT_SIZE(HlHHPackedFileEntry, 12);
+
+typedef struct HlHHPackedFileIndexV0
+{
+    HlU32 entryCount;
+    HL_OFF32(HL_OFF32(HlHHPackedFileEntry)) entriesOffset;
+}
+HlHHPackedFileIndexV0;
+
+HL_STATIC_ASSERT_SIZE(HlHHPackedFileIndexV0, 8);
+
+HL_API void hlHHPackedFileEntrySwap(HlHHPackedFileEntry* entry, HlBool swapOffsets);
+HL_API void hlHHPackedFileIndexV0Swap(HlHHPackedFileIndexV0* pfi, HlBool swapOffsets);
+
 HL_API HlResult hlGensArchiveRead(const HlBlob* const HL_RESTRICT * HL_RESTRICT splits,
     size_t splitCount, HlArchive* HL_RESTRICT * HL_RESTRICT archive);
 
@@ -71,7 +97,22 @@ HL_API HlResult hlGensArchiveLoad(const HlNChar* HL_RESTRICT filePath,
 
 HL_API HlResult hlGensArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
     HlU32 dataAlignment, HlCompressType compressType, HlBool generateARL,
-    const HlNChar* HL_RESTRICT filePath);
+    HlPackedFileIndex* HL_RESTRICT pfi, const HlNChar* HL_RESTRICT filePath);
+
+HL_API HlResult hlHHPackedFileIndexV0Write(
+    const HlPackedFileIndex* HL_RESTRICT pfi,
+    size_t dataPos, HlOffTable* HL_RESTRICT offTable,
+    HlFile* HL_RESTRICT file);
+
+HL_API HlResult hlHHPackedFileIndexWrite(
+    const HlPackedFileIndex* HL_RESTRICT pfi,
+    HlU32 version, size_t dataPos,
+    HlOffTable* HL_RESTRICT offTable,
+    HlFile* HL_RESTRICT file);
+
+HL_API HlResult hlHHPackedFileIndexSave(
+    const HlPackedFileIndex* HL_RESTRICT pfi,
+    HlU32 version, const HlNChar* HL_RESTRICT filePath);
 
 #ifdef __cplusplus
 }

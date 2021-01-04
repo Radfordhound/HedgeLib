@@ -785,6 +785,56 @@ void hlArchiveFree(HlArchive* arc)
     hlFree(arc);
 }
 
+HlResult hlPackedFileIndexConstruct(HlPackedFileIndex* pfi)
+{
+    HL_LIST_INIT(pfi->entries);
+    return HL_RESULT_SUCCESS;
+}
+
+HlResult hlPackedFileIndexCreate(HlPackedFileIndex** pfi)
+{
+    HlPackedFileIndex* hlIndexBuf;
+    HlResult result;
+
+    /* Allocate HlPackedFileIndex. */
+    hlIndexBuf = HL_ALLOC_OBJ(HlPackedFileIndex);
+    if (!hlIndexBuf) return HL_ERROR_OUT_OF_MEMORY;
+
+    /* Construct HlPackedFileIndex. */
+    result = hlPackedFileIndexConstruct(hlIndexBuf);
+    if (HL_FAILED(result))
+    {
+        hlFree(hlIndexBuf);
+        return result;
+    }
+
+    /* Set HlPackedFileIndex pointer and return. */
+    *pfi = hlIndexBuf;
+    return result;
+}
+
+void hlPackedFileEntryDestruct(HlPackedFileEntry* entry)
+{
+    hlFree(entry->name);
+}
+
+void hlPackedFileIndexDestruct(HlPackedFileIndex* pfi)
+{
+    size_t i;
+    for (i = 0; i < pfi->entries.count; ++i)
+    {
+        hlPackedFileEntryDestruct(&pfi->entries.data[i]);
+    }
+
+    HL_LIST_FREE(pfi->entries);
+}
+
+void hlPackedFileIndexDestroy(HlPackedFileIndex* pfi)
+{
+    hlPackedFileIndexDestruct(pfi);
+    hlFree(pfi);
+}
+
 #ifndef HL_NO_EXTERNAL_WRAPPERS
 HlBool hlArchiveEntryIsStreamingExt(const HlArchiveEntry* entry)
 {

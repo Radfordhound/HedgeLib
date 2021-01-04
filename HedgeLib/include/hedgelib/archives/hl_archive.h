@@ -83,6 +83,23 @@ typedef struct HlArchive
 }
 HlArchive;
 
+typedef struct HlPackedFileEntry
+{
+    /** @brief The name this entry represents. */
+    char* name;
+    /** @brief The absolute position of the file within the packed data (e.g. within the .pfd). */
+    HlU32 dataPos;
+    /** @brief The size of the file within the packed data (e.g. within the .pfd). */
+    HlU32 dataSize;
+}
+HlPackedFileEntry;
+
+typedef struct HlPackedFileIndex
+{
+    HL_LIST(HlPackedFileEntry) entries;
+}
+HlPackedFileIndex;
+
 HL_API size_t hlArchiveExtIsSplit(const HlNChar* ext);
 
 /**
@@ -185,6 +202,12 @@ HL_API const HlNChar* hlArchiveEntryGetName(const HlArchiveEntry* entry);
 HL_API void hlArchiveEntryDestruct(HlArchiveEntry* entry);
 HL_API void hlArchiveDestruct(HlArchive* arc);
 HL_API void hlArchiveFree(HlArchive* arc);
+
+HL_API HlResult hlPackedFileIndexConstruct(HlPackedFileIndex* pfi);
+HL_API HlResult hlPackedFileIndexCreate(HlPackedFileIndex** pfi);
+HL_API void hlPackedFileEntryDestruct(HlPackedFileEntry* entry);
+HL_API void hlPackedFileIndexDestruct(HlPackedFileIndex* pfi);
+HL_API void hlPackedFileIndexDestroy(HlPackedFileIndex* pfi);
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS
 HL_API HlBool hlArchiveEntryIsStreamingExt(const HlArchiveEntry* entry);

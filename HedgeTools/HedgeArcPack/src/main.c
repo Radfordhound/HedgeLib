@@ -369,47 +369,91 @@ static HlResult pack(const HlNChar* HL_RESTRICT input,
     HlBool generatePFI, HlCompressType compressType,
     const HlNChar* HL_RESTRICT output)
 {
+    HlPackedFileIndex pfi;
     HlArchive* arc;
     HlResult result;
 
     /* Print message letting user know we're packing an archive. */
     nprintf(GET_TEXT(PACKING_STRING));
 
+    /* Construct packed file index. */
+    result = hlPackedFileIndexConstruct(&pfi);
+    if (HL_FAILED(result)) return result;
+
     /* Create archive from directory. */
     result = hlArchiveCreateFromDir(input, HL_FALSE, HL_TRUE, &arc);
-    if (HL_FAILED(result)) return result;
+    if (HL_FAILED(result)) goto end;
 
     /* Pack archive in the format specified by type. */
     switch (type)
     {
     case ARC_TYPE_AR:
-        result = hlGensArchiveSave(arc,
-            (splitLimit) ? *splitLimit : ((generatePFI) ?
+        result = hlGensArchiveSave(arc,                     /* arc */
+            (splitLimit) ? *splitLimit : ((generatePFI) ?   /* splitLimit */
                 0 : HL_GENS_DEFAULT_SPLIT_LIMIT),
 
-            (alignment) ? *alignment : ((generatePFI) ?
+            (alignment) ? *alignment : ((generatePFI) ?     /* dataAlignment */
                 HL_GENS_DEFAULT_ALIGNMENT_PFD :
                 HL_GENS_DEFAULT_ALIGNMENT),
 
-            compressType, !generatePFI, output);
+            compressType,                                   /* compressType */
+            !generatePFI,                                   /* generateARL */
+            (generatePFI) ? &pfi : NULL,                    /* pfi */
+            output);                                        /* filePath */
+
         break;
 
     /* TODO */
 
-    /*case ARC_TYPE_PACV2:
+    default:
+        result = HL_ERROR_UNSUPPORTED;
         break;
-
-    case ARC_TYPE_PACV3:
-        break;
-
-    case ARC_TYPE_PACV4:
-        break;*/
-
-    default: return HL_ERROR_UNSUPPORTED;
     }
 
-    /* TODO: Generate PFI if requested. */
+    /* Free archive. */
+    hlArchiveFree(arc);
 
+    /* Return early if archive creation failed. */
+    if (HL_FAILED(result)) goto end;
+
+    /* Generate PFI if requested and possible for the given type. */
+    if (generatePFI)
+    {
+        /* Allocate buffer for PFI file path. */
+        HlNChar pfiPathBuf[255];
+        HlNChar* pfiPathPtr;
+        const size_t pfiExtPos = hlPathRemoveExtsNoAlloc(output, NULL);
+        const size_t pfiPathSize = (pfiExtPos + 5);
+
+        if (pfiPathSize >= 255)
+        {
+            /* Allocate buffer on heap. */
+            pfiPathPtr = HL_ALLOC_ARR(HlNChar, pfiPathSize);
+            if (!pfiPathPtr)
+            {
+                result = HL_ERROR_OUT_OF_MEMORY;
+                goto end;
+            }
+        }
+        else
+        {
+            /* Use stack buffer. */
+            pfiPathPtr = pfiPathBuf;
+        }
+
+        /* Copy output path without extension into PFI path. */
+        hlPathRemoveExtsNoAlloc(output, pfiPathPtr);
+        
+        /* Copy .pfi extension and null terminator into PFI path. */
+        memcpy(&pfiPathPtr[pfiExtPos], HL_GENS_PFI_EXT, sizeof(HL_GENS_PFI_EXT));
+
+        /* Save PFI and free PFI path buffer if necessary. */
+        result = hlHHPackedFileIndexSave(&pfi, 0, pfiPathPtr);
+        if (pfiPathPtr != pfiPathBuf) hlFree(pfiPathPtr);
+    }
+
+end:
+    hlPackedFileIndexDestruct(&pfi);
     return result;
 }
 

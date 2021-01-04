@@ -1,14 +1,30 @@
 #include "hl_in_archive.h"
-#include "hedgelib/archives/hl_gens_archive.h"
+#include "hedgelib/hl_endian.h"
 #include "hedgelib/io/hl_file.h"
 #include "hedgelib/io/hl_path.h"
-#include "hedgelib/hl_blob.h"
+#include "hedgelib/io/hl_hh.h"
+#include "hedgelib/archives/hl_gens_archive.h"
 
 #define HL_INGENS_ARC_BLOB_BUF_LEN 10
 
 const HlNChar HL_GENS_ARL_EXT[5] = HL_NTEXT(".arl");
 const HlNChar HL_GENS_AR_EXT[4] = HL_NTEXT(".ar");
 const HlNChar HL_GENS_PFD_EXT[5] = HL_NTEXT(".pfd");
+const HlNChar HL_GENS_PFI_EXT[5] = HL_NTEXT(".pfi");
+
+void hlHHPackedFileEntrySwap(HlHHPackedFileEntry* entry, HlBool swapOffsets)
+{
+    if (swapOffsets) hlSwapU32P(&entry->nameOffset);
+
+    hlSwapU32P(&entry->dataPos);
+    hlSwapU32P(&entry->dataSize);
+}
+
+void hlHHPackedFileIndexV0Swap(HlHHPackedFileIndexV0* pfi, HlBool swapOffsets)
+{
+    hlSwapU32P(&pfi->entryCount);
+    if (swapOffsets) hlSwapU32P(&pfi->entriesOffset);
+}
 
 HlResult hlGensArchiveRead(const HlBlob* const HL_RESTRICT * HL_RESTRICT splits,
     size_t splitCount, HlArchive* HL_RESTRICT * HL_RESTRICT archive)
@@ -326,7 +342,7 @@ HlResult hlGensArchiveLoad(const HlNChar* HL_RESTRICT filePath,
 
 HlResult hlGensArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
     HlU32 dataAlignment, HlCompressType compressType, HlBool generateARL,
-    const HlNChar* HL_RESTRICT filePath)
+    HlPackedFileIndex* HL_RESTRICT pfi, const HlNChar* HL_RESTRICT filePath)
 {
     /*
         input           splits          arl             no splits           max reqBufLen
@@ -476,20 +492,60 @@ HlResult hlGensArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
             const HlNChar* entryName;
             void* entryData;
             const char* fileNameUTF8;
-            size_t fileNameUTF8Size;
+            size_t dataPos, entrySize, fileNameUTF8Size;
+            HlBool doFreeEntryData = HL_FALSE;
 
             /* Skip streaming and directory entries. */
             if (!hlArchiveEntryIsRegularFile(entry))
                 continue;
 
+            /* Get entry data pointer. */
+            if (entry->data == 0)
+            {
+                /* This entry is a file reference; load data into memory. */
+                result = hlFileLoad(entry->path, &entryData, NULL);
+                if (HL_FAILED(result)) goto failed;
+
+                doFreeEntryData = HL_TRUE;
+            }
+            else
+            {
+                entryData = (void*)((HlUPtr)entry->data);
+            }
+
+            /* Compress data if necessary. */
+            if (compressType != HL_COMPRESS_TYPE_NONE)
+            {
+                void* compressedEntryData;
+
+                /* Compress data. */
+                result = hlCompress(compressType,
+                    entryData, entry->size,
+                    &entrySize, &compressedEntryData);
+
+                if (HL_FAILED(result)) goto failed;
+
+                /* Free uncompressed data if necessary. */
+                if (doFreeEntryData) hlFree(entryData);
+
+                /* Set entry data pointer. */
+                entryData = compressedEntryData;
+                doFreeEntryData = HL_TRUE;
+            }
+            else
+            {
+                entrySize = entry->size;
+            }
+
             /* Ensure file size can fit within a 32-bit unsigned integer. */
-            if (entry->size > 0xFFFFFFFFU)
+            if (entrySize > 0xFFFFFFFFU)
             {
                 result = HL_ERROR_OUT_OF_RANGE;
+                if (doFreeEntryData) hlFree(entryData);
                 goto failed;
             }
             
-            fileEntry.dataSize = (HlU32)entry->size;
+            fileEntry.dataSize = (HlU32)entrySize;
 
             /* Get entry name and compute required size to convert to UTF-8. */
             entryName = hlArchiveEntryGetName(entry);
@@ -594,24 +650,12 @@ HlResult hlGensArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
 #else
             fileNameUTF8 = entryName;
 #endif
-
-            /* Get entry data pointer. */
-            if (entry->data == 0)
-            {
-                /* This entry is a file reference; load data into memory. */
-                result = hlFileLoad(entry->path, &entryData, NULL);
-                if (HL_FAILED(result)) goto failed;
-            }
-            else
-            {
-                entryData = (void*)((HlUPtr)entry->data);
-            }
-
+            
             /* Write file entry to archive. */
             result = hlFileWrite(arcFile, sizeof(fileEntry), &fileEntry, NULL);
             if (HL_FAILED(result))
             {
-                if (entry->data == 0) hlFree(entryData);
+                if (doFreeEntryData) hlFree(entryData);
                 goto failed;
             }
 
@@ -619,7 +663,7 @@ HlResult hlGensArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
             result = hlFileWrite(arcFile, fileNameUTF8Size, fileNameUTF8, NULL);
             if (HL_FAILED(result))
             {
-                if (entry->data == 0) hlFree(entryData);
+                if (doFreeEntryData) hlFree(entryData);
                 goto failed;
             }
 
@@ -627,19 +671,51 @@ HlResult hlGensArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
             result = hlFilePad(arcFile, dataAlignment);
             if (HL_FAILED(result))
             {
-                if (entry->data == 0) hlFree(entryData);
+                if (doFreeEntryData) hlFree(entryData);
                 goto failed;
             }
 
+            /* Store data position. */
+            dataPos = hlFileTell(arcFile);
+
             /* Write file data to archive. */
-            result = hlFileWrite(arcFile, entry->size, entryData, NULL);
+            result = hlFileWrite(arcFile, entrySize, entryData, NULL);
 
             /* Free entry data if necessary. */
-            if (entry->data == 0) hlFree(entryData);
+            if (doFreeEntryData) hlFree(entryData);
             if (HL_FAILED(result)) goto failed; /* NOTE: From the hlFileWrite above. */
 
             /* Indicate that we have written at least one entry to this archive. */
             wroteEntryToCurArc = HL_TRUE;
+
+            /* Add packed file entry to packed file index if necessary. */
+            if (pfi && !splitLimit)
+            {
+                /* Generate packed file entry. */
+                HlPackedFileEntry packedEntry =
+                {
+                    HL_ALLOC_ARR(char, fileNameUTF8Size),   /* name */
+                    (HlU32)dataPos,                         /* dataPos */
+                    fileEntry.dataSize                      /* dataSize */
+                };
+
+                if (!packedEntry.name)
+                {
+                    result = HL_ERROR_OUT_OF_MEMORY;
+                    goto failed;
+                }
+
+                /* Copy UTF-8 name into packed file entry name buffer. */
+                memcpy(packedEntry.name, fileNameUTF8, fileNameUTF8Size);
+
+                /* Add packed file entry to packed file index. */
+                result = HL_LIST_PUSH(pfi->entries, packedEntry);
+                if (HL_FAILED(result))
+                {
+                    hlPackedFileEntryDestruct(&packedEntry);
+                    goto failed;
+                }
+            }
         }
         
         /* Close archive. */
@@ -748,5 +824,173 @@ end:
         hlFree(pathBufPtr);
     }
 
+    return result;
+}
+
+HlResult hlHHPackedFileIndexV0Write(
+    const HlPackedFileIndex* HL_RESTRICT pfi,
+    size_t dataPos, HlOffTable* HL_RESTRICT offTable,
+    HlFile* HL_RESTRICT file)
+{
+    size_t i, curOffPos, eofPos;
+    HlResult result;
+
+    /* Write PFI header. */
+    {
+        /* Generate PFI header. */
+        HlHHPackedFileIndexV0 hhPfiHeader =
+        {
+            (HlU32)pfi->entries.count,      /* entryCount */
+            sizeof(HlHHPackedFileIndexV0)   /* entriesOffset */
+        };
+
+        /* Endian-swap if necessary. */
+#ifndef HL_IS_BIG_ENDIAN
+        hlHHPackedFileIndexV0Swap(&hhPfiHeader, HL_TRUE);
+#endif
+
+        /* Write PFI header. */
+        result = hlFileWrite(file, sizeof(hhPfiHeader), &hhPfiHeader, NULL);
+        if (HL_FAILED(result)) return result;
+
+        /* Add entries offset to offset table. */
+        result = HL_LIST_PUSH(*offTable, dataPos +
+            offsetof(HlHHPackedFileIndexV0, entriesOffset));
+
+        if (HL_FAILED(result)) return result;
+    }
+
+    /* Get current offset position. */
+    curOffPos = hlFileTell(file);
+
+    /* Write placeholder entry offsets. */
+    result = hlFileWriteNulls(file, sizeof(HlU32) *
+        pfi->entries.count, NULL);
+
+    if (HL_FAILED(result)) return result;
+
+    /* Get EOF position. */
+    eofPos = hlFileTell(file);
+
+    /* Write entries and fill-in placeholder offsets. */
+    for (i = 0; i < pfi->entries.count; ++i)
+    {
+        const HlPackedFileEntry* pfiEntry = &pfi->entries.data[i];
+        HlU32 curEntryRelPos = (HlU32)(eofPos - dataPos);
+
+        /* Generate HH packed file entry. */
+        HlHHPackedFileEntry entry =
+        {
+            (curEntryRelPos + sizeof(HlHHPackedFileEntry)), /* nameOffset */
+            pfiEntry->dataPos,                              /* dataPos */
+            pfiEntry->dataSize                              /* dataSize */
+        };
+
+        /* Jump to entry offset. */
+        result = hlFileJumpTo(file, curOffPos);
+        if (HL_FAILED(result)) return result;
+
+        /* Endian-swap entry offset if necessary. */
+#ifndef HL_IS_BIG_ENDIAN
+        hlSwapU32P(&curEntryRelPos);
+#endif
+
+        /* Fill-in entry offset. */
+        result = hlFileWrite(file, sizeof(curEntryRelPos),
+            &curEntryRelPos, NULL);
+
+        if (HL_FAILED(result)) return result;
+
+        /* Add current entry offset to offset table. */
+        result = HL_LIST_PUSH(*offTable, curOffPos);
+        if (HL_FAILED(result)) return result;
+
+        /* Increase current offset position. */
+        curOffPos += sizeof(HlU32);
+
+        /* Jump to EOF. */
+        result = hlFileJumpTo(file, eofPos);
+        if (HL_FAILED(result)) return result;
+
+        /* Endian-swap entry if necessary. */
+#ifndef HL_IS_BIG_ENDIAN
+        hlHHPackedFileEntrySwap(&entry, HL_TRUE);
+#endif
+
+        /* Write entry. */
+        result = hlFileWrite(file, sizeof(entry), &entry, NULL);
+        if (HL_FAILED(result)) return result;
+
+        /* Write entry name. */
+        result = hlFileWriteString(file, pfiEntry->name, NULL);
+        if (HL_FAILED(result)) return result;
+
+        /* Add name offset to offset table. */
+        result = HL_LIST_PUSH(*offTable, eofPos);
+        if (HL_FAILED(result)) return result;
+
+        /* Write padding. */
+        result = hlFilePad(file, 4);
+        if (HL_FAILED(result)) return result;
+
+        /* Get EOF position. */
+        eofPos = hlFileTell(file);
+    }
+
+    return result;
+}
+
+HlResult hlHHPackedFileIndexWrite(
+    const HlPackedFileIndex* HL_RESTRICT pfi,
+    HlU32 version, size_t dataPos,
+    HlOffTable* HL_RESTRICT offTable,
+    HlFile* HL_RESTRICT file)
+{
+    /* Ensure version is supported. */
+    if (version != 0) return HL_ERROR_UNSUPPORTED;
+
+    /* Write PFI data. */
+    return hlHHPackedFileIndexV0Write(pfi,
+        dataPos, offTable, file);
+}
+
+HlResult hlHHPackedFileIndexSave(
+    const HlPackedFileIndex* HL_RESTRICT pfi,
+    HlU32 version, const HlNChar* HL_RESTRICT filePath)
+{
+    HlOffTable offTable;
+    HlFile* file;
+    HlResult result;
+
+    /* Initialize offset table. */
+    HL_LIST_INIT(offTable);
+
+    /* Open file. */
+    result = hlFileOpen(filePath, HL_FILE_MODE_WRITE, &file);
+    if (HL_FAILED(result)) return result;
+
+    /* Start writing HH standard header. */
+    result = hlHHStandardStartWrite(file, version);
+    if (HL_FAILED(result)) goto failed;
+
+    /* Write HH PFI data. */
+    result = hlHHPackedFileIndexWrite(pfi, version,
+        sizeof(HlHHStandardHeader), &offTable, file);
+
+    if (HL_FAILED(result)) goto failed;
+
+    /* Finish writing HH standard header. */
+    result = hlHHStandardFinishWrite(0,
+        HL_TRUE, &offTable, file);
+
+    if (HL_FAILED(result)) goto failed;
+
+    /* Free lists, close file, and return result. */
+    HL_LIST_FREE(offTable);
+    return hlFileClose(file);
+
+failed:
+    HL_LIST_FREE(offTable);
+    hlFileClose(file);
     return result;
 }
