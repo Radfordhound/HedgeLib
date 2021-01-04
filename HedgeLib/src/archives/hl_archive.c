@@ -393,7 +393,7 @@ HlResult hlArchiveEntriesExtract(const HlArchiveEntry* HL_RESTRICT entries,
         recursive, &pathBufOnHeap, &pathBufPtr,
         &pathBufCap, dirPathLen);
 
-    if (pathBufOnHeap) hlFree(pathBuf);
+    if (pathBufOnHeap) hlFree(pathBufPtr);
 
     return result;
 }
@@ -701,7 +701,7 @@ HlResult hlArchiveAddDir(const HlNChar* HL_RESTRICT dirPath,
         loadData, recursive, &arc->entries);
 
     /* Free path buffer if necessary and return result. */
-    if (pathBufOnHeap) hlFree(pathBuf);
+    if (pathBufOnHeap) hlFree(pathBufPtr);
 
     return result;
 }

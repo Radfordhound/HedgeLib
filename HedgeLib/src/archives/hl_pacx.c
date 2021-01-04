@@ -855,7 +855,7 @@ static HlResult hlINPACxV2LoadSingle(const HlNChar* HL_RESTRICT filePath,
 
 static HlResult hlINPACxV2LoadSplitBlobs(HlBlob* HL_RESTRICT rootPac,
     size_t dirLen, size_t pathBufCapacity, HlNChar* HL_RESTRICT * HL_RESTRICT pathBufPtr,
-    HlBool* HL_RESTRICT pathBufOnHeap, HlBlob* HL_RESTRICT * HL_RESTRICT * HL_RESTRICT pacs,
+    HlBool* HL_RESTRICT pathBufOnHeap, HlBlob*** pacs,
     size_t* HL_RESTRICT pacCount)
 {
     HlPACxV2BlockDataHeader* dataBlock;
@@ -1286,7 +1286,7 @@ static HlResult hlINPACxV3LoadSingle(const HlNChar* HL_RESTRICT filePath,
 
 static HlResult hlINPACxV3LoadSplitBlobs(HlBlob* HL_RESTRICT rootPac,
     size_t dirLen, size_t pathBufCapacity, HlNChar* HL_RESTRICT * HL_RESTRICT pathBufPtr,
-    HlBool* HL_RESTRICT pathBufOnHeap, HlBlob* HL_RESTRICT * HL_RESTRICT * HL_RESTRICT pacs,
+    HlBool* HL_RESTRICT pathBufOnHeap, HlBlob*** pacs,
     size_t* HL_RESTRICT pacCount)
 {
     HlPACxV3Header* header = (HlPACxV3Header*)rootPac->data;
@@ -1511,7 +1511,7 @@ HlResult hlPACxV403DecompressBlob(const void* HL_RESTRICT compressedData,
 }
 
 static HlResult hlINPACxV4DecompressToBlobs(HlBlob* HL_RESTRICT pac,
-    HlBlob* HL_RESTRICT * HL_RESTRICT * HL_RESTRICT pacs, size_t* HL_RESTRICT pacCount)
+    HlBlob*** pacs, size_t* HL_RESTRICT pacCount)
 {
     const HlPACxV4Header* header = (const HlPACxV4Header*)pac->data;
     const HlPACxV3Header* rootHeader;
