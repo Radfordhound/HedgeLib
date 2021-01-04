@@ -1,6 +1,7 @@
-#include "hedgelib/io/hl_hh.h"
 #include "hedgelib/hl_endian.h"
 #include "hedgelib/hl_blob.h"
+#include "hedgelib/io/hl_hh.h"
+#include "hedgelib/io/hl_file.h"
 #include "../hl_in_assert.h" /* TODO: Remove this? */
 #include <string.h>
 
@@ -233,6 +234,172 @@ const void* hlHHMirageGetData(const HlBlob* HL_RESTRICT blob,
 
     /* Get data pointer and return it. */
     return (contextsNode + 1);
+}
+
+HlResult hlHHOffsetsWriteNoSort(const HlOffTable* HL_RESTRICT offTable,
+    size_t dataPos, HlFile* HL_RESTRICT file)
+{
+    size_t i;
+    HlResult result = HL_RESULT_SUCCESS;
+
+    for (i = 0; i < offTable->count; ++i)
+    {
+        const size_t curOffVal = (offTable->data[i] - dataPos);
+        HlU32 curOffValU32 = (HlU32)curOffVal;
+
+        /* Ensure offset fits within 32-bits. */
+#if HL_SIZE_MAX > 0xFFFFFFFFU
+        if (curOffVal > 0xFFFFFFFFU) return HL_ERROR_OUT_OF_RANGE;
+#endif
+
+        /* Endian-swap offset count if necessary. */
+#ifndef HL_IS_BIG_ENDIAN
+        hlSwapU32P(&curOffValU32);
+#endif
+
+        /* Write offset value. */
+        result = hlFileWrite(file, sizeof(curOffValU32),
+            &curOffValU32, NULL);
+
+        if (HL_FAILED(result)) return result;
+    }
+
+    return result;
+}
+
+HlResult hlHHOffsetsWrite(HlOffTable* HL_RESTRICT offTable,
+    size_t dataPos, HlFile* HL_RESTRICT file)
+{
+    /* Sort offsets in offset table. */
+    hlOffTableSort(offTable);
+
+    /* Write sorted offsets. */
+    return hlHHOffsetsWriteNoSort(offTable, dataPos, file);
+}
+
+HlResult hlHHStandardStartWrite(HlFile* file, HlU32 version)
+{
+    /* Generate HH standard header. */
+    HlHHStandardHeader header =
+    {
+        0,                                  /* fileSize */
+        version,                            /* version */
+        0,                                  /* dataSize */
+        sizeof(HlHHStandardHeader),         /* dataOffset */
+        0,                                  /* offsetTableOffset */
+        0                                   /* eofOffset */
+    };
+
+    /* Swap endianness if necessary. */
+#ifndef HL_IS_BIG_ENDIAN
+    hlHHStandardHeaderSwap(&header, HL_TRUE);
+#endif
+
+    /* Write header and return result. */
+    return hlFileWrite(file, sizeof(header), &header, NULL);
+}
+
+HlResult hlHHStandardFinishWrite(size_t headerPos, HlBool writeEOFPadding,
+    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file)
+{
+    const size_t dataPos = (headerPos + sizeof(HlHHStandardHeader));
+    size_t offTablePos, eofPos;
+    HlResult result;
+
+    /* Pad file for offset table. */
+    result = hlFilePad(file, 4);
+    if (HL_FAILED(result)) return result;
+
+    /* Get offset table position. */
+    offTablePos = hlFileTell(file);
+
+    /* Write offset count. */
+    {
+        HlU32 offsetCountU32 = (HlU32)offTable->count;
+     
+        /* Ensure offset count fits within 32-bits. */
+#if HL_SIZE_MAX > 0xFFFFFFFFU
+        if (offsetCountU32 > 0xFFFFFFFFU) return HL_ERROR_OUT_OF_RANGE;
+#endif
+
+        /* Endian-swap offset count if necessary. */
+#ifndef HL_IS_BIG_ENDIAN
+        hlSwapU32P(&offsetCountU32);
+#endif
+
+        /* Write offset count. */
+        result = hlFileWrite(file, sizeof(offsetCountU32),
+            &offsetCountU32, NULL);
+
+        if (HL_FAILED(result)) return result;
+    }
+
+    /* Write offset table. */
+    result = hlHHOffsetsWrite(offTable, dataPos, file);
+    if (HL_FAILED(result)) return result;
+
+    /* Get end of file position. */
+    eofPos = hlFileTell(file);
+
+    /* Jump to header fileSize position. */
+    result = hlFileJumpTo(file, headerPos);
+    if (HL_FAILED(result)) return result;
+
+    /* Fill-in header values. */
+    {
+        HlHHStandardHeader header =
+        {
+            (HlU32)(eofPos - headerPos),        /* fileSize */
+            0,                                  /* version */
+            (HlU32)(offTablePos - dataPos),     /* dataSize */
+            sizeof(HlHHStandardHeader),         /* dataOffset */
+            (HlU32)(offTablePos - headerPos),   /* offsetTableOffset */
+            0                                   /* eofOffset */
+        };
+
+        if (writeEOFPadding)
+        {
+            /* Set EOF offset. */
+            header.eofOffset = header.fileSize;
+
+            /* Account for the padding we're going to write at EOF. */
+            header.fileSize += sizeof(HlU32);
+        }
+
+        /* Endian-swap header if necessary. */
+#ifndef HL_IS_BIG_ENDIAN
+        hlHHStandardHeaderSwap(&header, HL_TRUE);
+#endif
+
+        /* Fill-in header fileSize. */
+        result = hlFileWrite(file, sizeof(header.fileSize), &header.fileSize, NULL);
+        if (HL_FAILED(result)) return result;
+
+        /* Skip header version. */
+        result = hlFileJumpAhead(file, 4);
+        if (HL_FAILED(result)) return result;
+
+        /* Fill-in remaining header values. */
+        result = hlFileWrite(file, sizeof(header) -
+            offsetof(HlHHStandardHeader, dataSize),
+            &header.dataSize, NULL);
+
+        if (HL_FAILED(result)) return result;
+    }
+
+    /* Jump to end of file. */
+    result = hlFileJumpTo(file, eofPos);
+    if (HL_FAILED(result)) return result;
+
+    /* Write EOF padding if requested. */
+    if (writeEOFPadding)
+    {
+        const HlU32 eofPadding = 0;
+        result = hlFileWrite(file, sizeof(eofPadding),
+            &eofPadding, NULL);
+    }
+
+    return result;
 }
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS

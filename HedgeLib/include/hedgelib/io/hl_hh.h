@@ -1,6 +1,7 @@
 #ifndef HL_HH_H_INCLUDED
 #define HL_HH_H_INCLUDED
 #include "../hl_blob.h"
+#include "../hl_list.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -110,6 +111,17 @@ HL_API const void* hlHHMirageGetData(const HlBlob* HL_RESTRICT blob,
 
 #define hlHHGetData(blob, version) ((hlHHHeaderIsMirage((blob)->data)) ?\
     hlHHMirageGetData(blob, version) : hlHHStandardGetData(blob, version))
+
+HL_API HlResult hlHHOffsetsWriteNoSort(const HlOffTable* HL_RESTRICT offTable,
+    size_t dataPos, HlFile* HL_RESTRICT file);
+
+HL_API HlResult hlHHOffsetsWrite(HlOffTable* HL_RESTRICT offTable,
+    size_t dataPos, HlFile* HL_RESTRICT file);
+
+HL_API HlResult hlHHStandardStartWrite(HlFile* file, HlU32 version);
+
+HL_API HlResult hlHHStandardFinishWrite(size_t headerPos, HlBool writeEOFPadding,
+    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file);
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS
 HL_API HlBool hlHHHeaderIsMirageExt(const void* header);
