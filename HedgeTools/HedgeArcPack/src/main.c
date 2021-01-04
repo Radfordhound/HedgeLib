@@ -32,7 +32,8 @@ typedef enum STRING_ID
     FILE_TYPE_AR,
     FILE_TYPE_PACxV2,
     FILE_TYPE_PACxV3,
-    FILE_TYPE_PACxV4,
+    FILE_TYPE_PACxV402,
+    FILE_TYPE_PACxV403,
 
     EXTRACTING_STRING,
     PACKING_STRING,
@@ -94,7 +95,8 @@ typedef enum ARC_TYPE
     ARC_TYPE_PACx,
     ARC_TYPE_PACxV2,
     ARC_TYPE_PACxV3,
-    ARC_TYPE_PACxV4,
+    ARC_TYPE_PACxV402,
+    ARC_TYPE_PACxV403,
     ARC_TYPE_COUNT
 }
 ARC_TYPE;
@@ -178,7 +180,8 @@ static void printTypes(const HlNChar* HL_RESTRICT fmt, FILE* HL_RESTRICT stream)
     fnprintf(stream, fmt, GET_TEXT(FILE_TYPE_AR));
     fnprintf(stream, fmt, GET_TEXT(FILE_TYPE_PACxV2));
     fnprintf(stream, fmt, GET_TEXT(FILE_TYPE_PACxV3));
-    fnprintf(stream, fmt, GET_TEXT(FILE_TYPE_PACxV4));
+    fnprintf(stream, fmt, GET_TEXT(FILE_TYPE_PACxV402));
+    fnprintf(stream, fmt, GET_TEXT(FILE_TYPE_PACxV403));
 }
 
 static void printUsage(FILE* stream)
@@ -244,9 +247,17 @@ static ARC_TYPE getArcType(const HlNChar* HL_RESTRICT typeStr,
 
     /* Tokyo 2020/Sakura Wars .pac files. */
     if (!nstrncmp(typeStr, HL_NTEXT("rings"), 5) ||
-        !nstrncmp(typeStr, HL_NTEXT("pac4"), 4))
+        !nstrncmp(typeStr, HL_NTEXT("sakura"), 6) ||
+        !nstrncmp(typeStr, HL_NTEXT("pac402"), 6))
     {
-        return ARC_TYPE_PACxV4;
+        return ARC_TYPE_PACxV402;
+    }
+
+    /* Puyo Puyo Tetris 2 .pac files. */
+    if (!nstrncmp(typeStr, HL_NTEXT("ppt2"), 4) ||
+        !nstrncmp(typeStr, HL_NTEXT("pac403"), 6))
+    {
+        return ARC_TYPE_PACxV403;
     }
 
     return ARC_TYPE_UNKNOWN;
@@ -288,7 +299,8 @@ static const extInfo* getExtInfo(ARC_TYPE type, HlBool generatePFI)
     case ARC_TYPE_PACx:
     case ARC_TYPE_PACxV2:
     case ARC_TYPE_PACxV3:
-    case ARC_TYPE_PACxV4:
+    case ARC_TYPE_PACxV402:
+    case ARC_TYPE_PACxV403:
         return &Extensions[EXT_TYPE_PAC];
 
     default: return NULL;
@@ -360,7 +372,8 @@ static HlResult extract(const HlNChar* HL_RESTRICT input,
         result = hlPACxV3Load(input, loadSplits, &arc);
         break;
 
-    case ARC_TYPE_PACxV4:
+    case ARC_TYPE_PACxV402:
+    case ARC_TYPE_PACxV403:
         result = hlPACxV4Load(input, loadSplits, &arc);
         break;
 

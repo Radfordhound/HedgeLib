@@ -77,8 +77,11 @@
     /* FILE_TYPE_PACxV3 */
     HL_NTEXT("wars/forces/pac3\t(Forces .pac files)\n"),
 
-    /* FILE_TYPE_PACxV4 */
-    HL_NTEXT("rings/pac4\t\t(Tokyo 2020/Sakura Wars .pac files)\n\n"),
+    /* FILE_TYPE_PACxV402 */
+    HL_NTEXT("rings/sakura/pac402\t(Tokyo 2020/Sakura Wars .pac files)\n"),
+
+    /* FILE_TYPE_PACxV403 */
+    HL_NTEXT("ppt2/pac403\t\t(Puyo Puyo Tetris 2 .pac files)\n\n"),
 
     /* EXTRACTING_STRING */
     HL_NTEXT("Extracting..."),
