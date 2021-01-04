@@ -1488,7 +1488,7 @@ HlResult hlPACxV403DecompressNoAlloc(const void* HL_RESTRICT compressedData,
     HlU32 compressedSize, HlU32 uncompressedSize,
     void* HL_RESTRICT uncompressedData)
 {
-    return hlZLibDecompressNoAlloc(compressedData,
+    return hlZlibDecompressNoAlloc(compressedData,
         compressedSize, uncompressedSize, uncompressedData);
 }
 
@@ -1623,7 +1623,7 @@ HlResult hlPACxV4Read(HlBlob* HL_RESTRICT pac,
     HlResult result = HL_RESULT_SUCCESS;
 
     /* PACx403 uses Deflate with no separate chunks. */
-    const HlBool isV403 = header->version[1] == '0' && header->version[2] == '3';
+    const HlBool isV403 = (header->version[1] == '0' && header->version[2] == '3');
 
     /* Setup root PAC entry, decompressing if necessary. */
     if (isV403)
