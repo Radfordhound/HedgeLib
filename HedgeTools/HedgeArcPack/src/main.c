@@ -493,9 +493,12 @@ int nmain(int argc, HlNChar* argv[])
     HlCompressType compressType = HL_COMPRESS_TYPE_NONE;
     MODE mode = MODE_UNKNOWN;
     ARC_TYPE type = ARC_TYPE_UNKNOWN;
+    HlResult result;
     HlBool freeOutput = HL_FALSE, bigEndian = HL_FALSE, generatePFI = HL_FALSE;
 
-    WIN32_SET_MODE_UTF16();
+    /* Setup console IO. */
+    result = setupConsoleIO();
+    if (HL_FAILED(result)) goto failed;
 
     /* Parse command-line arguments. */
     for (i = 1; i < argc; ++i)
@@ -583,8 +586,6 @@ int nmain(int argc, HlNChar* argv[])
     /* Extract or pack as instructed. */
     if (input)
     {
-        HlResult result;
-
         /* Ensure input exists. */
         if (!hlPathExists(input))
         {
@@ -688,14 +689,7 @@ int nmain(int argc, HlNChar* argv[])
         if (freeOutput) hlFree((HlNChar*)output);
 
         /* Error if extracting/packing failed. */
-        if (HL_FAILED(result))
-        {
-        failed:
-            /* TODO: Get proper error string. */
-            printError(HL_NTEXT("Unknown."));
-            returnCode = EXIT_FAILURE;
-            goto end;
-        }
+        if (HL_FAILED(result)) goto failed;
     }
 
     /* Print usage information if no valid file path was given. */
@@ -706,4 +700,9 @@ int nmain(int argc, HlNChar* argv[])
 
 end:
     return returnCode;
+
+failed:
+    /* TODO: Get proper error string. */
+    printError(HL_NTEXT("Unknown."));
+    return EXIT_FAILURE;
 }

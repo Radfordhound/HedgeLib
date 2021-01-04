@@ -113,6 +113,7 @@ static void printWarning(const HlNChar* warning)
 static void printError(const HlNChar* err)
 {
     fnprintf(stderr, GET_TEXT(ERROR_STRING), err);
+    win32PromptIfNecessary();
 }
 
 static void printUsage(FILE* stream)
@@ -122,6 +123,8 @@ static void printUsage(FILE* stream)
 #ifdef _WIN32
     fnprintf(stream, HL_NTEXT("%s"), GET_TEXT(WIN32_HELP_STRING));
 #endif
+
+    win32PromptIfNecessary();
 }
 
 static void NNPrintOffsets(HlBlob* blob)
@@ -351,8 +354,11 @@ int nmain(int argc, HlNChar* argv[])
 {
     const HlNChar* input = NULL;
     int i, returnCode = EXIT_SUCCESS;
+    HlResult result;
 
-    WIN32_SET_MODE_UTF16();
+    /* Setup console IO. */
+    result = setupConsoleIO();
+    if (HL_FAILED(result)) goto failed;
 
     /* Parse command-line arguments. */
     for (i = 1; i < argc; ++i)
@@ -382,14 +388,8 @@ int nmain(int argc, HlNChar* argv[])
     /* Read file and print offsets if a valid file path was given. */
     if (input)
     {
-        HlResult result = printOffsets(input);
-        if (HL_FAILED(result))
-        {
-            /* TODO: Get proper error string. */
-            printError(HL_NTEXT("Unknown."));
-            returnCode = EXIT_FAILURE;
-            goto end;
-        }
+        result = printOffsets(input);
+        if (HL_FAILED(result)) goto failed;
     }
 
     /* Print usage information if no valid file path was given. */
@@ -399,6 +399,10 @@ int nmain(int argc, HlNChar* argv[])
     }
 
 end:
-    win32PromptIfNecessary();
     return returnCode;
+
+failed:
+    /* TODO: Get proper error string. */
+    printError(HL_NTEXT("Unknown."));
+    return EXIT_FAILURE;
 }

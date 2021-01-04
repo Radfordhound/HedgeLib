@@ -2,6 +2,7 @@
 #define HEDGETOOLS_HELPERS_H_INCLUDED
 #include "hedgelib/hl_internal.h"
 #include <stdio.h>
+#include <locale.h>
 
 #ifdef HL_IN_WIN32_UNICODE
 #include <io.h>
@@ -19,13 +20,15 @@
 #define nfputs fputws
 #define nmain wmain
 
-#define WIN32_SET_MODE_UTF16() {\
+#define setupConsoleIO()\
+    /* Set locale to system-wide default. */\
+    ((!setlocale(LC_ALL, "") ||\
+\
     /* Set the standard input/output/error streams to use UTF-16. */\
-    /* (We could error-check these but honestly if this fails, we're screwed anyway.) */\
-    _setmode(_fileno(stdin), _O_U16TEXT);\
-    _setmode(_fileno(stdout), _O_U16TEXT);\
-    _setmode(_fileno(stderr), _O_U16TEXT);\
-}
+    _setmode(_fileno(stdin), _O_U16TEXT) == -1 ||\
+    _setmode(_fileno(stdout), _O_U16TEXT) == -1 ||\
+    _setmode(_fileno(stderr), _O_U16TEXT) == -1) ?\
+        HL_ERROR_UNKNOWN : HL_RESULT_SUCCESS)
 #else
 #define nstrcmp strcmp
 #define nstrncmp strncmp
@@ -36,6 +39,9 @@
 #define nfputs fputs
 #define nmain main
 
-#define WIN32_SET_MODE_UTF16()
+#define setupConsoleIO()\
+    /* Set locale to system-wide default. */\
+    ((!setlocale(LC_ALL, "")) ?\
+        HL_ERROR_UNKNOWN : HL_RESULT_SUCCESS)
 #endif
 #endif
