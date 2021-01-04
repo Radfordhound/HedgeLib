@@ -154,7 +154,7 @@ static void win32PromptIfNecessary(void)
     */
     if (GetCurrentProcessId() == processID)
     {
-        nprintf(GET_TEXT(PRESS_ENTER_STRING));
+        nputs(GET_TEXT(PRESS_ENTER_STRING));
         getwchar();
     }
 }
@@ -185,14 +185,20 @@ static void printUsage(FILE* stream)
 {
     /* Print usage and help1. */
     fnprintf(stream, HL_NTEXT("HedgeArcPack v%s\n"), VersionString);
-    fnprintf(stream, GET_TEXT(USAGE_STRING));
-    fnprintf(stream, GET_TEXT(HELP1_STRING));
+    nfputs(GET_TEXT(USAGE_STRING), stream);
+    nfputs(GET_TEXT(HELP1_STRING), stream);
 
     /* Print types. */
-    printTypes(HL_NTEXT("\t\t%s"), stream);
+    printTypes(
+#ifdef HL_IN_WIN32_UNICODE
+        HL_NTEXT("\t\t%ls"),
+#else
+        HL_NTEXT("\t\t%s"),
+#endif
+        stream);
 
     /* Print help2. */
-    fnprintf(stream, GET_TEXT(HELP2_STRING));
+    nfputs(GET_TEXT(HELP2_STRING), stream);
 
     /* Print win32-specific stuff. */
 #ifdef _WIN32
@@ -252,9 +258,16 @@ static ARC_TYPE promptForArcType(HlBool* generatePFI)
     HlNChar* input;
 
     /* Ask user for type and display options. */
-    nprintf(GET_TEXT(TYPE1_STRING));
-    printTypes(HL_NTEXT(" %s"), stdout);
-    nprintf(GET_TEXT(TYPE2_STRING));
+    nfputs(GET_TEXT(TYPE1_STRING), stdout);
+    printTypes(
+#ifdef HL_IN_WIN32_UNICODE
+        HL_NTEXT(" %ls"),
+#else
+        HL_NTEXT(" %s"),
+#endif
+        stdout);
+
+    nfputs(GET_TEXT(TYPE2_STRING), stdout);
 
     /* Read response from user. */
     input = nfgets(buf, sizeof(buf) / sizeof(HlNChar), stdin);
@@ -326,7 +339,7 @@ static HlResult extract(const HlNChar* HL_RESTRICT input,
     HlResult result;
 
     /* Print message letting user know we're extracting the archive. */
-    nprintf(GET_TEXT(EXTRACTING_STRING));
+    nputs(GET_TEXT(EXTRACTING_STRING));
 
     /* Load archive based on type. */
     switch (type)
@@ -374,7 +387,7 @@ static HlResult pack(const HlNChar* HL_RESTRICT input,
     HlResult result;
 
     /* Print message letting user know we're packing an archive. */
-    nprintf(GET_TEXT(PACKING_STRING));
+    nputs(GET_TEXT(PACKING_STRING));
 
     /* Construct packed file index. */
     result = hlPackedFileIndexConstruct(&pfi);

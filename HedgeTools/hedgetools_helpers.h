@@ -15,6 +15,8 @@
 #define nprintf wprintf
 #define fnprintf fwprintf
 #define nfgets fgetws
+#define nputs _putws
+#define nfputs fputws
 #define nmain wmain
 
 #define WIN32_SET_MODE_UTF16() {\
@@ -30,6 +32,8 @@
 #define nprintf printf
 #define fnprintf fprintf
 #define nfgets fgets
+#define nputs puts
+#define nfputs fputs
 #define nmain main
 
 #define WIN32_SET_MODE_UTF16()
