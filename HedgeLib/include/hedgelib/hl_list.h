@@ -64,9 +64,6 @@ extern "C" {
 /* Use capacity == 0 as a flag which means the list does not own its data pointer. */
 #define HL_IN_LIST_OWNS_DATA_PTR(list) ((list).capacity != 0)
 
-HL_API void* hlINListGrow(void* HL_RESTRICT data,
-    size_t size, size_t count, size_t* HL_RESTRICT capacity);
-
 #ifdef __cplusplus
 }
 
@@ -98,6 +95,33 @@ extern "C" {
 #define HL_IN_LIST_SET_DATA(list, ptr) (list).data = ptr
 #endif
 
+HL_API void* hlINListReserve(void* HL_RESTRICT data,
+    size_t size, size_t count, size_t capacity,
+    size_t desiredCapacity);
+
+#define HL_IN_LIST_RESERVE(list, c)\
+    /* Resize the data buffer and set the new pointer. */\
+    (HL_IN_LIST_SET_DATA(list, hlINListReserve((void*)(list).data,\
+    sizeof(*((list).data)), (list).count, (list).capacity, c)),\
+\
+    /* "Return" whether the reallocation of the buffer succeeded. */\
+    (HlBool)((list).data != NULL))
+
+/**
+   @brief Pre-allocates enough space to store the given amount of values within the given list.
+   @param[in] list  The HL_LIST to reserve space in.
+   @param[in] c     The amount of values to reserve space for.
+
+   @return An HlResult indicating whether pre-allocation succeeded or not.
+   @ingroup lists
+*/
+#define HL_LIST_RESERVE(list, c)\
+    (HL_IN_LIST_RESERVE(list, c) ?              /* Resize the list's data buffer as requested. */\
+    HL_RESULT_SUCCESS : HL_ERROR_OUT_OF_MEMORY) /* Return HlResult indicating whether resize succeeded. */
+
+HL_API void* hlINListGrow(void* HL_RESTRICT data,
+    size_t size, size_t count, size_t* HL_RESTRICT capacity);
+
 #define HL_IN_LIST_GROW(list)\
     /* Grow the data buffer and set the new pointer. */\
     (HL_IN_LIST_SET_DATA(list, hlINListGrow((void*)(list).data,\
@@ -107,14 +131,14 @@ extern "C" {
     (HlBool)((list).data != NULL))
 
 /*
-    The list needs to grow if the list's count + the
-    given grow amount exceeds the list's capacity.
+    The list needs to grow if the list's count + 1
+    exceeds the list's capacity.
 */
-#define HL_IN_LIST_NEEDS_GROW(list, growAmount)\
-    (HlBool)(((list).count + (growAmount)) > (list).capacity)
+#define HL_IN_LIST_NEEDS_GROW(list)\
+    (HlBool)(((list).count + 1) > (list).capacity)
 
-#define HL_IN_LIST_MAYBE_GROW(list, reqCount)\
-    (HL_IN_LIST_NEEDS_GROW(list, reqCount) ?    /* If the list needs to grow... */\
+#define HL_IN_LIST_MAYBE_GROW(list)\
+    (HL_IN_LIST_NEEDS_GROW(list) ?              /* If the list needs to grow... */\
     HL_IN_LIST_GROW(list) :                     /* Enlargen it and return whether that succeeds. */\
     HL_TRUE)                                    /* Otherwise, just return true; we "succeeded". */
 
@@ -127,7 +151,7 @@ extern "C" {
    @ingroup lists
 */
 #define HL_LIST_PUSH(list, v)\
-    (HL_IN_LIST_MAYBE_GROW(list, 1) ?           /* Enlarge the list's data buffer if necessary. */\
+    (HL_IN_LIST_MAYBE_GROW(list) ?              /* Enlarge the list's data buffer if necessary. */\
     (list).data[(list).count++] = (v),          /* Increment list count and copy object into list. */\
     HL_RESULT_SUCCESS : HL_ERROR_OUT_OF_MEMORY) /* Return HlResult indicating whether push succeeded. */
 
@@ -198,6 +222,8 @@ HlStrTableEntry;
 
 /** @brief Typedef of HL_LIST(HlStrTableEntry) meant to be used for storing string entries. */
 typedef HL_LIST(HlStrTableEntry) HlStrTable;
+
+HL_API void hlOffTableSort(HlOffTable* offTable);
 
 #ifdef __cplusplus
 }

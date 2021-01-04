@@ -167,6 +167,8 @@ HL_API HlU32 hlBINAGetVersion(const HlBlob* blob);
 #define hlBINAGetRevisionVersion(version)   (HlU8)(hlBINAGetRevisionVersionChar(version) - 0x30)
 
 #define hlBINAHasV2Header(blob)             (HlBool)(*(const HlU32*)((blob)->data) == HL_BINA_SIG)
+
+/* TODO: Uh oh, turns out this is wrong. Rio 2016 has 2.1.0 files that are 32-bit!!! */
 #define hlBINAIs64Bit(version)              (HlBool)((version) >= 0x323130U) /* version >= 2.1.0 */
 
 HL_API HlBINAV2BlockDataHeader* hlBINAV2GetDataBlock(const HlBlob* blob);
@@ -181,7 +183,7 @@ HL_API HlResult hlBINAStringsWrite32(size_t dataPos, const HlStrTable* HL_RESTRI
 HL_API HlResult hlBINAStringsWrite64(size_t dataPos, const HlStrTable* HL_RESTRICT strTable,
     HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file);
 
-HL_API HlResult hlBINAOffsetsWriteSorted(size_t dataPos,
+HL_API HlResult hlBINAOffsetsWriteNoSort(size_t dataPos,
     const HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file);
 
 HL_API HlResult hlBINAOffsetsWrite(size_t dataPos,

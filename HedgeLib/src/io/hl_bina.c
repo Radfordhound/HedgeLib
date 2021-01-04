@@ -177,7 +177,7 @@ void hlBINAOffsetsFix32(const void* HL_RESTRICT offsets, HlU8 endianFlag,
     {
         /*
            Get the next offset's address - return early
-           if we've reached the end of the offset table. 
+           if we've reached the end of the offset table.
         */
         if (!hlBINAOffsetsNext(&curOffsetPos, (const HlU32**)&curOffset))
             return;
@@ -206,7 +206,7 @@ void hlBINAOffsetsFix64(const void* HL_RESTRICT offsets, HlU8 endianFlag,
     {
         /*
            Get the next offset's address - return early
-           if we've reached the end of the offset table. 
+           if we've reached the end of the offset table.
         */
         if (!hlBINAOffsetsNext(&curOffsetPos, (const HlU32**)(&curOffset)))
             return;
@@ -505,7 +505,7 @@ HlResult hlBINAStringsWrite64(size_t dataPos, const HlStrTable* HL_RESTRICT strT
     return result;
 }
 
-HlResult hlBINAOffsetsWriteSorted(size_t dataPos,
+HlResult hlBINAOffsetsWriteNoSort(size_t dataPos,
     const HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file)
 {
     size_t i, lastOffPos = dataPos;
@@ -517,7 +517,7 @@ HlResult hlBINAOffsetsWriteSorted(size_t dataPos,
         HlResult result;
 
         /* Ensure offset fits within thirty bits. */
-        HL_ASSERT(curOffVal <= 0x3FFFFFFF);
+        if (curOffVal > 0x3FFFFFFFU) return HL_ERROR_OUT_OF_RANGE;
 
         /* Compute offset value. */
         if (curOffVal <= 0x3F)
@@ -557,23 +557,14 @@ HlResult hlBINAOffsetsWriteSorted(size_t dataPos,
     return hlFilePad(file, 4);
 }
 
-static int hlINOffTableCompareOffsets(const void* a, const void* b)
-{
-    const size_t off1 = *(const size_t*)a;
-    const size_t off2 = *(const size_t*)b;
-
-    return ((off1 > off2) - (off1 < off2));
-}
-
 HlResult hlBINAOffsetsWrite(size_t dataPos,
     HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file)
 {
     /* Sort offsets in offset table. */
-    qsort(offTable->data, offTable->count,
-        sizeof(size_t), hlINOffTableCompareOffsets);
+    hlOffTableSort(offTable);
 
     /* Write sorted offsets. */
-    return hlBINAOffsetsWriteSorted(dataPos, offTable, file);
+    return hlBINAOffsetsWriteNoSort(dataPos, offTable, file);
 }
 
 HlResult hlBINAV1StartWrite(HlBINAEndianFlag endianFlag, HlFile* file)
@@ -636,7 +627,7 @@ HlResult hlBINAV1FinishWrite(size_t headerPos,
 
     /* Get offset table position. */
     offTablePos = hlFileTell(file);
-    
+
     /* Write offset table. */
     result = hlBINAOffsetsWrite(dataPos, offTable, file);
     if (HL_FAILED(result)) return result;
