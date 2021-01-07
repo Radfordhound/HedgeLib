@@ -201,24 +201,48 @@ static HlResult setupGITexturesHH2(
     return HL_RESULT_SUCCESS;
 }
 
+static HlResult loadPACxV3(HrInstance* HL_RESTRICT instance,
+    const HlNChar* HL_RESTRICT pacPath, const char* HL_RESTRICT resName,
+    HrResMgr* HL_RESTRICT resMgr)
+{
+    HlBlobList pacs;
+    HlResult result;
+
+    /* Initialize pac blob list. */
+    HL_LIST_INIT(pacs);
+
+    /* Load pacs. */
+    result = hlPACxV3LoadAllInto(pacPath, &pacs, NULL);
+    if (HL_FAILED(result)) return result;
+
+    /* Parse data in pacs. */
+    result = parsePACxV3(instance, pacs.data, NULL, resMgr);
+    hlBlobListFree(&pacs);
+    
+    /* TODO: Just ignore failed resources? */
+    /* TODO: Should we also parse models here if we find them?? */
+
+    return result;
+}
+
 static HlResult loadHH2TerrainSectors(HrInstance* HL_RESTRICT instance,
     size_t pathBufLen, size_t fileNameIndex, HlU8 sectorCount,
     HlNChar* HL_RESTRICT pathBufPtr, HrResMgr* HL_RESTRICT resMgr)
 {
-    HlBlob** pacs;
-    size_t pacCount;
+    HlBlobList pacs;
     HlResult result;
     HlU8 i;
 
     for (i = 0; i < sectorCount; ++i)
     {
         HlTerrainGroup* terrainGroup;
+        HL_LIST_INIT(pacs);
 
         /* Load pacs. */
         snprintf(&pathBufPtr[fileNameIndex], pathBufLen - fileNameIndex,
             HL_NTEXT("trr_s%02u.pac"), i);
 
-        result = hlPACxLoadBlobs(pathBufPtr, &pacs, &pacCount);
+        result = hlPACxLoadInto(pathBufPtr, 0, HL_TRUE, &pacs, NULL);
         if (HL_FAILED(result))
         {
             /* Just skip this sector if the pac wasn't found. */
@@ -228,12 +252,6 @@ static HlResult loadHH2TerrainSectors(HrInstance* HL_RESTRICT instance,
             /* If we encountered another error, fail. */
             return result;
         }
-
-        /* Add pacs to resource manager. */
-        result = hrResMgrAddResourceEx(resMgr, NULL, 0,
-            HR_RES_TYPE_USER_DATA, pacs, NULL);
-
-        if (HL_FAILED(result)) return result;
 
         /* Create terrain group. */
         terrainGroup = HL_ALLOC_OBJ(HlTerrainGroup);
@@ -246,7 +264,9 @@ static HlResult loadHH2TerrainSectors(HrInstance* HL_RESTRICT instance,
         HL_LIST_INIT(terrainGroup->modelNames);
 
         /* Parse data in pacs. */
-        result = parsePACxV3(instance, pacs, terrainGroup, resMgr);
+        result = parsePACxV3(instance, pacs.data, terrainGroup, resMgr);
+        hlBlobListFree(&pacs);
+
         if (HL_FAILED(result)) /* TODO: Just ignore failed resources? */
         {
             hlTerrainGroupDestroy(terrainGroup);
@@ -315,26 +335,9 @@ static HlResult LOADER_NAME(FORCES)(HrInstance* HL_RESTRICT instance,
     /* TODO: Have PACxV3 load blob functions!! */
 
     /* Load terrain common. */
-    {
-        HlBlob** pacs;
-        size_t pacCount;
-
-        /* Load pacs. */
-        hlNStrCopy(HL_NTEXT("trr_cmn.pac"), &pathBufPtr[fileNameIndex]);
-        result = hlPACxLoadBlobs(pathBufPtr, &pacs, &pacCount);
-        if (HL_FAILED(result)) goto end;
-
-        /* Add pacs to resource manager. */
-        result = hrResMgrAddResource(resMgr, "trr_cmn",
-            HR_RES_TYPE_USER_DATA, pacs, NULL);
-
-        if (HL_FAILED(result)) goto end;
-
-        /* Parse data in pacs. */
-        result = parsePACxV3(instance, pacs, NULL, resMgr);
-        if (HL_FAILED(result)) goto end; /* TODO: Just ignore failed resources? */
-        /* TODO: Should we also parse models here if we find them?? */
-    }
+    hlNStrCopy(HL_NTEXT("trr_cmn.pac"), &pathBufPtr[fileNameIndex]);
+    result = loadPACxV3(instance, pathBufPtr, "trr_cmn", resMgr);
+    if (HL_FAILED(result)) goto end;
 
     /* Load terrain sectors. */
     /* TODO: Parse actstgmission.lua!! */
@@ -460,43 +463,35 @@ static HlResult LOADER_NAME(TOKYO_2020)(HrInstance* HL_RESTRICT instance,
 
     /* Load terrain miscellaneous. */
     {
-        HlBlob** pacs;
-        size_t pacCount;
+        HlBlobList pacs;
+        HL_LIST_INIT(pacs);
 
         /* Load pacs. */
         hlNStrCopy(HL_NTEXT("trr_misc.pac"), &pathBufPtr[fileNameIndex]);
-        result = hlPACxLoadBlobs(pathBufPtr, &pacs, &pacCount);
-        if (HL_FAILED(result)) goto end;
-
-        /* Add pacs to resource manager. */
-        result = hrResMgrAddResource(resMgr, "trr_misc",
-            HR_RES_TYPE_USER_DATA, pacs, NULL);
-
+        result = hlPACxV4LoadInto(pathBufPtr, HL_TRUE, &pacs, NULL);
         if (HL_FAILED(result)) goto end;
 
         /* Parse data in pacs. */
-        result = parsePACxV3(instance, pacs, NULL, resMgr);
+        result = parsePACxV3(instance, pacs.data, NULL, resMgr);
+        hlBlobListFree(&pacs);
+
         if (HL_FAILED(result)) goto end; /* TODO: Just ignore failed resources? */
     }
 
     /* Load terrain common. */
     {
-        HlBlob** pacs;
-        size_t pacCount;
+        HlBlobList pacs;
+        HL_LIST_INIT(pacs);
 
         /* Load pacs. */
         hlNStrCopy(HL_NTEXT("trr_cmn.pac"), &pathBufPtr[fileNameIndex]);
-        result = hlPACxLoadBlobs(pathBufPtr, &pacs, &pacCount);
-        if (HL_FAILED(result)) goto end;
-
-        /* Add pacs to resource manager. */
-        result = hrResMgrAddResource(resMgr, "trr_cmn",
-            HR_RES_TYPE_USER_DATA, pacs, NULL);
-
+        result = hlPACxV4LoadInto(pathBufPtr, HL_TRUE, &pacs, NULL);
         if (HL_FAILED(result)) goto end;
 
         /* Parse data in pacs. */
-        result = parsePACxV3(instance, pacs, NULL, resMgr);
+        result = parsePACxV3(instance, pacs.data, NULL, resMgr);
+        hlBlobListFree(&pacs);
+
         if (HL_FAILED(result)) goto end; /* TODO: Just ignore failed resources? */
         /* TODO: Should we also parse models here if we find them?? */
     }
@@ -625,43 +620,35 @@ static HlResult LOADER_NAME(SAKURA)(HrInstance* HL_RESTRICT instance,
 
     /* Load terrain miscellaneous. */
     {
-        HlBlob** pacs;
-        size_t pacCount;
+        HlBlobList pacs;
+        HL_LIST_INIT(pacs);
 
         /* Load pacs. */
         hlNStrCopy(HL_NTEXT("trr_misc.pac"), &pathBufPtr[fileNameIndex]);
-        result = hlPACxLoadBlobs(pathBufPtr, &pacs, &pacCount);
-        if (HL_FAILED(result)) goto end;
-
-        /* Add pacs to resource manager. */
-        result = hrResMgrAddResource(resMgr, "trr_misc",
-            HR_RES_TYPE_USER_DATA, pacs, NULL);
-
+        result = hlPACxV4LoadInto(pathBufPtr, HL_TRUE, &pacs, NULL);
         if (HL_FAILED(result)) goto end;
 
         /* Parse data in pacs. */
-        result = parsePACxV3(instance, pacs, NULL, resMgr);
+        result = parsePACxV3(instance, pacs.data, NULL, resMgr);
+        hlBlobListFree(&pacs);
+
         if (HL_FAILED(result)) goto end; /* TODO: Just ignore failed resources? */
     }
 
     /* Load terrain common. */
     {
-        HlBlob** pacs;
-        size_t pacCount;
+        HlBlobList pacs;
+        HL_LIST_INIT(pacs);
 
         /* Load pacs. */
         hlNStrCopy(HL_NTEXT("trr_cmn.pac"), &pathBufPtr[fileNameIndex]);
-        result = hlPACxLoadBlobs(pathBufPtr, &pacs, &pacCount);
-        if (HL_FAILED(result)) goto end;
-
-        /* Add pacs to resource manager. */
-        result = hrResMgrAddResource(resMgr, "trr_cmn",
-            HR_RES_TYPE_USER_DATA, pacs, NULL);
-
+        result = hlPACxV4LoadInto(pathBufPtr, HL_TRUE, &pacs, NULL);
         if (HL_FAILED(result)) goto end;
 
         /* Parse data in pacs. */
-        result = parsePACxV3(instance, pacs, NULL, resMgr);
+        result = parsePACxV3(instance, pacs.data, NULL, resMgr);
+        hlBlobListFree(&pacs);
+
         if (HL_FAILED(result)) goto end; /* TODO: Just ignore failed resources? */
         /* TODO: Should we also parse models here if we find them?? */
     }

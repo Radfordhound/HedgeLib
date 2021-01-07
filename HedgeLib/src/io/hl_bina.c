@@ -222,10 +222,10 @@ void hlBINAOffsetsFix64(const void* HL_RESTRICT offsets, HlU8 endianFlag,
     }
 }
 
-void hlBINAV1Fix(HlBlob* blob)
+void hlBINAV1Fix(void* rawData)
 {
     /* Fix header. */
-    HlBINAV1Header* header = (HlBINAV1Header*)blob->data;
+    HlBINAV1Header* header = (HlBINAV1Header*)rawData;
     hlBINAV1HeaderFix(header, header->endianFlag);
 
     /* Fix offsets. */
@@ -236,10 +236,10 @@ void hlBINAV1Fix(HlBlob* blob)
     }
 }
 
-void hlBINAV2Fix(HlBlob* blob)
+void hlBINAV2Fix(void* rawData)
 {
     /* Swap header if necessary. */
-    HlBINAV2Header* header = (HlBINAV2Header*)blob->data;
+    HlBINAV2Header* header = (HlBINAV2Header*)rawData;
     if (hlBINANeedsSwap(header->endianFlag))
     {
         hlBINAV2HeaderSwap(header);
@@ -248,44 +248,44 @@ void hlBINAV2Fix(HlBlob* blob)
     /* Fix blocks. */
     {
         HlBINAV2BlockHeader* blocks = (HlBINAV2BlockHeader*)(header + 1);
-        const HlBool is64Bit = hlBINAIs64Bit(hlBINAGetVersion(blob));
+        const HlBool is64Bit = hlBINAIs64Bit(hlBINAGetVersion(rawData));
 
         hlBINAV2BlocksFix(blocks, header->blockCount,
             header->endianFlag, is64Bit);
     }
 }
 
-void hlBINAFix(HlBlob* blob)
+void hlBINAFix(void* rawData)
 {
-    if (hlBINAHasV2Header(blob))
+    if (hlBINAHasV2Header(rawData))
     {
-        hlBINAV2Fix(blob);
+        hlBINAV2Fix(rawData);
     }
     else
     {
-        hlBINAV1Fix(blob);
+        hlBINAV1Fix(rawData);
     }
 }
 
-HlU32 hlBINAGetVersion(const HlBlob* blob)
+HlU32 hlBINAGetVersion(const void* rawData)
 {
-    if (hlBINAHasV2Header(blob))
+    if (hlBINAHasV2Header(rawData))
     {
-        const HlBINAV2Header* header = (const HlBINAV2Header*)blob->data;
+        const HlBINAV2Header* header = (const HlBINAV2Header*)rawData;
         return ((((HlU32)header->version[0]) << 16) |   /* Major version */
             (((HlU32)header->version[1]) << 8) |        /* Minor version */
             ((HlU32)header->version[2]));               /* Revision version */
     }
     else
     {
-        const HlBINAV1Header* header = (const HlBINAV1Header*)blob->data;
+        const HlBINAV1Header* header = (const HlBINAV1Header*)rawData;
         return ((HlU32)header->version << 16);
     }
 }
 
-HlBINAV2BlockDataHeader* hlBINAV2GetDataBlock(const HlBlob* blob)
+HlBINAV2BlockDataHeader* hlBINAV2GetDataBlock(const void* rawData)
 {
-    HlBINAV2Header* header = (HlBINAV2Header*)blob->data;
+    const HlBINAV2Header* header = (const HlBINAV2Header*)rawData;
     HlBINAV2BlockHeader* curBlock = (HlBINAV2BlockHeader*)(header + 1);
     HlU16 i;
 
@@ -304,20 +304,20 @@ HlBINAV2BlockDataHeader* hlBINAV2GetDataBlock(const HlBlob* blob)
     return NULL;
 }
 
-void* hlBINAV2GetData(const HlBlob* blob)
+const void* hlBINAV2GetData(const void* rawData)
 {
     /* Get data block, returning NULL if there is no data block. */
-    HlBINAV2BlockDataHeader* dataBlock = hlBINAV2GetDataBlock(blob);
+    HlBINAV2BlockDataHeader* dataBlock = hlBINAV2GetDataBlock(rawData);
     if (!dataBlock) return NULL;
 
     /* Get data. */
     return HL_ADD_OFF(dataBlock + 1, dataBlock->relativeDataOffset);
 }
 
-void* hlBINAGetData(const HlBlob* blob)
+const void* hlBINAGetData(const void* rawData)
 {
-    return (hlBINAHasV2Header(blob)) ?
-        hlBINAV2GetData(blob) : hlBINAV1GetData(blob);
+    return (hlBINAHasV2Header(rawData)) ?
+        hlBINAV2GetData(rawData) : hlBINAV1GetData(rawData);
 }
 
 #define hlINBINAStringIsDuplicate(str1, str2)\
@@ -849,9 +849,9 @@ HlU8 hlBINAGetRevisionVersionExt(HlU32 version)
     return hlBINAGetRevisionVersion(version);
 }
 
-HlBool hlBINAHasV2HeaderExt(const HlBlob* blob)
+HlBool hlBINAHasV2HeaderExt(const void* rawData)
 {
-    return hlBINAHasV2Header(blob);
+    return hlBINAHasV2Header(rawData);
 }
 
 HlBool hlBINAIs64BitExt(HlU32 version)
@@ -859,8 +859,8 @@ HlBool hlBINAIs64BitExt(HlU32 version)
     return hlBINAIs64Bit(version);
 }
 
-void* hlBINAV1GetDataExt(const HlBlob* blob)
+const void* hlBINAV1GetDataExt(const void* rawData)
 {
-    return hlBINAV1GetData(blob);
+    return hlBINAV1GetData(rawData);
 }
 #endif

@@ -737,6 +737,8 @@ const HlNChar* hlArchiveEntryGetName(const HlArchiveEntry* entry)
 
 void hlArchiveEntryDestruct(HlArchiveEntry* entry)
 {
+    if (!entry) return;
+
     /* Free path buffer. */
     hlFree(entry->path);
 
@@ -770,6 +772,7 @@ void hlArchiveEntryDestruct(HlArchiveEntry* entry)
 void hlArchiveDestruct(HlArchive* arc)
 {
     size_t i;
+    if (!arc) return;
 
     for (i = 0; i < arc->entries.count; ++i)
     {

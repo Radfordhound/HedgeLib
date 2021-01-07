@@ -358,7 +358,7 @@ int nmain(int argc, HlNChar* argv[])
 
     /* Setup console IO. */
     result = setupConsoleIO();
-    if (HL_FAILED(result)) goto failed;
+    if (HL_FAILED(result)) return EXIT_FAILURE; /* We might not be able to even printError */
 
     /* Parse command-line arguments. */
     for (i = 1; i < argc; ++i)

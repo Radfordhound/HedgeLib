@@ -3,14 +3,12 @@
 #include "hedgelib/io/hl_file.h"
 #include "hedgelib/io/hl_path.h"
 #include "hedgelib/io/hl_hh.h"
-#include "hedgelib/archives/hl_gens_archive.h"
+#include "hedgelib/archives/hl_hh_archive.h"
 
-#define HL_INGENS_ARC_BLOB_BUF_LEN 10
-
-const HlNChar HL_GENS_ARL_EXT[5] = HL_NTEXT(".arl");
-const HlNChar HL_GENS_AR_EXT[4] = HL_NTEXT(".ar");
-const HlNChar HL_GENS_PFD_EXT[5] = HL_NTEXT(".pfd");
-const HlNChar HL_GENS_PFI_EXT[5] = HL_NTEXT(".pfi");
+const HlNChar HL_HH_ARL_EXT[5] = HL_NTEXT(".arl");
+const HlNChar HL_HH_PFD_EXT[5] = HL_NTEXT(".pfd");
+const HlNChar HL_HH_PFI_EXT[5] = HL_NTEXT(".pfi");
+const HlNChar HL_HH_AR_EXT[4] = HL_NTEXT(".ar");
 
 void hlHHPackedFileEntrySwap(HlHHPackedFileEntry* entry, HlBool swapOffsets)
 {
@@ -26,115 +24,111 @@ void hlHHPackedFileIndexV0Swap(HlHHPackedFileIndexV0* pfi, HlBool swapOffsets)
     if (swapOffsets) hlSwapU32P(&pfi->entriesOffset);
 }
 
-HlResult hlGensArchiveRead(const HlBlob* const HL_RESTRICT * HL_RESTRICT splits,
-    size_t splitCount, HlArchive* HL_RESTRICT * HL_RESTRICT archive)
+HlResult hlHHArchiveParseInto(const HlHHArchiveHeader* HL_RESTRICT hhArc,
+    size_t hhArcSize, HlArchive* HL_RESTRICT hlArc)
 {
-    HlArchive* hlArcBuf;
-    HlResult result;
+    /* Get start position and end position. */
+    const unsigned char* curPos = HL_ADD_OFFC(hhArc, sizeof(HlHHArchiveHeader));
+    const unsigned char* endPos = HL_ADD_OFFC(hhArc, hhArcSize);
+    HlResult result = HL_RESULT_SUCCESS;
 
-    /* Allocate HlArchive buffer. */
-    hlArcBuf = HL_ALLOC_OBJ(HlArchive);
-    if (!hlArcBuf) return HL_ERROR_OUT_OF_MEMORY;
-
-    /* Setup archive. */
-    HL_LIST_INIT(hlArcBuf->entries);
-
-    /* TODO: Account for endianness on big-endian machines. */
-
-    /* Setup archive entries. */
+    /* Setup file entries in this split. */
+    while (curPos < endPos)
     {
-        size_t i;
+        /* Get file entry and file name pointers. */
+        const HlHHArchiveFileEntry* hhFileEntry = (const HlHHArchiveFileEntry*)curPos;
+        const char* fileName = (const char*)(hhFileEntry + 1);
+        const void* fileData = HL_ADD_OFFC(hhFileEntry, hhFileEntry->dataOffset);
+        HlArchiveEntry hlArcEntry;
+        void* dataBuf;
 
-        for (i = 0; i < splitCount; ++i)
+        /* Convert file name to native encoding and copy into buffer. */
+        hlArcEntry.path = hlStrConvUTF8ToNative(fileName, 0);
+        if (!hlArcEntry.path) return HL_ERROR_OUT_OF_MEMORY;
+
+        /* Allocate new data buffer. */
+        hlArcEntry.size = (size_t)hhFileEntry->dataSize;
+        dataBuf = hlAlloc(hlArcEntry.size);
+
+        if (!dataBuf)
         {
-            /* Get start position and end position. */
-            const HlGensArchiveHeader* header = (const HlGensArchiveHeader*)splits[i]->data;
-            const unsigned char* curPos = HL_ADD_OFFC(header, sizeof(*header));
-            const unsigned char* endPos = HL_ADD_OFFC(header, splits[i]->size);
-
-            /* Setup file entries in this split. */
-            while (curPos < endPos)
-            {
-                /* Get file entry and file name pointers. */
-                const HlGensArchiveFileEntry* fileEntry = (const HlGensArchiveFileEntry*)curPos;
-                const char* fileName = (const char*)(fileEntry + 1);
-                const void* fileData = HL_ADD_OFFC(fileEntry, fileEntry->dataOffset);
-                /*size_t nameLen;*/
-                HlArchiveEntry entry;
-                void* dataBuf;
-
-                /* Convert file name to native encoding and copy into buffer. */
-                entry.path = hlStrConvUTF8ToNative(fileName, 0);
-                
-                if (!entry.path)
-                {
-                    hlArchiveFree(hlArcBuf);
-                    return HL_ERROR_OUT_OF_MEMORY;
-                }
-
-                /* Allocate new data buffer. */
-                entry.size = (size_t)fileEntry->dataSize;
-                dataBuf = hlAlloc(entry.size);
-
-                if (!dataBuf)
-                {
-                    hlFree(entry.path);
-                    hlArchiveFree(hlArcBuf);
-                    return HL_ERROR_OUT_OF_MEMORY;
-                }
-
-                /* Copy data. */
-                memcpy(dataBuf, fileData, entry.size);
-
-                /* Finish setting up entry. */
-                entry.meta = 0;
-                entry.data = (HlUMax)((HlUPtr)dataBuf);
-                
-                /* Add new entry to archive. */
-                {
-                    HlArchiveEntry* oldDataPtr = hlArcBuf->entries.data;
-                    result = HL_LIST_PUSH(hlArcBuf->entries, entry);
-
-                    if (HL_FAILED(result))
-                    {
-                        hlArcBuf->entries.data = oldDataPtr;
-                        hlArchiveEntryDestruct(&entry);
-                        hlArchiveFree(hlArcBuf);
-                        return result;
-                    }
-                }
-
-                /* Go to next file entry within the archive. */
-                curPos += fileEntry->entrySize;
-            }
+            hlFree(hlArcEntry.path);
+            return HL_ERROR_OUT_OF_MEMORY;
         }
+
+        /* Copy data. */
+        memcpy(dataBuf, fileData, hlArcEntry.size);
+
+        /* Finish setting up entry. */
+        hlArcEntry.meta = 0;
+        hlArcEntry.data = (HlUMax)((HlUPtr)dataBuf);
+
+        /* Add new entry to HlArchive. */
+        result = HL_LIST_PUSH(hlArc->entries, hlArcEntry);
+        if (HL_FAILED(result))
+        {
+            hlArchiveEntryDestruct(&hlArcEntry);
+            return result;
+        }
+
+        /* Go to next file entry within the archive. */
+        curPos += hhFileEntry->entrySize;
     }
 
-    /* Set archive pointer and return success. */
-    *archive = hlArcBuf;
-    return HL_RESULT_SUCCESS;
-}
-
-static HlResult hlINGensArchiveLoadSingle(const HlNChar* HL_RESTRICT filePath,
-    HlArchive* HL_RESTRICT * HL_RESTRICT archive)
-{
-    HlBlob* blob;
-    HlResult result;
-
-    /* Load archive. */
-    result = hlBlobLoad(filePath, &blob);
-    if (HL_FAILED(result)) return result;
-
-    /* Parse blob into HlArchive, free blob, and return. */
-    result = hlGensArchiveRead((const HlBlob**)&blob, 1, archive);
-    hlFree(blob);
     return result;
 }
 
-static HlResult hlINGensArchiveLoadSplits(const HlNChar* HL_RESTRICT filePath,
-    HlArchive* HL_RESTRICT * HL_RESTRICT archive)
+HlResult hlHHArchiveReadInto(void* HL_RESTRICT hhArc,
+    size_t hhArcSize, HlArchive* HL_RESTRICT hlArc)
 {
-    HlNChar* pathBuf = NULL;
+    /* TODO: Account for endianness on big-endian machines. */
+
+    return hlHHArchiveParseInto(
+        (const HlHHArchiveHeader*)hhArc,
+        hhArcSize, hlArc);
+}
+
+HlResult hlHHArchiveLoadSingleInto(
+    const HlNChar* HL_RESTRICT filePath,
+    HlBlobList* HL_RESTRICT hhArcs,
+    HlArchive* HL_RESTRICT hlArc)
+{
+    HlBlob* hhArc;
+    HlResult result;
+
+    /* Load archive. */
+    result = hlBlobLoad(filePath, &hhArc);
+    if (HL_FAILED(result)) return result;
+
+    /* Add this archive's blob to the blobs list if necessary. */
+    if (hhArcs)
+    {
+        result = HL_LIST_PUSH(*hhArcs, hhArc);
+        if (HL_FAILED(result))
+        {
+            hlBlobFree(hhArc);
+            return result;
+        }
+    }
+
+    /* Parse blob into HlArchive, free blob if necessary, and return. */
+    if (hlArc)
+    {
+        result = hlHHArchiveReadInto(hhArc->data,
+            hhArc->size, hlArc);
+    }
+
+    if (!hhArcs) hlBlobFree(hhArc);
+    return result;
+}
+
+HlResult hlHHArchiveLoadAllInto(
+    const HlNChar* HL_RESTRICT filePath,
+    HlBlobList* HL_RESTRICT hhArcs,
+    HlArchive* HL_RESTRICT hlArc)
+{
+    HlNChar pathBuf[255];
+    HlNChar* pathBufPtr = pathBuf;
     HlNChar* lastCharPtr = NULL;
     HlResult result = HL_RESULT_SUCCESS;
 
@@ -147,14 +141,19 @@ static HlResult hlINGensArchiveLoadSplits(const HlNChar* HL_RESTRICT filePath,
         if (ext[0] == HL_NTEXT('.') && HL_IS_DIGIT(ext[1]) &&
             HL_IS_DIGIT(ext[2]) && ext[3] == HL_NTEXT('\0'))
         {
-            /* Create a copy of filePath. */
-            pathBuf = HL_ALLOC_ARR(HlNChar, filePathLen + 1);
-            if (!pathBuf) return HL_ERROR_OUT_OF_MEMORY;
+            /* Allocate a new buffer if necessary. */
+            const size_t filePathSize = (filePathLen + 1);
+            if (filePathSize > 255)
+            {
+                pathBufPtr = HL_ALLOC_ARR(HlNChar, filePathSize);
+                if (!pathBufPtr) return HL_ERROR_OUT_OF_MEMORY;
+            }
 
-            memcpy(pathBuf, filePath, (filePathLen + 1) * sizeof(HlNChar));
+            /* Copy filePath into buffer. */
+            memcpy(pathBufPtr, filePath, filePathSize * sizeof(HlNChar));
 
             /* Set lastCharPtr. */
-            lastCharPtr = &pathBuf[filePathLen - 1];
+            lastCharPtr = &pathBufPtr[filePathLen - 1];
 
             /* If this is not the .00 split, check if the .00 split exists. */
             if (ext[1] != HL_NTEXT('0') || ext[2] != HL_NTEXT('0'))
@@ -163,7 +162,7 @@ static HlResult hlINGensArchiveLoadSplits(const HlNChar* HL_RESTRICT filePath,
                 *lastCharPtr = HL_NTEXT('0');
 
                 /* Fallback to the given file path if .00 split does not exist. */
-                if (!hlPathExists(pathBuf))
+                if (!hlPathExists(pathBufPtr))
                 {
                     *(lastCharPtr - 1) = ext[1];
                     *lastCharPtr = ext[2];
@@ -172,40 +171,45 @@ static HlResult hlINGensArchiveLoadSplits(const HlNChar* HL_RESTRICT filePath,
         }
         
         /* If the given file path is an arl, get the path to the corresponding .ar or .ar.00 */
-        else if (hlNStrsEqual(ext, HL_GENS_ARL_EXT))
+        else if (hlNStrsEqual(ext, HL_HH_ARL_EXT))
         {
-            /* Create a bigger copy of filePath. */
-            pathBuf = HL_ALLOC_ARR(HlNChar, filePathLen + 3);
-            if (!pathBuf) return HL_ERROR_OUT_OF_MEMORY;
+            /* Allocate a new buffer if necessary. */
+            const size_t reqPathBufSize = (filePathLen + 3);
+            if (reqPathBufSize > 255)
+            {
+                pathBufPtr = HL_ALLOC_ARR(HlNChar, reqPathBufSize);
+                if (!pathBufPtr) return HL_ERROR_OUT_OF_MEMORY;
+            }
 
-            memcpy(pathBuf, filePath, filePathLen * sizeof(HlNChar));
+            /* Copy filePath into buffer. */
+            memcpy(pathBufPtr, filePath, filePathLen * sizeof(HlNChar));
 
             /* Change extension from .arl$ to .ar.00$ */
-            pathBuf[filePathLen - 1] = HL_NTEXT('.');
-            pathBuf[filePathLen]     = HL_NTEXT('0');
-            pathBuf[filePathLen + 1] = HL_NTEXT('0');
-            pathBuf[filePathLen + 2] = HL_NTEXT('\0');
+            pathBufPtr[filePathLen - 1] = HL_NTEXT('.');
+            pathBufPtr[filePathLen]     = HL_NTEXT('0');
+            pathBufPtr[filePathLen + 1] = HL_NTEXT('0');
+            pathBufPtr[filePathLen + 2] = HL_NTEXT('\0');
 
             /* See if .ar.00 archive exists... */
-            if (!hlPathExists(pathBuf))
+            if (!hlPathExists(pathBufPtr))
             {
                 /* ...If it doesn't, change extension from .ar.00$ to .ar$ */
-                pathBuf[filePathLen - 1] = HL_NTEXT('\0');
+                pathBufPtr[filePathLen - 1] = HL_NTEXT('\0');
 
                 /* Check if the .ar$ exists, and if not, return with an error. */
-                if (!hlPathExists(pathBuf))
+                if (!hlPathExists(pathBufPtr))
                 {
                     result = HL_ERROR_NOT_FOUND;
                     goto end;
                 }
 
                 /* Set filePath. */
-                filePath = pathBuf;
+                filePath = pathBufPtr;
             }
             else
             {
                 /* Set lastCharPtr. */
-                lastCharPtr = &pathBuf[filePathLen + 1];
+                lastCharPtr = &pathBufPtr[filePathLen + 1];
             }
         }
 
@@ -215,132 +219,81 @@ static HlResult hlINGensArchiveLoadSplits(const HlNChar* HL_RESTRICT filePath,
         */
         else if (!hlPathExists(filePath))
         {
-            /* Create a bigger copy of filePath. */
-            pathBuf = HL_ALLOC_ARR(HlNChar, filePathLen + 4);
-            if (!pathBuf) return HL_ERROR_OUT_OF_MEMORY;
+            /* Allocate a new buffer if necessary. */
+            const size_t reqPathBufSize = (filePathLen + 4);
+            if (reqPathBufSize > 255)
+            {
+                pathBufPtr = HL_ALLOC_ARR(HlNChar, reqPathBufSize);
+                if (!pathBufPtr) return HL_ERROR_OUT_OF_MEMORY;
+            }
 
-            memcpy(pathBuf, filePath, filePathLen * sizeof(HlNChar));
+            /* Copy filePath into buffer. */
+            memcpy(pathBufPtr, filePath, filePathLen * sizeof(HlNChar));
 
             /* Add split extension .00$ */
-            pathBuf[filePathLen]     = HL_NTEXT('.');
-            pathBuf[filePathLen + 1] = HL_NTEXT('0');
-            pathBuf[filePathLen + 2] = HL_NTEXT('0');
-            pathBuf[filePathLen + 3] = HL_NTEXT('\0');
+            pathBufPtr[filePathLen]     = HL_NTEXT('.');
+            pathBufPtr[filePathLen + 1] = HL_NTEXT('0');
+            pathBufPtr[filePathLen + 2] = HL_NTEXT('0');
+            pathBufPtr[filePathLen + 3] = HL_NTEXT('\0');
 
             /* See if .00 archive exists, and if not, return with an error. */
-            if (!hlPathExists(pathBuf))
+            if (!hlPathExists(pathBufPtr))
             {
                 result = HL_ERROR_NOT_FOUND;
                 goto end;
             }
 
             /* Set lastCharPtr. */
-            lastCharPtr = &pathBuf[filePathLen + 2];
+            lastCharPtr = &pathBufPtr[filePathLen + 2];
         }
     }
 
     /* Load splits. */
-    if (lastCharPtr)
+    do
     {
-        HlBlob* blobs[HL_INGENS_ARC_BLOB_BUF_LEN];
-        HlBlob** blobsPtr = blobs;
-        size_t blobCount = 0, blobCapacity = HL_INGENS_ARC_BLOB_BUF_LEN;
-
-        /* Load splits. */
-        do
-        {
-            /* Load this split. */
-            result = hlBlobLoad(pathBuf, &blobsPtr[blobCount]);
-            if (HL_FAILED(result)) goto free_blobs_and_end;
-
-            /* Increase blob count, and size of blobs array if necessary. */
-            if (++blobCount >= blobCapacity)
-            {
-                /* Increase blobs array capacity. */
-                HlBlob** newBlobsPtr;
-                blobCapacity += HL_INGENS_ARC_BLOB_BUF_LEN;
-
-                /* Make sure we're already using a dynamically-allocated array, and resize it. */
-                if (blobsPtr != blobs)
-                {
-                    /* Realloc the existing dynamically-allocated blobs array. */
-                    newBlobsPtr = HL_RESIZE_ARR(HlBlob*,
-                        blobCapacity, blobsPtr);
-
-                    if (!newBlobsPtr)
-                    {
-                        result = HL_ERROR_OUT_OF_MEMORY;
-                        goto free_blobs_and_end;
-                    }
-                }
-
-                /* Switch from the static "blobs" array to a dynamically-allocated array. */
-                else
-                {
-                    /* Dynamically allocate a new blobs array. */
-                    newBlobsPtr = HL_ALLOC_ARR(HlBlob*, blobCapacity);
-
-                    if (!newBlobsPtr)
-                    {
-                        result = HL_ERROR_OUT_OF_MEMORY;
-                        goto free_blobs_and_end;
-                    }
-
-                    /* Copy blob pointers into new array. */
-                    memcpy(newBlobsPtr, blobs, sizeof(HlBlob*) *
-                        HL_INGENS_ARC_BLOB_BUF_LEN);
-                }
-
-                /* Set blobsPtr. */
-                blobsPtr = newBlobsPtr;
-            }
-        }
-        while (hlINArchiveNextSplit2(lastCharPtr) && hlPathExists(pathBuf));
-
-        /* Parse blobs into HlArchive. */
-        result = hlGensArchiveRead((const HlBlob**)blobsPtr, blobCount, archive);
-
-    free_blobs_and_end:
-        {
-            /* Free blobs. */
-            size_t i;
-            for (i = 0; i < blobCount; ++i)
-            {
-                hlFree(blobsPtr[i]);
-            }
-
-            /* Free blobs array if necessary. */
-            if (blobsPtr != blobs) hlFree(blobsPtr);
-
-            goto end;
-        }
+        result = hlHHArchiveLoadSingleInto(pathBufPtr, hhArcs, hlArc);
     }
-
-    /* Load single archive. */
-    else
-    {
-        result = hlINGensArchiveLoadSingle(filePath, archive);
-        goto end;
-    }
+    while (lastCharPtr && hlINArchiveNextSplit2(
+        lastCharPtr) && hlPathExists(pathBufPtr));
 
 end:
     /* Free path buffer if we allocated it. */
-    if (pathBuf) hlFree(pathBuf);
+    if (pathBufPtr != pathBuf) hlFree(pathBufPtr);
 
     /* Return result. */
     return result;
 }
 
-HlResult hlGensArchiveLoad(const HlNChar* HL_RESTRICT filePath,
-    HlBool loadSplits, HlArchive* HL_RESTRICT * HL_RESTRICT archive)
+HlResult hlHHArchiveLoad(const HlNChar* HL_RESTRICT filePath,
+    HlBool loadSplits, HlBlobList* HL_RESTRICT hhArcs,
+    HlArchive* HL_RESTRICT * HL_RESTRICT hlArc)
 {
-    /* Load all splits or simply a single archive based on user request. */
-    return (loadSplits) ?
-        hlINGensArchiveLoadSplits(filePath, archive) :
-        hlINGensArchiveLoadSingle(filePath, archive);
+    HlArchive* hlArcBuf;
+    HlResult result;
+
+    /* Allocate HlArchive buffer. */
+    hlArcBuf = HL_ALLOC_OBJ(HlArchive);
+    if (!hlArcBuf) return HL_ERROR_OUT_OF_MEMORY;
+
+    /* Setup archive. */
+    HL_LIST_INIT(hlArcBuf->entries);
+
+    /*
+       Add all the files from all the splits or simply a
+       single archive based on user request.
+    */
+    result = (loadSplits) ?
+        hlHHArchiveLoadAllInto(filePath, hhArcs, hlArcBuf) :
+        hlHHArchiveLoadSingleInto(filePath, hhArcs, hlArcBuf);
+
+    if (HL_FAILED(result)) return result;
+
+    /* Set pointer and return result. */
+    *hlArc = hlArcBuf;
+    return result;
 }
 
-HlResult hlGensArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
+HlResult hlHHArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
     HlU32 dataAlignment, HlCompressType compressType, HlBool generateARL,
     HlPackedFileIndex* HL_RESTRICT pfi, const HlNChar* HL_RESTRICT filePath)
 {
@@ -419,14 +372,14 @@ HlResult hlGensArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
            NOTE: Endianness doesn't matter here; the signature's endianness will
            always be correct, and splitCount is going to filled-in later.
         */
-        const HlGensArchiveListHeader arlHeader =
+        const HlHHArchiveListHeader arlHeader =
         {
-            HL_GENS_ARL_SIG,    /* signature */
+            HL_HH_ARL_SIG,      /* signature */
             0                   /* splitCount */
         };
 
         /* Copy ARL extension and null terminator into path buffer. */
-        memcpy(&pathBufPtr[filePathLen], HL_GENS_ARL_EXT, sizeof(HL_GENS_ARL_EXT));
+        memcpy(&pathBufPtr[filePathLen], HL_HH_ARL_EXT, sizeof(HL_HH_ARL_EXT));
 
         /* Open ARL for writing. */
         result = hlFileOpen(pathBufPtr, HL_FILE_MODE_WRITE, &arlFile);
@@ -440,11 +393,11 @@ HlResult hlGensArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
     /* Write archive(s) and ARL split sizes as requested. */
     {
         /* Generate the header that will be written to every split. */
-        const HlGensArchiveHeader arcHeader =
+        const HlHHArchiveHeader arcHeader =
         {
             0,                              /* unknown1 */
-            sizeof(HlGensArchiveHeader),    /* headerSize */
-            sizeof(HlGensArchiveFileEntry), /* entrySize */
+            sizeof(HlHHArchiveHeader),      /* headerSize */
+            sizeof(HlHHArchiveFileEntry),   /* entrySize */
             dataAlignment                   /* dataAlignment */
         };
 
@@ -453,7 +406,7 @@ HlResult hlGensArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
         HlBool wroteEntryToCurArc = HL_FALSE;
         
         /* Account for AR header. */
-        arcSize = sizeof(HlGensArchiveHeader);
+        arcSize = sizeof(HlHHArchiveHeader);
 
         /* Copy extension(s) from filePath into path buffer. */
         memcpy(&pathBufPtr[filePathLen], exts, nonSplitExtsLen * sizeof(HlNChar));
@@ -487,7 +440,7 @@ HlResult hlGensArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
             char fileNameUTF8Buf[256];
 #endif
 
-            HlGensArchiveFileEntry fileEntry;
+            HlHHArchiveFileEntry hhFileEntry;
             const HlArchiveEntry* entry = &arc->entries.data[i];
             const HlNChar* entryName;
             void* entryData;
@@ -545,7 +498,7 @@ HlResult hlGensArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
                 goto failed;
             }
             
-            fileEntry.dataSize = (HlU32)entrySize;
+            hhFileEntry.dataSize = (HlU32)entrySize;
 
             /* Get entry name and compute required size to convert to UTF-8. */
             entryName = hlArchiveEntryGetName(entry);
@@ -567,22 +520,22 @@ HlResult hlGensArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
             }
 
             /* Account for entry and file name (including null terminator). */
-            fileEntry.dataOffset = (HlU32)(sizeof(HlGensArchiveFileEntry) + fileNameUTF8Size);
+            hhFileEntry.dataOffset = (HlU32)(sizeof(HlHHArchiveFileEntry) + fileNameUTF8Size);
 
             /* Account for file data alignment. */
-            fileEntry.dataOffset = HL_ALIGN(fileEntry.dataOffset + arcSize, dataAlignment);
-            fileEntry.dataOffset -= arcSize;
+            hhFileEntry.dataOffset = HL_ALIGN(hhFileEntry.dataOffset + arcSize, dataAlignment);
+            hhFileEntry.dataOffset -= arcSize;
 
             /* Account for file size. */
-            fileEntry.entrySize = (fileEntry.dataOffset + fileEntry.dataSize);
+            hhFileEntry.entrySize = (hhFileEntry.dataOffset + hhFileEntry.dataSize);
 
             /* Increase total archive size. */
-            arcSize += fileEntry.entrySize;
+            arcSize += hhFileEntry.entrySize;
 
             /* Set unknown values. */
             /* TODO: Find out what these are and set them properly. */
-            fileEntry.unknown1 = 0;
-            fileEntry.unknown2 = 0;
+            hhFileEntry.unknown1 = 0;
+            hhFileEntry.unknown2 = 0;
 
             /* Break off into next split if necessary. */
             if (splitLimit && arcSize > splitLimit && wroteEntryToCurArc)
@@ -615,7 +568,7 @@ HlResult hlGensArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
                 if (HL_FAILED(result)) goto failed;
 
                 /* Reset arcSize. */
-                arcSize = sizeof(HlGensArchiveHeader);
+                arcSize = sizeof(HlHHArchiveHeader);
 
                 /* Indicate that we have not yet written an entry to this new split. */
                 wroteEntryToCurArc = HL_FALSE;
@@ -624,17 +577,17 @@ HlResult hlGensArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
                 ++splitCount;
 
                 /* Account for entry and file name (including null terminator). */
-                fileEntry.dataOffset = (HlU32)(sizeof(HlGensArchiveFileEntry) + fileNameUTF8Size);
+                hhFileEntry.dataOffset = (HlU32)(sizeof(HlHHArchiveFileEntry) + fileNameUTF8Size);
 
                 /* Account for file data alignment. */
-                fileEntry.dataOffset = HL_ALIGN(fileEntry.dataOffset + arcSize, dataAlignment);
-                fileEntry.dataOffset -= arcSize;
+                hhFileEntry.dataOffset = HL_ALIGN(hhFileEntry.dataOffset + arcSize, dataAlignment);
+                hhFileEntry.dataOffset -= arcSize;
 
                 /* Account for file size. */
-                fileEntry.entrySize = (fileEntry.dataOffset + fileEntry.dataSize);
+                hhFileEntry.entrySize = (hhFileEntry.dataOffset + hhFileEntry.dataSize);
 
                 /* Increase total archive size. */
-                arcSize += fileEntry.entrySize;
+                arcSize += hhFileEntry.entrySize;
             }
 
             /* Convert file name to UTF-8 if necessary. */
@@ -652,7 +605,7 @@ HlResult hlGensArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
 #endif
             
             /* Write file entry to archive. */
-            result = hlFileWrite(arcFile, sizeof(fileEntry), &fileEntry, NULL);
+            result = hlFileWrite(arcFile, sizeof(hhFileEntry), &hhFileEntry, NULL);
             if (HL_FAILED(result))
             {
                 if (doFreeEntryData) hlFree(entryData);
@@ -696,7 +649,7 @@ HlResult hlGensArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
                 {
                     HL_ALLOC_ARR(char, fileNameUTF8Size),   /* name */
                     (HlU32)dataPos,                         /* dataPos */
-                    fileEntry.dataSize                      /* dataSize */
+                    hhFileEntry.dataSize                    /* dataSize */
                 };
 
                 if (!packedEntry.name)

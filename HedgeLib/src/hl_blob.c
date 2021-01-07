@@ -78,3 +78,14 @@ void hlBlobFree(HlBlob* blob)
 {
     hlFree(blob);
 }
+
+void hlBlobListFree(HlBlobList* blobList)
+{
+    size_t i;
+    for (i = 0; i < blobList->count; ++i)
+    {
+        hlBlobFree(blobList->data[i]);
+    }
+
+    HL_LIST_FREE(*blobList);
+}

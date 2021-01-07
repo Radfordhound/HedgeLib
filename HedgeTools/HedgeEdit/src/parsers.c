@@ -164,11 +164,8 @@ static HlResult hhSvColParser(HrInstance* HL_RESTRICT instance,
     HlSectorCollision* hlSvCol;
     HlResult result;
 
-    {
-        HlBlob blob = { data, dataSize };
-        result = hlSVColRead(&blob, relPath, &hlSvCol);
-        if (HL_FAILED(result)) return result;
-    }
+    result = hlSVColRead(data, relPath, &hlSvCol);
+    if (HL_FAILED(result)) return result;
 
     result = hrResMgrAddResource(resMgr, relPath,
         HR_RES_TYPE_SV_COL, hlSvCol, resID);

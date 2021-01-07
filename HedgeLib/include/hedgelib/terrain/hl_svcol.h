@@ -9,7 +9,6 @@ extern "C" {
 
 #define HL_SVCOL_SIG 0x5356434F /* 'SVCO' */
 
-typedef struct HlBlob HlBlob;
 typedef struct HlFile HlFile;
 typedef enum HlBINAEndianFlag HlBINAEndianFlag;
 
@@ -89,7 +88,7 @@ HL_API HlResult hlSVColParse(const HlSVColHeader* HL_RESTRICT svcol,
     const char* HL_RESTRICT name,
     HlSectorCollision* HL_RESTRICT * HL_RESTRICT hlSecCol);
 
-HL_API HlResult hlSVColRead(HlBlob* HL_RESTRICT blob,
+HL_API HlResult hlSVColRead(void* HL_RESTRICT rawData,
     const char* HL_RESTRICT name,
     HlSectorCollision* HL_RESTRICT * HL_RESTRICT hlSecCol);
 

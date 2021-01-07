@@ -2,7 +2,7 @@
 #include "hedgelib/hl_text.h"
 #include "hedgelib/hl_blob.h"
 #include "hedgelib/io/hl_path.h"
-#include "hedgelib/archives/hl_gens_archive.h"
+#include "hedgelib/archives/hl_hh_archive.h"
 #include "hedgelib/archives/hl_pacx.h"
 #include <stdlib.h>
 
@@ -92,6 +92,7 @@ typedef enum ARC_TYPE
 {
     ARC_TYPE_UNKNOWN = 0,
     ARC_TYPE_AR,
+    ARC_TYPE_PFD,
     ARC_TYPE_PACx,
     ARC_TYPE_PACxV2,
     ARC_TYPE_PACxV3,
@@ -122,9 +123,9 @@ extInfo;
 
 static const extInfo Extensions[EXT_TYPE_COUNT] =
 {
-    DEF_EXTENSION(HL_GENS_AR_EXT),
-    DEF_EXTENSION(HL_GENS_ARL_EXT),
-    DEF_EXTENSION(HL_GENS_PFD_EXT),
+    DEF_EXTENSION(HL_HH_AR_EXT),
+    DEF_EXTENSION(HL_HH_ARL_EXT),
+    DEF_EXTENSION(HL_HH_PFD_EXT),
     DEF_EXTENSION(HL_PACX_EXT)
 };
 
@@ -211,13 +212,12 @@ static void printUsage(FILE* stream)
     win32PromptIfNecessary();
 }
 
-static ARC_TYPE getArcType(const HlNChar* HL_RESTRICT typeStr,
-    HlBool* HL_RESTRICT generatePFI)
+static ARC_TYPE getArcType(const HlNChar* typeStr)
 {
     /* Unleashed/Generations .ar/.pfd files. */
     if (!nstrncmp(typeStr, HL_NTEXT("su"), 2) ||
-        !nstrncmp(typeStr, HL_NTEXT("sg"), 2) ||
         !nstrncmp(typeStr, HL_NTEXT("gens"), 4) ||
+        !nstrncmp(typeStr, HL_NTEXT("hh"), 2) ||
         !nstrncmp(typeStr, HL_NTEXT("ar"), 2))
     {
         return ARC_TYPE_AR;
@@ -225,8 +225,7 @@ static ARC_TYPE getArcType(const HlNChar* HL_RESTRICT typeStr,
 
     if (!nstrncmp(typeStr, HL_NTEXT("pfd"), 3))
     {
-        if (generatePFI) *generatePFI = HL_TRUE;
-        return ARC_TYPE_AR;
+        return ARC_TYPE_PFD;
     }
 
     /* Lost World .pac files. */
@@ -263,7 +262,7 @@ static ARC_TYPE getArcType(const HlNChar* HL_RESTRICT typeStr,
     return ARC_TYPE_UNKNOWN;
 }
 
-static ARC_TYPE promptForArcType(HlBool* generatePFI)
+static ARC_TYPE promptForArcType(void)
 {
     HlNChar buf[32];
     HlNChar* input;
@@ -285,16 +284,18 @@ static ARC_TYPE promptForArcType(HlBool* generatePFI)
     if (!input) return ARC_TYPE_UNKNOWN;
 
     /* Get type from user input and return it. */
-    return getArcType(input, generatePFI);
+    return getArcType(input);
 }
 
-static const extInfo* getExtInfo(ARC_TYPE type, HlBool generatePFI)
+static const extInfo* getExtInfo(ARC_TYPE type)
 {
     switch (type)
     {
     case ARC_TYPE_AR:
-        return (generatePFI) ? &Extensions[EXT_TYPE_PFD] :
-            &Extensions[EXT_TYPE_AR];
+        return &Extensions[EXT_TYPE_AR];
+
+    case ARC_TYPE_PFD:
+        return &Extensions[EXT_TYPE_PFD];
 
     case ARC_TYPE_PACx:
     case ARC_TYPE_PACxV2:
@@ -319,8 +320,7 @@ static HlBool extensionsMatch(const HlNChar* exts, EXT_TYPE extType)
         exts[extInf->len] == HL_NTEXT('.')));
 }
 
-static ARC_TYPE autoDetectArcType(const HlNChar* HL_RESTRICT input,
-    HlBool* HL_RESTRICT generatePFI)
+static ARC_TYPE autoDetectArcType(const HlNChar* input)
 {
     /* Attempt to auto-determine type from extension. */
     const HlNChar* exts = hlPathGetExts(input);
@@ -331,8 +331,7 @@ static ARC_TYPE autoDetectArcType(const HlNChar* HL_RESTRICT input,
     }
     else if (extensionsMatch(exts, EXT_TYPE_PFD))
     {
-        if (generatePFI) *generatePFI = HL_TRUE;
-        return ARC_TYPE_AR;
+        return ARC_TYPE_PFD;
     }
     else if (extensionsMatch(exts, EXT_TYPE_PAC))
     {
@@ -340,7 +339,7 @@ static ARC_TYPE autoDetectArcType(const HlNChar* HL_RESTRICT input,
     }
 
     /* If we were unable to auto-determine type, manually prompt user for it. */
-    return promptForArcType(generatePFI);
+    return promptForArcType();
 }
 
 static HlResult extract(const HlNChar* HL_RESTRICT input,
@@ -357,24 +356,25 @@ static HlResult extract(const HlNChar* HL_RESTRICT input,
     switch (type)
     {
     case ARC_TYPE_AR:
-        result = hlGensArchiveLoad(input, loadSplits, &arc);
+    case ARC_TYPE_PFD:
+        result = hlHHArchiveLoad(input, loadSplits, NULL, &arc);
         break;
 
     case ARC_TYPE_PACx:
-        result = hlPACxLoad(input, loadSplits, &arc);
+        result = hlPACxLoad(input, 0, loadSplits, NULL, &arc);
         break;
 
     case ARC_TYPE_PACxV2:
-        result = hlPACxV2Load(input, loadSplits, &arc);
+        result = hlPACxV2Load(input, loadSplits, NULL, &arc);
         break;
 
     case ARC_TYPE_PACxV3:
-        result = hlPACxV3Load(input, loadSplits, &arc);
+        result = hlPACxV3Load(input, loadSplits, NULL, &arc);
         break;
 
     case ARC_TYPE_PACxV402:
     case ARC_TYPE_PACxV403:
-        result = hlPACxV4Load(input, loadSplits, &arc);
+        result = hlPACxV4Load(input, loadSplits, NULL, &arc);
         break;
 
     default: return HL_ERROR_UNSUPPORTED;
@@ -410,22 +410,36 @@ static HlResult pack(const HlNChar* HL_RESTRICT input,
     result = hlArchiveCreateFromDir(input, HL_FALSE, HL_TRUE, &arc);
     if (HL_FAILED(result)) goto end;
 
+    /* Disable PFI generation if we are generating splits; PFIs can only exist for one file. */
+    if (generatePFI && ((splitLimit && *splitLimit != 0) ||
+        (!splitLimit && type != ARC_TYPE_PFD)))
+    {
+        generatePFI = HL_FALSE;
+        /* TODO: Print warning. */
+    }
+
     /* Pack archive in the format specified by type. */
     switch (type)
     {
     case ARC_TYPE_AR:
-        result = hlGensArchiveSave(arc,                     /* arc */
-            (splitLimit) ? *splitLimit : ((generatePFI) ?   /* splitLimit */
-                0 : HL_GENS_DEFAULT_SPLIT_LIMIT),
+        result = hlHHArchiveSave(arc,                                   /* arc */
+            (splitLimit) ? *splitLimit : HL_HH_DEFAULT_SPLIT_LIMIT,     /* splitLimit */
+            (alignment) ? *alignment : HL_HH_DEFAULT_ALIGNMENT,         /* dataAlignment */
+            compressType,                                               /* compressType */
+            (splitLimit == NULL || *splitLimit != 0),                   /* generateARL */
+            (generatePFI) ? &pfi : NULL,                                /* pfi */
+            output);                                                    /* filePath */
 
-            (alignment) ? *alignment : ((generatePFI) ?     /* dataAlignment */
-                HL_GENS_DEFAULT_ALIGNMENT_PFD :
-                HL_GENS_DEFAULT_ALIGNMENT),
+        break;
 
-            compressType,                                   /* compressType */
-            !generatePFI,                                   /* generateARL */
-            (generatePFI) ? &pfi : NULL,                    /* pfi */
-            output);                                        /* filePath */
+    case ARC_TYPE_PFD:
+        result = hlHHArchiveSave(arc,                                   /* arc */
+            (splitLimit) ? *splitLimit : 0,                             /* splitLimit */
+            (alignment) ? *alignment : HL_HH_DEFAULT_ALIGNMENT_PFD,     /* dataAlignment */
+            compressType,                                               /* compressType */
+            HL_FALSE,                                                   /* generateARL */
+            (generatePFI) ? &pfi : NULL,                                /* pfi */
+            output);                                                    /* filePath */
 
         break;
 
@@ -471,7 +485,15 @@ static HlResult pack(const HlNChar* HL_RESTRICT input,
         hlPathRemoveExtsNoAlloc(output, pfiPathPtr);
         
         /* Copy .pfi extension and null terminator into PFI path. */
-        memcpy(&pfiPathPtr[pfiExtPos], HL_GENS_PFI_EXT, sizeof(HL_GENS_PFI_EXT));
+        memcpy(&pfiPathPtr[pfiExtPos], HL_HH_PFI_EXT, sizeof(HL_HH_PFI_EXT));
+
+        /* Ensure we're not about to overwrite the archive we just wrote. */
+        if (hlNStrsEqual(output, pfiPathPtr))
+        {
+            result = HL_ERROR_ALREADY_EXISTS;
+            if (pfiPathPtr != pfiPathBuf) hlFree(pfiPathPtr);
+            goto end;
+        }
 
         /* Save PFI and free PFI path buffer if necessary. */
         result = hlHHPackedFileIndexSave(&pfi, 0, pfiPathPtr);
@@ -498,7 +520,7 @@ int nmain(int argc, HlNChar* argv[])
 
     /* Setup console IO. */
     result = setupConsoleIO();
-    if (HL_FAILED(result)) goto failed;
+    if (HL_FAILED(result)) return EXIT_FAILURE; /* We might not be able to even printError */
 
     /* Parse command-line arguments. */
     for (i = 1; i < argc; ++i)
@@ -539,7 +561,7 @@ int nmain(int argc, HlNChar* argv[])
         /* Type flag. */
         else if (!nstrncmp(argv[i], HL_NTEXT("-T="), 3))
         {
-            type = getArcType(&argv[i][3], &generatePFI);
+            type = getArcType(&argv[i][3]);
             if (type == ARC_TYPE_UNKNOWN)
             {
                 printError(GET_TEXT(ERROR_INVALID_TYPE));
@@ -555,6 +577,7 @@ int nmain(int argc, HlNChar* argv[])
         }
 
         /* TODO: Split flag. */
+        /* TODO: Alignment flag. */
 
         /* Generate PFI flag. */
         else if (!nstrncmp(argv[i], HL_NTEXT("-I"), 2))
@@ -604,7 +627,7 @@ int nmain(int argc, HlNChar* argv[])
         /* Auto-determine type if necessary. */
         if (type == ARC_TYPE_UNKNOWN)
         {
-            type = autoDetectArcType(input, &generatePFI);
+            type = autoDetectArcType(input);
             if (type == ARC_TYPE_UNKNOWN)
             {
                 printError(GET_TEXT(ERROR_INVALID_TYPE));
@@ -619,7 +642,7 @@ int nmain(int argc, HlNChar* argv[])
             if (mode == MODE_PACK)
             {
                 /* Get output path from input directory. */
-                const extInfo* const extInf = getExtInfo(type, generatePFI);
+                const extInfo* const extInf = getExtInfo(type);
                 const size_t inputLen = hlNStrLen(input);
                 const size_t outputLen = (inputLen + extInf->len);
 

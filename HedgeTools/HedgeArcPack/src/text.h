@@ -33,9 +33,13 @@
     HL_NTEXT("\t\tto be, in bytes) for packing if the given type supports it. Ignored\n")
     HL_NTEXT("\t\twhen extracting. Set this to 0 to disable the split limit.\n\n")
 
+    HL_NTEXT(" -A=amount\tSpecifies a custom data alignment (how much padding to apply\n")
+    HL_NTEXT("\t\tbefore writing each file's data, in bytes) for packing if the given\n")
+    HL_NTEXT("\t\ttype supports it. Ignored when extracting. Set this to 0 to disable\n")
+    HL_NTEXT("\t\tdata alignment.\n\n")
+
     HL_NTEXT(" -I\t\tGenerates a .pfi alongside the archive if possible for the given type.\n")
-    HL_NTEXT("\t\tSpecified by default when type is set to \"pfd\". Ignored when extracting\n")
-    HL_NTEXT("\t\tor when not possible for the given type.\n"),
+    HL_NTEXT("\t\tIgnored when extracting or when not possible for the given type.\n"),
 
     /* PRESS_ENTER_STRING */
     HL_NTEXT("\nPress enter to continue..."),
@@ -69,7 +73,7 @@
     HL_NTEXT("Archive type: "),
 
     /* FILE_TYPE_AR */
-    HL_NTEXT("su/sg/gens/ar/pfd\t(Unleashed/Generations .ar/.pfd files)\n"),
+    HL_NTEXT("su/gens/hh/ar/pfd\t(Unleashed/Generations .ar/.pfd files)\n"),
 
     /* FILE_TYPE_PACxV2 */
     HL_NTEXT("lw/slw/pac2\t\t(Lost World .pac files)\n"),

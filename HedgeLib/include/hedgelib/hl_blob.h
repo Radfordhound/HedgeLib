@@ -1,6 +1,6 @@
 #ifndef HL_BLOB_H_INCLUDED
 #define HL_BLOB_H_INCLUDED
-#include "hl_internal.h"
+#include "hl_list.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,6 +29,8 @@ typedef struct HlBlob
 }
 HlBlob;
 
+typedef HL_LIST(HlBlob*) HlBlobList;
+
 /** @brief The size of an HlBlob, aligned to a 16-byte offset. */
 #define HL_BLOB_ALIGNED_SIZE    HL_ALIGN(sizeof(HlBlob), 16)
 
@@ -42,6 +44,7 @@ HL_API HlResult hlBlobLoad(const HlNChar* HL_RESTRICT filePath,
     HlBlob* HL_RESTRICT * HL_RESTRICT blob);
 
 HL_API void hlBlobFree(HlBlob* blob);
+HL_API void hlBlobListFree(HlBlobList* blobList);
 
 #ifdef __cplusplus
 }

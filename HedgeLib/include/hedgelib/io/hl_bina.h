@@ -1,7 +1,7 @@
 #ifndef HL_BINA_H_INCLUDED
 #define HL_BINA_H_INCLUDED
-#include "../hl_blob.h"
 #include "../hl_list.h"
+#include "../hl_blob.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -152,11 +152,11 @@ HL_API void hlBINAOffsetsFix32(const void* HL_RESTRICT offsets,
 HL_API void hlBINAOffsetsFix64(const void* HL_RESTRICT offsets,
     HlU8 endianFlag, HlU32 offsetTableSize, void* HL_RESTRICT data);
 
-HL_API void hlBINAV1Fix(HlBlob* blob);
-HL_API void hlBINAV2Fix(HlBlob* blob);
-HL_API void hlBINAFix(HlBlob* blob);
+HL_API void hlBINAV1Fix(void* rawData);
+HL_API void hlBINAV2Fix(void* rawData);
+HL_API void hlBINAFix(void* rawData);
 
-HL_API HlU32 hlBINAGetVersion(const HlBlob* blob);
+HL_API HlU32 hlBINAGetVersion(const void* rawData);
 
 #define hlBINAGetMajorVersionChar(version)      (char)(((version) & 0xFF0000U) >> 16)
 #define hlBINAGetMinorVersionChar(version)      (char)(((version) & 0xFF00U) >> 8)
@@ -166,16 +166,16 @@ HL_API HlU32 hlBINAGetVersion(const HlBlob* blob);
 #define hlBINAGetMinorVersion(version)      (HlU8)(hlBINAGetMinorVersionChar(version) - 0x30)
 #define hlBINAGetRevisionVersion(version)   (HlU8)(hlBINAGetRevisionVersionChar(version) - 0x30)
 
-#define hlBINAHasV2Header(blob)             (HlBool)(*(const HlU32*)((blob)->data) == HL_BINA_SIG)
+#define hlBINAHasV2Header(rawData)         (HlBool)(*(const HlU32*)((rawData)) == HL_BINA_SIG)
 
 /* TODO: Uh oh, turns out this is wrong. Rio 2016 has 2.1.0 files that are 32-bit!!! */
 #define hlBINAIs64Bit(version)              (HlBool)((version) >= 0x323130U) /* version >= 2.1.0 */
 
-HL_API HlBINAV2BlockDataHeader* hlBINAV2GetDataBlock(const HlBlob* blob);
+HL_API HlBINAV2BlockDataHeader* hlBINAV2GetDataBlock(const void* rawData);
 
-#define hlBINAV1GetData(blob)   (void*)(((const HlBINAV1Header*)(blob)->data) + 1)
-HL_API void* hlBINAV2GetData(const HlBlob* blob);
-HL_API void* hlBINAGetData(const HlBlob* blob);
+#define hlBINAV1GetData(rawData) (const void*)(((const HlBINAV1Header*)(rawData)) + 1)
+HL_API const void* hlBINAV2GetData(const void* rawData);
+HL_API const void* hlBINAGetData(const void* rawData);
 
 HL_API HlResult hlBINAStringsWrite32(size_t dataPos, const HlStrTable* HL_RESTRICT strTable,
     HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file);
@@ -216,9 +216,9 @@ HL_API char hlBINAGetRevisionVersionCharExt(HlU32 version);
 HL_API HlU8 hlBINAGetMajorVersionExt(HlU32 version);
 HL_API HlU8 hlBINAGetMinorVersionExt(HlU32 version);
 HL_API HlU8 hlBINAGetRevisionVersionExt(HlU32 version);
-HL_API HlBool hlBINAHasV2HeaderExt(const HlBlob* blob);
+HL_API HlBool hlBINAHasV2HeaderExt(const void* rawData);
 HL_API HlBool hlBINAIs64BitExt(HlU32 version);
-HL_API void* hlBINAV1GetDataExt(const HlBlob* blob);
+HL_API const void* hlBINAV1GetDataExt(const void* rawData);
 #endif
 
 #ifdef __cplusplus
