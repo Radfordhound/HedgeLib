@@ -542,17 +542,17 @@ HlResult hlHHMaterialV3Parse(const HlHHMaterialV3* HL_RESTRICT hhMat,
     }
 }
 
-HlResult hlHHMaterialRead(HlBlob* HL_RESTRICT blob,
+HlResult hlHHMaterialRead(void* HL_RESTRICT rawData,
     const char* HL_RESTRICT name, HlMaterial* HL_RESTRICT * HL_RESTRICT hlMat)
 {
     void* hhMat;
     HlU32 version;
 
     /* Fix HH general data. */
-    hlHHFix(blob);
+    hlHHFix(rawData);
 
     /* Get HH material pointer and version number. */
-    hhMat = (void*)hlHHGetData(blob, &version);
+    hhMat = (void*)hlHHGetData(rawData, &version);
     if (!hhMat) return HL_ERROR_INVALID_DATA;
 
     /* Fix and parse HH material data based on version number. */

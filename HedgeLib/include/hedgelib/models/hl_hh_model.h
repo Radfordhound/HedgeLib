@@ -88,17 +88,6 @@ HlHHMesh;
 
 HL_STATIC_ASSERT_SIZE(HlHHMesh, 0x2C);
 
-typedef struct HlHHSpecialMeshSlot
-{
-    HlU32 count;
-    HL_OFF32(HL_OFF32_STR) types;
-    HL_OFF32(HL_OFF32(HlU32)) meshCounts;
-    HL_OFF32(HL_OFF32(HL_OFF32(HlHHMesh))) meshes;
-}
-HlHHSpecialMeshSlot;
-
-HL_STATIC_ASSERT_SIZE(HlHHSpecialMeshSlot, 16);
-
 typedef struct HlHHMeshSlot
 {
     HlU32 meshCount;
@@ -107,6 +96,17 @@ typedef struct HlHHMeshSlot
 HlHHMeshSlot;
 
 HL_STATIC_ASSERT_SIZE(HlHHMeshSlot, 8);
+
+typedef struct HlHHSpecialMeshSlot
+{
+    HlU32 count;
+    HL_OFF32(HL_OFF32_STR) types;
+    HL_OFF32(HL_OFF32(HlU32)) meshCounts;
+    HL_OFF32(HL_OFF32(HL_OFF32(HlHHMesh))) meshesOffset;
+}
+HlHHSpecialMeshSlot;
+
+HL_STATIC_ASSERT_SIZE(HlHHSpecialMeshSlot, 16);
 
 typedef struct HlHHMeshGroup
 {
@@ -170,9 +170,8 @@ HL_API void hlHHMeshSwap(HlHHMesh* mesh, HlBool swapOffsets);
 HL_API void hlHHMeshSwapFaces(HlHHMesh* mesh);
 HL_API void hlHHMeshSwapVertices(HlHHMesh* mesh);
 HL_API void hlHHMeshSlotSwap(HlHHMeshSlot* meshSlot, HlBool swapOffsets);
-HL_API void hlHHMeshSlotSwapRecursive(HlHHMeshSlot* meshSlot, HlBool swapOffsets);
+HL_API void hlHHSpecialMeshSlotSwap(HlHHSpecialMeshSlot* meshSlot, HlBool swapOffsets);
 HL_API void hlHHMeshGroupSwap(HlHHMeshGroup* meshGroup, HlBool swapOffsets);
-HL_API void hlHHMeshGroupSwapRecursive(HlHHMeshGroup* meshGroup, HlBool swapOffsets);
 HL_API void hlHHTerrainModelV5Swap(HlHHTerrainModelV5* model, HlBool swapOffsets);
 HL_API void hlHHSkeletonSwap(HlHHSkeleton* skeleton);
 HL_API void hlHHSkeletalModelV5Swap(HlHHSkeletalModelV5* model, HlBool swapOffsets);
@@ -180,20 +179,20 @@ HL_API void hlHHSkeletalModelV5Swap(HlHHSkeletalModelV5* model, HlBool swapOffse
 HL_API void hlHHSkeletalModelV5Fix(HlHHSkeletalModelV5* model);
 HL_API void hlHHTerrainModelV5Fix(HlHHTerrainModelV5* model);
 
-HL_API HlU32 hlHHModelGetTopologyType(const HlBlob* blob);
+HL_API HlU32 hlHHModelGetTopologyType(const void* rawData);
 
 HL_API HlResult hlHHSkeletalModelV5Parse(
     const HlHHSkeletalModelV5* HL_RESTRICT hhModel,
     HlU32 hhTopologyType, HlModel* HL_RESTRICT * HL_RESTRICT hlModel);
 
-HL_API HlResult hlHHSkeletalModelRead(HlBlob* HL_RESTRICT blob,
+HL_API HlResult hlHHSkeletalModelRead(void* HL_RESTRICT rawData,
     HlModel* HL_RESTRICT * HL_RESTRICT hlModel);
 
 HL_API HlResult hlHHTerrainModelV5Parse(
     const HlHHTerrainModelV5 *HL_RESTRICT hhModel,
     HlU32 hhTopologyType, HlModel* HL_RESTRICT * HL_RESTRICT hlModel);
 
-HL_API HlResult hlHHTerrainModelRead(HlBlob* HL_RESTRICT blob,
+HL_API HlResult hlHHTerrainModelRead(void* HL_RESTRICT rawData,
     HlModel* HL_RESTRICT * HL_RESTRICT hlModel);
 
 HL_API HlResult hlHHModelLoadMaterials(HlModel* HL_RESTRICT hlModel,

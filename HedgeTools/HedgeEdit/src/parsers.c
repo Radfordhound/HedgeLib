@@ -53,7 +53,7 @@ static HlResult ddsTextureParser(HrInstance* HL_RESTRICT instance,
         return result;
     }
 
-    return HL_RESULT_SUCCESS;
+    return result;
 }
 
 static HlResult hhTextureParser(HrInstance* HL_RESTRICT instance,
@@ -76,11 +76,8 @@ static HlResult hhMaterialParser(HrInstance* HL_RESTRICT instance,
     HlMaterial* hlMaterial;
     HlResult result;
 
-    {
-        HlBlob blob = { data, dataSize };
-        result = hlHHMaterialRead(&blob, relPath, &hlMaterial);
-        if (HL_FAILED(result)) return result;
-    }
+    result = hlHHMaterialRead(data, relPath, &hlMaterial);
+    if (HL_FAILED(result)) return result;
 
     result = hrResMgrAddResource(resMgr, relPath,
         HR_RES_TYPE_MATERIAL, hlMaterial, resID);
@@ -91,7 +88,7 @@ static HlResult hhMaterialParser(HrInstance* HL_RESTRICT instance,
         return result;
     }
 
-    return HL_RESULT_SUCCESS;
+    return result;
 }
 
 static HlResult hhTerrainModelParser(HrInstance* HL_RESTRICT instance,
@@ -100,34 +97,28 @@ static HlResult hhTerrainModelParser(HrInstance* HL_RESTRICT instance,
     HrResourceID* HL_RESTRICT resID)
 {
     HlModel* hlModel;
+    HrGPUModel* hrModel;
     HlResult result;
 
+    result = hlHHTerrainModelRead(data, &hlModel);
+    if (HL_FAILED(result)) return result;
+
+    result = hrGPUModelCreate(instance, hlModel,
+        HL_TRUE, resMgr, &hrModel);
+
+    hlFree(hlModel);
+    if (HL_FAILED(result)) return result;
+
+    result = hrResMgrAddResource(resMgr, relPath,
+        HR_RES_TYPE_GPU_MODEL, hrModel, resID);
+
+    if (HL_FAILED(result))
     {
-        HlBlob blob = { data, dataSize };
-        result = hlHHTerrainModelRead(&blob, &hlModel);
-        if (HL_FAILED(result)) return result;
+        hrGPUModelDestroy(hrModel);
+        return result;
     }
 
-    {
-        HrGPUModel* hrModel;
-
-        result = hrGPUModelCreate(instance, hlModel,
-            HL_TRUE, resMgr, &hrModel);
-
-        hlFree(hlModel);
-        if (HL_FAILED(result)) return result;
-
-        result = hrResMgrAddResource(resMgr, relPath,
-            HR_RES_TYPE_GPU_MODEL, hrModel, resID);
-
-        if (HL_FAILED(result))
-        {
-            hrGPUModelDestroy(hrModel);
-            return result;
-        }
-
-        return HL_RESULT_SUCCESS;
-    }
+    return result;
 }
 
 static HlResult hhTerrainInstanceInfoParser(HrInstance* HL_RESTRICT instance,
@@ -138,11 +129,8 @@ static HlResult hhTerrainInstanceInfoParser(HrInstance* HL_RESTRICT instance,
     HlTerrainInstanceInfo* hlInstInfo;
     HlResult result;
 
-    {
-        HlBlob blob = { data, dataSize };
-        result = hlHHTerrainInstanceInfoRead(&blob, &hlInstInfo);
-        if (HL_FAILED(result)) return result;
-    }
+    result = hlHHTerrainInstanceInfoRead(data, &hlInstInfo);
+    if (HL_FAILED(result)) return result;
 
     result = hrResMgrAddResource(resMgr, relPath,
         HR_RES_TYPE_TERRAIN_INSTANCE_INFO, hlInstInfo, resID);
@@ -153,7 +141,7 @@ static HlResult hhTerrainInstanceInfoParser(HrInstance* HL_RESTRICT instance,
         return result;
     }
 
-    return HL_RESULT_SUCCESS;
+    return result;
 }
 
 static HlResult hhSvColParser(HrInstance* HL_RESTRICT instance,

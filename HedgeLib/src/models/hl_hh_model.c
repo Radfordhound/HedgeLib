@@ -123,7 +123,26 @@ void hlHHMeshSlotSwap(HlHHMeshSlot* meshSlot, HlBool swapOffsets)
     if (swapOffsets) hlSwapU32P(&meshSlot->meshesOffset);
 }
 
-void hlHHMeshSlotSwapRecursive(HlHHMeshSlot* meshSlot, HlBool swapOffsets)
+void hlHHSpecialMeshSlotSwap(HlHHSpecialMeshSlot* meshSlot, HlBool swapOffsets)
+{
+    hlSwapU32P(&meshSlot->count);
+    if (swapOffsets)
+    {
+        hlSwapU32P(&meshSlot->types);
+        hlSwapU32P(&meshSlot->meshCounts);
+        hlSwapU32P(&meshSlot->meshesOffset);
+    }
+}
+
+void hlHHMeshGroupSwap(HlHHMeshGroup* meshGroup, HlBool swapOffsets)
+{
+    hlHHMeshSlotSwap(&meshGroup->solid, swapOffsets);
+    hlHHMeshSlotSwap(&meshGroup->transparent, swapOffsets);
+    hlHHMeshSlotSwap(&meshGroup->punch, swapOffsets);
+    hlHHSpecialMeshSlotSwap(&meshGroup->special, swapOffsets);
+}
+
+static void hlINHHMeshSlotSwapRecursive(HlHHMeshSlot* meshSlot)
 {
     /* Get pointers. */
     HL_OFF32(HlHHMesh)* meshOffsets = (HL_OFF32(HlHHMesh)*)
@@ -135,7 +154,7 @@ void hlHHMeshSlotSwapRecursive(HlHHMeshSlot* meshSlot, HlBool swapOffsets)
     {
         /* Swap the mesh. */
         HlHHMesh* mesh = (HlHHMesh*)hlOff32Get(&meshOffsets[i]);
-        hlHHMeshSwap(mesh, swapOffsets);
+        hlHHMeshSwap(mesh, HL_FALSE);
 
         /* Swap the vertex format. */
         hlHHVertexFormatSwap(mesh);
@@ -148,26 +167,57 @@ void hlHHMeshSlotSwapRecursive(HlHHMeshSlot* meshSlot, HlBool swapOffsets)
     }
 }
 
-void hlHHMeshGroupSwap(HlHHMeshGroup* meshGroup, HlBool swapOffsets)
+static void hlINHHSpecialMeshSlotSwapRecursive(HlHHSpecialMeshSlot* meshSlot)
 {
-    hlHHMeshSlotSwap(&meshGroup->solid, swapOffsets);
-    hlHHMeshSlotSwap(&meshGroup->transparent, swapOffsets);
-    hlHHMeshSlotSwap(&meshGroup->punch, swapOffsets);
+    /* Get pointers. */
+    HL_OFF32(HL_OFF32(HlHHMesh))* meshOffsets = (HL_OFF32(HL_OFF32(HlHHMesh))*)
+        hlOff32Get(&meshSlot->meshesOffset);
 
-    /* TODO: Swap special slot. */
+    HL_OFF32(HlU32)* meshCounts = (HL_OFF32(HlU32)*)
+        hlOff32Get(&meshSlot->meshCounts);
+
+    /* Swap the meshes in the mesh slots. */
+    HlU32 i;
+    for (i = 0; i < meshSlot->count; ++i)
+    {
+        HlU32* meshCount = (HlU32*)hlOff32Get(&meshCounts[i]);
+        HL_OFF32(HlHHMesh)* meshes = (HL_OFF32(HlHHMesh)*)
+            hlOff32Get(&meshOffsets[i]);
+
+        HlU32 i2;
+        
+        /* Swap mesh count. */
+        hlSwapU32P(meshCount);
+
+        /* Swap meshes. */
+        for (i2 = 0; i2 < *meshCount; ++i2)
+        {
+            /* Swap the mesh. */
+            HlHHMesh* mesh = (HlHHMesh*)hlOff32Get(&meshes[i2]);
+            hlHHMeshSwap(mesh, HL_FALSE);
+
+            /* Swap the vertex format. */
+            hlHHVertexFormatSwap(mesh);
+
+            /* Swap the faces. */
+            hlHHMeshSwapFaces(mesh);
+
+            /* Swap the vertices. */
+            hlHHMeshSwapVertices(mesh);
+        }
+    }
 }
 
-void hlHHMeshGroupSwapRecursive(HlHHMeshGroup* meshGroup, HlBool swapOffsets)
+static void hlINHHMeshGroupSwapRecursive(HlHHMeshGroup* meshGroup)
 {
     /* Swap the mesh group. */
-    hlHHMeshGroupSwap(meshGroup, swapOffsets);
+    hlHHMeshGroupSwap(meshGroup, HL_FALSE);
 
     /* Recursively swap the slots within the group. */
-    hlHHMeshSlotSwapRecursive(&meshGroup->solid, swapOffsets);
-    hlHHMeshSlotSwapRecursive(&meshGroup->punch, swapOffsets);
-    hlHHMeshSlotSwapRecursive(&meshGroup->transparent, swapOffsets);
-
-    /* TODO: Swap the special slots. */
+    hlINHHMeshSlotSwapRecursive(&meshGroup->solid);
+    hlINHHMeshSlotSwapRecursive(&meshGroup->punch);
+    hlINHHMeshSlotSwapRecursive(&meshGroup->transparent);
+    hlINHHSpecialMeshSlotSwapRecursive(&meshGroup->special);
 }
 
 void hlHHTerrainModelV5Swap(HlHHTerrainModelV5* model, HlBool swapOffsets)
@@ -205,7 +255,7 @@ static void hlINHHMeshGroupsSwapRecursive(
         HlHHMeshGroup* meshGroup = (HlHHMeshGroup*)hlOff32Get(&meshGroups[i]);
 
         /* Swap the mesh group recursively. */
-        hlHHMeshGroupSwapRecursive(meshGroup, HL_FALSE);
+        hlINHHMeshGroupSwapRecursive(meshGroup);
     }
 }
 
@@ -248,16 +298,16 @@ static const HlU8 hlINHHGetIndexType(const HlU32 topologyType)
     }
 }
 
-HlU32 hlHHModelGetTopologyType(const HlBlob* blob)
+HlU32 hlHHModelGetTopologyType(const void* rawData)
 {
     /* Default topology type used in all games before Tokyo 2020 is triangle strip. */
     HlU32 topologyType = HL_HH_TOPOLOGY_TYPE_TRIANGLE_STRIP;
 
     /* Get topology type if one was specified. */
-    if (hlHHHeaderIsMirage(blob->data))
+    if (hlHHHeaderIsMirage(rawData))
     {
         /* Get "Model" node. */
-        const HlHHMirageHeader* mirageHeader = (const HlHHMirageHeader*)blob->data;
+        const HlHHMirageHeader* mirageHeader = (const HlHHMirageHeader*)rawData;
         const HlHHMirageNode* node = hlHHMirageGetNode(
             hlHHMirageHeaderGetNodes(mirageHeader),
             "Model   ", HL_FALSE);
@@ -703,21 +753,21 @@ HlResult hlHHSkeletalModelV5Parse(
     }
 }
 
-HlResult hlHHSkeletalModelRead(HlBlob* HL_RESTRICT blob,
+HlResult hlHHSkeletalModelRead(void* HL_RESTRICT rawData,
     HlModel* HL_RESTRICT * HL_RESTRICT hlModel)
 {
     HlHHSkeletalModelV5* hhModel;
     HlU32 version, hhTopologyType;
 
     /* Fix HH general data. */
-    hlHHFix(blob);
+    hlHHFix(rawData);
 
     /* Get HH skeletal model pointer and version number. */
-    hhModel = (HlHHSkeletalModelV5*)hlHHGetData(blob, &version);
+    hhModel = (HlHHSkeletalModelV5*)hlHHGetData(rawData, &version);
     if (!hhModel) return HL_ERROR_INVALID_DATA;
 
     /* Get HH topology type. */
-    hhTopologyType = hlHHModelGetTopologyType(blob);
+    hhTopologyType = hlHHModelGetTopologyType(rawData);
 
     /* TODO: Take version number into account. */
 
@@ -786,21 +836,21 @@ HlResult hlHHTerrainModelV5Parse(
     }
 }
 
-HlResult hlHHTerrainModelRead(HlBlob* HL_RESTRICT blob,
+HlResult hlHHTerrainModelRead(void* HL_RESTRICT rawData,
     HlModel* HL_RESTRICT * HL_RESTRICT hlModel)
 {
     HlHHTerrainModelV5* hhModel;
     HlU32 version, hhTopologyType;
 
     /* Fix HH general data. */
-    hlHHFix(blob);
+    hlHHFix(rawData);
 
     /* Get HH terrain model pointer and version number. */
-    hhModel = (HlHHTerrainModelV5*)hlHHGetData(blob, &version);
+    hhModel = (HlHHTerrainModelV5*)hlHHGetData(rawData, &version);
     if (!hhModel) return HL_ERROR_INVALID_DATA;
 
     /* Get HH topology type. */
-    hhTopologyType = hlHHModelGetTopologyType(blob);
+    hhTopologyType = hlHHModelGetTopologyType(rawData);
 
     /* TODO: Take version number into account. */
 
@@ -884,7 +934,7 @@ static HlResult hlINHHModelLoadMaterials(HlModel* HL_RESTRICT hlModel,
         if (HL_FAILED(result)) goto failed_loop;
 
         /* Parse material data. */
-        result = hlHHMaterialRead(blob, matNameRefs.data[i], &mat);
+        result = hlHHMaterialRead(blob->data, matNameRefs.data[i], &mat);
         hlBlobFree(blob);
 
         if (HL_FAILED(result)) goto failed_loop;

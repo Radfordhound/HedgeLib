@@ -114,9 +114,9 @@ void hlHHOffsetsFix(HlU32* HL_RESTRICT offsets,
     }
 }
 
-void hlHHStandardFix(HlBlob* blob)
+void hlHHStandardFix(void* rawData)
 {
-    HlHHStandardHeader* header = (HlHHStandardHeader*)blob->data;
+    HlHHStandardHeader* header = (HlHHStandardHeader*)rawData;
     void* data;
     HlU32* offsets;
     HlU32 offsetCount;
@@ -142,9 +142,9 @@ void hlHHStandardFix(HlBlob* blob)
     hlHHOffsetsFix(offsets, offsetCount, data);
 }
 
-void hlHHMirageFix(HlBlob* blob)
+void hlHHMirageFix(void* rawData)
 {
-    HlHHMirageHeader* header = (HlHHMirageHeader*)blob->data;
+    HlHHMirageHeader* header = (HlHHMirageHeader*)rawData;
     void* data;
     HlU32* offsets;
 
@@ -161,15 +161,15 @@ void hlHHMirageFix(HlBlob* blob)
     hlHHOffsetsFix(offsets, header->offsetCount, data);
 }
 
-void hlHHFix(HlBlob* blob)
+void hlHHFix(void* rawData)
 {
-    if (hlHHHeaderIsMirageNotFixed(blob->data))
+    if (hlHHHeaderIsMirageNotFixed(rawData))
     {
-        hlHHMirageFix(blob);
+        hlHHMirageFix(rawData);
     }
     else
     {
-        hlHHStandardFix(blob);
+        hlHHStandardFix(rawData);
     }
 }
 
@@ -204,29 +204,29 @@ const HlHHMirageNode* hlHHMirageGetNode(
     return NULL;
 }
 
-const HlHHMirageNode* hlHHMirageGetDataNode(const HlBlob* blob)
+const HlHHMirageNode* hlHHMirageGetDataNode(const void* rawData)
 {
-    const HlHHMirageHeader* header = (const HlHHMirageHeader*)blob->data;
+    const HlHHMirageHeader* header = (const HlHHMirageHeader*)rawData;
     return hlHHMirageGetNode(hlHHMirageHeaderGetNodes(header),
         "Contexts", HL_TRUE);
 }
 
-const void* hlHHStandardGetData(const HlBlob* HL_RESTRICT blob,
+const void* hlHHStandardGetData(const void* HL_RESTRICT rawData,
     HlU32* HL_RESTRICT version)
 {
     /* Set version number if requested. */
-    const HlHHStandardHeader* header = (const HlHHStandardHeader*)blob->data;
+    const HlHHStandardHeader* header = (const HlHHStandardHeader*)rawData;
     if (version) *version = header->version;
 
     /* Get data pointer and return it. */
     return (const void*)hlOff32Get(&header->dataOffset);
 }
 
-const void* hlHHMirageGetData(const HlBlob* HL_RESTRICT blob,
+const void* hlHHMirageGetData(const void* HL_RESTRICT rawData,
     HlU32* HL_RESTRICT version)
 {
     /* Get contexts node; return NULL if there was none. */
-    const HlHHMirageNode* contextsNode = hlHHMirageGetDataNode(blob);
+    const HlHHMirageNode* contextsNode = hlHHMirageGetDataNode(rawData);
     if (!contextsNode) return NULL;
 
     /* Set version number if requested. */
@@ -433,9 +433,9 @@ const HlHHMirageNode* hlHHMirageNodeGetChildrenExt(const HlHHMirageNode* node)
     return hlHHMirageNodeGetChildren(node);
 }
 
-const void* hlHHGetDataExt(const HlBlob* HL_RESTRICT blob,
+const void* hlHHGetDataExt(const void* HL_RESTRICT rawData,
     HlU32* HL_RESTRICT version)
 {
-    return hlHHGetData(blob, version);
+    return hlHHGetData(rawData, version);
 }
 #endif

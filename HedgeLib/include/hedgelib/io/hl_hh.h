@@ -1,6 +1,5 @@
 #ifndef HL_HH_H_INCLUDED
 #define HL_HH_H_INCLUDED
-#include "../hl_blob.h"
 #include "../hl_list.h"
 
 #ifdef __cplusplus
@@ -8,6 +7,8 @@ extern "C" {
 #endif
 
 #define HL_HH_MIRAGE_MAGIC      0x0133054AU
+
+typedef struct HlFile HlFile;
 
 typedef struct HlHHStandardHeader
 {
@@ -71,9 +72,9 @@ HL_API void hlHHMirageHeaderFix(HlHHMirageHeader* header);
 HL_API void hlHHOffsetsFix(HlU32* HL_RESTRICT offsets,
     HlU32 offsetCount, void* HL_RESTRICT data);
 
-HL_API void hlHHStandardFix(HlBlob* blob);
-HL_API void hlHHMirageFix(HlBlob* blob);
-HL_API void hlHHFix(HlBlob* blob);
+HL_API void hlHHStandardFix(void* rawData);
+HL_API void hlHHMirageFix(void* rawData);
+HL_API void hlHHFix(void* rawData);
 
 #define hlHHHeaderIsMirage(header) (HlBool)(*(const HlU32*)(header) & HL_HH_MIRAGE_NODE_IS_ROOT)
 
@@ -101,16 +102,16 @@ HL_API const HlHHMirageNode* hlHHMirageGetNode(
     const HlHHMirageNode* HL_RESTRICT nodes,
     const char* HL_RESTRICT name, HlBool recursive);
 
-HL_API const HlHHMirageNode* hlHHMirageGetDataNode(const HlBlob* blob);
+HL_API const HlHHMirageNode* hlHHMirageGetDataNode(const void* rawData);
 
-HL_API const void* hlHHStandardGetData(const HlBlob* HL_RESTRICT blob,
+HL_API const void* hlHHStandardGetData(const void* HL_RESTRICT rawData,
     HlU32* HL_RESTRICT version);
 
-HL_API const void* hlHHMirageGetData(const HlBlob* HL_RESTRICT blob,
+HL_API const void* hlHHMirageGetData(const void* HL_RESTRICT rawData,
     HlU32* HL_RESTRICT version);
 
-#define hlHHGetData(blob, version) ((hlHHHeaderIsMirage((blob)->data)) ?\
-    hlHHMirageGetData(blob, version) : hlHHStandardGetData(blob, version))
+#define hlHHGetData(rawData, version) ((hlHHHeaderIsMirage(rawData)) ?\
+    hlHHMirageGetData(rawData, version) : hlHHStandardGetData(rawData, version))
 
 HL_API HlResult hlHHOffsetsWriteNoSort(const HlOffTable* HL_RESTRICT offTable,
     size_t dataPos, HlFile* HL_RESTRICT file);
@@ -130,7 +131,7 @@ HL_API const HlHHMirageNode* hlHHMirageHeaderGetNodesExt(const HlHHMirageHeader*
 HL_API HlU32 hlHHMirageNodeGetSizeExt(const HlHHMirageNode* node);
 HL_API const HlHHMirageNode* hlHHMirageNodeGetNextExt(const HlHHMirageNode* node);
 HL_API const HlHHMirageNode* hlHHMirageNodeGetChildrenExt(const HlHHMirageNode* node);
-HL_API const void* hlHHGetDataExt(const HlBlob* HL_RESTRICT blob,
+HL_API const void* hlHHGetDataExt(const void* HL_RESTRICT rawData,
     HlU32* HL_RESTRICT version);
 #endif
 

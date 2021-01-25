@@ -532,17 +532,17 @@ HlResult hlHHTerrainInstanceInfoV5Parse(
     return HL_RESULT_SUCCESS;
 }
 
-HlResult hlHHTerrainInstanceInfoRead(HlBlob* HL_RESTRICT blob,
+HlResult hlHHTerrainInstanceInfoRead(void* HL_RESTRICT rawData,
     HlTerrainInstanceInfo* HL_RESTRICT * HL_RESTRICT hlInstInfo)
 {
     void* hhInstInfo;
     HlU32 version;
 
     /* Fix HH general data. */
-    hlHHFix(blob);
+    hlHHFix(rawData);
 
     /* Get HH terrain instance info pointer and version number. */
-    hhInstInfo = (void*)hlHHGetData(blob, &version);
+    hhInstInfo = (void*)hlHHGetData(rawData, &version);
     if (!hhInstInfo) return HL_ERROR_INVALID_DATA;
 
     /* Fix and parse HH terrain instance info data based on version number. */

@@ -7,8 +7,6 @@
 extern "C" {
 #endif
 
-typedef struct HlBlob HlBlob;
-
 typedef struct HlHHMaterialParameter
 {
     /** @brief Always 2 or 0? */
@@ -85,7 +83,7 @@ HL_API HlResult hlHHMaterialV1Parse(const HlHHMaterialV1* HL_RESTRICT hhMat,
 HL_API HlResult hlHHMaterialV3Parse(const HlHHMaterialV3* HL_RESTRICT hhMat,
     const char* HL_RESTRICT name, HlMaterial* HL_RESTRICT * HL_RESTRICT hlMat);
 
-HL_API HlResult hlHHMaterialRead(HlBlob* HL_RESTRICT blob,
+HL_API HlResult hlHHMaterialRead(void* HL_RESTRICT rawData,
     const char* HL_RESTRICT name, HlMaterial* HL_RESTRICT * HL_RESTRICT hlMat);
 
 #ifdef __cplusplus

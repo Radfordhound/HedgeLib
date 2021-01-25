@@ -6,8 +6,6 @@
 extern "C" {
 #endif
 
-typedef struct HlBlob HlBlob;
-
 typedef struct HlHHTerrainInstanceInfoV0
 {
     HL_OFF32_STR modelNameOffset;
@@ -105,7 +103,7 @@ HL_API HlResult hlHHTerrainInstanceInfoV5Parse(
     const HlHHTerrainInstanceInfoV5* HL_RESTRICT hhInstInfo,
     HlTerrainInstanceInfo* HL_RESTRICT * HL_RESTRICT hlInstInfo);
 
-HL_API HlResult hlHHTerrainInstanceInfoRead(HlBlob* HL_RESTRICT blob,
+HL_API HlResult hlHHTerrainInstanceInfoRead(void* HL_RESTRICT rawData,
     HlTerrainInstanceInfo* HL_RESTRICT * HL_RESTRICT hlInstInfo);
 
 #ifdef __cplusplus
