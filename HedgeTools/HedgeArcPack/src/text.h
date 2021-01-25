@@ -72,20 +72,32 @@
     /* TYPE2_STRING */
     HL_NTEXT("Archive type: "),
 
-    /* FILE_TYPE_AR */
-    HL_NTEXT("su/gens/hh/ar/pfd\t(Unleashed/Generations .ar/.pfd files)\n"),
+    /* ARC_TYPE_HH_AR_STRING */
+    HL_NTEXT("hh/su/gens/ar\t(Sonic Unleashed/Generations .ar files)\n"),
 
-    /* FILE_TYPE_PACxV2 */
-    HL_NTEXT("lw/slw/pac2\t\t(Lost World .pac files)\n"),
+    /* ARC_TYPE_HH_PFD_STRING */
+    HL_NTEXT("pfd\t\t(Sonic Unleashed/Generations .pfd files)\n"),
+
+    /* ARC_TYPE_LW_STRING */
+    HL_NTEXT("lw/slw\t\t(Sonic Lost World .pac files)\n"),
+
+    /* ARC_TYPE_RIO_STRING */
+    HL_NTEXT("rio/unison\t(Mario & Sonic Rio 2016 .pac files)\n"),
     
-    /* FILE_TYPE_PACxV3 */
-    HL_NTEXT("wars/forces/pac3\t(Forces .pac files)\n"),
+    /* ARC_TYPE_FORCES_STRING */
+    HL_NTEXT("wars/forces\t(Sonic Forces .pac files)\n"),
 
-    /* FILE_TYPE_PACxV402 */
-    HL_NTEXT("rings/sakura/pac402\t(Tokyo 2020/Sakura Wars .pac files)\n"),
+    /* ARC_TYPE_TOKYO1_STRING */
+    HL_NTEXT("musashi/tokyo1\t(Tokyo 2020 - Official Video Game .pac files)\n"),
 
-    /* FILE_TYPE_PACxV403 */
-    HL_NTEXT("ppt2/pac403\t\t(Puyo Puyo Tetris 2 .pac files)\n\n"),
+    /* ARC_TYPE_TOKYO2_STRING */
+    HL_NTEXT("rings/tokyo2\t(Mario & Sonic Tokyo 2020 .pac files)\n"),
+
+    /* ARC_TYPE_SAKURA_STRING */
+    HL_NTEXT("arukas/sakura\t(Sakura Wars .pac files)\n"),
+
+    /* ARC_TYPE_PPT2_STRING */
+    HL_NTEXT("ppt2\t\t(Puyo Puyo Tetris 2 .pac files)\n\n"),
 
     /* EXTRACTING_STRING */
     HL_NTEXT("Extracting..."),

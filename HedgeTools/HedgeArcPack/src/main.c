@@ -29,11 +29,15 @@ typedef enum STRING_ID
     TYPE1_STRING,
     TYPE2_STRING,
 
-    FILE_TYPE_AR,
-    FILE_TYPE_PACxV2,
-    FILE_TYPE_PACxV3,
-    FILE_TYPE_PACxV402,
-    FILE_TYPE_PACxV403,
+    ARC_TYPE_HH_AR_STRING,
+    ARC_TYPE_HH_PFD_STRING,
+    ARC_TYPE_LW_STRING,
+    ARC_TYPE_RIO_STRING,
+    ARC_TYPE_FORCES_STRING,
+    ARC_TYPE_TOKYO1_STRING,
+    ARC_TYPE_TOKYO2_STRING,
+    ARC_TYPE_SAKURA_STRING,
+    ARC_TYPE_PPT2_STRING,
 
     EXTRACTING_STRING,
     PACKING_STRING,
@@ -91,13 +95,16 @@ MODE;
 typedef enum ARC_TYPE
 {
     ARC_TYPE_UNKNOWN = 0,
-    ARC_TYPE_AR,
-    ARC_TYPE_PFD,
-    ARC_TYPE_PACx,
-    ARC_TYPE_PACxV2,
-    ARC_TYPE_PACxV3,
-    ARC_TYPE_PACxV402,
-    ARC_TYPE_PACxV403,
+    ARC_TYPE_HH_AR,
+    ARC_TYPE_HH_PFD,
+    ARC_TYPE_PACX,
+    ARC_TYPE_LW,
+    ARC_TYPE_RIO,
+    ARC_TYPE_FORCES,
+    ARC_TYPE_TOKYO1,
+    ARC_TYPE_TOKYO2,
+    ARC_TYPE_SAKURA,
+    ARC_TYPE_PPT2,
     ARC_TYPE_COUNT
 }
 ARC_TYPE;
@@ -178,11 +185,15 @@ static void printError(const HlNChar* err)
 
 static void printTypes(const HlNChar* HL_RESTRICT fmt, FILE* HL_RESTRICT stream)
 {
-    fnprintf(stream, fmt, GET_TEXT(FILE_TYPE_AR));
-    fnprintf(stream, fmt, GET_TEXT(FILE_TYPE_PACxV2));
-    fnprintf(stream, fmt, GET_TEXT(FILE_TYPE_PACxV3));
-    fnprintf(stream, fmt, GET_TEXT(FILE_TYPE_PACxV402));
-    fnprintf(stream, fmt, GET_TEXT(FILE_TYPE_PACxV403));
+    fnprintf(stream, fmt, GET_TEXT(ARC_TYPE_HH_AR_STRING));
+    fnprintf(stream, fmt, GET_TEXT(ARC_TYPE_HH_PFD_STRING));
+    fnprintf(stream, fmt, GET_TEXT(ARC_TYPE_LW_STRING));
+    fnprintf(stream, fmt, GET_TEXT(ARC_TYPE_RIO_STRING));
+    fnprintf(stream, fmt, GET_TEXT(ARC_TYPE_FORCES_STRING));
+    fnprintf(stream, fmt, GET_TEXT(ARC_TYPE_TOKYO1_STRING));
+    fnprintf(stream, fmt, GET_TEXT(ARC_TYPE_TOKYO2_STRING));
+    fnprintf(stream, fmt, GET_TEXT(ARC_TYPE_SAKURA_STRING));
+    fnprintf(stream, fmt, GET_TEXT(ARC_TYPE_PPT2_STRING));
 }
 
 static void printUsage(FILE* stream)
@@ -214,49 +225,67 @@ static void printUsage(FILE* stream)
 
 static ARC_TYPE getArcType(const HlNChar* typeStr)
 {
-    /* Unleashed/Generations .ar/.pfd files. */
-    if (!nstrncmp(typeStr, HL_NTEXT("su"), 2) ||
+    /* Sonic Unleashed/Generations .ar files. */
+    if (!nstrncmp(typeStr, HL_NTEXT("hh"), 2) ||
+        !nstrncmp(typeStr, HL_NTEXT("su"), 2) ||
         !nstrncmp(typeStr, HL_NTEXT("gens"), 4) ||
-        !nstrncmp(typeStr, HL_NTEXT("hh"), 2) ||
         !nstrncmp(typeStr, HL_NTEXT("ar"), 2))
     {
-        return ARC_TYPE_AR;
+        return ARC_TYPE_HH_AR;
     }
 
+    /* Sonic Unleashed/Generations .pfd files. */
     if (!nstrncmp(typeStr, HL_NTEXT("pfd"), 3))
     {
-        return ARC_TYPE_PFD;
+        return ARC_TYPE_HH_PFD;
     }
 
-    /* Lost World .pac files. */
+    /* Sonic Lost World .pac files. */
     if (!nstrncmp(typeStr, HL_NTEXT("lw"), 2) ||
-        !nstrncmp(typeStr, HL_NTEXT("slw"), 3) ||
-        !nstrncmp(typeStr, HL_NTEXT("pac2"), 4))
+        !nstrncmp(typeStr, HL_NTEXT("slw"), 3))
     {
-        return ARC_TYPE_PACxV2;
+        return ARC_TYPE_LW;
     }
 
-    /* Forces .pac files. */
+    /* Mario & Sonic Rio 2016 .pac files. */
+    if (!nstrncmp(typeStr, HL_NTEXT("rio"), 3) ||
+        !nstrncmp(typeStr, HL_NTEXT("unison"), 6))
+    {
+        return ARC_TYPE_RIO;
+    }
+
+    /* Sonic Forces .pac files. */
     if (!nstrncmp(typeStr, HL_NTEXT("wars"), 4) ||
-        !nstrncmp(typeStr, HL_NTEXT("forces"), 6) ||
-        !nstrncmp(typeStr, HL_NTEXT("pac3"), 4))
+        !nstrncmp(typeStr, HL_NTEXT("forces"), 6))
     {
-        return ARC_TYPE_PACxV3;
+        return ARC_TYPE_FORCES;
     }
 
-    /* Tokyo 2020/Sakura Wars .pac files. */
-    if (!nstrncmp(typeStr, HL_NTEXT("rings"), 5) ||
-        !nstrncmp(typeStr, HL_NTEXT("sakura"), 6) ||
-        !nstrncmp(typeStr, HL_NTEXT("pac402"), 6))
+    /* Tokyo 2020 - Official Video Game .pac files. */
+    if (!nstrncmp(typeStr, HL_NTEXT("musashi"), 7) ||
+        !nstrncmp(typeStr, HL_NTEXT("tokyo1"), 6))
     {
-        return ARC_TYPE_PACxV402;
+        return ARC_TYPE_TOKYO1;
+    }
+
+    /* Mario & Sonic Tokyo 2020 .pac files. */
+    if (!nstrncmp(typeStr, HL_NTEXT("rings"), 5) ||
+        !nstrncmp(typeStr, HL_NTEXT("tokyo2"), 6))
+    {
+        return ARC_TYPE_TOKYO2;
+    }
+
+    /* Sakura Wars .pac files. */
+    if (!nstrncmp(typeStr, HL_NTEXT("arukas"), 6) ||
+        !nstrncmp(typeStr, HL_NTEXT("sakura"), 6))
+    {
+        return ARC_TYPE_SAKURA;
     }
 
     /* Puyo Puyo Tetris 2 .pac files. */
-    if (!nstrncmp(typeStr, HL_NTEXT("ppt2"), 4) ||
-        !nstrncmp(typeStr, HL_NTEXT("pac403"), 6))
+    if (!nstrncmp(typeStr, HL_NTEXT("ppt2"), 4))
     {
-        return ARC_TYPE_PACxV403;
+        return ARC_TYPE_PPT2;
     }
 
     return ARC_TYPE_UNKNOWN;
@@ -291,17 +320,20 @@ static const extInfo* getExtInfo(ARC_TYPE type)
 {
     switch (type)
     {
-    case ARC_TYPE_AR:
+    case ARC_TYPE_HH_AR:
         return &Extensions[EXT_TYPE_AR];
 
-    case ARC_TYPE_PFD:
+    case ARC_TYPE_HH_PFD:
         return &Extensions[EXT_TYPE_PFD];
 
-    case ARC_TYPE_PACx:
-    case ARC_TYPE_PACxV2:
-    case ARC_TYPE_PACxV3:
-    case ARC_TYPE_PACxV402:
-    case ARC_TYPE_PACxV403:
+    case ARC_TYPE_PACX:
+    case ARC_TYPE_LW:
+    case ARC_TYPE_RIO:
+    case ARC_TYPE_FORCES:
+    case ARC_TYPE_TOKYO1:
+    case ARC_TYPE_TOKYO2:
+    case ARC_TYPE_SAKURA:
+    case ARC_TYPE_PPT2:
         return &Extensions[EXT_TYPE_PAC];
 
     default: return NULL;
@@ -327,15 +359,15 @@ static ARC_TYPE autoDetectArcType(const HlNChar* input)
     if (extensionsMatch(exts, EXT_TYPE_AR) ||
         extensionsMatch(exts, EXT_TYPE_ARL))
     {
-        return ARC_TYPE_AR;
+        return ARC_TYPE_HH_AR;
     }
     else if (extensionsMatch(exts, EXT_TYPE_PFD))
     {
-        return ARC_TYPE_PFD;
+        return ARC_TYPE_HH_PFD;
     }
     else if (extensionsMatch(exts, EXT_TYPE_PAC))
     {
-        return ARC_TYPE_PACx;
+        return ARC_TYPE_PACX;
     }
 
     /* If we were unable to auto-determine type, manually prompt user for it. */
@@ -355,25 +387,28 @@ static HlResult extract(const HlNChar* HL_RESTRICT input,
     /* Load archive based on type. */
     switch (type)
     {
-    case ARC_TYPE_AR:
-    case ARC_TYPE_PFD:
+    case ARC_TYPE_HH_AR:
+    case ARC_TYPE_HH_PFD:
         result = hlHHArchiveLoad(input, loadSplits, NULL, &arc);
         break;
 
-    case ARC_TYPE_PACx:
+    case ARC_TYPE_PACX:
         result = hlPACxLoad(input, 0, loadSplits, NULL, &arc);
         break;
 
-    case ARC_TYPE_PACxV2:
+    case ARC_TYPE_LW:
+    case ARC_TYPE_RIO:
         result = hlPACxV2Load(input, loadSplits, NULL, &arc);
         break;
 
-    case ARC_TYPE_PACxV3:
+    case ARC_TYPE_FORCES:
         result = hlPACxV3Load(input, loadSplits, NULL, &arc);
         break;
 
-    case ARC_TYPE_PACxV402:
-    case ARC_TYPE_PACxV403:
+    case ARC_TYPE_TOKYO1:
+    case ARC_TYPE_TOKYO2:
+    case ARC_TYPE_SAKURA:
+    case ARC_TYPE_PPT2:
         result = hlPACxV4Load(input, loadSplits, NULL, &arc);
         break;
 
@@ -413,7 +448,7 @@ static HlResult pack(const HlNChar* HL_RESTRICT input,
     /* Pack archive in the format specified by type. */
     switch (type)
     {
-    case ARC_TYPE_AR:
+    case ARC_TYPE_HH_AR:
         result = hlHHArchiveSave(arc,                                   /* arc */
             (splitLimit) ? *splitLimit : HL_HH_DEFAULT_SPLIT_LIMIT,     /* splitLimit */
             (alignment) ? *alignment : HL_HH_DEFAULT_ALIGNMENT,         /* dataAlignment */
@@ -424,7 +459,7 @@ static HlResult pack(const HlNChar* HL_RESTRICT input,
 
         break;
 
-    case ARC_TYPE_PFD:
+    case ARC_TYPE_HH_PFD:
         result = hlHHArchiveSave(arc,                                   /* arc */
             (splitLimit) ? *splitLimit : 0,                             /* splitLimit */
             (alignment) ? *alignment : HL_HH_DEFAULT_ALIGNMENT_PFD,     /* dataAlignment */
