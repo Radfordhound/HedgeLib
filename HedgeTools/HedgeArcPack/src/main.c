@@ -410,14 +410,6 @@ static HlResult pack(const HlNChar* HL_RESTRICT input,
     result = hlArchiveCreateFromDir(input, HL_FALSE, HL_TRUE, &arc);
     if (HL_FAILED(result)) goto end;
 
-    /* Disable PFI generation if we are generating splits; PFIs can only exist for one file. */
-    if (generatePFI && ((splitLimit && *splitLimit != 0) ||
-        (!splitLimit && type != ARC_TYPE_PFD)))
-    {
-        generatePFI = HL_FALSE;
-        /* TODO: Print warning. */
-    }
-
     /* Pack archive in the format specified by type. */
     switch (type)
     {
@@ -457,7 +449,7 @@ static HlResult pack(const HlNChar* HL_RESTRICT input,
     if (HL_FAILED(result)) goto end;
 
     /* Generate PFI if requested and possible for the given type. */
-    if (generatePFI)
+    if (generatePFI && pfi.entries.count > 0)
     {
         /* Allocate buffer for PFI file path. */
         HlNChar pfiPathBuf[255];
