@@ -98,6 +98,17 @@ void hlINListRemove(void* data, size_t size,
     memmove(dst, dst + size, size * (count - index));
 }
 
+void hlStrListDestruct(HlStrList* strList)
+{
+    size_t i;
+    for (i = 0; i < strList->count; ++i)
+    {
+        hlFree(strList->data[i]);
+    }
+
+    HL_LIST_FREE(*strList);
+}
+
 static int hlINOffTableCompareOffsets(const void* a, const void* b)
 {
     const size_t off1 = *(const size_t*)a;

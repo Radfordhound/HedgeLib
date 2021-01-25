@@ -205,6 +205,8 @@ HL_API void hlINListRemove(void* data, size_t size,
 #define HL_LIST_FREE(list) ((HL_IN_LIST_OWNS_DATA_PTR(list)) ?\
     hlFree((void*)((list).data)), HL_TRUE : HL_FALSE)
 
+typedef HL_LIST(char*) HlStrList;
+
 /** @brief Typedef of HL_LIST(size_t) meant to be used for storing offset positions. */
 typedef HL_LIST(size_t) HlOffTable;
 
@@ -231,6 +233,8 @@ HlStrTableEntry;
 
 /** @brief Typedef of HL_LIST(HlStrTableEntry) meant to be used for storing string entries. */
 typedef HL_LIST(HlStrTableEntry) HlStrTable;
+
+HL_API void hlStrListDestruct(HlStrList* strList);
 
 HL_API void hlOffTableSort(HlOffTable* offTable);
 
