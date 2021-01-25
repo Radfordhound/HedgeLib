@@ -249,17 +249,10 @@ HlResult hlSVColWrite(const HlSectorCollision* HL_RESTRICT hlSecCol,
             }
 
             /* Add name to string table. */
-            {
-                const HlStrTableEntry strEntry =
-                {
-                    hlSecCol->shapes.data[i].name,          /* str */
-                    curOffPos,                              /* offPos */
-                    strlen(hlSecCol->shapes.data[i].name)   /* len */
-                };
+            result = hlStrTableAddStrRefUTF8(strTable,
+                hlSecCol->shapes.data[i].name, curOffPos);
 
-                result = HL_LIST_PUSH(*strTable, strEntry);
-                if (HL_FAILED(result)) return result;
-            }
+            if (HL_FAILED(result)) return result;
 
             /* Increase current offset position. */
             curOffPos += 0x58;
@@ -327,12 +320,12 @@ HlResult hlSVColSave(const HlSectorCollision* HL_RESTRICT hlSecCol,
     if (HL_FAILED(result)) goto failed;
 
     /* Free lists, close file, and return result. */
-    HL_LIST_FREE(strTable);
+    hlStrTableDestruct(&strTable);
     HL_LIST_FREE(offTable);
     return hlFileClose(file);
 
 failed:
-    HL_LIST_FREE(strTable);
+    hlStrTableDestruct(&strTable);
     HL_LIST_FREE(offTable);
     hlFileClose(file);
     return result;

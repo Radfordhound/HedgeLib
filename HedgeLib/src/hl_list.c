@@ -1,5 +1,5 @@
 #include "hedgelib/hl_list.h"
-#include <string.h>
+#include "hedgelib/hl_text.h"
 #include <stdlib.h>
 
 void* hlINListReserve(void* HL_RESTRICT data,
@@ -111,4 +111,135 @@ void hlOffTableSort(HlOffTable* offTable)
     /* Sort offsets in offset table. */
     qsort(offTable->data, offTable->count,
         sizeof(size_t), hlINOffTableCompareOffsets);
+}
+
+HlResult hlStrTableAddStrRefNativeEx(HlStrTable* HL_RESTRICT strTable,
+    const HlNChar* HL_RESTRICT str, size_t offPos, size_t len)
+{
+#ifdef HL_IN_WIN32_UNICODE
+    return hlStrTableAddStrNativeEx(strTable, str, offPos, len);
+#else
+    return hlStrTableAddStrRefUTF8Ex(strTable, str, offPos, len);
+#endif
+}
+
+HlResult hlStrTableAddStrRefNative(HlStrTable* HL_RESTRICT strTable,
+    const HlNChar* HL_RESTRICT str, size_t offPos)
+{
+    return hlStrTableAddStrRefNativeEx(strTable,
+        str, offPos, hlNStrLen(str));
+}
+
+HlResult hlStrTableAddStrRefUTF8Ex(HlStrTable* HL_RESTRICT strTable,
+    const char* HL_RESTRICT str, size_t offPos, size_t len)
+{
+    /* Generate string table entry. */
+    HlStrTableEntry strTableEntry;
+    strTableEntry.flags = HL_STR_TABLE_ENTRY_FLAGS_NONE;
+    strTableEntry.str = str;
+    strTableEntry.offPos = offPos;
+    strTableEntry.len = len;
+
+    /* Add string table entry to string table and return result. */
+    return HL_LIST_PUSH(*strTable, strTableEntry);
+}
+
+HlResult hlStrTableAddStrRefUTF8(HlStrTable* HL_RESTRICT strTable,
+    const char* HL_RESTRICT str, size_t offPos)
+{
+    return hlStrTableAddStrRefUTF8Ex(strTable,
+        str, offPos, strlen(str));
+}
+
+HlResult hlStrTableAddStrNativeEx(HlStrTable* HL_RESTRICT strTable,
+    const HlNChar* HL_RESTRICT str, size_t offPos, size_t len)
+{
+    HlStrTableEntry strTableEntry;
+    char* newStr;
+    size_t dstLen;
+    HlResult result;
+
+    /* Create a copy of the given string. */
+    /* NOTE: We don't require a null terminator in string table entries. */
+    dstLen = hlStrGetReqLenNativeToUTF8(str, len);
+    newStr = HL_ALLOC_ARR(char, dstLen);
+    if (!newStr) return HL_ERROR_OUT_OF_MEMORY;
+
+    hlStrConvNativeToUTF8NoAlloc(str, newStr, len, dstLen);
+
+    /* Generate string table entry. */
+    strTableEntry.flags = HL_STR_TABLE_ENTRY_FLAGS_DOES_OWN;
+    strTableEntry.str = newStr;
+    strTableEntry.offPos = offPos;
+    strTableEntry.len = len;
+
+    /* Add string table entry to string table and return result. */
+    result = HL_LIST_PUSH(*strTable, strTableEntry);
+    if (HL_FAILED(result))
+    {
+        hlFree(newStr);
+        return result;
+    }
+
+    return result;
+}
+
+HlResult hlStrTableAddStrNative(HlStrTable* HL_RESTRICT strTable,
+    const HlNChar* HL_RESTRICT str, size_t offPos)
+{
+    return hlStrTableAddStrNativeEx(strTable,
+        str, offPos, hlNStrLen(str));
+}
+
+HlResult hlStrTableAddStrUTF8Ex(HlStrTable* HL_RESTRICT strTable,
+    const char* HL_RESTRICT str, size_t offPos, size_t len)
+{
+    HlStrTableEntry strTableEntry;
+    char* newStr;
+    HlResult result;
+
+    /* Create a copy of the given string. */
+    /* NOTE: We don't require a null terminator in string table entries. */
+    newStr = HL_ALLOC_ARR(char, len);
+    if (!newStr) return HL_ERROR_OUT_OF_MEMORY;
+
+    memcpy(newStr, str, sizeof(char) * len);
+
+    /* Generate string table entry. */
+    strTableEntry.flags = HL_STR_TABLE_ENTRY_FLAGS_DOES_OWN;
+    strTableEntry.str = newStr;
+    strTableEntry.offPos = offPos;
+    strTableEntry.len = len;
+
+    /* Add string table entry to string table and return result. */
+    result = HL_LIST_PUSH(*strTable, strTableEntry);
+    if (HL_FAILED(result))
+    {
+        hlFree(newStr);
+        return result;
+    }
+
+    return result;
+}
+
+HlResult hlStrTableAddStrUTF8(HlStrTable* HL_RESTRICT strTable,
+    const char* HL_RESTRICT str, size_t offPos)
+{
+    return hlStrTableAddStrUTF8Ex(strTable,
+        str, offPos, strlen(str));
+}
+
+void hlStrTableDestruct(HlStrTable* strTable)
+{
+    size_t i;
+    for (i = 0; i < strTable->count; ++i)
+    {
+        HlStrTableEntry* entry = &strTable->data[i];
+        if (entry->flags & HL_STR_TABLE_ENTRY_FLAGS_DOES_OWN)
+        {
+            hlFree((char*)entry->str);
+        }
+    }
+
+    HL_LIST_FREE(*strTable);
 }

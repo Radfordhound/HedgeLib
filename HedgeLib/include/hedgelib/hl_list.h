@@ -208,9 +208,18 @@ HL_API void hlINListRemove(void* data, size_t size,
 /** @brief Typedef of HL_LIST(size_t) meant to be used for storing offset positions. */
 typedef HL_LIST(size_t) HlOffTable;
 
+typedef enum HlStrTableEntryFlags
+{
+    HL_STR_TABLE_ENTRY_FLAGS_NONE = 0,
+    HL_STR_TABLE_ENTRY_FLAGS_DOES_OWN = 1
+}
+HlStrTableEntryFlags;
+
 /** @brief String table entry. */
 typedef struct HlStrTableEntry
 {
+    /** @brief See HlStrTableEntryFlags. */
+    HlStrTableEntryFlags flags;
     /** @brief The string being referenced. */
     const char* str;
     /** @brief The (absolute) position of the string offset within the file. */
@@ -224,6 +233,32 @@ HlStrTableEntry;
 typedef HL_LIST(HlStrTableEntry) HlStrTable;
 
 HL_API void hlOffTableSort(HlOffTable* offTable);
+
+HL_API HlResult hlStrTableAddStrRefNativeEx(HlStrTable* HL_RESTRICT strTable,
+    const HlNChar* HL_RESTRICT str, size_t offPos, size_t len);
+
+HL_API HlResult hlStrTableAddStrRefNative(HlStrTable* HL_RESTRICT strTable,
+    const HlNChar* HL_RESTRICT str, size_t offPos);
+
+HL_API HlResult hlStrTableAddStrRefUTF8Ex(HlStrTable* HL_RESTRICT strTable,
+    const char* HL_RESTRICT str, size_t offPos, size_t len);
+
+HL_API HlResult hlStrTableAddStrRefUTF8(HlStrTable* HL_RESTRICT strTable,
+    const char* HL_RESTRICT str, size_t offPos);
+
+HL_API HlResult hlStrTableAddStrNativeEx(HlStrTable* HL_RESTRICT strTable,
+    const HlNChar* HL_RESTRICT str, size_t offPos, size_t len);
+
+HL_API HlResult hlStrTableAddStrNative(HlStrTable* HL_RESTRICT strTable,
+    const HlNChar* HL_RESTRICT str, size_t offPos);
+
+HL_API HlResult hlStrTableAddStrUTF8Ex(HlStrTable* HL_RESTRICT strTable,
+    const char* HL_RESTRICT str, size_t offPos, size_t len);
+
+HL_API HlResult hlStrTableAddStrUTF8(HlStrTable* HL_RESTRICT strTable,
+    const char* HL_RESTRICT str, size_t offPos);
+
+HL_API void hlStrTableDestruct(HlStrTable* strTable);
 
 #ifdef __cplusplus
 }
