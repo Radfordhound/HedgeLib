@@ -3,29 +3,37 @@
 #include <stdlib.h>
 
 void* hlINListReserve(void* HL_RESTRICT data,
-    size_t size, size_t count, size_t capacity,
-    size_t desiredCapacity)
+    size_t size, size_t count, size_t desiredCapacity,
+    size_t* HL_RESTRICT capacity)
 {
+    void* newData;
+    
+    /* Only reserve if necessary. */
+    if (*capacity > desiredCapacity)
+        return data;
+
     /* If capacity != 0, the list owns its data pointer. Just realloc. */
-    if (capacity)
+    if (*capacity)
     {
         /* Reallocate the list's data buffer. */
-        return hlRealloc(data, size * desiredCapacity);
+        newData = hlRealloc(data, size * desiredCapacity);
+        if (!newData) return NULL;
     }
 
     /* If capacity == 0, the list does not own its data pointer. Alloc and copy. */
     else
     {
-        void* newData;
-
         /* Allocate a new buffer for the list. */
         newData = hlAlloc(size * desiredCapacity);
         if (!newData) return NULL;
 
-        /* Copy the existing data (if any) into the new buffer and return new buffer. */
+        /* Copy the existing data (if any) into the new buffer. */
         memcpy(newData, data, size * count);
-        return newData;
     }
+
+    /* Set new capacity and return new buffer. */
+    *capacity = desiredCapacity;
+    return newData;
 }
 
 void* hlINListGrow(void* HL_RESTRICT data,

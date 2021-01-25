@@ -96,13 +96,13 @@ extern "C" {
 #endif
 
 HL_API void* hlINListReserve(void* HL_RESTRICT data,
-    size_t size, size_t count, size_t capacity,
-    size_t desiredCapacity);
+    size_t size, size_t count, size_t desiredCapacity,
+    size_t* HL_RESTRICT capacity);
 
 #define HL_IN_LIST_RESERVE(list, c)\
     /* Resize the data buffer and set the new pointer. */\
     (HL_IN_LIST_SET_DATA(list, hlINListReserve((void*)(list).data,\
-    sizeof(*((list).data)), (list).count, (list).capacity, c)),\
+    sizeof(*((list).data)), (list).count, c, &(list).capacity)),\
 \
     /* "Return" whether the reallocation of the buffer succeeded. */\
     (HlBool)((list).data != NULL))
