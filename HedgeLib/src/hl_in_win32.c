@@ -16,6 +16,9 @@ HlResult hlINWin32GetResult(HRESULT hresult)
     case __HRESULT_FROM_WIN32(ERROR_NO_MORE_FILES):
         return HL_ERROR_NO_MORE_ENTRIES;
 
+    case __HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION):
+        return HL_ERROR_SHARING_VIOLATION;
+
     /* TODO: More errors. */
 
     default: return HL_ERROR_UNKNOWN;

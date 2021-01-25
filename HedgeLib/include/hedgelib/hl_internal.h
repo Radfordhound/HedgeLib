@@ -330,12 +330,12 @@ HL_API void hlOff64Set(HlU64* offPtr, void* ptr);
     ((((value) + ((stride) - 1)) & ~((stride) - 1))))   /* Align value by stride and return. */
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS
-    HL_API void* hlOff32GetExt(const HlU32* offPtr);
-    HL_API void hlOff32SetExt(HlU32* offPtr, void* ptr);
-    HL_API void* hlOff64GetExt(const HlU64* offPtr);
-    HL_API void hlOff64SetExt(HlU64* offPtr, void* ptr);
-    HL_API void hlOff32FixExt(HlU32* offPtr, void* base);
-    HL_API void hlOff64FixExt(HlU64* offPtr, void* base);
+HL_API void* hlOff32GetExt(const HlU32* offPtr);
+HL_API void hlOff32SetExt(HlU32* offPtr, void* ptr);
+HL_API void* hlOff64GetExt(const HlU64* offPtr);
+HL_API void hlOff64SetExt(HlU64* offPtr, void* ptr);
+HL_API void hlOff32FixExt(HlU32* offPtr, void* base);
+HL_API void hlOff64FixExt(HlU64* offPtr, void* base);
 #endif
 
 #ifdef __cplusplus
@@ -360,7 +360,8 @@ typedef enum HlResult
     HL_ERROR_ALREADY_EXISTS,
     HL_ERROR_NOT_FOUND,
     HL_ERROR_INVALID_DATA,
-    HL_ERROR_NO_MORE_ENTRIES
+    HL_ERROR_NO_MORE_ENTRIES,
+    HL_ERROR_SHARING_VIOLATION
 }
 HlResult;
 

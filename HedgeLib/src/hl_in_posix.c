@@ -8,6 +8,7 @@ HlResult hlINPosixGetResult(int err)
         case ENOMEM: return HL_ERROR_OUT_OF_MEMORY;
         case ERANGE: return HL_ERROR_OUT_OF_RANGE;
         case EEXIST: return HL_ERROR_ALREADY_EXISTS;
+        case ETXTBSY: return HL_ERROR_SHARING_VIOLATION;
         /* TODO: Add more. */
         default: return HL_ERROR_UNKNOWN;
     }
