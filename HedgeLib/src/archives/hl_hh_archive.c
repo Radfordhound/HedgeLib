@@ -215,9 +215,19 @@ HlResult hlHHArchiveLoadAllInto(
 
         /*
             If the given file path has another non-split extension and it
+            exists, just load it directly.
+        */
+        else if (hlPathExists(filePath))
+        {
+            result = hlHHArchiveLoadSingleInto(filePath, hhArcs, hlArc);
+            goto end;
+        }
+
+        /*
+            If the given file path has another non-split extension and it
             doesn't exist, see if it has any splits.
         */
-        else if (!hlPathExists(filePath))
+        else
         {
             /* Allocate a new buffer if necessary. */
             const size_t reqPathBufSize = (filePathLen + 4);
