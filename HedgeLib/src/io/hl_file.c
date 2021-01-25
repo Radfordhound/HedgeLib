@@ -1,5 +1,6 @@
 #include "hedgelib/io/hl_file.h"
 #include "hedgelib/hl_memory.h"
+#include "hedgelib/hl_endian.h"
 #include "../hl_in_assert.h"
 
 #ifdef _WIN32
@@ -368,10 +369,14 @@ HlResult hlFileWriteNulls(HlFile* HL_RESTRICT file,
 }
 
 HlResult hlFileWriteOff32(HlFile* HL_RESTRICT file,
-    size_t basePos, size_t offVal, HlOffTable* HL_RESTRICT offTable)
+    size_t basePos, size_t offVal, HlBool doSwap, 
+    HlOffTable* HL_RESTRICT offTable)
 {
     /* Compute offset. */
-    const HlU32 off = (HlU32)(offVal - basePos);
+    HlU32 off = (HlU32)(offVal - basePos);
+
+    /* Swap offset if necessary. */
+    if (doSwap) hlSwapU32P(&off);
 
     /* Add offset position to offset table if requested by user. */
     if (offTable)
@@ -385,10 +390,14 @@ HlResult hlFileWriteOff32(HlFile* HL_RESTRICT file,
 }
 
 HlResult hlFileWriteOff64(HlFile* HL_RESTRICT file,
-    size_t basePos, size_t offVal, HlOffTable* HL_RESTRICT offTable)
+    size_t basePos, size_t offVal, HlBool doSwap,
+    HlOffTable* HL_RESTRICT offTable)
 {
     /* Compute offset. */
-    const HlU32 off = (HlU32)(offVal - basePos);
+    HlU64 off = (HlU64)(offVal - basePos);
+
+    /* Swap offset if necessary. */
+    if (doSwap) hlSwapU64P(&off);
 
     /* Add offset position to offset table if requested by user. */
     if (offTable)

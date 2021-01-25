@@ -47,10 +47,12 @@ HL_API HlResult hlFileWriteNulls(HlFile* HL_RESTRICT file,
     size_t amount, size_t* HL_RESTRICT writtenByteCount);
 
 HL_API HlResult hlFileWriteOff32(HlFile* HL_RESTRICT file,
-    size_t basePos, size_t offVal, HlOffTable* HL_RESTRICT offTable);
+    size_t basePos, size_t offVal, HlBool doSwap,
+    HlOffTable* HL_RESTRICT offTable);
 
 HL_API HlResult hlFileWriteOff64(HlFile* HL_RESTRICT file,
-    size_t basePos, size_t offVal, HlOffTable* HL_RESTRICT offTable);
+    size_t basePos, size_t offVal, HlBool doSwap, 
+    HlOffTable* HL_RESTRICT offTable);
 
 HL_API HlResult hlFileAlign(HlFile* file, size_t stride);
 HL_API HlResult hlFilePad(HlFile* file, size_t stride);
