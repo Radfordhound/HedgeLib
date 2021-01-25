@@ -89,7 +89,7 @@ HL_API HlResult hlSVColParse(const HlSVColHeader* HL_RESTRICT svcol,
     HlSectorCollision* HL_RESTRICT * HL_RESTRICT hlSecCol);
 
 HL_API HlResult hlSVColRead(void* HL_RESTRICT rawData,
-    const char* HL_RESTRICT name,
+    size_t dataSize, const char* HL_RESTRICT name,
     HlSectorCollision* HL_RESTRICT * HL_RESTRICT hlSecCol);
 
 HL_API HlResult hlSVColWrite(const HlSectorCollision* HL_RESTRICT hlSecCol,

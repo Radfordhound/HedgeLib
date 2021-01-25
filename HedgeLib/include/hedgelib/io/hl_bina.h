@@ -137,8 +137,8 @@ HL_API void hlBINAV2BlockHeaderFix(HlBINAV2BlockHeader* blockHeader,
 HL_API void hlBINAV2DataHeaderSwap(HlBINAV2BlockDataHeader* dataHeader, HlBool swapOffsets);
 HL_API void hlBINAV2DataHeaderFix(HlBINAV2BlockDataHeader* dataHeader, HlU8 endianFlag);
 
-#define hlBINAV2BlockGetNext(block) (HlBINAV2BlockHeader*)(HL_ADD_OFF(\
-    block, (block)->size))
+#define hlBINAV2BlockGetNext(block) (const HlBINAV2BlockHeader*)(\
+    HL_ADD_OFFC(block, (block)->size))
 
 HL_API void hlBINAV2BlocksFix(HlBINAV2BlockHeader* blocks,
     HlU16 blockCount, HlU8 endianFlag, HlBool is64Bit);
@@ -153,8 +153,21 @@ HL_API void hlBINAOffsetsFix64(const void* HL_RESTRICT offsets,
     HlU8 endianFlag, HlU32 offsetTableSize, void* HL_RESTRICT data);
 
 HL_API void hlBINAV1Fix(void* rawData);
-HL_API void hlBINAV2Fix(void* rawData);
-HL_API void hlBINAFix(void* rawData);
+
+HL_API void hlBINAPacPackMetadataFix(void* rawData,
+    void* pacPackMetadata, size_t dataSize);
+
+HL_API HlResult hlBINAV2Fix(void* rawData, size_t dataSize);
+HL_API HlResult hlBINAFix(void* rawData, size_t dataSize);
+
+#define hlBINAHasV1Header(rawData)\
+    (HlBool)(((const HlBINAV1Header*)(rawData))->signature == HL_BINA_SIG)
+
+#define hlBINAHasV2Header(rawData)\
+    (HlBool)(((const HlBINAV2Header*)(rawData))->signature == HL_BINA_SIG)
+
+/* TODO: Uh oh, turns out this is wrong. Rio 2016 has 2.1.0 files that are 32-bit!!! */
+#define hlBINAIs64Bit(version)              (HlBool)((version) >= 0x323130U) /* version >= 2.1.0 */
 
 HL_API HlU32 hlBINAGetVersion(const void* rawData);
 
@@ -166,22 +179,21 @@ HL_API HlU32 hlBINAGetVersion(const void* rawData);
 #define hlBINAGetMinorVersion(version)      (HlU8)(hlBINAGetMinorVersionChar(version) - 0x30)
 #define hlBINAGetRevisionVersion(version)   (HlU8)(hlBINAGetRevisionVersionChar(version) - 0x30)
 
-#define hlBINAHasV2Header(rawData)         (HlBool)(*(const HlU32*)((rawData)) == HL_BINA_SIG)
+HL_API const void* hlBINAGetPacPackMetadata(const void* rawData, size_t dataSize);
 
-/* TODO: Uh oh, turns out this is wrong. Rio 2016 has 2.1.0 files that are 32-bit!!! */
-#define hlBINAIs64Bit(version)              (HlBool)((version) >= 0x323130U) /* version >= 2.1.0 */
-
-HL_API HlBINAV2BlockDataHeader* hlBINAV2GetDataBlock(const void* rawData);
+HL_API const HlBINAV2BlockDataHeader* hlBINAV2GetDataBlock(const void* rawData);
 
 #define hlBINAV1GetData(rawData) (const void*)(((const HlBINAV1Header*)(rawData)) + 1)
 HL_API const void* hlBINAV2GetData(const void* rawData);
 HL_API const void* hlBINAGetData(const void* rawData);
 
-HL_API HlResult hlBINAStringsWrite32(size_t dataPos, const HlStrTable* HL_RESTRICT strTable,
-    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file);
+HL_API HlResult hlBINAStringsWrite32(size_t dataPos, HlBINAEndianFlag endianFlag,
+    const HlStrTable* HL_RESTRICT strTable, HlOffTable* HL_RESTRICT offTable,
+    HlFile* HL_RESTRICT file);
 
-HL_API HlResult hlBINAStringsWrite64(size_t dataPos, const HlStrTable* HL_RESTRICT strTable,
-    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file);
+HL_API HlResult hlBINAStringsWrite64(size_t dataPos, HlBINAEndianFlag endianFlag,
+    const HlStrTable* HL_RESTRICT strTable, HlOffTable* HL_RESTRICT offTable,
+    HlFile* HL_RESTRICT file);
 
 HL_API HlResult hlBINAOffsetsWriteNoSort(size_t dataPos,
     const HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file);
@@ -204,20 +216,21 @@ HL_API HlResult hlBINAV2FinishWrite(size_t headerPos, HlU16 blockCount,
 HL_API HlResult hlBINAV2DataBlockStartWrite(HlBINAEndianFlag endianFlag, HlFile* file);
 
 HL_API HlResult hlBINAV2DataBlockFinishWrite(size_t dataBlockPos, HlBool use64BitOffsets,
-    const HlStrTable* HL_RESTRICT strTable, HlOffTable* HL_RESTRICT offTable,
-    HlBINAEndianFlag endianFlag, HlFile* HL_RESTRICT file);
+    HlBINAEndianFlag endianFlag, const HlStrTable* HL_RESTRICT strTable,
+    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file);
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS
 HL_API HlBool hlBINANeedsSwapExt(HlU8 endianFlag);
-HL_API HlBINAV2BlockHeader* hlBINAV2BlockGetNextExt(const HlBINAV2BlockHeader* block);
+HL_API const HlBINAV2BlockHeader* hlBINAV2BlockGetNextExt(const HlBINAV2BlockHeader* block);
+HL_API HlBool hlBINAHasV1HeaderExt(const void* rawData);
+HL_API HlBool hlBINAHasV2HeaderExt(const void* rawData);
+HL_API HlBool hlBINAIs64BitExt(HlU32 version);
 HL_API char hlBINAGetMajorVersionCharExt(HlU32 version);
 HL_API char hlBINAGetMinorVersionCharExt(HlU32 version);
 HL_API char hlBINAGetRevisionVersionCharExt(HlU32 version);
 HL_API HlU8 hlBINAGetMajorVersionExt(HlU32 version);
 HL_API HlU8 hlBINAGetMinorVersionExt(HlU32 version);
 HL_API HlU8 hlBINAGetRevisionVersionExt(HlU32 version);
-HL_API HlBool hlBINAHasV2HeaderExt(const void* rawData);
-HL_API HlBool hlBINAIs64BitExt(HlU32 version);
 HL_API const void* hlBINAV1GetDataExt(const void* rawData);
 #endif
 

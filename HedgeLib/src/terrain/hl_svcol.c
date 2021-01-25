@@ -153,14 +153,14 @@ HlResult hlSVColParse(const HlSVColHeader* HL_RESTRICT svcol,
 }
 
 HlResult hlSVColRead(void* HL_RESTRICT rawData,
-    const char* HL_RESTRICT name,
+    size_t dataSize, const char* HL_RESTRICT name,
     HlSectorCollision* HL_RESTRICT * HL_RESTRICT hlSecCol)
 {
     /* Fix BINA general data. */
     HlSVColHeader* data;
     HlBINAEndianFlag endianFlag = ((const HlBINAV2Header*)rawData)->endianFlag;
 
-    hlBINAV2Fix(rawData);
+    hlBINAV2Fix(rawData, dataSize);
 
     /* Get SVCOL data. */
     data = (HlSVColHeader*)hlBINAV2GetData(rawData);
@@ -311,7 +311,7 @@ HlResult hlSVColSave(const HlSectorCollision* HL_RESTRICT hlSecCol,
 
     /* Finish writing BINAV2 data block. */
     result = hlBINAV2DataBlockFinishWrite(0x10, HL_TRUE,
-        &strTable, &offTable, endianFlag, file);
+        endianFlag, &strTable, &offTable, file);
 
     if (HL_FAILED(result)) goto failed;
 

@@ -119,7 +119,7 @@ void hlBINAV2BlocksFix(HlBINAV2BlockHeader* curBlock, HlU16 blockCount,
     for (i = 1; i < blockCount; ++i)
     {
         /* Get next block. */
-        curBlock = hlBINAV2BlockGetNext(curBlock);
+        curBlock = (HlBINAV2BlockHeader*)hlBINAV2BlockGetNext(curBlock);
 
         /* Fix this block's header. */
         hlBINAV2BlockHeaderFix(curBlock, endianFlag, is64Bit);
@@ -236,35 +236,105 @@ void hlBINAV1Fix(void* rawData)
     }
 }
 
-void hlBINAV2Fix(void* rawData)
+void hlBINAPacPackMetadataFix(void* rawData,
+    void* pacPackMetadata, size_t dataSize)
 {
-    /* Swap header if necessary. */
-    HlBINAV2Header* header = (HlBINAV2Header*)rawData;
-    if (hlBINANeedsSwap(header->endianFlag))
-    {
-        hlBINAV2HeaderSwap(header);
-    }
+    HlU32* offsets = (HlU32*)HL_ADD_OFF(pacPackMetadata, 16);
+    HlU32* eof = (HlU32*)HL_ADD_OFF(rawData, dataSize);
+    HlU32* offCount = offsets++;
+    HlU32 i;
 
-    /* Fix blocks. */
-    {
-        HlBINAV2BlockHeader* blocks = (HlBINAV2BlockHeader*)(header + 1);
-        const HlBool is64Bit = hlBINAIs64Bit(hlBINAGetVersion(rawData));
+    /* Auto-detect endianness. */
+    const HlBool needsSwap = (*offCount > (HlU32)(eof - offsets));
 
-        hlBINAV2BlocksFix(blocks, header->blockCount,
-            header->endianFlag, is64Bit);
+    /* Swap offset count if necessary. */
+    if (needsSwap) hlSwapU32P(offCount);
+
+    /* Fix offsets. */
+    for (i = 0; i < *offCount; ++i)
+    {
+        HlU32* curOff;
+
+        /* Endian swap offset position if necessary. */
+        if (needsSwap) hlSwapU32P(&offsets[i]);
+
+        /* Get pointer to current offset. */
+        curOff = (HlU32*)HL_ADD_OFF(rawData, offsets[i]);
+
+        /* Endian swap offset if necessary. */
+        if (needsSwap) hlSwapU32P(curOff);
+
+        /* Fix current offset. */
+        hlOff32Fix(curOff, rawData);
     }
 }
 
-void hlBINAFix(void* rawData)
+HlResult hlBINAV2Fix(void* rawData, size_t dataSize)
 {
     if (hlBINAHasV2Header(rawData))
     {
-        hlBINAV2Fix(rawData);
+        /* Swap header if necessary. */
+        HlBINAV2Header* header = (HlBINAV2Header*)rawData;
+        if (hlBINANeedsSwap(header->endianFlag))
+        {
+            hlBINAV2HeaderSwap(header);
+        }
+
+        /* Fix blocks. */
+        {
+            HlBINAV2BlockHeader* blocks = (HlBINAV2BlockHeader*)(header + 1);
+            const HlBool is64Bit = hlBINAIs64Bit(hlBINAGetVersion(rawData));
+
+            hlBINAV2BlocksFix(blocks, header->blockCount,
+                header->endianFlag, is64Bit);
+        }
     }
     else
     {
-        hlBINAV1Fix(rawData);
+        /*
+           Compatibility with files extracted using PacPack; check if
+           this file has PacPack metadata and fix it if so.
+        */
+        void* pacPackMetadata = (void*)hlBINAGetPacPackMetadata(rawData, dataSize);
+        if (!pacPackMetadata) return HL_ERROR_UNSUPPORTED;
+        
+        hlBINAPacPackMetadataFix(rawData, pacPackMetadata, dataSize);
     }
+
+    return HL_RESULT_SUCCESS;
+}
+
+HlResult hlBINAFix(void* rawData, size_t dataSize)
+{
+    if (dataSize >= sizeof(HlBINAV1Header) && hlBINAHasV1Header(rawData))
+    {
+        hlBINAV1Fix(rawData);
+        return HL_RESULT_SUCCESS;
+    }
+    else
+    {
+        /* NOTE: hlBINAV2Fix also handles PACPACK_METADATA. */
+        return hlBINAV2Fix(rawData, dataSize);
+    }
+}
+
+const void* hlBINAGetPacPackMetadata(const void* rawData, size_t dataSize)
+{
+    const HlU8* curDataPtr = (const HlU8*)rawData;
+    const HlU8* endDataPtr = (curDataPtr + dataSize);
+
+    /* 20 == (16 for "PACPACK_METADATA" + 4 for offsetCount). */
+    while ((curDataPtr + 20) < endDataPtr)
+    {
+        if (memcmp(curDataPtr, "PACPACK_METADATA", 16) == 0)
+        {
+            return curDataPtr;
+        }
+
+        ++curDataPtr;
+    }
+
+    return NULL;
 }
 
 HlU32 hlBINAGetVersion(const void* rawData)
@@ -276,25 +346,33 @@ HlU32 hlBINAGetVersion(const void* rawData)
             (((HlU32)header->version[1]) << 8) |        /* Minor version */
             ((HlU32)header->version[2]));               /* Revision version */
     }
-    else
+    else if (hlBINAHasV1Header(rawData))
     {
         const HlBINAV1Header* header = (const HlBINAV1Header*)rawData;
-        return ((HlU32)header->version << 16);
+        return ((HlU32)header->version << 16);          /* Major version */
+    }
+    else
+    {
+        return 0;
     }
 }
 
-HlBINAV2BlockDataHeader* hlBINAV2GetDataBlock(const void* rawData)
+const HlBINAV2BlockDataHeader* hlBINAV2GetDataBlock(const void* rawData)
 {
     const HlBINAV2Header* header = (const HlBINAV2Header*)rawData;
-    HlBINAV2BlockHeader* curBlock = (HlBINAV2BlockHeader*)(header + 1);
+    const HlBINAV2BlockHeader* curBlock = (const HlBINAV2BlockHeader*)(header + 1);
     HlU16 i;
 
+    /* If we don't have a BINA V2 header, assume we have no DATA block either. */
+    if (!hlBINAHasV2Header(rawData)) return NULL;
+
+    /* Otherwise, go through all blocks in the file. */
     for (i = 0; i < header->blockCount; ++i)
     {
         /* If this block is a data block, return it. */
         if (curBlock->signature == HL_BINAV2_BLOCK_TYPE_DATA)
         {
-            return (HlBINAV2BlockDataHeader*)curBlock;
+            return (const HlBINAV2BlockDataHeader*)curBlock;
         }
 
         /* Otherwise, get the next block. */
@@ -306,8 +384,14 @@ HlBINAV2BlockDataHeader* hlBINAV2GetDataBlock(const void* rawData)
 
 const void* hlBINAV2GetData(const void* rawData)
 {
+    const HlBINAV2Header* header = (const HlBINAV2Header*)rawData;
+    const HlBINAV2BlockDataHeader* dataBlock;
+
+    /* If we don't have a BINA V2 header, just return the rawData pointer. */
+    if (!hlBINAHasV2Header(rawData)) return rawData;
+    
     /* Get data block, returning NULL if there is no data block. */
-    HlBINAV2BlockDataHeader* dataBlock = hlBINAV2GetDataBlock(rawData);
+    dataBlock = hlBINAV2GetDataBlock(rawData);
     if (!dataBlock) return NULL;
 
     /* Get data. */
@@ -316,8 +400,18 @@ const void* hlBINAV2GetData(const void* rawData)
 
 const void* hlBINAGetData(const void* rawData)
 {
-    return (hlBINAHasV2Header(rawData)) ?
-        hlBINAV2GetData(rawData) : hlBINAV1GetData(rawData);
+    if (hlBINAHasV2Header(rawData))
+    {
+        return hlBINAV2GetData(rawData);
+    }
+    else if (hlBINAHasV1Header(rawData))
+    {
+        return hlBINAV1GetData(rawData);
+    }
+    else
+    {
+        return rawData;
+    }
 }
 
 #define hlINBINAStringIsDuplicate(str1, str2)\
@@ -326,47 +420,82 @@ const void* hlBINAGetData(const void* rawData)
     !memcmp((str1).str, (str2).str, /* string matches) */\
         (str1).len)))
 
-HlResult hlBINAStringsWrite32(size_t dataPos, const HlStrTable* HL_RESTRICT strTable,
+static HlResult hlINBINAStringsWrite(const HlBool is64Bit,
+    size_t dataPos, HlBINAEndianFlag endianFlag,
+    const HlStrTable* HL_RESTRICT strTable,
     HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file)
 {
-    HlBool skipStrBuf[255];
-    HlBool* skipStr = skipStrBuf;
+    HlBool duplicateStrsBuf[255];
+    HlBool* duplicateStrsPtr = duplicateStrsBuf;
     size_t i;
     HlResult result;
 
-    /* Allocate string entry skip buffer on heap if necessary. */
+    /* Allocate duplicate strings buffer on heap if necessary. */
     if (strTable->count > 255)
     {
-        skipStr = HL_ALLOC_ARR(HlBool, strTable->count);
-        if (!skipStr) return HL_ERROR_OUT_OF_MEMORY;
+        duplicateStrsPtr = HL_ALLOC_ARR(HlBool, strTable->count);
+        if (!duplicateStrsPtr) return HL_ERROR_OUT_OF_MEMORY;
     }
+
+    /* Clear the duplicate strings buffer so we don't have garbage data. */
+    memset(duplicateStrsPtr, 0, sizeof(HlBool) * strTable->count);
 
     /* Write strings and fix offsets in string entries. */
     for (i = 0; i < strTable->count; ++i)
     {
         size_t i2, curStrPos;
-        HlU32 off;
+        union
+        {
+            HlU32 u32;
+            HlU64 u64;
+        }
+        off;
 
         /* Skip the current string entry if it's a duplicate. */
-        if (skipStr[i]) continue;
+        if (duplicateStrsPtr[i]) continue;
 
         /* Get current string position. */
         curStrPos = hlFileTell(file);
 
-        /* Compute offset. */
-        off = (HlU32)(curStrPos - dataPos);
-
         /* Add offset value to offset table. */
         result = HL_LIST_PUSH(*offTable, strTable->data[i].offPos);
-        if (HL_FAILED(result)) return result;
+        if (HL_FAILED(result)) goto end;
 
         /* Jump to offset position. */
         result = hlFileJumpTo(file, strTable->data[i].offPos);
-        if (HL_FAILED(result)) return result;
+        if (HL_FAILED(result)) goto end;
 
-        /* Fix offset. */
-        result = hlFileWrite(file, sizeof(off), &off, NULL);
-        if (HL_FAILED(result)) return result;
+        /* Compute and fix offset. */
+        if (is64Bit)
+        {
+            /* Compute offset. */
+            off.u64 = (HlU64)(curStrPos - dataPos);
+
+            /* Swap offset if necessary. */
+            if (hlBINANeedsSwap(endianFlag))
+            {
+                hlSwapU64P(&off.u64);
+            }
+
+            /* Fix offset. */
+            result = hlFileWrite(file, sizeof(off.u64), &off.u64, NULL);
+            if (HL_FAILED(result)) goto end;
+        }
+        else
+        {
+            /* Compute offset. */
+            off.u32 = (HlU32)(curStrPos - dataPos);
+
+            /* Swap offset if necessary. */
+            if (hlBINANeedsSwap(endianFlag))
+            {
+                hlSwapU32P(&off.u32);
+            }
+
+            /* Fix offset. */
+            result = hlFileWrite(file, sizeof(off.u32), &off.u32, NULL);
+            if (HL_FAILED(result)) goto end;
+        }
 
         /* Mark duplicate string entries and fix duplicate offsets. */
         for (i2 = (i + 1); i2 < strTable->count; ++i2)
@@ -376,133 +505,62 @@ HlResult hlBINAStringsWrite32(size_t dataPos, const HlStrTable* HL_RESTRICT strT
             {
                 /* Add offset value to offset table. */
                 result = HL_LIST_PUSH(*offTable, strTable->data[i2].offPos);
-                if (HL_FAILED(result)) return result;
+                if (HL_FAILED(result)) goto end;
 
                 /* Jump to offset position. */
                 result = hlFileJumpTo(file, strTable->data[i2].offPos);
-                if (HL_FAILED(result)) return result;
+                if (HL_FAILED(result)) goto end;
 
                 /* Fix offset. */
-                result = hlFileWrite(file, sizeof(off), &off, NULL);
-                if (HL_FAILED(result)) return result;
+                result = (is64Bit) ?
+                    hlFileWrite(file, sizeof(off.u64), &off.u64, NULL) :
+                    hlFileWrite(file, sizeof(off.u32), &off.u32, NULL);
+
+                if (HL_FAILED(result)) goto end;
 
                 /* Mark this string entry as a duplicate. */
-                skipStr[i2] = HL_TRUE;
+                duplicateStrsPtr[i2] = HL_TRUE;
             }
         }
 
         /* Jump to string position. */
         result = hlFileJumpTo(file, curStrPos);
-        if (HL_FAILED(result)) return result;
+        if (HL_FAILED(result)) goto end;
 
         /* Write string. */
         result = hlFileWrite(file, strTable->data[i].len,
             strTable->data[i].str, NULL);
 
-        if (HL_FAILED(result)) return result;
+        if (HL_FAILED(result)) goto end;
 
         /* Write null terminator. */
         result = hlFileWriteNulls(file, 1, NULL);
-        if (HL_FAILED(result)) return result;
+        if (HL_FAILED(result)) goto end;
     }
 
     /* Write padding. */
     result = hlFilePad(file, 4);
 
-    /* Free string entry skip buffer if necessary and return result. */
-    if (skipStr != skipStrBuf) hlFree(skipStr);
+end:
+    /* Free resources as necessary and return result. */
+    if (duplicateStrsPtr != duplicateStrsBuf) hlFree(duplicateStrsPtr);
     return result;
 }
 
-HlResult hlBINAStringsWrite64(size_t dataPos, const HlStrTable* HL_RESTRICT strTable,
-    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file)
+HlResult hlBINAStringsWrite32(size_t dataPos, HlBINAEndianFlag endianFlag,
+    const HlStrTable* HL_RESTRICT strTable, HlOffTable* HL_RESTRICT offTable,
+    HlFile* HL_RESTRICT file)
 {
-    HlBool skipStrBuf[255];
-    HlBool* skipStr = skipStrBuf;
-    size_t i;
-    HlResult result;
+    return hlINBINAStringsWrite(HL_FALSE, dataPos,
+        endianFlag, strTable, offTable, file);
+}
 
-    /* Allocate string entry skip buffer on heap if necessary. */
-    if (strTable->count > 255)
-    {
-        skipStr = HL_ALLOC_ARR(HlBool, strTable->count);
-        if (!skipStr) return HL_ERROR_OUT_OF_MEMORY;
-    }
-
-    /* Clear the skip string buffer so we don't have garbage data. */
-    memset(skipStr, 0, sizeof(HlBool) * strTable->count);
-
-    /* Write strings and fix offsets in string entries. */
-    for (i = 0; i < strTable->count; ++i)
-    {
-        size_t i2, curStrPos;
-        HlU64 off;
-
-        /* Skip the current string entry if it's a duplicate. */
-        if (skipStr[i]) continue;
-
-        /* Get current string position. */
-        curStrPos = hlFileTell(file);
-
-        /* Compute offset. */
-        off = (HlU64)(curStrPos - dataPos);
-
-        /* Add offset value to offset table. */
-        result = HL_LIST_PUSH(*offTable, strTable->data[i].offPos);
-        if (HL_FAILED(result)) return result;
-
-        /* Jump to offset position. */
-        result = hlFileJumpTo(file, strTable->data[i].offPos);
-        if (HL_FAILED(result)) return result;
-
-        /* Fix offset. */
-        result = hlFileWrite(file, sizeof(off), &off, NULL);
-        if (HL_FAILED(result)) return result;
-
-        /* Mark duplicate string entries and fix duplicate offsets. */
-        for (i2 = (i + 1); i2 < strTable->count; ++i2)
-        {
-            /* If we've found a duplicate string entry... */
-            if (hlINBINAStringIsDuplicate(strTable->data[i], strTable->data[i2]))
-            {
-                /* Add offset value to offset table. */
-                result = HL_LIST_PUSH(*offTable, strTable->data[i2].offPos);
-                if (HL_FAILED(result)) return result;
-
-                /* Jump to offset position. */
-                result = hlFileJumpTo(file, strTable->data[i2].offPos);
-                if (HL_FAILED(result)) return result;
-
-                /* Fix offset. */
-                result = hlFileWrite(file, sizeof(off), &off, NULL);
-                if (HL_FAILED(result)) return result;
-
-                /* Mark this string entry as a duplicate. */
-                skipStr[i2] = HL_TRUE;
-            }
-        }
-
-        /* Jump to string position. */
-        result = hlFileJumpTo(file, curStrPos);
-        if (HL_FAILED(result)) return result;
-
-        /* Write string. */
-        result = hlFileWrite(file, strTable->data[i].len,
-            strTable->data[i].str, NULL);
-
-        if (HL_FAILED(result)) return result;
-
-        /* Write null terminator. */
-        result = hlFileWriteNulls(file, 1, NULL);
-        if (HL_FAILED(result)) return result;
-    }
-
-    /* Write padding. */
-    result = hlFilePad(file, 4);
-
-    /* Free string entry skip buffer if necessary and return result. */
-    if (skipStr != skipStrBuf) hlFree(skipStr);
-    return result;
+HlResult hlBINAStringsWrite64(size_t dataPos, HlBINAEndianFlag endianFlag,
+    const HlStrTable* HL_RESTRICT strTable, HlOffTable* HL_RESTRICT offTable,
+    HlFile* HL_RESTRICT file)
+{
+    return hlINBINAStringsWrite(HL_TRUE, dataPos,
+        endianFlag, strTable, offTable, file);
 }
 
 HlResult hlBINAOffsetsWriteNoSort(size_t dataPos,
@@ -742,8 +800,8 @@ HlResult hlBINAV2DataBlockStartWrite(HlBINAEndianFlag endianFlag, HlFile* file)
 }
 
 HlResult hlBINAV2DataBlockFinishWrite(size_t dataBlockPos, HlBool use64BitOffsets,
-    const HlStrTable* HL_RESTRICT strTable, HlOffTable* HL_RESTRICT offTable,
-    HlBINAEndianFlag endianFlag, HlFile* HL_RESTRICT file)
+    HlBINAEndianFlag endianFlag, const HlStrTable* HL_RESTRICT strTable,
+    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file)
 {
     const size_t dataPos = (dataBlockPos + (sizeof(HlBINAV2BlockDataHeader) * 2));
     size_t strTablePos, offTablePos, eofPos;
@@ -754,8 +812,8 @@ HlResult hlBINAV2DataBlockFinishWrite(size_t dataBlockPos, HlBool use64BitOffset
 
     /* Write string table. */
     result = (use64BitOffsets) ?
-        hlBINAStringsWrite64(dataPos, strTable, offTable, file) :
-        hlBINAStringsWrite32(dataPos, strTable, offTable, file);
+        hlBINAStringsWrite64(dataPos, endianFlag, strTable, offTable, file) :
+        hlBINAStringsWrite32(dataPos, endianFlag, strTable, offTable, file);
 
     if (HL_FAILED(result)) return result;
 
@@ -814,9 +872,24 @@ HlBool hlBINANeedsSwapExt(HlU8 endianFlag)
     return hlBINANeedsSwap(endianFlag);
 }
 
-HlBINAV2BlockHeader* hlBINAV2BlockGetNextExt(const HlBINAV2BlockHeader* block)
+const HlBINAV2BlockHeader* hlBINAV2BlockGetNextExt(const HlBINAV2BlockHeader* block)
 {
     return hlBINAV2BlockGetNext(block);
+}
+
+HlBool hlBINAHasV1HeaderExt(const void* rawData)
+{
+    return hlBINAHasV1Header(rawData);
+}
+
+HlBool hlBINAHasV2HeaderExt(const void* rawData)
+{
+    return hlBINAHasV2Header(rawData);
+}
+
+HlBool hlBINAIs64BitExt(HlU32 version)
+{
+    return hlBINAIs64Bit(version);
 }
 
 char hlBINAGetMajorVersionCharExt(HlU32 version)
@@ -847,16 +920,6 @@ HlU8 hlBINAGetMinorVersionExt(HlU32 version)
 HlU8 hlBINAGetRevisionVersionExt(HlU32 version)
 {
     return hlBINAGetRevisionVersion(version);
-}
-
-HlBool hlBINAHasV2HeaderExt(const void* rawData)
-{
-    return hlBINAHasV2Header(rawData);
-}
-
-HlBool hlBINAIs64BitExt(HlU32 version)
-{
-    return hlBINAIs64Bit(version);
 }
 
 const void* hlBINAV1GetDataExt(const void* rawData)
