@@ -99,6 +99,89 @@ int hlNStrCmp(const HlNChar* HL_RESTRICT str1, const HlNChar* HL_RESTRICT str2)
 #endif
 }
 
+int hlNStrNCmp(const HlNChar* HL_RESTRICT str1,
+    const HlNChar* HL_RESTRICT str2, size_t maxCount)
+{
+#ifdef HL_IN_WIN32_UNICODE
+    return wcsncmp(str1, str2, maxCount);
+#else
+    return strncmp(str1, str2, maxCount);
+#endif
+}
+
+int hlNStrICmp(const HlNChar* HL_RESTRICT str1,
+    const HlNChar* HL_RESTRICT str2)
+{
+    HlNChar c1 = 0, c2 = 0;
+    while ((c2 = *str2, c1 = *str1))
+    {
+        if (c1 != c2)
+        {
+            if (c1 >= HL_NTEXT('A') && c2 >= HL_NTEXT('A'))
+            {
+                /* If c1 is lower-cased, upper-case it. */
+                if (c1 >= HL_NTEXT('a') && c1 <= HL_NTEXT('z'))
+                {
+                    c1 -= 32;
+                }
+
+                /* If c2 is lower-cased, upper-case it. */
+                if (c2 >= HL_NTEXT('a') && c2 <= HL_NTEXT('z'))
+                {
+                    c2 -= 32;
+                }
+
+                if (c1 != c2) goto end;
+            }
+            else goto end;
+        }
+
+        ++str1;
+        ++str2;
+    }
+
+end:
+    return (((int)c1) - ((int)c2));
+}
+
+int hlNStrNICmp(const HlNChar* HL_RESTRICT str1,
+    const HlNChar* HL_RESTRICT str2, size_t maxCount)
+{
+    HlNChar c1 = 0, c2 = 0;
+    while (maxCount && (c2 = *str2, c1 = *str1))
+    {
+        if (c1 != c2)
+        {
+            if (c1 >= HL_NTEXT('A') && c2 >= HL_NTEXT('A'))
+            {
+                /* If c1 is lower-cased, upper-case it. */
+                if (c1 >= HL_NTEXT('a') && c1 <= HL_NTEXT('z'))
+                {
+                    c1 -= 32;
+                }
+
+                /* If c2 is lower-cased, upper-case it. */
+                if (c2 >= HL_NTEXT('a') && c2 <= HL_NTEXT('z'))
+                {
+                    c2 -= 32;
+                }
+
+                if (c1 != c2) goto end;
+            }
+            else goto end;
+        }
+
+        ++str1;
+        ++str2;
+        --maxCount;
+    }
+
+end:
+    if (maxCount == 0) return 0;
+
+    return (((int)c1) - ((int)c2));
+}
+
 size_t hlNStrCopyAndLen(const HlNChar* HL_RESTRICT src, HlNChar* HL_RESTRICT dst)
 {
 #if !defined(HL_IN_WIN32_UNICODE) && (defined(_POSIX_VERSION) && _POSIX_VERSION >= 200809L)
@@ -138,12 +221,12 @@ HlBool hlNStrCopyLimit(const HlNChar* HL_RESTRICT src,
         if (!(*dst++ = *src++))
         {
             if (copiedCount) *copiedCount = copied;
-            return 1;
+            return HL_TRUE;
         }
     }
 
     if (copiedCount) *copiedCount = copied;
-    return 0;
+    return HL_FALSE;
 }
 
 size_t hlStrGetReqLenUTF8ToUTF16(const char* src, size_t srcLen)

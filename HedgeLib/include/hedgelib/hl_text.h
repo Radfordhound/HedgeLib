@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 /* Helper macros */
-#define HL_IS_DIGIT(c) ((c) >= '0' && (c) <= '9')
+#define HL_IS_DIGIT(c) ((c) <= '9' && (c) >= '0')
 
 /** @brief Auto-compute text length. Supports both pointers and string literals. */
 #define HL_IN_TEXT_GET_LEN(text)\
@@ -30,6 +30,14 @@ HL_API HlBool hlStrCopyLimit(const char* HL_RESTRICT src,
 HL_API size_t hlNStrLen(const HlNChar* str);
 HL_API HlNChar* hlNStrCopy(const HlNChar* HL_RESTRICT src, HlNChar* HL_RESTRICT dst);
 HL_API int hlNStrCmp(const HlNChar* HL_RESTRICT str1, const HlNChar* HL_RESTRICT str2);
+HL_API int hlNStrNCmp(const HlNChar* HL_RESTRICT str1,
+    const HlNChar* HL_RESTRICT str2, size_t maxCount);
+
+HL_API int hlNStrICmp(const HlNChar* HL_RESTRICT str1,
+    const HlNChar* HL_RESTRICT str2);
+
+HL_API int hlNStrNICmp(const HlNChar* HL_RESTRICT str1,
+    const HlNChar* HL_RESTRICT str2, size_t maxCount);
 
 #define hlNStrsEqual(str1, str2) (HlBool)(hlNStrCmp(str1, str2) == 0)
 
