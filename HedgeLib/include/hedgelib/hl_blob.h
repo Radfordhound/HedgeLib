@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-typedef struct HlFile HlFile;
+typedef struct HlStream HlStream;
 
 typedef struct HlBlob
 {
@@ -37,7 +37,7 @@ typedef HL_LIST(HlBlob*) HlBlobList;
 HL_API HlResult hlBlobCreate(const void* HL_RESTRICT initialData,
     size_t size, HlBlob* HL_RESTRICT * HL_RESTRICT blob);
 
-HL_API HlResult hlBlobRead(HlFile* HL_RESTRICT file,
+HL_API HlResult hlBlobRead(HlStream* HL_RESTRICT stream,
     HlBlob* HL_RESTRICT * HL_RESTRICT blob);
 
 HL_API HlResult hlBlobLoad(const HlNChar* HL_RESTRICT filePath,

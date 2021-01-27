@@ -1,9 +1,11 @@
 #include "hl_in_archive.h"
+#include "hedgelib/hl_text.h"
 #include "hedgelib/hl_endian.h"
 #include "hedgelib/io/hl_file.h"
 #include "hedgelib/io/hl_path.h"
 #include "hedgelib/io/hl_hh.h"
 #include "hedgelib/archives/hl_hh_archive.h"
+#include <string.h>
 
 const HlNChar HL_HH_ARL_EXT[5] = HL_NTEXT(".arl");
 const HlNChar HL_HH_PFD_EXT[5] = HL_NTEXT(".pfd");
@@ -319,7 +321,7 @@ HlResult hlHHArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
     */
     HlNChar pathBuf[255];
     HlNChar* pathBufPtr = pathBuf;
-    HlFile *arcFile = NULL, *arlFile = NULL;
+    HlFileStream *arcFile = NULL, *arlFile = NULL;
     const HlNChar* exts = hlPathGetExts(filePath);
     const size_t filePathLen = (size_t)(exts - filePath);
     size_t nonSplitExtsLen, pathBufCount, pathBufCap = 255;
@@ -392,11 +394,11 @@ HlResult hlHHArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
         memcpy(&pathBufPtr[filePathLen], HL_HH_ARL_EXT, sizeof(HL_HH_ARL_EXT));
 
         /* Open ARL for writing. */
-        result = hlFileOpen(pathBufPtr, HL_FILE_MODE_WRITE, &arlFile);
+        result = hlFileStreamOpen(pathBufPtr, HL_FILE_MODE_WRITE, &arlFile);
         if (HL_FAILED(result)) goto failed_open_arl;
 
         /* Write placeholder ARL header. */
-        result = hlFileWrite(arlFile, sizeof(arlHeader), &arlHeader, NULL);
+        result = hlStreamWrite(arlFile, sizeof(arlHeader), &arlHeader, NULL);
         if (HL_FAILED(result)) goto failed;
     }
 
@@ -436,11 +438,11 @@ HlResult hlHHArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
         }
 
         /* Open first archive for writing. */
-        result = hlFileOpen(pathBufPtr, HL_FILE_MODE_WRITE, &arcFile);
+        result = hlFileStreamOpen(pathBufPtr, HL_FILE_MODE_WRITE, &arcFile);
         if (HL_FAILED(result)) goto failed_open_arc;
 
         /* Write AR header. */
-        result = hlFileWrite(arcFile, sizeof(arcHeader), &arcHeader, NULL);
+        result = hlStreamWrite(arcFile, sizeof(arcHeader), &arcHeader, NULL);
         if (HL_FAILED(result)) goto failed;
 
         /* Write archive(s) and ARL split sizes as requested. */
@@ -551,13 +553,13 @@ HlResult hlHHArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
             if (splitLimit && arcSize > splitLimit && wroteEntryToCurArc)
             {
                 /* Close the current split. */
-                result = hlFileClose(arcFile);
+                result = hlFileStreamClose(arcFile);
                 if (HL_FAILED(result)) goto failed_close_arc;
 
                 /* Write current split archive size to ARL if necessary. */
                 if (generateARL)
                 {
-                    result = hlFileWrite(arlFile, sizeof(arcSize), &arcSize, NULL);
+                    result = hlStreamWrite(arlFile, sizeof(arcSize), &arcSize, NULL);
                     if (HL_FAILED(result)) goto failed_close_arc;
                 }
 
@@ -570,11 +572,11 @@ HlResult hlHHArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
                 }
 
                 /* Open the next split for writing. */
-                result = hlFileOpen(pathBufPtr, HL_FILE_MODE_WRITE, &arcFile);
+                result = hlFileStreamOpen(pathBufPtr, HL_FILE_MODE_WRITE, &arcFile);
                 if (HL_FAILED(result)) goto failed_open_arc;
 
                 /* Write AR header. */
-                result = hlFileWrite(arcFile, sizeof(arcHeader), &arcHeader, NULL);
+                result = hlStreamWrite(arcFile, sizeof(arcHeader), &arcHeader, NULL);
                 if (HL_FAILED(result)) goto failed;
 
                 /* Reset arcSize. */
@@ -615,7 +617,7 @@ HlResult hlHHArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
 #endif
             
             /* Write file entry to archive. */
-            result = hlFileWrite(arcFile, sizeof(hhFileEntry), &hhFileEntry, NULL);
+            result = hlStreamWrite(arcFile, sizeof(hhFileEntry), &hhFileEntry, NULL);
             if (HL_FAILED(result))
             {
                 if (doFreeEntryData) hlFree(entryData);
@@ -623,7 +625,7 @@ HlResult hlHHArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
             }
 
             /* Write file name to archive. */
-            result = hlFileWrite(arcFile, fileNameUTF8Size, fileNameUTF8, NULL);
+            result = hlStreamWrite(arcFile, fileNameUTF8Size, fileNameUTF8, NULL);
             if (HL_FAILED(result))
             {
                 if (doFreeEntryData) hlFree(entryData);
@@ -631,7 +633,7 @@ HlResult hlHHArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
             }
 
             /* Write file data padding to archive. */
-            result = hlFilePad(arcFile, dataAlignment);
+            result = hlStreamPad(arcFile, dataAlignment);
             if (HL_FAILED(result))
             {
                 if (doFreeEntryData) hlFree(entryData);
@@ -639,14 +641,14 @@ HlResult hlHHArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
             }
 
             /* Store data position. */
-            dataPos = hlFileTell(arcFile);
+            dataPos = hlStreamTell(arcFile);
 
             /* Write file data to archive. */
-            result = hlFileWrite(arcFile, entrySize, entryData, NULL);
+            result = hlStreamWrite(arcFile, entrySize, entryData, NULL);
 
             /* Free entry data if necessary. */
             if (doFreeEntryData) hlFree(entryData);
-            if (HL_FAILED(result)) goto failed; /* NOTE: From the hlFileWrite above. */
+            if (HL_FAILED(result)) goto failed; /* NOTE: From the hlStreamWrite above. */
 
             /* Indicate that we have written at least one entry to this archive. */
             wroteEntryToCurArc = HL_TRUE;
@@ -682,7 +684,7 @@ HlResult hlHHArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
         }
         
         /* Close archive. */
-        result = hlFileClose(arcFile);
+        result = hlFileStreamClose(arcFile);
         if (HL_FAILED(result)) goto failed_close_arc;
     }
 
@@ -692,25 +694,25 @@ HlResult hlHHArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
         size_t i, arlEOF;
 
         /* Write final split archive size to ARL. */
-        result = hlFileWrite(arlFile, sizeof(arcSize), &arcSize, NULL);
+        result = hlStreamWrite(arlFile, sizeof(arcSize), &arcSize, NULL);
         if (HL_FAILED(result)) goto failed_finishing_arl;
 
         /* Increment split count. */
         ++splitCount;
 
         /* Get ARL EOF position. */
-        arlEOF = hlFileTell(arlFile);
+        arlEOF = hlStreamTell(arlFile);
 
         /* Jump to ARL split count position. */
-        result = hlFileJumpTo(arlFile, 4);
+        result = hlStreamJumpTo(arlFile, 4);
         if (HL_FAILED(result)) goto failed_finishing_arl;
 
         /* Fill-in ARL split count. */
-        result = hlFileWrite(arlFile, sizeof(splitCount), &splitCount, NULL);
+        result = hlStreamWrite(arlFile, sizeof(splitCount), &splitCount, NULL);
         if (HL_FAILED(result)) goto failed_finishing_arl;
 
         /* Jump to end of ARL. */
-        result = hlFileJumpTo(arlFile, arlEOF);
+        result = hlStreamJumpTo(arlFile, arlEOF);
         if (HL_FAILED(result)) goto failed_finishing_arl;
 
         /* Write file names to ARL. */
@@ -757,28 +759,28 @@ HlResult hlHHArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLimit,
 #endif
 
             /* Write file name length (size - 1) to ARL. */
-            result = hlFileWrite(arlFile, 1, &fileNameUTF8Len, NULL);
+            result = hlStreamWrite(arlFile, 1, &fileNameUTF8Len, NULL);
             if (HL_FAILED(result)) goto failed_finishing_arl;
 
             /* Write file name to ARL without null terminator. */
-            result = hlFileWrite(arlFile, fileNameUTF8Size - 1, fileNameUTF8, NULL);
+            result = hlStreamWrite(arlFile, fileNameUTF8Size - 1, fileNameUTF8, NULL);
             if (HL_FAILED(result)) goto failed_finishing_arl;
         }
         
         /* Close ARL. */
-        result = hlFileClose(arlFile);
+        result = hlFileStreamClose(arlFile);
     }
 
     /* Close/free everything and return result. */
     goto end;
 
 failed:
-    hlFileClose(arcFile);
+    hlFileStreamClose(arcFile);
 
 failed_open_arc:
 failed_close_arc:
 failed_finishing_arl:
-    hlFileClose(arlFile);
+    hlFileStreamClose(arlFile);
 
 failed_open_arl:
 end:
@@ -793,7 +795,7 @@ end:
 HlResult hlHHPackedFileIndexV0Write(
     const HlPackedFileIndex* HL_RESTRICT pfi,
     size_t dataPos, HlOffTable* HL_RESTRICT offTable,
-    HlFile* HL_RESTRICT file)
+    HlStream* HL_RESTRICT stream)
 {
     size_t i, curOffPos, eofPos;
     HlResult result;
@@ -813,7 +815,7 @@ HlResult hlHHPackedFileIndexV0Write(
 #endif
 
         /* Write PFI header. */
-        result = hlFileWrite(file, sizeof(hhPfiHeader), &hhPfiHeader, NULL);
+        result = hlStreamWrite(stream, sizeof(hhPfiHeader), &hhPfiHeader, NULL);
         if (HL_FAILED(result)) return result;
 
         /* Add entries offset to offset table. */
@@ -824,16 +826,16 @@ HlResult hlHHPackedFileIndexV0Write(
     }
 
     /* Get current offset position. */
-    curOffPos = hlFileTell(file);
+    curOffPos = hlStreamTell(stream);
 
     /* Write placeholder entry offsets. */
-    result = hlFileWriteNulls(file, sizeof(HlU32) *
+    result = hlStreamWriteNulls(stream, sizeof(HlU32) *
         pfi->entries.count, NULL);
 
     if (HL_FAILED(result)) return result;
 
     /* Get EOF position. */
-    eofPos = hlFileTell(file);
+    eofPos = hlStreamTell(stream);
 
     /* Write entries and fill-in placeholder offsets. */
     for (i = 0; i < pfi->entries.count; ++i)
@@ -850,7 +852,7 @@ HlResult hlHHPackedFileIndexV0Write(
         };
 
         /* Jump to entry offset. */
-        result = hlFileJumpTo(file, curOffPos);
+        result = hlStreamJumpTo(stream, curOffPos);
         if (HL_FAILED(result)) return result;
 
         /* Endian-swap entry offset if necessary. */
@@ -859,7 +861,7 @@ HlResult hlHHPackedFileIndexV0Write(
 #endif
 
         /* Fill-in entry offset. */
-        result = hlFileWrite(file, sizeof(curEntryRelPos),
+        result = hlStreamWrite(stream, sizeof(curEntryRelPos),
             &curEntryRelPos, NULL);
 
         if (HL_FAILED(result)) return result;
@@ -872,7 +874,7 @@ HlResult hlHHPackedFileIndexV0Write(
         curOffPos += sizeof(HlU32);
 
         /* Jump to EOF. */
-        result = hlFileJumpTo(file, eofPos);
+        result = hlStreamJumpTo(stream, eofPos);
         if (HL_FAILED(result)) return result;
 
         /* Endian-swap entry if necessary. */
@@ -881,11 +883,11 @@ HlResult hlHHPackedFileIndexV0Write(
 #endif
 
         /* Write entry. */
-        result = hlFileWrite(file, sizeof(entry), &entry, NULL);
+        result = hlStreamWrite(stream, sizeof(entry), &entry, NULL);
         if (HL_FAILED(result)) return result;
 
         /* Write entry name. */
-        result = hlFileWriteString(file, pfiEntry->name, NULL);
+        result = hlStreamWriteStringUTF8(stream, pfiEntry->name, NULL);
         if (HL_FAILED(result)) return result;
 
         /* Add name offset to offset table. */
@@ -893,11 +895,11 @@ HlResult hlHHPackedFileIndexV0Write(
         if (HL_FAILED(result)) return result;
 
         /* Write padding. */
-        result = hlFilePad(file, 4);
+        result = hlStreamPad(stream, 4);
         if (HL_FAILED(result)) return result;
 
         /* Get EOF position. */
-        eofPos = hlFileTell(file);
+        eofPos = hlStreamTell(stream);
     }
 
     return result;
@@ -907,14 +909,14 @@ HlResult hlHHPackedFileIndexWrite(
     const HlPackedFileIndex* HL_RESTRICT pfi,
     HlU32 version, size_t dataPos,
     HlOffTable* HL_RESTRICT offTable,
-    HlFile* HL_RESTRICT file)
+    HlStream* HL_RESTRICT stream)
 {
     /* Ensure version is supported. */
     if (version != 0) return HL_ERROR_UNSUPPORTED;
 
     /* Write PFI data. */
     return hlHHPackedFileIndexV0Write(pfi,
-        dataPos, offTable, file);
+        dataPos, offTable, stream);
 }
 
 HlResult hlHHPackedFileIndexSave(
@@ -922,14 +924,14 @@ HlResult hlHHPackedFileIndexSave(
     HlU32 version, const HlNChar* HL_RESTRICT filePath)
 {
     HlOffTable offTable;
-    HlFile* file;
+    HlFileStream* file;
     HlResult result;
 
     /* Initialize offset table. */
     HL_LIST_INIT(offTable);
 
     /* Open file. */
-    result = hlFileOpen(filePath, HL_FILE_MODE_WRITE, &file);
+    result = hlFileStreamOpen(filePath, HL_FILE_MODE_WRITE, &file);
     if (HL_FAILED(result)) return result;
 
     /* Start writing HH standard header. */
@@ -950,10 +952,10 @@ HlResult hlHHPackedFileIndexSave(
 
     /* Free lists, close file, and return result. */
     HL_LIST_FREE(offTable);
-    return hlFileClose(file);
+    return hlFileStreamClose(file);
 
 failed:
     HL_LIST_FREE(offTable);
-    hlFileClose(file);
+    hlFileStreamClose(file);
     return result;
 }

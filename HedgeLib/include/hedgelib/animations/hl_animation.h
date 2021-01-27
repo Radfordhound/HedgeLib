@@ -6,7 +6,8 @@
 extern "C" {
 #endif
 
-typedef struct HlFile HlFile;
+typedef struct HlStream HlStream;
+/* TODO: De-couple HlAnimation stuff from HlBlob. */
 typedef struct HlBlob HlBlob;
 
 typedef struct HlAnimationIPData
@@ -281,7 +282,7 @@ HL_API const char* const hlAnimationGetLoopTypeStr(const HlAnimation* anim);
 HL_API HlAnimation* hlAnimationReadJSON(const HlBlob* blob);
 
 HL_API HlResult hlAnimationWriteJSON(const HlAnimation* HL_RESTRICT anim,
-    HlFile* HL_RESTRICT file);
+    HlStream* HL_RESTRICT stream);
 
 HL_API HlAnimation* hlAnimationImportJSON(const HlNChar* filePath);
 

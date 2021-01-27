@@ -1,13 +1,14 @@
 #ifndef HL_BINA_H_INCLUDED
 #define HL_BINA_H_INCLUDED
 #include "../hl_list.h"
-#include "../hl_blob.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define HL_BINA_SIG         HL_MAKE_SIG('B', 'I', 'N', 'A')
+
+typedef struct HlStream HlStream;
 
 typedef enum HlBINAEndianFlag
 {
@@ -189,35 +190,35 @@ HL_API const void* hlBINAGetData(const void* rawData);
 
 HL_API HlResult hlBINAStringsWrite32(size_t dataPos, HlBINAEndianFlag endianFlag,
     const HlStrTable* HL_RESTRICT strTable, HlOffTable* HL_RESTRICT offTable,
-    HlFile* HL_RESTRICT file);
+    HlStream* HL_RESTRICT stream);
 
 HL_API HlResult hlBINAStringsWrite64(size_t dataPos, HlBINAEndianFlag endianFlag,
     const HlStrTable* HL_RESTRICT strTable, HlOffTable* HL_RESTRICT offTable,
-    HlFile* HL_RESTRICT file);
+    HlStream* HL_RESTRICT stream);
 
 HL_API HlResult hlBINAOffsetsWriteNoSort(size_t dataPos,
-    const HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file);
+    const HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream);
 
 HL_API HlResult hlBINAOffsetsWrite(size_t dataPos,
-    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file);
+    HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream);
 
-HL_API HlResult hlBINAV1StartWrite(HlBINAEndianFlag endianFlag, HlFile* file);
+HL_API HlResult hlBINAV1StartWrite(HlBINAEndianFlag endianFlag, HlStream* stream);
 
 HL_API HlResult hlBINAV2StartWrite(HlBool use64BitOffsets,
-    HlBINAEndianFlag endianFlag, HlFile* file);
+    HlBINAEndianFlag endianFlag, HlStream* stream);
 
 HL_API HlResult hlBINAV1FinishWrite(size_t headerPos,
     HlOffTable* HL_RESTRICT offTable, HlBINAEndianFlag endianFlag,
-    HlFile* HL_RESTRICT file);
+    HlStream* HL_RESTRICT stream);
 
 HL_API HlResult hlBINAV2FinishWrite(size_t headerPos, HlU16 blockCount,
-    HlBINAEndianFlag endianFlag, HlFile* file);
+    HlBINAEndianFlag endianFlag, HlStream* stream);
 
-HL_API HlResult hlBINAV2DataBlockStartWrite(HlBINAEndianFlag endianFlag, HlFile* file);
+HL_API HlResult hlBINAV2DataBlockStartWrite(HlBINAEndianFlag endianFlag, HlStream* stream);
 
 HL_API HlResult hlBINAV2DataBlockFinishWrite(size_t dataBlockPos, HlBool use64BitOffsets,
     HlBINAEndianFlag endianFlag, const HlStrTable* HL_RESTRICT strTable,
-    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file);
+    HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream);
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS
 HL_API HlBool hlBINANeedsSwapExt(HlU8 endianFlag);

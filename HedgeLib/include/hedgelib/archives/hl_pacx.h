@@ -1,6 +1,7 @@
 #ifndef HL_PACX_H_INCLUDED
 #define HL_PACX_H_INCLUDED
 #include "hl_archive.h"
+#include "../hl_blob.h"
 #include "../io/hl_bina.h"
 
 #ifdef __cplusplus
@@ -478,17 +479,17 @@ HL_API HlResult hlPACxV2Load(const HlNChar* HL_RESTRICT filePath,
     HlBool loadSplits, HlBlobList* HL_RESTRICT pacs,
     HlArchive* HL_RESTRICT * HL_RESTRICT hlArc);
 
-HL_API HlResult hlPACxV2StartWrite(HlBINAEndianFlag endianFlag, HlFile* file);
+HL_API HlResult hlPACxV2StartWrite(HlBINAEndianFlag endianFlag, HlStream* stream);
 
 HL_API HlResult hlPACxV2FinishWrite(size_t headerPos, HlU16 blockCount,
-    HlBINAEndianFlag endianFlag, HlFile* file);
+    HlBINAEndianFlag endianFlag, HlStream* stream);
 
-HL_API HlResult hlPACxV2DataBlockStartWrite(HlFile* file);
+HL_API HlResult hlPACxV2DataBlockStartWrite(HlStream* stream);
 
 HL_API HlResult hlPACxV2DataBlockFinishWrite(size_t headerPos, size_t dataBlockPos,
     HlU32 treesSize, HlU32 dataEntriesSize, HlU32 proxyTableSize,
     HlBINAEndianFlag endianFlag, const HlStrTable* HL_RESTRICT strTable,
-    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file);
+    HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream);
 
 HL_API HlResult hlPACxV2SaveEx(const HlArchive* HL_RESTRICT arc,
     HlU32 splitLimit, HlU32 dataAlignment, HlBINAEndianFlag endianFlag,

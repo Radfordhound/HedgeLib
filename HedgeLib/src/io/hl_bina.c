@@ -1,8 +1,10 @@
-#include "hedgelib/io/hl_bina.h"
-#include "hedgelib/io/hl_file.h"
-#include "hedgelib/hl_endian.h"
 #include "../hl_in_assert.h"
+#include "hedgelib/hl_endian.h"
+#include "hedgelib/io/hl_bina.h"
+#include "hedgelib/io/hl_stream.h"
+#include "hedgelib/io/hl_hh.h"
 #include <stdlib.h>
+#include <string.h>
 
 void hlBINAV1HeaderSwap(HlBINAV1Header* header, HlBool swapOffsets)
 {
@@ -423,7 +425,7 @@ const void* hlBINAGetData(const void* rawData)
 static HlResult hlINBINAStringsWrite(const HlBool is64Bit,
     size_t dataPos, HlBINAEndianFlag endianFlag,
     const HlStrTable* HL_RESTRICT strTable,
-    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file)
+    HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream)
 {
     HlBool duplicateStrsBuf[255];
     HlBool* duplicateStrsPtr = duplicateStrsBuf;
@@ -455,14 +457,14 @@ static HlResult hlINBINAStringsWrite(const HlBool is64Bit,
         if (duplicateStrsPtr[i]) continue;
 
         /* Get current string position. */
-        curStrPos = hlFileTell(file);
+        curStrPos = hlStreamTell(stream);
 
         /* Add offset value to offset table. */
         result = HL_LIST_PUSH(*offTable, strTable->data[i].offPos);
         if (HL_FAILED(result)) goto end;
 
         /* Jump to offset position. */
-        result = hlFileJumpTo(file, strTable->data[i].offPos);
+        result = hlStreamJumpTo(stream, strTable->data[i].offPos);
         if (HL_FAILED(result)) goto end;
 
         /* Compute and fix offset. */
@@ -478,7 +480,7 @@ static HlResult hlINBINAStringsWrite(const HlBool is64Bit,
             }
 
             /* Fix offset. */
-            result = hlFileWrite(file, sizeof(off.u64), &off.u64, NULL);
+            result = hlStreamWrite(stream, sizeof(off.u64), &off.u64, NULL);
             if (HL_FAILED(result)) goto end;
         }
         else
@@ -493,7 +495,7 @@ static HlResult hlINBINAStringsWrite(const HlBool is64Bit,
             }
 
             /* Fix offset. */
-            result = hlFileWrite(file, sizeof(off.u32), &off.u32, NULL);
+            result = hlStreamWrite(stream, sizeof(off.u32), &off.u32, NULL);
             if (HL_FAILED(result)) goto end;
         }
 
@@ -508,13 +510,13 @@ static HlResult hlINBINAStringsWrite(const HlBool is64Bit,
                 if (HL_FAILED(result)) goto end;
 
                 /* Jump to offset position. */
-                result = hlFileJumpTo(file, strTable->data[i2].offPos);
+                result = hlStreamJumpTo(stream, strTable->data[i2].offPos);
                 if (HL_FAILED(result)) goto end;
 
                 /* Fix offset. */
                 result = (is64Bit) ?
-                    hlFileWrite(file, sizeof(off.u64), &off.u64, NULL) :
-                    hlFileWrite(file, sizeof(off.u32), &off.u32, NULL);
+                    hlStreamWrite(stream, sizeof(off.u64), &off.u64, NULL) :
+                    hlStreamWrite(stream, sizeof(off.u32), &off.u32, NULL);
 
                 if (HL_FAILED(result)) goto end;
 
@@ -524,22 +526,22 @@ static HlResult hlINBINAStringsWrite(const HlBool is64Bit,
         }
 
         /* Jump to string position. */
-        result = hlFileJumpTo(file, curStrPos);
+        result = hlStreamJumpTo(stream, curStrPos);
         if (HL_FAILED(result)) goto end;
 
         /* Write string. */
-        result = hlFileWrite(file, strTable->data[i].len,
+        result = hlStreamWrite(stream, strTable->data[i].len,
             strTable->data[i].str, NULL);
 
         if (HL_FAILED(result)) goto end;
 
         /* Write null terminator. */
-        result = hlFileWriteNulls(file, 1, NULL);
+        result = hlStreamWriteNulls(stream, 1, NULL);
         if (HL_FAILED(result)) goto end;
     }
 
     /* Write padding. */
-    result = hlFilePad(file, 4);
+    result = hlStreamPad(stream, 4);
 
 end:
     /* Free resources as necessary and return result. */
@@ -549,22 +551,22 @@ end:
 
 HlResult hlBINAStringsWrite32(size_t dataPos, HlBINAEndianFlag endianFlag,
     const HlStrTable* HL_RESTRICT strTable, HlOffTable* HL_RESTRICT offTable,
-    HlFile* HL_RESTRICT file)
+    HlStream* HL_RESTRICT stream)
 {
     return hlINBINAStringsWrite(HL_FALSE, dataPos,
-        endianFlag, strTable, offTable, file);
+        endianFlag, strTable, offTable, stream);
 }
 
 HlResult hlBINAStringsWrite64(size_t dataPos, HlBINAEndianFlag endianFlag,
     const HlStrTable* HL_RESTRICT strTable, HlOffTable* HL_RESTRICT offTable,
-    HlFile* HL_RESTRICT file)
+    HlStream* HL_RESTRICT stream)
 {
     return hlINBINAStringsWrite(HL_TRUE, dataPos,
-        endianFlag, strTable, offTable, file);
+        endianFlag, strTable, offTable, stream);
 }
 
 HlResult hlBINAOffsetsWriteNoSort(size_t dataPos,
-    const HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file)
+    const HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream)
 {
     size_t i, lastOffPos = dataPos;
     for (i = 0; i < offTable->count; ++i)
@@ -604,7 +606,7 @@ HlResult hlBINAOffsetsWriteNoSort(size_t dataPos,
         }
 
         /* Write offset value. */
-        result = hlFileWrite(file, curOffSize, tmpOffVal, NULL);
+        result = hlStreamWrite(stream, curOffSize, tmpOffVal, NULL);
         if (HL_FAILED(result)) return result;
 
         /* Set lastOffPos for next iteration. */
@@ -612,20 +614,20 @@ HlResult hlBINAOffsetsWriteNoSort(size_t dataPos,
     }
 
     /* Write padding and return result. */
-    return hlFilePad(file, 4);
+    return hlStreamPad(stream, 4);
 }
 
 HlResult hlBINAOffsetsWrite(size_t dataPos,
-    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file)
+    HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream)
 {
     /* Sort offsets in offset table. */
     hlOffTableSort(offTable);
 
     /* Write sorted offsets. */
-    return hlBINAOffsetsWriteNoSort(dataPos, offTable, file);
+    return hlBINAOffsetsWriteNoSort(dataPos, offTable, stream);
 }
 
-HlResult hlBINAV1StartWrite(HlBINAEndianFlag endianFlag, HlFile* file)
+HlResult hlBINAV1StartWrite(HlBINAEndianFlag endianFlag, HlStream* stream)
 {
     /* Generate BINAV1 header. */
     const HlBINAV1Header header =
@@ -649,11 +651,11 @@ HlResult hlBINAV1StartWrite(HlBINAEndianFlag endianFlag, HlFile* file)
     */
 
     /* Write BINAV1 header and return result. */
-    return hlFileWrite(file, sizeof(header), &header, NULL);
+    return hlStreamWrite(stream, sizeof(header), &header, NULL);
 }
 
 HlResult hlBINAV2StartWrite(HlBool use64BitOffsets,
-    HlBINAEndianFlag endianFlag, HlFile* file)
+    HlBINAEndianFlag endianFlag, HlStream* stream)
 {
     /* Generate BINAV2 header. */
     const HlBINAV2Header header =
@@ -672,29 +674,29 @@ HlResult hlBINAV2StartWrite(HlBool use64BitOffsets,
     */
 
     /* Write BINAV2 header and return result. */
-    return hlFileWrite(file, sizeof(header), &header, NULL);
+    return hlStreamWrite(stream, sizeof(header), &header, NULL);
 }
 
 HlResult hlBINAV1FinishWrite(size_t headerPos,
     HlOffTable* HL_RESTRICT offTable, HlBINAEndianFlag endianFlag,
-    HlFile* HL_RESTRICT file)
+    HlStream* HL_RESTRICT stream)
 {
     const size_t dataPos = (headerPos + sizeof(HlBINAV1Header));
     size_t offTablePos, eofPos;
     HlResult result;
 
     /* Get offset table position. */
-    offTablePos = hlFileTell(file);
+    offTablePos = hlStreamTell(stream);
 
     /* Write offset table. */
-    result = hlBINAOffsetsWrite(dataPos, offTable, file);
+    result = hlBINAOffsetsWrite(dataPos, offTable, stream);
     if (HL_FAILED(result)) return result;
 
-    /* Get end of file position. */
-    eofPos = hlFileTell(file);
+    /* Get end of stream position. */
+    eofPos = hlStreamTell(stream);
 
     /* Jump to header fileSize position. */
-    result = hlFileJumpTo(file, headerPos);
+    result = hlStreamJumpTo(stream, headerPos);
     if (HL_FAILED(result)) return result;
 
     /* Fill-in header values. */
@@ -721,26 +723,26 @@ HlResult hlBINAV1FinishWrite(size_t headerPos,
         }
 
         /* Fill-in header values. */
-        result = hlFileWrite(file, sizeof(values), &values, NULL);
+        result = hlStreamWrite(stream, sizeof(values), &values, NULL);
         if (HL_FAILED(result)) return result;
     }
 
-    /* Jump to end of file and return. */
-    return hlFileJumpTo(file, eofPos);
+    /* Jump to end of stream and return. */
+    return hlStreamJumpTo(stream, eofPos);
 }
 
 HlResult hlBINAV2FinishWrite(size_t headerPos, HlU16 blockCount,
-    HlBINAEndianFlag endianFlag, HlFile* file)
+    HlBINAEndianFlag endianFlag, HlStream* stream)
 {
     size_t curPos;
     HlResult result;
     HlU32 fileSize;
 
-    /* Get current file position. */
-    curPos = hlFileTell(file);
+    /* Get current stream position. */
+    curPos = hlStreamTell(stream);
 
     /* Jump to header fileSize position. */
-    result = hlFileJumpTo(file, headerPos + 8);
+    result = hlStreamJumpTo(stream, headerPos + 8);
     if (HL_FAILED(result)) return result;
 
     /* Compute file size. */
@@ -754,18 +756,18 @@ HlResult hlBINAV2FinishWrite(size_t headerPos, HlU16 blockCount,
     }
 
     /* Fill-in file size. */
-    result = hlFileWrite(file, sizeof(HlU32), &fileSize, NULL);
+    result = hlStreamWrite(stream, sizeof(HlU32), &fileSize, NULL);
     if (HL_FAILED(result)) return result;
 
     /* Fill-in block count. */
-    result = hlFileWrite(file, sizeof(HlU16), &blockCount, NULL);
+    result = hlStreamWrite(stream, sizeof(HlU16), &blockCount, NULL);
     if (HL_FAILED(result)) return result;
 
-    /* Jump back to end of file and return. */
-    return hlFileJumpTo(file, curPos);
+    /* Jump back to end of stream and return. */
+    return hlStreamJumpTo(stream, curPos);
 }
 
-HlResult hlBINAV2DataBlockStartWrite(HlBINAEndianFlag endianFlag, HlFile* file)
+HlResult hlBINAV2DataBlockStartWrite(HlBINAEndianFlag endianFlag, HlStream* stream)
 {
     /* Generate data block header. */
     HlBINAV2BlockDataHeader dataBlock =
@@ -788,7 +790,7 @@ HlResult hlBINAV2DataBlockStartWrite(HlBINAEndianFlag endianFlag, HlFile* file)
     }
 
     /* Write data block to file. */
-    result = hlFileWrite(file, sizeof(dataBlock), &dataBlock, NULL);
+    result = hlStreamWrite(stream, sizeof(dataBlock), &dataBlock, NULL);
     if (HL_FAILED(result)) return result;
 
     /* HACK: Re-use dataBlock memory to write padding. */
@@ -796,39 +798,39 @@ HlResult hlBINAV2DataBlockStartWrite(HlBINAEndianFlag endianFlag, HlFile* file)
     dataBlock.relativeDataOffset = 0;
 
     /* Write padding and return result. */
-    return hlFileWrite(file, sizeof(dataBlock), &dataBlock, NULL);
+    return hlStreamWrite(stream, sizeof(dataBlock), &dataBlock, NULL);
 }
 
 HlResult hlBINAV2DataBlockFinishWrite(size_t dataBlockPos, HlBool use64BitOffsets,
     HlBINAEndianFlag endianFlag, const HlStrTable* HL_RESTRICT strTable,
-    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file)
+    HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream)
 {
     const size_t dataPos = (dataBlockPos + (sizeof(HlBINAV2BlockDataHeader) * 2));
     size_t strTablePos, offTablePos, eofPos;
     HlResult result;
 
     /* Get string table position. */
-    strTablePos = hlFileTell(file);
+    strTablePos = hlStreamTell(stream);
 
     /* Write string table. */
     result = (use64BitOffsets) ?
-        hlBINAStringsWrite64(dataPos, endianFlag, strTable, offTable, file) :
-        hlBINAStringsWrite32(dataPos, endianFlag, strTable, offTable, file);
+        hlBINAStringsWrite64(dataPos, endianFlag, strTable, offTable, stream) :
+        hlBINAStringsWrite32(dataPos, endianFlag, strTable, offTable, stream);
 
     if (HL_FAILED(result)) return result;
 
     /* Get offset table position. */
-    offTablePos = hlFileTell(file);
+    offTablePos = hlStreamTell(stream);
 
     /* Write offset table. */
-    result = hlBINAOffsetsWrite(dataPos, offTable, file);
+    result = hlBINAOffsetsWrite(dataPos, offTable, stream);
     if (HL_FAILED(result)) return result;
 
-    /* Get end of file position. */
-    eofPos = hlFileTell(file);
+    /* Get end of stream position. */
+    eofPos = hlStreamTell(stream);
 
     /* Jump to data block size position. */
-    result = hlFileJumpTo(file, dataBlockPos + 4);
+    result = hlStreamJumpTo(stream, dataBlockPos + 4);
     if (HL_FAILED(result)) return result;
 
     /* Fill-in data block header values. */
@@ -858,12 +860,12 @@ HlResult hlBINAV2DataBlockFinishWrite(size_t dataBlockPos, HlBool use64BitOffset
         }
 
         /* Fill-in data block header values. */
-        result = hlFileWrite(file, sizeof(values), &values, NULL);
+        result = hlStreamWrite(stream, sizeof(values), &values, NULL);
         if (HL_FAILED(result)) return result;
     }
 
-    /* Jump to end of file and return. */
-    return hlFileJumpTo(file, eofPos);
+    /* Jump to end of stream and return. */
+    return hlStreamJumpTo(stream, eofPos);
 }
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS

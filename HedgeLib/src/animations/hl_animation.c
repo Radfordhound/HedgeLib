@@ -1,8 +1,7 @@
-#include "../depends/cJSON/cJSON.h"
 #include "hedgelib/hl_blob.h"
-#include "hedgelib/hl_memory.h"
 #include "hedgelib/io/hl_file.h"
 #include "hedgelib/animations/hl_animation.h"
+#include "../depends/cJSON/cJSON.h"
 
 const char* const hlAnimationKeyGroupGetFormatStr(const HlAnimationKeyGroup* keyGroup)
 {
@@ -794,7 +793,7 @@ static HlResult hlINAnimationGenerateJSON(const HlAnimation* HL_RESTRICT anim,
 }
 
 HlResult hlAnimationWriteJSON(const HlAnimation* HL_RESTRICT anim,
-    HlFile* HL_RESTRICT file)
+    HlStream* HL_RESTRICT stream)
 {
     cJSON* jrootObj;
     HlResult result;
@@ -807,7 +806,7 @@ HlResult hlAnimationWriteJSON(const HlAnimation* HL_RESTRICT anim,
     result = hlINAnimationGenerateJSON(anim, jrootObj);
     if (HL_FAILED(result)) goto end;
 
-    /* Write JSON to file. */
+    /* Write JSON to stream. */
     {
         char* jsonText;
         size_t size;
@@ -820,8 +819,9 @@ HlResult hlAnimationWriteJSON(const HlAnimation* HL_RESTRICT anim,
             goto end;
         }
 
-        /* Write JSON to file. */
-        result = hlFileWrite(file, (size - 1) * sizeof(char), jsonText, 0);
+        /* Write JSON to stream. */
+        result = hlStreamWrite(stream, (size - 1) * sizeof(char), jsonText, NULL);
+        hlFree(jsonText);
     }
 
 end:
@@ -838,20 +838,20 @@ HlAnimation* hlAnimationImportJSON(const HlNChar* filePath)
 HlResult hlAnimationExportJSON(const HlAnimation* HL_RESTRICT anim,
     const HlNChar* HL_RESTRICT filePath)
 {
-    HlFile* file;
+    HlFileStream* file;
     HlResult result;
 
     /* Open file. */
-    result = hlFileOpen(filePath, HL_FILE_MODE_WRITE, &file);
+    result = hlFileStreamOpen(filePath, HL_FILE_MODE_WRITE, &file);
     if (HL_FAILED(result)) return result;
 
     /* Write JSON to file, close it, and return. */
     result = hlAnimationWriteJSON(anim, file);
     if (HL_FAILED(result))
     {
-        hlFileClose(file);
+        hlFileStreamClose(file);
         return result;
     }
 
-    return hlFileClose(file);
+    return hlFileStreamClose(file);
 }

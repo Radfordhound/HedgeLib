@@ -1,6 +1,4 @@
 #include "hedgelib/io/hl_file.h"
-#include "hedgelib/hl_memory.h"
-#include "hedgelib/hl_endian.h"
 #include "../hl_in_assert.h"
 
 #ifdef _WIN32
@@ -13,6 +11,336 @@
 #else
 #error "HedgeLib currently only supports Windows and POSIX-compliant platforms."
 #endif
+
+static HlResult hlINFileStreamRead(HlFileStream* HL_RESTRICT file, size_t count,
+    void* HL_RESTRICT buf, size_t* HL_RESTRICT readByteCount)
+{
+#ifdef _WIN32
+    DWORD readBytes;
+    BOOL succeeded;
+
+    /* Ensure count can fit within a DWORD before casting to one. */
+    HL_ASSERT(count <= ULONG_MAX);
+
+    /* Read the given number of bytes from the file. */
+    succeeded = ReadFile((HANDLE)file->handle,
+        buf, (DWORD)count, &readBytes, 0);
+
+    /* Increase stream curPos. */
+    file->curPos += readBytes;
+
+    if (readByteCount)
+    {
+        /*
+           The readByteCount pointer was provided; store the
+           amount of bytes successfully read from the file into it
+           and return the result.
+        */
+        *readByteCount = (size_t)readBytes;
+        return (succeeded) ? HL_RESULT_SUCCESS :
+            hlINWin32GetResultLastError();
+    }
+    else
+    {
+        /*
+           The readByteCount pointer was not provided; return
+           the result, also treating the amount of read bytes
+           not being equal to count as an error.
+        */
+        if (!succeeded) return hlINWin32GetResultLastError();
+        return (readBytes == count) ? HL_RESULT_SUCCESS :
+            HL_ERROR_UNKNOWN;
+    }
+#else
+    ssize_t readBytes;
+    HlBool succeeded;
+
+    /* Ensure count can fit within a ssize_t before casting to one. */
+    HL_ASSERT(count <= SSIZE_MAX);
+
+    /* Read the given number of bytes from the file. */
+    readBytes = read((int)file->handle, buf, count);
+    
+    /* Set succeeded and act based on if the read succeeded or failed. */
+    if ((succeeded = (readBytes != -1)))
+    {
+        /* Increase stream curPos. */
+        file->curPos += readBytes;
+    }
+    else
+    {
+        /* Set readBytes count to 0. */
+        readBytes = 0;
+    }
+
+    if (readByteCount)
+    {
+        /*
+           The readByteCount pointer was provided; store the
+           amount of bytes successfully read from the file into it
+           and return the result.
+        */
+        *readByteCount = (size_t)readBytes;
+        return (succeeded) ? HL_RESULT_SUCCESS :
+            hlINPosixGetResultErrno();
+    }
+    else
+    {
+        /*
+           The readByteCount pointer was not provided; return
+           the result, also treating the amount of read bytes
+           not being equal to count as an error.
+        */
+        if (!succeeded) return hlINPosixGetResultErrno();
+        return (readBytes == count) ? HL_RESULT_SUCCESS :
+            HL_ERROR_UNKNOWN;
+    }
+#endif
+}
+
+static HlResult hlINFileStreamWrite(HlFileStream* HL_RESTRICT file, size_t count,
+    const void* HL_RESTRICT buf, size_t* HL_RESTRICT writtenByteCount)
+{
+#ifdef _WIN32
+    DWORD writtenBytes;
+    BOOL succeeded;
+
+    /* Ensure count can fit within a DWORD before casting to one. */
+    HL_ASSERT(count <= ULONG_MAX);
+
+    /* Write the given number of bytes to the file. */
+    succeeded = WriteFile((HANDLE)file->handle,
+        buf, (DWORD)count, &writtenBytes, 0);
+
+    /* Increase stream curPos. */
+    file->curPos += writtenBytes;
+
+    if (writtenByteCount)
+    {
+        /*
+           The writtenByteCount pointer was provided; store the
+           amount of bytes successfully written to the file into it
+           and return the result.
+        */
+        *writtenByteCount = (size_t)writtenBytes;
+        return (succeeded) ? HL_RESULT_SUCCESS :
+            hlINWin32GetResultLastError();
+    }
+    else
+    {
+        /*
+           The writtenByteCount pointer was not provided; return
+           the result, also treating the amount of written bytes
+           not being equal to count as an error.
+        */
+        if (!succeeded) return hlINWin32GetResultLastError();
+        return (writtenBytes == count) ? HL_RESULT_SUCCESS :
+            HL_ERROR_UNKNOWN;
+    }
+#else
+    ssize_t writtenBytes;
+    HlBool succeeded;
+
+    /* Ensure count can fit within a ssize_t before casting to one. */
+    HL_ASSERT(count <= SSIZE_MAX);
+
+    /* Write the given number of bytes to the file. */
+    writtenBytes = write((int)file->handle, buf, count);
+    
+    /* Set succeeded and act based on if the write succeeded or failed. */
+    if ((succeeded = (writtenBytes != -1)))
+    {
+        /* Increase stream curPos. */
+        file->curPos += writtenBytes;
+    }
+    else
+    {
+        /* Set writtenBytes count to 0. */
+        writtenBytes = 0;
+    }
+
+    if (writtenByteCount)
+    {
+        /*
+           The writtenByteCount pointer was provided; store the
+           amount of bytes successfully written to the file and
+           return the result.
+        */
+        *writtenByteCount = (size_t)writtenBytes;
+        return (succeeded) ? HL_RESULT_SUCCESS :
+            hlINPosixGetResultErrno();
+    }
+    else
+    {
+        /*
+           The writtenByteCount pointer was not provided; return
+           the result, also treating the amount of written bytes
+           not being equal to count as an error.
+        */
+        if (!succeeded) return hlINPosixGetResultErrno();
+        return (writtenBytes == count) ? HL_RESULT_SUCCESS :
+            HL_ERROR_UNKNOWN;
+    }
+#endif
+}
+
+#ifdef _WIN32
+static DWORD hlINWin32FileGetMoveMethod(const HlSeekMode mode)
+{
+    switch (mode)
+    {
+    default:
+    case HL_SEEK_MODE_BEG:
+        return FILE_BEGIN;
+
+    case HL_SEEK_MODE_CUR:
+        return FILE_CURRENT;
+
+    case HL_SEEK_MODE_END:
+        return FILE_END;
+    }
+}
+#elif defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+static int hlINPosixFileGetSeekMethod(const HlSeekMode mode)
+{
+    switch (mode)
+    {
+    default:
+    case HL_SEEK_MODE_BEG:
+        return SEEK_SET;
+
+    case HL_SEEK_MODE_CUR:
+        return SEEK_CUR;
+
+    case HL_SEEK_MODE_END:
+        return SEEK_END;
+    }
+}
+#endif
+
+static HlResult hlINFileStreamSeek(HlFileStream* file,
+    long offset, HlSeekMode seekMode)
+{
+#ifdef _WIN32
+    LARGE_INTEGER loffset, lcurPos;
+    BOOL succeeded;
+
+    /* Seek using the given parameters. */
+    loffset.QuadPart = (LONGLONG)offset;
+
+    succeeded = SetFilePointerEx((HANDLE)file->handle, loffset,
+        &lcurPos, hlINWin32FileGetMoveMethod(seekMode));
+
+    /* Set stream curPos. */
+    file->curPos = (size_t)lcurPos.QuadPart;
+
+    /* Return result. */
+    return (succeeded) ? HL_RESULT_SUCCESS :
+        hlINWin32GetResultLastError();
+#else
+    /* Seek using the given parameters. */
+    off_t curPos = lseek((int)file->handle, (off_t)offset,
+        hlINPosixFileGetSeekMethod(seekMode));
+
+    /* Return failure if seeking failed. */
+    if (curPos == (off_t)(-1)) return hlINPosixGetResultErrno();
+
+    /* Set stream curPos and return success. */
+    file->curPos = (size_t)curPos;
+    return HL_RESULT_SUCCESS;
+#endif
+}
+
+static HlResult hlINFileStreamJumpTo(HlFileStream* file, size_t pos)
+{
+#ifdef _WIN32
+    LARGE_INTEGER loffset, lcurPos;
+    BOOL succeeded;
+
+    /* Jump to the given position. */
+    loffset.QuadPart = (LONGLONG)pos;
+
+    succeeded = SetFilePointerEx((HANDLE)file->handle, loffset,
+        &lcurPos, FILE_BEGIN);
+
+    /* Set stream curPos. */
+    file->curPos = (size_t)lcurPos.QuadPart;
+
+    /* Return result. */
+    return (succeeded) ? HL_RESULT_SUCCESS :
+        hlINWin32GetResultLastError();
+#else
+    /* Jump to the given position. */
+    off_t curPos = lseek((int)file->handle, (off_t)pos, SEEK_SET);
+
+    /* Return failure if seeking failed. */
+    if (curPos == (off_t)(-1)) return hlINPosixGetResultErrno();
+
+    /* Set stream curPos and return success. */
+    file->curPos = (size_t)curPos;
+    return HL_RESULT_SUCCESS;
+#endif
+}
+
+static HlResult hlINFileStreamFlush(HlFileStream* file)
+{
+    /* Flush the given file stream and return whether flushing was successful or not. */
+#ifdef _WIN32
+    const BOOL succeeded = FlushFileBuffers((HANDLE)file->handle);
+    return (succeeded) ? HL_RESULT_SUCCESS :
+        hlINWin32GetResultLastError();
+#else
+    const int result = fsync((int)file->handle);
+    return (result == 0) ? HL_RESULT_SUCCESS :
+        hlINPosixGetResultErrno();
+#endif
+}
+
+static HlResult hlINFileStreamGetSize(HlFileStream* HL_RESTRICT file,
+    size_t* HL_RESTRICT fileSize)
+{
+#ifdef _WIN32
+    LARGE_INTEGER size;
+    BOOL succeeded;
+
+    /* Get the size of the given file. */
+    succeeded = GetFileSizeEx((HANDLE)file->handle, &size);
+
+    /*
+       Store the file's size in the fileSize pointer, or
+       0 if we failed to get the file's size.
+    */
+    *fileSize = (succeeded) ? (size_t)size.QuadPart : 0;
+
+    /* Return result. */
+    return (succeeded) ? HL_RESULT_SUCCESS :
+        hlINWin32GetResultLastError();
+#else
+    struct stat st;
+    if (fstat((int)file->handle, &st))
+    {
+        /* Store 0 in the fileSize pointer and return the error. */
+        *fileSize = 0;
+        return hlINPosixGetResultErrno();
+    }
+    else
+    {
+        /* Store the file's size in the fileSize pointer and return success. */
+        *fileSize = st.st_size;
+        return HL_RESULT_SUCCESS;
+    }
+#endif
+}
+
+static const HlStreamFuncs HlINFileStreamFuncPtrs =
+{
+    hlINFileStreamRead,         /* read */
+    hlINFileStreamWrite,        /* write */
+    hlINFileStreamSeek,         /* seek */
+    hlINFileStreamJumpTo,       /* jumpTo */
+    hlINFileStreamFlush,        /* flush */
+    hlINFileStreamGetSize       /* getSize */
+};
 
 #ifdef _WIN32
 typedef HANDLE HlINFileHandle;
@@ -92,18 +420,11 @@ static int hlINPosixFileGetFlags(const HlFileMode mode)
 }
 #endif
 
-typedef struct HlFile
+HlResult hlFileStreamOpen(const HlNChar* HL_RESTRICT filePath,
+    HlFileMode mode, HlFileStream* HL_RESTRICT * HL_RESTRICT file)
 {
-    HlINFileHandle handle;
-    size_t curPos;
-}
-HlFile;
-
-HlResult hlFileOpen(const HlNChar* HL_RESTRICT filePath,
-    HlFileMode mode, HlFile* HL_RESTRICT * HL_RESTRICT file)
-{
+    HlFileStream* hlFile;
     HlINFileHandle fileHandle;
-    HlFile* hlFile;
 
 #ifdef _WIN32
     SECURITY_ATTRIBUTES securityAttrs;
@@ -113,8 +434,8 @@ HlResult hlFileOpen(const HlNChar* HL_RESTRICT filePath,
     const DWORD shareMode = hlINWin32FileGetShareMode(mode);
     const DWORD createOptions = hlINWin32FileGetCreateOptions(mode);
 
-    /* Allocate enough space for a HlFile. */
-    hlFile = HL_ALLOC_OBJ(HlFile);
+    /* Allocate enough space for an HlFileStream. */
+    hlFile = HL_ALLOC_OBJ(HlFileStream);
     if (!hlFile) return HL_ERROR_OUT_OF_MEMORY;
 
     /* Setup securityAttrs */
@@ -142,8 +463,8 @@ HlResult hlFileOpen(const HlNChar* HL_RESTRICT filePath,
         return hlINWin32GetResultLastError();
     }
 #else
-    /* Allocate enough space for a HlFile. */
-    hlFile = HL_ALLOC_OBJ(HlFile);
+    /* Allocate enough space for a HlFileStream. */
+    hlFile = HL_ALLOC_OBJ(HlFileStream);
     if (!hlFile) return HL_ERROR_OUT_OF_MEMORY;
 
     /* Open file and return if any errors were encountered. */
@@ -151,306 +472,33 @@ HlResult hlFileOpen(const HlNChar* HL_RESTRICT filePath,
         S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 
     /* Return result if we encountered an error. */
-    if (fileHandle == -1)
+    if (fileHandle != 0)
     {
         hlFree(hlFile);
         return hlINPosixGetResultErrno();
     }
 #endif
     
-    /* Set pointer and return success. */
-    hlFile->handle = fileHandle;
+    /* Setup HlStream, set pointer, and return success. */
+    hlFile->funcs = &HlINFileStreamFuncPtrs;
+    hlFile->handle = (HlUMax)fileHandle;
+    hlFile->customData = 0;
     hlFile->curPos = 0;
-    *file = hlFile;
 
+    *file = hlFile;
     return HL_RESULT_SUCCESS;
 
 }
 
-HlResult hlFileRead(HlFile* HL_RESTRICT file, size_t count,
-    void* HL_RESTRICT buf, size_t* HL_RESTRICT readByteCount)
+HlResult hlFileStreamClose(HlFileStream* file)
 {
-#ifdef _WIN32
-    DWORD readBytes;
-    BOOL succeeded;
-
-    /* Ensure count can fit within a DWORD before casting to one. */
-    HL_ASSERT(count <= ULONG_MAX);
-
-    /* Read the given number of bytes from the file. */
-    succeeded = ReadFile(file->handle,
-        buf, (DWORD)count, &readBytes, 0);
-
-    /* Increase file curPos. */
-    file->curPos += readBytes;
-
-    if (readByteCount)
-    {
-        /*
-           The readByteCount pointer was provided; store the
-           amount of bytes successfully read from the file into it
-           and return the result.
-        */
-        *readByteCount = (size_t)readBytes;
-        return (succeeded) ? HL_RESULT_SUCCESS :
-            hlINWin32GetResultLastError();
-    }
-    else
-    {
-        /*
-           The readByteCount pointer was not provided; return
-           the result, also treating the amount of read bytes
-           not being equal to count as an error.
-        */
-        if (!succeeded) return hlINWin32GetResultLastError();
-        return (readBytes == count) ? HL_RESULT_SUCCESS :
-            HL_ERROR_UNKNOWN;
-    }
-#else
-    ssize_t readBytes;
-    HlBool succeeded;
-
-    /* Ensure count can fit within a ssize_t before casting to one. */
-    HL_ASSERT(count <= SSIZE_MAX);
-
-    /* Read the given number of bytes from the file. */
-    readBytes = read(file->handle, buf, count);
-    
-    /* Set succeeded and act based on if the read succeeded or failed. */
-    if ((succeeded = (readBytes != -1)))
-    {
-        /* Increase file curPos. */
-        file->curPos += readBytes;
-    }
-    else
-    {
-        /* Set readBytes count to 0. */
-        readBytes = 0;
-    }
-
-    if (readByteCount)
-    {
-        /*
-           The readByteCount pointer was provided; store the
-           amount of bytes successfully read from the file into it
-           and return the result.
-        */
-        *readByteCount = (size_t)readBytes;
-        return (succeeded) ? HL_RESULT_SUCCESS :
-            hlINPosixGetResultErrno();
-    }
-    else
-    {
-        /*
-           The readByteCount pointer was not provided; return
-           the result, also treating the amount of read bytes
-           not being equal to count as an error.
-        */
-        if (!succeeded) return hlINPosixGetResultErrno();
-        return (readBytes == count) ? HL_RESULT_SUCCESS :
-            HL_ERROR_UNKNOWN;
-    }
-#endif
-}
-
-HlResult hlFileWrite(HlFile* HL_RESTRICT file, size_t count,
-    const void* HL_RESTRICT buf, size_t* HL_RESTRICT writtenByteCount)
-{
-#ifdef _WIN32
-    DWORD writtenBytes;
-    BOOL succeeded;
-
-    /* Ensure count can fit within a DWORD before casting to one. */
-    HL_ASSERT(count <= ULONG_MAX);
-
-    /* Write the given number of bytes to the file. */
-    succeeded = WriteFile(file->handle,
-        buf, (DWORD)count, &writtenBytes, 0);
-
-    /* Increase file curPos. */
-    file->curPos += writtenBytes;
-
-    if (writtenByteCount)
-    {
-        /*
-           The writtenByteCount pointer was provided; store the
-           amount of bytes successfully written to the file into it
-           and return the result.
-        */
-        *writtenByteCount = (size_t)writtenBytes;
-        return (succeeded) ? HL_RESULT_SUCCESS :
-            hlINWin32GetResultLastError();
-    }
-    else
-    {
-        /*
-           The writtenByteCount pointer was not provided; return
-           the result, also treating the amount of written bytes
-           not being equal to count as an error.
-        */
-        if (!succeeded) return hlINWin32GetResultLastError();
-        return (writtenBytes == count) ? HL_RESULT_SUCCESS :
-            HL_ERROR_UNKNOWN;
-    }
-#else
-    ssize_t writtenBytes;
-    HlBool succeeded;
-
-    /* Ensure count can fit within a ssize_t before casting to one. */
-    HL_ASSERT(count <= SSIZE_MAX);
-
-    /* Write the given number of bytes to the file. */
-    writtenBytes = write(file->handle, buf, count);
-    
-    /* Set succeeded and act based on if the write succeeded or failed. */
-    if ((succeeded = (writtenBytes != -1)))
-    {
-        /* Increase file curPos. */
-        file->curPos += writtenBytes;
-    }
-    else
-    {
-        /* Set writtenBytes count to 0. */
-        writtenBytes = 0;
-    }
-
-    if (writtenByteCount)
-    {
-        /*
-           The writtenByteCount pointer was provided; store the
-           amount of bytes successfully written to the file and
-           return the result.
-        */
-        *writtenByteCount = (size_t)writtenBytes;
-        return (succeeded) ? HL_RESULT_SUCCESS :
-            hlINPosixGetResultErrno();
-    }
-    else
-    {
-        /*
-           The writtenByteCount pointer was not provided; return
-           the result, also treating the amount of written bytes
-           not being equal to count as an error.
-        */
-        if (!succeeded) return hlINPosixGetResultErrno();
-        return (writtenBytes == count) ? HL_RESULT_SUCCESS :
-            HL_ERROR_UNKNOWN;
-    }
-#endif
-}
-
-const static HlU8 hlINFileNulls[255] = { 0 };
-
-HlResult hlFileWriteNulls(HlFile* HL_RESTRICT file,
-    size_t amount, size_t* HL_RESTRICT writtenByteCount)
-{
-    HlResult result;
-    if (amount > 255)
-    {
-        /* Allocate a buffer large enough to hold all of the nulls we want to write. */
-        void* nulls = hlAlloc(amount);
-        if (!nulls) return HL_ERROR_OUT_OF_MEMORY;
-
-        /* Zero-out the allocated memory in the buffer. */
-        memset(nulls, 0, amount);
-
-        /* Write the nulls to the file and free the buffer. */
-        result = hlFileWrite(file, amount, nulls, writtenByteCount);
-        hlFree(nulls);
-    }
-    else
-    {
-        /* Write the given amount of nulls to the file using our static nulls buffer. */
-        result = hlFileWrite(file, amount,
-            hlINFileNulls, writtenByteCount);
-    }
-
-    return result;
-}
-
-HlResult hlFileWriteOff32(HlFile* HL_RESTRICT file,
-    size_t basePos, size_t offVal, HlBool doSwap, 
-    HlOffTable* HL_RESTRICT offTable)
-{
-    /* Compute offset. */
-    HlU32 off = (HlU32)(offVal - basePos);
-
-    /* Swap offset if necessary. */
-    if (doSwap) hlSwapU32P(&off);
-
-    /* Add offset position to offset table if requested by user. */
-    if (offTable)
-    {
-        HlResult result = HL_LIST_PUSH(*offTable, hlFileTell(file));
-        if (HL_FAILED(result)) return result;
-    }
-
-    /* Write offset to file and return result. */
-    return hlFileWrite(file, sizeof(off), &off, NULL);
-}
-
-HlResult hlFileWriteOff64(HlFile* HL_RESTRICT file,
-    size_t basePos, size_t offVal, HlBool doSwap,
-    HlOffTable* HL_RESTRICT offTable)
-{
-    /* Compute offset. */
-    HlU64 off = (HlU64)(offVal - basePos);
-
-    /* Swap offset if necessary. */
-    if (doSwap) hlSwapU64P(&off);
-
-    /* Add offset position to offset table if requested by user. */
-    if (offTable)
-    {
-        HlResult result = HL_LIST_PUSH(*offTable, hlFileTell(file));
-        if (HL_FAILED(result)) return result;
-    }
-
-    /* Write offset to file and return result. */
-    return hlFileWrite(file, sizeof(off), &off, NULL);
-}
-
-HlResult hlFileAlign(HlFile* file, size_t stride)
-{
-    /* If stride is < 2, we don't need to align; return success. */
-    size_t pos;
-    if (stride-- < 2) return HL_RESULT_SUCCESS;
-
-    /* Get the current file position. */
-    pos = hlFileTell(file);
-
-    /*
-       Compute the closest position in the file that's aligned
-       by the given stride, and jump to that position.
-    */
-    return hlFileJumpTo(file, ((pos + stride) & ~stride));
-}
-
-HlResult hlFilePad(HlFile* file, size_t stride)
-{
-    /* If stride is < 2, we don't need to pad; return success. */
-    size_t pos;
-    if (stride-- < 2) return HL_RESULT_SUCCESS;
-
-    /* Get the current file position. */
-    pos = hlFileTell(file);
-
-    /*
-       Compute the amount of nulls we need to write to align the
-       file with the given stride, and write that many nulls.
-    */
-    return hlFileWriteNulls(file, ((pos + stride) & ~stride) - pos, 0);
-}
-
-HlResult hlFileClose(HlFile* file)
-{
-    /* Close the given file and return whether closing was successful or not. */
+    /* Close the given file stream and return whether closing was successful or not. */
 #ifdef _WIN32
     BOOL succeeded;
     
     if (!file) return HL_RESULT_SUCCESS;
 
-    succeeded = CloseHandle(file->handle);
+    succeeded = CloseHandle((HANDLE)file->handle);
     hlFree(file);
 
     return (succeeded) ? HL_RESULT_SUCCESS :
@@ -460,228 +508,80 @@ HlResult hlFileClose(HlFile* file)
     
     if (!file) return HL_RESULT_SUCCESS;
 
-    result = close(file->handle);
+    result = close((int)file->handle);
     hlFree(file);
 
-    return (result != -1) ? HL_RESULT_SUCCESS :
+    return (result == 0) ? HL_RESULT_SUCCESS :
         hlINPosixGetResultErrno();
-#endif
-}
-
-HlResult hlFileGetSize(HlFile* HL_RESTRICT file, size_t* HL_RESTRICT fileSize)
-{
-#ifdef _WIN32
-    LARGE_INTEGER size;
-    BOOL succeeded;
-
-    /* Get the size of the given file. */
-    succeeded = GetFileSizeEx(file->handle, &size);
-
-    /*
-       Store the file's size in the fileSize pointer, or
-       0 if we failed to get the file's size.
-    */
-    *fileSize = (succeeded) ? (size_t)size.QuadPart : 0;
-
-    /* Return result. */
-    return (succeeded) ? HL_RESULT_SUCCESS :
-        hlINWin32GetResultLastError();
-#else
-    struct stat st;
-    if (fstat(file->handle, &st))
-    {
-        /* Store 0 in the fileSize pointer and return the error. */
-        *fileSize = 0;
-        return hlINPosixGetResultErrno();
-    }
-    else
-    {
-        /* Store the file's size in the fileSize pointer and return success. */
-        *fileSize = st.st_size;
-        return HL_RESULT_SUCCESS;
-    }
 #endif
 }
 
 HlResult hlFileLoad(const HlNChar* HL_RESTRICT filePath,
     void* HL_RESTRICT * HL_RESTRICT data, size_t* HL_RESTRICT dataSize)
 {
-    void* buf;
-    HlFile* file;
+    void* buf = NULL;
+    HlFileStream* file;
     size_t fileSize;
     HlResult result;
 
-    /* Open the file at the given file path. */
-    result = hlFileOpen(filePath, HL_FILE_MODE_READ, &file);
+    /* Open a stream to the file at the given file path. */
+    result = hlFileStreamOpen(filePath, HL_FILE_MODE_READ, &file);
     if (HL_FAILED(result)) return result;
 
     /* Get the file's size. */
-    result = hlFileGetSize(file, &fileSize);
-    if (HL_FAILED(result)) goto failed_pre_alloc;
+    result = hlStreamGetSize(file, &fileSize);
+    if (HL_FAILED(result)) goto failed;
 
     /* Allocate a buffer large enough to hold the entire contents of the file. */
     buf = hlAlloc(fileSize);
     if (!buf)
     {
         result = HL_ERROR_OUT_OF_MEMORY;
-        goto failed_pre_alloc;
+        goto failed;
     }
 
     /* Read all bytes from the file into the buffer. */
-    result = hlFileRead(file, fileSize, buf, NULL);
+    result = hlStreamRead(file, fileSize, buf, NULL);
     if (HL_FAILED(result)) goto failed;
 
-    /* Close the file. */
-    hlFileClose(file);
+    /* Close the file stream. */
+    result = hlFileStreamClose(file);
+    if (HL_FAILED(result))
+    {
+        hlFree(buf);
+        return result;
+    }
 
-    /* Set pointers and return success. */
+    /* Set pointers and return result. */
     *data = buf;
     if (dataSize) *dataSize = fileSize;
 
-    return HL_RESULT_SUCCESS;
+    return result;
 
 failed:
     hlFree(buf);
-
-failed_pre_alloc:
-    hlFileClose(file);
+    hlFileStreamClose(file);
     return result;
 }
 
 HlResult hlFileSave(const void* HL_RESTRICT data,
-    size_t count, const HlNChar* HL_RESTRICT filePath)
+    size_t dataSize, const HlNChar* HL_RESTRICT filePath)
 {
-    HlFile* file;
+    HlFileStream* file;
     HlResult result;
 
     /* Open the file at the given file path, creating it if it doesn't yet exist. */
-    result = hlFileOpen(filePath, HL_FILE_MODE_WRITE, &file);
+    result = hlFileStreamOpen(filePath, HL_FILE_MODE_WRITE, &file);
     if (HL_FAILED(result)) return result;
 
-    /* Write all bytes in the buffer to the file, close the file, and return. */
-    result = hlFileWrite(file, count, data, 0);
-    hlFileClose(file);
-
-    return result;
-}
-
-#ifdef _WIN32
-static DWORD hlINWin32FileGetMoveMethod(const HlSeekMode mode)
-{
-    switch (mode)
+    /* Write all bytes in the buffer to the file. */
+    result = hlStreamWrite(file, dataSize, data, 0);
+    if (HL_FAILED(result))
     {
-    default:
-    case HL_SEEK_MODE_BEG:
-        return FILE_BEGIN;
-
-    case HL_SEEK_MODE_CUR:
-        return FILE_CURRENT;
-
-    case HL_SEEK_MODE_END:
-        return FILE_END;
+        hlFileStreamClose(file);
+        return result;
     }
+
+    /* Close the file stream and return. */
+    return hlFileStreamClose(file);
 }
-#elif defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
-static int hlINPosixFileGetSeekMethod(const HlSeekMode mode)
-{
-    switch (mode)
-    {
-    default:
-    case HL_SEEK_MODE_BEG:
-        return SEEK_SET;
-
-    case HL_SEEK_MODE_CUR:
-        return SEEK_CUR;
-
-    case HL_SEEK_MODE_END:
-        return SEEK_END;
-    }
-}
-#endif
-
-HlResult hlFileSeek(HlFile* file,
-    long offset, HlSeekMode seekMode)
-{
-#ifdef _WIN32
-    LARGE_INTEGER loffset, lcurPos;
-    BOOL succeeded;
-
-    /* Seek using the given parameters. */
-    loffset.QuadPart = (LONGLONG)offset;
-
-    succeeded = SetFilePointerEx(file->handle, loffset,
-        &lcurPos, hlINWin32FileGetMoveMethod(seekMode));
-
-    /* Set file curPos. */
-    file->curPos = (size_t)lcurPos.QuadPart;
-
-    /* Return result. */
-    return (succeeded) ? HL_RESULT_SUCCESS :
-        hlINWin32GetResultLastError();
-#else
-    /* Seek using the given parameters. */
-    off_t curPos = lseek(file->handle, (off_t)offset,
-        hlINPosixFileGetSeekMethod(seekMode));
-
-    /* Return failure if seeking failed. */
-    if (curPos == (off_t)-1) return hlINPosixGetResultErrno();
-
-    /* Set file curPos and return success. */
-    file->curPos = (size_t)curPos;
-    return HL_RESULT_SUCCESS;
-#endif
-}
-
-size_t hlFileTell(const HlFile* file)
-{
-    return file->curPos;
-}
-
-HlResult hlFileJumpTo(HlFile* file, size_t pos)
-{
-#ifdef _WIN32
-    LARGE_INTEGER loffset, lcurPos;
-    BOOL succeeded;
-
-    /* Jump to the given position. */
-    loffset.QuadPart = (LONGLONG)pos;
-
-    succeeded = SetFilePointerEx(file->handle, loffset,
-        &lcurPos, FILE_BEGIN);
-
-    /* Set file curPos. */
-    file->curPos = (size_t)lcurPos.QuadPart;
-
-    /* Return result. */
-    return (succeeded) ? HL_RESULT_SUCCESS :
-        hlINWin32GetResultLastError();
-#else
-    /* Jump to the given position. */
-    off_t curPos = lseek(file->handle, (off_t)pos, SEEK_SET);
-
-    /* Return failure if seeking failed. */
-    if (curPos == (off_t)-1) return hlINPosixGetResultErrno();
-
-    /* Set file curPos and return success. */
-    file->curPos = (size_t)curPos;
-    return HL_RESULT_SUCCESS;
-#endif
-}
-
-#ifndef HL_NO_EXTERNAL_WRAPPERS
-HlResult hlFileWriteStringExt(HlFile* HL_RESTRICT file,
-    const char* HL_RESTRICT str, size_t* HL_RESTRICT writtenByteCount)
-{
-    return hlFileWriteString(file, str, writtenByteCount);
-}
-
-HlResult hlFileJumpAheadExt(HlFile* file, long amount)
-{
-    return hlFileJumpAhead(file, amount);
-}
-
-HlResult hlFileJumpBehindExt(HlFile* file, long amount)
-{
-    return hlFileJumpBehind(file, amount);
-}
-#endif

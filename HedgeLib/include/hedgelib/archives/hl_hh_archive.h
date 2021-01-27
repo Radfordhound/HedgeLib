@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-typedef struct HlFile HlFile;
+typedef struct HlStream HlStream;
 
 #define HL_HH_DEFAULT_SPLIT_LIMIT       0xA01000
 #define HL_HH_DEFAULT_ALIGNMENT         0x40
@@ -111,13 +111,13 @@ HL_API HlResult hlHHArchiveSave(const HlArchive* HL_RESTRICT arc, HlU32 splitLim
 HL_API HlResult hlHHPackedFileIndexV0Write(
     const HlPackedFileIndex* HL_RESTRICT pfi,
     size_t dataPos, HlOffTable* HL_RESTRICT offTable,
-    HlFile* HL_RESTRICT file);
+    HlStream* HL_RESTRICT stream);
 
 HL_API HlResult hlHHPackedFileIndexWrite(
     const HlPackedFileIndex* HL_RESTRICT pfi,
     HlU32 version, size_t dataPos,
     HlOffTable* HL_RESTRICT offTable,
-    HlFile* HL_RESTRICT file);
+    HlStream* HL_RESTRICT stream);
 
 HL_API HlResult hlHHPackedFileIndexSave(
     const HlPackedFileIndex* HL_RESTRICT pfi,

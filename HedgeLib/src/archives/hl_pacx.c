@@ -9,6 +9,8 @@
 #include "hedgelib/hl_endian.h"
 #include "hedgelib/hl_compression.h"
 #include "hedgelib/hl_math.h"
+#include "hedgelib/hl_text.h"
+#include <stdlib.h>
 
 const HlNChar HL_PACX_EXT[5] = HL_NTEXT(".pac");
 
@@ -1204,7 +1206,7 @@ HlResult hlPACxV2Load(const HlNChar* HL_RESTRICT filePath,
     return result;
 }
 
-HlResult hlPACxV2StartWrite(HlBINAEndianFlag endianFlag, HlFile* file)
+HlResult hlPACxV2StartWrite(HlBINAEndianFlag endianFlag, HlStream* stream)
 {
     /* Generate PACxV2 header. */
     const HlPACxV2Header header =
@@ -1223,16 +1225,16 @@ HlResult hlPACxV2StartWrite(HlBINAEndianFlag endianFlag, HlFile* file)
     */
 
     /* Write PACxV2 header and return result. */
-    return hlFileWrite(file, sizeof(header), &header, NULL);
+    return hlStreamWrite(stream, sizeof(header), &header, NULL);
 }
 
 HlResult hlPACxV2FinishWrite(size_t headerPos, HlU16 blockCount,
-    HlBINAEndianFlag endianFlag, HlFile* file)
+    HlBINAEndianFlag endianFlag, HlStream* stream)
 {
-    return hlBINAV2FinishWrite(headerPos, blockCount, endianFlag, file);
+    return hlBINAV2FinishWrite(headerPos, blockCount, endianFlag, stream);
 }
 
-HlResult hlPACxV2DataBlockStartWrite(HlFile* file)
+HlResult hlPACxV2DataBlockStartWrite(HlStream* stream)
 {
     /* Generate data block header. */
     const HlPACxV2BlockDataHeader dataBlock =
@@ -1255,36 +1257,36 @@ HlResult hlPACxV2DataBlockStartWrite(HlFile* file)
     */
 
     /* Write PACx data block and return. */
-    return hlFileWrite(file, sizeof(dataBlock), &dataBlock, NULL);
+    return hlStreamWrite(stream, sizeof(dataBlock), &dataBlock, NULL);
 }
 
 HlResult hlPACxV2DataBlockFinishWrite(size_t headerPos, size_t dataBlockPos,
     HlU32 treesSize, HlU32 dataEntriesSize, HlU32 proxyTableSize,
     HlBINAEndianFlag endianFlag, const HlStrTable* HL_RESTRICT strTable,
-    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file)
+    HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream)
 {
     size_t strTablePos, offTablePos, eofPos;
     HlResult result;
 
     /* Get string table position. */
-    strTablePos = hlFileTell(file);
+    strTablePos = hlStreamTell(stream);
 
     /* Write string table. */
-    result = hlBINAStringsWrite32(headerPos, endianFlag, strTable, offTable, file);
+    result = hlBINAStringsWrite32(headerPos, endianFlag, strTable, offTable, stream);
     if (HL_FAILED(result)) return result;
 
     /* Get offset table position. */
-    offTablePos = hlFileTell(file);
+    offTablePos = hlStreamTell(stream);
 
     /* Write offset table. */
-    result = hlBINAOffsetsWrite(headerPos, offTable, file);
+    result = hlBINAOffsetsWrite(headerPos, offTable, stream);
     if (HL_FAILED(result)) return result;
 
-    /* Get end of file position. */
-    eofPos = hlFileTell(file);
+    /* Get end of stream position. */
+    eofPos = hlStreamTell(stream);
 
     /* Jump to data block size position. */
-    result = hlFileJumpTo(file, dataBlockPos + 4);
+    result = hlStreamJumpTo(stream, dataBlockPos + 4);
     if (HL_FAILED(result)) return result;
 
     /* Fill-in data block header values. */
@@ -1331,12 +1333,12 @@ HlResult hlPACxV2DataBlockFinishWrite(size_t headerPos, size_t dataBlockPos,
         }
 
         /* Fill-in data block header values. */
-        result = hlFileWrite(file, sizeof(values), &values, NULL);
+        result = hlStreamWrite(stream, sizeof(values), &values, NULL);
         if (HL_FAILED(result)) return result;
     }
 
-    /* Jump to end of file and return. */
-    return hlFileJumpTo(file, eofPos);
+    /* Jump to end of stream and return. */
+    return hlStreamJumpTo(stream, eofPos);
 }
 
 typedef struct HlINPACxV2FileMetadata
@@ -1450,24 +1452,24 @@ static HlResult hlINPACxV2FileMetadataMakeCopyOfData(
     else
     {
         /* This is a file reference; open up the file. */
-        HlFile* file;
-        result = hlFileOpen(fileMetadata->entry->path,
+        HlFileStream* file;
+        result = hlFileStreamOpen(fileMetadata->entry->path,
             HL_FILE_MODE_READ, &file);
 
         if (HL_FAILED(result)) goto failed;
 
         /* Read the file's data into the buffer. */
-        result = hlFileRead(file, fileMetadata->entry->size,
+        result = hlStreamRead(file, fileMetadata->entry->size,
             newFileDataBuf, NULL);
 
         if (HL_FAILED(result))
         {
-            hlFileClose(file);
+            hlFileStreamClose(file);
             goto failed;
         }
 
         /* Close the file. */
-        result = hlFileClose(file);
+        result = hlFileStreamClose(file);
         if (HL_FAILED(result)) goto failed;
     }
 
@@ -1818,10 +1820,10 @@ static int hlINPACxV2SortFileMetadataPtrsSplit(const void* a, const void* b)
 }
 
 static HlResult hlINPACxV2WriteNodeTree(HlU32 nodeCount, HlBINAEndianFlag endianFlag,
-    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file)
+    HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream)
 {
     /* Generate node tree. */
-    const size_t eofPos = hlFileTell(file);
+    const size_t eofPos = hlStreamTell(stream);
     HlPACxV2NodeTree nodeTree =
     {
         nodeCount,                                      /* nodeCount */
@@ -1837,7 +1839,7 @@ static HlResult hlINPACxV2WriteNodeTree(HlU32 nodeCount, HlBINAEndianFlag endian
     }
 
     /* Write node tree. */
-    result = hlFileWrite(file, sizeof(nodeTree), &nodeTree, NULL);
+    result = hlStreamWrite(stream, sizeof(nodeTree), &nodeTree, NULL);
     if (HL_FAILED(result)) return result;
 
     /* Add nodes offset to offset table. */
@@ -1847,14 +1849,14 @@ static HlResult hlINPACxV2WriteNodeTree(HlU32 nodeCount, HlBINAEndianFlag endian
     if (HL_FAILED(result)) return result;
 
     /* Write placeholder type nodes and return result. */
-    return hlFileWriteNulls(file, sizeof(HlPACxV2NodeTree) * nodeCount, NULL);
+    return hlStreamWriteNulls(stream, sizeof(HlPACxV2NodeTree) * nodeCount, NULL);
 }
 
 static HlResult hlINPACxV2WriteFileData(
     const HlINPACxV2FileMetadata* HL_RESTRICT fileMetadata,
     HlBINAEndianFlag endianFlag, HlBool isHere, HlPackedFileIndex* HL_RESTRICT pfi,
     HlStrTable* HL_RESTRICT strTable, HlOffTable* HL_RESTRICT offTable,
-    HlFile* HL_RESTRICT file)
+    HlStream* HL_RESTRICT stream)
 {
     HlPACxV2DataEntry dataEntry =
     {
@@ -1869,7 +1871,7 @@ static HlResult hlINPACxV2WriteFileData(
 
     const void* entryData;
     void* tmpEntryDataBuf = NULL;
-    const size_t dataPos = (hlFileTell(file) + sizeof(HlPACxV2DataEntry));
+    const size_t dataPos = (hlStreamTell(stream) + sizeof(HlPACxV2DataEntry));
     HlResult result;
 
     /* Get entry data pointer. */
@@ -2058,7 +2060,7 @@ static HlResult hlINPACxV2WriteFileData(
         }
     }
 
-    /* Write data entry to file. */
+    /* Write data entry to stream. */
     {
         const HlU32 dataSize = dataEntry.dataSize;
 
@@ -2068,14 +2070,14 @@ static HlResult hlINPACxV2WriteFileData(
             hlPACxV2DataEntrySwap(&dataEntry);
         }
 
-        /* Write data entry header to file. */
-        result = hlFileWrite(file, sizeof(dataEntry), &dataEntry, NULL);
+        /* Write data entry header to stream. */
+        result = hlStreamWrite(stream, sizeof(dataEntry), &dataEntry, NULL);
         if (HL_FAILED(result)) goto end;
 
-        /* Write data to file if necessary. */
+        /* Write data to stream if necessary. */
         if (isHere)
         {
-            result = hlFileWrite(file, dataSize, entryData, NULL);
+            result = hlStreamWrite(stream, dataSize, entryData, NULL);
         }
     }
 
@@ -2128,7 +2130,7 @@ end:
 
 static HlResult hlINPACxV2WriteSplitTableData(const HlStrList* HL_RESTRICT splitNames,
     HlBINAEndianFlag endianFlag, HlStrTable* HL_RESTRICT strTable,
-    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file)
+    HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream)
 {
     HlResult result;
 
@@ -2154,14 +2156,14 @@ static HlResult hlINPACxV2WriteSplitTableData(const HlStrList* HL_RESTRICT split
         }
 
         /* Write data entry header. */
-        result = hlFileWrite(file, sizeof(dataEntry), &dataEntry, NULL);
+        result = hlStreamWrite(stream, sizeof(dataEntry), &dataEntry, NULL);
         if (HL_FAILED(result)) return result;
     }
 
     /* Write split table. */
     {
         /* Generate split table. */
-        const size_t dataPos = hlFileTell(file);
+        const size_t dataPos = hlStreamTell(stream);
         const size_t splitNamesOffPos = (dataPos +
             offsetof(HlPACxV2SplitTable, splitNames));
 
@@ -2178,7 +2180,7 @@ static HlResult hlINPACxV2WriteSplitTableData(const HlStrList* HL_RESTRICT split
         }
 
         /* Write split table. */
-        result = hlFileWrite(file, sizeof(splitTable), &splitTable, NULL);
+        result = hlStreamWrite(stream, sizeof(splitTable), &splitTable, NULL);
         if (HL_FAILED(result)) return result;
 
         /* Add splitNames offset to offset table. */
@@ -2187,16 +2189,16 @@ static HlResult hlINPACxV2WriteSplitTableData(const HlStrList* HL_RESTRICT split
     }
 
     /* Write placeholder split names and return result. */
-    return hlFileWriteNulls(file, sizeof(HL_OFF32_STR) * splitNames->count, NULL);
+    return hlStreamWriteNulls(stream, sizeof(HL_OFF32_STR) * splitNames->count, NULL);
 }
 
 static HlResult hlINPACxV2ProxyEntryTableWrite(
     const HlINPACxV2TypeMetadataList* HL_RESTRICT typeMetadata,
     HlU32 proxyEntryCount, HlBINAEndianFlag endianFlag,
     HlStrTable* HL_RESTRICT strTable, HlOffTable* HL_RESTRICT offTable,
-    HlFile* HL_RESTRICT file)
+    HlStream* HL_RESTRICT stream)
 {
-    size_t curOffPos = hlFileTell(file);
+    size_t curOffPos = hlStreamTell(stream);
     HlResult result;
 
     /* Write proxy entry table. */
@@ -2216,7 +2218,7 @@ static HlResult hlINPACxV2ProxyEntryTableWrite(
         }
 
         /* Write proxy entry table. */
-        result = hlFileWrite(file, sizeof(proxyEntryTable), &proxyEntryTable, NULL);
+        result = hlStreamWrite(stream, sizeof(proxyEntryTable), &proxyEntryTable, NULL);
         if (HL_FAILED(result)) return result;
 
         /* Increase current offset position. */
@@ -2264,7 +2266,7 @@ static HlResult hlINPACxV2ProxyEntryTableWrite(
                 }
 
                 /* Write proxy entry. */
-                result = hlFileWrite(file, sizeof(proxyEntry), &proxyEntry, NULL);
+                result = hlStreamWrite(stream, sizeof(proxyEntry), &proxyEntry, NULL);
                 if (HL_FAILED(result)) return result;
 
                 /* Add type string to string table. */
@@ -2295,7 +2297,7 @@ static HlResult hlINPACxV2DataBlockWrite(unsigned short splitIndex,
     const HlINPACxV2TypeMetadataList* HL_RESTRICT typeMetadata,
     HlU32 splitLimit, HlU32 dataAlignment, HlBINAEndianFlag endianFlag,
     const HlStrList* HL_RESTRICT splitNames, HlPackedFileIndex* HL_RESTRICT pfi,
-    HlFile* HL_RESTRICT file)
+    HlStream* HL_RESTRICT stream)
 {
     HlStrTable strTable, tmpMergedStrTable;
     HlOffTable offTable;
@@ -2311,7 +2313,7 @@ static HlResult hlINPACxV2DataBlockWrite(unsigned short splitIndex,
     HL_LIST_INIT(offTable);
 
     /* Start writing data block. */
-    result = hlPACxV2DataBlockStartWrite(file);
+    result = hlPACxV2DataBlockStartWrite(stream);
     if (HL_FAILED(result)) goto failed;
 
     /* Compute required type node count. */
@@ -2347,7 +2349,7 @@ static HlResult hlINPACxV2DataBlockWrite(unsigned short splitIndex,
 
     /* Write type tree and placeholder type nodes. */
     result = hlINPACxV2WriteNodeTree((HlU32)typeNodeCount,
-        endianFlag, &offTable, file);
+        endianFlag, &offTable, stream);
 
     if (HL_FAILED(result)) goto failed;
 
@@ -2356,7 +2358,7 @@ static HlResult hlINPACxV2DataBlockWrite(unsigned short splitIndex,
     for (i = 0; i < typeMetadata->count; ++i)
     {
         const HlINPACxV2TypeMetadata* curTypeMetadata = &typeMetadata->data[i];
-        const size_t fileTreePos = hlFileTell(file);
+        const size_t fileTreePos = hlStreamTell(stream);
         size_t fileCount;
 
         /* Compute file count. */
@@ -2397,17 +2399,17 @@ static HlResult hlINPACxV2DataBlockWrite(unsigned short splitIndex,
 
         /* Jump to type node data offset. */
         curOffPos += 4;
-        result = hlFileJumpTo(file, curOffPos);
+        result = hlStreamJumpTo(stream, curOffPos);
         if (HL_FAILED(result)) goto failed;
 
         /* Fill-in type node data offset. */
-        result = hlFileWriteOff32(file, 0, fileTreePos,
+        result = hlStreamWriteOff32(stream, 0, fileTreePos,
             hlBINANeedsSwap(endianFlag), &offTable);
 
         if (HL_FAILED(result)) goto failed;
 
         /* Jump to file tree position (end of file). */
-        result = hlFileJumpTo(file, fileTreePos);
+        result = hlStreamJumpTo(stream, fileTreePos);
         if (HL_FAILED(result)) goto failed;
 
         /* Increase current offset position. */
@@ -2415,13 +2417,13 @@ static HlResult hlINPACxV2DataBlockWrite(unsigned short splitIndex,
 
         /* Write file tree and placeholder file nodes. */
         result = hlINPACxV2WriteNodeTree((HlU32)fileCount,
-            endianFlag, &offTable, file);
+            endianFlag, &offTable, stream);
 
         if (HL_FAILED(result)) goto failed;
     }
 
     /* Write data entries and fill-in file nodes. */
-    dataEntriesPos = hlFileTell(file);
+    dataEntriesPos = hlStreamTell(stream);
     for (i = 0; i < typeMetadata->count; ++i)
     {
         const HlINPACxV2TypeMetadata* curTypeMetadata = &typeMetadata->data[i];
@@ -2462,25 +2464,25 @@ static HlResult hlINPACxV2DataBlockWrite(unsigned short splitIndex,
             }
 
             /* Pad data entry to requested data alignment. */
-            result = hlFilePad(file, dataAlignment);
+            result = hlStreamPad(stream, dataAlignment);
             if (HL_FAILED(result)) goto failed;
 
             /* Get data entry position. */
-            dataEntryPos = hlFileTell(file);
+            dataEntryPos = hlStreamTell(stream);
 
             /* Jump to type node data offset. */
             curOffPos += 4;
-            result = hlFileJumpTo(file, curOffPos);
+            result = hlStreamJumpTo(stream, curOffPos);
             if (HL_FAILED(result)) goto failed;
 
             /* Fill-in file node data offset. */
-            result = hlFileWriteOff32(file, 0, dataEntryPos,
+            result = hlStreamWriteOff32(stream, 0, dataEntryPos,
                 hlBINANeedsSwap(endianFlag), &offTable);
 
             if (HL_FAILED(result)) goto failed;
 
             /* Jump to data entry position. */
-            result = hlFileJumpTo(file, dataEntryPos);
+            result = hlStreamJumpTo(stream, dataEntryPos);
             if (HL_FAILED(result)) goto failed;
 
             /* Increase current offset position. */
@@ -2495,7 +2497,8 @@ static HlResult hlINPACxV2DataBlockWrite(unsigned short splitIndex,
                     HL_PACX_EXT_FLAGS_ROOT_TYPE)));
 
                 result = hlINPACxV2WriteFileData(curFileMetadata,
-                    endianFlag, isHere, pfi, &tmpMergedStrTable, &offTable, file);
+                    endianFlag, isHere, pfi, &tmpMergedStrTable,
+                    &offTable, stream);
 
                 if (!isHere) ++proxyEntryCount;
             }
@@ -2509,7 +2512,7 @@ static HlResult hlINPACxV2DataBlockWrite(unsigned short splitIndex,
 
                 /* Write split table data and placeholder split entries. */
                 result = hlINPACxV2WriteSplitTableData(splitNames,
-                    endianFlag, &strTable, &offTable, file);
+                    endianFlag, &strTable, &offTable, stream);
             }
 
             if (HL_FAILED(result)) goto failed;
@@ -2517,7 +2520,7 @@ static HlResult hlINPACxV2DataBlockWrite(unsigned short splitIndex,
     }
 
     /* Fill-in split entries and write proxy entry table if necessary. */
-    proxyTablePos = hlFileTell(file);
+    proxyTablePos = hlStreamTell(stream);
     if (isRoot && splitLimit)
     {
         /* Fill-in split entries if necessary. */
@@ -2542,7 +2545,7 @@ static HlResult hlINPACxV2DataBlockWrite(unsigned short splitIndex,
         {
             result = hlINPACxV2ProxyEntryTableWrite(typeMetadata,
                 proxyEntryCount, endianFlag, &strTable, &offTable,
-                file);
+                stream);
 
             if (HL_FAILED(result)) goto failed;
         }
@@ -2579,12 +2582,12 @@ static HlResult hlINPACxV2DataBlockWrite(unsigned short splitIndex,
     }
 
     /* Finish writing root data block. */
-    result = hlPACxV2DataBlockFinishWrite(0,        /* headerPos */
-        sizeof(HlPACxV2Header),                     /* dataBlockPos */
-        (HlU32)(dataEntriesPos - treesPos),         /* treesSize */
-        (HlU32)(proxyTablePos - dataEntriesPos),    /* dataEntriesSize */
-        (HlU32)(hlFileTell(file) - proxyTablePos),  /* proxyTableSize */
-        endianFlag, &strTable, &offTable, file);    /* (self-explanatory) */
+    result = hlPACxV2DataBlockFinishWrite(0,            /* headerPos */
+        sizeof(HlPACxV2Header),                         /* dataBlockPos */
+        (HlU32)(dataEntriesPos - treesPos),             /* treesSize */
+        (HlU32)(proxyTablePos - dataEntriesPos),        /* dataEntriesSize */
+        (HlU32)(hlStreamTell(stream) - proxyTablePos),  /* proxyTableSize */
+        endianFlag, &strTable, &offTable, stream);      /* (self-explanatory) */
 
     if (HL_FAILED(result)) goto failed;
 
@@ -2603,7 +2606,7 @@ static HlResult hlINPACxV2SaveSplits(unsigned short splitCount,
     HlU32 dataAlignment, HlPackedFileIndex* HL_RESTRICT pfi,
     HlStrList* HL_RESTRICT splitNames, HlNChar* HL_RESTRICT pathBuf)
 {
-    HlFile* splitFile;
+    HlFileStream* splitFile;
     const HlNChar* rootName = hlPathGetName(pathBuf);
     HlNChar* lastCharPtr = &pathBuf[filePathLen + 2];
     const size_t rootNameSize = (hlNStrLen(rootName) + 1);
@@ -2633,14 +2636,14 @@ static HlResult hlINPACxV2SaveSplits(unsigned short splitCount,
             return HL_ERROR_OUT_OF_RANGE;
 
         /* Open the next split file for writing. */
-        result = hlFileOpen(pathBuf, HL_FILE_MODE_WRITE, &splitFile);
+        result = hlFileStreamOpen(pathBuf, HL_FILE_MODE_WRITE, &splitFile);
         if (HL_FAILED(result)) return result;
 
         /* Start writing split header. */
         result = hlPACxV2StartWrite(endianFlag, splitFile);
         if (HL_FAILED(result))
         {
-            hlFileClose(splitFile);
+            hlFileStreamClose(splitFile);
             return result;
         }
 
@@ -2651,7 +2654,7 @@ static HlResult hlINPACxV2SaveSplits(unsigned short splitCount,
 
         if (HL_FAILED(result))
         {
-            hlFileClose(splitFile);
+            hlFileStreamClose(splitFile);
             return result;
         }
 
@@ -2659,12 +2662,12 @@ static HlResult hlINPACxV2SaveSplits(unsigned short splitCount,
         result = hlPACxV2FinishWrite(0, 1, endianFlag, splitFile);
         if (HL_FAILED(result))
         {
-            hlFileClose(splitFile);
+            hlFileStreamClose(splitFile);
             return result;
         }
 
         /* Close split file. */
-        result = hlFileClose(splitFile);
+        result = hlFileStreamClose(splitFile);
         if (HL_FAILED(result)) return result;
 
         /* Allocate new buffer for split name. */
@@ -2766,7 +2769,7 @@ HlResult hlPACxV2SaveEx(const HlArchive* HL_RESTRICT arc,
 
     HlINPACxV2TypeMetadataList typeMetadata;
     HlINPACxV2FileMetadata* fileMetadata = NULL;
-    HlFile* rootFile = NULL;
+    HlFileStream* rootFile = NULL;
     const size_t filePathLen = hlNStrLen(filePath);
     size_t fileMetadataCount = 0;
     unsigned short splitCount = 0;
@@ -2952,7 +2955,7 @@ HlResult hlPACxV2SaveEx(const HlArchive* HL_RESTRICT arc,
     }
 
     /* Open root file. */
-    result = hlFileOpen(pathBufPtr, HL_FILE_MODE_WRITE, &rootFile);
+    result = hlFileStreamOpen(pathBufPtr, HL_FILE_MODE_WRITE, &rootFile);
     if (HL_FAILED(result)) goto failed_root_not_open;
 
     /* Start writing root header. */
@@ -2999,12 +3002,12 @@ HlResult hlPACxV2SaveEx(const HlArchive* HL_RESTRICT arc,
     if (HL_FAILED(result)) goto failed;
 
     /* Close root file and return result. */
-    result = hlFileClose(rootFile);
+    result = hlFileStreamClose(rootFile);
     goto end;
 
 failed:
     /* Free everything as necessary and return result. */
-    hlFileClose(rootFile);
+    hlFileStreamClose(rootFile);
 
 end:
 failed_root_not_open:

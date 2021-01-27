@@ -9,7 +9,7 @@ extern "C" {
 
 #define HL_SVCOL_SIG 0x5356434F /* 'SVCO' */
 
-typedef struct HlFile HlFile;
+typedef struct HlStream HlStream;
 typedef enum HlBINAEndianFlag HlBINAEndianFlag;
 
 typedef struct HlSVSector
@@ -95,7 +95,7 @@ HL_API HlResult hlSVColRead(void* HL_RESTRICT rawData,
 HL_API HlResult hlSVColWrite(const HlSectorCollision* HL_RESTRICT hlSecCol,
     size_t dataPos, HlBINAEndianFlag endianFlag,
     HlStrTable* HL_RESTRICT strTable, HlOffTable* HL_RESTRICT offTable,
-    HlFile* HL_RESTRICT file);
+    HlStream* HL_RESTRICT stream);
 
 HL_API HlResult hlSVColSave(const HlSectorCollision* HL_RESTRICT hlSecCol,
     HlBINAEndianFlag endianFlag, const HlNChar* HL_RESTRICT filePath);

@@ -494,7 +494,7 @@ HL_API HlResult hlNNMotionRead(HlBlob* HL_RESTRICT blob,
     HlAnimation* HL_RESTRICT * HL_RESTRICT hlAnim);
 
 HL_API HlResult hlNNMotionWrite(const HlAnimation* HL_RESTRICT anim, size_t dataPos,
-    HlNNPlatform platform, HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file);
+    HlNNPlatform platform, HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream);
 
 #ifdef __cplusplus
 }

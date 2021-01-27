@@ -8,7 +8,7 @@ extern "C" {
 
 #define HL_HH_MIRAGE_MAGIC      0x0133054AU
 
-typedef struct HlFile HlFile;
+typedef struct HlStream HlStream;
 
 typedef struct HlHHStandardHeader
 {
@@ -114,15 +114,15 @@ HL_API const void* hlHHMirageGetData(const void* HL_RESTRICT rawData,
     hlHHMirageGetData(rawData, version) : hlHHStandardGetData(rawData, version))
 
 HL_API HlResult hlHHOffsetsWriteNoSort(const HlOffTable* HL_RESTRICT offTable,
-    size_t dataPos, HlFile* HL_RESTRICT file);
+    size_t dataPos, HlStream* HL_RESTRICT stream);
 
 HL_API HlResult hlHHOffsetsWrite(HlOffTable* HL_RESTRICT offTable,
-    size_t dataPos, HlFile* HL_RESTRICT file);
+    size_t dataPos, HlStream* HL_RESTRICT stream);
 
-HL_API HlResult hlHHStandardStartWrite(HlFile* file, HlU32 version);
+HL_API HlResult hlHHStandardStartWrite(HlStream* stream, HlU32 version);
 
 HL_API HlResult hlHHStandardFinishWrite(size_t headerPos, HlBool writeEOFPadding,
-    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file);
+    HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream);
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS
 HL_API HlBool hlHHHeaderIsMirageExt(const void* header);

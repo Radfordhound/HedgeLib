@@ -1,13 +1,14 @@
 #ifndef HL_NN_H_INCLUDED
 #define HL_NN_H_INCLUDED
-#include "hl_file.h"
 #include "../hl_list.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/* TODO: Make NN stuff not reliant upon HlBlob. */
 typedef struct HlBlob HlBlob;
+typedef struct HlStream HlStream;
 
 #ifdef HL_IS_BIG_ENDIAN
 #define HL_NN_CNK_PLATFORM_MASK 0x00FF0000U
@@ -190,11 +191,13 @@ HL_API void hlNNRGBSwap(HlNNRGB* rgb);
 HL_API void hlNNRotateA32Swap(HlNNRotateA32* rot);
 HL_API void hlNNRotateA16Swap(HlNNRotateA16* rot);
 
+/* TODO: Add swapOffsets boolean. */
 HL_API void hlNNDataHeaderSwap(HlNNBinCnkDataHeader* header);
 HL_API void hlNNFileHeaderSwap(HlNNBinCnkFileHeader* header);
 HL_API void hlNNOffsetsHeaderSwap(HlNNBinCnkNOF0Header* header);
 HL_API void hlNNDataHeaderFix(HlNNBinCnkDataHeader* dataHeader, void* base);
 
+/* TODO: Aren't these names a bit inconsistent with the above Swap functions? */
 HL_API void hlNNFixHeader(HlNNBinCnkFileHeader* header);
 HL_API void hlNNFixDataChunks(void* data, HlU32 dataChunkCount);
 HL_API void hlNNFixOffsets(HlNNBinCnkNOF0Header* HL_RESTRICT NOF0Header,
@@ -202,11 +205,11 @@ HL_API void hlNNFixOffsets(HlNNBinCnkNOF0Header* HL_RESTRICT NOF0Header,
 
 HL_API void hlNNFix(HlBlob* blob);
 
-HL_API HlResult hlNNStartWrite(HlNNPlatform platform, HlFile* file);
+HL_API HlResult hlNNStartWrite(HlNNPlatform platform, HlStream* stream);
 HL_API HlResult hlNNFinishWrite(size_t headerPos, size_t dataPos,
     size_t dataChunkCount, const HlOffTable* HL_RESTRICT offTable,
     const char* HL_RESTRICT optionalFileName, HlNNPlatform platform,
-    HlFile* HL_RESTRICT file);
+    HlStream* HL_RESTRICT stream);
 
 HL_API const HlNChar* hlNNPlatformGetFriendlyName(HlNNPlatform platform);
 

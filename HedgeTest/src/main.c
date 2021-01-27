@@ -1,5 +1,4 @@
 #include "tmp_tests_depends.h"
-#include "hedgelib/hl_memory.h"
 #include "hedgelib/hl_blob.h"
 #include "hedgelib/hl_list.h"
 #include "hedgelib/io/hl_path.h"

@@ -1,4 +1,5 @@
 #include "hedgelib/io/hl_nn.h"
+#include "hedgelib/io/hl_stream.h"
 #include "hedgelib/hl_blob.h"
 #include "hedgelib/hl_endian.h"
 
@@ -183,7 +184,7 @@ void hlNNFix(HlBlob* blob)
     hlNNFixOffsets(NOF0Header, platform, data);
 }
 
-HlResult hlNNStartWrite(HlNNPlatform platform, HlFile* file)
+HlResult hlNNStartWrite(HlNNPlatform platform, HlStream* stream)
 {
     /* Construct chunk file header, leaving values we can't properly set yet as 0. */
     HlNNBinCnkFileHeader header = HL_NN_INIT_CHUNK_HEADER(HL_NN_ID_HEADER, platform, 0x18);
@@ -195,24 +196,24 @@ HlResult hlNNStartWrite(HlNNPlatform platform, HlFile* file)
         hlNNFileHeaderSwap(&header);
     }
 
-    /* Write chunk file header to file. */
-    return hlFileWrite(file, sizeof(header), &header, 0);
+    /* Write chunk file header to stream. */
+    return hlStreamWrite(stream, sizeof(header), &header, NULL);
 }
 
 HlResult hlNNFinishWrite(size_t headerPos, size_t dataPos,
     size_t dataChunkCount, const HlOffTable* HL_RESTRICT offTable,
     const char* HL_RESTRICT optionalFileName, HlNNPlatform platform,
-    HlFile* HL_RESTRICT file)
+    HlStream* HL_RESTRICT stream)
 {
     size_t dataEndPos, nof0EndPos, eof;
     HlResult result;
 
     /* Fix padding. */
-    result = hlFilePad(file, hlNNPlatformGetPadSize(platform));
+    result = hlStreamPad(stream, hlNNPlatformGetPadSize(platform));
     if (HL_FAILED(result)) return result;
 
     /* Get data end position. */
-    dataEndPos = hlFileTell(file);
+    dataEndPos = hlStreamTell(stream);
 
     /* Write NOF0 chunk header. */
     {
@@ -221,7 +222,7 @@ HlResult hlNNFinishWrite(size_t headerPos, size_t dataPos,
             (HlU32)offTable->count)
         };
 
-        result = hlFileWrite(file, sizeof(nof0Header), &nof0Header, 0);
+        result = hlStreamWrite(stream, sizeof(nof0Header), &nof0Header, NULL);
         if (HL_FAILED(result)) return result;
     }
 
@@ -240,23 +241,23 @@ HlResult hlNNFinishWrite(size_t headerPos, size_t dataPos,
             }
 
             /* Write relative offset position. */
-            result = hlFileWrite(file, sizeof(off), &off, 0);
+            result = hlStreamWrite(stream, sizeof(off), &off, NULL);
             if (HL_FAILED(result)) return result;
         }
     }
 
     /* Fix padding. */
-    result = hlFilePad(file, hlNNPlatformGetPadSize(platform));
+    result = hlStreamPad(stream, hlNNPlatformGetPadSize(platform));
     if (HL_FAILED(result)) return result;
 
     /* Get NOF0 end position. */
-    nof0EndPos = hlFileTell(file);
+    nof0EndPos = hlStreamTell(stream);
 
     /* Fill-in NOF0 next ID offset. */
     {
         /* Jump to NOF0 next ID offset position. */
         HlU32 nof0NextIDOff;
-        result = hlFileJumpTo(file, dataEndPos + 4);
+        result = hlStreamJumpTo(stream, dataEndPos + 4);
         if (HL_FAILED(result)) return result;
 
         /* Compute value for NOF0 next ID offset. */
@@ -268,38 +269,38 @@ HlResult hlNNFinishWrite(size_t headerPos, size_t dataPos,
 #endif
 
         /* Fill-in NOF0 next ID offset. */
-        result = hlFileWrite(file, sizeof(nof0NextIDOff), &nof0NextIDOff, 0);
+        result = hlStreamWrite(stream, sizeof(nof0NextIDOff), &nof0NextIDOff, NULL);
         if (HL_FAILED(result)) return result;
     }
 
-    /* Jump to end of file. */
-    result = hlFileJumpTo(file, nof0EndPos);
+    /* Jump to NOF0 end position. */
+    result = hlStreamJumpTo(stream, nof0EndPos);
     if (HL_FAILED(result)) return result;
 
     /* Write NFN0 chunk if requested. */
     if (optionalFileName)
     {
         /* Get NFN0 chunk position. */
-        size_t nfn0Pos = hlFileTell(file);
+        size_t nfn0Pos = hlStreamTell(stream);
 
         /* Write NFN0 chunk header. */
         HlNNBinCnkDataHeader nfn0Header = { HL_NN_ID_FILENAME };
-        result = hlFileWrite(file, sizeof(nfn0Header), &nfn0Header, 0);
+        result = hlStreamWrite(stream, sizeof(nfn0Header), &nfn0Header, NULL);
         if (HL_FAILED(result)) return result;
 
         /* Write file name. */
-        result = hlFileWriteString(file, optionalFileName, 0);
+        result = hlStreamWriteStringUTF8(stream, optionalFileName, NULL);
         if (HL_FAILED(result)) return result;
 
         /* Fix padding. */
-        result = hlFilePad(file, hlNNPlatformGetPadSize(platform));
+        result = hlStreamPad(stream, hlNNPlatformGetPadSize(platform));
         if (HL_FAILED(result)) return result;
 
-        /* Get end of file position. */
-        eof = hlFileTell(file);
+        /* Get end of stream position. */
+        eof = hlStreamTell(stream);
 
         /* Jump to NFN0 next ID offset position. */
-        result = hlFileJumpTo(file, nfn0Pos + 4);
+        result = hlStreamJumpTo(stream, nfn0Pos + 4);
         if (HL_FAILED(result)) return result;
 
         /* Compute value for NFN0 next ID offset. */
@@ -311,11 +312,11 @@ HlResult hlNNFinishWrite(size_t headerPos, size_t dataPos,
 #endif
 
         /* Fill-in NFN0 next ID offset. */
-        result = hlFileWrite(file, 4, &nfn0Header.nextIDOffset, 0);
+        result = hlStreamWrite(stream, 4, &nfn0Header.nextIDOffset, NULL);
         if (HL_FAILED(result)) return result;
 
-        /* Jump to end of file. */
-        result = hlFileJumpTo(file, eof);
+        /* Jump to end of stream. */
+        result = hlStreamJumpTo(stream, eof);
         if (HL_FAILED(result)) return result;
     }
 
@@ -330,22 +331,22 @@ HlResult hlNNFinishWrite(size_t headerPos, size_t dataPos,
 #endif
         };
 
-        result = hlFileWrite(file, sizeof(nendHeader), &nendHeader, 0);
+        result = hlStreamWrite(stream, sizeof(nendHeader), &nendHeader, NULL);
         if (HL_FAILED(result)) return result;
 
         /* Write padding if necessary. */
         if (platform == HL_NN_PLATFORM_GAMECUBE)
         {
-            result = hlFileWriteNulls(file, 16, 0);
+            result = hlStreamWriteNulls(stream, 16, NULL);
             if (HL_FAILED(result)) return result;
         }
     }
 
-    /* Get end of file position. */
-    eof = hlFileTell(file);
+    /* Get end of stream position. */
+    eof = hlStreamTell(stream);
 
     /* Jump to header position. */
-    result = hlFileJumpTo(file, headerPos + 8);
+    result = hlStreamJumpTo(stream, headerPos + 8);
     if (HL_FAILED(result)) return result;
 
     /* Fill-in header values. */
@@ -365,12 +366,12 @@ HlResult hlNNFinishWrite(size_t headerPos, size_t dataPos,
         }
 
         /* Fill-in header values. */
-        result = hlFileWrite(file, 0x14, &header.chunkCount, 0);
+        result = hlStreamWrite(stream, 0x14, &header.chunkCount, NULL);
         if (HL_FAILED(result)) return result;
     }
 
-    /* Jump to end of file and return. */
-    return hlFileJumpTo(file, eof);
+    /* Jump to end of stream and return. */
+    return hlStreamJumpTo(stream, eof);
 }
 
 const HlNChar* hlNNPlatformGetFriendlyName(HlNNPlatform platform)

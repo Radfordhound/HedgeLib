@@ -1,5 +1,6 @@
 #include "hedgelib/hl_blob.h"
 #include "hedgelib/io/hl_file.h"
+#include <string.h>
 
 HlResult hlBlobCreate(const void* HL_RESTRICT initialData,
     size_t size, HlBlob* HL_RESTRICT* HL_RESTRICT blob)
@@ -25,27 +26,27 @@ HlResult hlBlobCreate(const void* HL_RESTRICT initialData,
     return HL_RESULT_SUCCESS;
 }
 
-HlResult hlBlobRead(HlFile* HL_RESTRICT file,
+HlResult hlBlobRead(HlStream* HL_RESTRICT stream,
     HlBlob* HL_RESTRICT * HL_RESTRICT blob)
 {
     HlBlob* blobBuf;
-    size_t fileSize;
+    size_t size;
     HlResult result;
 
-    /* Get file size. */
-    result = hlFileGetSize(file, &fileSize);
+    /* Get stream size. */
+    result = hlStreamGetSize(stream, &size);
     if (HL_FAILED(result)) return result;
 
     /* Allocate blob buffer. */
-    blobBuf = (HlBlob*)hlAlloc(HL_BLOB_ALIGNED_SIZE + fileSize);
+    blobBuf = (HlBlob*)hlAlloc(HL_BLOB_ALIGNED_SIZE + size);
     if (!blobBuf) return HL_ERROR_OUT_OF_MEMORY;
 
     /* Construct blob. */
     blobBuf->data = HL_ADD_OFF(blobBuf, HL_BLOB_ALIGNED_SIZE);
-    blobBuf->size = fileSize;
+    blobBuf->size = size;
 
     /* Read all data into blob. */
-    result = hlFileRead(file, fileSize, blobBuf->data, NULL);
+    result = hlStreamRead(stream, size, blobBuf->data, NULL);
     if (HL_FAILED(result))
     {
         hlBlobFree(blobBuf);
@@ -60,18 +61,23 @@ HlResult hlBlobRead(HlFile* HL_RESTRICT file,
 HlResult hlBlobLoad(const HlNChar* HL_RESTRICT filePath,
     HlBlob* HL_RESTRICT * HL_RESTRICT blob)
 {
-    HlFile* file;
+    HlFileStream* file;
     HlResult result;
 
     /* Open the file at the given path. */
-    result = hlFileOpen(filePath, HL_FILE_MODE_READ, &file);
+    result = hlFileStreamOpen(filePath, HL_FILE_MODE_READ, &file);
     if (HL_FAILED(result)) return result;
 
-    /* Read the blob, close the file, and return. */
+    /* Read the blob. */
     result = hlBlobRead(file, blob);
-    hlFileClose(file);
+    if (HL_FAILED(result))
+    {
+        hlFileStreamClose(file);
+        return result;
+    }
 
-    return result;
+    /* Close the stream and return result. */
+    return hlFileStreamClose(file);
 }
 
 void hlBlobFree(HlBlob* blob)

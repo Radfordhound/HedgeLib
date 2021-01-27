@@ -1,6 +1,6 @@
 #include "hedgelib/hl_blob.h"
-#include "hedgelib/hl_memory.h"
 #include "hedgelib/hl_endian.h"
+#include "hedgelib/io/hl_stream.h"
 #include "hedgelib/animations/hl_nn_motion.h"
 #include "hedgelib/animations/hl_animation.h"
 
@@ -2013,7 +2013,7 @@ HlResult hlNNMotionRead(HlBlob* HL_RESTRICT blob,
         }\
 \
         /* Write NN keyframe. */\
-        result = hlFileWrite(file, sizeof(key), &key, 0);\
+        result = hlStreamWrite(stream, sizeof(key), &key, NULL);\
         if (HL_FAILED(result)) return result;\
     }
 
@@ -2032,7 +2032,7 @@ HlResult hlNNMotionRead(HlBlob* HL_RESTRICT blob,
 
 static HlResult hlINNNSubMotionWriteKeyframesFloat(
     const HlAnimationKeyGroup* HL_RESTRICT keyGroup,
-    HlNNPlatform platform, HlFile* HL_RESTRICT file)
+    HlNNPlatform platform, HlStream* HL_RESTRICT stream)
 {
     HlNNMotionKeyFloat key;
     HlResult result;
@@ -2062,7 +2062,7 @@ static HlResult hlINNNSubMotionWriteKeyframesFloat(
 
 static HlResult hlINNNSubMotionWriteKeyframesInt(
     const HlAnimationKeyGroup* HL_RESTRICT keyGroup,
-    HlNNPlatform platform, HlFile* HL_RESTRICT file)
+    HlNNPlatform platform, HlStream* HL_RESTRICT stream)
 {
     HlNNMotionKeyInt key;
     HlResult result;
@@ -2098,7 +2098,7 @@ static HlResult hlINNNSubMotionWriteKeyframesInt(
 
 static HlResult hlINNNSubMotionWriteKeyframesUInt(
     const HlAnimationKeyGroup* HL_RESTRICT keyGroup,
-    HlNNPlatform platform, HlFile* HL_RESTRICT file)
+    HlNNPlatform platform, HlStream* HL_RESTRICT stream)
 {
     HlNNMotionKeyUInt key;
     HlResult result;
@@ -2134,7 +2134,7 @@ static HlResult hlINNNSubMotionWriteKeyframesUInt(
 
 static HlResult hlINNNSubMotionWriteKeyframesUV(
     const HlAnimationKeyGroup* HL_RESTRICT keyGroup,
-    HlNNPlatform platform, HlFile* HL_RESTRICT file)
+    HlNNPlatform platform, HlStream* HL_RESTRICT stream)
 {
     HlNNMotionKeyTexCoord key;
     HlResult result;
@@ -2195,7 +2195,7 @@ static HlResult hlINNNSubMotionWriteKeyframesUV(
 
 static HlResult hlINNNSubMotionWriteKeyframesRGB(
     const HlAnimationKeyGroup* HL_RESTRICT keyGroup,
-    HlNNPlatform platform, HlFile* HL_RESTRICT file)
+    HlNNPlatform platform, HlStream* HL_RESTRICT stream)
 {
     HlNNMotionKeyRGB key;
     HlResult result;
@@ -2259,7 +2259,7 @@ static HlResult hlINNNSubMotionWriteKeyframesRGB(
 
 static HlResult hlINNNSubMotionWriteKeyframesVector(
     const HlAnimationKeyGroup* HL_RESTRICT keyGroup,
-    HlNNPlatform platform, HlFile* HL_RESTRICT file)
+    HlNNPlatform platform, HlStream* HL_RESTRICT stream)
 {
     HlNNMotionKeyVector key;
     HlResult result;
@@ -2323,7 +2323,7 @@ static HlResult hlINNNSubMotionWriteKeyframesVector(
 
 static HlResult hlINNNSubMotionWriteKeyframesRotA16(
     const HlAnimationKeyGroup* HL_RESTRICT keyGroup,
-    HlNNPlatform platform, HlFile* HL_RESTRICT file)
+    HlNNPlatform platform, HlStream* HL_RESTRICT stream)
 {
     HlNNMotionKeyRotateA16 key;
     HlResult result;
@@ -2358,7 +2358,7 @@ static HlResult hlINNNSubMotionWriteKeyframesRotA16(
             }
             
             /* Write NN keyframe. */
-            result = hlFileWrite(file, sizeof(key), &key, 0);
+            result = hlStreamWrite(stream, sizeof(key), &key, NULL);
             if (HL_FAILED(result)) return result;
         }
         
@@ -2389,7 +2389,7 @@ static HlResult hlINNNSubMotionWriteKeyframesRotA16(
             }
 
             /* Write NN keyframe. */
-            result = hlFileWrite(file, sizeof(key), &key, 0);
+            result = hlStreamWrite(stream, sizeof(key), &key, NULL);
             if (HL_FAILED(result)) return result;
         }
 
@@ -2403,7 +2403,7 @@ static HlResult hlINNNSubMotionWriteKeyframesRotA16(
 
 static HlResult hlINNNSubMotionWriteKeyframesRotA32(
     const HlAnimationKeyGroup* HL_RESTRICT keyGroup,
-    HlNNPlatform platform, HlFile* HL_RESTRICT file)
+    HlNNPlatform platform, HlStream* HL_RESTRICT stream)
 {
     HlNNMotionKeyRotateA32 key;
     HlResult result;
@@ -2438,7 +2438,7 @@ static HlResult hlINNNSubMotionWriteKeyframesRotA32(
             }
             
             /* Write NN keyframe. */
-            result = hlFileWrite(file, sizeof(key), &key, 0);
+            result = hlStreamWrite(stream, sizeof(key), &key, NULL);
             if (HL_FAILED(result)) return result;
         }
         
@@ -2469,7 +2469,7 @@ static HlResult hlINNNSubMotionWriteKeyframesRotA32(
             }
 
             /* Write NN keyframe. */
-            result = hlFileWrite(file, sizeof(key), &key, 0);
+            result = hlStreamWrite(stream, sizeof(key), &key, NULL);
             if (HL_FAILED(result)) return result;
         }
 
@@ -2483,7 +2483,7 @@ static HlResult hlINNNSubMotionWriteKeyframesRotA32(
 
 static HlResult hlINNNSubMotionBoneWriteKeyframes(
     const HlAnimationKeyGroup* HL_RESTRICT keyGroup,
-    HlNNPlatform platform, HlFile* HL_RESTRICT file)
+    HlNNPlatform platform, HlStream* HL_RESTRICT stream)
 {
     switch (keyGroup->flagsAndType & HL_ANIM_KEY_TYPE_MASK)
     {
@@ -2496,35 +2496,35 @@ static HlResult hlINNNSubMotionBoneWriteKeyframes(
     case HL_ANIM_KEY_BONE_TYPE_SCALE_X:
     case HL_ANIM_KEY_BONE_TYPE_SCALE_Y:
     case HL_ANIM_KEY_BONE_TYPE_SCALE_Z:
-        return hlINNNSubMotionWriteKeyframesFloat(keyGroup, platform, file);
+        return hlINNNSubMotionWriteKeyframesFloat(keyGroup, platform, stream);
 
     case HL_ANIM_KEY_MAT_TYPE_TEX_INDEX:
-        return hlINNNSubMotionWriteKeyframesInt(keyGroup, platform, file);
+        return hlINNNSubMotionWriteKeyframesInt(keyGroup, platform, stream);
 
     case HL_ANIM_KEY_TYPE_CUSTOM:
         return ((keyGroup->flagsAndType & HL_ANIM_KEY_FORMAT_MASK) == HL_ANIM_KEY_FORMAT_UINT) ?
-            hlINNNSubMotionWriteKeyframesUInt(keyGroup, platform, file) :
-            hlINNNSubMotionWriteKeyframesFloat(keyGroup, platform, file);
+            hlINNNSubMotionWriteKeyframesUInt(keyGroup, platform, stream) :
+            hlINNNSubMotionWriteKeyframesFloat(keyGroup, platform, stream);
 
     case HL_ANIM_KEY_MAT_TYPE_TEXCOORD_UV:
-        return hlINNNSubMotionWriteKeyframesUV(keyGroup, platform, file);
+        return hlINNNSubMotionWriteKeyframesUV(keyGroup, platform, stream);
 
     case HL_ANIM_KEY_BONE_TYPE_POS_XYZ:
     case HL_ANIM_KEY_BONE_TYPE_SCALE_XYZ:
-        return hlINNNSubMotionWriteKeyframesVector(keyGroup, platform, file);
+        return hlINNNSubMotionWriteKeyframesVector(keyGroup, platform, stream);
 
     case HL_ANIM_KEY_BONE_TYPE_ROT_XYZ:
         switch (keyGroup->flagsAndType & HL_ANIM_KEY_FORMAT_MASK)
         {
         default:
         case HL_ANIM_KEY_FORMAT_FLOAT:
-            return hlINNNSubMotionWriteKeyframesVector(keyGroup, platform, file);
+            return hlINNNSubMotionWriteKeyframesVector(keyGroup, platform, stream);
 
         case HL_ANIM_KEY_FORMAT_SHORT:
-            return hlINNNSubMotionWriteKeyframesRotA16(keyGroup, platform, file);
+            return hlINNNSubMotionWriteKeyframesRotA16(keyGroup, platform, stream);
 
         case HL_ANIM_KEY_FORMAT_INT:
-            return hlINNNSubMotionWriteKeyframesRotA32(keyGroup, platform, file);
+            return hlINNNSubMotionWriteKeyframesRotA32(keyGroup, platform, stream);
         }
 
         /* Just so compilers don't complain; we should never even reach this. */
@@ -2541,7 +2541,7 @@ static HlResult hlINNNSubMotionBoneWriteKeyframes(
 
 static HlResult hlINNNSubMotionCameraWriteKeyframes(
     const HlAnimationKeyGroup* HL_RESTRICT keyGroup,
-    HlNNPlatform platform, HlFile* HL_RESTRICT file)
+    HlNNPlatform platform, HlStream* HL_RESTRICT stream)
 {
     switch (keyGroup->flagsAndType & HL_ANIM_KEY_TYPE_MASK)
     {
@@ -2558,12 +2558,12 @@ static HlResult hlINNNSubMotionCameraWriteKeyframes(
     case HL_ANIM_KEY_CAM_TYPE_ZNEAR:
     case HL_ANIM_KEY_CAM_TYPE_ZFAR:
     case HL_ANIM_KEY_CAM_TYPE_ASPECT:
-        return hlINNNSubMotionWriteKeyframesFloat(keyGroup, platform, file);
+        return hlINNNSubMotionWriteKeyframesFloat(keyGroup, platform, stream);
 
     case HL_ANIM_KEY_CAM_TYPE_TARGET_XYZ:
     case HL_ANIM_KEY_CAM_TYPE_UPTARGET_XYZ:
     case HL_ANIM_KEY_CAM_TYPE_UPVECTOR_XYZ:
-        return hlINNNSubMotionWriteKeyframesVector(keyGroup, platform, file);
+        return hlINNNSubMotionWriteKeyframesVector(keyGroup, platform, stream);
 
     /* TODO: Write HL_ANIM_KEY_CAM_TYPE_ROLL. */
 
@@ -2574,7 +2574,7 @@ static HlResult hlINNNSubMotionCameraWriteKeyframes(
 
 static HlResult hlINNNSubMotionLightWriteKeyframes(
     const HlAnimationKeyGroup* HL_RESTRICT keyGroup,
-    HlNNPlatform platform, HlFile* HL_RESTRICT file)
+    HlNNPlatform platform, HlStream* HL_RESTRICT stream)
 {
     switch (keyGroup->flagsAndType & HL_ANIM_KEY_TYPE_MASK)
     {
@@ -2585,10 +2585,10 @@ static HlResult hlINNNSubMotionLightWriteKeyframes(
     case HL_ANIM_KEY_LIGHT_TYPE_INTENSITY:
     case HL_ANIM_KEY_LIGHT_TYPE_FALLOFF_START:
     case HL_ANIM_KEY_LIGHT_TYPE_FALLOFF_END:
-        return hlINNNSubMotionWriteKeyframesFloat(keyGroup, platform, file);
+        return hlINNNSubMotionWriteKeyframesFloat(keyGroup, platform, stream);
 
     case HL_ANIM_KEY_LIGHT_TYPE_COLOR_RGB:
-        return hlINNNSubMotionWriteKeyframesRGB(keyGroup, platform, file);
+        return hlINNNSubMotionWriteKeyframesRGB(keyGroup, platform, stream);
 
     /* TODO: Write HL_ANIM_KEY_LIGHT_TYPE_INNER_ANGLE. */
     /* TODO: Write HL_ANIM_KEY_LIGHT_TYPE_OUTER_ANGLE. */
@@ -2602,12 +2602,12 @@ static HlResult hlINNNSubMotionLightWriteKeyframes(
 
 static HlResult hlINNNSubMotionMorphWriteKeyframes(
     const HlAnimationKeyGroup* HL_RESTRICT keyGroup,
-    HlNNPlatform platform, HlFile* HL_RESTRICT file)
+    HlNNPlatform platform, HlStream* HL_RESTRICT stream)
 {
     switch (keyGroup->flagsAndType & HL_ANIM_KEY_TYPE_MASK)
     {
     case HL_ANIM_KEY_MORPH_TYPE_WEIGHT:
-        return hlINNNSubMotionWriteKeyframesFloat(keyGroup, platform, file);
+        return hlINNNSubMotionWriteKeyframesFloat(keyGroup, platform, stream);
 
     /* NN doesn't have a corresponding type for this; return failure. */
     default: return HL_ERROR_UNSUPPORTED;
@@ -2616,7 +2616,7 @@ static HlResult hlINNNSubMotionMorphWriteKeyframes(
 
 static HlResult hlINNNSubMotionMaterialWriteKeyframes(
     const HlAnimationKeyGroup* HL_RESTRICT keyGroup,
-    HlNNPlatform platform, HlFile* HL_RESTRICT file)
+    HlNNPlatform platform, HlStream* HL_RESTRICT stream)
 {
     switch (keyGroup->flagsAndType & HL_ANIM_KEY_TYPE_MASK)
     {
@@ -2635,21 +2635,21 @@ static HlResult hlINNNSubMotionMaterialWriteKeyframes(
     case HL_ANIM_KEY_MAT_TYPE_TEX_BLEND:
     case HL_ANIM_KEY_MAT_TYPE_TEXCOORD_U:
     case HL_ANIM_KEY_MAT_TYPE_TEXCOORD_V:
-        return hlINNNSubMotionWriteKeyframesFloat(keyGroup, platform, file);
+        return hlINNNSubMotionWriteKeyframesFloat(keyGroup, platform, stream);
 
     case HL_ANIM_KEY_MAT_TYPE_TEX_INDEX:
-        return hlINNNSubMotionWriteKeyframesInt(keyGroup, platform, file);
+        return hlINNNSubMotionWriteKeyframesInt(keyGroup, platform, stream);
 
     case HL_ANIM_KEY_TYPE_CUSTOM:
-        return hlINNNSubMotionWriteKeyframesUInt(keyGroup, platform, file);
+        return hlINNNSubMotionWriteKeyframesUInt(keyGroup, platform, stream);
 
     case HL_ANIM_KEY_MAT_TYPE_TEXCOORD_UV:
-        return hlINNNSubMotionWriteKeyframesUV(keyGroup, platform, file);
+        return hlINNNSubMotionWriteKeyframesUV(keyGroup, platform, stream);
 
     case HL_ANIM_KEY_MAT_TYPE_DIFFUSE_RGB:
     case HL_ANIM_KEY_MAT_TYPE_SPECULAR_RGB:
     case HL_ANIM_KEY_MAT_TYPE_AMBIENT_RGB:
-        return hlINNNSubMotionWriteKeyframesRGB(keyGroup, platform, file);
+        return hlINNNSubMotionWriteKeyframesRGB(keyGroup, platform, stream);
 
     /* TODO: Write HL_ANIM_KEY_MAT_TYPE_HIDE. */
 
@@ -2661,24 +2661,24 @@ static HlResult hlINNNSubMotionMaterialWriteKeyframes(
 static HlResult hlINNNSubMotionWriteKeyframes(
     const HlAnimationKeyGroup* HL_RESTRICT keyGroup,
     HlAnimationFlags animFlags, HlNNPlatform platform,
-    HlFile* HL_RESTRICT file)
+    HlStream* HL_RESTRICT stream)
 {
     switch (animFlags & HL_ANIM_TYPE_MASK)
     {
     case HL_ANIM_TYPE_BONE:
-        return hlINNNSubMotionBoneWriteKeyframes(keyGroup, platform, file);
+        return hlINNNSubMotionBoneWriteKeyframes(keyGroup, platform, stream);
 
     case HL_ANIM_TYPE_CAMERA:
-        return hlINNNSubMotionCameraWriteKeyframes(keyGroup, platform, file);
+        return hlINNNSubMotionCameraWriteKeyframes(keyGroup, platform, stream);
 
     case HL_ANIM_TYPE_LIGHT:
-        return hlINNNSubMotionLightWriteKeyframes(keyGroup, platform, file);
+        return hlINNNSubMotionLightWriteKeyframes(keyGroup, platform, stream);
 
     case HL_ANIM_TYPE_MORPH:
-        return hlINNNSubMotionMorphWriteKeyframes(keyGroup, platform, file);
+        return hlINNNSubMotionMorphWriteKeyframes(keyGroup, platform, stream);
 
     case HL_ANIM_TYPE_MATERIAL:
-        return hlINNNSubMotionMaterialWriteKeyframes(keyGroup, platform, file);
+        return hlINNNSubMotionMaterialWriteKeyframes(keyGroup, platform, stream);
 
     default: return HL_ERROR_UNKNOWN;
     }
@@ -3338,7 +3338,7 @@ static HlNNCnkID hlINNNMotionGetChunkID(const HlAnimation* anim)
 }
 
 HlResult hlNNMotionWrite(const HlAnimation* HL_RESTRICT anim, size_t dataPos,
-    HlNNPlatform platform, HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file)
+    HlNNPlatform platform, HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream)
 {
     /* Create NN header. */
     HlNNBinCnkDataHeader header =
@@ -3356,10 +3356,10 @@ HlResult hlNNMotionWrite(const HlAnimation* HL_RESTRICT anim, size_t dataPos,
     header.id = hlNNPlatformMakeCnkID(header.id, platform);
 
     /* Get chunk position. */
-    cnkPos = hlFileTell(file);
+    cnkPos = hlStreamTell(stream);
 
     /* Write motion chunk header. */
-    result = hlFileWrite(file, sizeof(header), &header, 0);
+    result = hlStreamWrite(stream, sizeof(header), &header, NULL);
     if (HL_FAILED(result)) return result;
 
     /* Write NN SubMotion Keyframes. */
@@ -3370,13 +3370,13 @@ HlResult hlNNMotionWrite(const HlAnimation* HL_RESTRICT anim, size_t dataPos,
         {
             /* TODO */
             /*result = hlINNNSubMotionWriteKeyframesIP(&anim->keyGroups[i],
-                anim->flagsAndType, platform, file);*/
+                anim->flagsAndType, platform, stream);*/
             return HL_ERROR_UNKNOWN;
         }
         else
         {
             result = hlINNNSubMotionWriteKeyframes(&anim->keyGroups[i],
-                anim->flagsAndType, platform, file);
+                anim->flagsAndType, platform, stream);
         }
         
         /* Return if an error was encountered. */
@@ -3420,7 +3420,7 @@ HlResult hlNNMotionWrite(const HlAnimation* HL_RESTRICT anim, size_t dataPos,
         subMot.keyframes = (HlU32)(keyframeOff - dataPos);
 
         /* Add offset to offset table. */
-        result = HL_LIST_PUSH(*offTable, hlFileTell(file) + 36);
+        result = HL_LIST_PUSH(*offTable, hlStreamTell(stream) + 36);
         if (HL_FAILED(result)) return result;
 
         /* Increase keyframe offset. */
@@ -3433,7 +3433,7 @@ HlResult hlNNMotionWrite(const HlAnimation* HL_RESTRICT anim, size_t dataPos,
         }
 
         /* Write NN SubMotion. */
-        result = hlFileWrite(file, sizeof(subMot), &subMot, 0);
+        result = hlStreamWrite(stream, sizeof(subMot), &subMot, NULL);
         if (HL_FAILED(result)) return result;
     }
 
@@ -3451,7 +3451,7 @@ HlResult hlNNMotionWrite(const HlAnimation* HL_RESTRICT anim, size_t dataPos,
         };
 
         /* Get NN Motion position. */
-        motPos = hlFileTell(file);
+        motPos = hlStreamTell(stream);
 
         /* Add offset to offset table. */
         result = HL_LIST_PUSH(*offTable, motPos + 16);
@@ -3464,21 +3464,21 @@ HlResult hlNNMotionWrite(const HlAnimation* HL_RESTRICT anim, size_t dataPos,
         }
 
         /* Write NN Motion. */
-        result = hlFileWrite(file, sizeof(motion), &motion, 0);
+        result = hlStreamWrite(stream, sizeof(motion), &motion, NULL);
         if (HL_FAILED(result)) return result;
     }
 
     /* Fix padding. */
-    result = hlFilePad(file, hlNNPlatformGetPadSize(platform));
+    result = hlStreamPad(stream, hlNNPlatformGetPadSize(platform));
     if (HL_FAILED(result)) return result;
 
     /* Fill-in motion chunk header. */
     {
-        /* Get end of file. */
-        size_t eof = hlFileTell(file);
+        /* Get end of stream. */
+        size_t eof = hlStreamTell(stream);
 
         /* Jump to motion chunk. */
-        result = hlFileJumpTo(file, cnkPos + 4);
+        result = hlStreamJumpTo(stream, cnkPos + 4);
         if (HL_FAILED(result)) return result;
 
         /* Generate motion chunk header values. */
@@ -3492,11 +3492,11 @@ HlResult hlNNMotionWrite(const HlAnimation* HL_RESTRICT anim, size_t dataPos,
         }
 
         /* Fill-in motion chunk header. */
-        result = hlFileWrite(file, 8, &header.nextIDOffset, 0);
+        result = hlStreamWrite(stream, 8, &header.nextIDOffset, NULL);
         if (HL_FAILED(result)) return result;
 
-        /* Jump to end of file. */
-        result = hlFileJumpTo(file, eof);
+        /* Jump to end of stream. */
+        result = hlStreamJumpTo(stream, eof);
     }
 
     return result;

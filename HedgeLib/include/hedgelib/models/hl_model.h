@@ -6,8 +6,9 @@
 extern "C" {
 #endif
 
+/* TODO: Make hl_model stuff not reliant upon HlBlob. */
 typedef struct HlBlob HlBlob;
-typedef struct HlFile HlFile;
+typedef struct HlStream HlStream;
 typedef struct HlMaterial HlMaterial;
 
 typedef enum HlIndexType
@@ -171,7 +172,7 @@ HL_API HlResult hlModelGetMats(const HlModel* HL_RESTRICT model,
     HlMaterialList* HL_RESTRICT mats);
 
 HL_API HlResult hlModelWriteMTL(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
-    size_t modelCount, HlFile* HL_RESTRICT file);
+    size_t modelCount, HlStream* HL_RESTRICT stream);
 
 HL_API HlResult hlModelExportMTL(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
     size_t modelCount, const HlNChar* HL_RESTRICT filePath);
@@ -179,7 +180,7 @@ HL_API HlResult hlModelExportMTL(const HlModel* const HL_RESTRICT * HL_RESTRICT 
 HL_API HlModel** hlModelReadOBJ(const HlBlob* blob, size_t* modelCount);
 
 HL_API HlResult hlModelWriteOBJ(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
-    size_t modelCount, const char* HL_RESTRICT mtlName, HlFile* HL_RESTRICT file);
+    size_t modelCount, const char* HL_RESTRICT mtlName, HlStream* HL_RESTRICT stream);
 
 HL_API HlModel** hlModelImportOBJ(const HlNChar* filePath, size_t* modelCount);
 

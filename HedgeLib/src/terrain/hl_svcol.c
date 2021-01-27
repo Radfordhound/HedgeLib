@@ -1,7 +1,8 @@
+#include "hedgelib/hl_endian.h"
+#include "hedgelib/hl_text.h"
 #include "hedgelib/terrain/hl_svcol.h"
 #include "hedgelib/io/hl_bina.h"
 #include "hedgelib/io/hl_file.h"
-#include "hedgelib/hl_endian.h"
 
 void hlSVShapeSwap(HlSVShape* shape, HlBool swapOffsets)
 {
@@ -176,7 +177,7 @@ HlResult hlSVColRead(void* HL_RESTRICT rawData,
 HlResult hlSVColWrite(const HlSectorCollision* HL_RESTRICT hlSecCol,
     size_t dataPos, HlBINAEndianFlag endianFlag,
     HlStrTable* HL_RESTRICT strTable, HlOffTable* HL_RESTRICT offTable,
-    HlFile* HL_RESTRICT file)
+    HlStream* HL_RESTRICT stream)
 {
     HlResult result;
 
@@ -197,8 +198,8 @@ HlResult hlSVColWrite(const HlSectorCollision* HL_RESTRICT hlSecCol,
             hlSVColHeaderSwap(&header, HL_TRUE);
         }
 
-        /* Write header to file. */
-        result = hlFileWrite(file, sizeof(HlSVColHeader), &header, NULL);
+        /* Write header to stream. */
+        result = hlStreamWrite(stream, sizeof(HlSVColHeader), &header, NULL);
         if (HL_FAILED(result)) return result;
 
         /* Add shapes offset to offset table. */
@@ -239,8 +240,8 @@ HlResult hlSVColWrite(const HlSectorCollision* HL_RESTRICT hlSecCol,
                     hlSVShapeSwap(&shape, HL_TRUE);
                 }
                 
-                /* Write shape to file. */
-                result = hlFileWrite(file, sizeof(HlSVShape), &shape, NULL);
+                /* Write shape to stream. */
+                result = hlStreamWrite(stream, sizeof(HlSVShape), &shape, NULL);
                 if (HL_FAILED(result)) return result;
 
                 /* Increase current sectors position. */
@@ -268,7 +269,7 @@ HlResult hlSVColWrite(const HlSectorCollision* HL_RESTRICT hlSecCol,
         /* Write SVCOL sectors. */
         for (i = 0; i < hlSecCol->shapes.count; ++i)
         {
-            result = hlFileWrite(file, sizeof(HlSVSector) *
+            result = hlStreamWrite(stream, sizeof(HlSVSector) *
                 hlSecCol->shapes.data[i].sectors.count,
                 hlSecCol->shapes.data[i].sectors.data, NULL);
 
@@ -284,7 +285,7 @@ HlResult hlSVColSave(const HlSectorCollision* HL_RESTRICT hlSecCol,
 {
     HlStrTable strTable;
     HlOffTable offTable;
-    HlFile* file;
+    HlFileStream* file;
     HlResult result;
 
     /* Initialize string and offset tables. */
@@ -292,7 +293,7 @@ HlResult hlSVColSave(const HlSectorCollision* HL_RESTRICT hlSecCol,
     HL_LIST_INIT(offTable);
 
     /* Open file. */
-    result = hlFileOpen(filePath, HL_FILE_MODE_WRITE, &file);
+    result = hlFileStreamOpen(filePath, HL_FILE_MODE_WRITE, &file);
     if (HL_FAILED(result)) return result;
 
     /* Start writing BINAV2 header. */
@@ -322,11 +323,11 @@ HlResult hlSVColSave(const HlSectorCollision* HL_RESTRICT hlSecCol,
     /* Free lists, close file, and return result. */
     hlStrTableDestruct(&strTable);
     HL_LIST_FREE(offTable);
-    return hlFileClose(file);
+    return hlFileStreamClose(file);
 
 failed:
     hlStrTableDestruct(&strTable);
     HL_LIST_FREE(offTable);
-    hlFileClose(file);
+    hlFileStreamClose(file);
     return result;
 }

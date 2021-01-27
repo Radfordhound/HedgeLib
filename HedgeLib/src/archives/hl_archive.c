@@ -4,7 +4,6 @@
 #include "hedgelib/io/hl_path.h"
 #include "hedgelib/io/hl_file.h"
 #include "hedgelib/archives/hl_archive.h"
-#include <string.h>
 
 size_t hlArchiveExtIsSplit(const HlNChar* ext)
 {
@@ -287,23 +286,9 @@ static HlResult hlINArchiveEntriesExtract(const HlArchiveEntry* HL_RESTRICT entr
             /* Extract file. */
             else
             {
-                /* Open the file. */
-                HlFile* file;
-                result = hlFileOpen(*pathBuf, HL_FILE_MODE_WRITE, &file);
-                if (HL_FAILED(result)) return result;
+                result = hlFileSave((void*)((HlUPtr)entries[i].data),
+                    entries[i].size, *pathBuf);
 
-                /* Write data to the file. */
-                result = hlFileWrite(file, entries[i].size,
-                    (void*)((HlUPtr)entries[i].data), NULL);
-
-                if (HL_FAILED(result))
-                {
-                    hlFileClose(file);
-                    return result;
-                }
-
-                /* Close the file, then return if any errors were encountered. */
-                result = hlFileClose(file);
                 if (HL_FAILED(result)) return result;
             }
         }
@@ -497,17 +482,17 @@ static HlResult hlINArchiveAddDir(
             if (loadData)
             {
                 void* fileData;
-                HlFile* file;
+                HlFileStream* file;
 
                 /* Open file. */
-                result = hlFileOpen(*pathBuf, HL_FILE_MODE_READ, &file);
+                result = hlFileStreamOpen(*pathBuf, HL_FILE_MODE_READ, &file);
                 if (HL_FAILED(result)) break;
 
                 /* Allocate name buffer. */
                 arcEntry.path = HL_ALLOC_ARR(HlNChar, nameSize);
                 if (!arcEntry.path)
                 {
-                    hlFileClose(file);
+                    hlFileStreamClose(file);
                     result = HL_ERROR_OUT_OF_MEMORY;
                     break;
                 }
@@ -520,23 +505,23 @@ static HlResult hlINArchiveAddDir(
                 if (!fileData)
                 {
                     hlFree(arcEntry.path);
-                    hlFileClose(file);
+                    hlFileStreamClose(file);
                     result = HL_ERROR_OUT_OF_MEMORY;
                     break;
                 }
 
                 /* Read data into buffer. */
-                result = hlFileRead(file, arcEntry.size, fileData, NULL);
+                result = hlStreamRead(file, arcEntry.size, fileData, NULL);
                 if (HL_FAILED(result))
                 {
                     hlFree(fileData);
                     hlFree(arcEntry.path);
-                    hlFileClose(file);
+                    hlFileStreamClose(file);
                     break;
                 }
 
                 /* Close file. */
-                result = hlFileClose(file);
+                result = hlFileStreamClose(file);
                 if (HL_FAILED(result))
                 {
                     hlFree(fileData);

@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-typedef struct HlFile HlFile;
+typedef struct HlStream HlStream;
 
 typedef enum HlMaterialParamFormat
 {
@@ -52,10 +52,13 @@ typedef struct HlMaterial
 }
 HlMaterial;
 
-HL_API HlResult hlMaterialWriteMTL(const HlMaterial* const HL_RESTRICT * HL_RESTRICT materials,
-    size_t materialCount, HlFile* HL_RESTRICT file);
 
-HL_API HlResult hlMaterialExportMTL(const HlMaterial* const HL_RESTRICT * HL_RESTRICT materials,
+HL_API HlResult hlMaterialWriteMTL(
+    const HlMaterial* const HL_RESTRICT * HL_RESTRICT materials,
+    size_t materialCount, HlStream* HL_RESTRICT stream);
+
+HL_API HlResult hlMaterialExportMTL(
+    const HlMaterial* const HL_RESTRICT * HL_RESTRICT materials,
     size_t materialCount, const HlNChar* HL_RESTRICT filePath);
 
 #ifdef __cplusplus

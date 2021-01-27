@@ -1,8 +1,6 @@
 #include "hedgelib/hl_endian.h"
-#include "hedgelib/hl_blob.h"
 #include "hedgelib/io/hl_hh.h"
-#include "hedgelib/io/hl_file.h"
-#include "../hl_in_assert.h" /* TODO: Remove this? */
+#include "hedgelib/io/hl_stream.h"
 #include <string.h>
 
 void hlHHStandardHeaderSwap(HlHHStandardHeader* header, HlBool swapOffsets)
@@ -237,7 +235,7 @@ const void* hlHHMirageGetData(const void* HL_RESTRICT rawData,
 }
 
 HlResult hlHHOffsetsWriteNoSort(const HlOffTable* HL_RESTRICT offTable,
-    size_t dataPos, HlFile* HL_RESTRICT file)
+    size_t dataPos, HlStream* HL_RESTRICT stream)
 {
     size_t i;
     HlResult result = HL_RESULT_SUCCESS;
@@ -258,7 +256,7 @@ HlResult hlHHOffsetsWriteNoSort(const HlOffTable* HL_RESTRICT offTable,
 #endif
 
         /* Write offset value. */
-        result = hlFileWrite(file, sizeof(curOffValU32),
+        result = hlStreamWrite(stream, sizeof(curOffValU32),
             &curOffValU32, NULL);
 
         if (HL_FAILED(result)) return result;
@@ -268,16 +266,16 @@ HlResult hlHHOffsetsWriteNoSort(const HlOffTable* HL_RESTRICT offTable,
 }
 
 HlResult hlHHOffsetsWrite(HlOffTable* HL_RESTRICT offTable,
-    size_t dataPos, HlFile* HL_RESTRICT file)
+    size_t dataPos, HlStream* HL_RESTRICT stream)
 {
     /* Sort offsets in offset table. */
     hlOffTableSort(offTable);
 
     /* Write sorted offsets. */
-    return hlHHOffsetsWriteNoSort(offTable, dataPos, file);
+    return hlHHOffsetsWriteNoSort(offTable, dataPos, stream);
 }
 
-HlResult hlHHStandardStartWrite(HlFile* file, HlU32 version)
+HlResult hlHHStandardStartWrite(HlStream* stream, HlU32 version)
 {
     /* Generate HH standard header. */
     HlHHStandardHeader header =
@@ -296,22 +294,22 @@ HlResult hlHHStandardStartWrite(HlFile* file, HlU32 version)
 #endif
 
     /* Write header and return result. */
-    return hlFileWrite(file, sizeof(header), &header, NULL);
+    return hlStreamWrite(stream, sizeof(header), &header, NULL);
 }
 
 HlResult hlHHStandardFinishWrite(size_t headerPos, HlBool writeEOFPadding,
-    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file)
+    HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream)
 {
     const size_t dataPos = (headerPos + sizeof(HlHHStandardHeader));
     size_t offTablePos, eofPos;
     HlResult result;
 
     /* Pad file for offset table. */
-    result = hlFilePad(file, 4);
+    result = hlStreamPad(stream, 4);
     if (HL_FAILED(result)) return result;
 
     /* Get offset table position. */
-    offTablePos = hlFileTell(file);
+    offTablePos = hlStreamTell(stream);
 
     /* Write offset count. */
     {
@@ -328,21 +326,21 @@ HlResult hlHHStandardFinishWrite(size_t headerPos, HlBool writeEOFPadding,
 #endif
 
         /* Write offset count. */
-        result = hlFileWrite(file, sizeof(offsetCountU32),
+        result = hlStreamWrite(stream, sizeof(offsetCountU32),
             &offsetCountU32, NULL);
 
         if (HL_FAILED(result)) return result;
     }
 
     /* Write offset table. */
-    result = hlHHOffsetsWrite(offTable, dataPos, file);
+    result = hlHHOffsetsWrite(offTable, dataPos, stream);
     if (HL_FAILED(result)) return result;
 
-    /* Get end of file position. */
-    eofPos = hlFileTell(file);
+    /* Get end of stream position. */
+    eofPos = hlStreamTell(stream);
 
     /* Jump to header fileSize position. */
-    result = hlFileJumpTo(file, headerPos);
+    result = hlStreamJumpTo(stream, headerPos);
     if (HL_FAILED(result)) return result;
 
     /* Fill-in header values. */
@@ -372,30 +370,30 @@ HlResult hlHHStandardFinishWrite(size_t headerPos, HlBool writeEOFPadding,
 #endif
 
         /* Fill-in header fileSize. */
-        result = hlFileWrite(file, sizeof(header.fileSize), &header.fileSize, NULL);
+        result = hlStreamWrite(stream, sizeof(header.fileSize), &header.fileSize, NULL);
         if (HL_FAILED(result)) return result;
 
         /* Skip header version. */
-        result = hlFileJumpAhead(file, 4);
+        result = hlStreamJumpAhead(stream, 4);
         if (HL_FAILED(result)) return result;
 
         /* Fill-in remaining header values. */
-        result = hlFileWrite(file, sizeof(header) -
+        result = hlStreamWrite(stream, sizeof(header) -
             offsetof(HlHHStandardHeader, dataSize),
             &header.dataSize, NULL);
 
         if (HL_FAILED(result)) return result;
     }
 
-    /* Jump to end of file. */
-    result = hlFileJumpTo(file, eofPos);
+    /* Jump to end of stream. */
+    result = hlStreamJumpTo(stream, eofPos);
     if (HL_FAILED(result)) return result;
 
     /* Write EOF padding if requested. */
     if (writeEOFPadding)
     {
         const HlU32 eofPadding = 0;
-        result = hlFileWrite(file, sizeof(eofPadding),
+        result = hlStreamWrite(stream, sizeof(eofPadding),
             &eofPadding, NULL);
     }
 

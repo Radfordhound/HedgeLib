@@ -1,12 +1,13 @@
 #include "hedgelib/hl_math.h"
+#include "hedgelib/hl_text.h"
 #include "hedgelib/models/hl_model.h"
+#include "hedgelib/materials/hl_material.h"
 #include "hedgelib/io/hl_file.h"
 #include "hedgelib/io/hl_path.h"
-#include "hedgelib/materials/hl_material.h"
 #include <stdio.h>
 
 HlResult hlModelWriteMTL(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
-    size_t modelCount, HlFile* HL_RESTRICT file)
+    size_t modelCount, HlStream* HL_RESTRICT stream)
 {
     HlMaterialList mats;
     size_t i;
@@ -23,7 +24,7 @@ HlResult hlModelWriteMTL(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
     }
 
     /* Write MTL, free list, and return result. */
-    result = hlMaterialWriteMTL((const HlMaterial**)mats.data, mats.count, file);
+    result = hlMaterialWriteMTL((const HlMaterial**)mats.data, mats.count, stream);
     HL_LIST_FREE(mats);
     return result;
 }
@@ -31,22 +32,22 @@ HlResult hlModelWriteMTL(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
 HlResult hlModelExportMTL(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
     size_t modelCount, const HlNChar* HL_RESTRICT filePath)
 {
-    HlFile* file;
+    HlFileStream* file;
     HlResult result;
 
     /* Open file. */
-    result = hlFileOpen(filePath, HL_FILE_MODE_WRITE, &file);
+    result = hlFileStreamOpen(filePath, HL_FILE_MODE_WRITE, &file);
     if (HL_FAILED(result)) return result;
 
     /* Write MTL to file, close it, and return. */
     result = hlModelWriteMTL(models, modelCount, file);
     if (HL_FAILED(result))
     {
-        hlFileClose(file);
+        hlFileStreamClose(file);
         return result;
     }
 
-    return hlFileClose(file);
+    return hlFileStreamClose(file);
 }
 
 HlModel** hlModelReadOBJ(const HlBlob* blob, size_t* modelCount)
@@ -58,7 +59,7 @@ HlModel** hlModelReadOBJ(const HlBlob* blob, size_t* modelCount)
 static HlResult hlINMeshWriteVerticesOBJVec1(const HlMesh* HL_RESTRICT mesh,
     const HlVertexFormat* HL_RESTRICT vtxFmt, const HlVertexElement* HL_RESTRICT vtxElem,
     size_t bufStartIndex, char* HL_RESTRICT buf, size_t* HL_RESTRICT globalVertexCount,
-    HlFile* HL_RESTRICT file)
+    HlStream* HL_RESTRICT stream)
 {
     const void* verticesBufPtr;
     size_t i, bufLen;
@@ -100,8 +101,8 @@ static HlResult hlINMeshWriteVerticesOBJVec1(const HlMesh* HL_RESTRICT mesh,
         default: return HL_ERROR_UNSUPPORTED;
         }
 
-        /* Write buffer contents to file. */
-        result = hlFileWrite(file, bufLen * sizeof(char), buf, 0);
+        /* Write buffer contents to stream. */
+        result = hlStreamWrite(stream, bufLen * sizeof(char), buf, 0);
         if (HL_FAILED(result)) return result;
     }
 
@@ -111,7 +112,7 @@ static HlResult hlINMeshWriteVerticesOBJVec1(const HlMesh* HL_RESTRICT mesh,
 static HlResult hlINMeshWriteVerticesOBJVec2(const HlMesh* HL_RESTRICT mesh,
     const HlVertexFormat* HL_RESTRICT vtxFmt, const HlVertexElement* HL_RESTRICT vtxElem,
     size_t bufStartIndex, char* HL_RESTRICT buf, size_t* HL_RESTRICT globalVertexCount,
-    HlFile* HL_RESTRICT file)
+    HlStream* HL_RESTRICT stream)
 {
     const void* verticesBufPtr;
     size_t i, bufLen;
@@ -162,8 +163,8 @@ static HlResult hlINMeshWriteVerticesOBJVec2(const HlMesh* HL_RESTRICT mesh,
         default: return HL_ERROR_UNSUPPORTED;
         }
 
-        /* Write buffer contents to file. */
-        result = hlFileWrite(file, bufLen * sizeof(char), buf, 0);
+        /* Write buffer contents to stream. */
+        result = hlStreamWrite(stream, bufLen * sizeof(char), buf, 0);
         if (HL_FAILED(result)) return result;
     }
 
@@ -173,7 +174,7 @@ static HlResult hlINMeshWriteVerticesOBJVec2(const HlMesh* HL_RESTRICT mesh,
 static HlResult hlINMeshWriteVerticesOBJVec3(const HlMesh* HL_RESTRICT mesh,
     const HlVertexFormat* HL_RESTRICT vtxFmt, const HlVertexElement* HL_RESTRICT vtxElem,
     size_t bufStartIndex, char* HL_RESTRICT buf, size_t* HL_RESTRICT globalVertexCount,
-    HlFile* HL_RESTRICT file)
+    HlStream* HL_RESTRICT stream)
 {
     const void* verticesBufPtr;
     size_t i, bufLen;
@@ -226,8 +227,8 @@ static HlResult hlINMeshWriteVerticesOBJVec3(const HlMesh* HL_RESTRICT mesh,
         default: return HL_ERROR_UNSUPPORTED;
         }
 
-        /* Write buffer contents to file. */
-        result = hlFileWrite(file, bufLen * sizeof(char), buf, 0);
+        /* Write buffer contents to stream. */
+        result = hlStreamWrite(stream, bufLen * sizeof(char), buf, 0);
         if (HL_FAILED(result)) return result;
     }
 
@@ -237,7 +238,7 @@ static HlResult hlINMeshWriteVerticesOBJVec3(const HlMesh* HL_RESTRICT mesh,
 static HlResult hlINMeshWriteVerticesOBJVec4(const HlMesh* HL_RESTRICT mesh,
     const HlVertexFormat* HL_RESTRICT vtxFmt, const HlVertexElement* HL_RESTRICT vtxElem,
     size_t bufStartIndex, char* HL_RESTRICT buf, size_t* HL_RESTRICT globalVertexCount,
-    HlFile* HL_RESTRICT file)
+    HlStream* HL_RESTRICT stream)
 {
     const void* verticesBufPtr;
     size_t i, bufLen;
@@ -285,8 +286,8 @@ static HlResult hlINMeshWriteVerticesOBJVec4(const HlMesh* HL_RESTRICT mesh,
         default: return HL_ERROR_UNSUPPORTED;
         }
 
-        /* Write buffer contents to file. */
-        result = hlFileWrite(file, bufLen * sizeof(char), buf, 0);
+        /* Write buffer contents to stream. */
+        result = hlStreamWrite(stream, bufLen * sizeof(char), buf, 0);
         if (HL_FAILED(result)) return result;
     }
 
@@ -413,7 +414,7 @@ static int hlINMeshStoreFaceOBJ(char types, HlBool clockwise,
 
 static HlResult hlINMeshWriteFacesOBJStrips(const HlMesh* HL_RESTRICT mesh,
     char types, const HlINOBJGlobalCounts* HL_RESTRICT globalOffset,
-    char* HL_RESTRICT buf, HlFile* HL_RESTRICT file)
+    char* HL_RESTRICT buf, HlStream* HL_RESTRICT stream)
 {
     size_t i, bufLen;
     HlResult result;
@@ -466,8 +467,8 @@ static HlResult hlINMeshWriteFacesOBJStrips(const HlMesh* HL_RESTRICT mesh,
                 /* Multiply by sizeof(char). This should almost always be optimized-out. */
                 bufLen *= sizeof(char);
 
-                /* Write data to file. */
-                result = hlFileWrite(file, bufLen, buf, 0);
+                /* Write data to stream. */
+                result = hlStreamWrite(stream, bufLen, buf, 0);
                 if (HL_FAILED(result)) return result;
             }
 
@@ -483,7 +484,7 @@ static HlResult hlINMeshWriteFacesOBJStrips(const HlMesh* HL_RESTRICT mesh,
 static HlResult hlINMeshesWriteOBJ(const HlMesh* HL_RESTRICT meshes,
     size_t meshCount, const HlVertexFormat* HL_RESTRICT vertexFormats,
     HlBool writeMats, char* HL_RESTRICT buf, size_t* HL_RESTRICT globalIndex,
-    HlINOBJGlobalCounts* HL_RESTRICT globalCounts, HlFile* HL_RESTRICT file)
+    HlINOBJGlobalCounts* HL_RESTRICT globalCounts, HlStream* HL_RESTRICT stream)
 {
     size_t i;
     HlResult result;
@@ -511,8 +512,8 @@ static HlResult hlINMeshesWriteOBJ(const HlMesh* HL_RESTRICT meshes,
         /* Increment global index. */
         ++(*globalIndex);
 
-        /* Write group name to file. */
-        result = hlFileWrite(file, len, buf, 0);
+        /* Write group name to stream. */
+        result = hlStreamWrite(stream, len, buf, 0);
         if (HL_FAILED(result)) return result;
 
         /* Store material name data in buffer if necessary. */
@@ -528,8 +529,8 @@ static HlResult hlINMeshesWriteOBJ(const HlMesh* HL_RESTRICT meshes,
                 len = sprintf(buf, "usemtl %s\n", matName);
                 if (len < 0) return HL_ERROR_UNKNOWN;
 
-                /* Write material name to file. */
-                result = hlFileWrite(file, len, buf, 0);
+                /* Write material name to stream. */
+                result = hlStreamWrite(stream, len, buf, 0);
                 if (HL_FAILED(result)) return result;
             }
         }
@@ -560,12 +561,12 @@ static HlResult hlINMeshesWriteOBJ(const HlMesh* HL_RESTRICT meshes,
                 if (vtxElemDimension == HL_VERTEX_ELEM_DIMENSION_3D)
                 {
                     result = hlINMeshWriteVerticesOBJVec3(&meshes[i], vtxFmt,
-                        vtxElem, 2, buf, &globalCounts->vertexCount, file);
+                        vtxElem, 2, buf, &globalCounts->vertexCount, stream);
                 }
                 else
                 {
                     result = hlINMeshWriteVerticesOBJVec4(&meshes[i], vtxFmt,
-                        vtxElem, 2, buf, &globalCounts->vertexCount, file);
+                        vtxElem, 2, buf, &globalCounts->vertexCount, stream);
                 }
 
                 if (HL_FAILED(result)) return result;
@@ -585,7 +586,7 @@ static HlResult hlINMeshesWriteOBJ(const HlMesh* HL_RESTRICT meshes,
 
                 /* Store data in buffer. */
                 result = hlINMeshWriteVerticesOBJVec3(&meshes[i], vtxFmt,
-                    vtxElem, 3, buf, &globalCounts->normalCount, file);
+                    vtxElem, 3, buf, &globalCounts->normalCount, stream);
 
                 if (HL_FAILED(result)) return result;
 
@@ -603,17 +604,17 @@ static HlResult hlINMeshesWriteOBJ(const HlMesh* HL_RESTRICT meshes,
                 if (vtxElemDimension == HL_VERTEX_ELEM_DIMENSION_2D)
                 {
                     result = hlINMeshWriteVerticesOBJVec2(&meshes[i], vtxFmt,
-                        vtxElem, 3, buf, &globalCounts->texcoordCount, file);
+                        vtxElem, 3, buf, &globalCounts->texcoordCount, stream);
                 }
                 else if (vtxElemDimension == HL_VERTEX_ELEM_DIMENSION_1D)
                 {
                     result = hlINMeshWriteVerticesOBJVec1(&meshes[i], vtxFmt,
-                        vtxElem, 3, buf, &globalCounts->texcoordCount, file);
+                        vtxElem, 3, buf, &globalCounts->texcoordCount, stream);
                 }
                 else
                 {
                     result = hlINMeshWriteVerticesOBJVec3(&meshes[i], vtxFmt,
-                        vtxElem, 3, buf, &globalCounts->texcoordCount, file);
+                        vtxElem, 3, buf, &globalCounts->texcoordCount, stream);
                 }
 
                 if (HL_FAILED(result)) return result;
@@ -633,7 +634,7 @@ static HlResult hlINMeshesWriteOBJ(const HlMesh* HL_RESTRICT meshes,
             /* TODO: Handle quads?? */
             /* TODO: Triangle lists. */
             result = hlINMeshWriteFacesOBJStrips(&meshes[i],
-                types, &globalOffsets, buf, file);
+                types, &globalOffsets, buf, stream);
 
             if (HL_FAILED(result)) return result;
         }
@@ -643,29 +644,29 @@ static HlResult hlINMeshesWriteOBJ(const HlMesh* HL_RESTRICT meshes,
 }
 
 static HlResult hlINModelWriteOBJ(const HlModel* HL_RESTRICT model,
-    HlBool writeMats, HlFile* HL_RESTRICT file)
+    HlBool writeMats, HlStream* HL_RESTRICT stream)
 {
     HlResult result;
 
     /* Write object. */
-    result = HL_FILE_WRITE_TEXT(file, "o ", NULL);
+    result = HL_STREAM_WRITE_TEXT_UTF8(stream, "o ", NULL);
     if (HL_FAILED(result)) return result;
 
     /* Write object name. */
     if (model->name)
     {
-        result = hlFileWrite(file, strlen(model->name) *
+        result = hlStreamWrite(stream, strlen(model->name) *
             sizeof(char), model->name, NULL);
     }
     else
     {
-        result = HL_FILE_WRITE_TEXT(file, "default", NULL);
+        result = HL_STREAM_WRITE_TEXT_UTF8(stream, "default", NULL);
     }
 
     if (HL_FAILED(result)) return result;
 
     /* Write newline. */
-    result = HL_FILE_WRITE_TEXT(file, "\n", NULL);
+    result = HL_STREAM_WRITE_TEXT_UTF8(stream, "\n", NULL);
     if (HL_FAILED(result)) return result;
 
     /* Write meshes. */
@@ -679,21 +680,21 @@ static HlResult hlINModelWriteOBJ(const HlModel* HL_RESTRICT model,
             /* Write solid slot. */
             result = hlINMeshesWriteOBJ(model->meshGroups[i].solid.meshes,
                 model->meshGroups[i].solid.meshCount, model->vertexFormats,
-                writeMats, buf, &globalIndex, &globalCounts, file);
+                writeMats, buf, &globalIndex, &globalCounts, stream);
 
             if (HL_FAILED(result)) return result;
 
             /* Write transparent slot. */
             result = hlINMeshesWriteOBJ(model->meshGroups[i].transparent.meshes,
                 model->meshGroups[i].transparent.meshCount, model->vertexFormats,
-                writeMats, buf, &globalIndex, &globalCounts, file);
+                writeMats, buf, &globalIndex, &globalCounts, stream);
 
             if (HL_FAILED(result)) return result;
 
             /* Write punch slot. */
             result = hlINMeshesWriteOBJ(model->meshGroups[i].punch.meshes,
                 model->meshGroups[i].punch.meshCount, model->vertexFormats,
-                writeMats, buf, &globalIndex, &globalCounts, file);
+                writeMats, buf, &globalIndex, &globalCounts, stream);
 
             if (HL_FAILED(result)) return result;
 
@@ -706,35 +707,35 @@ static HlResult hlINModelWriteOBJ(const HlModel* HL_RESTRICT model,
 
 HlResult hlModelWriteOBJ(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
     size_t modelCount, const char* HL_RESTRICT mtlName,
-    HlFile* HL_RESTRICT file)
+    HlStream* HL_RESTRICT stream)
 {
     size_t i;
     HlResult result;
 
     /* Write "Generated by HedgeLib" comment. */
-    result = HL_FILE_WRITE_TEXT(file, "# Generated by HedgeLib\n", NULL);
+    result = HL_STREAM_WRITE_TEXT_UTF8(stream, "# Generated by HedgeLib\n", NULL);
     if (HL_FAILED(result)) return result;
     
     /* Write mtl name if necessary. */
     if (mtlName)
     {
         /* Write mtllib. */
-        result = HL_FILE_WRITE_TEXT(file, "mtllib ", NULL);
+        result = HL_STREAM_WRITE_TEXT_UTF8(stream, "mtllib ", NULL);
         if (HL_FAILED(result)) return result;
 
         /* Write name of mtl. */
-        result = hlFileWrite(file, strlen(mtlName), mtlName, NULL);
+        result = hlStreamWrite(stream, strlen(mtlName), mtlName, NULL);
         if (HL_FAILED(result)) return result;
 
         /* Write newline. */
-        result = HL_FILE_WRITE_TEXT(file, "\n", NULL);
+        result = HL_STREAM_WRITE_TEXT_UTF8(stream, "\n", NULL);
         if (HL_FAILED(result)) return result;
     }
 
     /* Write objects. */
     for (i = 0; i < modelCount; ++i)
     {
-        result = hlINModelWriteOBJ(models[i], (mtlName != NULL), file);
+        result = hlINModelWriteOBJ(models[i], (mtlName != NULL), stream);
         if (HL_FAILED(result)) return result;
     }
 
@@ -750,7 +751,7 @@ HlModel** hlModelImportOBJ(const HlNChar* filePath, size_t* modelCount)
 HlResult hlModelExportOBJ(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
     size_t modelCount, HlBool writeMTL, const HlNChar* HL_RESTRICT filePath)
 {
-    HlFile* file;
+    HlFileStream* file;
     const HlNChar* ext;
     HlResult result;
 
@@ -785,14 +786,14 @@ HlResult hlModelExportOBJ(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
         }
 
         /* Open OBJ file. */
-        result = hlFileOpen(filePath, HL_FILE_MODE_WRITE, &file);
+        result = hlFileStreamOpen(filePath, HL_FILE_MODE_WRITE, &file);
         if (HL_FAILED(result)) return result;
 
         /* Write OBJ to file. */
         result = hlModelWriteOBJ(models, modelCount, mtlName, file);
         if (HL_FAILED(result))
         {
-            hlFileClose(file);
+            hlFileStreamClose(file);
             return result;
         }
 
@@ -801,7 +802,7 @@ HlResult hlModelExportOBJ(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
             hlFree(mtlName);
 
         /* Close OBJ file and return result if failed, or if we're not writing an MTL. */
-        result = hlFileClose(file);
+        result = hlFileStreamClose(file);
         if (!writeMTL || HL_FAILED(result))
             return result;
     }
@@ -827,7 +828,7 @@ HlResult hlModelExportOBJ(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
         hlNStrCopy(HL_NTEXT(".mtl"), &mtlPath[extPos]);
 
         /* Open MTL file. */
-        result = hlFileOpen(mtlPath, HL_FILE_MODE_WRITE, &file);
+        result = hlFileStreamOpen(mtlPath, HL_FILE_MODE_WRITE, &file);
         if (HL_FAILED(result)) return result;
 
         /* Write MTL to file. */
@@ -835,7 +836,7 @@ HlResult hlModelExportOBJ(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
         if (HL_FAILED(result))
         {
             if (mtlPath != buf) hlFree(mtlPath);
-            hlFileClose(file);
+            hlFileStreamClose(file);
             return result;
         }
 
@@ -843,6 +844,6 @@ HlResult hlModelExportOBJ(const HlModel* const HL_RESTRICT * HL_RESTRICT models,
         if (mtlPath != buf) hlFree(mtlPath);
 
         /* Close MTL file and return result. */
-        return hlFileClose(file);
+        return hlFileStreamClose(file);
     }
 }
