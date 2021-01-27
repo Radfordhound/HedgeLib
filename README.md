@@ -60,7 +60,11 @@ Right now, HedgeLib supports the following:
 - ...and more
 
 ### Other
-#### PACx V4 Packfiles (.pac)
+#### PACx V403 Packfiles (.pac)
+**Used in:**
+- Puyo Puyo Tetris 2
+
+#### PACx V402 Packfiles (.pac)
 **Used in:**
 - Olympic Games Tokyo 2020 - The Official Video Game
 - Mario & Sonic at the Olympic Games Tokyo 2020
@@ -86,7 +90,7 @@ Right now, HedgeLib supports the following:
 - Sakura Wars
 - ...and more
 
-#### AR Archives (.ar/.pfd)
+#### AR Archives (.ar/.pfd) & Packed File Indexes (.pfi)
 **Used in:**
 - Sonic Unleashed (360/PS3)
 - Sonic Generations (PC/360/PS3)
@@ -111,21 +115,26 @@ Right now this includes the following:
 Building HedgeLib is supposed to be easy.
 If you're having trouble building with the following instructions, please [create an issue](https://github.com/Radfordhound/HedgeLib/issues/new).
 
-**1: Clone the HedgeLib repository:**
+## Windows (Visual Studio)
+**1: Install the Windows SDK if you don't already have it:**
+You can install it either from the Visual Studio Installer by selecting "Windows 10 SDK" from the "Individual Components" list, or from [this link](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk).
+
+**2: Clone the HedgeLib repository and go into its folder:**
 ```
 git clone https://github.com/Radfordhound/HedgeLib.git
+cd HedgeLib
 ```
 
-**2: Download Premake from [here](https://premake.github.io/download.html) and extract it to the directory you cloned HedgeLib to.**
+**3: Switch to the HedgeLib++ branch:**
+```
+git switch HedgeLib++
+```
+
+**4: Download Premake from [here](https://premake.github.io/download.html) and extract it to the directory you cloned HedgeLib to.**
 
 HedgeLib uses Premake for easy Project/Makefile generation across different platforms/IDEs.
 
-**Everything that follows is platform-specific.**
-
-## Windows
-Make sure you have the [Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk) installed (it can be downloaded from the link or from the Visual Studio Installer by selecting "Windows 10 SDK" from the "Individual Components" list), then simply:
-
-**1: Open a cmd window in the folder you cloned HedgeLib to and run the following command:**
+**5: Generate a Visual Studio Solution (.sln file) with Premake:**
 ```
 premake5 vs2019
 ```
@@ -133,19 +142,34 @@ premake5 vs2019
 If you're using a different version of Visual Studio, simply replace ```vs2019``` with the version you're using.
 (E.G. to use Visual Studio 2017, type ```premake5 vs2017``` instead.)
 
-MinGW/Cygwin/etc. aren't officially supported/tested, but should also work fine. Just type ```premake5 gmake2``` instead.
+MinGW/Cygwin/etc. aren't officially supported/tested, but should also work fine. Just type ```premake5 gmake2``` to generate a Makefile instead.
 
-**2: Open the resulting HedgeLib.sln file in Visual Studio and hit "Build Solution" (or Ctrl+Shift+B).**
+**6: Open the resulting HedgeLib.sln file in Visual Studio and hit "Build Solution" (or Ctrl+Shift+B).**
 
 Or, if you're using MinGW/Cygwin/etc., just run "make".
 
 ## macOS
-**1: Open a terminal in the folder you cloned HedgeLib to and run the following command:**
+**1: Clone the HedgeLib repository and go into its folder:**
+```
+git clone https://github.com/Radfordhound/HedgeLib.git
+cd HedgeLib
+```
+
+**2: Switch to the HedgeLib++ branch:**
+```
+git switch HedgeLib++
+```
+
+**3: Download Premake from [here](https://premake.github.io/download.html) and extract it to the directory you cloned HedgeLib to.**
+
+HedgeLib uses Premake for easy Project/Makefile generation across different platforms/IDEs.
+
+**4: Run Premake:**
 ```
 ./premake5 xcode4
 ```
 
-**2: Open the resulting HedgeLib.xcworkspace file in Xcode and build there.**
+**5: Open the resulting HedgeLib.xcworkspace file in Xcode and build there.**
 
 Alternatively, you can build from the terminal by ```cd```ing into the directory of the tool you want to build (e.g. HedgeTools/HedgeOffsets) and entering the following command:
 ```
@@ -158,14 +182,37 @@ xcodebuild -configuration Release
 ```
 
 ## Linux
-**1: Open a terminal in the folder you cloned HedgeLib to and run the following command:**
+**1: Install the following packages** (or equivalents for your distro of choice):
 ```
-./premake5 gmake2
+git
+gcc
+make
+premake5
 ```
 
-This will use GCC by default. If you wish to build using Clang instead of GCC, run ```./premake5 gmake2 --cc=clang``` instead.
+If your distro of choice does not have a premake5 package, you may have to download Premake from [here](https://premake.github.io/download.html).
 
-**2: Run the following command:**
+(You can also use Clang in-place of GCC if you wish.)
+
+**2: Clone the HedgeLib repository and go into its folder:**
+```
+git clone https://github.com/Radfordhound/HedgeLib.git
+cd HedgeLib
+```
+
+**3: Switch to the HedgeLib++ branch:**
+```
+git switch HedgeLib++
+```
+
+**4: Generate a Makefile with Premake:**
+```
+premake5 gmake2
+```
+
+This will use GCC by default. If you wish to build using Clang instead of GCC, run ```premake5 gmake2 --cc=clang``` instead.
+
+**5: Run the Makefile:**
 ```
 make config=debug_x64
 ```
