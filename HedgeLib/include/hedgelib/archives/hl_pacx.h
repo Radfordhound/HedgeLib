@@ -7,9 +7,62 @@
 extern "C" {
 #endif
 
+#define HL_LW_DEFAULT_SPLIT_LIMIT   0xA00000
+#define HL_RIO_DEFAULT_SPLIT_LIMIT  0xA00000
+#define HL_PACX_DEFAULT_ALIGNMENT   16
+
 #define HL_PACX_SIG     HL_MAKE_SIG('P', 'A', 'C', 'x')
 
 HL_API extern const HlNChar HL_PACX_EXT[5];
+
+HL_API extern const char* const HlPACxDataTypes[];
+HL_API extern const size_t HlPACxDataTypeCount;
+
+typedef enum HlPACxSupportedExtFlags
+{
+    HL_PACX_EXT_FLAGS_TYPE_MASK = 3,
+
+    /** @brief This type can appear in root PACs. */
+    HL_PACX_EXT_FLAGS_ROOT_TYPE = 1,
+    /** @brief This type can appear in split PACs. */
+    HL_PACX_EXT_FLAGS_SPLIT_TYPE = 2,
+    /** @brief This type can appear in both root and split PACs. */
+    HL_PACX_EXT_FLAGS_MIXED_TYPE = (HL_PACX_EXT_FLAGS_ROOT_TYPE | HL_PACX_EXT_FLAGS_SPLIT_TYPE),
+    /**
+       @brief The BINA string and offset tables of this type are to be "merged"
+       into the global string and offset tables of the PAC file(s).
+    */
+    HL_PACX_EXT_FLAGS_V2_MERGED_TYPE = (
+        HL_PACX_EXT_FLAGS_ROOT_TYPE | 4)
+}
+HlPACxSupportedExtFlags;
+
+typedef struct HlPACxSupportedExt
+{
+    /**
+        @brief A lowercased extension, without a dot at the beginning, that
+        is supported/used by this version of PACx (e.g. "dds").
+    */
+    const HlNChar* const ext;
+    /**
+        @brief The index of the PACx data type for this extension (e.g. "ResTexture")
+        within the HlPACxDataTypes array.
+    */
+    const unsigned short pacxDataTypeIndex;
+    /** @brief See HlPACxSupportedExtFlags. */
+    const unsigned short flags;
+    /** @brief A number indicating how this type will be sorted; smaller == higher priority. */
+    const short rootSortWeight;
+    /** @brief A number indicating how this type will be sorted; smaller == higher priority. */
+    const short splitSortWeight;
+}
+HlPACxSupportedExt;
+
+HL_API extern const HlPACxSupportedExt HlLWSupportedExts[];
+HL_API extern const size_t HlLWSupportedExtCount;
+
+HL_API extern const HlPACxSupportedExt HlRioSupportedExts[];
+HL_API extern const size_t HlRioSupportedExtCount;
 
 typedef HlBINAV2Header HlPACxV2Header;
 typedef HlBINAV2BlockHeader HlPACxV2BlockHeader;
@@ -333,7 +386,7 @@ HlPACxV402Header;
 
 HL_STATIC_ASSERT_SIZE(HlPACxV402Header, 0x24);
 
-typedef struct c
+typedef struct HlPACxV403Header
 {
     /** @brief "PACx" */
     HlU32 signature;
@@ -392,6 +445,8 @@ HL_API void hlPACxV2BlocksFix(HlPACxV2BlockHeader* HL_RESTRICT firstBlock,
 
 HL_API void hlPACxV2Fix(void* rawData);
 
+HL_API const HlPACxV2BlockDataHeader* hlPACxV2GetDataBlock(const void* rawData);
+
 #define hlPACxV2DataGetTypeTree(dataBlock) (const HlPACxV2NodeTree*)((dataBlock) + 1)
 
 HL_API const HlPACxV2NodeTree* hlPACxV2DataGetFileTree(
@@ -423,12 +478,34 @@ HL_API HlResult hlPACxV2Load(const HlNChar* HL_RESTRICT filePath,
     HlBool loadSplits, HlBlobList* HL_RESTRICT pacs,
     HlArchive* HL_RESTRICT * HL_RESTRICT hlArc);
 
+HL_API HlResult hlPACxV2StartWrite(HlBINAEndianFlag endianFlag, HlFile* file);
+
+HL_API HlResult hlPACxV2FinishWrite(size_t headerPos, HlU16 blockCount,
+    HlBINAEndianFlag endianFlag, HlFile* file);
+
+HL_API HlResult hlPACxV2DataBlockStartWrite(HlFile* file);
+
+HL_API HlResult hlPACxV2DataBlockFinishWrite(size_t headerPos, size_t dataBlockPos,
+    HlU32 treesSize, HlU32 dataEntriesSize, HlU32 proxyTableSize,
+    HlBINAEndianFlag endianFlag, const HlStrTable* HL_RESTRICT strTable,
+    HlOffTable* HL_RESTRICT offTable, HlFile* HL_RESTRICT file);
+
 HL_API HlResult hlPACxV2SaveEx(const HlArchive* HL_RESTRICT arc,
-    HlU32 splitLimit, HlBINAEndianFlag endianFlag, HlU32 dataAlignment,
+    HlU32 splitLimit, HlU32 dataAlignment, HlBINAEndianFlag endianFlag,
+    const HlPACxSupportedExt* HL_RESTRICT exts, const size_t extCount,
     HlPackedFileIndex* HL_RESTRICT pfi, const HlNChar* HL_RESTRICT filePath);
 
-#define hlPACxV2Save(arc, splitLimit, endianFlag, filePath)\
-    hlPACxV2SaveEx(arc, splitLimit, endianFlag, 0, NULL, filePath)
+#define hlPACxV2Save(arc, splitLimit, endianFlag, exts, extCount, filePath)\
+    hlPACxV2SaveEx(arc, splitLimit, HL_PACX_DEFAULT_ALIGNMENT, endianFlag,\
+        exts, extCount, NULL, filePath)
+
+#define hlPACxV2SaveLW(arc, splitLimit, endianFlag, filePath)\
+    hlPACxV2SaveEx(arc, splitLimit, HL_PACX_DEFAULT_ALIGNMENT, endianFlag,\
+        HlLWSupportedExts, HlLWSupportedExtCount, NULL, filePath)
+
+#define hlPACxV2SaveRio(arc, splitLimit, endianFlag, filePath)\
+    hlPACxV2SaveEx(arc, splitLimit, HL_PACX_DEFAULT_ALIGNMENT, endianFlag,\
+        HlRioSupportedExts, HlRioSupportedExtCount, NULL, filePath)
 
 /* ========================================== PACx V3 ========================================== */
 HL_API void hlPACxV3Fix(void* rawData);
