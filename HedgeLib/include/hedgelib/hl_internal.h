@@ -258,10 +258,10 @@ HlRefType;
 /* Static assert macros */
 #ifdef __cpp_static_assert
 /* C++11 static assert */
-#define HL_STATIC_ASSERT(expression, msg) static_assert(expression, msg)
+#define HL_STATIC_ASSERT(expression, msg) static_assert(expression, msg);
 #elif defined(__STDC_VERSION__) && __STDC_VERSION__ == 201112L
 /* C11 static assert */
-#define HL_STATIC_ASSERT(expression, msg) _Static_assert(expression, msg)
+#define HL_STATIC_ASSERT(expression, msg) _Static_assert(expression, msg);
 #else
 /* No static assert */
 #define HL_STATIC_ASSERT(expression, msg)

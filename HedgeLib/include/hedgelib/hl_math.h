@@ -34,7 +34,7 @@ typedef struct HlVector2Half
 }
 HlVector2Half;
 
-HL_STATIC_ASSERT_SIZE(HlVector2Half, 4);
+HL_STATIC_ASSERT_SIZE(HlVector2Half, 4)
 
 typedef struct HlVector2
 {
@@ -43,7 +43,7 @@ typedef struct HlVector2
 }
 HlVector2;
 
-HL_STATIC_ASSERT_SIZE(HlVector2, 8);
+HL_STATIC_ASSERT_SIZE(HlVector2, 8)
 
 typedef struct HlVector3
 {
@@ -53,7 +53,7 @@ typedef struct HlVector3
 }
 HlVector3;
 
-HL_STATIC_ASSERT_SIZE(HlVector3, 12);
+HL_STATIC_ASSERT_SIZE(HlVector3, 12)
 
 typedef struct HlVector4
 {
@@ -65,7 +65,7 @@ typedef struct HlVector4
 HlVector4,
 HlQuaternion;
 
-HL_STATIC_ASSERT_SIZE(HlVector4, 16);
+HL_STATIC_ASSERT_SIZE(HlVector4, 16)
 
 typedef struct HlAABB
 {
@@ -74,7 +74,7 @@ typedef struct HlAABB
 }
 HlAABB;
 
-HL_STATIC_ASSERT_SIZE(HlAABB, 24);
+HL_STATIC_ASSERT_SIZE(HlAABB, 24)
 
 typedef struct HlBoundingSphere
 {
@@ -83,7 +83,7 @@ typedef struct HlBoundingSphere
 }
 HlBoundingSphere;
 
-HL_STATIC_ASSERT_SIZE(HlBoundingSphere, 16);
+HL_STATIC_ASSERT_SIZE(HlBoundingSphere, 16)
 
 typedef struct HlMatrix4x4
 {
@@ -94,7 +94,7 @@ typedef struct HlMatrix4x4
 }
 HlMatrix4x4;
 
-HL_STATIC_ASSERT_SIZE(HlMatrix4x4, 64);
+HL_STATIC_ASSERT_SIZE(HlMatrix4x4, 64)
 
 HL_API extern const HlVector2 HlVector2Zero;
 HL_API extern const HlVector3 HlVector3Zero;

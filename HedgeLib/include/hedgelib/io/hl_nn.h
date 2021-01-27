@@ -94,7 +94,7 @@ typedef struct HlNNBinCnkDataHeader
 }
 HlNNBinCnkDataHeader;
 
-HL_STATIC_ASSERT_SIZE(HlNNBinCnkDataHeader, 16);
+HL_STATIC_ASSERT_SIZE(HlNNBinCnkDataHeader, 16)
 
 typedef struct HlNNBinCnkNOF0Header
 {
@@ -105,7 +105,7 @@ typedef struct HlNNBinCnkNOF0Header
 }
 HlNNBinCnkNOF0Header;
 
-HL_STATIC_ASSERT_SIZE(HlNNBinCnkNOF0Header, 16);
+HL_STATIC_ASSERT_SIZE(HlNNBinCnkNOF0Header, 16)
 
 typedef struct HlNNBinCnkFileHeader
 {
@@ -125,7 +125,7 @@ typedef struct HlNNBinCnkFileHeader
 }
 HlNNBinCnkFileHeader;
 
-HL_STATIC_ASSERT_SIZE(HlNNBinCnkFileHeader, 0x20);
+HL_STATIC_ASSERT_SIZE(HlNNBinCnkFileHeader, 0x20)
 
 typedef struct HlNNTexCoord
 {
@@ -134,7 +134,7 @@ typedef struct HlNNTexCoord
 }
 HlNNTexCoord;
 
-HL_STATIC_ASSERT_SIZE(HlNNTexCoord, 8);
+HL_STATIC_ASSERT_SIZE(HlNNTexCoord, 8)
 
 typedef struct HlNNRGB
 {
@@ -144,7 +144,7 @@ typedef struct HlNNRGB
 }
 HlNNRGB;
 
-HL_STATIC_ASSERT_SIZE(HlNNRGB, 12);
+HL_STATIC_ASSERT_SIZE(HlNNRGB, 12)
 
 typedef struct HlNNRGBA
 {
@@ -155,7 +155,7 @@ typedef struct HlNNRGBA
 }
 HlNNRGBA;
 
-HL_STATIC_ASSERT_SIZE(HlNNRGBA, 16);
+HL_STATIC_ASSERT_SIZE(HlNNRGBA, 16)
 
 typedef struct HlNNRotateA32
 {
@@ -165,7 +165,7 @@ typedef struct HlNNRotateA32
 }
 HlNNRotateA32;
 
-HL_STATIC_ASSERT_SIZE(HlNNRotateA32, 12);
+HL_STATIC_ASSERT_SIZE(HlNNRotateA32, 12)
 
 typedef struct HlNNRotateA16
 {
@@ -175,7 +175,7 @@ typedef struct HlNNRotateA16
 }
 HlNNRotateA16;
 
-HL_STATIC_ASSERT_SIZE(HlNNRotateA16, 6);
+HL_STATIC_ASSERT_SIZE(HlNNRotateA16, 6)
 
 #ifdef HL_IS_BIG_ENDIAN
 #define HL_NN_INIT_CHUNK_HEADER(id, platform, size) {\

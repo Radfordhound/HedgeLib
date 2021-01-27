@@ -21,7 +21,7 @@ typedef struct HlHHTextureUnit
 }
 HlHHTextureUnit;
 
-HL_STATIC_ASSERT_SIZE(HlHHTextureUnit, 8);
+HL_STATIC_ASSERT_SIZE(HlHHTextureUnit, 8)
 
 typedef enum HlHHVertexFormat
 {
@@ -68,7 +68,7 @@ typedef struct HlHHVertexElement
 }
 HlHHVertexElement;
 
-HL_STATIC_ASSERT_SIZE(HlHHVertexElement, 12);
+HL_STATIC_ASSERT_SIZE(HlHHVertexElement, 12)
 
 typedef struct HlHHMesh
 {
@@ -86,7 +86,7 @@ typedef struct HlHHMesh
 }
 HlHHMesh;
 
-HL_STATIC_ASSERT_SIZE(HlHHMesh, 0x2C);
+HL_STATIC_ASSERT_SIZE(HlHHMesh, 0x2C)
 
 typedef struct HlHHMeshSlot
 {
@@ -95,7 +95,7 @@ typedef struct HlHHMeshSlot
 }
 HlHHMeshSlot;
 
-HL_STATIC_ASSERT_SIZE(HlHHMeshSlot, 8);
+HL_STATIC_ASSERT_SIZE(HlHHMeshSlot, 8)
 
 typedef struct HlHHSpecialMeshSlot
 {
@@ -106,7 +106,7 @@ typedef struct HlHHSpecialMeshSlot
 }
 HlHHSpecialMeshSlot;
 
-HL_STATIC_ASSERT_SIZE(HlHHSpecialMeshSlot, 16);
+HL_STATIC_ASSERT_SIZE(HlHHSpecialMeshSlot, 16)
 
 typedef struct HlHHMeshGroup
 {
@@ -117,7 +117,7 @@ typedef struct HlHHMeshGroup
 }
 HlHHMeshGroup;
 
-HL_STATIC_ASSERT_SIZE(HlHHMeshGroup, 0x28);
+HL_STATIC_ASSERT_SIZE(HlHHMeshGroup, 0x28)
 
 typedef struct HlHHTerrainModelV5
 {
@@ -128,7 +128,7 @@ typedef struct HlHHTerrainModelV5
 }
 HlHHTerrainModelV5;
 
-HL_STATIC_ASSERT_SIZE(HlHHTerrainModelV5, 16);
+HL_STATIC_ASSERT_SIZE(HlHHTerrainModelV5, 16)
 
 typedef struct HlHHBone
 {
@@ -137,7 +137,7 @@ typedef struct HlHHBone
 }
 HlHHBone;
 
-HL_STATIC_ASSERT_SIZE(HlHHBone, 8);
+HL_STATIC_ASSERT_SIZE(HlHHBone, 8)
 
 typedef struct HlHHSkeleton
 {
@@ -150,7 +150,7 @@ typedef struct HlHHSkeleton
 }
 HlHHSkeleton;
 
-HL_STATIC_ASSERT_SIZE(HlHHSkeleton, 0x18);
+HL_STATIC_ASSERT_SIZE(HlHHSkeleton, 0x18)
 
 typedef struct HlHHSkeletalModelV5
 {
@@ -160,7 +160,7 @@ typedef struct HlHHSkeletalModelV5
 }
 HlHHSkeletalModelV5;
 
-HL_STATIC_ASSERT_SIZE(HlHHSkeletalModelV5, 0x20);
+HL_STATIC_ASSERT_SIZE(HlHHSkeletalModelV5, 0x20)
 
 /* TODO: Make the recursive swap functions internal since they don't work if offsets are swapped before they get accessed!! */
 

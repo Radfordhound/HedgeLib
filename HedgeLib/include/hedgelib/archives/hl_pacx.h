@@ -98,7 +98,7 @@ typedef struct HlPACxV2BlockDataHeader
 }
 HlPACxV2BlockDataHeader;
 
-HL_STATIC_ASSERT_SIZE(HlPACxV2BlockDataHeader, 0x20);
+HL_STATIC_ASSERT_SIZE(HlPACxV2BlockDataHeader, 0x20)
 
 typedef struct HlPACxV2Node
 {
@@ -107,7 +107,7 @@ typedef struct HlPACxV2Node
 }
 HlPACxV2Node;
 
-HL_STATIC_ASSERT_SIZE(HlPACxV2Node, 8);
+HL_STATIC_ASSERT_SIZE(HlPACxV2Node, 8)
 
 typedef struct HlPACxV2NodeTree
 {
@@ -116,7 +116,7 @@ typedef struct HlPACxV2NodeTree
 }
 HlPACxV2NodeTree;
 
-HL_STATIC_ASSERT_SIZE(HlPACxV2NodeTree, 8);
+HL_STATIC_ASSERT_SIZE(HlPACxV2NodeTree, 8)
 
 typedef enum HlPACxV2DataFlags
 {
@@ -150,7 +150,7 @@ typedef struct HlPACxV2DataEntry
 }
 HlPACxV2DataEntry;
 
-HL_STATIC_ASSERT_SIZE(HlPACxV2DataEntry, 16);
+HL_STATIC_ASSERT_SIZE(HlPACxV2DataEntry, 16)
 
 typedef struct HlPACxV2SplitTable
 {
@@ -163,7 +163,7 @@ typedef struct HlPACxV2SplitTable
 }
 HlPACxV2SplitTable;
 
-HL_STATIC_ASSERT_SIZE(HlPACxV2SplitTable, 8);
+HL_STATIC_ASSERT_SIZE(HlPACxV2SplitTable, 8)
 
 typedef struct HlPACxV2ProxyEntry
 {
@@ -185,7 +185,7 @@ typedef struct HlPACxV2ProxyEntry
 }
 HlPACxV2ProxyEntry;
 
-HL_STATIC_ASSERT_SIZE(HlPACxV2ProxyEntry, 12);
+HL_STATIC_ASSERT_SIZE(HlPACxV2ProxyEntry, 12)
 
 typedef struct HlPACxV2ProxyEntryTable
 {
@@ -194,7 +194,7 @@ typedef struct HlPACxV2ProxyEntryTable
 }
 HlPACxV2ProxyEntryTable;
 
-HL_STATIC_ASSERT_SIZE(HlPACxV2ProxyEntryTable, 8);
+HL_STATIC_ASSERT_SIZE(HlPACxV2ProxyEntryTable, 8)
 
 /* Thanks to Skyth for cracking the majority of the PACxV3 format! */
 typedef struct HlPACxV3SplitEntry
@@ -203,7 +203,7 @@ typedef struct HlPACxV3SplitEntry
 }
 HlPACxV3SplitEntry;
 
-HL_STATIC_ASSERT_SIZE(HlPACxV3SplitEntry, 8);
+HL_STATIC_ASSERT_SIZE(HlPACxV3SplitEntry, 8)
 
 typedef struct HlPACxV3SplitTable
 {
@@ -212,7 +212,7 @@ typedef struct HlPACxV3SplitTable
 }
 HlPACxV3SplitTable;
 
-HL_STATIC_ASSERT_SIZE(HlPACxV3SplitTable, 16);
+HL_STATIC_ASSERT_SIZE(HlPACxV3SplitTable, 16)
 
 typedef enum PACxV3DataType
 {
@@ -238,7 +238,7 @@ typedef struct HlPACxV3DataEntry
 }
 HlPACxV3DataEntry;
 
-HL_STATIC_ASSERT_SIZE(HlPACxV3DataEntry, 0x30);
+HL_STATIC_ASSERT_SIZE(HlPACxV3DataEntry, 0x30)
 
 typedef struct HlPACxV3Node
 {
@@ -255,7 +255,7 @@ typedef struct HlPACxV3Node
 }
 HlPACxV3Node;
 
-HL_STATIC_ASSERT_SIZE(HlPACxV3Node, 0x28);
+HL_STATIC_ASSERT_SIZE(HlPACxV3Node, 0x28)
 
 typedef struct HlPACxV3NodeTree
 {
@@ -266,7 +266,7 @@ typedef struct HlPACxV3NodeTree
 }
 HlPACxV3NodeTree;
 
-HL_STATIC_ASSERT_SIZE(HlPACxV3NodeTree, 0x18);
+HL_STATIC_ASSERT_SIZE(HlPACxV3NodeTree, 0x18)
 
 typedef enum HlPACxV3Type
 {
@@ -303,7 +303,7 @@ typedef struct HlPACxV3Header
 }
 HlPACxV3Header;
 
-HL_STATIC_ASSERT_SIZE(HlPACxV3Header, 0x30);
+HL_STATIC_ASSERT_SIZE(HlPACxV3Header, 0x30)
 
 /**
    @brief Information explaining how to decompress a blob of LZ4-compressed data.
@@ -321,7 +321,7 @@ typedef struct HlPACxV402Chunk
 }
 HlPACxV402Chunk;
 
-HL_STATIC_ASSERT_SIZE(HlPACxV402Chunk, 8);
+HL_STATIC_ASSERT_SIZE(HlPACxV402Chunk, 8)
 
 typedef struct HlPACxV402SplitEntry
 {
@@ -334,7 +334,7 @@ typedef struct HlPACxV402SplitEntry
 }
 HlPACxV402SplitEntry;
 
-HL_STATIC_ASSERT_SIZE(HlPACxV402SplitEntry, 0x20);
+HL_STATIC_ASSERT_SIZE(HlPACxV402SplitEntry, 0x20)
 
 typedef struct HlPACxV403SplitEntry
 {
@@ -346,7 +346,7 @@ typedef struct HlPACxV403SplitEntry
 }
 HlPACxV403SplitEntry;
 
-HL_STATIC_ASSERT_SIZE(HlPACxV403SplitEntry, 0x18);
+HL_STATIC_ASSERT_SIZE(HlPACxV403SplitEntry, 0x18)
 
 typedef struct HlPACxV402Header
 {
@@ -384,7 +384,7 @@ typedef struct HlPACxV402Header
 }
 HlPACxV402Header;
 
-HL_STATIC_ASSERT_SIZE(HlPACxV402Header, 0x24);
+HL_STATIC_ASSERT_SIZE(HlPACxV402Header, 0x24)
 
 typedef struct HlPACxV403Header
 {
@@ -421,7 +421,7 @@ typedef struct HlPACxV403Header
 }
 HlPACxV403Header;
 
-HL_STATIC_ASSERT_SIZE(HlPACxV403Header, 0x20);
+HL_STATIC_ASSERT_SIZE(HlPACxV403Header, 0x20)
 
 /* This type is a "subset" of all V4 revision headers. */
 typedef HlPACxV403Header HlPACxV4Header;

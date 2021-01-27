@@ -22,7 +22,7 @@ typedef struct HlHHMaterialParameter
 }
 HlHHMaterialParameter;
 
-HL_STATIC_ASSERT_SIZE(HlHHMaterialParameter, 12);
+HL_STATIC_ASSERT_SIZE(HlHHMaterialParameter, 12)
 
 /* Thanks to Skyth for helping crack alphaThreshold and int4/bool4 param types! */
 
@@ -46,7 +46,7 @@ typedef struct HlHHMaterialV1
 }
 HlHHMaterialV1;
 
-HL_STATIC_ASSERT_SIZE(HlHHMaterialV1, 0x24);
+HL_STATIC_ASSERT_SIZE(HlHHMaterialV1, 0x24)
 
 typedef struct HlHHMaterialV3
 {
@@ -68,7 +68,7 @@ typedef struct HlHHMaterialV3
 }
 HlHHMaterialV3;
 
-HL_STATIC_ASSERT_SIZE(HlHHMaterialV3, 0x24);
+HL_STATIC_ASSERT_SIZE(HlHHMaterialV3, 0x24)
 
 HL_API void hlHHMaterialParameterSwap(HlHHMaterialParameter* param, HlBool swapOffsets);
 HL_API void hlHHMaterialV1Swap(HlHHMaterialV1* mat, HlBool swapOffsets);

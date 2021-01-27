@@ -14,7 +14,7 @@ typedef struct HlHHTerrainInstanceInfoV0
 }
 HlHHTerrainInstanceInfoV0;
 
-HL_STATIC_ASSERT_SIZE(HlHHTerrainInstanceInfoV0, 12);
+HL_STATIC_ASSERT_SIZE(HlHHTerrainInstanceInfoV0, 12)
 
 typedef struct HlHHLitElement
 {
@@ -39,7 +39,7 @@ typedef struct HlHHLitElement
 }
 HlHHLitElement;
 
-HL_STATIC_ASSERT_SIZE(HlHHLitElement, 16);
+HL_STATIC_ASSERT_SIZE(HlHHLitElement, 16)
 
 typedef struct HlHHLitMesh
 {
@@ -48,7 +48,7 @@ typedef struct HlHHLitMesh
 }
 HlHHLitMesh;
 
-HL_STATIC_ASSERT_SIZE(HlHHLitMesh, 8);
+HL_STATIC_ASSERT_SIZE(HlHHLitMesh, 8)
 
 typedef struct HlHHLitMeshSlot
 {
@@ -57,7 +57,7 @@ typedef struct HlHHLitMeshSlot
 }
 HlHHLitMeshSlot;
 
-HL_STATIC_ASSERT_SIZE(HlHHLitMeshSlot, 8);
+HL_STATIC_ASSERT_SIZE(HlHHLitMeshSlot, 8)
 
 typedef struct HlHHLitMeshGroup
 {
@@ -67,7 +67,7 @@ typedef struct HlHHLitMeshGroup
 }
 HlHHLitMeshGroup;
 
-HL_STATIC_ASSERT_SIZE(HlHHLitMeshGroup, 24);
+HL_STATIC_ASSERT_SIZE(HlHHLitMeshGroup, 24)
 
 typedef struct HlHHTerrainInstanceInfoV5
 {
@@ -79,7 +79,7 @@ typedef struct HlHHTerrainInstanceInfoV5
 }
 HlHHTerrainInstanceInfoV5;
 
-HL_STATIC_ASSERT_SIZE(HlHHTerrainInstanceInfoV5, 20);
+HL_STATIC_ASSERT_SIZE(HlHHTerrainInstanceInfoV5, 20)
 
 HL_API void hlHHTerrainInstanceInfoV0Swap(HlHHTerrainInstanceInfoV0* instInfo,
     HlBool swapOffsets);

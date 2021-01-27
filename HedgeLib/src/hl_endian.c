@@ -1,7 +1,7 @@
 #include "hedgelib/hl_endian.h"
 
-HL_STATIC_ASSERT_SIZE(float, 4);
-HL_STATIC_ASSERT_SIZE(double, 8);
+HL_STATIC_ASSERT_SIZE(float, 4)
+HL_STATIC_ASSERT_SIZE(double, 8)
 
 float hlSwapFloat(float v)
 {

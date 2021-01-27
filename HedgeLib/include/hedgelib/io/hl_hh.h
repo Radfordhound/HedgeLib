@@ -21,7 +21,7 @@ typedef struct HlHHStandardHeader
 }
 HlHHStandardHeader;
 
-HL_STATIC_ASSERT_SIZE(HlHHStandardHeader, 0x18);
+HL_STATIC_ASSERT_SIZE(HlHHStandardHeader, 0x18)
 
 /* Thanks to Skyth for cracking the "Mirage" stuff! */
 
@@ -35,7 +35,7 @@ typedef struct HlHHMirageHeader
 }
 HlHHMirageHeader;
 
-HL_STATIC_ASSERT_SIZE(HlHHMirageHeader, 16);
+HL_STATIC_ASSERT_SIZE(HlHHMirageHeader, 16)
 
 typedef enum HlHHMirageNodeFlags
 {
@@ -61,7 +61,7 @@ typedef struct HlHHMirageNode
 }
 HlHHMirageNode;
 
-HL_STATIC_ASSERT_SIZE(HlHHMirageNode, 16);
+HL_STATIC_ASSERT_SIZE(HlHHMirageNode, 16)
 
 HL_API void hlHHStandardHeaderSwap(HlHHStandardHeader* header, HlBool swapOffsets);
 HL_API void hlHHMirageHeaderSwap(HlHHMirageHeader* header, HlBool swapOffsets);

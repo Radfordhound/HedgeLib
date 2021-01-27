@@ -17,7 +17,7 @@ typedef struct HlGrifAnimationParameterV106
 HlGrifAnimationParameterV106;
 
 /* TODO: Figure out actual size and finish/uncomment this: */
-/*HL_STATIC_ASSERT_SIZE(HlGrifAnimationParameterV106, );*/
+/*HL_STATIC_ASSERT_SIZE(HlGrifAnimationParameterV106, )*/
 
 typedef struct HlGrifTextureParameterV106
 {
@@ -29,7 +29,7 @@ typedef struct HlGrifTextureParameterV106
 }
 HlGrifTextureParameterV106;
 
-HL_STATIC_ASSERT_SIZE(HlGrifTextureParameterV106, 16);
+HL_STATIC_ASSERT_SIZE(HlGrifTextureParameterV106, 16)
 
 typedef struct HlGrifMaterialParameterV106
 {
@@ -70,7 +70,7 @@ typedef struct HlGrifMaterialParameterV106
 }
 HlGrifMaterialParameterV106;
 
-HL_STATIC_ASSERT_SIZE(HlGrifMaterialParameterV106, 0x9C);
+HL_STATIC_ASSERT_SIZE(HlGrifMaterialParameterV106, 0x9C)
 
 typedef struct HlGrifParticleParameterV106
 {
@@ -221,7 +221,7 @@ typedef struct HlGrifParticleParameterV106
 }
 HlGrifParticleParameterV106;
 
-HL_STATIC_ASSERT_SIZE(HlGrifParticleParameterV106, 0x2D8);
+HL_STATIC_ASSERT_SIZE(HlGrifParticleParameterV106, 0x2D8)
 
 typedef struct HlGrifEmitterParameterV106
 {
@@ -298,7 +298,7 @@ typedef struct HlGrifEmitterParameterV106
 }
 HlGrifEmitterParameterV106;
 
-HL_STATIC_ASSERT_SIZE(HlGrifEmitterParameterV106, 0x150);
+HL_STATIC_ASSERT_SIZE(HlGrifEmitterParameterV106, 0x150)
 
 typedef struct HlGrifEffectParameterV106
 {
@@ -364,7 +364,7 @@ typedef struct HlGrifEffectParameterV106
 }
 HlGrifEffectParameterV106;
 
-HL_STATIC_ASSERT_SIZE(HlGrifEffectParameterV106, 0x118);
+HL_STATIC_ASSERT_SIZE(HlGrifEffectParameterV106, 0x118)
 
 typedef struct HlGrifEffect
 {
@@ -375,7 +375,7 @@ typedef struct HlGrifEffect
 }
 HlGrifEffect;
 
-HL_STATIC_ASSERT_SIZE(HlGrifEffect, 16);
+HL_STATIC_ASSERT_SIZE(HlGrifEffect, 16)
 
 HL_API void hlGrifTextureParameterV106Swap(HlGrifTextureParameterV106* texture,
     HlBool swapOffsets);

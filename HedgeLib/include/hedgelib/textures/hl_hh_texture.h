@@ -30,7 +30,7 @@ typedef struct HlHHTextureV1
 }
 HlHHTextureV1;
 
-HL_STATIC_ASSERT_SIZE(HlHHTextureV1, 12);
+HL_STATIC_ASSERT_SIZE(HlHHTextureV1, 12)
 
 typedef struct HlHHTexsetV0
 {
@@ -39,7 +39,7 @@ typedef struct HlHHTexsetV0
 }
 HlHHTexsetV0;
 
-HL_STATIC_ASSERT_SIZE(HlHHTexsetV0, 8);
+HL_STATIC_ASSERT_SIZE(HlHHTexsetV0, 8)
 
 HL_API void hlHHTextureSwap(HlHHTextureV1* tex, HlBool swapOffsets);
 HL_API void hlHHTexsetSwap(HlHHTexsetV0* texset, HlBool swapOffsets);

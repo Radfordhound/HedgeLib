@@ -14,7 +14,7 @@ typedef struct HlNNMotionBezierHandle
 }
 HlNNMotionBezierHandle;
 
-HL_STATIC_ASSERT_SIZE(HlNNMotionBezierHandle, 16);
+HL_STATIC_ASSERT_SIZE(HlNNMotionBezierHandle, 16)
 
 typedef struct HlNNMotionSISplineHandle
 {
@@ -23,7 +23,7 @@ typedef struct HlNNMotionSISplineHandle
 }
 HlNNMotionSISplineHandle;
 
-HL_STATIC_ASSERT_SIZE(HlNNMotionSISplineHandle, 16);
+HL_STATIC_ASSERT_SIZE(HlNNMotionSISplineHandle, 16)
 
 typedef struct HlNNMotionKeyFloat
 {
@@ -37,7 +37,7 @@ HlNNMotionKeyDiffuseB,
 HlNNMotionKeyOffsetU,
 HlNNMotionKeyOffsetV;
 
-HL_STATIC_ASSERT_SIZE(HlNNMotionKeyFloat, 8);
+HL_STATIC_ASSERT_SIZE(HlNNMotionKeyFloat, 8)
 
 typedef struct HlNNMotionKeyBezier
 {
@@ -47,7 +47,7 @@ typedef struct HlNNMotionKeyBezier
 }
 HlNNMotionKeyBezier;
 
-HL_STATIC_ASSERT_SIZE(HlNNMotionKeyBezier, 24);
+HL_STATIC_ASSERT_SIZE(HlNNMotionKeyBezier, 24)
 
 typedef struct HlNNMotionKeySISpline
 {
@@ -57,7 +57,7 @@ typedef struct HlNNMotionKeySISpline
 }
 HlNNMotionKeySISpline;
 
-HL_STATIC_ASSERT_SIZE(HlNNMotionKeySISpline, 24);
+HL_STATIC_ASSERT_SIZE(HlNNMotionKeySISpline, 24)
 
 typedef struct HlNNMotionKeyTexCoord
 {
@@ -67,7 +67,7 @@ typedef struct HlNNMotionKeyTexCoord
 HlNNMotionKeyTexCoord,
 HlNNMotionKeyOffsetUV;
 
-HL_STATIC_ASSERT_SIZE(HlNNMotionKeyTexCoord, 12);
+HL_STATIC_ASSERT_SIZE(HlNNMotionKeyTexCoord, 12)
 
 typedef struct HlNNMotionKeyVector
 {
@@ -76,7 +76,7 @@ typedef struct HlNNMotionKeyVector
 }
 HlNNMotionKeyVector;
 
-HL_STATIC_ASSERT_SIZE(HlNNMotionKeyVector, 16);
+HL_STATIC_ASSERT_SIZE(HlNNMotionKeyVector, 16)
 
 typedef struct HlNNMotionKeyRGB
 {
@@ -85,7 +85,7 @@ typedef struct HlNNMotionKeyRGB
 }
 HlNNMotionKeyRGB;
 
-HL_STATIC_ASSERT_SIZE(HlNNMotionKeyRGB, 16);
+HL_STATIC_ASSERT_SIZE(HlNNMotionKeyRGB, 16)
 
 typedef struct HlNNMotionKeyQuaternion
 {
@@ -94,7 +94,7 @@ typedef struct HlNNMotionKeyQuaternion
 }
 HlNNMotionKeyQuaternion;
 
-HL_STATIC_ASSERT_SIZE(HlNNMotionKeyQuaternion, 20);
+HL_STATIC_ASSERT_SIZE(HlNNMotionKeyQuaternion, 20)
 
 typedef struct HlNNMotionKeyInt
 {
@@ -103,7 +103,7 @@ typedef struct HlNNMotionKeyInt
 }
 HlNNMotionKeyInt;
 
-HL_STATIC_ASSERT_SIZE(HlNNMotionKeyInt, 8);
+HL_STATIC_ASSERT_SIZE(HlNNMotionKeyInt, 8)
 
 typedef struct HlNNMotionKeyBezierInt
 {
@@ -113,7 +113,7 @@ typedef struct HlNNMotionKeyBezierInt
 }
 HlNNMotionKeyBezierInt;
 
-HL_STATIC_ASSERT_SIZE(HlNNMotionKeyBezierInt, 24);
+HL_STATIC_ASSERT_SIZE(HlNNMotionKeyBezierInt, 24)
 
 typedef struct HlNNMotionKeySISplineInt
 {
@@ -123,7 +123,7 @@ typedef struct HlNNMotionKeySISplineInt
 }
 HlNNMotionKeySISplineInt;
 
-HL_STATIC_ASSERT_SIZE(HlNNMotionKeySISplineInt, 24);
+HL_STATIC_ASSERT_SIZE(HlNNMotionKeySISplineInt, 24)
 
 typedef struct HlNNMotionKeyUInt
 {
@@ -132,7 +132,7 @@ typedef struct HlNNMotionKeyUInt
 }
 HlNNMotionKeyUInt;
 
-HL_STATIC_ASSERT_SIZE(HlNNMotionKeyUInt, 8);
+HL_STATIC_ASSERT_SIZE(HlNNMotionKeyUInt, 8)
 
 typedef struct HlNNMotionKeyRotateA32
 {
@@ -141,7 +141,7 @@ typedef struct HlNNMotionKeyRotateA32
 }
 HlNNMotionKeyRotateA32;
 
-HL_STATIC_ASSERT_SIZE(HlNNMotionKeyRotateA32, 16);
+HL_STATIC_ASSERT_SIZE(HlNNMotionKeyRotateA32, 16)
 
 typedef struct HlNNMotionKeyShort
 {
@@ -150,7 +150,7 @@ typedef struct HlNNMotionKeyShort
 }
 HlNNMotionKeyShort;
 
-HL_STATIC_ASSERT_SIZE(HlNNMotionKeyShort, 4);
+HL_STATIC_ASSERT_SIZE(HlNNMotionKeyShort, 4)
 
 typedef struct HlNNMotionKeySISplineShort
 {
@@ -160,7 +160,7 @@ typedef struct HlNNMotionKeySISplineShort
 }
 HlNNMotionKeySISplineShort;
 
-HL_STATIC_ASSERT_SIZE(HlNNMotionKeySISplineShort, 20);
+HL_STATIC_ASSERT_SIZE(HlNNMotionKeySISplineShort, 20)
 
 typedef struct HlNNMotionKeyRotateA16
 {
@@ -169,7 +169,7 @@ typedef struct HlNNMotionKeyRotateA16
 }
 HlNNMotionKeyRotateA16;
 
-HL_STATIC_ASSERT_SIZE(HlNNMotionKeyRotateA16, 8);
+HL_STATIC_ASSERT_SIZE(HlNNMotionKeyRotateA16, 8)
 
 typedef union HlNNMotionKey
 {
@@ -192,7 +192,7 @@ typedef union HlNNMotionKey
 }
 HlNNMotionKey;
 
-HL_STATIC_ASSERT_SIZE(HlNNMotionKey, 24);
+HL_STATIC_ASSERT_SIZE(HlNNMotionKey, 24)
 
 typedef enum HlNNSubMotionType
 {
@@ -409,7 +409,7 @@ typedef struct HlNNSubMotion
 }
 HlNNSubMotion;
 
-HL_STATIC_ASSERT_SIZE(HlNNSubMotion, 0x28);
+HL_STATIC_ASSERT_SIZE(HlNNSubMotion, 0x28)
 
 typedef enum HlNNMotionType
 {
@@ -461,7 +461,7 @@ typedef struct HlNNMotion /* NNS_MOTION */
 }
 HlNNMotion;
 
-HL_STATIC_ASSERT_SIZE(HlNNMotion, 0x20);
+HL_STATIC_ASSERT_SIZE(HlNNMotion, 0x20)
 
 HL_API void hlNNMotionBezierHandleSwap(HlNNMotionBezierHandle* handle);
 HL_API void hlNNMotionSISplineHandleSwap(HlNNMotionSISplineHandle* handle);

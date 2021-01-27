@@ -33,7 +33,7 @@ typedef struct HlHHArchiveHeader
 }
 HlHHArchiveHeader;
 
-HL_STATIC_ASSERT_SIZE(HlHHArchiveHeader, 16);
+HL_STATIC_ASSERT_SIZE(HlHHArchiveHeader, 16)
 
 typedef struct HlHHArchiveFileEntry
 {
@@ -50,7 +50,7 @@ typedef struct HlHHArchiveFileEntry
 }
 HlHHArchiveFileEntry;
 
-HL_STATIC_ASSERT_SIZE(HlHHArchiveFileEntry, 0x14);
+HL_STATIC_ASSERT_SIZE(HlHHArchiveFileEntry, 0x14)
 
 typedef struct HlHHArchiveListHeader
 {
@@ -61,7 +61,7 @@ typedef struct HlHHArchiveListHeader
 }
 HlHHArchiveListHeader;
 
-HL_STATIC_ASSERT_SIZE(HlHHArchiveListHeader, 8);
+HL_STATIC_ASSERT_SIZE(HlHHArchiveListHeader, 8)
 
 typedef struct HlHHPackedFileEntry
 {
@@ -74,7 +74,7 @@ typedef struct HlHHPackedFileEntry
 }
 HlHHPackedFileEntry;
 
-HL_STATIC_ASSERT_SIZE(HlHHPackedFileEntry, 12);
+HL_STATIC_ASSERT_SIZE(HlHHPackedFileEntry, 12)
 
 typedef struct HlHHPackedFileIndexV0
 {
@@ -83,7 +83,7 @@ typedef struct HlHHPackedFileIndexV0
 }
 HlHHPackedFileIndexV0;
 
-HL_STATIC_ASSERT_SIZE(HlHHPackedFileIndexV0, 8);
+HL_STATIC_ASSERT_SIZE(HlHHPackedFileIndexV0, 8)
 
 HL_API void hlHHPackedFileEntrySwap(HlHHPackedFileEntry* entry, HlBool swapOffsets);
 HL_API void hlHHPackedFileIndexV0Swap(HlHHPackedFileIndexV0* pfi, HlBool swapOffsets);

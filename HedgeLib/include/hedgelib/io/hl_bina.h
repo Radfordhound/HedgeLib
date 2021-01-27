@@ -54,7 +54,7 @@ typedef struct HlBINAV1Header
 }
 HlBINAV1Header;
 
-HL_STATIC_ASSERT_SIZE(HlBINAV1Header, 0x20);
+HL_STATIC_ASSERT_SIZE(HlBINAV1Header, 0x20)
 
 typedef struct HlBINAV2Header
 {
@@ -73,7 +73,7 @@ typedef struct HlBINAV2Header
 }
 HlBINAV2Header;
 
-HL_STATIC_ASSERT_SIZE(HlBINAV2Header, 16);
+HL_STATIC_ASSERT_SIZE(HlBINAV2Header, 16)
 
 typedef enum HlBINAV2BlockType
 {
@@ -99,7 +99,7 @@ typedef struct HlBINAV2BlockHeader
 }
 HlBINAV2BlockHeader;
 
-HL_STATIC_ASSERT_SIZE(HlBINAV2BlockHeader, 8);
+HL_STATIC_ASSERT_SIZE(HlBINAV2BlockHeader, 8)
 
 typedef struct HlBINAV2BlockDataHeader
 {
@@ -120,7 +120,7 @@ typedef struct HlBINAV2BlockDataHeader
 }
 HlBINAV2BlockDataHeader;
 
-HL_STATIC_ASSERT_SIZE(HlBINAV2BlockDataHeader, 0x18);
+HL_STATIC_ASSERT_SIZE(HlBINAV2BlockDataHeader, 0x18)
 
 #ifdef HL_IS_BIG_ENDIAN
 #define hlBINANeedsSwap(endianFlag) (HlBool)((endianFlag) == HL_BINA_LITTLE_ENDIAN)

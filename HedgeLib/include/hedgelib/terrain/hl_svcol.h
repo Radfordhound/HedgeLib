@@ -19,7 +19,7 @@ typedef struct HlSVSector
 }
 HlSVSector;
 
-HL_STATIC_ASSERT_SIZE(HlSVSector, 2);
+HL_STATIC_ASSERT_SIZE(HlSVSector, 2)
 
 typedef struct HlSVShape
 {
@@ -40,7 +40,7 @@ typedef struct HlSVShape
 }
 HlSVShape;
 
-HL_STATIC_ASSERT_SIZE(HlSVShape, 0x60);
+HL_STATIC_ASSERT_SIZE(HlSVShape, 0x60)
 
 typedef struct HlSVColHeader
 {
@@ -51,7 +51,7 @@ typedef struct HlSVColHeader
 }
 HlSVColHeader;
 
-HL_STATIC_ASSERT_SIZE(HlSVColHeader, 24);
+HL_STATIC_ASSERT_SIZE(HlSVColHeader, 24)
 
 typedef struct HlSectorRef
 {
