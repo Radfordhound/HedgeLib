@@ -311,7 +311,7 @@ static HlResult BINAV2PrintOffsets(HlBlob* blob)
             }
 
             /* Get next block. */
-            curBlock = hlBINAV2BlockGetNext(curBlock);
+            curBlock = (HlBINAV2BlockHeader*)hlBINAV2BlockGetNext(curBlock);
         }
 
         /* No data block was found. */
