@@ -355,12 +355,12 @@ HlResult hlArchiveEntriesExtract(const HlArchiveEntry* HL_RESTRICT entries,
     HlResult result;
     HlBool pathBufOnHeap;
 
-    /* Return early if entryCount == 0 to avoid unnecessary work. */
-    if (!entryCount) return HL_RESULT_SUCCESS;
-
     /* Ensure extraction directory exists. */
     result = hlPathCreateDirectory(dirPath, HL_TRUE);
     if (HL_FAILED(result)) return result;
+
+    /* Return early if entryCount == 0 to avoid unnecessary work. */
+    if (!entryCount) return result;
 
     /* Get dirPath length. */
     dirPathLen = hlNStrLen(dirPath);
