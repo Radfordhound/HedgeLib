@@ -6,6 +6,9 @@
 extern "C" {
 #endif
 
+typedef struct HlStream HlMemStream;
+typedef struct HlBlob HlBlob;
+
 typedef void* (*HlAllocFunc)(size_t size);
 typedef void* (*HlReallocFunc)(void* ptr, size_t size);
 typedef void (*HlFreeFunc)(void* ptr);
@@ -23,6 +26,18 @@ HL_API void hlSetAllocators(HlAllocFunc alloc,
 
 HL_API void* hlCAlloc(size_t size);
 HL_API void* hlCRealloc(void* ptr, size_t size);
+
+HL_API HlResult hlMemStreamOpenRead(const void* HL_RESTRICT data,
+    size_t dataSize, HlMemStream* HL_RESTRICT * HL_RESTRICT mem);
+
+HL_API HlResult hlMemStreamOpenWrite(HlMemStream** mem);
+HL_API void* hlMemStreamGetDataPtr(const HlMemStream* HL_RESTRICT mem,
+    size_t* HL_RESTRICT bufSize);
+
+HL_API HlResult hlMemStreamGetData(const HlMemStream* HL_RESTRICT mem,
+    HlBlob* HL_RESTRICT * HL_RESTRICT blob);
+
+HL_API HlResult hlMemStreamClose(HlMemStream* mem);
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS
 HL_API void* hlAllocExt(size_t size);

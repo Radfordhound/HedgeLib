@@ -482,7 +482,6 @@ HlResult hlFileStreamOpen(const HlNChar* HL_RESTRICT filePath,
     /* Setup HlStream, set pointer, and return success. */
     hlFile->funcs = &HlINFileStreamFuncPtrs;
     hlFile->handle = (HlUMax)fileHandle;
-    hlFile->customData = 0;
     hlFile->curPos = 0;
 
     *file = hlFile;

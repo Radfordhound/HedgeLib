@@ -27,7 +27,7 @@ typedef HlResult (*HlStreamJumpToFunc)(struct HlStream* stream, size_t pos);
 typedef HlResult (*HlStreamFlushFunc)(struct HlStream* stream);
 
 typedef HlResult (*HlStreamGetSizeFunc)(struct HlStream* HL_RESTRICT stream,
-    size_t* HL_RESTRICT fileSize);
+    size_t* HL_RESTRICT size);
 
 typedef struct HlStreamFuncs
 {
@@ -44,7 +44,6 @@ typedef struct HlStream
 {
     const HlStreamFuncs* funcs;
     HlUMax handle;
-    HlUMax customData;
     size_t curPos;
 }
 HlStream;
@@ -69,7 +68,7 @@ HlStream;
 
 #define hlStreamTell(stream) (stream)->curPos
 #define hlStreamFlush(stream) (stream)->funcs->flush(stream)
-#define hlStreamGetSize(stream, fileSize) (stream)->funcs->getSize(stream, fileSize)
+#define hlStreamGetSize(stream, size) (stream)->funcs->getSize(stream, size)
 
 #define HL_STREAM_WRITE_TEXT_UTF8(stream, text, writtenByteCount)\
     hlStreamWrite(stream, sizeof(text) - sizeof(char), text, writtenByteCount)
