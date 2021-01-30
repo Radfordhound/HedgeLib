@@ -182,6 +182,15 @@ end:
     return (((int)c1) - ((int)c2));
 }
 
+const HlNChar* hlNStrStr(const HlNChar* str1, const HlNChar* str2)
+{
+#ifdef HL_IN_WIN32_UNICODE
+    return wcsstr(str1, str2);
+#else
+    return strstr(str1, str2);
+#endif
+}
+
 size_t hlNStrCopyAndLen(const HlNChar* HL_RESTRICT src, HlNChar* HL_RESTRICT dst)
 {
 #if !defined(HL_IN_WIN32_UNICODE) && (defined(_POSIX_VERSION) && _POSIX_VERSION >= 200809L)

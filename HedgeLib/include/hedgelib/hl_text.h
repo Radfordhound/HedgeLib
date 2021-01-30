@@ -39,6 +39,9 @@ HL_API int hlNStrICmp(const HlNChar* HL_RESTRICT str1,
 HL_API int hlNStrNICmp(const HlNChar* HL_RESTRICT str1,
     const HlNChar* HL_RESTRICT str2, size_t maxCount);
 
+HL_API const HlNChar* hlNStrStr(const HlNChar* HL_RESTRICT str1,
+    const HlNChar* HL_RESTRICT str2);
+
 #define hlNStrsEqual(str1, str2) (HlBool)(hlNStrCmp(str1, str2) == 0)
 
 HL_API size_t hlNStrCopyAndLen(const HlNChar* HL_RESTRICT src, HlNChar* HL_RESTRICT dst);
