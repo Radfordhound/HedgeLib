@@ -103,7 +103,7 @@ public:
     inline pointer allocate(size_type n, const void* hint = 0)
 #endif
     {
-        pointer* ptr = static_cast<pointer>(hlAlloc(sizeof(value_type) * n));
+        pointer ptr = static_cast<pointer>(hlAlloc(sizeof(value_type) * n));
         if (!ptr) throw std::bad_alloc();
         return ptr;
     }
