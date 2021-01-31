@@ -1,6 +1,7 @@
 #include "hedgelib/io/hl_nn.h"
 #include "hedgelib/io/hl_bina.h"
 #include "hedgelib/hl_endian.h"
+#include "hedgelib/hl_blob.h"
 #include "../../hedgetools_helpers.h"
 #include <stdlib.h>
 
