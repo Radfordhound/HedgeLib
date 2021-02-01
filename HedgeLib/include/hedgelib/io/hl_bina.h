@@ -196,11 +196,23 @@ HL_API HlResult hlBINAStringsWrite64(size_t dataPos, HlBINAEndianFlag endianFlag
     const HlStrTable* HL_RESTRICT strTable, HlOffTable* HL_RESTRICT offTable,
     HlStream* HL_RESTRICT stream);
 
-HL_API HlResult hlBINAOffsetsWriteNoSort(size_t dataPos,
+HL_API HlResult hlBINAOffsetsWriteNoSort(size_t dataPos, size_t padAmount,
     const HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream);
 
-HL_API HlResult hlBINAOffsetsWrite(size_t dataPos,
+#define hlBINAOffsetsWriteNoSort32(dataPos, offTable, stream)\
+    hlBINAOffsetsWriteNoSort(dataPos, 4, offTable, stream)
+
+#define hlBINAOffsetsWriteNoSort64(dataPos, offTable, stream)\
+    hlBINAOffsetsWriteNoSort(dataPos, 8, offTable, stream)
+
+HL_API HlResult hlBINAOffsetsWrite(size_t dataPos, size_t padAmount,
     HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream);
+
+#define hlBINAOffsetsWrite32(dataPos, offTable, stream)\
+    hlBINAOffsetsWrite(dataPos, 4, offTable, stream)
+
+#define hlBINAOffsetsWrite64(dataPos, offTable, stream)\
+    hlBINAOffsetsWrite(dataPos, 8, offTable, stream)
 
 HL_API HlResult hlBINAV1StartWrite(HlBINAEndianFlag endianFlag, HlStream* stream);
 

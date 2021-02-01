@@ -541,7 +541,7 @@ static HlResult hlINBINAStringsWrite(const HlBool is64Bit,
     }
 
     /* Write padding. */
-    result = hlStreamPad(stream, 4);
+    result = hlStreamPad(stream, (is64Bit) ?  8 : 4);
 
 end:
     /* Free resources as necessary and return result. */
@@ -565,7 +565,7 @@ HlResult hlBINAStringsWrite64(size_t dataPos, HlBINAEndianFlag endianFlag,
         endianFlag, strTable, offTable, stream);
 }
 
-HlResult hlBINAOffsetsWriteNoSort(size_t dataPos,
+HlResult hlBINAOffsetsWriteNoSort(size_t dataPos, size_t padAmount,
     const HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream)
 {
     size_t i, lastOffPos = dataPos;
@@ -614,17 +614,18 @@ HlResult hlBINAOffsetsWriteNoSort(size_t dataPos,
     }
 
     /* Write padding and return result. */
-    return hlStreamPad(stream, 4);
+    return hlStreamPad(stream, padAmount);
 }
 
-HlResult hlBINAOffsetsWrite(size_t dataPos,
+HlResult hlBINAOffsetsWrite(size_t dataPos, size_t padAmount,
     HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream)
 {
     /* Sort offsets in offset table. */
     hlOffTableSort(offTable);
 
     /* Write sorted offsets. */
-    return hlBINAOffsetsWriteNoSort(dataPos, offTable, stream);
+    return hlBINAOffsetsWriteNoSort(dataPos,
+        padAmount, offTable, stream);
 }
 
 HlResult hlBINAV1StartWrite(HlBINAEndianFlag endianFlag, HlStream* stream)
@@ -689,7 +690,7 @@ HlResult hlBINAV1FinishWrite(size_t headerPos,
     offTablePos = hlStreamTell(stream);
 
     /* Write offset table. */
-    result = hlBINAOffsetsWrite(dataPos, offTable, stream);
+    result = hlBINAOffsetsWrite32(dataPos, offTable, stream);
     if (HL_FAILED(result)) return result;
 
     /* Get end of stream position. */
@@ -813,9 +814,8 @@ HlResult hlBINAV2DataBlockFinishWrite(size_t dataBlockPos, HlBool use64BitOffset
     strTablePos = hlStreamTell(stream);
 
     /* Write string table. */
-    result = (use64BitOffsets) ?
-        hlBINAStringsWrite64(dataPos, endianFlag, strTable, offTable, stream) :
-        hlBINAStringsWrite32(dataPos, endianFlag, strTable, offTable, stream);
+    result = hlINBINAStringsWrite(use64BitOffsets, dataPos,
+        endianFlag, strTable, offTable, stream);
 
     if (HL_FAILED(result)) return result;
 
@@ -823,7 +823,10 @@ HlResult hlBINAV2DataBlockFinishWrite(size_t dataBlockPos, HlBool use64BitOffset
     offTablePos = hlStreamTell(stream);
 
     /* Write offset table. */
-    result = hlBINAOffsetsWrite(dataPos, offTable, stream);
+    result = hlBINAOffsetsWrite(dataPos,
+        (use64BitOffsets) ? 8 : 4,
+        offTable, stream);
+
     if (HL_FAILED(result)) return result;
 
     /* Get end of stream position. */

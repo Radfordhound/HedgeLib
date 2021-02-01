@@ -1279,7 +1279,7 @@ HlResult hlPACxV2DataBlockFinishWrite(size_t headerPos, size_t dataBlockPos,
     offTablePos = hlStreamTell(stream);
 
     /* Write offset table. */
-    result = hlBINAOffsetsWrite(headerPos, offTable, stream);
+    result = hlBINAOffsetsWrite32(headerPos, offTable, stream);
     if (HL_FAILED(result)) return result;
 
     /* Get end of stream position. */
