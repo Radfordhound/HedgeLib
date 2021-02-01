@@ -79,7 +79,6 @@ static void hlINSVColRead(const HlSVColHeader* HL_RESTRICT svcol,
     const HlSVShape* hhShapes = (const HlSVShape*)hlOff64Get(&svcol->shapesOffset);
     HlSectorCollisionShape* hlShapes;
     char* curStrPtr = (char*)(hlSecCol + 1);
-    size_t reqBufLen = 0;
     HlU64 i;
 
     hlSecCol->name = curStrPtr;

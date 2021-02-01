@@ -240,7 +240,7 @@ static HlResult hlINMemStreamSeek(HlMemStream* stream,
     pos = (basePos + offset);
 
     /* Ensure this position is contained within the data buffer. */
-    if (pos < 0 || pos > mem->bufSize)
+    if (pos < 0 || (size_t)pos > mem->bufSize)
     {
         return HL_ERROR_OUT_OF_RANGE;
     }
@@ -335,7 +335,7 @@ void* hlMemStreamGetDataPtr(const HlMemStream* HL_RESTRICT mem,
     if (bufSize) *bufSize = ((const HlINMemStream*)mem)->bufSize;
 
     /* Return pointer to data buffer. */
-    return (const void*)((HlUPtr)mem->handle);
+    return (void*)((HlUPtr)mem->handle);
 }
 
 HlResult hlMemStreamGetData(const HlMemStream* HL_RESTRICT mem,

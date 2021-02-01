@@ -30,6 +30,8 @@
     _setmode(_fileno(stderr), _O_U16TEXT) == -1) ?\
         HL_ERROR_UNKNOWN : HL_RESULT_SUCCESS)
 #else
+#include <string.h>
+
 #define nstrcmp strcmp
 #define nstrncmp strncmp
 #define nprintf printf
