@@ -87,6 +87,14 @@ HL_API HlResult hlStreamWriteOff64(HlStream* HL_RESTRICT stream,
     size_t basePos, size_t offVal, HlBool doSwap,
     HlOffTable* HL_RESTRICT offTable);
 
+HL_API HlResult hlStreamFixOff32(HlStream* HL_RESTRICT stream,
+    size_t basePos, size_t offPos, size_t offVal, HlBool doSwap,
+    HlOffTable* HL_RESTRICT offTable);
+
+HL_API HlResult hlStreamFixOff64(HlStream* HL_RESTRICT stream,
+    size_t basePos, size_t offPos, size_t offVal, HlBool doSwap,
+    HlOffTable* HL_RESTRICT offTable);
+
 HL_API HlResult hlStreamWriteStringUTF8(HlStream* HL_RESTRICT stream,
     const char* str, size_t* HL_RESTRICT writtenByteCount);
 

@@ -73,6 +73,50 @@ HlResult hlStreamWriteOff64(HlStream* HL_RESTRICT stream,
     return hlStreamWrite(stream, sizeof(off), &off, NULL);
 }
 
+HlResult hlStreamFixOff32(HlStream* HL_RESTRICT stream,
+    size_t basePos, size_t offPos, size_t offVal, HlBool doSwap,
+    HlOffTable* HL_RESTRICT offTable)
+{
+    /* Get end of stream position. */
+    const size_t eof = hlStreamTell(stream);
+    HlResult result;
+
+    /* Jump to the given offset position. */
+    result = hlStreamJumpTo(stream, offPos);
+    if (HL_FAILED(result)) return result;
+
+    /* Fix the offset. */
+    result = hlStreamWriteOff32(stream, basePos,
+        offVal, doSwap, offTable);
+
+    if (HL_FAILED(result)) return result;
+
+    /* Jump back to the end of the stream and return result. */
+    return hlStreamJumpTo(stream, eof);
+}
+
+HlResult hlStreamFixOff64(HlStream* HL_RESTRICT stream,
+    size_t basePos, size_t offPos, size_t offVal, HlBool doSwap,
+    HlOffTable* HL_RESTRICT offTable)
+{
+    /* Get end of stream position. */
+    const size_t eof = hlStreamTell(stream);
+    HlResult result;
+
+    /* Jump to the given offset position. */
+    result = hlStreamJumpTo(stream, offPos);
+    if (HL_FAILED(result)) return result;
+
+    /* Fix the offset. */
+    result = hlStreamWriteOff64(stream, basePos,
+        offVal, doSwap, offTable);
+
+    if (HL_FAILED(result)) return result;
+
+    /* Jump back to the end of the stream and return result. */
+    return hlStreamJumpTo(stream, eof);
+}
+
 HlResult hlStreamWriteStringUTF8(HlStream* HL_RESTRICT stream,
     const char* str, size_t* HL_RESTRICT writtenByteCount)
 {
