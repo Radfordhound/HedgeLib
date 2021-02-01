@@ -7,6 +7,10 @@ extern "C" {
 #endif
 
 #define HL_BINA_SIG         HL_MAKE_SIG('B', 'I', 'N', 'A')
+#define HL_BINA_MAKE_VER(major, minor, rev)\
+    ((((HlU32)(major)) << 16) |\
+    (((HlU32)(minor)) << 8) |\
+    ((HlU32)(rev)))
 
 typedef struct HlStream HlStream;
 

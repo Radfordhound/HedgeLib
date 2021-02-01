@@ -344,9 +344,8 @@ HlU32 hlBINAGetVersion(const void* rawData)
     if (hlBINAHasV2Header(rawData))
     {
         const HlBINAV2Header* header = (const HlBINAV2Header*)rawData;
-        return ((((HlU32)header->version[0]) << 16) |   /* Major version */
-            (((HlU32)header->version[1]) << 8) |        /* Minor version */
-            ((HlU32)header->version[2]));               /* Revision version */
+        return HL_BINA_MAKE_VER(header->version[0],
+            header->version[1], header->version[2]);
     }
     else if (hlBINAHasV1Header(rawData))
     {
