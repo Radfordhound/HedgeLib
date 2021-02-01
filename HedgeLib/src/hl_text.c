@@ -109,7 +109,42 @@ int hlNStrNCmp(const HlNChar* HL_RESTRICT str1,
 #endif
 }
 
-int hlNStrICmp(const HlNChar* HL_RESTRICT str1,
+int hlStrICmpAsUpperCase(const char* HL_RESTRICT str1,
+    const char* HL_RESTRICT str2)
+{
+    unsigned char c1 = 0, c2 = 0;
+    while ((c2 = *((const unsigned char*)str2), c1 = *((const unsigned char*)str1)))
+    {
+        if (c1 != c2)
+        {
+            if (c1 >= 'A' && c2 >= 'A')
+            {
+                /* If c1 is lower-cased, upper-case it. */
+                if (c1 >= 'a' && c1 <= 'z')
+                {
+                    c1 -= 32;
+                }
+
+                /* If c2 is lower-cased, upper-case it. */
+                if (c2 >= 'a' && c2 <= 'z')
+                {
+                    c2 -= 32;
+                }
+
+                if (c1 != c2) goto end;
+            }
+            else goto end;
+        }
+
+        ++str1;
+        ++str2;
+    }
+
+end:
+    return (((int)c1) - ((int)c2));
+}
+
+int hlNStrICmpAsUpperCase(const HlNChar* HL_RESTRICT str1,
     const HlNChar* HL_RESTRICT str2)
 {
     HlNChar c1 = 0, c2 = 0;
@@ -144,7 +179,46 @@ end:
     return (((int)c1) - ((int)c2));
 }
 
-int hlNStrNICmp(const HlNChar* HL_RESTRICT str1,
+int hlStrNICmpAsUpperCase(const char* HL_RESTRICT str1,
+    const char* HL_RESTRICT str2, size_t maxCount)
+{
+    unsigned char c1 = 0, c2 = 0;
+    while (maxCount && (c2 = *((const unsigned char*)str2),
+        c1 = *((const unsigned char*)str1)))
+    {
+        if (c1 != c2)
+        {
+            if (c1 >= 'A' && c2 >= 'A')
+            {
+                /* If c1 is lower-cased, upper-case it. */
+                if (c1 >= 'a' && c1 <= 'z')
+                {
+                    c1 -= 32;
+                }
+
+                /* If c2 is lower-cased, upper-case it. */
+                if (c2 >= 'a' && c2 <= 'z')
+                {
+                    c2 -= 32;
+                }
+
+                if (c1 != c2) goto end;
+            }
+            else goto end;
+        }
+
+        ++str1;
+        ++str2;
+        --maxCount;
+    }
+
+end:
+    if (maxCount == 0) return 0;
+
+    return (((int)c1) - ((int)c2));
+}
+
+int hlNStrNICmpAsUpperCase(const HlNChar* HL_RESTRICT str1,
     const HlNChar* HL_RESTRICT str2, size_t maxCount)
 {
     HlNChar c1 = 0, c2 = 0;
@@ -164,6 +238,153 @@ int hlNStrNICmp(const HlNChar* HL_RESTRICT str1,
                 if (c2 >= HL_NTEXT('a') && c2 <= HL_NTEXT('z'))
                 {
                     c2 -= 32;
+                }
+
+                if (c1 != c2) goto end;
+            }
+            else goto end;
+        }
+
+        ++str1;
+        ++str2;
+        --maxCount;
+    }
+
+end:
+    if (maxCount == 0) return 0;
+
+    return (((int)c1) - ((int)c2));
+}
+
+int hlStrICmpAsLowerCase(const char* HL_RESTRICT str1,
+    const char* HL_RESTRICT str2)
+{
+    unsigned char c1 = 0, c2 = 0;
+    while ((c2 = *((const unsigned char*)str2), c1 = *((const unsigned char*)str1)))
+    {
+        if (c1 != c2)
+        {
+            if (c1 <= 'z' && c2 <= 'z')
+            {
+                /* If c1 is upper-cased, lower-case it. */
+                if (c1 >= 'A' && c1 <= 'Z')
+                {
+                    c1 += 32;
+                }
+
+                /* If c2 is upper-cased, lower-case it. */
+                if (c2 >= 'A' && c2 <= 'Z')
+                {
+                    c2 += 32;
+                }
+
+                if (c1 != c2) goto end;
+            }
+            else goto end;
+        }
+
+        ++str1;
+        ++str2;
+    }
+
+end:
+    return (((int)c1) - ((int)c2));
+}
+
+int hlNStrICmpAsLowerCase(const HlNChar* HL_RESTRICT str1,
+    const HlNChar* HL_RESTRICT str2)
+{
+    HlNChar c1 = 0, c2 = 0;
+    while ((c2 = *str2, c1 = *str1))
+    {
+        if (c1 != c2)
+        {
+            if (c1 <= HL_NTEXT('z') && c2 <= HL_NTEXT('z'))
+            {
+                /* If c1 is upper-cased, lower-case it. */
+                if (c1 >= HL_NTEXT('A') && c1 <= HL_NTEXT('Z'))
+                {
+                    c1 += 32;
+                }
+
+                /* If c2 is upper-cased, lower-case it. */
+                if (c2 >= HL_NTEXT('A') && c2 <= HL_NTEXT('Z'))
+                {
+                    c2 += 32;
+                }
+
+                if (c1 != c2) goto end;
+            }
+            else goto end;
+        }
+
+        ++str1;
+        ++str2;
+    }
+
+end:
+    return (((int)c1) - ((int)c2));
+}
+
+int hlStrNICmpAsLowerCase(const char* HL_RESTRICT str1,
+    const char* HL_RESTRICT str2, size_t maxCount)
+{
+    unsigned char c1 = 0, c2 = 0;
+    while (maxCount && (c2 = *((const unsigned char*)str2),
+        c1 = *((const unsigned char*)str1)))
+    {
+        if (c1 != c2)
+        {
+            if (c1 <= 'z' && c2 <= 'z')
+            {
+                /* If c1 is upper-cased, lower-case it. */
+                if (c1 >= 'A' && c1 <= 'Z')
+                {
+                    c1 += 32;
+                }
+
+                /* If c2 is upper-cased, lower-case it. */
+                if (c2 >= 'A' && c2 <= 'Z')
+                {
+                    c2 += 32;
+                }
+
+                if (c1 != c2) goto end;
+            }
+            else goto end;
+        }
+
+        ++str1;
+        ++str2;
+        --maxCount;
+    }
+
+end:
+    if (maxCount == 0) return 0;
+
+    return (((int)c1) - ((int)c2));
+}
+
+int hlNStrNICmpAsLowerCase(const HlNChar* HL_RESTRICT str1,
+    const HlNChar* HL_RESTRICT str2, size_t maxCount)
+{
+    HlNChar c1 = 0, c2 = 0;
+    while (maxCount && (c2 = *str2, c1 = *str1))
+    {
+        if (c1 != c2)
+        {
+            if (c1 <= HL_NTEXT('z') && c2 <= HL_NTEXT('z'))
+            {
+                /* If c1 is upper-cased, lower-case it. */
+                if (c1 >= HL_NTEXT('A') && c1 <= HL_NTEXT('Z'))
+                {
+                    c1 += 32;
+                }
+
+                /* If c2 is upper-cased, lower-case it. */
+                if (c2 >= HL_NTEXT('A') && c2 <= HL_NTEXT('Z'))
+                {
+                    c2 += 32;
                 }
 
                 if (c1 != c2) goto end;

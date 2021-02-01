@@ -33,10 +33,28 @@ HL_API int hlNStrCmp(const HlNChar* HL_RESTRICT str1, const HlNChar* HL_RESTRICT
 HL_API int hlNStrNCmp(const HlNChar* HL_RESTRICT str1,
     const HlNChar* HL_RESTRICT str2, size_t maxCount);
 
-HL_API int hlNStrICmp(const HlNChar* HL_RESTRICT str1,
+HL_API int hlStrICmpAsUpperCase(const char* HL_RESTRICT str1,
+    const char* HL_RESTRICT str2);
+
+HL_API int hlNStrICmpAsUpperCase(const HlNChar* HL_RESTRICT str1,
     const HlNChar* HL_RESTRICT str2);
 
-HL_API int hlNStrNICmp(const HlNChar* HL_RESTRICT str1,
+HL_API int hlStrNICmpAsUpperCase(const char* HL_RESTRICT str1,
+    const char* HL_RESTRICT str2, size_t maxCount);
+
+HL_API int hlNStrNICmpAsUpperCase(const HlNChar* HL_RESTRICT str1,
+    const HlNChar* HL_RESTRICT str2, size_t maxCount);
+
+HL_API int hlStrICmpAsLowerCase(const char* HL_RESTRICT str1,
+    const char* HL_RESTRICT str2);
+
+HL_API int hlNStrICmpAsLowerCase(const HlNChar* HL_RESTRICT str1,
+    const HlNChar* HL_RESTRICT str2);
+
+HL_API int hlStrNICmpAsLowerCase(const char* HL_RESTRICT str1,
+    const char* HL_RESTRICT str2, size_t maxCount);
+
+HL_API int hlNStrNICmpAsLowerCase(const HlNChar* HL_RESTRICT str1,
     const HlNChar* HL_RESTRICT str2, size_t maxCount);
 
 HL_API const HlNChar* hlNStrStr(const HlNChar* HL_RESTRICT str1,

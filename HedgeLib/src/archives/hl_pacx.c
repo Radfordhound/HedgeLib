@@ -1395,38 +1395,40 @@ static char* hlINPACxV2CreateTypeStr(const HlINPACxV2FileMetadata* fileMetadata)
     return typeStr;
 }
 
-static int hlINPACxV2CompareFileNames(
+static int hlINPACxCompareFileNames(
     const HlNChar* HL_RESTRICT fileName1, const HlNChar* HL_RESTRICT fileName2,
     size_t fileNameLen1, size_t fileNameLen2)
 {
-    if (fileNameLen1 == fileNameLen2)
-    {
-        return hlNStrNCmp(fileName1, fileName2, fileNameLen1);
-    }
-    else
-    {
-        const size_t fileNameMinLen = HL_MIN(fileNameLen1, fileNameLen2);
-        const int nameSortWeight = hlNStrNCmp(fileName1,
-            fileName2, fileNameMinLen);
+    const size_t fileNameMinLen = HL_MIN(fileNameLen1, fileNameLen2);
+    const int nameSortWeight = hlNStrNCmp(fileName1,
+        fileName2, fileNameMinLen);
 
-        if (nameSortWeight != 0)
+    if (nameSortWeight == 0 && fileNameLen1 != fileNameLen2)
+    {
+        if (fileNameMinLen == fileNameLen1)
         {
-            return nameSortWeight;
+            const size_t lastCharPos = (fileNameLen2 > 0) ?
+                (fileNameLen2 - 1) : 0;
+
+            return (0 - (int)fileName2[lastCharPos]);
         }
         else
         {
-            return (fileNameMinLen == fileNameLen1) ?
-                (0 - (int)fileName2[fileNameLen2 - 1]) :
-                ((int)fileName1[fileNameLen1 - 1] - 0);
+            const size_t lastCharPos = (fileNameLen1 > 0) ?
+                (fileNameLen1 - 1) : 0;
+
+            return ((int)fileName1[lastCharPos] - 0);
         }
     }
+
+    return nameSortWeight;
 }
 
 static int hlINPACxV2FileMetadataCompareNames(
     const HlINPACxV2FileMetadata* HL_RESTRICT fileMeta1,
     const HlINPACxV2FileMetadata* HL_RESTRICT fileMeta2)
 {
-    return hlINPACxV2CompareFileNames(fileMeta1->name, fileMeta2->name,
+    return hlINPACxCompareFileNames(fileMeta1->name, fileMeta2->name,
         (fileMeta1->ext - fileMeta1->name),
         (fileMeta2->ext - fileMeta2->name));
 }
@@ -1491,9 +1493,8 @@ static const HlINPACxV2FileMetadata* hlINPACxV2TypeMetadataFindFile(
     {
         const HlINPACxV2FileMetadata* curFileMetadata = &typeMetadata->files[i];
 
-        if (hlINPACxV2CompareFileNames(curFileMetadata->name,
-            fileName, (curFileMetadata->ext - curFileMetadata->name),
-            fileNameLen) == 0)
+        if (hlINPACxCompareFileNames(curFileMetadata->name, fileName,
+            (curFileMetadata->ext - curFileMetadata->name), fileNameLen) == 0)
         {
             return curFileMetadata;
         }
@@ -1774,7 +1775,9 @@ static int hlINPACxV2SortFileMetadataPtrsSplit(const void* a, const void* b)
     {
         /* Sort by extensions. */
         {
-            const int extSortWeight = hlNStrICmp(fileMeta1->ext, fileMeta2->ext);
+            const int extSortWeight = hlNStrICmpAsUpperCase(
+                fileMeta1->ext, fileMeta2->ext);
+
             if (extSortWeight != 0) return extSortWeight;
         }
 
@@ -1793,13 +1796,14 @@ static int hlINPACxV2SortFileMetadataPtrsSplit(const void* a, const void* b)
 
             if (fileNameLen1 == fileNameLen2)
             {
-                return hlNStrNICmp(fileMeta1->name, fileMeta2->name, fileNameLen1);
+                return hlNStrNICmpAsUpperCase(fileMeta1->name,
+                    fileMeta2->name, fileNameLen1);
             }
             else
             {
                 const size_t fileNameMinLen = HL_MIN(fileNameLen1, fileNameLen2);
-                const int nameSortWeight = hlNStrNICmp(fileMeta1->name,
-                    fileMeta2->name, fileNameMinLen);
+                const int nameSortWeight = hlNStrNICmpAsUpperCase(
+                    fileMeta1->name, fileMeta2->name, fileNameMinLen);
 
                 if (nameSortWeight != 0)
                 {
