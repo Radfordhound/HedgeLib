@@ -23,6 +23,10 @@ typedef enum HlCompressType
 }
 HlCompressType;
 
+HL_API HlResult hlLZ4DecompressNoAlloc(const void* HL_RESTRICT compressedData,
+    size_t compressedSize, size_t uncompressedSize,
+    void* HL_RESTRICT uncompressedData);
+
 HL_API HlResult hlZlibDecompressNoAlloc(const void* HL_RESTRICT compressedData,
     size_t compressedSize, size_t uncompressedSize,
     void* HL_RESTRICT uncompressedData);
@@ -42,9 +46,20 @@ HL_API HlResult hlDecompressBlob(HlCompressType compressionType,
     size_t compressedSize, size_t uncompressedSize,
     HlBlob* HL_RESTRICT * HL_RESTRICT uncompressedBlob);
 
+HL_API size_t hlLZ4CompressBound(size_t uncompressedSize);
+
+HL_API HlResult hlLZ4CompressNoAlloc(const void* HL_RESTRICT uncompressedData,
+    size_t uncompressedSize, size_t compressedBufSize,
+    size_t* HL_RESTRICT compressedSize, void* HL_RESTRICT compressedBuf);
+
+HL_API size_t hlZlibCompressBound(size_t uncompressedSize);
+
 HL_API HlResult hlZlibCompressNoAlloc(const void* HL_RESTRICT uncompressedData,
     size_t uncompressedSize, size_t compressedBufSize,
     size_t* HL_RESTRICT compressedSize, void* HL_RESTRICT compressedBuf);
+
+HL_API size_t hlCompressBound(HlCompressType compressionType,
+    size_t uncompressedSize);
 
 HL_API HlResult hlCompressNoAlloc(HlCompressType compressionType,
     const void* HL_RESTRICT uncompressedData,

@@ -1,7 +1,25 @@
 #include "hedgelib/hl_compression.h"
 #include "hedgelib/hl_memory.h"
+#include "depends/lz4/lz4.h"
 #include "depends/zlib/zlib.h"
 #include <string.h>
+
+HlResult hlLZ4DecompressNoAlloc(const void* HL_RESTRICT compressedData,
+    size_t compressedSize, size_t uncompressedSize,
+    void* HL_RESTRICT uncompressedData)
+{
+    /* Decompress data. */
+    int r = LZ4_decompress_safe((const char*)compressedData,
+        (char*)uncompressedData, (int)compressedSize,
+        (int)uncompressedSize);
+
+    /* Return HL_ERROR_UNKNOWN if decompressing failed. */
+    if (r < 0 || (size_t)r < uncompressedSize)
+        return HL_ERROR_UNKNOWN; /* TODO: Return more specific errors? */
+
+    /* Otherwise, return success. */
+    return HL_RESULT_SUCCESS;
+}
 
 HlResult hlZlibDecompressNoAlloc(const void* HL_RESTRICT compressedData,
     size_t compressedSize, size_t uncompressedSize,
@@ -49,6 +67,10 @@ HlResult hlDecompressNoAlloc(HlCompressType compressionType,
         return HL_RESULT_SUCCESS;
 
     /* TODO: Support all HlCompressType values. */
+
+    case HL_COMPRESS_TYPE_LZ4:
+        return hlLZ4DecompressNoAlloc(compressedData,
+            compressedSize, uncompressedSize, uncompressedData);
 
     case HL_COMPRESS_TYPE_ZLIB:
         return hlZlibDecompressNoAlloc(compressedData,
@@ -114,12 +136,57 @@ HlResult hlDecompressBlob(HlCompressType compressionType,
     return HL_RESULT_SUCCESS;
 }
 
+size_t hlLZ4CompressBound(size_t uncompressedSize)
+{
+    return (size_t)LZ4_compressBound((int)uncompressedSize);
+}
+
+HlResult hlLZ4CompressNoAlloc(const void* HL_RESTRICT uncompressedData,
+    size_t uncompressedSize, size_t compressedBufSize,
+    size_t* HL_RESTRICT compressedSize, void* HL_RESTRICT compressedBuf)
+{
+    /* Compress data. */
+    int r = LZ4_compress_default((const char*)uncompressedData,
+        (char*)compressedBuf, (int)uncompressedSize, (int)compressedBufSize);
+
+    if (r <= 0) return HL_ERROR_UNKNOWN;
+
+    /* Set compressedSize and return success. */
+    *compressedSize = (size_t)r;
+    return HL_RESULT_SUCCESS;
+}
+
+size_t hlZlibCompressBound(size_t uncompressedSize)
+{
+    return (size_t)compressBound((uLong)uncompressedSize);
+}
+
 HlResult hlZlibCompressNoAlloc(const void* HL_RESTRICT uncompressedData,
     size_t uncompressedSize, size_t compressedBufSize,
     size_t* HL_RESTRICT compressedSize, void* HL_RESTRICT compressedBuf)
 {
     /* TODO */
     return HL_ERROR_UNSUPPORTED;
+}
+
+size_t hlCompressBound(HlCompressType compressionType,
+    size_t uncompressedSize)
+{
+    switch (compressionType)
+    {
+    case HL_COMPRESS_TYPE_NONE:
+        return uncompressedSize;
+
+        /* TODO: Support all HlCompressType values. */
+
+    case HL_COMPRESS_TYPE_LZ4:
+        return hlLZ4CompressBound(uncompressedSize);
+
+    case HL_COMPRESS_TYPE_ZLIB:
+        return hlZlibCompressBound(uncompressedSize);
+
+    default: return 0;
+    }
 }
 
 HlResult hlCompressNoAlloc(HlCompressType compressionType,
@@ -142,6 +209,11 @@ HlResult hlCompressNoAlloc(HlCompressType compressionType,
 
     /* TODO: Support all HlCompressType values. */
 
+    case HL_COMPRESS_TYPE_LZ4:
+        return hlLZ4CompressNoAlloc(uncompressedData,
+            uncompressedSize, compressedBufSize,
+            compressedSize, compressedBuf);
+
     case HL_COMPRESS_TYPE_ZLIB:
         return hlZlibCompressNoAlloc(uncompressedData,
             uncompressedSize, compressedBufSize,
@@ -157,10 +229,11 @@ HlResult hlCompress(HlCompressType compressionType,
     void* HL_RESTRICT * HL_RESTRICT compressedData)
 {
     void* compressedDataBuf;
+    const size_t compressBound = hlCompressBound(compressionType, uncompressedSize);
     HlResult result;
 
     /* Allocate a buffer to hold the compressed data. */
-    compressedDataBuf = hlAlloc(uncompressedSize);
+    compressedDataBuf = hlAlloc(compressBound);
     if (!compressedDataBuf) return HL_ERROR_OUT_OF_MEMORY;
 
     /* Compress the data. */
@@ -185,10 +258,11 @@ HlResult hlCompressBlob(HlCompressType compressionType,
     HlBlob* HL_RESTRICT * HL_RESTRICT compressedBlob)
 {
     HlBlob* compressedBlobBuf;
+    const size_t compressBound = hlCompressBound(compressionType, uncompressedSize);
     HlResult result;
 
     /* Create a blob to hold the compressed data. */
-    result = hlBlobCreate(NULL, uncompressedSize,
+    result = hlBlobCreate(NULL, compressBound,
         &compressedBlobBuf);
 
     if (HL_FAILED(result)) return result;
