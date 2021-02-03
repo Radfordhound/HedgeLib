@@ -494,6 +494,57 @@ static HlResult pack(const HlNChar* HL_RESTRICT input,
 
         break;
 
+    case ARC_TYPE_FORCES:
+        result = hlPACxV3SaveEx(arc,                                    /* arc */
+            (splitLimit) ? *splitLimit : HL_FORCES_DEFAULT_SPLIT_LIMIT, /* splitLimit */
+            (alignment) ? *alignment : HL_PACX_DEFAULT_ALIGNMENT,       /* dataAlignment */
+            (bigEndian) ? HL_BINA_BIG_ENDIAN : HL_BINA_LITTLE_ENDIAN,   /* endianFlag */
+            HlPACxForcesExts,                                           /* exts */
+            HlPACxForcesExtCount,                                       /* extCount */
+            (generatePFI) ? &pfi : NULL,                                /* pfi */
+            output);                                                    /* filePath */
+
+        break;
+
+    case ARC_TYPE_TOKYO1:
+        result = hlPACxV402SaveEx(arc,                                  /* arc */
+            (splitLimit) ? *splitLimit : HL_TOKYO1_DEFAULT_SPLIT_LIMIT, /* splitLimit */
+            (alignment) ? *alignment : HL_PACX_DEFAULT_ALIGNMENT,       /* dataAlignment */
+            HL_PACXV402_DEFAULT_CHUNK_SIZE,                             /* maxChunkSize */
+            HL_FALSE,                                                   /* noCompress */
+            (bigEndian) ? HL_BINA_BIG_ENDIAN : HL_BINA_LITTLE_ENDIAN,   /* endianFlag */
+            HlPACxTokyo1Exts,                                           /* exts */
+            HlPACxTokyo1ExtCount,                                       /* extCount */
+            output);                                                    /* filePath */
+
+        break;
+
+    case ARC_TYPE_TOKYO2:
+        result = hlPACxV402SaveEx(arc,                                  /* arc */
+            (splitLimit) ? *splitLimit : HL_TOKYO2_DEFAULT_SPLIT_LIMIT, /* splitLimit */
+            (alignment) ? *alignment : HL_PACX_DEFAULT_ALIGNMENT,       /* dataAlignment */
+            HL_PACXV402_DEFAULT_CHUNK_SIZE,                             /* maxChunkSize */
+            HL_FALSE,                                                   /* noCompress */
+            (bigEndian) ? HL_BINA_BIG_ENDIAN : HL_BINA_LITTLE_ENDIAN,   /* endianFlag */
+            HlPACxTokyo2Exts,                                           /* exts */
+            HlPACxTokyo2ExtCount,                                       /* extCount */
+            output);                                                    /* filePath */
+
+        break;
+
+    case ARC_TYPE_SAKURA:
+        result = hlPACxV402SaveEx(arc,                                  /* arc */
+            (splitLimit) ? *splitLimit : HL_SAKURA_DEFAULT_SPLIT_LIMIT, /* splitLimit */
+            (alignment) ? *alignment : HL_PACX_DEFAULT_ALIGNMENT,       /* dataAlignment */
+            HL_PACXV402_DEFAULT_CHUNK_SIZE,                             /* maxChunkSize */
+            HL_FALSE,                                                   /* noCompress */
+            (bigEndian) ? HL_BINA_BIG_ENDIAN : HL_BINA_LITTLE_ENDIAN,   /* endianFlag */
+            HlPACxSakuraExts,                                           /* exts */
+            HlPACxSakuraExtCount,                                       /* extCount */
+            output);                                                    /* filePath */
+
+        break;
+
     /* TODO */
 
     default:
