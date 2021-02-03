@@ -1,16 +1,20 @@
 #include "hl_in_archive.h"
 #include "../hl_in_assert.h"
 #include "../io/hl_in_path.h"
-#include "../depends/lz4/lz4.h"
 #include "hedgelib/effects/hl_grif.h"
 #include "hedgelib/archives/hl_pacx.h"
 #include "hedgelib/io/hl_path.h"
 #include "hedgelib/io/hl_file.h"
+#include "hedgelib/hl_radix_tree.h"
 #include "hedgelib/hl_endian.h"
 #include "hedgelib/hl_compression.h"
 #include "hedgelib/hl_math.h"
 #include "hedgelib/hl_text.h"
 #include <stdlib.h>
+
+#define HL_IN_PACX_VER_301      HL_BINA_MAKE_VER('3', '0', '1')
+#define HL_IN_PACX_VER_402      HL_BINA_MAKE_VER('4', '0', '2')
+#define HL_IN_PACX_VER_403      HL_BINA_MAKE_VER('4', '0', '3')
 
 const HlNChar HL_PACX_EXT[5] = HL_NTEXT(".pac");
 
@@ -36,7 +40,7 @@ const char* const HlPACxDataTypes[] =
 const size_t HlPACxDataTypeCount = HL_IN_PACX_DATA_TYPE_COUNT;
 
 /* Auto-generate LW supported extensions array. */
-const HlPACxSupportedExt HlLWSupportedExts[] =
+const HlPACxSupportedExt HlPACxLWExts[] =
 {
 #define HL_IN_PACX_LW_AUTOGEN(ext, pacxType, type, rootSortWeight, splitSortWeight)\
     { HL_NTEXT(ext), pacxType, HL_PACX_EXT_FLAGS_##type##_TYPE, rootSortWeight, splitSortWeight },
@@ -46,10 +50,10 @@ const HlPACxSupportedExt HlLWSupportedExts[] =
     { 0 }
 };
 
-const size_t HlLWSupportedExtCount = ((sizeof(HlLWSupportedExts) /
+const size_t HlPACxLWExtCount = ((sizeof(HlPACxLWExts) /
     sizeof(const HlPACxSupportedExt)) - 1);
 
-const HlPACxSupportedExt HlRioSupportedExts[] =
+const HlPACxSupportedExt HlPACxRioExts[] =
 {
 #define HL_IN_PACX_RIO_AUTOGEN(ext, pacxType, type, rootSortWeight, splitSortWeight)\
     { HL_NTEXT(ext), pacxType, HL_PACX_EXT_FLAGS_##type##_TYPE, rootSortWeight, splitSortWeight },
@@ -59,12 +63,12 @@ const HlPACxSupportedExt HlRioSupportedExts[] =
     { 0 }
 };
 
-const size_t HlRioSupportedExtCount = ((sizeof(HlRioSupportedExts) /
+const size_t HlPACxRioExtCount = ((sizeof(HlPACxRioExts) /
     sizeof(const HlPACxSupportedExt)) - 1);
 
-const HlPACxSupportedExt HlForcesSupportedExts[] =
+const HlPACxSupportedExt HlPACxForcesExts[] =
 {
-#define HL_IN_PACX_WARS_AUTOGEN(ext, pacxType, type)\
+#define HL_IN_PACX_FORCES_AUTOGEN(ext, pacxType, type)\
     { HL_NTEXT(ext), pacxType, HL_PACX_EXT_FLAGS_##type##_TYPE },
 
 #include "hl_in_pacx_type_autogen.h"
@@ -72,7 +76,59 @@ const HlPACxSupportedExt HlForcesSupportedExts[] =
     { 0 }
 };
 
-const size_t HlForcesSupportedExtCount = ((sizeof(HlForcesSupportedExts) /
+const size_t HlPACxForcesExtCount = ((sizeof(HlPACxForcesExts) /
+    sizeof(const HlPACxSupportedExt)) - 1);
+
+const HlPACxSupportedExt HlPACxTokyo1Exts[] =
+{
+#define HL_IN_PACX_TOKYO1_AUTOGEN(ext, pacxType, type)\
+    { HL_NTEXT(ext), pacxType, HL_PACX_EXT_FLAGS_##type##_TYPE },
+
+#include "hl_in_pacx_type_autogen.h"
+
+    { 0 }
+};
+
+const size_t HlPACxTokyo1ExtCount = ((sizeof(HlPACxTokyo1Exts) /
+    sizeof(const HlPACxSupportedExt)) - 1);
+
+const HlPACxSupportedExt HlPACxTokyo2Exts[] =
+{
+#define HL_IN_PACX_TOKYO2_AUTOGEN(ext, pacxType, type)\
+    { HL_NTEXT(ext), pacxType, HL_PACX_EXT_FLAGS_##type##_TYPE },
+
+#include "hl_in_pacx_type_autogen.h"
+
+    { 0 }
+};
+
+const size_t HlPACxTokyo2ExtCount = ((sizeof(HlPACxTokyo2Exts) /
+    sizeof(const HlPACxSupportedExt)) - 1);
+
+const HlPACxSupportedExt HlPACxSakuraExts[] =
+{
+#define HL_IN_PACX_SAKURA_AUTOGEN(ext, pacxType, type)\
+    { HL_NTEXT(ext), pacxType, HL_PACX_EXT_FLAGS_##type##_TYPE },
+
+#include "hl_in_pacx_type_autogen.h"
+
+    { 0 }
+};
+
+const size_t HlPACxSakuraExtCount = ((sizeof(HlPACxSakuraExts) /
+    sizeof(const HlPACxSupportedExt)) - 1);
+
+const HlPACxSupportedExt HlPACxPPT2Exts[] =
+{
+#define HL_IN_PACX_PPT2_AUTOGEN(ext, pacxType, type)\
+    { HL_NTEXT(ext), pacxType, HL_PACX_EXT_FLAGS_##type##_TYPE },
+
+#include "hl_in_pacx_type_autogen.h"
+
+    { 0 }
+};
+
+const size_t HlPACxPPT2ExtCount = ((sizeof(HlPACxPPT2Exts) /
     sizeof(const HlPACxSupportedExt)) - 1);
 
 static const HlPACxSupportedExt* hlINPACxGetSupportedExt(const HlNChar* HL_RESTRICT ext,
@@ -123,6 +179,27 @@ static HlResult hlINPACxGetRootPathStackBuf(const HlNChar* HL_RESTRICT filePath,
 
     /* Set null terminator. */
     (*pathBufPtr)[rootPathLen] = HL_NTEXT('\0');
+    return HL_RESULT_SUCCESS;
+}
+
+static HlResult hlINPACxSaveSetupPathBuffer(const HlNChar* HL_RESTRICT filePath,
+    HlU32 splitLimit, const size_t filePathLen, size_t pathBufCap,
+    HlNChar* HL_RESTRICT * HL_RESTRICT pathBufPtr)
+{
+    const size_t filePathSize = (filePathLen + 1);
+    const size_t reqPathBufSize = (splitLimit) ?
+        (filePathSize + 3) :    /* Account for path + split extension. */
+        filePathSize;           /* Account for path. */
+
+    /* Reallocate path buffer if necessary. */
+    if (reqPathBufSize > pathBufCap)
+    {
+        *pathBufPtr = HL_ALLOC_ARR(HlNChar, reqPathBufSize);
+        if (!(*pathBufPtr)) return HL_ERROR_OUT_OF_MEMORY;
+    }
+
+    /* Copy filePath and null terminator into path buffer. */
+    memcpy(*pathBufPtr, filePath, sizeof(HlNChar) * filePathSize);
     return HL_RESULT_SUCCESS;
 }
 
@@ -1345,7 +1422,7 @@ typedef struct HlINPACxV2FileMetadata
 {
     const HlArchiveEntry* entry;
     const HlNChar* name;
-    /** @brief The extensions of this file, without the initial dot (e.g. "dds"). */
+    /** @brief The extension(s) of this file, without the initial dot (e.g. "dds"). */
     const HlNChar* ext;
     const HlPACxSupportedExt* pacxExt;
     short rootSortWeight;
@@ -1726,7 +1803,7 @@ static HlResult hlINPACxV2TypeMetadatalistSetFilePriorities(
     return HL_RESULT_SUCCESS;
 }
 
-static void hlINPACxV2TypeMetadataListFree(HlINPACxV2TypeMetadataList* typeMetadata)
+static void hlINPACxV2TypeMetadataListDestruct(HlINPACxV2TypeMetadataList* typeMetadata)
 {
     /* Free type strings. */
     size_t i;
@@ -1878,18 +1955,21 @@ static HlResult hlINPACxV2WriteFileData(
     const size_t dataPos = (hlStreamTell(stream) + sizeof(HlPACxV2DataEntry));
     HlResult result;
 
-    /* Get entry data pointer. */
-    if (fileMetadata->entry->data == 0)
+    /* Get entry data pointer if necessary. */
+    if (isHere)
     {
-        /* This entry is a file reference; load data into memory. */
-        result = hlFileLoad(fileMetadata->entry->path, &tmpEntryDataBuf, NULL);
-        if (HL_FAILED(result)) return result;
+        if (fileMetadata->entry->data == 0)
+        {
+            /* This entry is a file reference; load data into memory. */
+            result = hlFileLoad(fileMetadata->entry->path, &tmpEntryDataBuf, NULL);
+            if (HL_FAILED(result)) return result;
 
-        entryData = tmpEntryDataBuf;
-    }
-    else
-    {
-        entryData = (const void*)((HlUPtr)fileMetadata->entry->data);
+            entryData = tmpEntryDataBuf;
+        }
+        else
+        {
+            entryData = (const void*)((HlUPtr)fileMetadata->entry->data);
+        }
     }
 
     /* Merge data if necessary. */
@@ -1911,9 +1991,9 @@ static HlResult hlINPACxV2WriteFileData(
             tmpEntryDataBuf = copyOfEntryData;
         }
 
-        if (hlBINAHasV2Header(entryData))
+        if (fileMetadata->entry->size >= sizeof(HlBINAV2Header) &&
+            hlBINAHasV2Header(entryData))
         {
-            const HlBINAV2Header* header = (const HlBINAV2Header*)entryData;
             const HlBINAV2BlockDataHeader* dataBlock;
 
             /*
@@ -2586,8 +2666,8 @@ failed:
 
 static HlResult hlINPACxV2SaveSplits(unsigned short splitCount,
     const HlINPACxV2TypeMetadataList* HL_RESTRICT typeMetadata,
-    size_t filePathLen, HlU32 splitLimit, HlBINAEndianFlag endianFlag,
-    HlU32 dataAlignment, HlPackedFileIndex* HL_RESTRICT pfi,
+    size_t filePathLen, HlU32 splitLimit, HlU32 dataAlignment,
+    HlBINAEndianFlag endianFlag, HlPackedFileIndex* HL_RESTRICT pfi,
     HlStrList* HL_RESTRICT splitNames, HlNChar* HL_RESTRICT pathBuf)
 {
     HlFileStream* splitFile;
@@ -2678,9 +2758,10 @@ static HlResult hlINPACxV2SaveSplits(unsigned short splitCount,
     return result;
 }
 
-static HlResult hlINPACxV2FileMetadataSplitUp(HlINPACxV2TypeMetadataList* HL_RESTRICT typeMetadata,
+static HlResult hlINPACxV2FileMetadataSplitUp(
+    HlINPACxV2TypeMetadataList* HL_RESTRICT typeMetadata,
     HlINPACxV2FileMetadata* HL_RESTRICT fileMetadata, size_t fileMetadataCount,
-    HlU32 splitLimit, HlU32 dataAlignment, unsigned short* HL_RESTRICT splitCount)
+    HlU32 splitLimit, unsigned short* HL_RESTRICT splitCount)
 {
     HlU32 splitDataEntriesSizes[100] = { 0 };
     HlINPACxV2FileMetadata** filesSortedForSplits;
@@ -2763,22 +2844,10 @@ HlResult hlPACxV2SaveEx(const HlArchive* HL_RESTRICT arc,
     if ((dataAlignment % 4) != 0) return HL_ERROR_INVALID_ARGS;
 
     /* Setup path buffer. */
-    {
-        const size_t filePathSize = (filePathLen + 1);
-        const size_t reqPathBufSize = (splitLimit) ?
-            (filePathSize + 3) :    /* Account for path + split extension. */
-            filePathSize;           /* Account for path. */
+    result = hlINPACxSaveSetupPathBuffer(filePath,
+        splitLimit, filePathLen, pathBufCap, &pathBufPtr);
 
-        /* Reallocate path buffer if necessary. */
-        if (reqPathBufSize > pathBufCap)
-        {
-            pathBufPtr = HL_ALLOC_ARR(HlNChar, reqPathBufSize);
-            if (!pathBufPtr) return HL_ERROR_OUT_OF_MEMORY;
-        }
-
-        /* Copy filePath and null terminator into path buffer. */
-        memcpy(pathBufPtr, filePath, sizeof(HlNChar) * filePathSize);
-    }
+    if (HL_FAILED(result)) return result;
 
     /* Generate file and type metadata. */
     HL_LIST_INIT(typeMetadata);
@@ -2792,7 +2861,11 @@ HlResult hlPACxV2SaveEx(const HlArchive* HL_RESTRICT arc,
         fileMetadata = HL_ALLOC_ARR(HlINPACxV2FileMetadata, arc->entries.count +
             ((splitLimit) ? 1 : 0));
 
-        if (!fileMetadata) goto failed_root_not_open;
+        if (!fileMetadata)
+        {
+            result = HL_ERROR_OUT_OF_MEMORY;
+            goto failed_root_not_open;
+        }
 
         /* Generate file metadata. */
         for (i = 0; i < arc->entries.count; ++i)
@@ -2840,6 +2913,7 @@ HlResult hlPACxV2SaveEx(const HlArchive* HL_RESTRICT arc,
             ++fileMetadataCount;
         }
 
+        /* Add split table file ("ResPacDepend") to file metadata. */
         if (needsSplits)
         {
             HlINPACxV2FileMetadata* curFileMetadata = &fileMetadata[fileMetadataCount];
@@ -2864,6 +2938,7 @@ HlResult hlPACxV2SaveEx(const HlArchive* HL_RESTRICT arc,
             ++fileMetadataCount;
         }
 
+        /* Generate type metadata. */
         if (fileMetadataCount)
         {
             /* Sort file metadata based on type indices. */
@@ -2932,7 +3007,7 @@ HlResult hlPACxV2SaveEx(const HlArchive* HL_RESTRICT arc,
         {
             result = hlINPACxV2FileMetadataSplitUp(&typeMetadata,
                 fileMetadata, fileMetadataCount, splitLimit,
-                dataAlignment, &splitCount);
+                &splitCount);
 
             if (HL_FAILED(result)) goto failed_root_not_open;
         }
@@ -2960,7 +3035,7 @@ HlResult hlPACxV2SaveEx(const HlArchive* HL_RESTRICT arc,
 
             /* Save splits. */
             result = hlINPACxV2SaveSplits(splitCount, &typeMetadata,
-                filePathLen, splitLimit, endianFlag, dataAlignment,
+                filePathLen, splitLimit, dataAlignment, endianFlag,
                 pfi, &splitNames, pathBufPtr);
 
             if (HL_FAILED(result))
@@ -2996,10 +3071,25 @@ failed:
 end:
 failed_root_not_open:
     hlFree(fileMetadata);
-    hlINPACxV2TypeMetadataListFree(&typeMetadata);
+    hlINPACxV2TypeMetadataListDestruct(&typeMetadata);
 
     if (pathBufPtr != pathBuf) hlFree(pathBufPtr);
     return result;
+}
+
+void hlPACxV3HeaderSwap(HlPACxV3Header* header, HlBool swapOffsets)
+{
+    hlSwapU32P(&header->uid);
+    hlSwapU32P(&header->fileSize);
+    hlSwapU32P(&header->treesSize);
+    hlSwapU32P(&header->splitTableSize);
+    hlSwapU32P(&header->dataEntriesSize);
+    hlSwapU32P(&header->stringTableSize);
+    hlSwapU32P(&header->fileDataSize);
+    hlSwapU32P(&header->offsetTableSize);
+    hlSwapU16P(&header->type);
+    hlSwapU16P(&header->unknown2);
+    hlSwapU32P(&header->splitCount);
 }
 
 void hlPACxV3Fix(void* rawData)
@@ -3007,8 +3097,7 @@ void hlPACxV3Fix(void* rawData)
     HlPACxV3Header* header = (HlPACxV3Header*)rawData;
     if (hlBINANeedsSwap(header->endianFlag))
     {
-        /* TODO: Swap header. */
-        HL_ASSERT(HL_FALSE);
+        hlPACxV3HeaderSwap(header, HL_FALSE);
     }
 
     /* Fix offsets. */
@@ -3029,13 +3118,13 @@ void hlPACxV3Fix(void* rawData)
 const HlPACxV3Node* hlPACxV3GetChildNode(const HlPACxV3Node* node,
     const HlPACxV3Node* nodes, const char* HL_RESTRICT name)
 {
-    const HlS32* childIndices = (const HlS32*)hlOff64Get(&node->childIndices);
+    const HlS32* childIndices = (const HlS32*)hlOff64Get(&node->childIndicesOffset);
     HlU16 i = 0, childCount = node->childCount;
 
     while (i < childCount)
     {
         const HlPACxV3Node* childNode = &nodes[childIndices[i]];
-        const char* nodeName = (const char*)hlOff64Get(&childNode->name);
+        const char* nodeName = (const char*)hlOff64Get(&childNode->nameOffset);
         size_t nodeNameLen;
 
         if (childNode->hasData) return childNode;
@@ -3055,7 +3144,7 @@ const HlPACxV3Node* hlPACxV3GetChildNode(const HlPACxV3Node* node,
             }
 
             /* Start looping through this child node's children instead. */
-            childIndices = (const HlS32*)hlOff64Get(&childNode->childIndices);
+            childIndices = (const HlS32*)hlOff64Get(&childNode->childIndicesOffset);
             childCount = childNode->childCount;
             i = 0;
         }
@@ -3077,12 +3166,12 @@ const HlPACxV3Node* hlPACxV3GetNode(
     const HlPACxV3NodeTree* HL_RESTRICT nodeTree,
     const char* HL_RESTRICT name)
 {
-    const HlPACxV3Node* nodes = (const HlPACxV3Node*)hlOff64Get(&nodeTree->nodes);
+    const HlPACxV3Node* nodes = (const HlPACxV3Node*)hlOff64Get(&nodeTree->nodesOffset);
     HlU32 i = 0;
 
     for (i = 0; i < nodeTree->nodeCount; ++i)
     {
-        const char* nodeName = (const char*)hlOff64Get(&nodes[i].name);
+        const char* nodeName = (const char*)hlOff64Get(&nodes[i].nameOffset);
         size_t nodeNameLen;
 
         if (nodes[i].hasData) return NULL;
@@ -3147,20 +3236,22 @@ static HlResult hlINPACxV3FileNodesSetupEntries(const HlPACxV3Node* fileNodes,
     const HlPACxV3Node* curFileNode, HlBool skipProxies,
     char* HL_RESTRICT pathBuf, HlArchive* HL_RESTRICT hlArc)
 {
-    const HlS32* childIndices = (const HlS32*)hlOff64Get(&curFileNode->childIndices);
+    const HlS32* childIndices = (const HlS32*)hlOff64Get(
+        &curFileNode->childIndicesOffset);
+
     HlU16 i;
     HlResult result;
 
     if (curFileNode->hasData)
     {
         const HlPACxV3DataEntry* dataEntry = (const HlPACxV3DataEntry*)
-            hlOff64Get(&curFileNode->data);
+            hlOff64Get(&curFileNode->dataOffset);
 
         /* Skip proxies if requested. */
         if (!skipProxies || dataEntry->dataType != HL_PACXV3_DATA_TYPE_NOT_HERE)
         {
             HlArchiveEntry entry;
-            const char* ext = (const char*)hlOff64Get(&dataEntry->extension);
+            const char* ext = (const char*)hlOff64Get(&dataEntry->extOffset);
             size_t nameLen, extSize, pathBufSize;
 
             /* Ensure node name length is > 0. */
@@ -3225,7 +3316,7 @@ static HlResult hlINPACxV3FileNodesSetupEntries(const HlPACxV3Node* fileNodes,
                 }
 
                 /* Copy data. */
-                memcpy(dstDataBuf, hlOff64Get(&dataEntry->data), entry.size);
+                memcpy(dstDataBuf, hlOff64Get(&dataEntry->dataOffset), entry.size);
 
                 /* Set meta and data within archive entry. */
                 entry.meta = 0;
@@ -3247,11 +3338,11 @@ static HlResult hlINPACxV3FileNodesSetupEntries(const HlPACxV3Node* fileNodes,
             }
         }
     }
-    else if (curFileNode->name)
+    else if (curFileNode->nameOffset)
     {
         /* Copy name into path buffer. */
         strcpy(&pathBuf[curFileNode->bufStartIndex],
-            (const char*)hlOff64Get(&curFileNode->name));
+            (const char*)hlOff64Get(&curFileNode->nameOffset));
     }
 
     /* Recurse through children. */
@@ -3273,8 +3364,8 @@ static HlResult hlINPACxV3ParseInto(const HlPACxV3Header* HL_RESTRICT pac,
     /* Get pointers. */
     char pathBuf[256]; /* PACxV3 names are hard-limited to 255, not including null terminator. */
     const HlPACxV3NodeTree* typeTree = hlPACxV3GetTypeTree(pac);
-    const HlPACxV3Node* typeNodes = (const HlPACxV3Node*)hlOff64Get(&typeTree->nodes);
-    const HlS32* typeDataIndices = (const HlS32*)hlOff64Get(&typeTree->dataNodeIndices);
+    const HlPACxV3Node* typeNodes = (const HlPACxV3Node*)hlOff64Get(&typeTree->nodesOffset);
+    const HlS32* typeDataIndices = (const HlS32*)hlOff64Get(&typeTree->dataNodeIndicesOffset);
     HlU64 i;
     HlResult result = HL_RESULT_SUCCESS;
 
@@ -3283,10 +3374,10 @@ static HlResult hlINPACxV3ParseInto(const HlPACxV3Header* HL_RESTRICT pac,
     {
         /* Setup archive entries. */
         const HlPACxV3NodeTree* fileTree = (const HlPACxV3NodeTree*)
-            hlOff64Get(&typeNodes[typeDataIndices[i]].data);
+            hlOff64Get(&typeNodes[typeDataIndices[i]].dataOffset);
 
         const HlPACxV3Node* fileNodes = (const HlPACxV3Node*)
-            hlOff64Get(&fileTree->nodes);
+            hlOff64Get(&fileTree->nodesOffset);
 
         result = hlINPACxV3FileNodesSetupEntries(fileNodes,
             fileNodes, skipProxies, pathBuf, hlArc);
@@ -3400,7 +3491,7 @@ static HlResult hlINPACxV3LoadAllInto(
     /* Load all splits referenced in the split table. */
     for (i = 0; i < splitTable->splitCount; ++i)
     {
-        const char* splitName = (const char*)hlOff64Get(&splitEntries[i].name);
+        const char* splitName = (const char*)hlOff64Get(&splitEntries[i].nameOffset);
         const size_t splitNameSize = hlStrGetReqLenUTF8ToNative(splitName, 0);
 
         /* Account for directory. */
@@ -3500,6 +3591,1916 @@ HlResult hlPACxV3Load(const HlNChar* HL_RESTRICT filePath,
     return result;
 }
 
+HlU32 hlPACxV3GenerateUID(void)
+{
+    return ((((HlU32)rand() % 256) << 24) |
+        (((HlU32)rand() % 256) << 16) |
+        (((HlU32)rand() % 256) << 8) |
+        ((HlU32)rand() % 256));
+}
+
+HlResult hlPACxV3StartWrite(HlU32 version, HlU32 uid,
+    HlU16 type, HlBINAEndianFlag endianFlag, HlStream* stream)
+{
+    /* Generate PACxV3 header. */
+    HlPACxV3Header header =
+    {
+        HL_PACX_SIG,                                        /* signature */
+        {                                                   /* version */
+            hlBINAGetMajorVersionChar(version),
+            hlBINAGetMinorVersionChar(version),
+            hlBINAGetRevisionVersionChar(version)
+        },
+        (HlU8)endianFlag,                                   /* endianFlag */
+        uid,                                                /* uid */
+        0,                                                  /* fileSize */
+        0,                                                  /* treesSize */
+        0,                                                  /* splitTableSize */
+        0,                                                  /* dataEntriesSize */
+        0,                                                  /* stringTableSize */
+        0,                                                  /* fileDataSize */
+        0,                                                  /* offsetTableSize */
+        type,                                               /* type */
+        0x108,                                              /* unknown2 */
+        0                                                   /* splitCount */
+    };
+
+    /* Endian-swap header if necessary. */
+    if (hlBINANeedsSwap(endianFlag))
+    {
+        hlPACxV3HeaderSwap(&header, HL_FALSE);
+    }
+
+    /* Write PACxV3 header and return result. */
+    return hlStreamWrite(stream, sizeof(header), &header, NULL);
+}
+
+HlResult hlPACxV3FinishWrite(size_t headerPos, HlU32 treesSize,
+    HlU32 splitTableSize, HlU32 dataEntriesSize, HlU32 stringTableSize,
+    size_t fileDataPos, HlU32 splitCount, HlBINAEndianFlag endianFlag,
+    HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream)
+{
+    size_t offTablePos, eofPos;
+    HlResult result;
+
+    /* Write padding. */
+    result = hlStreamPad(stream, 8);
+    if (HL_FAILED(result)) return result;
+
+    /* Get offset table position. */
+    offTablePos = hlStreamTell(stream);
+
+    /* Write offset table. */
+    result = hlBINAOffsetsWrite64(headerPos, offTable, stream);
+    if (HL_FAILED(result)) return result;
+
+    /* Get end of stream position. */
+    eofPos = hlStreamTell(stream);
+
+    /* Jump to header fileSize position. */
+    result = hlStreamJumpTo(stream, headerPos + offsetof(HlPACxV3Header, fileSize));
+    if (HL_FAILED(result)) return result;
+
+    /* Fill-in header values. */
+    {
+        struct
+        {
+            HlU32 fileSize;
+            HlU32 treesSize;
+            HlU32 splitTableSize;
+            HlU32 dataEntriesSize;
+            HlU32 stringTableSize;
+            HlU32 fileDataSize;
+            HlU32 offsetTableSize;
+        }
+        values;
+
+        /* Compute header values. */
+        values.fileSize = (HlU32)(eofPos - headerPos);
+        values.treesSize = treesSize;
+        values.splitTableSize = splitTableSize;
+        values.dataEntriesSize = dataEntriesSize;
+        values.stringTableSize = stringTableSize;
+        values.fileDataSize = (HlU32)(offTablePos - fileDataPos);
+        values.offsetTableSize = (HlU32)(eofPos - offTablePos);
+
+        /* Endian-swap header values if necessary. */
+        if (hlBINANeedsSwap(endianFlag))
+        {
+            hlSwapU32P(&values.fileSize);
+            hlSwapU32P(&values.treesSize);
+            hlSwapU32P(&values.splitTableSize);
+            hlSwapU32P(&values.dataEntriesSize);
+            hlSwapU32P(&values.stringTableSize);
+            hlSwapU32P(&values.fileDataSize);
+            hlSwapU32P(&values.offsetTableSize);
+        }
+
+        /* Fill-in header values. */
+        result = hlStreamWrite(stream, sizeof(values), &values, NULL);
+        if (HL_FAILED(result)) return result;
+
+        /* Jump to header splitCount position. */
+        result = hlStreamJumpTo(stream, headerPos + offsetof(HlPACxV3Header, splitCount));
+        if (HL_FAILED(result)) return result;
+
+        /* Endian-swap splitCount if necessary. */
+        if (hlBINANeedsSwap(endianFlag))
+        {
+            hlSwapU32P(&splitCount);
+        }
+
+        /* Fill-in splitCount. */
+        result = hlStreamWrite(stream, sizeof(splitCount), &splitCount, NULL);
+        if (HL_FAILED(result)) return result;
+    }
+
+    /* Jump to end of stream and return. */
+    return hlStreamJumpTo(stream, eofPos);
+}
+
+typedef struct HlINPACxV3FileMetadata
+{
+    const HlArchiveEntry* entry;
+    const HlNChar* name;
+    /** @brief The extension(s) of this file, without the initial dot (e.g. "dds"). */
+    const HlNChar* ext;
+    const HlPACxSupportedExt* pacxExt;
+    unsigned short splitIndex;
+}
+HlINPACxV3FileMetadata;
+
+typedef struct HlINPACxV3TypeMetadata
+{
+    const HlINPACxV3FileMetadata* files;
+    size_t fileCount;
+    HlRadixTree tmpFileTree;
+    HlS32* tmpFileDataNodeIndices;
+    HlU32 tmpFileDataNodeCount;
+}
+HlINPACxV3TypeMetadata;
+
+typedef HL_LIST(HlINPACxV3TypeMetadata) HlINPACxV3TypeMetadataList;
+
+typedef struct HlINPACxV3PacMetadata
+{
+    char* name;
+    size_t uncompressedSize;
+    HlBlob* blob;
+    HlPACxV402ChunkList chunks;
+}
+HlINPACxV3PacMetadata;
+
+typedef HL_LIST(HlINPACxV3PacMetadata) HlINPACxV3PacMetadataList;
+
+static int hlINPACxV3FileMetadataCompareNames(
+    const HlINPACxV3FileMetadata* HL_RESTRICT fileMeta1,
+    const HlINPACxV3FileMetadata* HL_RESTRICT fileMeta2)
+{
+    return hlINPACxCompareFileNames(fileMeta1->name, fileMeta2->name,
+        (fileMeta1->ext - fileMeta1->name),
+        (fileMeta2->ext - fileMeta2->name));
+}
+
+static void hlINPACxV3TypeMetadataListDestruct(HlINPACxV3TypeMetadataList* typeMetadata)
+{
+    size_t i;
+
+    /* Destruct temporary file radix trees and data node indices. */
+    for (i = 0; i < typeMetadata->count; ++i)
+    {
+        hlRadixTreeDestruct(&typeMetadata->data[i].tmpFileTree);
+        hlFree(typeMetadata->data[i].tmpFileDataNodeIndices);
+    }
+
+    /* Free type metadata list. */
+    HL_LIST_FREE(*typeMetadata);
+}
+
+static HlResult hlINPACxV3PacMetadataConstruct(
+    HlINPACxV3PacMetadata* HL_RESTRICT pacMetadata,
+    const HlNChar* HL_RESTRICT rootName, size_t rootNameSize,
+    size_t splitNameSize)
+{
+    /* Setup name as necessary. */
+    if (rootName)
+    {
+        /* Allocate new buffer for split name. */
+        pacMetadata->name = HL_ALLOC_ARR(char, splitNameSize);
+        if (!pacMetadata->name) return HL_ERROR_OUT_OF_MEMORY;
+
+        /* Convert split name to UTF-8 and copy into split name buffer. */
+        if (!hlStrConvNativeToUTF8NoAlloc(rootName, pacMetadata->name,
+            rootNameSize + 4, splitNameSize))
+        {
+            hlFree(pacMetadata->name);
+            return HL_ERROR_UNKNOWN;
+        }
+    }
+    else
+    {
+        pacMetadata->name = NULL;
+    }
+
+    /* Construct the rest of the pac metadata. */
+    pacMetadata->uncompressedSize = 0;
+    pacMetadata->blob = NULL;
+    HL_LIST_INIT(pacMetadata->chunks);
+
+    return HL_RESULT_SUCCESS;
+}
+
+static void hlINPACxV3PacMetadataDestruct(HlINPACxV3PacMetadata* pacMetadata)
+{
+    hlFree(pacMetadata->name);
+    hlBlobFree(pacMetadata->blob);
+    HL_LIST_FREE(pacMetadata->chunks);
+}
+
+static void hlINPACxV3PacMetadataListDestruct(HlINPACxV3PacMetadataList* pacMetadata)
+{
+    size_t i;
+
+    /* Destruct pac metadata. */
+    for (i = 0; i < pacMetadata->count; ++i)
+    {
+        hlINPACxV3PacMetadataDestruct(&pacMetadata->data[i]);
+    }
+
+    /* Free pac metadata list. */
+    HL_LIST_FREE(*pacMetadata);
+}
+
+static HlResult hlINPACxV3WriteNodes(const HlRadixNode* HL_RESTRICT radixNode,
+    HlS32 parentIndex, HlU8 bufStartIndex, HlBINAEndianFlag endianFlag,
+    HlS32* HL_RESTRICT globalIndex, HlS32* HL_RESTRICT globalDataIndex,
+    HlS32* HL_RESTRICT dataNodeIndices, HlStrTable* HL_RESTRICT strTable,
+    HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream)
+{
+    /* Generate node. */
+    const size_t nodePos = hlStreamTell(stream);
+    HlPACxV3Node node =
+    {
+        0,                                          /* name */
+        0,                                          /* data */
+        0,                                          /* childIndices */
+        parentIndex,                                /* parentIndex */
+        *globalIndex,                               /* globalIndex */
+        -1,                                         /* dataIndex */
+        (HlU16)radixNode->children.count,           /* childCount */
+        0,                                          /* hasData */
+        bufStartIndex                               /* bufStartIndex */
+    };
+
+    size_t i;
+    HlResult result;
+
+    /* Ensure total radix node name length does not exceed 255 characters. */
+    if ((((size_t)bufStartIndex) + radixNode->nameLen) > 255)
+    {
+        return HL_ERROR_OUT_OF_RANGE;
+    }
+
+    /* Increase child count to account for data node if necessary. */
+    if (radixNode->customData) ++node.childCount;
+
+    /* Endian-swap node if necessary. */
+    if (hlBINANeedsSwap(endianFlag))
+    {
+        /* TODO: Endian-swap node. */
+    }
+
+    /* Write node. */
+    result = hlStreamWrite(stream, sizeof(node), &node, NULL);
+    if (HL_FAILED(result)) return result;
+
+    /* Add node name to string table if necessary. */
+    if (radixNode->name)
+    {
+        result = hlStrTableAddStrRefUTF8Ex(strTable, radixNode->name,
+            nodePos, radixNode->nameLen);
+
+        if (HL_FAILED(result)) return result;
+    }
+
+    /* Increase indices. */
+    parentIndex = *globalIndex;
+    ++(*globalIndex);
+    bufStartIndex += (HlU8)radixNode->nameLen;
+
+    /* Write data node if necessary. */
+    if (radixNode->customData)
+    {
+        /* Generate data node. */
+        node.parentIndex = parentIndex;
+        node.globalIndex = *globalIndex;
+        node.dataIndex = *globalDataIndex;
+        node.childCount = 0;
+        node.hasData = 1;
+        node.bufStartIndex = bufStartIndex;
+
+        /* Endian-swap data node if necessary. */
+        if (hlBINANeedsSwap(endianFlag))
+        {
+            /* TODO: Endian-swap node. */
+        }
+
+        /* Write data node. */
+        result = hlStreamWrite(stream, sizeof(node), &node, NULL);
+        if (HL_FAILED(result)) return result;
+        
+        /*
+           Store data node index in buffer.
+           
+           NOTE: This value is already in the endianness required to
+           write it to the file; don't try to read it later as this 
+           may not match the current platform's endianness!
+        */
+        dataNodeIndices[*globalDataIndex] = node.globalIndex;
+
+        /* Increase indices. */
+        ++(*globalIndex);
+        ++(*globalDataIndex);
+    }
+
+    /* Recurse through child nodes and return result. */
+    for (i = 0; i < radixNode->children.count; ++i)
+    {
+        result = hlINPACxV3WriteNodes(&radixNode->children.data[i],
+            parentIndex, bufStartIndex, endianFlag, globalIndex,
+            globalDataIndex, dataNodeIndices, strTable, offTable,
+            stream);
+
+        if (HL_FAILED(result)) return result;
+    }
+    
+    return result;
+}
+
+static HlResult hlINPACxV3WriteNodeTree(const HlRadixTree* HL_RESTRICT radixTree,
+    HlU32 dataNodeCount, HlBINAEndianFlag endianFlag,
+    HlS32* HL_RESTRICT dataNodeIndices, HlStrTable* HL_RESTRICT strTable,
+    HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream)
+{
+    /* Generate node tree. */
+    const size_t eofPos = hlStreamTell(stream);
+    HlPACxV3NodeTree nodeTree =
+    {
+        (HlU32)(radixTree->totalNodeCount + dataNodeCount), /* nodeCount */
+        dataNodeCount,                                      /* dataNodeCount */
+        (HlU64)(eofPos + sizeof(HlPACxV3NodeTree)),         /* nodesOffset */
+        0                                                   /* dataNodeIndicesOffset */
+    };
+
+    HlS32 globalIndex = 0, globalDataIndex = 0;
+    HlResult result;
+
+    /* Endian-swap node tree if necessary. */
+    if (hlBINANeedsSwap(endianFlag))
+    {
+        /* TODO: Endian-swap type tree. */
+    }
+
+    /* Write node tree. */
+    result = hlStreamWrite(stream, sizeof(nodeTree), &nodeTree, NULL);
+    if (HL_FAILED(result)) return result;
+
+    /* Add nodes offset to offset table. */
+    result = HL_LIST_PUSH(*offTable, eofPos +
+        offsetof(HlPACxV3NodeTree, nodesOffset));
+
+    if (HL_FAILED(result)) return result;
+
+    /* Recursively write placeholder nodes and return result. */
+    return hlINPACxV3WriteNodes(&radixTree->rootNode,
+        -1, 0, endianFlag, &globalIndex, &globalDataIndex,
+        dataNodeIndices, strTable, offTable, stream);
+}
+
+static HlResult hlINPACxV3FillInTypeNodes(const HlRadixNode* HL_RESTRICT radixNode,
+    unsigned short splitIndex, HlBINAEndianFlag endianFlag, size_t* HL_RESTRICT curOffPos,
+    char* HL_RESTRICT tmpFileNameBuf, HlStrTable* HL_RESTRICT strTable,
+    HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream)
+{
+    size_t i;
+    HlResult result = HL_RESULT_SUCCESS;
+
+    /* Increase current offset position. */
+    *curOffPos += sizeof(HlPACxV3Node);
+
+    /* Write file tree and fill in type node data offset if necessary. */
+    if (radixNode->customData)
+    {
+        HlINPACxV3TypeMetadata* curTypeMetadata = (HlINPACxV3TypeMetadata*)(
+            (HlUPtr)radixNode->customData);
+
+        HlU32 fileDataNodeCount = 0;
+
+        /* Clear temporary file tree in type metadata. */
+        hlRadixTreeReset(&curTypeMetadata->tmpFileTree);
+
+        /* Generate file nodes. */
+        for (i = 0; i < curTypeMetadata->fileCount; ++i)
+        {
+            const HlINPACxV3FileMetadata* curFileMetadata = &curTypeMetadata->files[i];
+            size_t nativeFileNameLen, utf8FileNameLen;
+
+            /* Skip this file if we're writing a split and this file is not in it. */
+            if (splitIndex != USHRT_MAX && curFileMetadata->splitIndex != splitIndex)
+            {
+                continue;
+            }
+
+            /* Compute file name length. */
+            nativeFileNameLen = (curFileMetadata->ext - curFileMetadata->name);
+
+            /* Convert file name to UTF-8. */
+            utf8FileNameLen = hlStrConvNativeToUTF8NoAlloc(curFileMetadata->name,
+                tmpFileNameBuf, nativeFileNameLen, 255);
+
+            if (!utf8FileNameLen)
+            {
+                return HL_ERROR_UNKNOWN;
+            }
+
+            /* Append null terminator to UTF-8 file name. */
+            tmpFileNameBuf[utf8FileNameLen] = '\0';
+
+            /* Insert UTF-8 file name into file tree. */
+            result = hlRadixTreeInsert(&curTypeMetadata->tmpFileTree,
+                tmpFileNameBuf, (HlUMax)((HlUPtr)curFileMetadata), NULL);
+
+            if (HL_FAILED(result)) return result;
+
+            /* Increase data node count. */
+            ++fileDataNodeCount;
+        }
+
+        /* Allocate file data node indices buffer. */
+        curTypeMetadata->tmpFileDataNodeIndices = HL_RESIZE_ARR(HlS32,
+            fileDataNodeCount, curTypeMetadata->tmpFileDataNodeIndices);
+
+        if (!curTypeMetadata->tmpFileDataNodeIndices) return HL_ERROR_OUT_OF_MEMORY;
+
+        /* Store data node count in type metadata. */
+        curTypeMetadata->tmpFileDataNodeCount = fileDataNodeCount;
+
+        /* Fix type node data offset. */
+        result = hlStreamFixOff64(stream, 0, *curOffPos +
+            offsetof(HlPACxV3Node, dataOffset), hlStreamTell(stream),
+            hlBINANeedsSwap(endianFlag), offTable);
+
+        if (HL_FAILED(result)) return result;
+
+        /* Write file tree and placeholder file nodes. */
+        result = hlINPACxV3WriteNodeTree(&curTypeMetadata->tmpFileTree,
+            fileDataNodeCount, endianFlag, curTypeMetadata->tmpFileDataNodeIndices,
+            strTable, offTable, stream);
+
+        if (HL_FAILED(result)) return result;
+
+        /* Increase current offset position. */
+        *curOffPos += sizeof(HlPACxV3Node);
+    }
+
+    /* Recurse through child nodes and return result. */
+    for (i = 0; i < radixNode->children.count; ++i)
+    {
+        result = hlINPACxV3FillInTypeNodes(&radixNode->children.data[i],
+            splitIndex, endianFlag, curOffPos, tmpFileNameBuf,
+            strTable, offTable, stream);
+
+        if (HL_FAILED(result)) return result;
+    }
+
+    return result;
+}
+
+static HlResult hlINPACxV3FillInDataNodeIndices(const HlRadixTree* HL_RESTRICT radixTree,
+    const HlS32* HL_RESTRICT dataNodeIndices, HlU32 dataNodeCount,
+    HlBINAEndianFlag endianFlag, size_t* HL_RESTRICT curOffPos,
+    HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream)
+{
+    HlResult result;
+
+    /* Fix data node indices offset. */
+    result = hlStreamFixOff64(stream, 0, *curOffPos + offsetof(
+        HlPACxV3NodeTree, dataNodeIndicesOffset), hlStreamTell(stream),
+        hlBINANeedsSwap(endianFlag), offTable);
+
+    if (HL_FAILED(result)) return result;
+
+    /* Increase current offset position. */
+    *curOffPos += sizeof(HlPACxV3NodeTree);
+    *curOffPos += (sizeof(HlPACxV3Node) * (radixTree->totalNodeCount +
+        dataNodeCount));
+
+    /* Write data node indices. */
+    result = hlStreamWrite(stream, sizeof(HlS32) * dataNodeCount,
+        dataNodeIndices, NULL);
+
+    if (HL_FAILED(result)) return result;
+
+    /* Write padding and return result. */
+    return hlStreamPad(stream, 8);
+}
+
+static HlResult hlINPACxV3FillInFileDataNodeIndices(
+    const HlRadixNode* HL_RESTRICT radixNode,
+    HlBINAEndianFlag endianFlag, size_t* HL_RESTRICT curOffPos,
+    HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream)
+{
+    size_t i;
+    HlResult result = HL_RESULT_SUCCESS;
+
+    /* Fill-in file tree data node indices if this type node has data. */
+    if (radixNode->customData)
+    {
+        const HlINPACxV3TypeMetadata* curTypeMetadata =
+            (const HlINPACxV3TypeMetadata*)((HlUPtr)radixNode->customData);
+
+        /* Fill-in file tree data node indices. */
+        result = hlINPACxV3FillInDataNodeIndices(&curTypeMetadata->tmpFileTree,
+            curTypeMetadata->tmpFileDataNodeIndices,
+            curTypeMetadata->tmpFileDataNodeCount,
+            endianFlag, curOffPos, offTable, stream);
+        
+        if (HL_FAILED(result)) return result;
+    }
+
+    /* Recurse through child nodes and return result. */
+    for (i = 0; i < radixNode->children.count; ++i)
+    {
+        result = hlINPACxV3FillInFileDataNodeIndices(
+            &radixNode->children.data[i], endianFlag,
+            curOffPos, offTable, stream);
+
+        if (HL_FAILED(result)) return result;
+    }
+
+    return result;
+}
+
+static size_t hlINPACxV3GetTotalChildNodeCount(const HlRadixNode* radixNode)
+{
+    size_t i, totalChildCount = radixNode->children.count;
+
+    if (radixNode->customData)
+    {
+        ++totalChildCount;
+    }
+
+    for (i = 0; i < radixNode->children.count; ++i)
+    {
+        totalChildCount += hlINPACxV3GetTotalChildNodeCount(
+            &radixNode->children.data[i]);
+    }
+
+    return totalChildCount;
+}
+
+static HlResult hlINPACxV3FillInChildNodeIndices(
+    const HlRadixNode* HL_RESTRICT radixNode,
+    HlS32 globalIndex, HlBINAEndianFlag endianFlag,
+    size_t* HL_RESTRICT curOffPos, HlOffTable* HL_RESTRICT offTable,
+    HlStream* HL_RESTRICT stream)
+{
+    size_t i;
+    HlS32 childIndex;
+    HlResult result;
+
+    /* Don't write anything if there aren't any child nodes. */
+    if (radixNode->children.count || radixNode->customData)
+    {
+        /* Fix child node indices offset. */
+        result = hlStreamFixOff64(stream, 0, *curOffPos + offsetof(
+            HlPACxV3Node, childIndicesOffset), hlStreamTell(stream),
+            hlBINANeedsSwap(endianFlag), offTable);
+
+        if (HL_FAILED(result)) return result;
+    }
+
+    /* Increase current offset position. */
+    *curOffPos += sizeof(HlPACxV3Node);
+
+    /* Write data node child node index. */
+    if (radixNode->customData)
+    {
+        /* Endian-swap child node index if necessary. */
+        HlS32 childIndexSwapped = ++globalIndex;
+        if (hlBINANeedsSwap(endianFlag))
+        {
+            hlSwapS32P(&childIndexSwapped);
+        }
+
+        /* Write child node index. */
+        result = hlStreamWrite(stream, sizeof(childIndexSwapped),
+            &childIndexSwapped, NULL);
+
+        if (HL_FAILED(result)) return result;
+
+        /* Increase current offset position. */
+        *curOffPos += sizeof(HlPACxV3Node);
+    }
+
+    /* Get child index. */
+    childIndex = ++globalIndex;
+
+    /* Write child node indices. */
+    for (i = 0; i < radixNode->children.count; ++i)
+    {
+        /* Endian-swap child node index if necessary. */
+        HlS32 childIndexSwapped = childIndex;
+        if (hlBINANeedsSwap(endianFlag))
+        {
+            hlSwapS32P(&childIndexSwapped);
+        }
+
+        /* Write child node index. */
+        result = hlStreamWrite(stream, sizeof(childIndexSwapped),
+            &childIndexSwapped, NULL);
+
+        if (HL_FAILED(result)) return result;
+
+        /* Increase child index. */
+        childIndex += (HlS32)(hlINPACxV3GetTotalChildNodeCount(
+            &radixNode->children.data[i]) + 1);
+    }
+
+    /* Write padding. */
+    result = hlStreamPad(stream, 8);
+    if (HL_FAILED(result)) return result;
+
+    /* Recurse through child nodes and return result. */
+    for (i = 0; i < radixNode->children.count; ++i)
+    {
+        /* Recurse through child nodes */
+        result = hlINPACxV3FillInChildNodeIndices(&radixNode->children.data[i],
+            globalIndex, endianFlag, curOffPos, offTable, stream);
+
+        if (HL_FAILED(result)) return result;
+
+        /* Increase global index. */
+        globalIndex += (HlS32)(hlINPACxV3GetTotalChildNodeCount(
+            &radixNode->children.data[i]) + 1);
+    }
+
+    return result;
+}
+
+static HlResult hlINPACxV3FillInFileChildNodeIndices(
+    const HlRadixNode* HL_RESTRICT radixNode,
+    HlBINAEndianFlag endianFlag, size_t* HL_RESTRICT curOffPos,
+    HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream)
+{
+    size_t i;
+    HlResult result = HL_RESULT_SUCCESS;
+
+    /* Fill-in file tree child node indices if this type node has data. */
+    if (radixNode->customData)
+    {
+        const HlINPACxV3TypeMetadata* curTypeMetadata =
+            (const HlINPACxV3TypeMetadata*)((HlUPtr)radixNode->customData);
+
+        /* Increase current offset position. */
+        *curOffPos += sizeof(HlPACxV3NodeTree);
+
+        /* Fill-in file tree child node indices. */
+        result = hlINPACxV3FillInChildNodeIndices(
+            &curTypeMetadata->tmpFileTree.rootNode,
+            0, endianFlag, curOffPos, offTable, stream);
+
+        if (HL_FAILED(result)) return result;
+    }
+
+    /* Recurse through child nodes and return result. */
+    for (i = 0; i < radixNode->children.count; ++i)
+    {
+        result = hlINPACxV3FillInFileChildNodeIndices(
+            &radixNode->children.data[i], endianFlag,
+            curOffPos, offTable, stream);
+
+        if (HL_FAILED(result)) return result;
+    }
+
+    return result;
+}
+
+static HlResult hlINPACxV402WritePlaceholderChunks(HlU32 maxChunkSize,
+    const HlINPACxV3PacMetadata* HL_RESTRICT pacMetadata,
+    HlStream* HL_RESTRICT stream)
+{
+    size_t uncompressedSize = pacMetadata->uncompressedSize,
+        placeholderChunkSize = 0;
+
+    /* Compute placeholder chunk size. */
+    while (uncompressedSize > 0)
+    {
+        /* Compute current chunk size. */
+        const size_t curChunkSize = HL_MIN(uncompressedSize, maxChunkSize);
+
+        /* Account for chunk. */
+        placeholderChunkSize += sizeof(HlPACxV402Chunk);
+
+        /* Decrease sizes. */
+        uncompressedSize -= curChunkSize;
+    }
+
+    /* If no placeholder chunks needs to be written, return early. */
+    if (!placeholderChunkSize) return HL_RESULT_SUCCESS;
+
+    /* Write placeholder chunks and return result. */
+    return hlStreamWriteNulls(stream, placeholderChunkSize, NULL);
+}
+
+static HlResult hlINPACxV3WriteSplitTable(HlU32 version, HlU32 maxChunkSize,
+    HlINPACxV3PacMetadataList* HL_RESTRICT splitMetadata,
+    HlBINAEndianFlag endianFlag, HlStrTable* HL_RESTRICT strTable,
+    HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream)
+{
+    HlResult result;
+
+    /* Write split table. */
+    {
+        /* Generate split table. */
+        const size_t splitTablePos = hlStreamTell(stream);
+        const size_t splitEntriesOffPos = (splitTablePos +
+            offsetof(HlPACxV3SplitTable, splitEntries));
+
+        HlPACxV3SplitTable splitTable =
+        {
+            (HlU64)splitMetadata->count,                        /* splitCount */
+            (HlU64)(splitTablePos + sizeof(HlPACxV3SplitTable)) /* splitEntries */
+        };
+
+        /* Endian-swap split table if necessary. */
+        if (hlBINANeedsSwap(endianFlag))
+        {
+            /* TODO: Endian-swap split table. */
+        }
+
+        /* Write split table. */
+        result = hlStreamWrite(stream, sizeof(splitTable), &splitTable, NULL);
+        if (HL_FAILED(result)) return result;
+
+        /* Add split entries offset to offset table. */
+        result = HL_LIST_PUSH(*offTable, splitEntriesOffPos);
+        if (HL_FAILED(result)) return result;
+    }
+
+    /* Write split entries. */
+    {
+        size_t curOffPos = hlStreamTell(stream), i;
+        switch (version)
+        {
+        case HL_IN_PACX_VER_301:
+            /* Write placeholder offsets. */
+            result = hlStreamWriteNulls(stream, sizeof(HlPACxV3SplitEntry) *
+                splitMetadata->count, NULL);
+
+            if (HL_FAILED(result)) return result;
+
+            /* Fill-in string offsets and return result. */
+            for (i = 0; i < splitMetadata->count; ++i)
+            {
+                /* Add string offset to string table. */
+                result = hlStrTableAddStrRefUTF8(strTable,
+                    splitMetadata->data[i].name, curOffPos);
+
+                if (HL_FAILED(result)) return result;
+
+                /* Increase current offset position. */
+                curOffPos += sizeof(HlPACxV3SplitEntry);
+            }
+
+            return result;
+
+        case HL_IN_PACX_VER_402:
+            /* Write placeholder split entries. */
+            for (i = 0; i < splitMetadata->count; ++i)
+            {
+                /* Generate split entry. */
+                HlPACxV402SplitEntry splitEntry =
+                {
+                    0,                                              /* name */
+                    (HlU32)splitMetadata->data[i].blob->size,       /* compressedSize */
+                    (HlU32)splitMetadata->data[i].uncompressedSize, /* uncompressedSize */
+                    0,                                              /* splitPos */
+                    (HlU32)splitMetadata->data[i].chunks.count,     /* chunkCount */
+                    0                                               /* chunksOffset */
+                };
+
+                /* Endian-swap if necessary. */
+                if (hlBINANeedsSwap(endianFlag))
+                {
+                    /* TODO Endian-swap split entry. */
+                }
+
+                /* Write split entry. */
+                result = hlStreamWrite(stream, sizeof(splitEntry), &splitEntry, NULL);
+                if (HL_FAILED(result)) return result;
+            }
+
+            /* Fill-in offsets, write chunks, and return result. */
+            for (i = 0; i < splitMetadata->count; ++i)
+            {
+                HlINPACxV3PacMetadata* curSplitMetadata = &splitMetadata->data[i];
+                const size_t chunksPos = hlStreamTell(stream);
+
+                /* Add string offset to string table. */
+                result = hlStrTableAddStrRefUTF8(strTable,
+                    curSplitMetadata->name, curOffPos +
+                    offsetof(HlPACxV402SplitEntry, nameOffset));
+
+                if (HL_FAILED(result)) return result;
+
+                /* Fix chunks offset. */
+                result = hlStreamFixOff64(stream, 0, curOffPos + offsetof(
+                    HlPACxV402SplitEntry, chunksOffset), chunksPos,
+                    hlBINANeedsSwap(endianFlag), offTable);
+
+                if (HL_FAILED(result)) return result;
+
+                /*
+                   Write placeholder chunks.
+
+                   NOTE: Yes, this often results in plenty of extra nulls
+                   being written for no reason at all. For some reason
+                   this is how Sonic Team actually does it.
+                */
+                result = hlINPACxV402WritePlaceholderChunks(maxChunkSize,
+                    curSplitMetadata, stream);
+
+                if (HL_FAILED(result)) return result;
+
+                /* Write real chunks if this split is compressed. */
+                if (curSplitMetadata->blob->size != curSplitMetadata->uncompressedSize)
+                {
+                    const size_t eof = hlStreamTell(stream);
+
+                    /* Endian-swap chunks if necessary. */
+                    if (hlBINANeedsSwap(endianFlag))
+                    {
+                        size_t i2;
+                        for (i2 = 0; i2 < curSplitMetadata->chunks.count; ++i2)
+                        {
+                            /* TODO: Endian-swap chunk */
+                        }
+                    }
+
+                    /* Jump to chunks position. */
+                    result = hlStreamJumpTo(stream, chunksPos);
+                    if (HL_FAILED(result)) return result;
+
+                    /* Write chunks. */
+                    result = hlStreamWrite(stream, sizeof(HlPACxV402Chunk) *
+                        curSplitMetadata->chunks.count, curSplitMetadata->chunks.data,
+                        NULL);
+
+                    if (HL_FAILED(result)) return result;
+
+                    /* Jump to end of stream position. */
+                    result = hlStreamJumpTo(stream, eof);
+                    if (HL_FAILED(result)) return result;
+                }
+
+                /* Increase current offset position. */
+                curOffPos += sizeof(HlPACxV402SplitEntry);
+            }
+
+            return result;
+
+        default: return HL_ERROR_UNSUPPORTED;
+        }
+    }
+}
+
+static HlResult hlINPACxV3WriteDataEntry(
+    const HlINPACxV3FileMetadata* HL_RESTRICT fileMetadata,
+    HlU32 version, HlU32 uid, HlU64 dataType, HlBINAEndianFlag endianFlag,
+    HlStrTable* HL_RESTRICT strTable, HlStream* HL_RESTRICT stream)
+{
+    /* Generate placeholder data entry. */
+    const size_t dataEntryPos = hlStreamTell(stream);
+    const HlNChar* ext = fileMetadata->ext;
+    const HlU32 dataUID = (hlBINAGetMajorVersionChar(version) >= '4') ?
+        hlPACxV3GenerateUID() : uid;
+
+    HlPACxV3DataEntry dataEntry =
+    {
+        dataUID,                            /* uid */
+        (HlU32)fileMetadata->entry->size,   /* dataSize */
+        0,                                  /* unknown2 */
+        0,                                  /* dataOffset */
+        0,                                  /* unknown3 */
+        0,                                  /* extOffset */
+        dataType                            /* dataType */
+    };
+
+    HlResult result;
+
+    /* Endian-swap data entry if necessary. */
+    if (hlBINANeedsSwap(endianFlag))
+    {
+        /* TODO */
+    }
+
+    /* Write data entry. */
+    result = hlStreamWrite(stream, sizeof(dataEntry), &dataEntry, NULL);
+    if (HL_FAILED(result)) return result;
+
+    /* Skip beginning dot in extension, if any. */
+    if (*ext == HL_NTEXT('.'))
+    {
+        ++ext;
+    }
+
+    /* Add file extension to string table and return result. */
+    return hlStrTableAddStrRefNative(strTable, ext, dataEntryPos +
+        offsetof(HlPACxV3DataEntry, extOffset));
+}
+
+static HlResult hlINPACxV3WriteFileDataEntries(
+    const HlRadixNode* HL_RESTRICT radixNode, unsigned short splitIndex,
+    HlU32 version, HlU32 uid, HlBINAEndianFlag endianFlag, size_t* HL_RESTRICT curOffPos,
+    HlStrTable* HL_RESTRICT strTable, HlOffTable* HL_RESTRICT offTable,
+    HlStream* HL_RESTRICT stream)
+{
+    size_t i;
+    HlResult result = HL_RESULT_SUCCESS;
+
+    /* Increase current offset position. */
+    *curOffPos += sizeof(HlPACxV3Node);
+
+    if (radixNode->customData)
+    {
+        const HlINPACxV3FileMetadata* curFileMetadata = (const HlINPACxV3FileMetadata*)
+            ((HlUPtr)radixNode->customData);
+
+        const HlBool isHere = (curFileMetadata->splitIndex == splitIndex);
+
+        /* Fix file node data offset. */
+        result = hlStreamFixOff64(stream, 0, *curOffPos + offsetof(
+            HlPACxV3Node, dataOffset), hlStreamTell(stream),
+            hlBINANeedsSwap(endianFlag), offTable);
+
+        if (HL_FAILED(result)) return result;
+
+        /* Write placeholder data entry. */
+        result = hlINPACxV3WriteDataEntry(curFileMetadata, version, uid,
+            (isHere) ? HL_PACXV3_DATA_TYPE_REGULAR_FILE : HL_PACXV3_DATA_TYPE_NOT_HERE,
+            endianFlag, strTable, stream);
+
+        if (HL_FAILED(result)) return result;
+
+        /* Increase current offset position. */
+        *curOffPos += sizeof(HlPACxV3Node);
+    }
+    
+    /* Recurse through child nodes and return result. */
+    for (i = 0; i < radixNode->children.count; ++i)
+    {
+        result = hlINPACxV3WriteFileDataEntries(
+            &radixNode->children.data[i], splitIndex, version,
+            uid, endianFlag, curOffPos, strTable, offTable,
+            stream);
+
+        if (HL_FAILED(result)) return result;
+    }
+
+    return result;
+}
+
+static HlResult hlINPACxV3WriteDataEntries(
+    const HlRadixNode* HL_RESTRICT radixNode, unsigned short splitIndex,
+    HlU32 version, HlU32 uid, HlBINAEndianFlag endianFlag, size_t* HL_RESTRICT curOffPos,
+    HlStrTable* HL_RESTRICT strTable, HlOffTable* HL_RESTRICT offTable,
+    HlStream* HL_RESTRICT stream)
+{
+    size_t i;
+    HlResult result = HL_RESULT_SUCCESS;
+
+    /* Write data entries and fill-in file nodes if this type node has data. */
+    if (radixNode->customData)
+    {
+        const HlINPACxV3TypeMetadata* curTypeMetadata =
+            (const HlINPACxV3TypeMetadata*)((HlUPtr)radixNode->customData);
+
+        /* Increase current offset position. */
+        *curOffPos += sizeof(HlPACxV3NodeTree);
+
+        /* Write placeholder data entries and fill-in file nodes. */
+        result = hlINPACxV3WriteFileDataEntries(&curTypeMetadata->tmpFileTree.rootNode,
+            splitIndex, version, uid, endianFlag, curOffPos, strTable, offTable, stream);
+
+        if (HL_FAILED(result)) return result;
+    }
+
+    /* Recurse through child nodes and return result. */
+    for (i = 0; i < radixNode->children.count; ++i)
+    {
+        result = hlINPACxV3WriteDataEntries(
+            &radixNode->children.data[i], splitIndex, version,
+            uid, endianFlag, curOffPos, strTable, offTable,
+            stream);
+
+        if (HL_FAILED(result)) return result;
+    }
+
+    return result;
+}
+
+static HlResult hlINPACxV3FillInDataEntry(size_t dataEntryPos,
+    const HlINPACxV3FileMetadata* HL_RESTRICT fileMetadata,
+    HlU64 fileDataPos, HlU64 dataType, HlBINAEndianFlag endianFlag,
+    HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream)
+{
+    const size_t eof = hlStreamTell(stream);
+    HlResult result;
+
+    /* Endian-swap values if necessary. */
+    if (hlBINANeedsSwap(endianFlag))
+    {
+        hlSwapU64P(&fileDataPos);
+        hlSwapU64P(&dataType);
+    }
+
+    /* Jump to data entry dataOffset position. */
+    result = hlStreamJumpTo(stream, dataEntryPos + offsetof(
+        HlPACxV3DataEntry, dataOffset));
+
+    if (HL_FAILED(result)) return result;
+
+    /* Fill-in dataOffset. */
+    result = hlStreamWrite(stream, sizeof(fileDataPos), &fileDataPos, NULL);
+    if (HL_FAILED(result)) return result;
+
+    /* Add dataOffset to offset table. */
+    result = HL_LIST_PUSH(*offTable, dataEntryPos + offsetof(
+        HlPACxV3DataEntry, dataOffset));
+
+    if (HL_FAILED(result)) return result;
+
+    /* Jump to data entry dataType position. */
+    result = hlStreamJumpTo(stream, dataEntryPos + offsetof(
+        HlPACxV3DataEntry, dataType));
+
+    if (HL_FAILED(result)) return result;
+
+    /* Fill-in dataType. */
+    result = hlStreamWrite(stream, sizeof(dataType), &dataType, NULL);
+    if (HL_FAILED(result)) return result;
+
+    /* Jump to end of stream position. */
+    return hlStreamJumpTo(stream, eof);
+}
+
+static HlResult hlINPACxV3WriteFileData(
+    const HlINPACxV3FileMetadata* HL_RESTRICT fileMetadata,
+    size_t dataEntryPos, HlBINAEndianFlag endianFlag,
+    HlU32 dataAlignment, HlPackedFileIndex* HL_RESTRICT pfi,
+    HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream)
+{
+    const void* entryData;
+    void* tmpEntryDataBuf = NULL;
+    size_t fileDataPos;
+    HlU64 dataType = HL_PACXV3_DATA_TYPE_REGULAR_FILE;
+    HlResult result;
+
+    /* Pad data entry to requested data alignment. */
+    result = hlStreamPad(stream, dataAlignment);
+    if (HL_FAILED(result)) return result;
+
+    /* Get file data position. */
+    fileDataPos = hlStreamTell(stream);
+
+    /* Get entry data pointer. */
+    if (fileMetadata->entry->data == 0)
+    {
+        /* This entry is a file reference; load data into memory. */
+        result = hlFileLoad(fileMetadata->entry->path, &tmpEntryDataBuf, NULL);
+        if (HL_FAILED(result)) return result;
+
+        entryData = tmpEntryDataBuf;
+    }
+    else
+    {
+        entryData = (const void*)((HlUPtr)fileMetadata->entry->data);
+    }
+
+    /* Mark whether this data is BINA data or not. */
+    /* TODO: Do these games actually support BINAV1? */
+    if ((fileMetadata->entry->size >= sizeof(HlBINAV2Header) &&
+        hlBINAHasV2Header(entryData)) || (fileMetadata->entry->size >=
+            sizeof(HlBINAV1Header) && hlBINAHasV1Header(entryData)))
+    {
+        dataType = HL_PACXV3_DATA_TYPE_BINA_FILE;
+    }
+
+    /* Write data, then free it as necessary. */
+    result = hlStreamWrite(stream, fileMetadata->entry->size, entryData, NULL);
+    hlFree(tmpEntryDataBuf);
+
+    if (HL_FAILED(result)) return result;
+
+    /* Add packed file entry to packed file index if necessary. */
+    if (pfi)
+    {
+        /* Generate packed file entry. */
+        HlPackedFileEntry packedEntry;
+        result = hlPackedFileEntryConstruct(fileMetadata->name,
+            (HlU32)fileDataPos, (HlU32)fileMetadata->entry->size,
+            &packedEntry);
+
+        if (HL_FAILED(result)) return result;
+
+        /* Add packed file entry to packed file index. */
+        result = HL_LIST_PUSH(pfi->entries, packedEntry);
+        if (HL_FAILED(result))
+        {
+            hlPackedFileEntryDestruct(&packedEntry);
+            return result;
+        }
+    }
+
+    /* Fill-in data entry and return result. */
+    return hlINPACxV3FillInDataEntry(dataEntryPos, fileMetadata,
+        fileDataPos, dataType, endianFlag, offTable, stream);
+}
+
+static HlResult hlINPACxV4FixSplitPositions(HlU32 version,
+    size_t splitEntriesPos, HlU32 maxChunkSize, HlBINAEndianFlag endianFlag,
+    HlINPACxV3PacMetadataList* HL_RESTRICT splitMetadata,
+    HlStream* HL_RESTRICT stream)
+{
+    const size_t eof = hlStreamTell(stream);
+    size_t i;
+    HlResult result = HL_RESULT_SUCCESS;
+
+    switch (hlBINAGetRevisionVersionChar(version))
+    {
+    case '2':
+    {
+        size_t uncompressedSize = eof;
+        size_t curSplitPos = sizeof(HlPACxV402Header);
+
+        /* Compute first split position. */
+        while (uncompressedSize > 0)
+        {
+            /* Compute current chunk size. */
+            const size_t curChunkSize = HL_MIN(uncompressedSize, maxChunkSize);
+
+            /* Account for chunk. */
+            curSplitPos += sizeof(HlPACxV402Chunk);
+
+            /* Increase pointer and decrease size. */
+            uncompressedSize -= curChunkSize;
+        }
+
+        /* Fix split positions. */
+        for (i = 0; i < splitMetadata->count; ++i)
+        {
+            HlU32 curSplitPosSwapped;
+
+            /* Account for padding. */
+            curSplitPos = HL_ALIGN(curSplitPos, 16);
+
+            /* Jump to split position. */
+            result = hlStreamJumpTo(stream, splitEntriesPos +
+                offsetof(HlPACxV402SplitEntry, splitPos));
+
+            if (HL_FAILED(result)) return result;
+
+            /* Endian-swap current split position if necessary. */
+            curSplitPosSwapped = (HlU32)curSplitPos;
+            if (hlBINANeedsSwap(endianFlag))
+            {
+                hlSwapU32P(&curSplitPosSwapped);
+            }
+
+            /* Fix split position. */
+            result = hlStreamWrite(stream, sizeof(curSplitPosSwapped),
+                &curSplitPosSwapped, NULL);
+
+            if (HL_FAILED(result)) return result;
+
+            /* Account for split data. */
+            curSplitPos += splitMetadata->data[i].blob->size;
+            
+            /* Increase split entry position. */
+            splitEntriesPos += sizeof(HlPACxV402SplitEntry);
+        }
+
+        break;
+    }
+
+    default: return HL_ERROR_UNSUPPORTED;
+    }
+
+    return result;
+}
+
+static HlResult hlINPACxV3Write(unsigned short splitIndex, HlU32 version,
+    HlU32 uid, HlINPACxV3TypeMetadataList* HL_RESTRICT typeMetadata,
+    HlU32 splitLimit, HlU32 dataAlignment, HlU32 maxChunkSize,
+    HlBINAEndianFlag endianFlag, HlINPACxV3PacMetadataList* HL_RESTRICT splitMetadata,
+    HlPackedFileIndex* HL_RESTRICT pfi, HlStream* HL_RESTRICT stream)
+{
+    char tmpFileNameBuf[256]; /* PACxV3 file names can only be up to 255 characters in length. */
+    HlRadixTree typeTree;
+    HlStrTable strTable;
+    HlOffTable offTable;
+    HlS32* typeDataNodeIndices = NULL;
+
+    size_t i, treesPos, splitTablePos, dataEntriesPos,
+        stringTablePos, fileDataPos, curOffPos, firstFileTreePos;
+
+    HlU32 typeDataNodeCount = 0;
+    HlResult result;
+
+    const HlBool isRoot = (splitIndex == USHRT_MAX);
+    HlU16 type = ((isRoot) ? HL_PACXV3_TYPE_IS_ROOT :
+        HL_PACXV3_TYPE_IS_SPLIT);
+
+    /* Initialize string and offset tables. */
+    HL_LIST_INIT(strTable);
+    HL_LIST_INIT(offTable);
+
+    /* Construct type tree. */
+    result = hlRadixTreeConstruct(0, &typeTree);
+    if (HL_FAILED(result)) return result;
+
+    /* Generate type nodes. */
+    for (i = 0; i < typeMetadata->count; ++i)
+    {
+        HlINPACxV3TypeMetadata* curTypeMetadata = &typeMetadata->data[i];
+        const char* pacxDataType;
+
+        if (!isRoot)
+        {
+            /* Skip this type if we're writing a split and a file of this type is not in it. */
+            if ((curTypeMetadata->files->pacxExt->flags & HL_PACX_EXT_FLAGS_TYPE_MASK) !=
+                HL_PACX_EXT_FLAGS_ROOT_TYPE)
+            {
+                size_t i2;
+                HlBool hasAtLeastOneFileOfThisType = HL_FALSE;
+
+                for (i2 = 0; i2 < curTypeMetadata->fileCount; ++i2)
+                {
+                    if (curTypeMetadata->files[i2].splitIndex == splitIndex)
+                    {
+                        hasAtLeastOneFileOfThisType = HL_TRUE;
+                        break;
+                    }
+                }
+
+                if (!hasAtLeastOneFileOfThisType) continue;
+            }
+            else
+            {
+                continue;
+            }
+        }
+
+        /* Get PACx data type. */
+        pacxDataType = HlPACxDataTypes[curTypeMetadata->files->pacxExt->pacxDataTypeIndex];
+
+        /* Insert PACx data type string into type tree. */
+        result = hlRadixTreeInsert(&typeTree, pacxDataType,
+            (HlUMax)((HlUPtr)curTypeMetadata), NULL);
+
+        if (HL_FAILED(result)) goto failed;
+
+        /* Mark roots has having splits if we have a split type and a split limit is set. */
+        if (isRoot && splitLimit && (curTypeMetadata->files->pacxExt->flags &
+            HL_PACX_EXT_FLAGS_SPLIT_TYPE))
+        {
+            type |= HL_PACXV3_TYPE_HAS_SPLITS;
+        }
+
+        /* Increase data node count. */
+        ++typeDataNodeCount;
+    }
+
+    /* Allocate type data node indices buffer. */
+    typeDataNodeIndices = HL_ALLOC_ARR(HlS32, typeDataNodeCount);
+    if (!typeDataNodeIndices)
+    {
+        result = HL_ERROR_OUT_OF_MEMORY;
+        goto failed;
+    }
+
+    /* Put unknown flag in type if necessary. */
+    if (isRoot && hlBINAGetMajorVersionChar(version) >= '4')
+    {
+        type |= HL_PACXV3_TYPE_UNKNOWN;
+    }
+
+    /* Start writing PACx data. */
+    result = hlPACxV3StartWrite(version, uid, type, endianFlag, stream);
+    if (HL_FAILED(result)) goto failed;
+
+    /* Get trees position. */
+    treesPos = hlStreamTell(stream);
+
+    /* Write type tree and placeholder type nodes (and get type data node indices). */
+    result = hlINPACxV3WriteNodeTree(&typeTree,
+        typeDataNodeCount, endianFlag, typeDataNodeIndices,
+        &strTable, &offTable, stream);
+
+    if (HL_FAILED(result)) goto failed;
+
+    /* Write file trees and fill-in type nodes (and get file data node indices). */
+    curOffPos = (treesPos + sizeof(HlPACxV3NodeTree));
+    result = hlINPACxV3FillInTypeNodes(&typeTree.rootNode, splitIndex,
+        endianFlag, &curOffPos, tmpFileNameBuf, &strTable, &offTable,
+        stream);
+
+    if (HL_FAILED(result)) goto failed;
+
+    /* Write type data node indices and fill-in type trees. */
+    curOffPos = treesPos;
+    result = hlINPACxV3FillInDataNodeIndices(&typeTree,
+        typeDataNodeIndices, typeDataNodeCount, endianFlag,
+        &curOffPos, &offTable, stream);
+
+    if (HL_FAILED(result)) goto failed;
+
+    /* Write file data node indices and fill-in file trees. */
+    result = hlINPACxV3FillInFileDataNodeIndices(&typeTree.rootNode,
+        endianFlag, &curOffPos, &offTable, stream);
+
+    if (HL_FAILED(result)) goto failed;
+
+    /* Write type child node indices and fill-in type nodes. */
+    curOffPos = (treesPos + sizeof(HlPACxV3NodeTree));
+    result = hlINPACxV3FillInChildNodeIndices(&typeTree.rootNode,
+        0, endianFlag, &curOffPos, &offTable, stream);
+
+    if (HL_FAILED(result)) goto failed;
+
+    /* Write file child node indices and fill-in file nodes. */
+    firstFileTreePos = curOffPos;
+    result = hlINPACxV3FillInFileChildNodeIndices(&typeTree.rootNode,
+        endianFlag, &curOffPos, &offTable, stream);
+
+    if (HL_FAILED(result)) goto failed;
+
+    /* Get split table position. */
+    splitTablePos = hlStreamTell(stream);
+
+    /* Write split table if necessary. */
+    if (isRoot && splitMetadata && splitMetadata->count > 0)
+    {
+        result = hlINPACxV3WriteSplitTable(version, maxChunkSize,
+            splitMetadata, endianFlag, &strTable, &offTable, stream);
+
+        if (HL_FAILED(result)) goto failed;
+    }
+
+    /* Get data enties position. */
+    dataEntriesPos = hlStreamTell(stream);
+
+    /* Write placeholder data entries. */
+    curOffPos = firstFileTreePos;
+    result = hlINPACxV3WriteDataEntries(&typeTree.rootNode,
+        splitIndex, version, uid, endianFlag, &curOffPos,
+        &strTable, &offTable, stream);
+
+    if (HL_FAILED(result)) goto failed;
+
+    /* Get string table position. */
+    stringTablePos = hlStreamTell(stream);
+
+    /* Write string table. */
+    result = hlBINAStringsWrite64(0, endianFlag, &strTable, &offTable, stream);
+    if (HL_FAILED(result)) goto failed;
+
+    /* Get file data position. */
+    fileDataPos = hlStreamTell(stream);
+
+    /* Write file data and fill-in data entries. */
+    curOffPos = dataEntriesPos;
+    for (i = 0; i < typeMetadata->count; ++i)
+    {
+        const HlINPACxV3TypeMetadata* curTypeMetadata = &typeMetadata->data[i];
+        size_t i2;
+
+        /* Skip types that aren't in this pac. */
+        if (!isRoot && (curTypeMetadata->files->pacxExt->flags &
+            HL_PACX_EXT_FLAGS_TYPE_MASK) == HL_PACX_EXT_FLAGS_ROOT_TYPE)
+        {
+            continue;
+        }
+
+        /* Write file data and fill-in data entries. */
+        for (i2 = 0; i2 < curTypeMetadata->fileCount; ++i2)
+        {
+            const HlINPACxV3FileMetadata* curFileMetadata = &curTypeMetadata->files[i2];
+
+            /* Write file data and fill-in data entry if this file is in this pac. */
+            if (curFileMetadata->splitIndex == splitIndex)
+            {
+                result = hlINPACxV3WriteFileData(curFileMetadata, curOffPos,
+                    endianFlag, dataAlignment, pfi, &offTable, stream);
+
+                if (HL_FAILED(result)) goto failed;
+            }
+
+            /* Skip files that aren't in this pac. */
+            else if (!isRoot)
+            {
+                continue;
+            }
+
+            /* Increase current offset position. */
+            curOffPos += sizeof(HlPACxV3DataEntry);
+        }
+    }
+
+    /* Finish writing PACx data. */
+    result = hlPACxV3FinishWrite(0,                                     /* headerPos */
+        (HlU32)(splitTablePos - treesPos),                              /* treesSize */
+        (HlU32)(dataEntriesPos - splitTablePos),                        /* splitTableSize */
+        (HlU32)(stringTablePos - dataEntriesPos),                       /* dataEntriesSize */
+        (HlU32)(fileDataPos - stringTablePos),                          /* stringTableSize */
+        fileDataPos,                                                    /* fileDataPos */
+        (isRoot && splitMetadata) ? (HlU32)splitMetadata->count : 0,    /* splitCount */
+        endianFlag, &offTable, stream);                                 /* (self-explanatory) */
+
+    if (HL_FAILED(result)) goto failed;
+
+    /* Fix split positions if necessary. */
+    if (isRoot && hlBINAGetMajorVersionChar(version) >= '4' &&
+        splitMetadata && splitMetadata->count > 0)
+    {
+        result = hlINPACxV4FixSplitPositions(version, splitTablePos +
+            sizeof(HlPACxV3SplitTable), maxChunkSize, endianFlag,
+            splitMetadata, stream);
+
+        if (HL_FAILED(result)) goto failed;
+    }
+
+failed:
+    /* Free resources and return result. */
+    hlFree(typeDataNodeIndices);
+    hlRadixTreeDestruct(&typeTree);
+    HL_LIST_FREE(offTable);
+    hlStrTableDestruct(&strTable);
+
+    return result;
+}
+
+static HlResult hlINPACxV3SaveSplits(unsigned short splitCount,
+    HlINPACxV3TypeMetadataList* HL_RESTRICT typeMetadata,
+    size_t filePathLen, HlU32 uid, HlU32 splitLimit, HlU32 dataAlignment, 
+    HlBINAEndianFlag endianFlag, HlPackedFileIndex* HL_RESTRICT pfi,
+    HlINPACxV3PacMetadataList* HL_RESTRICT splitMetadata, HlNChar* HL_RESTRICT pathBuf)
+{
+    HlFileStream* splitFile;
+    const HlNChar* rootName = hlPathGetName(pathBuf);
+    HlNChar* lastCharPtr = &pathBuf[filePathLen + 3];
+    const size_t rootNameSize = (hlNStrLen(rootName) + 1);
+    const size_t splitNameSize = (hlStrGetReqLenNativeToUTF8(rootName, rootNameSize) + 4);
+    unsigned short splitIndex;
+    HlResult result;
+
+    /* Reserve space in split metadata list. */
+    result = HL_LIST_RESERVE(*splitMetadata, splitCount);
+    if (HL_FAILED(result)) return result;
+
+    /* Copy initial split extension into path buffer. */
+
+    /*
+       HACK: '/' == 47, '0' == 48. ".00/" will be incremented to ".000"
+       in the first call to hlINArchiveNextSplit3.
+    */
+    memcpy(&pathBuf[filePathLen], HL_NTEXT(".00/"), sizeof(HlNChar) * 5);
+
+    /* Save splits as needed. */
+    for (splitIndex = 0; splitIndex < splitCount; ++splitIndex)
+    {
+        HlINPACxV3PacMetadata curSplitMetadata;
+
+        /* Get the next split file path. */
+        if (!hlINArchiveNextSplit3(lastCharPtr))
+            return HL_ERROR_OUT_OF_RANGE;
+
+        /* Open the next split file for writing. */
+        result = hlFileStreamOpen(pathBuf, HL_FILE_MODE_WRITE, &splitFile);
+        if (HL_FAILED(result)) return result;
+
+        /* Write split. */
+        result = hlINPACxV3Write(splitIndex, HL_IN_PACX_VER_301, uid,
+            typeMetadata, splitLimit, dataAlignment, 0, endianFlag,
+            NULL, pfi, splitFile);
+
+        if (HL_FAILED(result))
+        {
+            hlFileStreamClose(splitFile);
+            return result;
+        }
+
+        /* Close split file. */
+        result = hlFileStreamClose(splitFile);
+        if (HL_FAILED(result)) return result;
+
+        /* Construct new pac metadata. */
+        result = hlINPACxV3PacMetadataConstruct(&curSplitMetadata,
+            rootName, rootNameSize, splitNameSize);
+
+        if (HL_FAILED(result)) return result;
+
+        /* Add pac metadata to split metadata list. */
+        result = HL_LIST_PUSH(*splitMetadata, curSplitMetadata);
+        if (HL_FAILED(result))
+        {
+            hlINPACxV3PacMetadataDestruct(&curSplitMetadata);
+            return result;
+        }
+    }
+
+    return result;
+}
+
+static int hlINPACxV3CustomStrCmp(const HlNChar* HL_RESTRICT str1,
+    const HlNChar* HL_RESTRICT str2, size_t maxCount)
+{
+    HlNChar c1 = 0, c2 = 0;
+    while (maxCount && (c2 = *str2, c1 = *str1))
+    {
+        if (c1 != c2)
+        {
+            if (c1 <= HL_NTEXT('z') && c2 <= HL_NTEXT('z'))
+            {
+                if (c1 >= HL_NTEXT('A'))
+                {
+                    /* If c1 is upper-cased, lower-case it. */
+                    if (c1 <= HL_NTEXT('Z'))
+                    {
+                        c1 += 32;
+                    }
+
+                    /* If c1 is an underscore, sort it with low priority. */
+                    else if (c1 == HL_NTEXT('_'))
+                    {
+                        c1 = HL_NTEXT('\0');
+                    }
+                }
+
+                if (c2 >= HL_NTEXT('A'))
+                {
+                    /* If c2 is upper-cased, lower-case it. */
+                    if (c2 <= HL_NTEXT('Z'))
+                    {
+                        c2 += 32;
+                    }
+
+                    /* If c2 is an underscore, sort it with low priority. */
+                    else if (c2 == HL_NTEXT('_'))
+                    {
+                        c2 = HL_NTEXT('\0');
+                    }
+                }
+
+                if (c1 != c2) goto end;
+            }
+            else goto end;
+        }
+
+        ++str1;
+        ++str2;
+        --maxCount;
+    }
+
+end:
+    if (maxCount == 0) return 0;
+
+    return (((int)c1) - ((int)c2));
+}
+
+static int hlINPACxV3SortFileMetadata(const void* a, const void* b)
+{
+    const HlINPACxV3FileMetadata* fileMeta1 = (const HlINPACxV3FileMetadata*)a;
+    const HlINPACxV3FileMetadata* fileMeta2 = (const HlINPACxV3FileMetadata*)b;
+
+    /* Sort by extensions if extensions are not the same. */
+    {
+        const int extSortWeight = hlNStrICmpAsLowerCase(fileMeta1->ext, fileMeta2->ext);
+        if (extSortWeight != 0) return extSortWeight;
+    }
+
+    /* Otherwise, sort by file name. */
+    {
+        const size_t fileNameLen1 = (fileMeta1->ext - fileMeta1->name);
+        const size_t fileNameLen2 = (fileMeta2->ext - fileMeta2->name);
+        const size_t fileNameMinLen = HL_MIN(fileNameLen1, fileNameLen2);
+        const int nameSortWeight = hlINPACxV3CustomStrCmp(fileMeta1->name,
+            fileMeta2->name, fileNameMinLen);
+
+        if (nameSortWeight != 0)
+        {
+            return nameSortWeight;
+        }
+        else
+        {
+            return (fileNameMinLen == fileNameLen1) ?
+                (0 - (int)fileMeta2->name[fileNameLen2 - 1]) :
+                ((int)fileMeta1->name[fileNameLen1 - 1] - 0);
+        }
+    }
+}
+
+static int hlINPACxV3SortTypeMetadata(const void* a, const void* b)
+{
+    const HlINPACxV3TypeMetadata* typeMeta1 = (const HlINPACxV3TypeMetadata*)a;
+    const HlINPACxV3TypeMetadata* typeMeta2 = (const HlINPACxV3TypeMetadata*)b;
+
+    /* Get PACx data types. */
+    const char* dataType1 = HlPACxDataTypes[typeMeta1->files->pacxExt->pacxDataTypeIndex];
+    const char* dataType2 = HlPACxDataTypes[typeMeta2->files->pacxExt->pacxDataTypeIndex];
+
+    /* Sory type names alphabetically. */
+    return hlStrICmpAsLowerCase(dataType1, dataType2);
+}
+
+static HlResult hlINPACxV3GenerateMetadata(const HlArchive* HL_RESTRICT arc,
+    const HlPACxSupportedExt* HL_RESTRICT exts, const size_t extCount,
+    HlINPACxV3FileMetadata* HL_RESTRICT * HL_RESTRICT fileMetadata,
+    size_t* HL_RESTRICT fileMetadataCount, HlBool* HL_RESTRICT hasSplitTypes,
+    HlINPACxV3TypeMetadataList* HL_RESTRICT typeMetadata)
+{
+    HlINPACxV3TypeMetadata curTypeMetadata;
+    size_t i;
+    HlResult result = HL_RESULT_SUCCESS;
+
+    /* Set default values. */
+    *fileMetadataCount = 0;
+    *hasSplitTypes = HL_FALSE;
+
+    /* Allocate file metadata array. */
+    *fileMetadata = HL_ALLOC_ARR(HlINPACxV3FileMetadata, arc->entries.count);
+    if (!(*fileMetadata)) return HL_ERROR_OUT_OF_MEMORY;
+
+    /* Generate file metadata. */
+    for (i = 0; i < arc->entries.count; ++i)
+    {
+        HlINPACxV3FileMetadata* curFileMetadata = (*fileMetadata + *fileMetadataCount);
+        const HlNChar* ext;
+
+        /* Set entry pointer. */
+        curFileMetadata->entry = &arc->entries.data[i];
+
+        /* Skip streaming and directory entries. */
+        if (!hlArchiveEntryIsRegularFile(curFileMetadata->entry))
+            continue;
+
+        /* Set name and extension pointers. */
+        curFileMetadata->name = hlArchiveEntryGetName(curFileMetadata->entry);
+        curFileMetadata->ext = ext = hlPathGetExts(curFileMetadata->name);
+
+        /* Skip dot in extension if necessary. */
+        if (*ext == HL_NTEXT('.')) ++ext;
+
+        /* Get PACx extension and sort weights. */
+        curFileMetadata->pacxExt = hlINPACxGetSupportedExt(
+            ext, exts, extCount);
+
+        /* Set default splitIndex. */
+        curFileMetadata->splitIndex = USHRT_MAX;
+
+        /* State if we have any split types. */
+        if (curFileMetadata->pacxExt->flags & HL_PACX_EXT_FLAGS_SPLIT_TYPE)
+        {
+            *hasSplitTypes = HL_TRUE;
+        }
+
+        /* Increase file metadata count. */
+        ++(*fileMetadataCount);
+    }
+
+    /* Generate type metadata if necessary. */
+    if (*fileMetadataCount)
+    {
+        /* Sort file metadata based on PACx types. */
+        qsort(*fileMetadata, *fileMetadataCount,
+            sizeof(HlINPACxV3FileMetadata),
+            hlINPACxV3SortFileMetadata);
+
+        /* Setup type metadata for first type. */
+        curTypeMetadata.files = *fileMetadata;
+        curTypeMetadata.fileCount = 1;
+        result = hlRadixTreeConstruct(0, &curTypeMetadata.tmpFileTree);
+        curTypeMetadata.tmpFileDataNodeIndices = NULL;
+
+        if (HL_FAILED(result)) return result;
+
+        /* Setup and add type metadata for subsequent types. */
+        for (i = 1; i < *fileMetadataCount; ++i)
+        {
+            if (curTypeMetadata.files->pacxExt == (*fileMetadata + i)->pacxExt)
+            {
+                ++curTypeMetadata.fileCount;
+            }
+            else
+            {
+                /* Add current type metadata to type metadata list. */
+                result = HL_LIST_PUSH(*typeMetadata, curTypeMetadata);
+                if (HL_FAILED(result))
+                {
+                    hlRadixTreeDestruct(&curTypeMetadata.tmpFileTree);
+                    return result;
+                }
+
+                /* Setup type metadata for next type. */
+                curTypeMetadata.files = (*fileMetadata + i);
+                curTypeMetadata.fileCount = 1;
+                result = hlRadixTreeConstruct(0, &curTypeMetadata.tmpFileTree);
+                curTypeMetadata.tmpFileDataNodeIndices = NULL;
+
+                if (HL_FAILED(result)) return result;
+            }
+        }
+
+        /* Add final type metadata to type metadata list. */
+        result = HL_LIST_PUSH(*typeMetadata, curTypeMetadata);
+        if (HL_FAILED(result))
+        {
+            hlRadixTreeDestruct(&curTypeMetadata.tmpFileTree);
+            return result;
+        }
+
+        /* Sort type metadata alphabetically. */
+        qsort(typeMetadata->data, typeMetadata->count,
+            sizeof(HlINPACxV3TypeMetadata),
+            hlINPACxV3SortTypeMetadata);
+    }
+
+    return result;
+}
+
+static HlResult hlINPACxV3FileMetadataSplitUp(
+    HlINPACxV3TypeMetadataList* HL_RESTRICT typeMetadata,
+    HlU32 splitLimit, HlU32 dataAlignment,
+    unsigned short* HL_RESTRICT splitCount)
+{
+    size_t i;
+    HlU32 curSplitDataSize = 0;
+    unsigned short splitIndex = 0;
+    HlResult result = HL_RESULT_SUCCESS;
+
+    /* Place files in splits. */
+    for (i = 0; i < typeMetadata->count; ++i)
+    {
+        HlINPACxV3TypeMetadata* curTypeMetadata = &typeMetadata->data[i];
+        size_t i2;
+
+        /* Skip root types. */
+        if ((curTypeMetadata->files->pacxExt->flags &
+            HL_PACX_EXT_FLAGS_SPLIT_TYPE) == 0)
+        {
+            continue;
+        }
+
+        /* Split up split-typed files. */
+        for (i2 = 0; i2 < curTypeMetadata->fileCount; ++i2)
+        {
+            HlINPACxV3FileMetadata* curFileMetadata = (HlINPACxV3FileMetadata*)
+                &curTypeMetadata->files[i2];
+
+            const HlU32 dataSize = (HlU32)curFileMetadata->entry->size;
+
+            /* Check if adding this file to the current split would exceed the split limit. */
+            if ((curSplitDataSize + dataSize) > splitLimit && curSplitDataSize != 0)
+            {
+                /* Increase split index and ensure we haven't exceeded 999 splits. */
+                if (++splitIndex > 999)
+                {
+                    result = HL_ERROR_OUT_OF_RANGE;
+                    goto end;
+                }
+
+                /* Reset current split data size. */
+                curSplitDataSize = 0;
+            }
+
+            /* Account for data size. */
+            curSplitDataSize += dataSize;
+
+            /* Set splitIndex. */
+            curFileMetadata->splitIndex = splitIndex;
+
+            /* Account for data alignment in current split size. */
+            curSplitDataSize = HL_ALIGN(curSplitDataSize, dataAlignment);
+        }
+    }
+
+end:
+    *splitCount = (splitIndex + 1);
+    return result;
+}
+
+HlResult hlPACxV3SaveEx(const HlArchive* HL_RESTRICT arc,
+    HlU32 splitLimit, HlU32 dataAlignment, HlBINAEndianFlag endianFlag,
+    const HlPACxSupportedExt* HL_RESTRICT exts, const size_t extCount,
+    HlPackedFileIndex* HL_RESTRICT pfi, const HlNChar* HL_RESTRICT filePath)
+{
+    HlNChar pathBuf[255];
+    HlNChar* pathBufPtr = pathBuf;
+    size_t pathBufCap = 255;
+
+    HlINPACxV3TypeMetadataList typeMetadata;
+    HlINPACxV3FileMetadata* fileMetadata = NULL;
+    HlFileStream* rootFile = NULL;
+    const size_t filePathLen = hlNStrLen(filePath);
+    size_t fileMetadataCount = 0;
+    const HlU32 uid = hlPACxV3GenerateUID();
+    unsigned short splitCount = 0;
+    HlResult result = HL_RESULT_SUCCESS;
+
+    /* Verify that dataAlignment is a multiple of 4. */
+    if ((dataAlignment % 4) != 0) return HL_ERROR_INVALID_ARGS;
+
+    /* Setup path buffer. */
+    result = hlINPACxSaveSetupPathBuffer(filePath,
+        splitLimit, filePathLen, pathBufCap, &pathBufPtr);
+
+    if (HL_FAILED(result)) return result;
+
+    /* Generate file and type metadata. */
+    HL_LIST_INIT(typeMetadata);
+    if (arc->entries.count > 0)
+    {
+        HlBool hasSplitTypes;
+        result = hlINPACxV3GenerateMetadata(arc, exts, extCount,
+            &fileMetadata, &fileMetadataCount, &hasSplitTypes,
+            &typeMetadata);
+
+        if (HL_FAILED(result)) goto failed_root_not_open;
+
+        /* Split data up. */
+        if (splitLimit && hasSplitTypes)
+        {
+            result = hlINPACxV3FileMetadataSplitUp(&typeMetadata,
+                splitLimit, dataAlignment, &splitCount);
+
+            if (HL_FAILED(result)) goto failed_root_not_open;
+        }
+    }
+
+    /* Open root file. */
+    result = hlFileStreamOpen(pathBufPtr, HL_FILE_MODE_WRITE, &rootFile);
+    if (HL_FAILED(result)) goto failed_root_not_open;
+    
+    /* Write splits and root as necessary. */
+    {
+        HlINPACxV3PacMetadataList splitMetadata;
+        HL_LIST_INIT(splitMetadata);
+
+        /* Save splits if necessary. */
+        if (splitCount)
+        {
+            /* Disable PFI generation if we're writing splits. */
+            pfi = NULL;
+
+            /* Save splits. */
+            result = hlINPACxV3SaveSplits(splitCount, &typeMetadata,
+                filePathLen, uid, splitLimit, dataAlignment, endianFlag,
+                pfi, &splitMetadata, pathBufPtr);
+
+            if (HL_FAILED(result))
+            {
+                hlINPACxV3PacMetadataListDestruct(&splitMetadata);
+                goto failed;
+            }
+        }
+
+        /* Write root. */
+        result = hlINPACxV3Write(USHRT_MAX, HL_IN_PACX_VER_301, uid,
+            &typeMetadata, splitLimit, dataAlignment, 0, endianFlag,
+            &splitMetadata, pfi, rootFile);
+
+        hlINPACxV3PacMetadataListDestruct(&splitMetadata);
+        if (HL_FAILED(result)) goto failed;
+    }
+
+    /* Close root file and return result. */
+    result = hlFileStreamClose(rootFile);
+    goto end;
+
+failed:
+    /* Free everything as necessary and return result. */
+    hlFileStreamClose(rootFile);
+
+end:
+failed_root_not_open:
+    hlFree(fileMetadata);
+    hlINPACxV3TypeMetadataListDestruct(&typeMetadata);
+
+    if (pathBufPtr != pathBuf) hlFree(pathBufPtr);
+    return result;
+}
+
 void hlPACxV4Fix(void* rawData)
 {
     /* Swap header and root chunks if necessary. */
@@ -3523,6 +5524,7 @@ HlResult hlPACxV402DecompressNoAlloc(const void* HL_RESTRICT compressedData,
     const char* compressedPtr = (const char*)compressedData;
     char* uncompressedPtr = (char*)uncompressedData;
     HlU32 i;
+    HlResult result;
 
     /* If the data is already uncompressed, just copy it and return success. */
     if (compressedSize == uncompressedSize)
@@ -3535,16 +5537,11 @@ HlResult hlPACxV402DecompressNoAlloc(const void* HL_RESTRICT compressedData,
     for (i = 0; i < chunkCount; ++i)
     {
         /* Decompress the current chunk. */
-        int r = LZ4_decompress_safe(compressedPtr,
-            uncompressedPtr, chunks[i].compressedSize,
-            uncompressedSize);
+        result = hlLZ4DecompressNoAlloc(compressedPtr,
+            chunks[i].compressedSize, chunks[i].uncompressedSize,
+            uncompressedPtr);
 
-        /* Return HL_ERROR_UNKNOWN if decompressing failed. */
-        if (r < 0 || (HlU32)r < chunks[i].uncompressedSize)
-            return HL_ERROR_UNKNOWN;
-
-        /* Substract from uncompressedSize. */
-        uncompressedSize -= chunks[i].uncompressedSize;
+        if (HL_FAILED(result)) return result;
 
         /* Increment pointers. */
         compressedPtr += chunks[i].compressedSize;
@@ -3571,7 +5568,11 @@ HlResult hlPACxV402Decompress(const void* HL_RESTRICT compressedData,
         chunkCount, compressedSize, uncompressedSize,
         uncompressedDataBuf);
 
-    if (HL_FAILED(result)) return result;
+    if (HL_FAILED(result))
+    {
+        hlFree(uncompressedDataBuf);
+        return result;
+    }
 
     /* Set uncompressedData pointer and return success. */
     *uncompressedData = uncompressedDataBuf;
@@ -3630,6 +5631,152 @@ HlResult hlPACxV403DecompressBlob(const void* HL_RESTRICT compressedData,
     return hlDecompressBlob(HL_COMPRESS_TYPE_ZLIB,
         compressedData, compressedSize,
         uncompressedSize, uncompressedBlob);
+}
+
+size_t hlPACxV402CompressBound(size_t uncompressedSize)
+{
+    return hlLZ4CompressBound(uncompressedSize);
+}
+
+HlResult hlPACxV402CompressNoAlloc(const void* HL_RESTRICT uncompressedData,
+    size_t uncompressedSize, size_t compressedBufSize, size_t maxChunkSize,
+    size_t* HL_RESTRICT compressedSize, void* HL_RESTRICT compressedBuf,
+    HlPACxV402ChunkList* HL_RESTRICT chunks)
+{
+    const HlU8* uncompressedPtr = (const HlU8*)uncompressedData;
+    HlU8* compressedPtr = (HlU8*)compressedBuf;
+    const HlU8* const endOfUncompressedData = (uncompressedPtr + uncompressedSize);
+    size_t totalCompressedSize = 0;
+    HlResult result = HL_RESULT_SUCCESS;
+
+    while (uncompressedPtr < endOfUncompressedData)
+    {
+        /* Compute current chunk size. */
+        const size_t curChunkSize = HL_MIN(uncompressedSize, maxChunkSize);
+        size_t curCompressedSize;
+
+        /* Compress chunk. */
+        result = hlCompressNoAlloc(HL_COMPRESS_TYPE_LZ4, uncompressedPtr,
+            curChunkSize, compressedBufSize, &curCompressedSize,
+            compressedPtr);
+
+        if (HL_FAILED(result)) return result;
+
+        /* Add new chunk to chunks list if necessary. */
+        if (chunks)
+        {
+            HlPACxV402Chunk curChunk =
+            {
+                (HlU32)curCompressedSize,   /* compressedSize */
+                (HlU32)curChunkSize         /* uncompressedSize */
+            };
+
+            result = HL_LIST_PUSH(*chunks, curChunk);
+            if (HL_FAILED(result)) return result;
+        }
+
+        /* Increase pointers and total compressed size. */
+        uncompressedPtr += curChunkSize;
+        compressedPtr += curCompressedSize;
+        totalCompressedSize += curCompressedSize;
+
+        /* Decrease sizes. */
+        compressedBufSize -= curCompressedSize;
+        uncompressedSize -= curChunkSize;
+    }
+    
+    /* Set compressedSize and return result. */
+    *compressedSize = totalCompressedSize;
+    return result;
+}
+
+HlResult hlPACxV402Compress(const void* HL_RESTRICT uncompressedData,
+    size_t uncompressedSize, size_t maxChunkSize, size_t* HL_RESTRICT compressedSize,
+    void* HL_RESTRICT * HL_RESTRICT compressedData, HlPACxV402ChunkList* HL_RESTRICT chunks)
+{
+    void* compressedDataBuf;
+    HlResult result;
+
+    /* Allocate a buffer to hold the compressed data. */
+    compressedDataBuf = hlAlloc(uncompressedSize);
+    if (!compressedDataBuf) return HL_ERROR_OUT_OF_MEMORY;
+
+    /* Compress the data. */
+    result = hlPACxV402CompressNoAlloc(uncompressedData, uncompressedSize,
+        uncompressedSize, maxChunkSize, compressedSize, compressedDataBuf,
+        chunks);
+
+    if (HL_FAILED(result))
+    {
+        hlFree(compressedDataBuf);
+        return result;
+    }
+
+    /* Set compressedData pointer and return success. */
+    *compressedData = compressedDataBuf;
+    return HL_RESULT_SUCCESS;
+}
+
+HlResult hlPACxV402CompressBlob(const void* HL_RESTRICT uncompressedData,
+    size_t uncompressedSize, size_t maxChunkSize,
+    HlBlob* HL_RESTRICT * HL_RESTRICT compressedBlob,
+    HlPACxV402ChunkList* HL_RESTRICT chunks)
+{
+    HlBlob* compressedBlobBuf;
+    HlResult result;
+
+    /* Create a blob to hold the compressed data. */
+    result = hlBlobCreate(NULL, uncompressedSize,
+        &compressedBlobBuf);
+
+    if (HL_FAILED(result)) return result;
+
+    /* Compress the data. */
+    result = hlPACxV402CompressNoAlloc(uncompressedData,
+        uncompressedSize, uncompressedSize, maxChunkSize,
+        &compressedBlobBuf->size, compressedBlobBuf->data,
+        chunks);
+
+    if (HL_FAILED(result))
+    {
+        hlBlobFree(compressedBlobBuf);
+        return result;
+    }
+
+    /* Set compressedBlob pointer and return success. */
+    *compressedBlob = compressedBlobBuf;
+    return HL_RESULT_SUCCESS;
+}
+
+size_t hlPACxV403CompressBound(size_t uncompressedSize)
+{
+    return hlZlibCompressBound(uncompressedSize);
+}
+
+HlResult hlPACxV403CompressNoAlloc(const void* HL_RESTRICT uncompressedData,
+    size_t uncompressedSize, size_t compressedBufSize,
+    size_t* HL_RESTRICT compressedSize, void* HL_RESTRICT compressedBuf)
+{
+    return hlCompressNoAlloc(HL_COMPRESS_TYPE_ZLIB,
+        uncompressedData, uncompressedSize,
+        compressedBufSize, compressedSize, compressedBuf);
+}
+
+HlResult hlPACxV403Compress(const void* HL_RESTRICT uncompressedData,
+    size_t uncompressedSize, size_t* HL_RESTRICT compressedSize,
+    void* HL_RESTRICT * HL_RESTRICT compressedData)
+{
+    return hlCompress(HL_COMPRESS_TYPE_ZLIB,
+        uncompressedData, uncompressedSize,
+        compressedSize, compressedData);
+}
+
+HlResult hlPACxV403CompressBlob(const void* HL_RESTRICT uncompressedData,
+    size_t uncompressedSize, HlBlob* HL_RESTRICT * HL_RESTRICT compressedBlob)
+{
+    return hlCompressBlob(HL_COMPRESS_TYPE_ZLIB,
+        uncompressedData, uncompressedSize,
+        compressedBlob);
 }
 
 HlResult hlPACxV4ReadInto(void* HL_RESTRICT rawData,
@@ -3726,7 +5873,7 @@ HlResult hlPACxV4ReadInto(void* HL_RESTRICT rawData,
                 const HlPACxV403SplitEntry* splitEntriesV403 =
                     (const HlPACxV403SplitEntry*)splitEntries;
 
-                result = hlPACxV403DecompressBlob(HL_ADD_OFFC(header, splitEntriesV403[i].offset),
+                result = hlPACxV403DecompressBlob(HL_ADD_OFFC(header, splitEntriesV403[i].splitPos),
                     splitEntriesV403[i].compressedSize, splitEntriesV403[i].uncompressedSize,
                     &curUncompressedPac);
             }
@@ -3739,7 +5886,7 @@ HlResult hlPACxV4ReadInto(void* HL_RESTRICT rawData,
                 const HlPACxV402Chunk* chunks = (const HlPACxV402Chunk*)
                     hlOff64Get(&splitEntriesV402[i].chunksOffset);
 
-                result = hlPACxV402DecompressBlob(HL_ADD_OFFC(header, splitEntriesV402[i].offset),
+                result = hlPACxV402DecompressBlob(HL_ADD_OFFC(header, splitEntriesV402[i].splitPos),
                     chunks, splitEntriesV402[i].chunkCount, splitEntriesV402[i].compressedSize,
                     splitEntriesV402[i].uncompressedSize, &curUncompressedPac);
             }
@@ -3925,6 +6072,489 @@ HlResult hlPACxLoad(const HlNChar* HL_RESTRICT filePath,
     /* Set pointer and return result. */
     *hlArc = hlArcBuf;
     return result;
+}
+
+static HlResult hlINPACxV4CompressBlob(const void* HL_RESTRICT uncompressedData,
+    size_t uncompressedSize, HlU32 version, HlU32 maxChunkSize,
+    HlBlob* HL_RESTRICT * HL_RESTRICT blob, HlPACxV402ChunkList* HL_RESTRICT chunks)
+{
+    switch (hlBINAGetRevisionVersionChar(version))
+    {
+    case '2':
+    {
+        return hlPACxV402CompressBlob(uncompressedData, uncompressedSize,
+            maxChunkSize, blob, chunks);
+    }
+
+    case '3':
+    {
+        return hlPACxV403CompressBlob(uncompressedData,
+            uncompressedSize, blob);
+    }
+
+    default:
+        return HL_ERROR_UNSUPPORTED;
+    }
+}
+
+static HlResult hlINPACxV4GeneratePacData(unsigned short splitIndex, HlU32 version,
+    HlU32 uid, HlINPACxV3TypeMetadataList* HL_RESTRICT typeMetadata,
+    HlU32 splitLimit, HlU32 dataAlignment, HlU32 maxChunkSize, size_t* HL_RESTRICT totalSize,
+    HlBINAEndianFlag endianFlag, HlINPACxV3PacMetadataList* HL_RESTRICT splitMetadata,
+    HlINPACxV3PacMetadata* HL_RESTRICT rootMetadata)
+{
+    const HlBool isRoot = (splitIndex == USHRT_MAX);
+    HlINPACxV3PacMetadata* curPacMetadata = (isRoot) ?
+        rootMetadata : &splitMetadata->data[splitIndex];
+
+    HlMemStream* internalFile;
+    const void* uncompressedData;
+    HlResult result;
+
+    /* Open a memory stream for writing. */
+    result = hlMemStreamOpenWrite(&internalFile);
+    if (HL_FAILED(result)) return result;
+
+    /* Write internal PACx data. */
+    result = hlINPACxV3Write(splitIndex, version, uid,
+        typeMetadata, splitLimit, dataAlignment, maxChunkSize,
+        endianFlag, splitMetadata, NULL, internalFile);
+
+    if (HL_FAILED(result))
+    {
+        hlMemStreamClose(internalFile);
+        return result;
+    }
+
+    /* Compress PAC data if necessary. */
+    if (totalSize)
+    {
+        /* Get uncompressed PACx data. */
+        uncompressedData = hlMemStreamGetDataPtr(internalFile,
+            &curPacMetadata->uncompressedSize);
+
+        /* Increase total size if this is a split. */
+        if (!isRoot)
+        {
+            *totalSize += curPacMetadata->uncompressedSize;
+        }
+
+        /* Compress data if the total size has exceeded maxChunkCount. */
+        if (*totalSize > maxChunkSize)
+        {
+            /* Compress internal PACx data (and generate chunks if necessary). */
+            result = hlINPACxV4CompressBlob(uncompressedData,
+                curPacMetadata->uncompressedSize, version, maxChunkSize,
+                &curPacMetadata->blob, &curPacMetadata->chunks);
+
+            if (HL_FAILED(result))
+            {
+                hlMemStreamClose(internalFile);
+                return result;
+            }
+
+            /* Close internal PACx memory stream and return result. */
+            return hlMemStreamClose(internalFile);
+        }
+    }
+
+    /* Otherwise, get copy of uncompressed PACx data. */
+    result = hlMemStreamGetData(internalFile,
+        &curPacMetadata->blob);
+
+    if (HL_FAILED(result))
+    {
+        hlMemStreamClose(internalFile);
+        return result;
+    }
+
+    /* Write PAC data uncompressed. */
+    {
+        HlPACxV402Chunk curChunk =
+        {
+            (HlU32)curPacMetadata->blob->size,  /* compressedSize */
+            (HlU32)curPacMetadata->blob->size   /* uncompressedSize */
+        };
+
+        /* Set uncompressed size. */
+        curPacMetadata->uncompressedSize = curPacMetadata->blob->size;
+
+        /* Add new chunk to chunks list if necessary. */
+        result = HL_LIST_PUSH(curPacMetadata->chunks, curChunk);
+        if (HL_FAILED(result))
+        {
+            hlMemStreamClose(internalFile);
+            return result;
+        }
+
+        /* Close internal PACx memory stream and return result. */
+        return hlMemStreamClose(internalFile);
+    }
+}
+
+static HlResult hlINPACxV4GenerateSplits(unsigned short splitCount,
+    HlINPACxV3TypeMetadataList* HL_RESTRICT typeMetadata,
+    size_t fileNameLen, HlU32 version, HlU32 uid, HlU32 splitLimit,
+    HlU32 dataAlignment, HlU32 maxChunkSize, size_t* HL_RESTRICT totalSize,
+    HlBINAEndianFlag endianFlag, HlINPACxV3PacMetadataList* HL_RESTRICT splitMetadata,
+    HlNChar* HL_RESTRICT pathBuf)
+{
+    HlNChar* lastCharPtr = &pathBuf[fileNameLen + 3];
+    const size_t rootNameSize = (hlNStrLen(pathBuf) + 1);
+    const size_t splitNameSize = (hlStrGetReqLenNativeToUTF8(pathBuf, rootNameSize) + 4);
+    unsigned short splitIndex;
+    HlResult result;
+
+    /* Reserve space in split metadata list. */
+    result = HL_LIST_RESERVE(*splitMetadata, splitCount);
+    if (HL_FAILED(result)) return result;
+
+    /* Copy initial split extension into path buffer. */
+
+    /*
+       HACK: '/' == 47, '0' == 48. ".00/" will be incremented to ".000"
+       in the first call to hlINArchiveNextSplit3.
+    */
+    memcpy(&pathBuf[fileNameLen], HL_NTEXT(".00/"), sizeof(HlNChar) * 5);
+
+    /* Save splits as needed. */
+    for (splitIndex = 0; splitIndex < splitCount; ++splitIndex)
+    {
+        HlINPACxV3PacMetadata curSplitMetadata;
+
+        /* Get the next split file path. */
+        if (!hlINArchiveNextSplit3(lastCharPtr))
+            return HL_ERROR_OUT_OF_RANGE;
+
+        /* Construct new pac metadata. */
+        result = hlINPACxV3PacMetadataConstruct(&curSplitMetadata,
+            pathBuf, rootNameSize, splitNameSize);
+
+        if (HL_FAILED(result)) return result;
+
+        /* Add split metadata to split metadata list. */
+        result = HL_LIST_PUSH(*splitMetadata, curSplitMetadata);
+        if (HL_FAILED(result))
+        {
+            hlINPACxV3PacMetadataDestruct(&curSplitMetadata);
+            return result;
+        }
+
+        /* Generate split data. */
+        result = hlINPACxV4GeneratePacData(splitIndex, version, uid,
+            typeMetadata, splitLimit, dataAlignment, maxChunkSize,
+            totalSize, endianFlag, splitMetadata, NULL);
+        
+        if (HL_FAILED(result)) return result;
+    }
+
+    return result;
+}
+
+static HlResult hlINPACxV4WriteAll(const HlArchive* HL_RESTRICT arc,
+    HlU32 version, HlU32 splitLimit, HlU32 dataAlignment, HlU32 maxChunkSize,
+    HlBool noCompress, HlBINAEndianFlag endianFlag,
+    const HlPACxSupportedExt* HL_RESTRICT exts, const size_t extCount,
+    const HlNChar* HL_RESTRICT fileName, HlStream* HL_RESTRICT stream)
+{
+    HlNChar pathBuf[255];
+    HlNChar* pathBufPtr = pathBuf;
+    size_t pathBufCap = 255;
+
+    HlINPACxV3TypeMetadataList typeMetadata;
+    HlINPACxV3FileMetadata* fileMetadata = NULL;
+    HlINPACxV3PacMetadataList splitMetadata;
+    HlINPACxV3PacMetadata rootMetadata = { 0 };
+    const size_t fileNameLen = hlNStrLen(fileName);
+    const size_t headerPos = hlStreamTell(stream);
+    size_t totalSize = 0;
+    size_t* totalSizePtr = (noCompress) ? NULL : &totalSize;
+    size_t fileMetadataCount = 0, rootPos, eof;
+    const HlU32 uid = hlPACxV3GenerateUID();
+    unsigned short splitCount = 0;
+    HlResult result = HL_RESULT_SUCCESS;
+
+    /* Verify that dataAlignment is a multiple of 4. */
+    if ((dataAlignment % 4) != 0) return HL_ERROR_INVALID_ARGS;
+
+    /* Setup path buffer. */
+    result = hlINPACxSaveSetupPathBuffer(fileName,
+        splitLimit, fileNameLen, pathBufCap, &pathBufPtr);
+
+    if (HL_FAILED(result)) return result;
+
+    /* Generate file and type metadata. */
+    HL_LIST_INIT(typeMetadata);
+    HL_LIST_INIT(splitMetadata);
+
+    if (arc->entries.count > 0)
+    {
+        HlBool hasSplitTypes;
+        result = hlINPACxV3GenerateMetadata(arc, exts, extCount,
+            &fileMetadata, &fileMetadataCount, &hasSplitTypes,
+            &typeMetadata);
+
+        if (HL_FAILED(result)) goto failed;
+
+        /* Split data up if necessary. */
+        if (splitLimit && hasSplitTypes)
+        {
+            /* Split data up. */
+            result = hlINPACxV3FileMetadataSplitUp(&typeMetadata,
+                splitLimit, dataAlignment, &splitCount);
+
+            if (HL_FAILED(result)) goto failed;
+        }
+    }
+
+    /* Generate splits if necessary. */
+    if (splitCount)
+    {
+        result = hlINPACxV4GenerateSplits(splitCount, &typeMetadata,
+            fileNameLen, version, uid, splitLimit, dataAlignment,
+            maxChunkSize, totalSizePtr, endianFlag, &splitMetadata,
+            pathBufPtr);
+
+        if (HL_FAILED(result)) goto failed;
+    }
+
+    /* Generate root. */
+    result = hlINPACxV4GeneratePacData(USHRT_MAX, version, uid,
+        &typeMetadata, splitLimit, dataAlignment, maxChunkSize,
+        totalSizePtr, endianFlag, &splitMetadata, &rootMetadata);
+
+    if (HL_FAILED(result)) goto failed;
+
+    /* Write header. */
+    switch (hlBINAGetRevisionVersionChar(version))
+    {
+    case '2':
+    {
+        /* Generate header. */
+        HlPACxV402Header header =
+        {
+            HL_PACX_SIG,                            /* signature */
+            { '4', '0', '2' },                      /* version */
+            endianFlag,                             /* endianFlag */
+            uid,                                    /* uid */
+            0,                                      /* fileSize */
+            0,                                      /* rootOffset */
+            (HlU32)rootMetadata.blob->size,         /* rootCompressedSize */
+            (HlU32)rootMetadata.uncompressedSize,   /* rootUncompressedSize */
+            HL_PACXV3_TYPE_IS_ROOT,                 /* flags */
+            0x208,                                  /* unknown2 */
+            (HlU32)rootMetadata.chunks.count        /* chunkCount */
+        };
+
+        size_t chunksPos, eof;
+
+        /* Endian-swap header if necessary. */
+        if (hlBINANeedsSwap(endianFlag))
+        {
+            /* TODO: Endian-swap */
+        }
+
+        /* Write header. */
+        result = hlStreamWrite(stream, sizeof(header), &header, NULL);
+        if (HL_FAILED(result)) goto failed;
+
+        /* Store chunks position. */
+        chunksPos = hlStreamTell(stream);
+
+        /* Write placeholder chunks. */
+        result = hlINPACxV402WritePlaceholderChunks(maxChunkSize,
+            &rootMetadata, stream);
+
+        if (HL_FAILED(result)) goto failed;
+
+        /* Store end of stream position. */
+        eof = hlStreamTell(stream);
+
+        /* Jump to chunks position. */
+        result = hlStreamJumpTo(stream, chunksPos);
+        if (HL_FAILED(result)) goto failed;
+
+        /* TODO: Endian-swap chunks if necessary. */
+
+        /* Write chunks. */
+        result = hlStreamWrite(stream, sizeof(HlPACxV402Chunk) *
+            rootMetadata.chunks.count, rootMetadata.chunks.data,
+            NULL);
+
+        if (HL_FAILED(result)) goto failed;
+
+        /* Jump to end of stream position. */
+        result = hlStreamJumpTo(stream, eof);
+        if (HL_FAILED(result)) goto failed;
+        
+        break;
+    }
+
+    default:
+        result = HL_ERROR_UNSUPPORTED;
+        goto failed;
+    }
+
+    /* Pad file. */
+    result = hlStreamPad(stream, 16);
+    if (HL_FAILED(result)) goto failed;
+
+    /* Write split pacs. */
+    {
+        size_t i;
+        for (i = 0; i < splitMetadata.count; ++i)
+        {
+            /* Write split data. */
+            result = hlStreamWrite(stream, splitMetadata.data[i].blob->size,
+                splitMetadata.data[i].blob->data, NULL);
+
+            if (HL_FAILED(result)) goto failed;
+
+            /* Pad file. */
+            /* TODO: Is this necessary? */
+            result = hlStreamPad(stream, 16);
+            if (HL_FAILED(result)) goto failed;
+        }
+    }
+
+    /* Store root position. */
+    rootPos = hlStreamTell(stream);
+
+    /* Write root data. */
+    result = hlStreamWrite(stream, rootMetadata.blob->size,
+        rootMetadata.blob->data, NULL);
+
+    if (HL_FAILED(result)) goto failed;
+
+    /* Pad file. */
+    /* TODO: Is this necessary? */
+    result = hlStreamPad(stream, 16);
+    if (HL_FAILED(result)) goto failed;
+
+    /* Store end of stream position. */
+    eof = hlStreamTell(stream);
+
+    /* Jump to header fileSize position. */
+    result = hlStreamJumpTo(stream, headerPos +
+        offsetof(HlPACxV4Header, fileSize));
+
+    if (HL_FAILED(result)) goto failed;
+    
+    /* Fill-in header fileSize. */
+    {
+        HlU32 fileSize = (HlU32)(eof - headerPos);
+        if (hlBINANeedsSwap(endianFlag))
+        {
+            hlSwapU32P(&fileSize);
+        }
+
+        result = hlStreamWrite(stream, sizeof(fileSize), &fileSize, NULL);
+        if (HL_FAILED(result)) goto failed;
+    }
+
+    /* Fill-in header rootOffset. */
+    {
+        HlU32 rootOffset = (HlU32)(rootPos - headerPos);
+        if (hlBINANeedsSwap(endianFlag))
+        {
+            hlSwapU32P(&rootOffset);
+        }
+
+        result = hlStreamWrite(stream, sizeof(rootOffset), &rootOffset, NULL);
+        if (HL_FAILED(result)) goto failed;
+    }
+
+    /* Jump to end of stream and return result. */
+    result = hlStreamJumpTo(stream, eof);
+    goto end;
+
+end:
+failed:
+    /* Free everything as necessary and return result. */
+    hlINPACxV3PacMetadataListDestruct(&splitMetadata);
+    hlINPACxV3PacMetadataDestruct(&rootMetadata);
+    hlFree(fileMetadata);
+    hlINPACxV3TypeMetadataListDestruct(&typeMetadata);
+
+    if (pathBufPtr != pathBuf) hlFree(pathBufPtr);
+    return result;
+}
+
+HlResult hlPACxV402Write(const HlArchive* HL_RESTRICT arc,
+    HlU32 splitLimit, HlU32 dataAlignment, HlU32 maxChunkSize,
+    HlBool noCompress, HlBINAEndianFlag endianFlag,
+    const HlPACxSupportedExt* HL_RESTRICT exts, const size_t extCount,
+    const HlNChar* HL_RESTRICT fileName, HlStream* HL_RESTRICT stream)
+{
+    return hlINPACxV4WriteAll(arc, HL_IN_PACX_VER_402, splitLimit,
+        dataAlignment, maxChunkSize, noCompress, endianFlag, exts,
+        extCount, fileName, stream);
+}
+
+HlResult hlPACxV403Write(const HlArchive* HL_RESTRICT arc,
+    HlU32 splitLimit, HlU32 dataAlignment, HlBool noCompress,
+    HlBINAEndianFlag endianFlag, const HlPACxSupportedExt* HL_RESTRICT exts,
+    const size_t extCount, const HlNChar* HL_RESTRICT fileName,
+    HlStream* HL_RESTRICT stream)
+{
+    return hlINPACxV4WriteAll(arc, HL_IN_PACX_VER_403, splitLimit,
+        dataAlignment, 0, noCompress, endianFlag, exts,
+        extCount, fileName, stream);
+}
+
+HlResult hlPACxV402SaveEx(const HlArchive* HL_RESTRICT arc,
+    HlU32 splitLimit, HlU32 dataAlignment, HlU32 maxChunkSize,
+    HlBool noCompress, HlBINAEndianFlag endianFlag,
+    const HlPACxSupportedExt* HL_RESTRICT exts, const size_t extCount,
+    const HlNChar* HL_RESTRICT filePath)
+{
+    HlFileStream* file;
+    HlResult result;
+
+    /* Open file for writing. */
+    result = hlFileStreamOpen(filePath, HL_FILE_MODE_WRITE, &file);
+    if (HL_FAILED(result)) return result;
+
+    /* Write all PACxV402 data to file. */
+    result = hlPACxV402Write(arc, splitLimit, dataAlignment,
+        maxChunkSize, noCompress, endianFlag, exts, extCount,
+        hlPathGetName(filePath), file);
+
+    if (HL_FAILED(result))
+    {
+        hlFileStreamClose(file);
+        return result;
+    }
+
+    /* Close file and return result. */
+    return hlFileStreamClose(file);
+}
+
+HlResult hlPACxV403SaveEx(const HlArchive* HL_RESTRICT arc,
+    HlU32 splitLimit, HlU32 dataAlignment, HlBool noCompress,
+    HlBINAEndianFlag endianFlag, const HlPACxSupportedExt* HL_RESTRICT exts,
+    const size_t extCount, const HlNChar* HL_RESTRICT filePath)
+{
+    HlFileStream* file;
+    HlResult result;
+
+    /* Open file for writing. */
+    result = hlFileStreamOpen(filePath, HL_FILE_MODE_WRITE, &file);
+    if (HL_FAILED(result)) return result;
+
+    /* Write all PACxV403 data to file. */
+    result = hlPACxV403Write(arc, splitLimit, dataAlignment,
+        noCompress, endianFlag, exts, extCount,
+        hlPathGetName(filePath), file);
+
+    if (HL_FAILED(result))
+    {
+        hlFileStreamClose(file);
+        return result;
+    }
+
+    /* Close file and return result. */
+    return hlFileStreamClose(file);
 }
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS

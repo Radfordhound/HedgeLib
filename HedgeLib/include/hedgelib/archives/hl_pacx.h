@@ -8,11 +8,17 @@
 extern "C" {
 #endif
 
-#define HL_LW_DEFAULT_SPLIT_LIMIT   0xA00000
-#define HL_RIO_DEFAULT_SPLIT_LIMIT  0xA00000
-#define HL_PACX_DEFAULT_ALIGNMENT   16
+#define HL_PACX_SIG                         HL_MAKE_SIG('P', 'A', 'C', 'x')
+#define HL_PACX_DEFAULT_ALIGNMENT           16
+#define HL_PACXV402_DEFAULT_CHUNK_SIZE      65536
 
-#define HL_PACX_SIG     HL_MAKE_SIG('P', 'A', 'C', 'x')
+#define HL_LW_DEFAULT_SPLIT_LIMIT           0xA00000U
+#define HL_RIO_DEFAULT_SPLIT_LIMIT          0xA00000U
+#define HL_FORCES_DEFAULT_SPLIT_LIMIT       0x1E00000U
+#define HL_TOKYO1_DEFAULT_SPLIT_LIMIT       0x1E00000U
+#define HL_TOKYO2_DEFAULT_SPLIT_LIMIT       0x1E00000U
+#define HL_SAKURA_DEFAULT_SPLIT_LIMIT       0x1E00000U
+#define HL_PPT2_DEFAULT_SPLIT_LIMIT         0x1E00000U
 
 HL_API extern const HlNChar HL_PACX_EXT[5];
 
@@ -59,11 +65,26 @@ typedef struct HlPACxSupportedExt
 }
 HlPACxSupportedExt;
 
-HL_API extern const HlPACxSupportedExt HlLWSupportedExts[];
-HL_API extern const size_t HlLWSupportedExtCount;
+HL_API extern const HlPACxSupportedExt HlPACxLWExts[];
+HL_API extern const size_t HlPACxLWExtCount;
 
-HL_API extern const HlPACxSupportedExt HlRioSupportedExts[];
-HL_API extern const size_t HlRioSupportedExtCount;
+HL_API extern const HlPACxSupportedExt HlPACxRioExts[];
+HL_API extern const size_t HlPACxRioExtCount;
+
+HL_API extern const HlPACxSupportedExt HlPACxForcesExts[];
+HL_API extern const size_t HlPACxForcesExtCount;
+
+HL_API extern const HlPACxSupportedExt HlPACxTokyo1Exts[];
+HL_API extern const size_t HlPACxTokyo1ExtCount;
+
+HL_API extern const HlPACxSupportedExt HlPACxTokyo2Exts[];
+HL_API extern const size_t HlPACxTokyo2ExtCount;
+
+HL_API extern const HlPACxSupportedExt HlPACxSakuraExts[];
+HL_API extern const size_t HlPACxSakuraExtCount;
+
+HL_API extern const HlPACxSupportedExt HlPACxPPT2Exts[];
+HL_API extern const size_t HlPACxPPT2ExtCount;
 
 typedef HlBINAV2Header HlPACxV2Header;
 typedef HlBINAV2BlockHeader HlPACxV2BlockHeader;
@@ -200,7 +221,7 @@ HL_STATIC_ASSERT_SIZE(HlPACxV2ProxyEntryTable, 8)
 /* Thanks to Skyth for cracking the majority of the PACxV3 format! */
 typedef struct HlPACxV3SplitEntry
 {
-    HL_OFF64_STR name;
+    HL_OFF64_STR nameOffset;
 }
 HlPACxV3SplitEntry;
 
@@ -225,15 +246,18 @@ PACxV3DataType;
 
 typedef struct HlPACxV3DataEntry
 {
-    /** @brief Date Modified or Hash?? */
-    HlU32 unknown1;
+    /**
+        @brief Same as HlPACxV3Header.uid in PACxV3.
+        Different number for each data entry in PACxV4.
+    */
+    HlU32 uid;
     HlU32 dataSize;
     /** @brief Always 0? Unknown1 from PACxV2DataEntry?? */
     HlU64 unknown2;
-    HL_OFF64(void) data;
+    HL_OFF64(void) dataOffset;
     /** @brief Always 0? Unknown2 from PACxV2DataEntry?? */
     HlU64 unknown3;
-    HL_OFF64_STR extension;
+    HL_OFF64_STR extOffset;
     /** @brief Probably actually just a single byte with 7 bytes of padding?? */
     HlU64 dataType;
 }
@@ -243,9 +267,9 @@ HL_STATIC_ASSERT_SIZE(HlPACxV3DataEntry, 0x30)
 
 typedef struct HlPACxV3Node
 {
-    HL_OFF64_STR name;
-    HL_OFF64(void) data;
-    HL_OFF64(HlS32) childIndices;
+    HL_OFF64_STR nameOffset;
+    HL_OFF64(void) dataOffset;
+    HL_OFF64(HlS32) childIndicesOffset;
     HlS32 parentIndex;
     HlS32 globalIndex;
     HlS32 dataIndex;
@@ -262,8 +286,8 @@ typedef struct HlPACxV3NodeTree
 {
     HlU32 nodeCount;
     HlU32 dataNodeCount;
-    HL_OFF64(HlPACxV3Node) nodes;
-    HL_OFF64(HlS32) dataNodeIndices;
+    HL_OFF64(HlPACxV3Node) nodesOffset;
+    HL_OFF64(HlS32) dataNodeIndicesOffset;
 }
 HlPACxV3NodeTree;
 
@@ -273,7 +297,8 @@ typedef enum HlPACxV3Type
 {
     HL_PACXV3_TYPE_IS_ROOT = 1,
     HL_PACXV3_TYPE_IS_SPLIT = 2,
-    HL_PACXV3_TYPE_HAS_SPLITS = 4
+    HL_PACXV3_TYPE_HAS_SPLITS = 4,
+    HL_PACXV3_TYPE_UNKNOWN = 8
 }
 HlPACxV3Type;
 
@@ -285,8 +310,8 @@ typedef struct HlPACxV3Header
     HlU8 version[3];
     /** @brief 'B' for Big Endian, 'L' for Little Endian. */
     HlU8 endianFlag;
-    /** @brief Date Modified or Hash?? */
-    HlU32 unknown1;
+    /** @brief A random number that serves as a unique identifier for this pac file. */
+    HlU32 uid;
     HlU32 fileSize;
     HlU32 treesSize;
     HlU32 splitTableSize;
@@ -324,14 +349,16 @@ HlPACxV402Chunk;
 
 HL_STATIC_ASSERT_SIZE(HlPACxV402Chunk, 8)
 
+typedef HL_LIST(HlPACxV402Chunk) HlPACxV402ChunkList;
+
 typedef struct HlPACxV402SplitEntry
 {
-    HL_OFF64_STR name;
+    HL_OFF64_STR nameOffset;
     HlU32 compressedSize;
     HlU32 uncompressedSize;
-    HlU32 offset;
+    HlU32 splitPos;
     HlU32 chunkCount;
-    HL_OFF64(HlPACxV4Chunk) chunksOffset;
+    HL_OFF64(HlPACxV402Chunk) chunksOffset;
 }
 HlPACxV402SplitEntry;
 
@@ -339,10 +366,10 @@ HL_STATIC_ASSERT_SIZE(HlPACxV402SplitEntry, 0x20)
 
 typedef struct HlPACxV403SplitEntry
 {
-    HL_OFF64_STR name;
+    HL_OFF64_STR nameOffset;
     HlU32 compressedSize;
     HlU32 uncompressedSize;
-    HlU32 offset;
+    HlU32 splitPos;
     HlU32 padding;
 }
 HlPACxV403SplitEntry;
@@ -357,8 +384,8 @@ typedef struct HlPACxV402Header
     HlU8 version[3];
     /** @brief 'B' for Big Endian, 'L' for Little Endian. */
     HlU8 endianFlag;
-    /** @brief Date Modified or Hash?? */
-    HlU32 unknown1;
+    /** @brief A random number that serves as a unique identifier for this pac file. */
+    HlU32 uid;
     HlU32 fileSize;
     HL_OFF32(void) rootOffset;
     /**
@@ -395,8 +422,8 @@ typedef struct HlPACxV403Header
     HlU8 version[3];
     /** @brief 'B' for Big Endian, 'L' for Little Endian. */
     HlU8 endianFlag;
-    /** @brief Date Modified or Hash?? */
-    HlU32 unknown1;
+    /** @brief A random number that serves as a unique identifier for this pac file. */
+    HlU32 uid;
     HlU32 fileSize;
     HL_OFF32(void) rootOffset;
     /**
@@ -496,19 +523,17 @@ HL_API HlResult hlPACxV2SaveEx(const HlArchive* HL_RESTRICT arc,
     const HlPACxSupportedExt* HL_RESTRICT exts, const size_t extCount,
     HlPackedFileIndex* HL_RESTRICT pfi, const HlNChar* HL_RESTRICT filePath);
 
-#define hlPACxV2Save(arc, splitLimit, endianFlag, exts, extCount, filePath)\
-    hlPACxV2SaveEx(arc, splitLimit, HL_PACX_DEFAULT_ALIGNMENT, endianFlag,\
-        exts, extCount, NULL, filePath)
-
 #define hlPACxV2SaveLW(arc, splitLimit, endianFlag, filePath)\
     hlPACxV2SaveEx(arc, splitLimit, HL_PACX_DEFAULT_ALIGNMENT, endianFlag,\
-        HlLWSupportedExts, HlLWSupportedExtCount, NULL, filePath)
+        HlPACxLWExts, HlPACxLWExtCount, NULL, filePath)
 
 #define hlPACxV2SaveRio(arc, splitLimit, endianFlag, filePath)\
     hlPACxV2SaveEx(arc, splitLimit, HL_PACX_DEFAULT_ALIGNMENT, endianFlag,\
-        HlRioSupportedExts, HlRioSupportedExtCount, NULL, filePath)
+        HlPACxRioExts, HlPACxRioExtCount, NULL, filePath)
 
 /* ========================================== PACx V3 ========================================== */
+HL_API void hlPACxV3HeaderSwap(HlPACxV3Header* header, HlBool swapOffsets);
+
 HL_API void hlPACxV3Fix(void* rawData);
 
 #define hlPACxV3GetTypeTree(rawData) (const HlPACxV3NodeTree*)(\
@@ -544,6 +569,23 @@ HL_API HlResult hlPACxV3Load(const HlNChar* HL_RESTRICT filePath,
     HlBool loadSplits, HlBlobList* HL_RESTRICT pacs,
     HlArchive* HL_RESTRICT * HL_RESTRICT hlArc);
 
+HL_API HlResult hlPACxV3StartWrite(HlU32 version, HlU32 uid,
+    HlU16 type, HlBINAEndianFlag endianFlag, HlStream* stream);
+
+HL_API HlResult hlPACxV3FinishWrite(size_t headerPos, HlU32 treesSize,
+    HlU32 splitTableSize, HlU32 dataEntriesSize, HlU32 stringTableSize,
+    size_t fileDataPos, HlU32 splitCount, HlBINAEndianFlag endianFlag,
+    HlOffTable* HL_RESTRICT offTable, HlStream* HL_RESTRICT stream);
+
+HL_API HlResult hlPACxV3SaveEx(const HlArchive* HL_RESTRICT arc,
+    HlU32 splitLimit, HlU32 dataAlignment, HlBINAEndianFlag endianFlag,
+    const HlPACxSupportedExt* HL_RESTRICT exts, const size_t extCount,
+    HlPackedFileIndex* HL_RESTRICT pfi, const HlNChar* HL_RESTRICT filePath);
+
+#define hlPACxV3SaveForces(arc, splitLimit, endianFlag, filePath)\
+    hlPACxV3SaveEx(arc, splitLimit, HL_PACX_DEFAULT_ALIGNMENT, endianFlag,\
+        HlPACxForcesExts, HlPACxForcesExtCount, NULL, filePath)
+
 /* ========================================== PACx V4 ========================================== */
 HL_API void hlPACxV4Fix(void* rawData);
 
@@ -577,6 +619,35 @@ HL_API HlResult hlPACxV403DecompressBlob(const void* HL_RESTRICT compressedData,
     HlU32 compressedSize, HlU32 uncompressedSize,
     HlBlob* HL_RESTRICT * HL_RESTRICT uncompressedBlob);
 
+HL_API size_t hlPACxV402CompressBound(size_t uncompressedSize);
+
+HL_API HlResult hlPACxV402CompressNoAlloc(const void* HL_RESTRICT uncompressedData,
+    size_t uncompressedSize, size_t compressedBufSize, size_t maxChunkSize,
+    size_t* HL_RESTRICT compressedSize, void* HL_RESTRICT compressedBuf,
+    HlPACxV402ChunkList* HL_RESTRICT chunks);
+
+HL_API HlResult hlPACxV402Compress(const void* HL_RESTRICT uncompressedData,
+    size_t uncompressedSize, size_t maxChunkSize, size_t* HL_RESTRICT compressedSize,
+    void* HL_RESTRICT * HL_RESTRICT compressedData, HlPACxV402ChunkList* HL_RESTRICT chunks);
+
+HL_API HlResult hlPACxV402CompressBlob(const void* HL_RESTRICT uncompressedData,
+    size_t uncompressedSize, size_t maxChunkSize,
+    HlBlob* HL_RESTRICT * HL_RESTRICT compressedBlob,
+    HlPACxV402ChunkList* HL_RESTRICT chunks);
+
+HL_API size_t hlPACxV403CompressBound(size_t uncompressedSize);
+
+HL_API HlResult hlPACxV403CompressNoAlloc(const void* HL_RESTRICT uncompressedData,
+    size_t uncompressedSize, size_t compressedBufSize,
+    size_t* HL_RESTRICT compressedSize, void* HL_RESTRICT compressedBuf);
+
+HL_API HlResult hlPACxV403Compress(const void* HL_RESTRICT uncompressedData,
+    size_t uncompressedSize, size_t* HL_RESTRICT compressedSize,
+    void* HL_RESTRICT * HL_RESTRICT compressedData);
+
+HL_API HlResult hlPACxV403CompressBlob(const void* HL_RESTRICT uncompressedData,
+    size_t uncompressedSize, HlBlob* HL_RESTRICT * HL_RESTRICT compressedBlob);
+
 HL_API HlResult hlPACxV4ReadInto(void* HL_RESTRICT rawData,
     HlBool parseSplits, HlBlobList* HL_RESTRICT uncompressedPacs,
     HlArchive* HL_RESTRICT hlArc);
@@ -596,6 +667,48 @@ HL_API HlResult hlPACxLoadInto(const HlNChar* HL_RESTRICT filePath,
 HL_API HlResult hlPACxLoad(const HlNChar* HL_RESTRICT filePath,
     HlU8 majorVersion, HlBool loadSplits, HlBlobList* HL_RESTRICT pacs,
     HlArchive* HL_RESTRICT * HL_RESTRICT hlArc);
+
+HL_API HlResult hlPACxV402Write(const HlArchive* HL_RESTRICT arc,
+    HlU32 splitLimit, HlU32 dataAlignment, HlU32 maxChunkSize,
+    HlBool noCompress, HlBINAEndianFlag endianFlag,
+    const HlPACxSupportedExt* HL_RESTRICT exts, const size_t extCount,
+    const HlNChar* HL_RESTRICT fileName, HlStream* HL_RESTRICT stream);
+
+HL_API HlResult hlPACxV403Write(const HlArchive* HL_RESTRICT arc,
+    HlU32 splitLimit, HlU32 dataAlignment, HlBool noCompress,
+    HlBINAEndianFlag endianFlag, const HlPACxSupportedExt* HL_RESTRICT exts,
+    const size_t extCount, const HlNChar* HL_RESTRICT fileName,
+    HlStream* HL_RESTRICT stream);
+
+HL_API HlResult hlPACxV402SaveEx(const HlArchive* HL_RESTRICT arc,
+    HlU32 splitLimit, HlU32 dataAlignment, HlU32 maxChunkSize,
+    HlBool noCompress, HlBINAEndianFlag endianFlag,
+    const HlPACxSupportedExt* HL_RESTRICT exts, const size_t extCount,
+    const HlNChar* HL_RESTRICT filePath);
+
+HL_API HlResult hlPACxV403SaveEx(const HlArchive* HL_RESTRICT arc,
+    HlU32 splitLimit, HlU32 dataAlignment, HlBool noCompress,
+    HlBINAEndianFlag endianFlag, const HlPACxSupportedExt* HL_RESTRICT exts,
+    const size_t extCount, const HlNChar* HL_RESTRICT filePath);
+
+#define hlPACxV4SaveTokyo1(arc, splitLimit, noCompress, endianFlag, filePath)\
+    hlPACxV402SaveEx(arc, splitLimit, HL_PACX_DEFAULT_ALIGNMENT,\
+        HL_PACXV402_DEFAULT_CHUNK_SIZE, noCompress, endianFlag,\
+        HlPACxTokyo1Exts, HlPACxTokyo1ExtCount, filePath)
+
+#define hlPACxV4SaveTokyo2(arc, splitLimit, noCompress, endianFlag, filePath)\
+    hlPACxV402SaveEx(arc, splitLimit, HL_PACX_DEFAULT_ALIGNMENT,\
+        HL_PACXV402_DEFAULT_CHUNK_SIZE, noCompress, endianFlag,\
+        HlPACxTokyo2Exts, HlPACxTokyo2ExtCount, filePath)
+
+#define hlPACxV4SaveSakura(arc, splitLimit, noCompress, endianFlag, filePath)\
+    hlPACxV402SaveEx(arc, splitLimit, HL_PACX_DEFAULT_ALIGNMENT,\
+        HL_PACXV402_DEFAULT_CHUNK_SIZE, noCompress, endianFlag,\
+        HlPACxSakuraExts, HlPACxSakuraExtCount, filePath)
+
+#define hlPACxV4SavePPT2(arc, splitLimit, noCompress, endianFlag, filePath)\
+    hlPACxV403SaveEx(arc, splitLimit, HL_PACX_DEFAULT_ALIGNMENT, noCompress,\
+        endianFlag, HlPACxPPT2Exts, HlPACxPPT2ExtCount, filePath)
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS
 HL_API const HlPACxV2NodeTree* hlPACxV2DataGetTypeTreeExt(

@@ -475,8 +475,8 @@ static HlResult pack(const HlNChar* HL_RESTRICT input,
             (splitLimit) ? *splitLimit : HL_LW_DEFAULT_SPLIT_LIMIT,     /* splitLimit */
             (alignment) ? *alignment : HL_PACX_DEFAULT_ALIGNMENT,       /* dataAlignment */
             (bigEndian) ? HL_BINA_BIG_ENDIAN : HL_BINA_LITTLE_ENDIAN,   /* endianFlag */
-            HlLWSupportedExts,                                          /* exts */
-            HlLWSupportedExtCount,                                      /* extCount */
+            HlPACxLWExts,                                               /* exts */
+            HlPACxLWExtCount,                                           /* extCount */
             (generatePFI) ? &pfi : NULL,                                /* pfi */
             output);                                                    /* filePath */
 
@@ -487,8 +487,8 @@ static HlResult pack(const HlNChar* HL_RESTRICT input,
             (splitLimit) ? *splitLimit : HL_RIO_DEFAULT_SPLIT_LIMIT,    /* splitLimit */
             (alignment) ? *alignment : HL_PACX_DEFAULT_ALIGNMENT,       /* dataAlignment */
             HL_BINA_BIG_ENDIAN,                                         /* endianFlag */
-            HlRioSupportedExts,                                         /* exts */
-            HlRioSupportedExtCount,                                     /* extCount */
+            HlPACxRioExts,                                              /* exts */
+            HlPACxRioExtCount,                                          /* extCount */
             (generatePFI) ? &pfi : NULL,                                /* pfi */
             output);                                                    /* filePath */
 

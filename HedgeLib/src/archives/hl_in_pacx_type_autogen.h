@@ -11,8 +11,24 @@
 #define HL_IN_PACX_RIO_AUTOGEN(ext, pacxType, type, rootSortWeight, splitSortWeight)
 #endif
 
-#ifndef HL_IN_PACX_WARS_AUTOGEN
-#define HL_IN_PACX_WARS_AUTOGEN(ext, pacxType, type)
+#ifndef HL_IN_PACX_FORCES_AUTOGEN
+#define HL_IN_PACX_FORCES_AUTOGEN(ext, pacxType, type)
+#endif
+
+#ifndef HL_IN_PACX_TOKYO1_AUTOGEN
+#define HL_IN_PACX_TOKYO1_AUTOGEN(ext, pacxType, type)
+#endif
+
+#ifndef HL_IN_PACX_TOKYO2_AUTOGEN
+#define HL_IN_PACX_TOKYO2_AUTOGEN(ext, pacxType, type)
+#endif
+
+#ifndef HL_IN_PACX_SAKURA_AUTOGEN
+#define HL_IN_PACX_SAKURA_AUTOGEN(ext, pacxType, type)
+#endif
+
+#ifndef HL_IN_PACX_PPT2_AUTOGEN
+#define HL_IN_PACX_PPT2_AUTOGEN(ext, pacxType, type)
 #endif
 
 /* ======================================== PACx Types ======================================== */
@@ -243,64 +259,257 @@ HL_IN_PACX_RIO_AUTOGEN("",                      ResRawData,                     
 /* Organized based on frequency information determined via a custom analyzation program. */
 
 /* High frequency */
-HL_IN_PACX_WARS_AUTOGEN("dds",                  ResTexture,                     SPLIT)
-HL_IN_PACX_WARS_AUTOGEN("model",                ResModel,                       SPLIT)
-HL_IN_PACX_WARS_AUTOGEN("terrain-model",        ResMirageTerrainModel,          SPLIT)
-HL_IN_PACX_WARS_AUTOGEN("material",             ResMirageMaterial,              SPLIT)
-HL_IN_PACX_WARS_AUTOGEN("swif",                 ResSurfRideProject,             ROOT)
-HL_IN_PACX_WARS_AUTOGEN("terrain-instanceinfo", ResMirageTerrainInstanceInfo,   ROOT)
-HL_IN_PACX_WARS_AUTOGEN("uv-anim",              ResAnimTexSrt,                  SPLIT)
-HL_IN_PACX_WARS_AUTOGEN("cemt",                 ResCyanEffect,                  ROOT)
-HL_IN_PACX_WARS_AUTOGEN("rfl",                  ResReflection,                  ROOT)
-HL_IN_PACX_WARS_AUTOGEN("skl.hkx",              ResSkeleton,                    ROOT)
-HL_IN_PACX_WARS_AUTOGEN("anm.hkx",              ResAnimSkeleton,                ROOT)
-HL_IN_PACX_WARS_AUTOGEN("mat-anim",             ResAnimMaterial,                SPLIT)
-HL_IN_PACX_WARS_AUTOGEN("codetbl",              ResCodeTable,                   ROOT)
-HL_IN_PACX_WARS_AUTOGEN("cnvrs-text",           ResText,                        ROOT)
-HL_IN_PACX_WARS_AUTOGEN("light",                ResMirageLight,                 ROOT)
-HL_IN_PACX_WARS_AUTOGEN("asm",                  ResAnimator,                    V2_MERGED)
-HL_IN_PACX_WARS_AUTOGEN("model-instanceinfo",   ResModelInstanceInfo,           V2_MERGED)
+HL_IN_PACX_FORCES_AUTOGEN("dds",                    ResTexture,                     SPLIT)
+HL_IN_PACX_FORCES_AUTOGEN("model",                  ResModel,                       SPLIT)
+HL_IN_PACX_FORCES_AUTOGEN("terrain-model",          ResMirageTerrainModel,          SPLIT)
+HL_IN_PACX_FORCES_AUTOGEN("material",               ResMirageMaterial,              SPLIT)
+HL_IN_PACX_FORCES_AUTOGEN("swif",                   ResSurfRideProject,             ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("terrain-instanceinfo",   ResMirageTerrainInstanceInfo,   ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("uv-anim",                ResAnimTexSrt,                  SPLIT)
+HL_IN_PACX_FORCES_AUTOGEN("cemt",                   ResCyanEffect,                  ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("rfl",                    ResReflection,                  ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("skl.hkx",                ResSkeleton,                    ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("anm.hkx",                ResAnimSkeleton,                ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("mat-anim",               ResAnimMaterial,                SPLIT)
+HL_IN_PACX_FORCES_AUTOGEN("codetbl",                ResCodeTable,                   ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("cnvrs-text",             ResText,                        ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("light",                  ResMirageLight,                 ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("asm",                    ResAnimator,                    V2_MERGED)
+HL_IN_PACX_FORCES_AUTOGEN("model-instanceinfo",     ResModelInstanceInfo,           V2_MERGED)
 
 /* Average frequency */
-HL_IN_PACX_WARS_AUTOGEN("cam-anim",             ResAnimCameraContainer,         SPLIT)
-HL_IN_PACX_WARS_AUTOGEN("gedit",                ResObjectWorld,                 ROOT)
-HL_IN_PACX_WARS_AUTOGEN("phy.hkx",              ResHavokMesh,                   ROOT)
-HL_IN_PACX_WARS_AUTOGEN("vis-anim",             ResAnimVis,                     SPLIT)
-HL_IN_PACX_WARS_AUTOGEN("grass.bin",            ResTerrainGrassInfo,            ROOT)
-HL_IN_PACX_WARS_AUTOGEN("scene",                ResScene,                       ROOT)
-HL_IN_PACX_WARS_AUTOGEN("effdb",                ResParticleLocation,            V2_MERGED)
-HL_IN_PACX_WARS_AUTOGEN("shlf",                 ResSHLightField,                ROOT)
-HL_IN_PACX_WARS_AUTOGEN("gism",                 ResGismoConfig,                 ROOT)
-HL_IN_PACX_WARS_AUTOGEN("probe",                ResProbe,                       V2_MERGED)
-HL_IN_PACX_WARS_AUTOGEN("svcol.bin",            ResSvCol,                       V2_MERGED)
+HL_IN_PACX_FORCES_AUTOGEN("cam-anim",               ResAnimCameraContainer,         SPLIT)
+HL_IN_PACX_FORCES_AUTOGEN("gedit",                  ResObjectWorld,                 ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("phy.hkx",                ResHavokMesh,                   ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("vis-anim",               ResAnimVis,                     SPLIT)
+HL_IN_PACX_FORCES_AUTOGEN("grass.bin",              ResTerrainGrassInfo,            ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("scene",                  ResScene,                       ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("effdb",                  ResParticleLocation,            V2_MERGED)
+HL_IN_PACX_FORCES_AUTOGEN("shlf",                   ResSHLightField,                ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("gism",                   ResGismoConfig,                 ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("probe",                  ResProbe,                       V2_MERGED)
+HL_IN_PACX_FORCES_AUTOGEN("svcol.bin",              ResSvCol,                       V2_MERGED)
 
 /* Low frequency */
-HL_IN_PACX_WARS_AUTOGEN("fxcol.bin",            ResFxColFile,                   V2_MERGED)
-HL_IN_PACX_WARS_AUTOGEN("path",                 ResSplinePath,                  ROOT)
-HL_IN_PACX_WARS_AUTOGEN("pt-anim",              ResAnimTexPat,                  SPLIT)
-HL_IN_PACX_WARS_AUTOGEN("lit-anim",             ResAnimLightContainer,          SPLIT)
-HL_IN_PACX_WARS_AUTOGEN("cnvrs-proj",           ResTextProject,                 ROOT)
-HL_IN_PACX_WARS_AUTOGEN("cnvrs-meta",           ResTextMeta,                    ROOT)
-HL_IN_PACX_WARS_AUTOGEN("scfnt",                ResScalableFontSet,             ROOT)
-HL_IN_PACX_WARS_AUTOGEN("pso",                  ResMiragePixelShader,           SPLIT)
-HL_IN_PACX_WARS_AUTOGEN("vso",                  ResMirageVertexShader,          SPLIT)
-HL_IN_PACX_WARS_AUTOGEN("shader-list",          ResShaderList,                  ROOT)
-HL_IN_PACX_WARS_AUTOGEN("vib",                  ResVibration,                   ROOT)
-HL_IN_PACX_WARS_AUTOGEN("bfnt",                 ResBitmapFont,                  V2_MERGED)
+HL_IN_PACX_FORCES_AUTOGEN("fxcol.bin",              ResFxColFile,                   V2_MERGED)
+HL_IN_PACX_FORCES_AUTOGEN("path",                   ResSplinePath,                  V2_MERGED)
+HL_IN_PACX_FORCES_AUTOGEN("pt-anim",                ResAnimTexPat,                  SPLIT)
+HL_IN_PACX_FORCES_AUTOGEN("lit-anim",               ResAnimLightContainer,          SPLIT)
+HL_IN_PACX_FORCES_AUTOGEN("cnvrs-proj",             ResTextProject,                 ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("cnvrs-meta",             ResTextMeta,                    ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("scfnt",                  ResScalableFontSet,             ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("pso",                    ResMiragePixelShader,           SPLIT)
+HL_IN_PACX_FORCES_AUTOGEN("vso",                    ResMirageVertexShader,          SPLIT)
+HL_IN_PACX_FORCES_AUTOGEN("shader-list",            ResShaderList,                  ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("vib",                    ResVibration,                   ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("bfnt",                   ResBitmapFont,                  V2_MERGED)
 
 /* Never used in Forces (but present in the .exe) */
 /* TODO: These are never used in Forces but are in the exe. Is this info correct?*/
-HL_IN_PACX_WARS_AUTOGEN("hhd",                  ResCustomData,                  ROOT)
-HL_IN_PACX_WARS_AUTOGEN("lua",                  ResLuaData,                     ROOT)
-HL_IN_PACX_WARS_AUTOGEN("lft",                  ResMirageLightField,            ROOT)
-HL_IN_PACX_WARS_AUTOGEN("xtb2",                 ResXTB2Data,                    V2_MERGED)
-HL_IN_PACX_WARS_AUTOGEN("nextra.bin",           ResNameExtra,                   V2_MERGED)
+HL_IN_PACX_FORCES_AUTOGEN("hhd",                    ResCustomData,                  ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("lua",                    ResLuaData,                     ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("lft",                    ResMirageLightField,            ROOT)
+HL_IN_PACX_FORCES_AUTOGEN("xtb2",                   ResXTB2Data,                    V2_MERGED)
+HL_IN_PACX_FORCES_AUTOGEN("nextra.bin",             ResNameExtra,                   V2_MERGED)
 
 /* ResRawData placed at the end; used if no other extensions matched. */
-HL_IN_PACX_WARS_AUTOGEN("",                     ResRawData,                     V2_MERGED)
+HL_IN_PACX_FORCES_AUTOGEN("",                       ResRawData,                     V2_MERGED)
+
+/* =================================== Tokyo 2020 Wars Exts =================================== */
+
+/* Organized based on frequency information determined via a custom analyzation program. */
+
+/* High frequency */
+HL_IN_PACX_TOKYO1_AUTOGEN("dds",                    ResTexture,                     SPLIT)
+HL_IN_PACX_TOKYO1_AUTOGEN("material",               ResMirageMaterial,              SPLIT)
+HL_IN_PACX_TOKYO1_AUTOGEN("model",                  ResModel,                       MIXED)
+HL_IN_PACX_TOKYO1_AUTOGEN("skl.pxd",                ResSkeletonPxd,                 ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("vli",                    ResVertexLinkInfo,              ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("rfl",                    ResReflection,                  ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("swif",                   ResSurfRideProject,             ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("cnvrs-text",             ResText,                        ROOT)
+
+/* Average frequency */
+HL_IN_PACX_TOKYO1_AUTOGEN("uv-anim",                ResAnimTexSrt,                  SPLIT)
+HL_IN_PACX_TOKYO1_AUTOGEN("cam-anim",               ResAnimCameraContainer,         SPLIT)
+HL_IN_PACX_TOKYO1_AUTOGEN("anm.pxd",                ResAnimationPxd,                ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("lua",                    ResLuaData,                     ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("asm",                    ResAnimator,                    ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("terrain-model",          ResMirageTerrainModel,          SPLIT)
+HL_IN_PACX_TOKYO1_AUTOGEN("light",                  ResMirageLight,                 ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("lf",                     ResSHLightField,                ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("cnvrs-meta",             ResTextMeta,                    ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("cnvrs-proj",             ResTextProject,                 ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("cemt",                   ResCyanEffect,                  ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("mat-anim",               ResAnimMaterial,                SPLIT)
+
+/* Low frequency */
+HL_IN_PACX_TOKYO1_AUTOGEN("scfnt",                  ResScalableFontSet,             ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("pso",                    ResMiragePixelShader,           SPLIT)
+HL_IN_PACX_TOKYO1_AUTOGEN("scene",                  ResScene,                       ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("path.bin",               ResSplinePath,                  ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("probe",                  ResProbe,                       ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("aid",                    ResAnimatedInstance,            ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("gedit",                  ResObjectWorld,                 ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("btmesh",                 ResBulletMesh,                  ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("affair",                 ResAffair,                      ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("vso",                    ResMirageVertexShader,          SPLIT)
+HL_IN_PACX_TOKYO1_AUTOGEN("vat",                    ResVertexAnimationTexture,      ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("pt-anim",                ResAnimTexPat,                  SPLIT)
+HL_IN_PACX_TOKYO1_AUTOGEN("cso",                    ResMirageComputeShader,         SPLIT)
+HL_IN_PACX_TOKYO1_AUTOGEN("shader-list",            ResShaderList,                  ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("anm.hkx",                ResAnimSkeleton,                ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("bfnt",                   ResBitmapFont,                  ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("effdb",                  ResParticleLocation,            ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("vib",                    ResVibration,                   ROOT)
+HL_IN_PACX_TOKYO1_AUTOGEN("skl.hkx",                ResSkeleton,                    ROOT)
+
+/* ResRawData placed at the end; used if no other extensions matched. */
+HL_IN_PACX_TOKYO1_AUTOGEN("",                       ResRawData,                     V2_MERGED)
+
+/* ================================= M&S Tokyo 2020 Wars Exts ================================= */
+
+/* Organized based on frequency information determined via a custom analyzation program. */
+
+/* High frequency */
+HL_IN_PACX_TOKYO2_AUTOGEN("dds",                    ResTexture,                     SPLIT)
+HL_IN_PACX_TOKYO2_AUTOGEN("material",               ResMirageMaterial,              SPLIT)
+HL_IN_PACX_TOKYO2_AUTOGEN("model",                  ResModel,                       MIXED)
+HL_IN_PACX_TOKYO2_AUTOGEN("swif",                   ResSurfRideProject,             ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("anm.pxd",                ResAnimationPxd,                ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("asm",                    ResAnimator,                    V2_MERGED)
+HL_IN_PACX_TOKYO2_AUTOGEN("effdb",                  ResParticleLocation,            ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("uv-anim",                ResAnimTexSrt,                  SPLIT)
+HL_IN_PACX_TOKYO2_AUTOGEN("vis-anim",               ResAnimVis,                     SPLIT)
+HL_IN_PACX_TOKYO2_AUTOGEN("skl.pxd",                ResSkeletonPxd,                 ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("lua",                    ResLuaData,                     ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("terrain-model",          ResMirageTerrainModel,          SPLIT)
+HL_IN_PACX_TOKYO2_AUTOGEN("cnvrs-text",             ResText,                        ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("rfl",                    ResReflection,                  ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("gedit",                  ResObjectWorld,                 ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("cam-anim",               ResAnimCameraContainer,         SPLIT)
+
+/* Average frequency */
+HL_IN_PACX_TOKYO2_AUTOGEN("aid",                    ResAnimatedInstance,            ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("pt-anim",                ResAnimTexPat,                  SPLIT)
+HL_IN_PACX_TOKYO2_AUTOGEN("light",                  ResMirageLight,                 ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("cemt",                   ResCyanEffect,                  ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("lf",                     ResSHLightField,                ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("probe",                  ResProbe,                       V2_MERGED)
+HL_IN_PACX_TOKYO2_AUTOGEN("btmesh",                 ResBulletMesh,                  ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("anim2d",                 ResAnim2D,                      ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("fpd",                    ResFlashLight,                  ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("mat-anim",               ResAnimMaterial,                SPLIT)
+HL_IN_PACX_TOKYO2_AUTOGEN("path.bin",               ResSplinePath,                  V2_MERGED)
+HL_IN_PACX_TOKYO2_AUTOGEN("scfnt",                  ResScalableFontSet,             ROOT)
+
+/* Low frequency */
+HL_IN_PACX_TOKYO2_AUTOGEN("cnvrs-meta",             ResTextMeta,                    ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("cnvrs-proj",             ResTextProject,                 ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("pso",                    ResMiragePixelShader,           SPLIT)
+HL_IN_PACX_TOKYO2_AUTOGEN("vso",                    ResMirageVertexShader,          SPLIT)
+HL_IN_PACX_TOKYO2_AUTOGEN("okern",                  ResOpticalKerning,              ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("btsb",                   ResSoftBody,                    ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("scene",                  ResScene,                       ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("svcol.bin",              ResSvCol,                       V2_MERGED)
+HL_IN_PACX_TOKYO2_AUTOGEN("terrain-instanceinfo",   ResMirageTerrainInstanceInfo,   ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("cso",                    ResMirageComputeShader,         SPLIT)
+HL_IN_PACX_TOKYO2_AUTOGEN("nmt",                    ResNavMeshTile,                 ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("shader-list",            ResShaderList,                  ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("vib",                    ResVibration,                   ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("bnvib",                  ResVibrationHD,                 ROOT)
+HL_IN_PACX_TOKYO2_AUTOGEN("bfnt",                   ResBitmapFont,                  V2_MERGED)
+
+/* ResRawData placed at the end; used if no other extensions matched. */
+HL_IN_PACX_TOKYO2_AUTOGEN("",                       ResRawData,                     V2_MERGED)
+
+/* ===================================== Sakura Wars Exts ===================================== */
+
+/* Organized based on frequency information determined via a custom analyzation program. */
+
+/* High frequency */
+HL_IN_PACX_SAKURA_AUTOGEN("rfl",                    ResReflection,                  ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("dds",                    ResTexture,                     SPLIT)
+HL_IN_PACX_SAKURA_AUTOGEN("material",               ResMirageMaterial,              SPLIT)
+HL_IN_PACX_SAKURA_AUTOGEN("model",                  ResModel,                       SPLIT)
+HL_IN_PACX_SAKURA_AUTOGEN("anm.pxd",                ResAnimationPxd,                ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("asm",                    ResAnimator,                    V2_MERGED)
+HL_IN_PACX_SAKURA_AUTOGEN("dv.bin",                 ResDvRawData,                   ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("cam-anim",               ResAnimCameraContainer,         SPLIT)
+HL_IN_PACX_SAKURA_AUTOGEN("skl.pxd",                ResSkeletonPxd,                 ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("terrain-model",          ResMirageTerrainModel,          SPLIT)
+HL_IN_PACX_SAKURA_AUTOGEN("swif",                   ResSurfRideProject,             ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("mat-anim",               ResAnimMaterial,                SPLIT)
+HL_IN_PACX_SAKURA_AUTOGEN("light",                  ResMirageLight,                 ROOT)
+
+/* Average frequency */
+HL_IN_PACX_SAKURA_AUTOGEN("uv-anim",                ResAnimTexSrt,                  SPLIT)
+HL_IN_PACX_SAKURA_AUTOGEN("btmesh",                 ResBulletMesh,                  ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("lf",                     ResSHLightField,                ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("terrain-instanceinfo",   ResMirageTerrainInstanceInfo,   ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("gedit",                  ResObjectWorld,                 ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("probe",                  ResProbe,                       V2_MERGED)
+HL_IN_PACX_SAKURA_AUTOGEN("msb",                    ResScript,                      ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("cemt",                   ResCyanEffect,                  ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("cnvrs-text",             ResText,                        ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("lit-anim",               ResAnimLightContainer,          SPLIT)
+HL_IN_PACX_SAKURA_AUTOGEN("lua",                    ResLuaData,                     ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("effdb",                  ResParticleLocation,            ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("model-instanceinfo",     ResModelInstanceInfo,           ROOT)
+
+/* Low frequency */
+HL_IN_PACX_SAKURA_AUTOGEN("fxcol.bin",              ResFxColFile,                   ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("nmt",                    ResNavMeshTile,                 ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("vis-anim",               ResAnimVis,                     SPLIT)
+HL_IN_PACX_SAKURA_AUTOGEN("mx_path",                ResMxGraph,                     ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("svcol.bin",              ResSvCol,                       V2_MERGED)
+HL_IN_PACX_SAKURA_AUTOGEN("pso",                    ResMiragePixelShader,           SPLIT)
+HL_IN_PACX_SAKURA_AUTOGEN("nmc",                    ResNavMeshConfig,               ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("scfnt",                  ResScalableFontSet,             ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("pt-anim",                ResAnimTexPat,                  SPLIT)
+HL_IN_PACX_SAKURA_AUTOGEN("bfnt",                   ResBitmapFont,                  V2_MERGED)
+HL_IN_PACX_SAKURA_AUTOGEN("cso",                    ResMirageComputeShader,         SPLIT)
+HL_IN_PACX_SAKURA_AUTOGEN("vso",                    ResMirageVertexShader,          SPLIT)
+HL_IN_PACX_SAKURA_AUTOGEN("okern",                  ResOpticalKerning,              ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("png",                    ResRawData,                     ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("vib",                    ResVibration,                   ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("cnvrs-proj",             ResTextProject,                 ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("cnvrs-meta",             ResTextMeta,                    ROOT)
+HL_IN_PACX_SAKURA_AUTOGEN("shader-list",            ResShaderList,                  ROOT)
+
+/* ResRawData placed at the end; used if no other extensions matched. */
+HL_IN_PACX_SAKURA_AUTOGEN("",                       ResRawData,                     V2_MERGED)
+
+/* ========================================= PPT2 Exts ======================================== */
+
+/* Organized based on frequency information determined via a custom analyzation program. */
+
+/* High frequency */
+HL_IN_PACX_PPT2_AUTOGEN("dds",                      ResTexture,                     SPLIT)
+HL_IN_PACX_PPT2_AUTOGEN("swif",                     ResSurfRideProject,             ROOT)
+
+/* Average frequency */
+HL_IN_PACX_PPT2_AUTOGEN("scfnt",                    ResScalableFontSet,             ROOT)
+HL_IN_PACX_PPT2_AUTOGEN("pss",                      ResPss,                         ROOT)
+HL_IN_PACX_PPT2_AUTOGEN("rfl",                      ResReflection,                  ROOT)
+HL_IN_PACX_PPT2_AUTOGEN("cnvrs-proj",               ResTextProject,                 ROOT)
+HL_IN_PACX_PPT2_AUTOGEN("cnvrs-text",               ResText,                        ROOT)
+
+/* Low frequency */
+HL_IN_PACX_PPT2_AUTOGEN("cnvrs-meta",               ResTextMeta,                    ROOT)
+HL_IN_PACX_PPT2_AUTOGEN("bfnt",                     ResBitmapFont,                  V2_MERGED)
+HL_IN_PACX_PPT2_AUTOGEN("bnvib",                    ResVibrationHD,                 ROOT)
+HL_IN_PACX_PPT2_AUTOGEN("vib",                      ResVibration,                   ROOT)
+
+/* ResRawData placed at the end; used if no other extensions matched. */
+HL_IN_PACX_PPT2_AUTOGEN("",                         ResRawData,                     V2_MERGED)
 
 /* Undefine all auto-generator macros. */
 #undef HL_IN_PACX_TYPE_AUTOGEN
 #undef HL_IN_PACX_LW_AUTOGEN
 #undef HL_IN_PACX_RIO_AUTOGEN
-#undef HL_IN_PACX_WARS_AUTOGEN
+#undef HL_IN_PACX_FORCES_AUTOGEN
+#undef HL_IN_PACX_TOKYO1_AUTOGEN
+#undef HL_IN_PACX_TOKYO2_AUTOGEN
+#undef HL_IN_PACX_SAKURA_AUTOGEN
+#undef HL_IN_PACX_PPT2_AUTOGEN
