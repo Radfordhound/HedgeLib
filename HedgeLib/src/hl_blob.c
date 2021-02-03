@@ -88,6 +88,8 @@ void hlBlobFree(HlBlob* blob)
 void hlBlobListFree(HlBlobList* blobList)
 {
     size_t i;
+    if (!blobList) return;
+
     for (i = 0; i < blobList->count; ++i)
     {
         hlBlobFree(blobList->data[i]);
