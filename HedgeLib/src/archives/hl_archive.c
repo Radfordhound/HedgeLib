@@ -150,6 +150,67 @@ HlBool hlINArchiveNextSplit2(HlNChar* lastCharPtr)
     return HL_TRUE;
 }
 
+HlBool hlINArchiveNextSplit3(HlNChar* lastCharPtr)
+{
+    /*
+       Increment the last character in the path and check if it's > 9.
+       
+       Before           After           > 9?
+       Sonic.pac.000    Sonic.pac.001   No
+       Sonic.pac.009    Sonic.pac.00:   Yes
+       Sonic.pac.090    Sonic.pac.091   No
+       Sonic.pac.199    Sonic.pac.19:   Yes
+       Sonic.pac.999    Sonic.pac.99:   Yes
+    */
+    if (++(*lastCharPtr) > HL_NTEXT('9'))
+    {
+        /*
+           Increment the second-to-last character in the path and check if it's > 9.
+
+           Before           After           > 9?
+           Sonic.pac.00:    Sonic.pac.01:   No
+           Sonic.pac.19:    Sonic.pac.1::   Yes
+           Sonic.pac.99:    Sonic.pac.9::   Yes
+        */
+        if (++(*(lastCharPtr - 1)) > HL_NTEXT('9'))
+        {
+            /* 
+               Increment the third-to-last character in the path and check if it's > 9.
+
+               Before           After           > 9?
+               Sonic.pac.1::    Sonic.pac.2::   No
+               Sonic.pac.9::    Sonic.pac.:::   Yes
+            */
+            if (++(*(lastCharPtr - 2)) > HL_NTEXT('9'))
+            {
+                /* We've gone over split .999 - there is no next split; return false. */
+                return HL_FALSE;
+            }
+            else
+            {
+                /*
+                   We haven't gone over split 999 yet; reset second-to-last character in path.
+
+                   Before           After
+                   Sonic.pac.2::    Sonic.pac.20:
+                */
+                *(lastCharPtr - 1) = HL_NTEXT('0');
+            }
+        }
+
+        /*
+           We haven't gone over split 99 yet; reset last character in path.
+
+           Before           After
+           Sonic.pac.01:    Sonic.pac.010
+           Sonic.pac.20:    Sonic.pac.200
+        */
+        *lastCharPtr = HL_NTEXT('0');
+    }
+
+    return HL_TRUE;
+}
+
 static HlNChar* hlINArchiveEnlargePathBuffer(size_t minAmount,
     HlBool* HL_RESTRICT pathBufOnHeap, HlNChar* HL_RESTRICT pathBuf,
     size_t* HL_RESTRICT pathBufCap)

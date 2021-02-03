@@ -3,5 +3,6 @@
 #include "hedgelib/hl_internal.h"
 
 HlBool hlINArchiveNextSplit2(HlNChar* lastCharPtr);
+HlBool hlINArchiveNextSplit3(HlNChar* lastCharPtr);
 
 #endif
