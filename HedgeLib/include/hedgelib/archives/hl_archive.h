@@ -203,11 +203,13 @@ HL_API void hlArchiveEntryDestruct(HlArchiveEntry* entry);
 HL_API void hlArchiveDestruct(HlArchive* arc);
 HL_API void hlArchiveFree(HlArchive* arc);
 
-HL_API HlResult hlPackedFileIndexConstruct(HlPackedFileIndex* pfi);
-HL_API HlResult hlPackedFileIndexCreate(HlPackedFileIndex** pfi);
+HL_API HlResult hlPackedFileEntryConstruct(const HlNChar* HL_RESTRICT name,
+    HlU32 dataPos, HlU32 dataSize, HlPackedFileEntry* HL_RESTRICT entry);
+
 HL_API void hlPackedFileEntryDestruct(HlPackedFileEntry* entry);
+
+HL_API HlResult hlPackedFileIndexConstruct(HlPackedFileIndex* pfi);
 HL_API void hlPackedFileIndexDestruct(HlPackedFileIndex* pfi);
-HL_API void hlPackedFileIndexDestroy(HlPackedFileIndex* pfi);
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS
 HL_API HlBool hlArchiveEntryIsStreamingExt(const HlArchiveEntry* entry);

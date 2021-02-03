@@ -773,37 +773,31 @@ void hlArchiveFree(HlArchive* arc)
     hlFree(arc);
 }
 
-HlResult hlPackedFileIndexConstruct(HlPackedFileIndex* pfi)
+HlResult hlPackedFileEntryConstruct(const HlNChar* HL_RESTRICT name,
+    HlU32 dataPos, HlU32 dataSize, HlPackedFileEntry* HL_RESTRICT entry)
 {
-    HL_LIST_INIT(pfi->entries);
+    /* Convert name to UTF-8. */
+    char* nameUTF8 = hlStrConvNativeToUTF8(name, 0);
+    if (!nameUTF8) return HL_ERROR_OUT_OF_MEMORY;
+
+    /* Construct packed file entry and return success. */
+    entry->name = nameUTF8;
+    entry->dataPos = dataPos;
+    entry->dataSize = dataSize;
+
     return HL_RESULT_SUCCESS;
-}
-
-HlResult hlPackedFileIndexCreate(HlPackedFileIndex** pfi)
-{
-    HlPackedFileIndex* hlIndexBuf;
-    HlResult result;
-
-    /* Allocate HlPackedFileIndex. */
-    hlIndexBuf = HL_ALLOC_OBJ(HlPackedFileIndex);
-    if (!hlIndexBuf) return HL_ERROR_OUT_OF_MEMORY;
-
-    /* Construct HlPackedFileIndex. */
-    result = hlPackedFileIndexConstruct(hlIndexBuf);
-    if (HL_FAILED(result))
-    {
-        hlFree(hlIndexBuf);
-        return result;
-    }
-
-    /* Set HlPackedFileIndex pointer and return. */
-    *pfi = hlIndexBuf;
-    return result;
 }
 
 void hlPackedFileEntryDestruct(HlPackedFileEntry* entry)
 {
+    if (!entry) return;
     hlFree(entry->name);
+}
+
+HlResult hlPackedFileIndexConstruct(HlPackedFileIndex* pfi)
+{
+    HL_LIST_INIT(pfi->entries);
+    return HL_RESULT_SUCCESS;
 }
 
 void hlPackedFileIndexDestruct(HlPackedFileIndex* pfi)
@@ -815,12 +809,6 @@ void hlPackedFileIndexDestruct(HlPackedFileIndex* pfi)
     }
 
     HL_LIST_FREE(pfi->entries);
-}
-
-void hlPackedFileIndexDestroy(HlPackedFileIndex* pfi)
-{
-    hlPackedFileIndexDestruct(pfi);
-    hlFree(pfi);
 }
 
 #ifndef HL_NO_EXTERNAL_WRAPPERS

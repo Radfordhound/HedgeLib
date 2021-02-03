@@ -2081,48 +2081,28 @@ static HlResult hlINPACxV2WriteFileData(
         /* Write data to stream if necessary. */
         if (isHere)
         {
+            /* Write data to stream. */
             result = hlStreamWrite(stream, dataSize, entryData, NULL);
-        }
-    }
+            if (HL_FAILED(result)) goto end;
 
-    /* Add packed file entry to packed file index if necessary. */
-    if (pfi)
-    {
-#ifdef HL_IN_WIN32_UNICODE
-        const size_t fileNameUTF8Size = hlStrGetReqLenNativeToUTF8(
-            fileMetadata->name, 0);
-#else
-        const size_t fileNameUTF8Size = hlNStrLen(fileMetadata->name);
-#endif
+            /* Add packed file entry to packed file index if necessary. */
+            if (pfi)
+            {
+                /* Generate packed file entry. */
+                HlPackedFileEntry packedEntry;
+                result = hlPackedFileEntryConstruct(fileMetadata->name,
+                    (HlU32)dataPos, dataEntry.dataSize, &packedEntry);
 
-        /* Generate packed file entry. */
-        HlPackedFileEntry packedEntry =
-        {
-            HL_ALLOC_ARR(char, fileNameUTF8Size),   /* name */
-            (HlU32)dataPos,                         /* dataPos */
-            dataEntry.dataSize                      /* dataSize */
-        };
+                if (HL_FAILED(result)) goto end;
 
-        if (!packedEntry.name)
-        {
-            result = HL_ERROR_OUT_OF_MEMORY;
-            goto end;
-        }
-
-        /* Convert name to UTF-8 and copy into packed file entry name buffer. */
-        if (!hlStrConvNativeToUTF8NoAlloc(fileMetadata->name,
-            packedEntry.name, 0, fileNameUTF8Size))
-        {
-            hlPackedFileEntryDestruct(&packedEntry);
-            goto end;
-        }
-
-        /* Add packed file entry to packed file index. */
-        result = HL_LIST_PUSH(pfi->entries, packedEntry);
-        if (HL_FAILED(result))
-        {
-            hlPackedFileEntryDestruct(&packedEntry);
-            goto end;
+                /* Add packed file entry to packed file index. */
+                result = HL_LIST_PUSH(pfi->entries, packedEntry);
+                if (HL_FAILED(result))
+                {
+                    hlPackedFileEntryDestruct(&packedEntry);
+                    goto end;
+                }
+            }
         }
     }
 
