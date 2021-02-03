@@ -188,14 +188,14 @@ static HlResult INPACxV3ParseFileEntries(HrInstance* HL_RESTRICT instance,
     const ParserFunc parser, char* HL_RESTRICT pathBuf,
     HrResMgr* HL_RESTRICT resMgr, HlTerrainGroup* HL_RESTRICT terrainGroup)
 {
-    const HlS32* childIndices = (const HlS32*)hlOff64Get(&fileNode->childIndices);
+    const HlS32* childIndices = (const HlS32*)hlOff64Get(&fileNode->childIndicesOffset);
     HlResult result;
     HlU16 i;
 
     if (fileNode->hasData)
     {
         const HlPACxV3DataEntry* dataEntry = (const HlPACxV3DataEntry*)
-            hlOff64Get(&fileNode->data);
+            hlOff64Get(&fileNode->dataOffset);
 
         /* Skip proxies if requested. */
         if (dataEntry->dataType != HL_PACXV3_DATA_TYPE_NOT_HERE)
@@ -205,7 +205,7 @@ static HlResult INPACxV3ParseFileEntries(HrInstance* HL_RESTRICT instance,
             /* Parse data. */
             /* TODO: Account for BINA data!! */
             result = parser(instance, pathBuf, hlOff64Get(
-                &dataEntry->data), dataEntry->dataSize,
+                &dataEntry->dataOffset), dataEntry->dataSize,
                 resMgr, &resID);
 
             if (HL_FAILED(result)) return result;
@@ -267,11 +267,11 @@ static HlResult INPACxV3ParseFileEntries(HrInstance* HL_RESTRICT instance,
             }
         }
     }
-    else if (fileNode->name)
+    else if (fileNode->nameOffset)
     {
         /* Copy name into path buffer. */
         strcpy(&pathBuf[fileNode->bufStartIndex],
-            (const char*)hlOff64Get(&fileNode->name));
+            (const char*)hlOff64Get(&fileNode->nameOffset));
     }
 
     /* Recurse through children. */
@@ -295,17 +295,17 @@ static HlResult INPACxV3ParseTypeEntries(HrInstance* HL_RESTRICT instance,
     char* HL_RESTRICT pathBuf, HrResMgr* HL_RESTRICT resMgr,
     HlTerrainGroup* HL_RESTRICT terrainGroup)
 {
-    const HlS32* childIndices = (const HlS32*)hlOff64Get(&typeNode->childIndices);
+    const HlS32* childIndices = (const HlS32*)hlOff64Get(&typeNode->childIndicesOffset);
     HlResult result;
     HlU16 i;
 
     if (typeNode->hasData)
     {
         const HlPACxV3NodeTree* fileTree = (const HlPACxV3NodeTree*)
-            hlOff64Get(&typeNode->data);
+            hlOff64Get(&typeNode->dataOffset);
 
         const HlPACxV3Node* fileNodes = (const HlPACxV3Node*)
-            hlOff64Get(&fileTree->nodes);
+            hlOff64Get(&fileTree->nodesOffset);
 
         /* Get parser. */
         const ParserFunc parser = getParser(typesPACxV3,
@@ -322,11 +322,11 @@ static HlResult INPACxV3ParseTypeEntries(HrInstance* HL_RESTRICT instance,
             if (HL_FAILED(result)) return result;
         }
     }
-    else if (typeNode->name)
+    else if (typeNode->nameOffset)
     {
         /* Copy name into type buffer. */
         strcpy(&typeBuf[typeNode->bufStartIndex],
-            (const char*)hlOff64Get(&typeNode->name));
+            (const char*)hlOff64Get(&typeNode->nameOffset));
     }
 
     /* Recurse through children. */
@@ -361,7 +361,7 @@ HlResult parsePACxV3(HrInstance* HL_RESTRICT instance,
     {
         const HlPACxV3Header* header = (const HlPACxV3Header*)pacs[i]->data;
         const HlPACxV3NodeTree* typeTree = hlPACxV3GetTypeTree(header);
-        const HlPACxV3Node* typeNodes = (const HlPACxV3Node*)hlOff64Get(&typeTree->nodes);
+        const HlPACxV3Node* typeNodes = (const HlPACxV3Node*)hlOff64Get(&typeTree->nodesOffset);
         const HlPACxV3Node* instanceInfoNode = hlPACxV3GetNode(
             typeTree, "ResMirageTerrainInstanceInfo");
 
