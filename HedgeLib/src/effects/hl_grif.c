@@ -486,7 +486,9 @@ HlResult hlGrifEffectFix(HlGrifEffect* effect, HlBINAEndianFlag endianFlag)
                 return HL_RESULT_SUCCESS;
             }
         }
+
+        return HL_ERROR_UNSUPPORTED;
     }
 
-    return HL_ERROR_UNSUPPORTED;
+    return HL_RESULT_SUCCESS;
 }
