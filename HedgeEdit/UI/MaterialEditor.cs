@@ -157,7 +157,7 @@ namespace HedgeEdit.UI
             }
             else
             {
-                Material.Header = new GensHeader();
+                Material.Header = new GensHeader { RootNodeType = 3 };
             }
 
             // Assign Parameters
@@ -276,6 +276,8 @@ namespace HedgeEdit.UI
             public SerializableParameter()
             {
                 param = new GensMaterial.Parameter();
+                param.ParamFlag1 = 512;
+                param.ParamFlag2 = 256;
             }
 
             public SerializableParameter(GensMaterial.Parameter param)
