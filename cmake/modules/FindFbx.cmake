@@ -287,5 +287,5 @@ find_package_handle_standard_args(Fbx
 
 # Warn about how this script can fail to find the newest version.
 if(NOT FBX_FOUND)
-  message("-- Note that the FindFbx.cmake script can fail to find the newest Fbx sdk if there are multiple ones installed. Please set \"FBX_DIR\" environment or cmake variable to choose a specific version/location.")
+  message(STATUS "Note that the FindFbx.cmake script can fail to find the newest Fbx sdk if there are multiple ones installed. Please set \"FBX_DIR\" environment or cmake variable to choose a specific version/location.")
 endif()

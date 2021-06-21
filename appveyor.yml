@@ -29,14 +29,16 @@ for:
     - ps: |
         mkdir build
         cd build
-        mkdir "$dir\bin"
-        cmake "-DCMAKE_INSTALL_PREFIX=$dir\bin" -G "Visual Studio 16 2019" -A $env:PLATFORM ../
+        mkdir "$env:APPVEYOR_BUILD_FOLDER\bin"
+        cmake "-DCMAKE_INSTALL_PREFIX=$env:APPVEYOR_BUILD_FOLDER\bin" -G "Visual Studio 16 2019" -A $env:PLATFORM ../
+        echo "Cmake generation complete"
   build: off
   build_script:
     - ps: |
-        msbuild -v:minimal "$dir\build\INSTALL.vcxproj"
-        Copy-Item "$dir\License.txt" -Destination "$dir\bin\License.txt"
-        Copy-Item "$dir\Third-Party-Licenses.txt" -Destination "$dir\bin\Third-Party-Licenses.txt"
+        echo "Starting msbuild for $env:APPVEYOR_BUILD_FOLDER\build\INSTALL.vcxproj"
+        msbuild -v:minimal "$env:APPVEYOR_BUILD_FOLDER\build\INSTALL.vcxproj"
+        Copy-Item "$env:APPVEYOR_BUILD_FOLDER\License.txt" -Destination "$env:APPVEYOR_BUILD_FOLDER\bin\License.txt"
+        Copy-Item "$env:APPVEYOR_BUILD_FOLDER\Third-Party-Licenses.txt" -Destination "$env:APPVEYOR_BUILD_FOLDER\bin\Third-Party-Licenses.txt"
   artifacts:
     - path: bin
       name: HedgeLib
@@ -54,10 +56,10 @@ for:
   build: off
   build_script:
     - ps: |
-        mkdir "$dir/bin"
-        make "DESTDIR=$dir/bin" install
-        Copy-Item "$dir\License.txt" -Destination "$dir\bin\License.txt"
-        Copy-Item "$dir\Third-Party-Licenses.txt" -Destination "$dir\bin\Third-Party-Licenses.txt"
+        mkdir "$env:APPVEYOR_BUILD_FOLDER/bin"
+        make "DESTDIR=$env:APPVEYOR_BUILD_FOLDER/bin" install
+        Copy-Item "$env:APPVEYOR_BUILD_FOLDER\License.txt" -Destination "$env:APPVEYOR_BUILD_FOLDER\bin\License.txt"
+        Copy-Item "$env:APPVEYOR_BUILD_FOLDER\Third-Party-Licenses.txt" -Destination "$env:APPVEYOR_BUILD_FOLDER\bin\Third-Party-Licenses.txt"
   artifacts:
     - path: bin
       name: HedgeLib
@@ -76,10 +78,10 @@ for:
   build: off
   build_script:
     - ps: |
-        mkdir "$dir/bin"
-        make CPP=g++-9 CXX=g++-9 LD=g++-9 "DESTDIR=$dir/bin" install
-        Copy-Item "$dir\License.txt" -Destination "$dir\bin\License.txt"
-        Copy-Item "$dir\Third-Party-Licenses.txt" -Destination "$dir\bin\Third-Party-Licenses.txt"
+        mkdir "$env:APPVEYOR_BUILD_FOLDER/bin"
+        make CPP=g++-9 CXX=g++-9 LD=g++-9 "DESTDIR=$env:APPVEYOR_BUILD_FOLDER/bin" install
+        Copy-Item "$env:APPVEYOR_BUILD_FOLDER\License.txt" -Destination "$env:APPVEYOR_BUILD_FOLDER\bin\License.txt"
+        Copy-Item "$env:APPVEYOR_BUILD_FOLDER\Third-Party-Licenses.txt" -Destination "$env:APPVEYOR_BUILD_FOLDER\bin\Third-Party-Licenses.txt"
   artifacts:
     - path: bin
       name: HedgeLib

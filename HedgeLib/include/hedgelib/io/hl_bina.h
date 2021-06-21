@@ -3,6 +3,11 @@
 #include "hl_hh_mirage.h"
 #include "../hl_blob.h"
 
+/* GNU-specific compilation fix */
+#ifdef major
+#undef major
+#endif
+
 namespace hl
 {
 namespace bina
