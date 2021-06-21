@@ -31,11 +31,10 @@ for:
         cd build
         mkdir "$dir\bin"
         cmake "-DCMAKE_INSTALL_PREFIX=$dir\bin" -G "Visual Studio 16 2019" -A $env:PLATFORM ../
-  build:
-    project: build/INSTALL.vcxproj
-    verbosity: minimal
-  after_build:
+  build: off
+  build_script:
     - ps: |
+        msbuild -v:minimal "$dir\build\INSTALL.vcxproj"
         Copy-Item "$dir\License.txt" -Destination "$dir\bin\License.txt"
         Copy-Item "$dir\Third-Party-Licenses.txt" -Destination "$dir\bin\Third-Party-Licenses.txt"
   artifacts:
@@ -70,7 +69,7 @@ for:
   install:
     - sh: if [ "$PLATFORM" == "x86" ]; then sudo apt-get update; sudo apt-get install -yq gcc-9-multilib g++-9-multilib; fi
     - ps: |
-        sudo apt install libglm-dev liblz4-dev zlib1g-dev
+        sudo apt install -yq libglm-dev liblz4-dev zlib1g-dev
         mkdir build
         cd build
         cmake -DCMAKE_BUILD_TYPE=Release ../
