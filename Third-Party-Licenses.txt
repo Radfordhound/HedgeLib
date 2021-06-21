@@ -1,15 +1,55 @@
-HedgeLib, HedgeRender, and the HedgeTools are all released under the MIT License detailed
-within License.txt. However, HedgeLib, HedgeRender, and the HedgeTools all rely on a
-few third-party libraries which are released under their own licenses.
+HedgeLib, HedgeRender, and the HedgeTools are all released under the MIT License as detailed
+within the included "License.txt". However, HedgeLib, HedgeRender, and the HedgeTools all
+additionally rely on third-party libraries which have been released under their own licenses.
 
-This file details each one of those third-party libraries and, of course, its license.
+This file details each one of those third-party libraries and their corresponding licenses.
 
 ===================================================================================
-==  cJSON
-== (Used for JSON serialization in HedgeLib)
+== FBX SDK
+== (Used for FBX serialization in HedgeLib)
 ===================================================================================
 
-Copyright (c) 2009-2017 Dave Gamble and cJSON contributors
+This software contains Autodesk® FBX® code developed by Autodesk, Inc. Copyright 2019 Autodesk, Inc. All rights, reserved. Such code is provided “as is” and Autodesk, Inc. disclaims any and all warranties, whether express or implied, including without limitation the implied warranties of merchantability, fitness for a particular purpose or non-infringement of third party rights. In no event shall Autodesk, Inc. be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services; loss of use, data, or profits; or business interruption) however caused and on any theory of liability, whether in contract, strict liability, or tort (including negligence or otherwise) arising in any way out of such code.
+
+
+===================================================================================
+== robin_hood
+== (Used for hash maps and other hashing operations in HedgeLib,
+== HedgeRender, and the HedgeTools)
+===================================================================================
+
+MIT License
+
+Copyright (c) 2018-2021 Martin Ankerl
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+===================================================================================
+== GLM
+== (Used for SIMD-optimized vector/matrix/quaternion math in HedgeLib,
+== HedgeRender, and the HedgeTools)
+===================================================================================
+
+The MIT License
+--------------------------------------------------------------------------------
+Copyright (c) 2005 - G-Truc Creation
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,13 +69,14 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
+
 ===================================================================================
-==  lz4
+== lz4
 == (Used for lz4 compression/decompression of PACxV4 .pac files in HedgeLib)
 ===================================================================================
 
 LZ4 Library
-Copyright (c) 2011-2016, Yann Collet
+Copyright (c) 2011-2020, Yann Collet
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -61,215 +102,28 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 ===================================================================================
-==  cglm
-== (Used for SIMD-optimized vector/matrix/quaternion math in HedgeLib,
-== HedgeRender, and the HedgeTools)
+== zlib
+== (Used for deflate ("zlib") compression/decompression throughout HedgeLib)
 ===================================================================================
 
-The MIT License (MIT)
+Copyright (C) 1995-2017 Jean-loup Gailly and Mark Adler
 
-Copyright (c) 2015 Recep Aslantas <info@recp.me>
+This software is provided 'as-is', without any express or implied
+warranty.  In no event will the authors be held liable for any damages
+arising from the use of this software.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. The origin of this software must not be misrepresented; you must not
+    claim that you wrote the original software. If you use this software
+    in a product, an acknowledgment in the product documentation would be
+    appreciated but is not required.
+2. Altered source versions must be plainly marked as such, and must not be
+    misrepresented as being the original software.
+3. This notice may not be removed or altered from any source distribution.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-
-This library [initially] used some [piece of] implementations
-(may include codes) from these open source projects/resources:
-
-1. Initial Affine Transforms
-The original glm repo (g-truc), url: https://github.com/g-truc/glm
-
-LICENSE[S]:
-  The Happy Bunny License (Modified MIT License)
-  The MIT License
-  Copyright (c) 2005 - 2016 G-Truc Creation
-
-FULL LICENSE: https://github.com/g-truc/glm/blob/master/copying.txt
-
-2. Initial Quaternions
-Anton's OpenGL 4 Tutorials book source code:
-
-LICENSE:
-  OpenGL 4 Example Code.
-  Accompanies written series "Anton's OpenGL 4 Tutorials"
-  Email: anton at antongerdelan dot net
-  First version 27 Jan 2014
-  Copyright Dr Anton Gerdelan, Trinity College Dublin, Ireland.
-
-3. Euler Angles
-  David Eberly
-  Geometric Tools, LLC http://www.geometrictools.com/
-  Copyright (c) 1998-2016. All Rights Reserved.
-
-  Computing Euler angles from a rotation matrix (euler.pdf)
-  Gregory G. Slabaugh
-
-4. Extracting Planes
-Fast Extraction of Viewing Frustum Planes from the World-View-Projection Matrix
-Authors:
-  Gil Gribb (ggribb@ravensoft.com)
-  Klaus Hartmann (k_hartmann@osnabrueck.netsurf.de)
-
-5. Transform AABB
-Transform Axis Aligned Bounding Boxes:
-http://dev.theomader.com/transform-bounding-boxes/
-https://github.com/erich666/GraphicsGems/blob/master/gems/TransBox.c
-
-6. Cull frustum
-http://www.txutxi.com/?p=584
-http://old.cescg.org/CESCG-2002/DSykoraJJelinek/
-
-7. Quaternions
-Initial mat4_quat is borrowed from Apple's simd library
-
-8. Vector Rotation using Quaternion
-https://gamedev.stackexchange.com/questions/28395/rotating-vector3-by-a-quaternion
-
-9. Sphere AABB intersect
-https://github.com/erich666/GraphicsGems/blob/master/gems/BoxSphere.c
-
-10. Horizontal add
-https://stackoverflow.com/questions/6996764/fastest-way-to-do-horizontal-float-vector-sum-on-x86
-
-11. de casteljau implementation and comments
-https://forums.khronos.org/showthread.php/10264-Animations-in-1-4-1-release-notes-revision-A/page2?highlight=bezier
-https://forums.khronos.org/showthread.php/10644-Animation-Bezier-interpolation
-https://forums.khronos.org/showthread.php/10387-2D-Tangents-in-Bezier-Splines?p=34164&viewfull=1#post34164
-https://forums.khronos.org/showthread.php/10651-Animation-TCB-Spline-Interpolation-in-COLLADA?highlight=bezier
-
-12. vec2 cross product
-http://allenchou.net/2013/07/cross-product-of-2d-vectors/
-
-13. Ray triangle intersect
-Möller–Trumbore ray-triangle intersection algorithm, from "Fast, Minimum Storage Ray/Triangle Intersection"
-Authors:
-  Thomas Möller (tompa@clarus.se)
-  Ben Trumbore (wbt@graphics.cornell.edu)
-Link to paper: http://webserver2.tecgraf.puc-rio.br/~mgattass/cg/trbRR/Fast%20MinimumStorage%20RayTriangle%20Intersection.pdf
-
-===================================================================================
-==  robin_hood
-== (Used for dictionaries/hashing in HedgeRender)
-===================================================================================
-
-MIT License
-
-Copyright (c) 2018-2019 Martin Ankerl
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-
-===================================================================================
-==  DirectXTex DDSTextureLoader
-== (Used for DDS texture loading in HedgeRender)
-===================================================================================
-
-                               The MIT License (MIT)
-
-Copyright (c) 2011-2020 Microsoft Corp
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-software and associated documentation files (the "Software"), to deal in the Software 
-without restriction, including without limitation the rights to use, copy, modify, 
-merge, publish, distribute, sublicense, and/or sell copies of the Software, and to 
-permit persons to whom the Software is furnished to do so, subject to the following 
-conditions: 
-
-The above copyright notice and this permission notice shall be included in all copies 
-or substantial portions of the Software.  
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
-HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
-CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
-OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-
-===================================================================================
-==  imgui
-== (Used for UI in the HedgeTools)
-===================================================================================
-
-The MIT License (MIT)
-
-Copyright (c) 2014-2020 Omar Cornut
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-
-===================================================================================
-==  cimgui
-== (Used for UI in the HedgeTools)
-===================================================================================
-
-The MIT License (MIT)
-
-Copyright (c) 2015 Stephan Dilly
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Jean-loup Gailly        Mark Adler
+jloup@gzip.org          madler@alumni.caltech.edu
 

@@ -1,15 +1,53 @@
 #ifndef HL_INTERNAL_H_INCLUDED
 #define HL_INTERNAL_H_INCLUDED
-#include <stddef.h>
-#include <limits.h>
+#include <cstdint>
+#include <cstddef>
+#include <climits>
+#include <type_traits>
+#include <exception>
+#include <stdexcept>
 
-#ifdef __cplusplus
-extern "C" {
+#ifdef _MSC_VER
+#include <intrin.h>
+#if _MSC_VER >= 1310
+#include <stdlib.h>
+#endif
 #endif
 
-/* Define one macro for Windows */
+namespace hl
+{
+/* Windows platform macro */
 #if defined(__CYGWIN__) && !defined(_WIN32)
 #define _WIN32
+#endif
+
+/* Common architecture macros */
+#ifndef HL_X86
+#if (defined(i386) || defined(__i386) || defined(__i386__) ||\
+    defined(_M_IX86) || defined(__X86__) || defined(_X86_) ||\
+    defined(__I86__) || defined(__INTEL__) || defined(__386))
+#define HL_X86
+#endif
+#endif
+
+#ifndef HL_X64
+#if (defined(__amd64__) || defined(__amd64) || defined(__x86_64__) ||\
+    defined(__x86_64) || defined(_M_X64) || defined(_M_AMD64))
+#define HL_X64
+#endif
+#endif
+
+#ifndef HL_ARM
+#if (defined(__arm__) || defined(__TARGET_ARCH_ARM) || defined(_ARM) ||\
+    defined(_M_ARM) || defined(__arm))
+#define HL_ARM
+#endif
+#endif
+
+#ifndef HL_ARM64
+#if (defined(__aarch64__) || defined(_M_ARM64))
+#define HL_ARM64
+#endif
 #endif
 
 /*
@@ -18,250 +56,43 @@ extern "C" {
 */
 #ifndef HL_API
 #ifdef HL_IS_DLL
-/* HedgeLib is a DLL. */
+// HedgeLib is a DLL.
 #ifdef _WIN32
-/* We're targetting Windows; use __declspec */
+// We're targetting Windows; use __declspec
 #ifdef HL_IS_BUILDING_DLL
-/* We're building a DLL; export the given symbol. */
+// We're building a DLL; export the given symbol.
 #define HL_API __declspec(dllexport)
 #else
-/* We're using a pre-built DLL; import the given symbol. */
+// We're using a pre-built DLL; import the given symbol.
 #define HL_API __declspec(dllimport)
 #endif
 #elif defined(__GNUC__) && __GNUC__ >= 4
-/* We're not targetting Windows and we're using gcc; use __attribute__ */
+// We're not targetting Windows and we're using gcc; use __attribute__ 
 #define HL_API __attribute__ ((visibility ("default")))
 #else
-/* We don't know the target platform/compiler; assume it doesn't require any keywords. */
+// We don't know the target platform/compiler; assume it doesn't require any keywords.
 #define HL_API
 #endif
 #else
-/* HedgeLib is a static library; no keyword(s) are needed. */
+// HedgeLib is a static library; no keyword(s) are needed. 
 #define HL_API
 #endif
 #endif
 
-/* Macro for restrict keyword */
-#ifndef HL_RESTRICT
-#if !defined(__cplusplus) && (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
-#define HL_RESTRICT restrict
-#elif defined(_MSC_VER) && _MSC_VER >= 1310 && !defined(__STDC__)
-/* MSVC-specific __restrict keyword. */
-#define HL_RESTRICT __restrict
-#elif (defined(__GNUC__) && __GNUC__ >= 3) || defined(__clang__)
-/* GCC 3.0+/Clang-specific __restrict__ keyword. */
-#define HL_RESTRICT __restrict__
-#else
-/* We assume no restrict keyword support. Define HL_RESTRICT yourself if wanted. */
-#define HL_RESTRICT
-#endif
-#endif
-
-/* Fixed-width integral types */
-#if (defined(__cplusplus) && __cplusplus >= 201103L) ||\
-    (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) ||\
-    (defined(_MSC_VER) && _MSC_VER >= 1600)
-
-/* Include C99/C++11 stdint.h */
-#include <stdint.h>
-
-/* Define typedefs for stdint fixed-width integral types. */
-#ifdef INT8_MAX
-typedef int8_t HlS8;
-#endif
-#ifdef INT_LEAST8_MAX
-typedef int_least8_t HlLeastS8;
-#endif
-#ifdef UINT8_MAX
-typedef uint8_t HlU8;
-#endif
-#ifdef UINT_LEAST8_MAX
-typedef uint_least8_t HlLeastU8;
-#endif
-#ifdef INT16_MAX
-typedef int16_t HlS16;
-#endif
-#ifdef INT_LEAST16_MAX
-typedef int_least16_t HlLeastS16;
-#endif
-#ifdef UINT16_MAX
-typedef uint16_t HlU16;
-#endif
-#ifdef UINT_LEAST16_MAX
-typedef uint_least16_t HlLeastU16;
-#endif
-#ifdef INT32_MAX
-typedef int32_t HlS32;
-#endif
-#ifdef INT_LEAST32_MAX
-typedef int_least32_t HlLeastS32;
-#endif
-#ifdef UINT32_MAX
-typedef uint32_t HlU32;
-#endif
-#ifdef UINT_LEAST32_MAX
-typedef uint_least32_t HlLeastU32;
-#endif
-#ifdef INT64_MAX
-typedef int64_t HlS64;
-#endif
-#ifdef INT_LEAST64_MAX
-typedef int_least64_t HlLeastS64;
-#endif
-#ifdef UINT64_MAX
-typedef uint64_t HlU64;
-#endif
-#ifdef UINT_LEAST64_MAX
-typedef uint_least64_t HlLeastU64;
-#endif
-
-/* Define pointer integral types/macros. */
-#ifdef INTPTR_MAX
-typedef intptr_t HlSPtr;
-#endif
-#ifdef UINTPTR_MAX
-typedef uintptr_t HlUPtr;
-#endif
-
-#define HL_SPTR_MIN INTPTR_MIN
-#define HL_SPTR_MAX INTPTR_MAX
-#define HL_UPTR_MAX UINTPTR_MAX
-
-/* Define size macros. */
-#define HL_SIZE_MAX SIZE_MAX
-
-/* Define max integral types/macros. */
-#ifdef INTMAX_MAX
-typedef intmax_t HlSMax;
-#endif
-#ifdef UINTMAX_MAX
-typedef uintmax_t HlUMax;
-#endif
-
-#define HL_SMAX_MAX INTMAX_MAX
-#define HL_UMAX_MAX UINTMAX_MAX
-#elif defined(_MSC_VER)
-/* Define typedefs for MSVC-specific fixed-width integral types. */
-typedef __int8 HlS8;
-typedef HlS8 HlLeastS8;
-typedef unsigned __int8 HlU8;
-typedef HlU8 HlLeastU8;
-typedef __int16 HlS16;
-typedef HlS16 HlLeastS16;
-typedef unsigned __int16 HlU16;
-typedef HlU16 HlLeastU16;
-typedef __int32 HlS32;
-typedef HlS32 HlLeastS32;
-typedef unsigned __int32 HlU32;
-typedef HlU32 HlLeastU32;
-typedef __int64 HlS64;
-typedef HlS64 HlLeastS64;
-typedef unsigned __int64 HlU64;
-typedef HlU64 HlLeastU64;
-
-/* Define pointer integral types/macros. */
-#ifdef _WIN64
-typedef HlS64 HlSPtr;
-typedef HlU64 HlUPtr;
-#define HL_SPTR_MIN (-9223372036854775807i64 - 1)
-#define HL_SPTR_MAX (9223372036854775807i64)
-#define HL_UPTR_MAX 0xffffffffffffffffu
-#else
-typedef HlS32 HlSPtr;
-typedef HlU32 HlUPtr;
-#define HL_SPTR_MIN (-2147483647i32 - 1)
-#define HL_SPTR_MAX (2147483647i32)
-#define HL_UPTR_MAX 0xffffffffu
-#endif
-
-/* Define size macros. */
-#define HL_SIZE_MAX HL_UPTR_MAX
-
-/* Define max integral types/macros. */
-typedef HlSPtr HlSMax;
-typedef HlUPtr HlUMax;
-
-#define HL_SMAX_MAX HL_SPTR_MAX
-#define HL_UMAX_MAX HL_UPTR_MAX
-#else
-/* Include hl_in_c89_stdint.h, which defines all the values we need. */
-#include "hl_in_c89_stdint.h"
-#endif
-
-/* Native character type */
-#ifndef HL_WIN32_FORCE_ANSI
-#if defined(_WIN32) && (defined(_UNICODE) || defined(UNICODE))
-/* Assume we have C95 wchar_t support (we already included stddef.h). */
-typedef wchar_t HlNChar;
-#define HL_IN_WIN32_UNICODE
-#endif
-#endif
-
-#ifndef HL_IN_WIN32_UNICODE
-typedef char HlNChar;
-#endif
-
-/* Unicode character types */
-#ifdef __cpp_unicode_characters
-/* C++11 unicode character types */
-typedef char16_t HlChar16;
-typedef char32_t HlChar32;
-#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L &&\
- !(defined(__APPLE__) && defined(__MACH__)) /* macOS "supports" C11 but doesn't include uchar.h */
-/* C11 unicode character types */
-#include <uchar.h>
-typedef char16_t HlChar16;
-typedef char32_t HlChar32;
-#else
-/* Custom unicode character types */
-typedef HlLeastU16 HlChar16;
-typedef HlLeastU32 HlChar32;
-#endif
-
-/* Text helper macros */
-#ifdef HL_IN_WIN32_UNICODE
-#define HL_NTEXT(txt) L##txt
-#else
-#define HL_NTEXT(txt) txt
-#endif
-
-/* Boolean type */
-#ifdef __cplusplus
-/* C++ bool type */
-typedef bool HlBool;
-#define HL_TRUE true
-#define HL_FALSE false
-#elif (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) ||\
-    (defined(_MSC_VER) && _MSC_VER >= 1800 && !defined(__STDC__))
-/* C99+ bool type */
-typedef _Bool HlBool;
-#define HL_TRUE 1
-#define HL_FALSE 0
-#else
-/* Pre-C99 bool type */
-typedef unsigned char HlBool;
-#define HL_TRUE 1
-#define HL_FALSE 0
-#endif
-
-/* Reference types */
-typedef enum HlRefType
-{
-    HL_REF_TYPE_PTR,
-    HL_REF_TYPE_NAME
-}
-HlRefType;
-
-#define HL_REF(type) struct { HlRefType refType; union {\
-    type* ptr; const char* name; } data; }
+/* Fixed-width integral type aliases */
+using s8 = std::int8_t;
+using u8 = std::uint8_t;
+using s16 = std::int16_t;
+using u16 = std::uint16_t;
+using s32 = std::int32_t;
+using u32 = std::uint32_t;
+using s64 = std::int64_t;
+using u64 = std::uint64_t;
 
 /* Static assert macros */
 #ifdef __cpp_static_assert
 /* C++11 static assert */
-#define HL_STATIC_ASSERT(expression, msg) static_assert(expression, msg);
-#elif defined(__STDC_VERSION__) && __STDC_VERSION__ == 201112L
-/* C11 static assert */
-#define HL_STATIC_ASSERT(expression, msg) _Static_assert(expression, msg);
+#define HL_STATIC_ASSERT(expression, msg) static_assert(expression, msg)
 #else
 /* No static assert */
 #define HL_STATIC_ASSERT(expression, msg)
@@ -270,101 +101,974 @@ HlRefType;
 #define HL_STATIC_ASSERT_SIZE(type, size) HL_STATIC_ASSERT(sizeof(type) == size,\
     "sizeof(" #type ") != expected size (" #size ").")
 
-/* Helper macros */
-#define HL_EMPTY
-#define HL_BIT_COUNT(v) (sizeof(v) * 8U)
-#define HL_BIT_FLAG(index) ((size_t)1U << (size_t)(index))
-#define HL_ADD_OFF(ptr, off) (((unsigned char*)(ptr)) + (off))
-#define HL_ADD_OFFC(ptr, off) (((const unsigned char*)(ptr)) + (off))
+/* Pointer addition helpers */
+template<typename ret_t = u8, typename off_t>
+inline ret_t* ptradd(void* ptr, off_t off) noexcept
+{
+    return reinterpret_cast<ret_t*>(
+        (static_cast<u8*>(ptr) + off));
+}
 
-#ifdef HL_IS_BIG_ENDIAN
-#define HL_MAKE_SIG(c1, c2, c3, c4) (\
-    ((unsigned int)((unsigned char)(c1)) << 24) |\
-    ((unsigned int)((unsigned char)(c2)) << 16) |\
-    ((unsigned int)((unsigned char)(c3)) << 8) |\
-    ((unsigned int)((unsigned char)(c4))))
+template<typename ret_t = u8, typename off_t>
+inline const ret_t* ptradd(const void* ptr, off_t off) noexcept
+{
+    return reinterpret_cast<const ret_t*>(
+        (static_cast<const u8*>(ptr) + off));
+}
+
+/* Bit helpers */
+template<typename T>
+constexpr std::size_t bit_count() noexcept
+{
+    return (sizeof(T) * 8);
+}
+
+template<typename T>
+constexpr T bit_flag(T index) noexcept
+{
+    return (static_cast<T>(1) << index);
+}
+
+inline unsigned int bit_ctz(unsigned int v) noexcept
+{
+#if defined(_MSC_VER)
+    unsigned long r;
+    _BitScanForward(&r, v);
+    return static_cast<unsigned int>(r);
+#elif (defined(__clang__) && defined(__has_builtin))
+#if __has_builtin(__builtin_ctz)
+    return static_cast<unsigned int>(__builtin_ctz(v));
+#endif
+#elif defined(__GNUC__)
+    return static_cast<unsigned int>(__builtin_ctz(v));
 #else
-#define HL_MAKE_SIG(c1, c2, c3, c4) (\
-    ((unsigned int)((unsigned char)(c4)) << 24) |\
-    ((unsigned int)((unsigned char)(c3)) << 16) |\
-    ((unsigned int)((unsigned char)(c2)) << 8) |\
-    ((unsigned int)((unsigned char)(c1))))
+    unsigned int i;
+    for (i = 0; i < 32; ++i)
+    {
+        if ((v & (1 << i)) != 0) break;
+    }
+
+    return i;
+#endif
+}
+
+#define HL_ENUM_CLASS_DEF_BITWISE_OPS(enumClass)\
+    constexpr enumClass operator&(enumClass a, enumClass b) noexcept\
+    {\
+        using int_t = std::underlying_type<enumClass>::type;\
+        return static_cast<enumClass>(static_cast<int_t>(a) & static_cast<int_t>(b));\
+    }\
+\
+    constexpr enumClass operator|(enumClass a, enumClass b) noexcept\
+    {\
+        using int_t = std::underlying_type<enumClass>::type;\
+        return static_cast<enumClass>(static_cast<int_t>(a) | static_cast<int_t>(b));\
+    }\
+\
+    constexpr enumClass operator^(enumClass a, enumClass b) noexcept\
+    {\
+        using int_t = std::underlying_type<enumClass>::type;\
+        return static_cast<enumClass>(static_cast<int_t>(a) ^ static_cast<int_t>(b));\
+    }\
+\
+    constexpr enumClass operator~(enumClass a) noexcept\
+    {\
+        using int_t = std::underlying_type<enumClass>::type;\
+        return static_cast<enumClass>(~static_cast<int_t>(a));\
+    }\
+\
+    template<typename shift_t>\
+    constexpr enumClass operator<<(enumClass a, shift_t b) noexcept\
+    {\
+        using int_t = std::underlying_type<enumClass>::type;\
+        return static_cast<enumClass>(static_cast<int_t>(a) << b);\
+    }\
+\
+    template<typename shift_t>\
+    constexpr enumClass operator>>(enumClass a, shift_t b) noexcept\
+    {\
+        using int_t = std::underlying_type<enumClass>::type;\
+        return static_cast<enumClass>(static_cast<int_t>(a) >> b);\
+    }\
+\
+    inline enumClass& operator&=(enumClass& a, enumClass b) noexcept\
+    {\
+        return ((a = (a & b)));\
+    }\
+\
+    inline enumClass& operator|=(enumClass& a, enumClass b) noexcept\
+    {\
+        return ((a = (a | b)));\
+    }\
+\
+    inline enumClass& operator^=(enumClass& a, enumClass b) noexcept\
+    {\
+        return ((a = (a ^ b)));\
+    }\
+\
+    template<typename shift_t>\
+    inline enumClass& operator>>=(enumClass a, shift_t b) noexcept\
+    {\
+        return ((a = (a >> b)));\
+    }\
+\
+    template<typename shift_t>\
+    inline enumClass& operator<<=(enumClass a, shift_t b) noexcept\
+    {\
+        return ((a = (a << b)));\
+    }
+    
+/* Endianness helpers */
+#ifndef HL_IS_BIG_ENDIAN
+#ifdef __BYTE_ORDER__
+// GCC big endian platform macro
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define HL_IS_BIG_ENDIAN
+#endif
+#elif defined(__BIG_ENDIAN__) && !defined(__LITTLE_ENDIAN__)
+// Clang big endian platform macro
+#define HL_IS_BIG_ENDIAN
+#endif
+#endif
+
+/* Error handling */
+enum class error_type
+{
+    unknown,
+    unsupported,
+    out_of_memory,
+    invalid_args,
+    out_of_range,
+    already_exists,
+    not_found,
+    invalid_data,
+    no_more_entries,
+    sharing_violation
+};
+
+HL_API std::exception make_exception(error_type err);
+
+HL_API std::exception make_exception(error_type err,
+    const char* what_arg);
+
+#ifndef HL_ERROR
+#define HL_ERROR(...) throw make_exception(__VA_ARGS__)
+#endif
+
+/* Memory helpers */
+HL_API void* aligned_malloc(std::size_t size, std::size_t alignment);
+HL_API void aligned_free(void* ptr);
+
+/* Endian swap intrinsic macros */
+#if defined(_MSC_VER) && _MSC_VER >= 1310
+
+/* MSVC intrinsics */
+#define HL_SWAP_U16(v) static_cast<::hl::u16>(_byteswap_ushort(static_cast<unsigned short>(v)))
+#define HL_SWAP_U32(v) static_cast<::hl::u32>(_byteswap_ulong(static_cast<unsigned long>(v)))
+#define HL_SWAP_U64(v) static_cast<::hl::u64>(_byteswap_uint64(static_cast<unsigned __int64>(v)))
+
+#elif (defined(__clang__) && defined(__has_builtin))
+
+/* Clang intrinsics */
+#if __has_builtin(__builtin_bswap16)
+#define HL_SWAP_U16(v) __builtin_bswap16(v)
+#endif
+#if __has_builtin(__builtin_bswap32)
+#define HL_SWAP_U32(v) __builtin_bswap32(v)
+#endif
+#if __has_builtin(__builtin_bswap64)
+#define HL_SWAP_U64(v) __builtin_bswap64(v)
+#endif
+
+#elif defined(__GNUC__)
+
+/* GCC intrinsics */
+#if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
+/* GCC 4.8+ intrinsics */
+#define HL_SWAP_U16(v) __builtin_bswap16(v)
+#endif
+
+#if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3))
+/* Use GCC 4.3+ intrinsics */
+#define HL_SWAP_U32(v) __builtin_bswap32(v)
+#define HL_SWAP_U64(v) __builtin_bswap64(v)
+#endif
+
 #endif
 
 /*
-   Offset macros; currently these exist only for code
-   readability, but that may change in the future.
+   Endian swap manual fallback macros
+
+   Most compilers should (hopefully) be smart enough
+   to turn these into intrinsics anyway.
 */
-#define HL_OFF32(type) HlU32
-#define HL_OFF64(type) HlU64
-#define HL_OFF32_STR HL_OFF32(char)
-#define HL_OFF64_STR HL_OFF64(char)
-
-/* Offset helpers. */
-#if HL_UPTR_MAX > 0xffffffffu
-/* Pointers don't fit within 32-bits, so use 32-bit offsets as relative pointers. */
-HL_API void* hlOff32Get(const HlU32* offPtr);
-HL_API void hlOff32Set(HlU32* offPtr, void* ptr);
-#else
-/* Pointers fit within 32-bits, so just use 32-bit offsets as pointers directly. */
-#define hlOff32Get(offPtr)          ((void*)((HlUPtr)(*(offPtr))))
-#define hlOff32Set(offPtr, ptr)     *(offPtr) = (HlU32)((HlUPtr)(ptr))
+#ifndef HL_SWAP_U16
+#define HL_SWAP_U16(v) ((((v) & 0xFFU) << 8) |\
+    (((v) & 0xFF00U) >> 8))
 #endif
 
-#if HL_UPTR_MAX > 0xffffffffffffffffu
-/* Pointers don't fit within 64-bits, so use 64-bit offsets as relative pointers. */
-HL_API void* hlOff64Get(const HlU64* offPtr);
-HL_API void hlOff64Set(HlU64* offPtr, void* ptr);
-#else
-/* Pointers fit within 64-bits, so just use 64-bit offsets as pointers directly. */
-#define hlOff64Get(offPtr)          ((void*)((HlUPtr)(*(offPtr))))
-#define hlOff64Set(offPtr, ptr)     *(offPtr) = (HlU64)((HlUPtr)(ptr))
+#ifndef HL_SWAP_U32
+#define HL_SWAP_U32(v) ((((v) & 0xFFU) << 24) |\
+    (((v) & 0xFF00U) << 8) | (((v) & 0xFF0000U) >> 8) |\
+    (((v) & 0xFF000000U) >> 24))
 #endif
 
-#define hlOff32Fix(offPtr, base)    hlOff32Set(offPtr, HL_ADD_OFF(base, *(offPtr)))
-#define hlOff64Fix(offPtr, base)    hlOff64Set(offPtr, HL_ADD_OFF(base, *(offPtr)))
-
-/* Alignment helpers. */
-#define HL_ALIGN(value, stride)\
-    (((stride) < 2) ? (value) :                         /* If stride is < 2, just return value. */\
-    ((((value) + ((stride) - 1)) & ~((stride) - 1))))   /* Align value by stride and return. */
-
-#ifndef HL_NO_EXTERNAL_WRAPPERS
-HL_API void* hlOff32GetExt(const HlU32* offPtr);
-HL_API void hlOff32SetExt(HlU32* offPtr, void* ptr);
-HL_API void* hlOff64GetExt(const HlU64* offPtr);
-HL_API void hlOff64SetExt(HlU64* offPtr, void* ptr);
-HL_API void hlOff32FixExt(HlU32* offPtr, void* base);
-HL_API void hlOff64FixExt(HlU64* offPtr, void* base);
+#ifndef HL_SWAP_U64
+#define HL_SWAP_U64(v) ((((v) & 0xFFU) << 56) |\
+    (((v) & 0xFF00U) << 40) | (((v) & 0xFF0000U) << 24) |\
+    (((v) & 0xFF000000U) << 8) | (((v) & 0xFF00000000U) >> 8) |\
+    (((v) & 0xFF0000000000U) >> 24) | (((v) & 0xFF000000000000U) >> 40)|\
+    (((v) & 0xFF00000000000000U) >> 56))
 #endif
 
-#ifdef __cplusplus
-}
-#endif
+inline void endian_swap(u8& v) noexcept {}
+inline void endian_swap(s8& v) noexcept {}
 
-/*#ifdef __cplusplus
-#define HL_DEFVAL(v) = v
-#else
-#define HL_DEFVAL(v)
-#endif*/
-
-/* Result type. */
-typedef enum HlResult
+inline void endian_swap(u16& v) noexcept
 {
-    HL_RESULT_SUCCESS = 0,
-    HL_ERROR_UNKNOWN,
-    HL_ERROR_UNSUPPORTED,
-    HL_ERROR_OUT_OF_MEMORY,
-    HL_ERROR_INVALID_ARGS,
-    HL_ERROR_OUT_OF_RANGE,
-    HL_ERROR_ALREADY_EXISTS,
-    HL_ERROR_NOT_FOUND,
-    HL_ERROR_INVALID_DATA,
-    HL_ERROR_NO_MORE_ENTRIES,
-    HL_ERROR_SHARING_VIOLATION
+    v = HL_SWAP_U16(v);
 }
-HlResult;
 
-#define HL_OK(result)       (result == HL_RESULT_SUCCESS)
-#define HL_FAILED(result)   !HL_OK(result)
+inline void endian_swap(s16& v) noexcept
+{
+    endian_swap(reinterpret_cast<u16&>(v));
+}
+
+inline void endian_swap(u32& v) noexcept
+{
+    v = HL_SWAP_U32(v);
+}
+
+inline void endian_swap(s32& v) noexcept
+{
+    endian_swap(reinterpret_cast<u32&>(v));
+}
+
+inline void endian_swap(u64& v) noexcept
+{
+    v = HL_SWAP_U64(v);
+}
+
+inline void endian_swap(s64& v) noexcept
+{
+    endian_swap(reinterpret_cast<u64&>(v));
+}
+
+inline void endian_swap(float& v) noexcept
+{
+    HL_STATIC_ASSERT_SIZE(float, sizeof(u32));
+    endian_swap(reinterpret_cast<u32&>(v));
+}
+
+inline void endian_swap(double& v) noexcept
+{
+    HL_STATIC_ASSERT_SIZE(double, sizeof(u64));
+    endian_swap(reinterpret_cast<u64&>(v));
+}
+
+template<typename T>
+inline void endian_swap(T& v) noexcept
+{
+    v.endian_swap();
+}
+
+template<bool swapOffsets, typename T>
+inline void endian_swap(T& v) noexcept
+{
+    v.template endian_swap<swapOffsets>();
+}
+
+/* Offsets */
+template<typename T>
+class off32
+{
+public:
+#if UINTPTR_MAX > UINT32_MAX
+    using val_t = s32;
+#else
+    using val_t = u32;
+#endif
+
+    using this_t = off32<T>;
+    using cthis_t = const this_t;
+    using ptr_t = T*;
+    using cptr_t = const T*;
+    using ref_t = typename std::add_lvalue_reference<T>::type;
+    using cref_t = typename std::add_lvalue_reference<const T>::type;
+
+private:
+    val_t m_val;
+
+public:
+    template<bool swapOffsets = true>
+    typename std::enable_if<swapOffsets, void>::type
+    	endian_swap() noexcept
+    {
+        hl::endian_swap(m_val);
+    }
+
+    template<bool swapOffsets = true>
+    typename std::enable_if<!swapOffsets, void>::type
+    	endian_swap() noexcept {}
+
+    cptr_t get() const noexcept
+    {
+#if UINTPTR_MAX > UINT32_MAX
+        // Convert from relative pointer to absolute pointer and return result.
+        return (m_val != 0) ? reinterpret_cast<cptr_t>(
+            reinterpret_cast<std::intptr_t>(this) + m_val) :
+            nullptr;
+#else
+        // Cast from number to pointer.
+        return reinterpret_cast<cptr_t>(
+            static_cast<std::uintptr_t>(m_val));
+#endif
+    }
+
+    inline ptr_t get() noexcept
+    {
+        return const_cast<ptr_t>(const_cast<cthis_t*>(this)->get());
+    }
+
+    val_t set(ptr_t ptr)
+    {
+#if UINTPTR_MAX > UINT32_MAX
+        // Just set m_val to 0 if ptr is null.
+        if (!ptr)
+        {
+            m_val = 0;
+            return m_val;
+        }
+
+        // Pointers are > 32 bits, so ptr will not fit within a 32-bit offset.
+        // We have to convert ptr to a relative pointer instead, and
+        // store that within the given offset.
+        const std::intptr_t ptrAddr = reinterpret_cast<std::intptr_t>(ptr);
+        std::intptr_t offAddr = reinterpret_cast<std::intptr_t>(this);
+
+        // Ensure offset does not point to itself; we can't do that
+        // with our relative offsets, since we still use 0 for null.
+        if (ptrAddr == offAddr)
+        {
+            HL_ERROR(error_type::unsupported);
+        }
+
+        // Compute a relative offset which points to ptr.
+        offAddr = (ptrAddr - offAddr);
+
+        // Ensure relative offset can fit within a signed
+        // 32-bit integer, since we're about to cast to that.
+        if (offAddr > INT32_MAX || offAddr < INT32_MIN)
+        {
+            HL_ERROR(error_type::out_of_range, "off32::offAddr");
+        }
+
+        // Set the offset to the relative offset we just computed.
+        m_val = static_cast<val_t>(offAddr);
+#else
+        m_val = static_cast<val_t>(
+            reinterpret_cast<std::uintptr_t>(ptr));
+#endif
+
+        return m_val;
+    }
+
+    inline val_t fix(void* base)
+    {
+        return set((m_val) ? ptradd<T>(base, m_val) : nullptr);
+    }
+
+    inline this_t& operator=(ptr_t ptr)
+    {
+        set(ptr);
+        return *this;
+    }
+
+    inline cptr_t operator->() const noexcept
+    {
+        return get();
+    }
+
+    inline ptr_t operator->() noexcept
+    {
+        return get();
+    }
+
+    inline cref_t operator*() const noexcept
+    {
+        return *get();
+    }
+
+    inline ref_t operator*() noexcept
+    {
+        return *get();
+    }
+
+    inline cref_t operator[](std::size_t i) const noexcept
+    {
+        return *(get() + i);
+    }
+
+    inline ref_t operator[](std::size_t i) noexcept
+    {
+        return *(get() + i);
+    }
+
+    inline bool operator<(cthis_t& other) const noexcept
+    {
+        return (get() < other.get());
+    }
+
+    inline bool operator>(cthis_t& other) const noexcept
+    {
+        return (get() > other.get());
+    }
+
+    inline bool operator<=(cthis_t& other) const noexcept
+    {
+        return (get() <= other.get());
+    }
+
+    inline bool operator>=(cthis_t& other) const noexcept
+    {
+        return (get() >= other.get());
+    }
+
+    inline bool operator==(cthis_t& other) const noexcept
+    {
+        return (get() == other.get());
+    }
+
+    inline bool operator!=(cthis_t& other) const noexcept
+    {
+        return (get() != other.get());
+    }
+
+    inline bool operator<(cptr_t ptr) const noexcept
+    {
+        return (get() < ptr);
+    }
+
+    inline bool operator>(cptr_t ptr) const noexcept
+    {
+        return (get() > ptr);
+    }
+
+    inline bool operator<=(cptr_t ptr) const noexcept
+    {
+        return (get() <= ptr);
+    }
+
+    inline bool operator>=(cptr_t ptr) const noexcept
+    {
+        return (get() >= ptr);
+    }
+
+    inline bool operator==(cptr_t ptr) const noexcept
+    {
+        return (get() == ptr);
+    }
+
+    inline bool operator!=(cptr_t ptr) const noexcept
+    {
+        return (get() != ptr);
+    }
+
+    inline explicit operator bool() const noexcept
+    {
+        return (m_val != 0);
+    }
+
+    inline off32() noexcept = default;
+    inline off32(std::nullptr_t) noexcept : m_val(0) {}
+    inline off32(u32 v) noexcept : m_val(static_cast<val_t>(v)) {}
+    inline off32(ptr_t ptr) : m_val(set(ptr)) {}
+};
+
+template<typename T>
+class off64
+{
+public:
+#if UINTPTR_MAX > UINT64_MAX
+    using val_t = s64;
+#else
+    using val_t = u64;
+#endif
+
+    using this_t = off64<T>;
+    using cthis_t = const this_t;
+    using ptr_t = T*;
+    using cptr_t = const T*;
+    using ref_t = typename std::add_lvalue_reference<T>::type;
+    using cref_t = typename std::add_lvalue_reference<const T>::type;
+
+private:
+    val_t m_val;
+
+public:
+    template<bool swapOffsets = true>
+    typename std::enable_if<swapOffsets, void>::type
+    	endian_swap() noexcept
+    {
+        hl::endian_swap(m_val);
+    }
+
+    template<bool swapOffsets = true>
+    typename std::enable_if<!swapOffsets, void>::type
+    	endian_swap() noexcept {}
+
+    cptr_t get() const noexcept
+    {
+#if UINTPTR_MAX > UINT64_MAX
+        // Convert from relative pointer to absolute pointer and return result.
+        return (m_val != 0) ? reinterpret_cast<cptr_t>(
+            reinterpret_cast<std::intptr_t>(this) + m_val) :
+            nullptr;
+#else
+        // Cast from number to pointer.
+        return reinterpret_cast<cptr_t>(
+            static_cast<std::uintptr_t>(m_val));
+#endif
+    }
+
+    inline ptr_t get() noexcept
+    {
+        return const_cast<ptr_t>(const_cast<cthis_t*>(this)->get());
+    }
+
+    val_t set(ptr_t ptr)
+    {
+#if UINTPTR_MAX > UINT64_MAX
+        // Just set m_val to 0 if ptr is null.
+        if (!ptr)
+        {
+            m_val = 0;
+            return m_val;
+        }
+
+        // Pointers are > 64 bits, so ptr will not fit within a 64-bit offset.
+        // We have to convert ptr to a relative pointer instead, and
+        // store that within the given offset.
+        const std::intptr_t ptrAddr = reinterpret_cast<std::intptr_t>(ptr);
+        std::intptr_t offAddr = reinterpret_cast<std::intptr_t>(this);
+
+        // Ensure offset does not point to itself; we can't do that
+        // with our relative offsets, since we still use 0 for null.
+        if (ptrAddr == offAddr)
+        {
+            HL_ERROR(error_type::unsupported);
+        }
+
+        // Compute a relative offset which points to ptr.
+        offAddr = (ptrAddr - offAddr);
+
+        // Ensure relative offset can fit within a signed
+        // 32-bit integer, since we're about to cast to that.
+        if (offAddr > INT64_MAX || offAddr < INT64_MIN)
+        {
+            HL_ERROR(error_type::out_of_range, "off64::offAddr");
+        }
+
+        // Set the offset to the relative offset we just computed.
+        m_val = static_cast<val_t>(offAddr);
+#else
+        m_val = static_cast<val_t>(
+            reinterpret_cast<std::uintptr_t>(ptr));
+#endif
+
+        return m_val;
+    }
+
+    inline val_t fix(void* base)
+    {
+        return set((m_val) ? ptradd<T>(base, m_val) : nullptr);
+    }
+
+    inline this_t& operator=(ptr_t ptr)
+    {
+        set(ptr);
+        return *this;
+    }
+
+    inline cptr_t operator->() const noexcept
+    {
+        return get();
+    }
+
+    inline ptr_t operator->() noexcept
+    {
+        return get();
+    }
+
+    inline cref_t operator*() const noexcept
+    {
+        return *get();
+    }
+
+    inline ref_t operator*() noexcept
+    {
+        return *get();
+    }
+
+    inline cref_t operator[](std::size_t i) const noexcept
+    {
+        return *(get() + i);
+    }
+
+    inline ref_t operator[](std::size_t i) noexcept
+    {
+        return *(get() + i);
+    }
+
+    inline bool operator<(cthis_t& other) const noexcept
+    {
+        return (get() < other.get());
+    }
+
+    inline bool operator>(cthis_t& other) const noexcept
+    {
+        return (get() > other.get());
+    }
+
+    inline bool operator<=(cthis_t& other) const noexcept
+    {
+        return (get() <= other.get());
+    }
+
+    inline bool operator>=(cthis_t& other) const noexcept
+    {
+        return (get() >= other.get());
+    }
+
+    inline bool operator==(cthis_t& other) const noexcept
+    {
+        return (get() == other.get());
+    }
+
+    inline bool operator!=(cthis_t& other) const noexcept
+    {
+        return (get() != other.get());
+    }
+
+    inline bool operator<(cptr_t ptr) const noexcept
+    {
+        return (get() < ptr);
+    }
+
+    inline bool operator>(cptr_t ptr) const noexcept
+    {
+        return (get() > ptr);
+    }
+
+    inline bool operator<=(cptr_t ptr) const noexcept
+    {
+        return (get() <= ptr);
+    }
+
+    inline bool operator>=(cptr_t ptr) const noexcept
+    {
+        return (get() >= ptr);
+    }
+
+    inline bool operator==(cptr_t ptr) const noexcept
+    {
+        return (get() == ptr);
+    }
+
+    inline bool operator!=(cptr_t ptr) const noexcept
+    {
+        return (get() != ptr);
+    }
+
+    inline explicit operator bool() const noexcept
+    {
+        return (m_val != 0);
+    }
+
+    inline off64() noexcept = default;
+    inline off64(std::nullptr_t) noexcept : m_val(0) {}
+    inline off64(u64 v) noexcept : m_val(static_cast<val_t>(v)) {}
+    inline off64(ptr_t ptr) : m_val(set(ptr)) {}
+};
+
+template<typename T>
+class arr32
+{
+    using this_t = arr32<T>;
+    using cthis_t = const this_t;
+    using ptr_t = T*;
+    using cptr_t = const T*;
+    using ref_t = typename std::add_lvalue_reference<T>::type;
+    using cref_t = typename std::add_lvalue_reference<const T>::type;
+
+public:
+    u32 count;
+    off32<T> data;
+
+    template<bool swapOffsets = true>
+    void endian_swap() noexcept
+    {
+        hl::endian_swap(count);
+        hl::endian_swap<swapOffsets>(data);
+    }
+
+    inline cptr_t get() const noexcept
+    {
+        return data.get();
+    }
+
+    inline ptr_t get() noexcept
+    {
+        return data.get();
+    }
+
+    inline cptr_t begin() const noexcept
+    {
+        return get();
+    }
+
+    inline ptr_t begin() noexcept
+    {
+        return get();
+    }
+
+    inline cptr_t end() const noexcept
+    {
+        return &data[count];
+    }
+
+    inline ptr_t end() noexcept
+    {
+        return &data[count];
+    }
+
+    inline cref_t operator[](u32 i) const noexcept
+    {
+        return data[i];
+    }
+
+    inline ref_t operator[](u32 i) noexcept
+    {
+        return data[i];
+    }
+
+    inline bool operator==(cthis_t& other) const noexcept
+    {
+        return (data == other.data &&
+            data == other.count);
+    }
+
+    inline bool operator!=(cthis_t& other) const noexcept
+    {
+        return (data != other.data ||
+            count != other.count);
+    }
+
+    inline arr32() noexcept = default;
+    inline arr32(u32 count, off32<T> data) noexcept :
+        count(count), data(data) {}
+};
+
+template<typename T>
+class arr64
+{
+    using this_t = arr64<T>;
+    using cthis_t = const this_t;
+    using ptr_t = T*;
+    using cptr_t = const T*;
+    using ref_t = typename std::add_lvalue_reference<T>::type;
+    using cref_t = typename std::add_lvalue_reference<const T>::type;
+
+public:
+    u64 count;
+    off64<T> data;
+
+    template<bool swapOffsets = true>
+    void endian_swap() noexcept
+    {
+        hl::endian_swap(count);
+        hl::endian_swap<swapOffsets>(data);
+    }
+
+    inline cptr_t get() const noexcept
+    {
+        return data.get();
+    }
+
+    inline ptr_t get() noexcept
+    {
+        return data.get();
+    }
+
+    inline cptr_t begin() const noexcept
+    {
+        return get();
+    }
+
+    inline ptr_t begin() noexcept
+    {
+        return get();
+    }
+
+    inline cptr_t end() const noexcept
+    {
+        return &data[static_cast<std::size_t>(count)];
+    }
+
+    inline ptr_t end() noexcept
+    {
+        return &data[static_cast<std::size_t>(count)];
+    }
+
+    inline cref_t operator[](u64 i) const noexcept
+    {
+        return data[static_cast<std::size_t>(i)];
+    }
+
+    inline ref_t operator[](u64 i) noexcept
+    {
+        return data[static_cast<std::size_t>(i)];
+    }
+
+    inline bool operator==(cthis_t& other) const noexcept
+    {
+        return (data == other.data &&
+            count == other.count);
+    }
+
+    inline bool operator!=(cthis_t& other) const noexcept
+    {
+        return (data != other.data ||
+            count != other.mount);
+    }
+
+    inline arr64() noexcept = default;
+    inline arr64(u64 count, off64<T> data) noexcept :
+        count(count), data(data) {}
+};
+
+/* Miscellaneous helpers */
+#define HL_CARR_COUNT(arr) (sizeof(arr) / sizeof(*(arr)))
+
+/**
+    @brief Creates a signature in the form of a 32-bit unsigned integer at compile-time.
+
+    @param c1 The first character in the signature.
+    @param c2 The second character in the signature.
+    @param c3 The third character in the signature.
+    @param c4 The fourth character in the signature.
+    @return The signature in the form of a 32-bit unsigned integer.
+*/
+constexpr u32 make_sig(char c1, char c2,
+    char c3, char c4) noexcept
+{
+#ifdef HL_IS_BIG_ENDIAN
+    return ((static_cast<u32>(c1) << 24U) |
+        (static_cast<u32>(c2) << 16U) |
+        (static_cast<u32>(c3) << 8U) |
+        static_cast<u32>(c4));
+#else
+    return ((static_cast<u32>(c4) << 24U) |
+        (static_cast<u32>(c3) << 16U) |
+        (static_cast<u32>(c2) << 8U) |
+        static_cast<u32>(c1));
+#endif
+}
+
+/**
+    @brief Creates a signature in the form of a 32-bit unsigned integer at compile-time.
+
+    @param arr The array of characters to create a signature from.
+    @return The signature in the form of a 32-bit unsigned integer.
+*/
+constexpr u32 make_sig(const char(&arr)[4]) noexcept
+{
+    return make_sig(arr[0], arr[1], arr[2], arr[3]);
+}
+
+/**
+    @brief Creates a signature in the form of a 32-bit unsigned integer at compile-time.
+
+    This overload takes a 5-character array. It's meant to be used with 4-character
+    strings, as they also have an additional 5th character - the null terminator.
+
+    @param str The string to create a signature from.
+    @return The signature in the form of a 32-bit unsigned integer.
+*/
+constexpr u32 make_sig(const char(&str)[5]) noexcept
+{
+    return make_sig(str[0], str[1], str[2], str[3]);
+}
+
+/**
+    @brief Creates a signature in the form of a 64-bit unsigned integer at compile-time.
+
+    @param c1 The first character in the signature.
+    @param c2 The second character in the signature.
+    @param c3 The third character in the signature.
+    @param c4 The fourth character in the signature.
+    @param c5 The fifth character in the signature.
+    @param c6 The sixth character in the signature.
+    @param c7 The seventh character in the signature.
+    @param c8 The eigth character in the signature.
+    @return The signature in the form of a 64-bit unsigned integer.
+*/
+constexpr u64 make_sig(char c1, char c2, char c3, char c4,
+    char c5, char c6, char c7, char c8) noexcept
+{
+#ifdef HL_IS_BIG_ENDIAN
+    return ((static_cast<u32>(c1) << 56U) |
+        (static_cast<u32>(c2) << 48U) |
+        (static_cast<u32>(c3) << 40U) |
+        (static_cast<u32>(c4) << 32U) |
+        (static_cast<u32>(c5) << 24U) |
+        (static_cast<u32>(c6) << 16U) |
+        (static_cast<u32>(c7) << 8U) |
+        static_cast<u32>(c8));
+#else
+    return ((static_cast<u64>(c8) << 56U) |
+        (static_cast<u64>(c7) << 48U) |
+        (static_cast<u64>(c6) << 40U) |
+        (static_cast<u64>(c5) << 32U) |
+        (static_cast<u64>(c4) << 24U) |
+        (static_cast<u64>(c3) << 16U) |
+        (static_cast<u64>(c2) << 8U) |
+        static_cast<u64>(c1));
+#endif
+}
+
+/**
+    @brief Creates a signature in the form of a 64-bit unsigned integer at compile-time.
+
+    @param arr The array of characters to create a signature from.
+    @return The signature in the form of a 64-bit unsigned integer.
+*/
+constexpr u64 make_sig(const char(&arr)[8]) noexcept
+{
+    return make_sig(arr[0], arr[1], arr[2], arr[3],
+        arr[4], arr[5], arr[6], arr[7]);
+}
+
+/**
+    @brief Creates a signature in the form of a 64-bit unsigned integer at compile-time.
+
+    This overload takes a 9-character array. It's meant to be used with 8-character
+    strings, as they also have an additional 9th character - the null terminator.
+
+    @param str The string to create a signature from.
+    @return The signature in the form of a 64-bit unsigned integer.
+*/
+constexpr u64 make_sig(const char(&str)[9]) noexcept
+{
+    return make_sig(str[0], str[1], str[2], str[3],
+        str[4], str[5], str[6], str[7]);
+}
+
+template<typename val_t, typename stride_t>
+constexpr val_t align(val_t value, stride_t stride) noexcept
+{
+    return (stride < 2) ? value :                   // If stride is < 2, just return value.
+        ((value + (stride - 1)) & ~(stride - 1));   // Align value by stride and return.
+}
+} // hl
 #endif

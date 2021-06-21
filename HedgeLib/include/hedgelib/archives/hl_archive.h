@@ -1,229 +1,541 @@
 /**
-   @file hl_archive.h
-   @brief The header which defines the concept of archives within HedgeLib.
+    @file hl_archive.h
+    @brief The base classes/functions for archives in HedgeLib.
 */
 #ifndef HL_ARCHIVE_H_INCLUDED
 #define HL_ARCHIVE_H_INCLUDED
-#include "../hl_list.h"
+#include "../hl_text.h"
+#include <vector>
 
-#ifdef __cplusplus
-extern "C" {
+namespace hl
+{
+// TODO: Make this an enum class
+enum archive_entry_flags : std::size_t
+{
+    HL_ARC_ENTRY_IS_STREAMING_FLAG      = bit_flag(bit_count<std::size_t>() - 1U),
+    HL_ARC_ENTRY_COMPRESSED_SIZE_MASK   = ~HL_ARC_ENTRY_IS_STREAMING_FLAG,
+    HL_ARC_ENTRY_IS_DIR_FLAG            = bit_flag(bit_count<std::size_t>() - 2U),
+    HL_ARC_ENTRY_NOT_OWNS_DATA_FLAG     = bit_flag(bit_count<std::size_t>() - 3U)
+};
+
+struct archive_entry_list;
+
+class archive_entry
+{
+    friend archive_entry_list;
+
+    /**
+        @brief Various metadata related to the entry, including flags specifying what
+        type of entry this is.
+
+        If HL_ARC_ENTRY_IS_STREAMING_FLAG is set, this entry represents a file which has not
+        yet been loaded into memory, and m_streamingData is format-specific information which
+        can be used to quickly locate/load the data at a later time.
+
+        Use HL_ARC_ENTRY_COMPRESSED_SIZE_MASK on m_meta when the HL_ARC_ENTRY_IS_STREAMING_FLAG
+        is set to get the file's compressed size, or 0 if the data is not compressed.
+
+        If HL_ARC_ENTRY_IS_STREAMING_FLAG is not set, and HL_ARC_ENTRY_IS_DIR_FLAG is set, this
+        entry represents a directory, and m_data is a pointer to an array of archive_entry structs
+        which represent the contents of the directory.
+
+        If HL_ARC_ENTRY_IS_STREAMING_FLAG is not set, and HL_ARC_ENTRY_IS_DIR_FLAG is not
+        set, this entry represents a "regular" file which is not being streamed-in from an
+        archive, and m_data is either a pointer to the file's data, or null if this is a file
+        reference, in which case, m_path is the absolute file path to said file on the user's
+        machine.
+
+        If HL_ARC_ENTRY_IS_STREAMING_FLAG is not set, and HL_ARC_ENTRY_NOT_OWNS_DATA_FLAG is
+        set, this entry's m_data pointer is not owned by this entry, and should not be freed
+        with the entry.
+    */
+    std::size_t m_meta;
+    /**
+        @brief The name of the file or directory represented by this entry, or the
+        absolute path to the file if this entry is a file reference.
+    */
+    std::unique_ptr<nchar[]> m_path;
+    /**
+        @brief The uncompressed size of the file if this entry represents a file.
+        Unused if this entry represents a directory.
+    */
+    std::size_t m_size;
+    /**
+        @brief Data pertaining to the actual file or directory this entry represents.
+
+        See documentation for m_meta for specifics on what this value represents.
+    */
+    union
+    {
+        void* m_data;
+        std::uintmax_t m_streamingData;
+    };
+
+#ifdef HL_IN_WIN32_UNICODE
+    inline archive_entry(std::size_t meta, const char* path,
+        std::size_t size, void* dataPtr) : m_meta(meta),
+        m_path(text::conv_unique_ptr<text::utf8_to_native>(path)),
+        m_size(size), m_data(dataPtr) {}
+
+    inline archive_entry(std::size_t meta, const char* path,
+        std::size_t size, std::uintmax_t dataNum) : m_meta(meta),
+        m_path(text::conv_unique_ptr<text::utf8_to_native>(path)),
+        m_size(size), m_streamingData(dataNum) {}
 #endif
 
-/**
-   @defgroup archives Archives
-   @brief Functions and types related to archives.
-*/
+    inline archive_entry(std::size_t meta, const nchar* path,
+        std::size_t size, void* dataPtr) : m_meta(meta),
+        m_path(text::make_copy(path)), m_size(size),
+        m_data(dataPtr) {}
 
-/*
-   Apparently in C89 enums are of type int by default, so we can't have
-   these as enum values since they won't fit within the size of an int
-   on 64-bit x86, for example.
-*/
-#define HL_ARC_ENTRY_STREAMING_FLAG         HL_BIT_FLAG(HL_BIT_COUNT(size_t) - 1U)
-#define HL_ARC_ENTRY_COMPRESSED_SIZE_MASK   ~(HL_ARC_ENTRY_STREAMING_FLAG)
+    inline archive_entry(std::size_t meta, const nchar* path,
+        std::size_t size, std::uintmax_t dataNum) : m_meta(meta),
+        m_path(text::make_copy(path)), m_size(size),
+        m_streamingData(dataNum) {}
 
-#define HL_ARC_ENTRY_IS_DIR_FLAG            HL_BIT_FLAG(HL_BIT_COUNT(size_t) - 2U)
+public:
+    inline bool is_streaming_file() const noexcept
+    {
+        return ((m_meta & HL_ARC_ENTRY_IS_STREAMING_FLAG) != 0);
+    }
 
-#define HL_ARC_ENTRY_NOT_OWNS_DATA_FLAG     HL_BIT_FLAG(HL_BIT_COUNT(size_t) - 3U)
+    inline bool is_dir() const noexcept
+    {
+        return (!is_streaming_file() && ((m_meta &
+            HL_ARC_ENTRY_IS_DIR_FLAG) != 0));
+    }
 
-/**
-   @brief An entry structure representing a file or directory stored within an archive.
-   @ingroup archives
-*/
-typedef struct HlArchiveEntry
+    inline bool is_file() const noexcept
+    {
+        return (is_streaming_file() || ((m_meta &
+            HL_ARC_ENTRY_IS_DIR_FLAG) == 0));
+    }
+
+    inline bool is_regular_file() const noexcept
+    {
+        return (!is_streaming_file() && ((m_meta &
+            HL_ARC_ENTRY_IS_DIR_FLAG) == 0));
+    }
+
+    inline bool is_reference_file() const noexcept
+    {
+        return (is_regular_file() && m_data == nullptr);
+    }
+
+    inline bool owns_data() const noexcept
+    {
+        return ((!is_regular_file()) ? true :
+            ((m_meta & HL_ARC_ENTRY_NOT_OWNS_DATA_FLAG) == 0));
+    }
+
+    inline const nchar* path() const noexcept
+    {
+        return m_path.get();
+    }
+
+    HL_API const nchar* name() const noexcept;
+
+    inline std::uintmax_t streaming_file_data() const noexcept
+    {
+        return m_streamingData;
+    }
+
+    inline const archive_entry_list& dir_entries() const noexcept
+    {
+        return *static_cast<const archive_entry_list*>(m_data);
+    }
+
+    inline archive_entry_list& dir_entries() noexcept
+    {
+        return *static_cast<archive_entry_list*>(m_data);
+    }
+
+    template<typename T = void>
+    inline const T* file_data() const noexcept
+    {
+        return ((is_streaming_file()) ? nullptr :
+            static_cast<const T*>(m_data));
+    }
+
+    template<typename T = void>
+    inline T* file_data() noexcept
+    {
+        return ((is_streaming_file()) ? nullptr :
+            static_cast<T*>(m_data));
+    }
+
+    HL_API std::size_t size() const noexcept;
+
+    inline std::size_t compressed_size() const noexcept
+    {
+        return ((!is_streaming_file()) ? 0 :
+            (m_meta & HL_ARC_ENTRY_COMPRESSED_SIZE_MASK));
+    }
+
+    HL_API static archive_entry make_streaming_file_utf8(const char* fileName,
+        std::size_t uncompressedSize, std::size_t compressedSize = 0,
+        std::uintmax_t customData = 0);
+
+    inline static archive_entry make_streaming_file_utf8(const std::string& fileName,
+        std::size_t uncompressedSize, std::size_t compressedSize = 0,
+        std::uintmax_t customData = 0)
+    {
+        return make_streaming_file_utf8(fileName.c_str(),
+            uncompressedSize, compressedSize, customData);
+    }
+
+    HL_API static archive_entry make_streaming_file(const nchar* fileName,
+        std::size_t uncompressedSize, std::size_t compressedSize = 0,
+        std::uintmax_t customData = 0);
+
+    inline static archive_entry make_streaming_file(const nstring& fileName,
+        std::size_t uncompressedSize, std::size_t compressedSize = 0,
+        std::uintmax_t customData = 0)
+    {
+        return make_streaming_file(fileName.c_str(),
+            uncompressedSize, compressedSize, customData);
+    }
+
+    /**
+        @brief Constructs an archive_entry which represents a directory.
+        @param[in] dirName  The name of the directory.
+
+        @return The newly-constructed archive_entry.
+        @ingroup archives
+    */
+    HL_API static archive_entry make_dir(const nchar* dirName,
+        std::size_t initialEntryCount = 0);
+
+    /**
+        @brief Constructs an archive_entry which represents a directory.
+        @param[in] dirName  The name of the directory.
+
+        @return The newly-constructed archive_entry.
+        @ingroup archives
+    */
+    inline static archive_entry make_dir(const nstring& dirName,
+        std::size_t initialEntryCount = 0)
+    {
+        return make_dir(dirName.c_str(), initialEntryCount);
+    }
+
+    /**
+        @brief Constructs an archive_entry which represents a file and which does
+               *NOT* create its own copy of data, meaning you will have to manually
+               free data yourself later.
+
+        @param[in] fileName     The name of the file + its extension if it has one.
+        @param[in] fileSize     The uncompressed size of the file, in bytes.
+        @param[in] data         A pointer to the file's uncompressed data.
+                                This pointer will *NOT* be automatically freed
+                                when the archive_entry is destructed, so make sure
+                                to manually free it later!
+
+        @return The newly-constructed archive_entry.
+        @ingroup archives
+    */
+    HL_API static archive_entry make_regular_file_no_alloc_utf8(
+        const char* fileName, std::size_t fileSize, void* data);
+
+    /**
+        @brief Constructs an archive_entry which represents a file and which does
+               *NOT* create its own copy of data, meaning you will have to manually
+               free data yourself later.
+
+        @param[in] fileName     The name of the file + its extension if it has one.
+        @param[in] fileSize     The uncompressed size of the file, in bytes.
+        @param[in] data         A pointer to the file's uncompressed data.
+                                This pointer will *NOT* be automatically freed
+                                when the archive_entry is destructed, so make sure
+                                to manually free it later!
+
+        @return The newly-constructed archive_entry.
+        @ingroup archives
+    */
+    inline static archive_entry make_regular_file_no_alloc_utf8(
+        const std::string& fileName, std::size_t fileSize, void* data)
+    {
+        return make_regular_file_no_alloc_utf8(fileName.c_str(), fileSize, data);
+    }
+
+    /**
+        @brief Constructs an archive_entry which represents a file.
+        @param[in] fileName     The name of the file + its extension if it has one.
+        @param[in] fileSize     The uncompressed size of the file, in bytes.
+        @param[in] data         A pointer to the file's uncompressed data.
+
+        @return The newly-constructed archive_entry.
+        @ingroup archives
+    */
+    HL_API static archive_entry make_regular_file_utf8(const char* fileName,
+        std::size_t fileSize, const void* data);
+
+    /**
+        @brief Constructs an archive_entry which represents a file.
+        @param[in] fileName     The name of the file + its extension if it has one.
+        @param[in] fileSize     The uncompressed size of the file, in bytes.
+        @param[in] data         A pointer to the file's uncompressed data.
+
+        @return The newly-constructed archive_entry.
+        @ingroup archives
+    */
+    inline static archive_entry make_regular_file_utf8(const std::string& fileName,
+        std::size_t fileSize, const void* data)
+    {
+        return make_regular_file_utf8(fileName.c_str(), fileSize, data);
+    }
+
+    /**
+        @brief Constructs an archive_entry which represents a file and which does
+               *NOT* create its own copy of data, meaning you will have to manually
+               free data yourself later.
+
+        @param[in] fileName     The name of the file + its extension if it has one.
+        @param[in] fileSize     The uncompressed size of the file, in bytes.
+        @param[in] data         A pointer to the file's uncompressed data.
+                                This pointer will *NOT* be automatically freed
+                                when the archive_entry is destructed, so make sure
+                                to manually free it later!
+
+        @return The newly-constructed archive_entry.
+        @ingroup archives
+    */
+    HL_API static archive_entry make_regular_file_no_alloc(
+        const nchar* fileName, std::size_t fileSize, void* data);
+
+    /**
+        @brief Constructs an archive_entry which represents a file and which does
+               *NOT* create its own copy of data, meaning you will have to manually
+               free data yourself later.
+
+        @param[in] fileName     The name of the file + its extension if it has one.
+        @param[in] fileSize     The uncompressed size of the file, in bytes.
+        @param[in] data         A pointer to the file's uncompressed data.
+                                This pointer will *NOT* be automatically freed
+                                when the archive_entry is destructed, so make sure
+                                to manually free it later!
+
+        @return The newly-constructed archive_entry.
+        @ingroup archives
+    */
+    inline static archive_entry make_regular_file_no_alloc(
+        const nstring& fileName, std::size_t fileSize, void* data)
+    {
+        return make_regular_file_no_alloc(fileName.c_str(), fileSize, data);
+    }
+
+    /**
+        @brief Constructs an archive_entry which represents a file.
+        @param[in] fileName     The name of the file + its extension if it has one.
+        @param[in] fileSize     The uncompressed size of the file, in bytes.
+        @param[in] data         A pointer to the file's uncompressed data.
+
+        @return The newly-constructed archive_entry.
+        @ingroup archives
+    */
+    HL_API static archive_entry make_regular_file(const nchar* fileName,
+        std::size_t fileSize, const void* data);
+
+    /**
+        @brief Constructs an archive_entry which represents a file.
+        @param[in] fileName     The name of the file + its extension if it has one.
+        @param[in] fileSize     The uncompressed size of the file, in bytes.
+        @param[in] data         A pointer to the file's uncompressed data.
+
+        @return The newly-constructed archive_entry.
+        @ingroup archives
+    */
+    inline static archive_entry make_regular_file(const nstring& fileName,
+        std::size_t fileSize, const void* data)
+    {
+        return make_regular_file(fileName.c_str(), fileSize, data);
+    }
+
+    /**
+        @brief Constructs an archive_entry which represents a file.
+        @param[in] filePath     The path to the file.
+        @param[in] loadData     Whether to load the data into memory.
+                                If set to false, this will construct
+                                a file reference instead.
+
+        @return The newly-constructed archive_entry.
+        @ingroup archives
+    */
+    HL_API static archive_entry make_file(const nchar* filePath,
+        bool loadData = false);
+
+    /**
+        @brief Constructs an archive_entry which represents a file.
+        @param[in] filePath     The path to the file.
+        @param[in] loadData     Whether to load the data into memory.
+                                If set to false, this will construct
+                                a file reference instead.
+
+        @return The newly-constructed archive_entry.
+        @ingroup archives
+    */
+    inline static archive_entry make_file(const nstring& filePath,
+        bool loadData = false)
+    {
+        return make_file(filePath.c_str(), loadData);
+    }
+
+    /**
+        @brief Constructs an archive_entry which represents a reference to a file.
+        @param[in] filePath     The path to the file.
+
+        @return The newly-constructed archive_entry.
+        @ingroup archives
+    */
+    HL_API static archive_entry make_reference_file(const nchar* filePath);
+
+    /**
+        @brief Constructs an archive_entry which represents a reference to a file.
+        @param[in] filePath     The path to the file.
+
+        @return The newly-constructed archive_entry.
+        @ingroup archives
+    */
+    inline static archive_entry make_reference_file(const nstring& filePath)
+    {
+        return make_reference_file(filePath.c_str());
+    }
+
+    HL_API archive_entry& operator=(const archive_entry& other);
+    HL_API archive_entry& operator=(archive_entry&& other) noexcept;
+
+    HL_API archive_entry(const archive_entry& other);
+    HL_API archive_entry(archive_entry&& other) noexcept;
+    HL_API ~archive_entry();
+};
+
+struct archive_entry_list : public std::vector<archive_entry>
 {
+    HL_API void extract(const nchar* dirPath, bool recursive = true) const;
+
+    inline void extract(const nstring& dirPath, bool recursive = true) const
+    {
+        extract(dirPath.c_str(), recursive);
+    }
+
+    inline void add_file(const nchar* filePath, bool loadData = false)
+    {
+        emplace_back(archive_entry::make_file(filePath, loadData));
+    }
+
+    inline void add_file(const nstring& filePath, bool loadData = false)
+    {
+        add_file(filePath.c_str(), loadData);
+    }
+
     /**
-       @brief The name of the file or directory represented by this entry, or the
-       absolute path to the file if this entry is a file reference.
+        @brief Adds an archive_entry which represents a file.
+        @param[in] fileName     The name of the file + its extension if it has one.
+        @param[in] fileSize     The uncompressed size of the file, in bytes.
+        @param[in] data         A pointer to the file's uncompressed data.
+
+        @ingroup archives
     */
-    HlNChar* path;
+    inline void add_file(const nchar* fileName,
+        std::size_t fileSize, const void* data)
+    {
+        emplace_back(archive_entry::make_regular_file(
+            fileName, fileSize, data));
+    }
+
     /**
-       @brief The uncompressed size of the file if this entry represents a file, or
-       the number of entries in the directory if this entry represents a directory.
+        @brief Adds an archive_entry which represents a file.
+        @param[in] fileName     The name of the file + its extension if it has one.
+        @param[in] fileSize     The uncompressed size of the file, in bytes.
+        @param[in] data         A pointer to the file's uncompressed data.
+
+        @ingroup archives
     */
-    size_t size;
+    inline void add_file(const nstring& fileName,
+        std::size_t fileSize, const void* data)
+    {
+        emplace_back(archive_entry::make_regular_file(
+            fileName, fileSize, data));
+    }
+
     /**
-       @brief Various metadata related to the entry, including flags
-       specifying what type of entry this is.
+        @brief Adds an archive_entry which represents a file.
+        @param[in] fileName     The name of the file + its extension if it has one.
+        @param[in] fileSize     The uncompressed size of the file, in bytes.
+        @param[in] data         A pointer to the file's uncompressed data.
 
-       If HL_ARC_ENTRY_STREAMING_FLAG is set, this entry represents a file which has not
-       yet been loaded into memory, and data is format-specific information which can be
-       used to quickly locate/load the data at a later time. Use HL_ARC_ENTRY_COMPRESSED_SIZE_MASK
-       on meta when the HL_ARC_ENTRY_STREAMING_FLAG is set to get the file's compressed
-       size, or 0 if the data is not compressed.
-
-       If HL_ARC_ENTRY_STREAMING_FLAG is not set, and HL_ARC_ENTRY_IS_DIR_FLAG is set, this
-       entry represents a directory, and data is a pointer to an array of HlArchiveEntry
-       structs which represent the contents of the directory.
-
-       If HL_ARC_ENTRY_STREAMING_FLAG is not set, and HL_ARC_ENTRY_IS_DIR_FLAG is not set, this
-       entry represents a "regular" file which is not being streamed-in from an archive, and data
-       is either a pointer to the file's data, or NULL if this is a file reference, in which case,
-       path is the absolute file path to said file on the user's machine.
-
-       If HL_ARC_ENTRY_STREAMING_FLAG is not set, and HL_ARC_ENTRY_NOT_OWNS_DATA_FLAG is set, this
-       entry's data pointer is not owned by this entry, and should not be freed with the entry.
+        @ingroup archives
     */
-    size_t meta;
+    inline void add_file_utf8(const char* fileName,
+        std::size_t fileSize, const void* data)
+    {
+        emplace_back(archive_entry::make_regular_file_utf8(
+            fileName, fileSize, data));
+    }
+
     /**
-       @brief Data pertaining to the actual file or directory this entry represents.
-       
-       See documentation for the meta parameter for specifics on what this value represents.
+        @brief Adds an archive_entry which represents a file.
+        @param[in] fileName     The name of the file + its extension if it has one.
+        @param[in] fileSize     The uncompressed size of the file, in bytes.
+        @param[in] data         A pointer to the file's uncompressed data.
+
+        @ingroup archives
     */
-    HlUMax data;
-}
-HlArchiveEntry;
+    inline void add_file_utf8(const std::string& fileName,
+        std::size_t fileSize, const void* data)
+    {
+        emplace_back(archive_entry::make_regular_file_utf8(
+            fileName, fileSize, data));
+    }
 
-typedef HL_LIST(HlArchiveEntry) HlArchiveEntryList;
+    HL_API void add_dir_contents(const nchar* dirPath,
+        bool loadData = false, bool recursive = true);
 
-typedef struct HlArchive
-{
-    HlArchiveEntryList entries;
-}
-HlArchive;
+    inline void add_dir_contents(const nstring& dirPath,
+        bool loadData = false, bool recursive = true)
+    {
+        add_dir_contents(dirPath.c_str(), loadData, recursive);
+    }
 
-typedef struct HlPackedFileEntry
+    inline archive_entry_list() = default;
+    
+    inline archive_entry_list(const nchar* dirPath,
+        bool loadData = false, bool recursive = true)
+    {
+        add_dir_contents(dirPath, loadData, recursive);
+    }
+
+    inline archive_entry_list(const nstring& dirPath,
+        bool loadData = false, bool recursive = true)
+    {
+        add_dir_contents(dirPath, loadData, recursive);
+    }
+};
+
+using archive = archive_entry_list;
+
+struct packed_file_entry
 {
     /** @brief The name this entry represents. */
-    char* name;
+    std::string name;
     /** @brief The absolute position of the file within the packed data (e.g. within the .pfd). */
-    HlU32 dataPos;
+    std::size_t dataPos;
     /** @brief The size of the file within the packed data (e.g. within the .pfd). */
-    HlU32 dataSize;
-}
-HlPackedFileEntry;
+    std::size_t dataSize;
 
-typedef struct HlPackedFileIndex
-{
-    HL_LIST(HlPackedFileEntry) entries;
-}
-HlPackedFileIndex;
+    inline packed_file_entry(const char* name,
+        std::size_t dataPos, std::size_t dataSize) :
+        name(name), dataPos(dataPos), dataSize(dataSize) {}
 
-HL_API size_t hlArchiveExtIsSplit(const HlNChar* ext);
+    inline packed_file_entry(const std::string& name,
+        std::size_t dataPos, std::size_t dataSize) :
+        name(name), dataPos(dataPos), dataSize(dataSize) {}
 
-/**
-   @brief Creates an HlArchiveEntry which represents a file.
-   @param[in] path      The name of the file, or the absolute path to the file if this is a reference.
-   @param[in] size      The uncompressed size of the file, in bytes.
-   @param[in] data      A pointer to the file's data, or NULL if this is a reference.
-   @param[in] dontFree  Just pass in HL_FALSE unless you know what you're doing.
-                        If set to HL_TRUE, this entry *won't* create its own copy of data,
-                        meaning it will *not* automatically be freed when hlArchiveEntryDestruct
-                        is called; you will have to free data yourself manually later on when it
-                        will no longer be used. path is not affected by this argument and will be
-                        automatically freed regardless.
+    inline packed_file_entry(std::string&& name,
+        std::size_t dataPos, std::size_t dataSize) :
+        name(name), dataPos(dataPos), dataSize(dataSize) {}
+};
 
-   @return An HlArchiveEntry representing the given file.
-   @ingroup archives
-*/
-HL_API HlArchiveEntry hlArchiveEntryMakeFile(const HlNChar* HL_RESTRICT path,
-    size_t size, const void* HL_RESTRICT data, HlBool dontFree);
-
-/**
-   @brief Creates an HlArchiveEntry which represents a directory.
-   @param[in] name  The name of the directory.
-
-   @return An HlArchiveEntry representing the given directory.
-   @ingroup archives
-*/
-HL_API HlArchiveEntry hlArchiveEntryMakeDir(const HlNChar* name);
-
-/**
-   @brief Modifies the data within an HlArchiveEntry which represents a file.
-   @param[in] entry     The file entry to be modified.
-   @param[in] size      The new uncompressed size of the file, in bytes.
-   @param[in] data      A pointer to the file's data, or NULL if this is a reference.
-   @param[in] dontFree  Just pass in HL_FALSE unless you know what you're doing.
-                        If set to HL_TRUE, this entry *won't* create its own copy of data,
-                        meaning it will *not* automatically be freed when hlArchiveEntryDestruct
-                        is called; you will have to free data yourself manually later on when it
-                        will no longer be used. path is not affected by this argument and will be
-                        automatically freed regardless.
-
-   @return An HlResult indicating whether data buffer allocation succeeded or not.
-   @ingroup archives
-*/
-HL_API HlResult hlArchiveEntryFileSetData(HlArchiveEntry* HL_RESTRICT entry,
-    size_t size, const void* HL_RESTRICT data, HlBool dontFree);
-
-/**
-   @brief Extracts all the files, and optionally, the directories in the given array of entries.
-   @param[in] entries       The array of HlArchiveEntry structs to extract.
-   @param[in] entryCount    The number of HlArchiveEntry structs in the entries array to extract.
-   @param[in] dirPath       Path to the directory the given files/directories should be extracted to.
-   @param[in] recursive     Whether or not the entries should be extracted recursively.
-                            Set this to HL_FALSE to only extract files from the root directory.
-   
-   @return An HlResult indicating whether extraction succeeded or not.
-   @ingroup archives
-*/
-HL_API HlResult hlArchiveEntriesExtract(const HlArchiveEntry* HL_RESTRICT entries,
-    size_t entryCount, const HlNChar* HL_RESTRICT dirPath, HlBool recursive);
-
-HL_API HlResult hlArchiveConstruct(HlArchive* arc);
-HL_API HlResult hlArchiveCreate(HlArchive** arc);
-
-HL_API HlResult hlArchiveAddDir(const HlNChar* HL_RESTRICT dirPath,
-    HlBool loadData, HlBool recursive, HlArchive* HL_RESTRICT arc);
-
-HL_API HlResult hlArchiveCreateFromDir(const HlNChar* HL_RESTRICT dirPath,
-    HlBool loadData, HlBool recursive, HlArchive* HL_RESTRICT * HL_RESTRICT arc);
-
-#define hlArchiveEntryIsStreaming(entry) (HlBool)(\
-    ((entry)->meta & HL_ARC_ENTRY_STREAMING_FLAG) != 0)
-
-#define hlArchiveEntryIsDir(entry)\
-    (HlBool)(!hlArchiveEntryIsStreaming(entry) &&\
-    ((entry)->meta & HL_ARC_ENTRY_IS_DIR_FLAG) != 0)
-
-#define hlArchiveEntryIsFile(entry)\
-    (HlBool)(hlArchiveEntryIsStreaming(entry) ||\
-    ((entry)->meta & HL_ARC_ENTRY_IS_DIR_FLAG) == 0)
-
-#define hlArchiveEntryIsRegularFile(entry)\
-    (HlBool)(!hlArchiveEntryIsStreaming(entry) &&\
-    ((entry)->meta & HL_ARC_ENTRY_IS_DIR_FLAG) == 0)
-
-#define hlArchiveEntryGetCompressedSize(entry)\
-    (size_t)(hlArchiveEntryIsStreaming(entry) ?\
-    ((entry)->meta & HL_ARC_ENTRY_COMPRESSED_SIZE_MASK) : 0)
-
-#define hlArchiveEntryIsReference(entry)\
-    (HlBool)(!hlArchiveEntryIsStreaming(entry) &&\
-    ((entry)->meta & HL_ARC_ENTRY_IS_DIR_FLAG) == 0 &&\
-    (entry)->data == 0)
-
-HL_API const HlNChar* hlArchiveEntryGetName(const HlArchiveEntry* entry);
-
-#define hlArchiveExtract(arc, dirPath, recursive) hlArchiveEntriesExtract(\
-    (arc)->entries.data, (arc)->entries.count, dirPath, recursive)
-
-HL_API void hlArchiveEntryDestruct(HlArchiveEntry* entry);
-HL_API void hlArchiveDestruct(HlArchive* arc);
-HL_API void hlArchiveFree(HlArchive* arc);
-
-HL_API HlResult hlPackedFileEntryConstruct(const HlNChar* HL_RESTRICT name,
-    HlU32 dataPos, HlU32 dataSize, HlPackedFileEntry* HL_RESTRICT entry);
-
-HL_API void hlPackedFileEntryDestruct(HlPackedFileEntry* entry);
-
-HL_API HlResult hlPackedFileIndexConstruct(HlPackedFileIndex* pfi);
-HL_API void hlPackedFileIndexDestruct(HlPackedFileIndex* pfi);
-
-#ifndef HL_NO_EXTERNAL_WRAPPERS
-HL_API HlBool hlArchiveEntryIsStreamingExt(const HlArchiveEntry* entry);
-HL_API HlBool hlArchiveEntryIsDirExt(const HlArchiveEntry* entry);
-HL_API HlBool hlArchiveEntryIsFileExt(const HlArchiveEntry* entry);
-HL_API HlBool hlArchiveEntryIsRegularFileExt(const HlArchiveEntry* entry);
-HL_API size_t hlArchiveEntryGetCompressedSizeExt(const HlArchiveEntry* entry);
-HL_API HlBool hlArchiveEntryIsReferenceExt(const HlArchiveEntry* entry);
-
-HL_API HlResult hlArchiveExtractExt(const HlArchive* HL_RESTRICT arc,
-    const HlNChar* HL_RESTRICT dirPath, HlBool recursive);
-#endif
-
-#ifdef __cplusplus
-}
-#endif
+using packed_file_info = std::vector<packed_file_entry>;
+} // hl
 #endif

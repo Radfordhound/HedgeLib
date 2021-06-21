@@ -1,52 +1,83 @@
 #ifndef HL_BLOB_H_INCLUDED
 #define HL_BLOB_H_INCLUDED
-#include "hl_list.h"
+#include "hl_text.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct HlStream HlStream;
-
-typedef struct HlBlob
+namespace hl
 {
-    /**
-        @brief Pointer to the data this blob contains.
+class blob
+{
+    friend struct in_blob_size_setter;
 
-        IMPORTANT: If you manually set this value, you will have
-        to manually free it yourself later; hlBlobFree will
-        NOT free the data pointer for you in that case.
-        
-        This does not apply to hlBlobCreate, hlBlobRead,
-        hlBlobLoad, or any other HedgeLib function that
-        returns an HlBlob; unless otherwise stated, the data
-        allocated by those functions will also be freed
-        automatically when hlBlobFree is called.
-    */
-    void* data;
+protected:
+    /** @brief Pointer to the data this blob contains. */
+    u8* m_data;
     /** @brief Size of the data this blob contains, in bytes. */
-    size_t size;
-}
-HlBlob;
+    std::size_t m_size;
 
-typedef HL_LIST(HlBlob*) HlBlobList;
+    blob() noexcept : m_data(nullptr), m_size(0U) {}
 
-/** @brief The size of an HlBlob, aligned to a 16-byte offset. */
-#define HL_BLOB_ALIGNED_SIZE    HL_ALIGN(sizeof(HlBlob), 16)
+public:
+    template<typename T = void>
+    inline const T* data() const noexcept
+    {
+        return reinterpret_cast<const T*>(m_data);
+    }
 
-HL_API HlResult hlBlobCreate(const void* HL_RESTRICT initialData,
-    size_t size, HlBlob* HL_RESTRICT * HL_RESTRICT blob);
+    template<typename T = void>
+    inline T* data() noexcept
+    {
+        return reinterpret_cast<T*>(m_data);
+    }
 
-HL_API HlResult hlBlobRead(HlStream* HL_RESTRICT stream,
-    HlBlob* HL_RESTRICT * HL_RESTRICT blob);
+    inline std::size_t size() const noexcept
+    {
+        return m_size;
+    }
 
-HL_API HlResult hlBlobLoad(const HlNChar* HL_RESTRICT filePath,
-    HlBlob* HL_RESTRICT * HL_RESTRICT blob);
+    inline operator const void*() const noexcept
+    {
+        return m_data;
+    }
 
-HL_API void hlBlobFree(HlBlob* blob);
-HL_API void hlBlobListFree(HlBlobList* blobList);
+    inline operator void*() noexcept
+    {
+        return m_data;
+    }
 
-#ifdef __cplusplus
-}
-#endif
+    HL_API blob& operator=(const blob& other);
+    HL_API blob& operator=(blob&& other) noexcept;
+
+    HL_API blob(std::size_t size, const void* initialData = nullptr);
+    HL_API blob(const nchar* filePath);
+    inline blob(const nstring& filePath) : blob(filePath.c_str()) {}
+
+    HL_API blob(const blob& other);
+    HL_API blob(blob&& other) noexcept;
+    HL_API ~blob();
+};
+
+struct nullable_blob : public blob
+{
+    inline bool empty() const noexcept
+    {
+        return (m_size == 0U);
+    }
+
+    explicit operator bool() const noexcept
+    {
+        return (m_size != 0U);
+    }
+
+    nullable_blob() noexcept : blob() {}
+
+    nullable_blob(std::size_t size, const void* initialData = nullptr) :
+        blob(size, initialData) {}
+
+    nullable_blob(const nchar* filePath) : blob(filePath) {}
+
+    nullable_blob(const nstring& filePath) :
+        nullable_blob(filePath.c_str()) {}
+
+};
+} // hl
 #endif

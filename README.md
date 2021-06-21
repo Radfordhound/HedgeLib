@@ -13,7 +13,7 @@ As such, you don't have to manually build any of the tools/libraries in this rep
 - [Latest (development) builds](https://ci.appveyor.com/project/Radfordhound/hedgelib)
 
 ## HedgeLib
-HedgeLib is an ANSI C ("C89") library [under the MIT license](License.txt) that aims to make modding games in the Sonic the Hedgehog franchise easier, similar to [Dario's excellent "LibGens"](https://github.com/DarioSamo/libgens-sonicglvl).
+HedgeLib is C++11 library [under the MIT license](License.txt) that aims to make modding games in the Sonic the Hedgehog franchise easier, similar to [Dario's excellent "LibGens"](https://github.com/DarioSamo/libgens-sonicglvl).
 Right now, HedgeLib supports the following:
 
 ### Hedgehog Engine 1/2
@@ -96,7 +96,7 @@ Right now, HedgeLib supports the following:
 - Sonic Generations (PC/360/PS3)
 
 ## HedgeRender
-A C++11 graphics/rendering engine with a fully-C89-compatible API designed around modern rendering APIs for speed and portability. Currently, it only supports Direct3D 11, but it has been designed from the ground up to work well with modern APIs such as Direct3D 12 and Vulkan, so porting it to those backends shouldn't be difficult.
+A C++11 graphics/rendering engine designed around modern rendering APIs for speed and portability. Currently, it only supports Direct3D 11, but it has been designed from the ground up to work well with modern APIs such as Direct3D 12 and Vulkan, so porting it to those backends shouldn't be difficult.
 
 ## HedgeTools
 A collection of miscellaneous tools that utilize HedgeLib to allow editing a wide array of formats.
@@ -104,125 +104,226 @@ A collection of miscellaneous tools that utilize HedgeLib to allow editing a wid
 Right now this includes the following:
 
 - [HedgeEdit](HedgeTools/HedgeEdit)
-  * A C89 level editor built on top of HedgeLib and HedgeRender that I ultimately hope to allow for quick and powerful editing of levels from every mainline 3D Sonic game in the series (think "SonicGlvl" but for more than just Generations).
+  * A C++11 level editor built on top of HedgeLib and HedgeRender that I ultimately hope to allow for quick and powerful editing of levels from every mainline 3D Sonic game in the series (think "SonicGlvl" but for more than just Generations).
   Right now it's a major WIP, though feel free to try it out!
 - [HedgeArcPack](HedgeTools/HedgeArcPack)
-  * A C89 Command-Line tool that allows quick and powerful extraction and generation of archiving formats from all games HedgeLib supports.
+  * A C++17 Command-Line tool that allows quick and powerful extraction and generation of archiving formats from all games HedgeLib supports.
 - [HedgeOffsets](HedgeTools/HedgeOffsets)
-  * A C89 Command-Line tool that reads the offset table in BINA/Hedgehog Engine formats and prints each offset. Useful for debugging and reverse-engineering of undocumented formats which contain an offset table.
+  * A C++11 Command-Line tool that reads the offset table in BINA/Hedgehog Engine formats and prints each offset. Useful for debugging and reverse-engineering of undocumented formats which contain an offset table.
 
 # Manually Building
 Building HedgeLib is supposed to be easy.
 If you're having trouble building with the following instructions, please [create an issue](https://github.com/Radfordhound/HedgeLib/issues/new).
 
 ## Windows (Visual Studio)
-**1: Install the Windows SDK if you don't already have it:**
-You can install it either from the Visual Studio Installer by selecting "Windows 10 SDK" from the "Individual Components" list, or from [this link](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk).
+**1: Install [CMake](https://cmake.org/download/) and [git](https://git-scm.com/download/win) if you haven't already.**
 
-**2: Clone the HedgeLib repository and go into its folder:**
+**IMPORTANT:** Be sure to select "Add CMake to the system PATH for all users" during the CMake installation, or you'll experience an error while following these steps.
+
+**2: Open a Command Prompt or PowerShell window and clone the HedgeLib repository:**
 ```
 git clone https://github.com/Radfordhound/HedgeLib.git
-cd HedgeLib
 ```
 
-**3: Switch to the HedgeLib++ branch:**
+**3: Go into the HedgeLib folder and switch to the HedgeLib++ branch:**
 ```
+cd HedgeLib
 git switch HedgeLib++
 ```
 
-**4: Download Premake from [here](https://premake.github.io/download.html) and extract it to the directory you cloned HedgeLib to.**
-
-HedgeLib uses Premake for easy Project/Makefile generation across different platforms/IDEs.
-
-**5: Generate a Visual Studio Solution (.sln file) with Premake:**
+**4: Generate a Visual Studio Solution (.sln file) with CMake:**
 ```
-premake5 vs2019
+mkdir build
+cd build
+cmake -G "Visual Studio 16 2019" -A x64 ../
 ```
 
-If you're using a different version of Visual Studio, simply replace ```vs2019``` with the version you're using.
-(E.G. to use Visual Studio 2017, type ```premake5 vs2017``` instead.)
+---
 
-MinGW/Cygwin/etc. aren't officially supported/tested, but should also work fine. Just type ```premake5 gmake2``` to generate a Makefile instead.
+**NOTE:** If you got an error here like this:
+```
+'cmake' is not recognized as an internal or external command,
+operable program or batch file.
+```
 
-**6: Open the resulting HedgeLib.sln file in Visual Studio and hit "Build Solution" (or Ctrl+Shift+B).**
+It means you didn't choose the "Add CMake to the system PATH for all users" option during the CMake installation, so CMake is not on your system's PATH environment variable.
 
-Or, if you're using MinGW/Cygwin/etc., just run "make".
+To fix this, just manually add the CMake bin folder (usually "C:\Program Files\CMake\bin") to your PATH environment variable (Google it if you don't know how). Please note that changes to the PATH variable won't take effect until you close and re-open your Command Prompt/PowerShell window, so make sure to do that (and then cd back into your HedgeLib/build directory, of course) before running CMake again.
+
+Alternatively, you could also just use the already-installed CMake-gui program instead of using cmake from the command-line.
+
+---
+
+CMake will automatically download and setup any required dependencies as necessary and generate the required Visual Studio project and solution files.
+
+**NOTE:** This command will generate solution and project files for Visual Studio 2019 that target 64-bit x86 processors.
+If you wish to target a different Visual Studio version, replace ```Visual Studio 16 2019``` in the above command with any of the following values:
+
+Value                     | Visual Studio Version
+------------------------- | -----------------------------------------
+Visual Studio 16 2019     | Visual Studio 2019
+Visual Studio 15 2017     | Visual Studio 2017
+Visual Studio 14 2015     | Visual Studio 2015
+Visual Studio 12 2013     | Visual Studio 2013
+Visual Studio 11 2012     | Visual Studio 2012
+Visual Studio 10 2010     | Visual Studio 2010
+Visual Studio 9 2008      | Visual Studio 2008
+
+If you wish to target a different architecture, replace ```x64``` in the above command with any of the following values:
+
+Value   | Architecture
+------- | -------------------------
+Win32   | 32-bit x86 Architecture
+x64     | 64-bit x86 Architecture
+ARM     | 32-bit ARM Architecture
+ARM64   | 64-bit ARM Architecture
+
+**5: Open the resulting HedgeLib.sln file (contained within the "build" directory) in Visual Studio and click "Build" -> "Build Solution"** (or press Ctrl+Shift+B).
+
+If building succeeds, the resulting .exe files will be located within the build/**(program name)**/**(configuration)** directory (e.g. build/HedgeArcPack/Debug/HedgeArcPack.exe)
 
 ## macOS
-**1: Clone the HedgeLib repository and go into its folder:**
+**1: Open a terminal and install Homebrew (if you don't already have it):**
 ```
-git clone https://github.com/Radfordhound/HedgeLib.git
-cd HedgeLib
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-**2: Switch to the HedgeLib++ branch:**
+**2: Install the required dependencies:**
 ```
+brew install cmake git glm lz4 zlib
+```
+
+**3: Clone the HedgeLib repository:**
+```
+git clone https://github.com/Radfordhound/HedgeLib.git
+```
+
+**3: Go into the HedgeLib folder and switch to the HedgeLib++ branch:**
+```
+cd HedgeLib
 git switch HedgeLib++
 ```
 
-**3: Download Premake from [here](https://premake.github.io/download.html) and extract it to the directory you cloned HedgeLib to.**
+**4: Generate Makefiles or Xcode project files with CMake:**
 
-HedgeLib uses Premake for easy Project/Makefile generation across different platforms/IDEs.
 
-**4: Run Premake:**
+To generate Makefiles:
 ```
-./premake5 xcode4
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Debug ../
 ```
 
-**5: Open the resulting HedgeLib.xcworkspace file in Xcode and build there.**
+---
 
-Alternatively, you can build from the terminal by ```cd```ing into the directory of the tool you want to build (e.g. HedgeTools/HedgeOffsets) and entering the following command:
+**NOTE:** The generated Makefile(s) will produce a Debug build.
+To change this, replace ```Debug``` in the above command with any of the following values:
+
+
+Value           | Meaning
+--------------- | -----------------------------------------------------------------------------
+Debug           | Debug build; has debugging information (such as symbols) and no optimization.
+Release         | Release build; is fully optimized and has no debugging information.
+RelWithDebInfo  | Release build with debugging information.
+MinSizeRel      | Release build, but optimized for size rather than speed.
+
+---
+
+To generate Xcode project files:
+```
+mkdir build
+cd build
+cmake -G "Xcode" ../
+```
+
+---
+
+**NOTE:** If you get this weird error:
+```
+CMake Error: Xcode 1.5 not supported.
+```
+
+It means CMake isn't finding the correct Xcode installation. To fix it, run the following command, but with "/Applications/Xcode_10.1.app" replaced with the path to your machine's Xcode.app file:
+```
+sudo /usr/bin/xcode-select --switch /Applications/Xcode_10.1.app
+```
+
+Then, run CMake again:
+```
+cmake -G "Xcode" ../
+```
+
+---
+
+**5: Build the code:**
+
+
+If you generated Makefiles, run them like so:
+```
+make
+```
+
+If you generated Xcode project files, just open them in Xcode and build there.
+
+Alternatively, you can also build them from the terminal by ```cd```ing into the directory of the tool you want to build (e.g. HedgeTools/HedgeOffsets) and entering the following command:
 ```
 xcodebuild
 ```
 
-By default, this should compile a Debug build. To compile a Release build, simply run the following command instead:
+**NOTE:** By default, this will compile a "Debug" build. To compile a "Release" build, simply run the following command instead:
 ```
 xcodebuild -configuration Release
 ```
 
 ## Linux
-**1: Install the following packages** (or equivalents for your distro of choice):
+**1: Install the required dependencies** (or equivalents for your distro of choice)**:**
+
+
+Ubuntu/Debian-based distros:
 ```
-git
-gcc
-make
-premake5
+sudo apt install git build-essential cmake libglm-dev liblz4-dev zlib1g-dev
 ```
 
-If your distro of choice does not have a premake5 package, you may have to download Premake from [here](https://premake.github.io/download.html).
+Arch-based distros:
+```
+sudo pacman -S git gcc make cmake glm lz4 zlib
+```
 
-(You can also use Clang in-place of GCC if you wish.)
+Void-based distros:
+```
+sudo xbps-install -S git gcc make cmake glm liblz4-devel zlib-devel
+```
 
-**2: Clone the HedgeLib repository and go into its folder:**
+**2: Clone the HedgeLib repository:**
 ```
 git clone https://github.com/Radfordhound/HedgeLib.git
-cd HedgeLib
 ```
 
-**3: Switch to the HedgeLib++ branch:**
+**3: Go into the HedgeLib folder and switch to the HedgeLib++ branch:**
 ```
+cd HedgeLib
 git switch HedgeLib++
 ```
 
-**4: Generate a Makefile with Premake:**
+**4: Generate Makefiles with CMake:**
 ```
-premake5 gmake2
-```
-
-This will use GCC by default. If you wish to build using Clang instead of GCC, run ```premake5 gmake2 --cc=clang``` instead.
-
-**5: Run the Makefile:**
-```
-make config=debug_x64
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Debug ../
 ```
 
-To build with a different configuration, simply replace ```debug_x64``` with any of the following options:
+**NOTE:** The generated Makefiles will produce a Debug build.
+To change this, replace ```Debug``` in the above command with any of the following values:
 
-- debug_x86     (Debug build for 32-bit x86 Architecture)
-- debug_x64     (Debug build for 64-bit x86 Architecture)
-- release_x86   (Release build for 32-bit x86 Architecture)
-- release_x64   (Release build for 64-bit x86 Architecture)
 
-Building for non-x86 architectures (such as ARM, PowerPC, etc.) should also work correctly, but currently it's not officially supported.
-If you'd like to help us change that, please let us know by [creating an issue](https://github.com/Radfordhound/HedgeLib/issues/new)!
+Value           | Meaning
+--------------- | -----------------------------------------------------------------------------
+Debug           | Debug build; has debugging information (such as symbols) and no optimization.
+Release         | Release build; is fully optimized and has no debugging information.
+RelWithDebInfo  | Release build with debugging information.
+MinSizeRel      | Release build, but optimized for size rather than speed.
+
+**5: Run the Makefiles:**
+```
+make
+```

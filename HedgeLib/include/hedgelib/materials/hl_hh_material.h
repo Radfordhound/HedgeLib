@@ -1,92 +1,196 @@
 #ifndef HL_HH_MATERIAL_H_INCLUDED
 #define HL_HH_MATERIAL_H_INCLUDED
-#include "hl_material.h"
+#include "../hl_math.h"
 #include "../textures/hl_hh_texture.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace hl
+{
+class material;
+class scene;
 
-typedef struct HlHHMaterialParameter
+namespace hh
+{
+namespace mirage
+{
+template<typename T>
+struct raw_material_param
 {
     /** @brief Always 2 or 0? */
-    HlU8 flag1;
+    u8 flag1;
     /** @brief Always 0? */
-    HlU8 flag2;
-    /** @brief How many values are in the array pointed to by valuesOffset. */
-    HlU8 valueCount;
+    u8 flag2;
+    /** @brief How many values are in the array pointed to by values. */
+    u8 valueCount;
     /** @brief Always 0? */
-    HlU8 flag4;
-    HL_OFF32_STR nameOffset;
-    HL_OFF32(void) valuesOffset;
-}
-HlHHMaterialParameter;
+    u8 flag3;
+    off32<char> name;
+    off32<T> values;
 
-HL_STATIC_ASSERT_SIZE(HlHHMaterialParameter, 12)
+    template<bool swapOffsets = true>
+    void endian_swap() noexcept
+    {
+        hl::endian_swap<swapOffsets>(name);
+        hl::endian_swap<swapOffsets>(values);
+    }
+};
 
-/* Thanks to Skyth for helping crack alphaThreshold and int4/bool4 param types! */
+HL_STATIC_ASSERT_SIZE(raw_material_param<vec4>, 12);
 
-typedef struct HlHHMaterialV1
+struct raw_material_v1
 {
-    HL_OFF32_STR shaderNameOffset;
-    HL_OFF32_STR subShaderNameOffset;
-    HL_OFF32_STR texsetNameOffset;
-    HlU32 reserved1;
-    HlU8 alphaThreshold;
-    HlU8 noBackfaceCulling;
-    HlU8 useAdditiveBlending;
-    HlU8 unknownFlag1;
-    HlU8 vec4ParamCount;
-    HlU8 int4ParamCount;
-    HlU8 bool4ParamCount;
-    HlU8 reserved2;
-    HL_OFF32(HL_OFF32(HlHHMaterialParameter)) vec4ParamsOffset;
-    HL_OFF32(HL_OFF32(HlHHMaterialParameter)) int4ParamsOffset;
-    HL_OFF32(HL_OFF32(HlHHMaterialParameter)) bool4ParamsOffset;
-}
-HlHHMaterialV1;
+    off32<char> shaderName;
+    off32<char> subShaderName;
+    off32<char> texsetName;
+    u32 reserved1;
+    u8 alphaThreshold;
+    u8 noBackfaceCulling;
+    u8 useAdditiveBlending;
+    u8 unknownFlag1;
+    u8 float4ParamCount;
+    u8 int4ParamCount;
+    u8 bool4ParamCount;
+    u8 reserved2;
+    off32<off32<raw_material_param<vec4>>> float4Params;
+    off32<off32<raw_material_param<ivec4>>> int4Params;
+    off32<off32<raw_material_param<bvec4>>> bool4Params;
 
-HL_STATIC_ASSERT_SIZE(HlHHMaterialV1, 0x24)
+    template<bool swapOffsets = true>
+    void endian_swap() noexcept
+    {
+        hl::endian_swap<swapOffsets>(shaderName);
+        hl::endian_swap<swapOffsets>(subShaderName);
+        hl::endian_swap<swapOffsets>(texsetName);
+        hl::endian_swap(reserved1);
+        hl::endian_swap<swapOffsets>(float4Params);
+        hl::endian_swap<swapOffsets>(int4Params);
+        hl::endian_swap<swapOffsets>(bool4Params);
+    }
 
-typedef struct HlHHMaterialV3
+    HL_API void fix();
+};
+
+HL_STATIC_ASSERT_SIZE(raw_material_v1, 0x24);
+
+struct raw_material_v3
 {
-    HL_OFF32_STR shaderNameOffset;
-    HL_OFF32_STR subShaderNameOffset;
-    HL_OFF32(HL_OFF32_STR) hhTextureNamesOffset;
-    HL_OFF32(HL_OFF32(HlHHTextureV1)) texturesOffset;
-    HlU8 alphaThreshold;
-    HlU8 noBackfaceCulling;
-    HlU8 useAdditiveBlending;
-    HlU8 unknownFlag1;
-    HlU8 vec4ParamCount;
-    HlU8 int4ParamCount;
-    HlU8 bool4ParamCount;
-    HlU8 textureCount;
-    HL_OFF32(HL_OFF32(HlHHMaterialParameter)) vec4ParamsOffset;
-    HL_OFF32(HL_OFF32(HlHHMaterialParameter)) int4ParamsOffset;
-    HL_OFF32(HL_OFF32(HlHHMaterialParameter)) bool4ParamsOffset;
-}
-HlHHMaterialV3;
+    off32<char> shaderName;
+    off32<char> subShaderName;
+    off32<off32<char>> textureEntryNames;
+    off32<off32<raw_texture_entry_v1>> textureEntries;
+    u8 alphaThreshold;
+    u8 noBackfaceCulling;
+    u8 useAdditiveBlending;
+    u8 unknownFlag1;
+    u8 float4ParamCount;
+    u8 int4ParamCount;
+    u8 bool4ParamCount;
+    u8 textureEntryCount;
+    off32<off32<raw_material_param<vec4>>> float4Params;
+    off32<off32<raw_material_param<ivec4>>> int4Params;
+    off32<off32<raw_material_param<bvec4>>> bool4Params;
 
-HL_STATIC_ASSERT_SIZE(HlHHMaterialV3, 0x24)
+    template<bool swapOffsets = true>
+    void endian_swap() noexcept
+    {
+        hl::endian_swap<swapOffsets>(shaderName);
+        hl::endian_swap<swapOffsets>(subShaderName);
+        hl::endian_swap<swapOffsets>(textureEntryNames);
+        hl::endian_swap<swapOffsets>(textureEntries);
+        hl::endian_swap<swapOffsets>(float4Params);
+        hl::endian_swap<swapOffsets>(int4Params);
+        hl::endian_swap<swapOffsets>(bool4Params);
+    }
 
-HL_API void hlHHMaterialParameterSwap(HlHHMaterialParameter* param, HlBool swapOffsets);
-HL_API void hlHHMaterialV1Swap(HlHHMaterialV1* mat, HlBool swapOffsets);
-HL_API void hlHHMaterialV3Swap(HlHHMaterialV3* mat, HlBool swapOffsets);
+    HL_API void fix();
+};
 
-HL_API void hlHHMaterialV1Fix(HlHHMaterialV1* mat);
-HL_API void hlHHMaterialV3Fix(HlHHMaterialV3* mat);
+HL_STATIC_ASSERT_SIZE(raw_material_v3, 0x24);
 
-HL_API HlResult hlHHMaterialV1Parse(const HlHHMaterialV1* HL_RESTRICT hhMat,
-    const char* HL_RESTRICT name, HlMaterial* HL_RESTRICT * HL_RESTRICT hlMat);
+template<typename T>
+struct material_param
+{
+    u8 flag1 = 0;
+    u8 flag2 = 0;
+    u8 flag3 = 0;
+    std::string name;
+    std::vector<T> values;
 
-HL_API HlResult hlHHMaterialV3Parse(const HlHHMaterialV3* HL_RESTRICT hhMat,
-    const char* HL_RESTRICT name, HlMaterial* HL_RESTRICT * HL_RESTRICT hlMat);
+    material_param(const char* name) : name(name) {}
+    material_param(const std::string& name) : name(name) {}
+    material_param(std::string&& name) noexcept : name(std::move(name)) {}
 
-HL_API HlResult hlHHMaterialRead(void* HL_RESTRICT rawData,
-    const char* HL_RESTRICT name, HlMaterial* HL_RESTRICT * HL_RESTRICT hlMat);
+    material_param(const raw_material_param<T>& rawParam) :
+        flag1(rawParam.flag1),
+        flag2(rawParam.flag2),
+        flag3(rawParam.flag3),
+        name(rawParam.name.get()),
+        values(rawParam.values.get(), rawParam.values.get() + rawParam.valueCount) {}
+};
 
-#ifdef __cplusplus
-}
-#endif
+class material
+{
+    HL_API void in_add_to_material(std::string& utf8TexFilePath,
+        hl::material& mat, bool includeLibGensTags = true) const;
+
+public:
+    std::string name;
+    std::string shaderName = "Common_d";
+    std::string subShaderName = "Common_d";
+    float alphaThreshold = 0.5f;
+    bool noBackfaceCulling = false;
+    bool useAdditiveBlending = false;
+    u8 unknownFlag1 = 0;
+    std::vector<material_param<vec4>> float4Params;
+    std::vector<material_param<ivec4>> int4Params;
+    std::vector<material_param<bvec4>> bool4Params;
+    mirage::texset texset;
+
+    constexpr static const nchar* const ext = HL_NTEXT(".material");
+
+    HL_API static void fix(void* rawData);
+
+    HL_API void add_to_scene(const nchar* texDir, scene& scene,
+        bool merge = true, bool includeLibGensTags = true) const;
+
+    void add_to_scene(const nstring& texDir, scene& scene,
+        bool merge = true, bool includeLibGensTags = true) const
+    {
+        add_to_scene(texDir.c_str(), scene, merge, includeLibGensTags);
+    }
+
+    HL_API void parse(const raw_material_v1& rawMat);
+
+    HL_API void parse(const raw_material_v1& rawMat, const nchar* texsetDir);
+    HL_API void parse(const raw_material_v1& rawMat, const nstring& texsetDir);
+
+    HL_API void parse(const raw_material_v3& rawMat);
+
+    HL_API void parse(const void* rawData, const nchar* texsetDir = nullptr);
+
+    inline void parse(const void* rawData, const nstring& texsetDir)
+    {
+        parse(rawData, texsetDir.c_str());
+    }
+
+    HL_API void load(const nchar* filePath);
+
+    inline void load(const nstring& filePath)
+    {
+        load(filePath.c_str());
+    }
+
+    material() = default;
+
+    HL_API material(const void* rawData, const char* name);
+    HL_API material(const void* rawData, const std::string& name);
+    HL_API material(const void* rawData, std::string&& name);
+
+    HL_API material(const nchar* filePath);
+
+    inline material(const nstring& filePath) :
+        material(filePath.c_str()) {}
+};
+} // mirage
+} // hh
+} // hl
 #endif

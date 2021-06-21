@@ -1,110 +1,115 @@
 #ifndef HL_STREAM_H_INCLUDED
 #define HL_STREAM_H_INCLUDED
-#include "../hl_list.h"
+#include "../hl_tables.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef enum HlSeekMode
+namespace hl
 {
-    HL_SEEK_MODE_BEG,
-    HL_SEEK_MODE_CUR,
-    HL_SEEK_MODE_END
-}
-HlSeekMode;
-
-typedef HlResult (*HlStreamReadFunc)(struct HlStream* HL_RESTRICT stream,
-    size_t size, void* HL_RESTRICT buf, size_t* HL_RESTRICT readByteCount);
-
-typedef HlResult (*HlStreamWriteFunc)(struct HlStream* HL_RESTRICT stream,
-    size_t size, const void* HL_RESTRICT buf, size_t* HL_RESTRICT writtenByteCount);
-
-typedef HlResult (*HlStreamSeekFunc)(struct HlStream* stream,
-    long offset, HlSeekMode seekMode);
-
-typedef HlResult (*HlStreamJumpToFunc)(struct HlStream* stream, size_t pos);
-typedef HlResult (*HlStreamFlushFunc)(struct HlStream* stream);
-
-typedef HlResult (*HlStreamGetSizeFunc)(struct HlStream* HL_RESTRICT stream,
-    size_t* HL_RESTRICT size);
-
-typedef struct HlStreamFuncs
+enum class seek_mode
 {
-    HlStreamReadFunc read;
-    HlStreamWriteFunc write;
-    HlStreamSeekFunc seek;
-    HlStreamJumpToFunc jumpTo;
-    HlStreamFlushFunc flush;
-    HlStreamGetSizeFunc getSize;
-}
-HlStreamFuncs;
+    /** @brief Seek starting from the beginning of the stream. */
+    beg,
+    /** @brief Seek starting from the current position in the stream. */
+    cur,
+    /** @brief Seek starting from the end of the stream. */
+    end
+};
 
-typedef struct HlStream
+/**
+    @brief Custom stream class. Designed for reading/writing binary data
+    much more easily than with std::fstream. Not designed for reading/writing
+    text.
+*/
+class stream
 {
-    const HlStreamFuncs* funcs;
-    HlUMax handle;
-    size_t curPos;
-}
-HlStream;
+protected:
+    std::size_t m_curPos = 0;
 
-#define hlStreamRead(stream, size, buf, readByteCount)\
-    (stream)->funcs->read(stream, size, buf, readByteCount)
+    inline stream() = default;
 
-#define hlStreamWrite(stream, size, buf, writtenByteCount)\
-    (stream)->funcs->write(stream, size, buf, writtenByteCount)
+public:
+    virtual std::size_t read(std::size_t size, void* buf) = 0;
+    virtual std::size_t write(std::size_t size, const void* buf) = 0;
+    virtual void seek(seek_mode mode, long long offset) = 0;
+    virtual void jump_to(std::size_t pos) = 0;
+    virtual void flush() = 0;
+    virtual std::size_t get_size() = 0;
+    virtual ~stream() = 0;
 
-#define hlStreamSeek(stream, offset, seekMode)\
-    (stream)->funcs->seek(stream, offset, seekMode)
+    inline void jump_ahead(long long amount)
+    {
+        seek(seek_mode::cur, amount);
+    }
 
-#define hlStreamJumpAhead(stream, amount)\
-    hlStreamSeek(stream, amount, HL_SEEK_MODE_CUR)
+    inline void jump_behind(long long amount)
+    {
+        seek(seek_mode::cur, -amount);
+    }
 
-#define hlStreamJumpBehind(stream, amount)\
-    hlStreamSeek(stream, -((long)(amount)), HL_SEEK_MODE_CUR)
+    inline std::size_t tell() const noexcept
+    {
+        return m_curPos;
+    }
 
-#define hlStreamJumpTo(stream, pos)\
-    (stream)->funcs->jumpTo(stream, pos)
+    HL_API void read_all(std::size_t size, void* buf);
+    HL_API void write_all(std::size_t size, const void* buf);
 
-#define hlStreamTell(stream) (stream)->curPos
-#define hlStreamFlush(stream) (stream)->funcs->flush(stream)
-#define hlStreamGetSize(stream, size) (stream)->funcs->getSize(stream, size)
+    template<typename T>
+    void read_obj(T& obj)
+    {
+        read_all(sizeof(T), &obj);
+    }
 
-#define HL_STREAM_WRITE_TEXT_UTF8(stream, text, writtenByteCount)\
-    hlStreamWrite(stream, sizeof(text) - sizeof(char), text, writtenByteCount)
+    template<typename T>
+    void write_obj(const T& obj)
+    {
+        write_all(sizeof(T), &obj);
+    }
 
-#define HL_STREAM_WRITE_TEXT_NATIVE(stream, text, writtenByteCount)\
-    hlStreamWrite(stream, sizeof(text) - sizeof(HlNChar), text, writtenByteCount)
+    template<typename T>
+    void read_arr(std::size_t count, T* arr)
+    {
+        read_all(sizeof(T) * count, arr);
+    }
 
-HL_API HlResult hlStreamWriteNulls(HlStream* HL_RESTRICT stream,
-    size_t amount, size_t* HL_RESTRICT writtenByteCount);
+    template<typename T>
+    void write_arr(std::size_t count, const T* arr)
+    {
+        write_all(sizeof(T) * count, arr);
+    }
 
-HL_API HlResult hlStreamWriteOff32(HlStream* HL_RESTRICT stream,
-    size_t basePos, size_t offVal, HlBool doSwap,
-    HlOffTable* HL_RESTRICT offTable);
+    HL_API void write_nulls(std::size_t amount);
 
-HL_API HlResult hlStreamWriteOff64(HlStream* HL_RESTRICT stream,
-    size_t basePos, size_t offVal, HlBool doSwap,
-    HlOffTable* HL_RESTRICT offTable);
+    HL_API void write_off32(std::size_t basePos, std::size_t offVal,
+        bool doSwap, off_table& offTable);
 
-HL_API HlResult hlStreamFixOff32(HlStream* HL_RESTRICT stream,
-    size_t basePos, size_t offPos, size_t offVal, HlBool doSwap,
-    HlOffTable* HL_RESTRICT offTable);
+    HL_API void write_off64(std::size_t basePos, std::size_t offVal,
+        bool doSwap, off_table& offTable);
 
-HL_API HlResult hlStreamFixOff64(HlStream* HL_RESTRICT stream,
-    size_t basePos, size_t offPos, size_t offVal, HlBool doSwap,
-    HlOffTable* HL_RESTRICT offTable);
+    HL_API void fix_off32(std::size_t basePos, std::size_t offPos,
+        bool doSwap, off_table& offTable);
 
-HL_API HlResult hlStreamWriteStringUTF8(HlStream* HL_RESTRICT stream,
-    const char* str, size_t* HL_RESTRICT writtenByteCount);
+    HL_API void fix_off64(std::size_t basePos, std::size_t offPos,
+        bool doSwap, off_table& offTable);
 
-HL_API HlResult hlStreamWriteStringNative(HlStream* HL_RESTRICT stream,
-    const HlNChar* str, size_t* HL_RESTRICT writtenByteCount);
+    HL_API bool read_str(std::size_t bufSize, char* buf);
+    HL_API std::string read_str();
 
-HL_API HlResult hlStreamAlign(HlStream* stream, size_t stride);
-HL_API HlResult hlStreamPad(HlStream* stream, size_t stride);
+    std::size_t write_str(const char* str)
+    {
+        const std::size_t size = text::size(str);
+        write_arr(size, str);
+        return size;
+    }
 
-#ifdef __cplusplus
-}
-#endif
+    std::size_t write_str(const std::string& str)
+    {
+        const std::size_t size = (str.length() + 1);
+        write_arr(size, str.c_str());
+        return size;
+    }
+
+    HL_API void align(std::size_t stride);
+    HL_API void pad(std::size_t stride);
+};
+} // hl
 #endif

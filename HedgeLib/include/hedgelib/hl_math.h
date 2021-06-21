@@ -1,133 +1,480 @@
 #ifndef HL_MATH_H_INCLUDED
 #define HL_MATH_H_INCLUDED
 #include "hl_internal.h"
-#include <math.h>
+#include <algorithm>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* Math constants */
-#define HL_PI 3.141592654
-
-/* Math helper macros */
-#define HL_MIN(a,b) (((a) < (b)) ? (a) : (b))
-#define HL_MAX(a,b) (((a) > (b)) ? (a) : (b))
-
-#ifdef isnan
-#define HL_IS_NAN(v) isnan(v)
-#else
-#define HL_IS_NAN(v) ((v) != (v))
-#endif
-    
-#ifdef isinf
-#define HL_IS_INF(v) isinf(v)
-#else
-#include <float.h>
-#define HL_IS_INF(v) ((x) < -FLT_MAX || (x) > FLT_MAX)
-#endif
-
-typedef struct HlVector2Half
+namespace hl
 {
-    HlU16 x;
-    HlU16 y;
+namespace math
+{
+constexpr double pi = 3.14159265358979323846;
+
+constexpr double degrees_to_radians(double degrees) noexcept
+{
+    return (degrees * (pi / 180));
 }
-HlVector2Half;
 
-HL_STATIC_ASSERT_SIZE(HlVector2Half, 4)
-
-typedef struct HlVector2
+constexpr double radians_to_degrees(double radians) noexcept
 {
-    float x;
-    float y;
+    return (radians * (180 / pi));
 }
-HlVector2;
 
-HL_STATIC_ASSERT_SIZE(HlVector2, 8)
-
-typedef struct HlVector3
+template<std::size_t bits, typename packed_t>
+constexpr float unsnorm_float(packed_t v) noexcept
 {
-    float x;
-    float y;
-    float z;
+    // Convert to float while preserving twos-compliment signedness.
+    return (((v & (1U << (bits - 1U))) != 0) ?
+        -static_cast<float>((1U << (bits - 1U)) - (v & ((1U << (bits - 1U)) - 1U))) :
+        static_cast<float>(v & ((1U << (bits - 1U)) - 1U)));
 }
-HlVector3;
 
-HL_STATIC_ASSERT_SIZE(HlVector3, 12)
-
-typedef struct HlVector4
+template<>
+constexpr float unsnorm_float<8, u8>(u8 v) noexcept
 {
-    float x;
-    float y;
-    float z;
-    float w;
+    return static_cast<float>(static_cast<s8>(v));
 }
-HlVector4,
-HlQuaternion;
 
-HL_STATIC_ASSERT_SIZE(HlVector4, 16)
-
-typedef struct HlAABB
+template<>
+constexpr float unsnorm_float<16, u16>(u16 v) noexcept
 {
-    HlVector3 min;
-    HlVector3 max;
+    return static_cast<float>(static_cast<s16>(v));
 }
-HlAABB;
 
-HL_STATIC_ASSERT_SIZE(HlAABB, 24)
-
-typedef struct HlBoundingSphere
+template<>
+constexpr float unsnorm_float<32, u32>(u32 v) noexcept
 {
-    HlVector3 center;
+    return static_cast<float>(static_cast<s32>(v));
+}
+
+template<>
+constexpr float unsnorm_float<64, u64>(u64 v) noexcept
+{
+    return static_cast<float>(static_cast<s64>(v));
+}
+
+template<typename packed_t>
+constexpr float unsnorm_float(packed_t v) noexcept
+{
+    return unsnorm_float<bit_count<packed_t>(), packed_t>(v);
+}
+
+template<std::size_t bits, typename packed_t>
+constexpr double unsnorm_double(packed_t v) noexcept
+{
+    // Convert to double while preserving twos-compliment signedness.
+    return (((v & (1U << (bits - 1U))) != 0) ?
+        -static_cast<double>((1U << (bits - 1U)) - (v & ((1U << (bits - 1U)) - 1U))) :
+        static_cast<double>(v & ((1U << (bits - 1U)) - 1U)));
+}
+
+template<>
+constexpr double unsnorm_double<8, u8>(u8 v) noexcept
+{
+    return static_cast<double>(static_cast<s8>(v));
+}
+
+template<>
+constexpr double unsnorm_double<16, u16>(u16 v) noexcept
+{
+    return static_cast<double>(static_cast<s16>(v));
+}
+
+template<>
+constexpr double unsnorm_double<32, u32>(u32 v) noexcept
+{
+    return static_cast<double>(static_cast<s32>(v));
+}
+
+template<>
+constexpr double unsnorm_double<64, u64>(u64 v) noexcept
+{
+    return static_cast<double>(static_cast<s64>(v));
+}
+
+template<typename packed_t>
+constexpr double unsnorm_double(packed_t v) noexcept
+{
+    return unsnorm_double<bit_count<packed_t>(), packed_t>(v);
+}
+
+template<std::size_t bits, typename packed_t>
+constexpr float unorm_to_float(packed_t v) noexcept
+{
+    return (static_cast<float>(v & ((1U << bits) - 1U)) /
+        ((1U << bits) - 1U));
+}
+
+template<>
+constexpr float unorm_to_float<8, u8>(u8 v) noexcept
+{
+    return (static_cast<float>(v) / UINT8_MAX);
+}
+
+template<>
+constexpr float unorm_to_float<16, u16>(u16 v) noexcept
+{
+    return (static_cast<float>(v) / UINT16_MAX);
+}
+
+template<>
+constexpr float unorm_to_float<32, u32>(u32 v) noexcept
+{
+    return (static_cast<float>(v) / UINT32_MAX);
+}
+
+template<>
+constexpr float unorm_to_float<64, u64>(u64 v) noexcept
+{
+    return (static_cast<float>(v) / UINT64_MAX);
+}
+
+template<typename packed_t>
+constexpr float unorm_to_float(packed_t v) noexcept
+{
+    return unorm_to_float<bit_count<packed_t>(), packed_t>(v);
+}
+
+template<std::size_t bits, typename packed_t>
+constexpr double unorm_to_double(packed_t v) noexcept
+{
+    return (static_cast<double>(v & ((1U << bits) - 1U)) /
+        ((1U << bits) - 1U));
+}
+
+template<>
+constexpr double unorm_to_double<8, u8>(u8 v) noexcept
+{
+    return (static_cast<double>(v) / UINT8_MAX);
+}
+
+template<>
+constexpr double unorm_to_double<16, u16>(u16 v) noexcept
+{
+    return (static_cast<double>(v) / UINT16_MAX);
+}
+
+template<>
+constexpr double unorm_to_double<32, u32>(u32 v) noexcept
+{
+    return (static_cast<double>(v) / UINT32_MAX);
+}
+
+template<>
+constexpr double unorm_to_double<64, u64>(u64 v) noexcept
+{
+    return (static_cast<double>(v) / UINT64_MAX);
+}
+
+template<typename packed_t>
+constexpr double unorm_to_double(packed_t v) noexcept
+{
+    return unorm_to_double<bit_count<packed_t>(), packed_t>(v);
+}
+
+template<std::size_t bits, typename packed_t>
+constexpr float snorm_to_float(packed_t v) noexcept
+{
+    return (std::max)(unsnorm_float<bits, packed_t>(v) /
+        ((1U << (bits - 1U)) - 1U), -1.0f);
+}
+
+template<typename packed_t>
+constexpr float snorm_to_float(packed_t v) noexcept
+{
+    return snorm_to_float<bit_count<packed_t>(), packed_t>(v);
+}
+
+template<std::size_t bits, typename packed_t>
+constexpr double snorm_to_double(packed_t v) noexcept
+{
+    return (std::max)(unsnorm_double<bits, packed_t>(v) /
+        ((1U << (bits - 1U)) - 1U), -1.0);
+}
+
+template<typename packed_t>
+constexpr double snorm_to_double(packed_t v) noexcept
+{
+    return snorm_to_double<bit_count<packed_t>(), packed_t>(v);
+}
+} // math
+
+//class half
+//{
+//    u16 m_val;
+//
+//public:
+//    HL_API float to_float() const noexcept;
+//
+//    inline operator float() const noexcept
+//    {
+//        return to_float();
+//    }
+//
+//    inline half() noexcept = default;
+//    HL_API half(float v) noexcept;
+//    constexpr half(u16 v) noexcept : m_val(v) {}
+//};
+
+template<typename T>
+struct vec2_base
+{
+    T x;
+    T y;
+
+    static const vec2_base<T> zero;
+    static const vec2_base<T> one;
+
+    template<bool swapOffsets = true>
+    void endian_swap() noexcept
+    {
+        hl::endian_swap(x);
+        hl::endian_swap(y);
+    }
+
+    inline bool operator==(const vec2_base<T>& other) const noexcept
+    {
+        return (x == other.x && y == other.y);
+    }
+
+    inline T operator[](const std::size_t i) const noexcept
+    {
+        return reinterpret_cast<const T*>(this)[i];
+    }
+
+    inline vec2_base() noexcept = default;
+    constexpr vec2_base(T x, T y) noexcept :
+        x(x), y(y) {}
+};
+
+template <typename T>
+const vec2_base<T> vec2_base<T>::zero = vec2_base<T>(0, 0);
+
+template <typename T>
+const vec2_base<T> vec2_base<T>::one = vec2_base<T>(1, 1);
+
+template<typename T>
+struct vec3_base
+{
+    T x;
+    T y;
+    T z;
+
+    static const vec3_base<T> zero;
+    static const vec3_base<T> one;
+
+    template<bool swapOffsets = true>
+    void endian_swap() noexcept
+    {
+        hl::endian_swap(x);
+        hl::endian_swap(y);
+        hl::endian_swap(z);
+    }
+
+    inline bool operator==(const vec3_base<T>& other) const noexcept
+    {
+        return (x == other.x && y == other.y &&
+            z == other.z);
+    }
+
+    inline T operator[](const std::size_t i) const noexcept
+    {
+        return reinterpret_cast<const T*>(this)[i];
+    }
+
+    inline vec3_base() noexcept = default;
+    constexpr vec3_base(T x, T y, T z) noexcept :
+        x(x), y(y), z(z) {}
+};
+
+template <typename T>
+const vec3_base<T> vec3_base<T>::zero = vec3_base<T>(0, 0, 0);
+
+template <typename T>
+const vec3_base<T> vec3_base<T>::one = vec3_base<T>(1, 1, 1);
+
+template<typename T>
+struct vec4_base
+{
+    T x;
+    T y;
+    T z;
+    T w;
+
+    static const vec4_base<T> zero;
+    static const vec4_base<T> one;
+
+    template<bool swapOffsets = true>
+    void endian_swap() noexcept
+    {
+        hl::endian_swap(x);
+        hl::endian_swap(y);
+        hl::endian_swap(z);
+        hl::endian_swap(w);
+    }
+
+    constexpr bool operator==(const vec4_base<T>& other) const noexcept
+    {
+        return (x == other.x && y == other.y &&
+            z == other.z && w == other.w);
+    }
+
+    inline T operator[](const std::size_t i) const noexcept
+    {
+        return reinterpret_cast<const T*>(this)[i];
+    }
+
+    inline vec4_base() noexcept = default;
+    constexpr vec4_base(T x, T y, T z, T w) noexcept :
+        x(x), y(y), z(z), w(w) {}
+};
+
+template <typename T>
+const vec4_base<T> vec4_base<T>::zero = vec4_base<T>(0, 0, 0, 0);
+
+template <typename T>
+const vec4_base<T> vec4_base<T>::one = vec4_base<T>(1, 1, 1, 1);
+
+using vec2 = vec2_base<float>;
+HL_STATIC_ASSERT_SIZE(vec2, 8);
+
+using vec2_half = vec2_base<u16>;
+HL_STATIC_ASSERT_SIZE(vec2_half, 4);
+
+using vec3 = vec3_base<float>;
+HL_STATIC_ASSERT_SIZE(vec3, 12);
+
+using vec4 = vec4_base<float>;
+HL_STATIC_ASSERT_SIZE(vec4, 16);
+
+using ivec2 = vec2_base<s32>;
+HL_STATIC_ASSERT_SIZE(ivec2, 8);
+
+using ivec3 = vec3_base<s32>;
+HL_STATIC_ASSERT_SIZE(ivec3, 12);
+
+using ivec4 = vec4_base<s32>;
+HL_STATIC_ASSERT_SIZE(ivec4, 16);
+
+using bvec2 = vec2_base<u8>;
+HL_STATIC_ASSERT_SIZE(bvec2, 2);
+
+using bvec3 = vec3_base<u8>;
+HL_STATIC_ASSERT_SIZE(bvec3, 3);
+
+using bvec4 = vec4_base<u8>;
+HL_STATIC_ASSERT_SIZE(bvec4, 4);
+
+struct quat : vec4
+{
+    HL_API static const quat identity;
+
+    inline quat() noexcept = default;
+    constexpr quat(vec4 v) noexcept : vec4(v) {}
+    constexpr quat(float x, float y, float z, float w) noexcept :
+        vec4(x, y, z, w) {}
+};
+
+HL_STATIC_ASSERT_SIZE(quat, 16);
+
+struct aabb
+{
+    // NOTE: These are named "minv" and "maxv" instead of "min" and "max"
+    // to avoid collisions with the Windows "min" and "max" macros for
+    // users who haven't defined NOMINMAX before including "windows.h".
+    vec3 minv;
+    vec3 maxv;
+
+    template<bool swapOffsets = true>
+    void endian_swap() noexcept
+    {
+        hl::endian_swap<swapOffsets>(minv);
+        hl::endian_swap<swapOffsets>(maxv);
+    }
+
+    inline bool operator==(const aabb& other) const noexcept
+    {
+        return (minv == other.minv && maxv == other.maxv);
+    }
+
+    inline aabb() noexcept = default;
+    constexpr aabb(vec3 minv, vec3 maxv) noexcept :
+        minv(minv), maxv(maxv) {}
+};
+
+HL_STATIC_ASSERT_SIZE(aabb, 24);
+
+struct bounding_sphere
+{
+    vec3 center;
     float radius;
-}
-HlBoundingSphere;
 
-HL_STATIC_ASSERT_SIZE(HlBoundingSphere, 16)
+    template<bool swapOffsets = true>
+    void endian_swap() noexcept
+    {
+        hl::endian_swap<swapOffsets>(center);
+        hl::endian_swap(radius);
+    }
 
-typedef struct HlMatrix4x4
+    inline bounding_sphere() noexcept = default;
+    constexpr bounding_sphere(vec3 center, float radius) noexcept :
+        center(center), radius(radius) {}
+};
+
+HL_STATIC_ASSERT_SIZE(bounding_sphere, 16);
+
+struct matrix4x4
 {
     float m11, m12, m13, m14;
     float m21, m22, m23, m24;
     float m31, m32, m33, m34;
     float m41, m42, m43, m44;
-}
-HlMatrix4x4;
 
-HL_STATIC_ASSERT_SIZE(HlMatrix4x4, 64)
+    HL_API static const matrix4x4 identity;
 
-HL_API extern const HlVector2 HlVector2Zero;
-HL_API extern const HlVector3 HlVector3Zero;
-HL_API extern const HlVector4 HlVector4Zero;
-HL_API extern const HlQuaternion HlQuaternionIdentity;
-HL_API extern const HlAABB HlAABBDefault;
-HL_API extern const HlMatrix4x4 HlMatrix4x4Identity;
+    template<bool swapOffsets = true>
+    void endian_swap() noexcept
+    {
+        hl::endian_swap(m11);
+        hl::endian_swap(m12);
+        hl::endian_swap(m13);
+        hl::endian_swap(m14);
 
-HL_API void hlVector2HalfSwap(HlVector2Half* vec);
-HL_API void hlVector2Swap(HlVector2* vec);
-HL_API void hlVector3Swap(HlVector3* vec);
-HL_API void hlVector4Swap(HlVector4* vec);
-HL_API void hlAABBSwap(HlAABB* aabb);
-HL_API void hlMatrix4x4Swap(HlMatrix4x4* matrix);
+        hl::endian_swap(m21);
+        hl::endian_swap(m22);
+        hl::endian_swap(m23);
+        hl::endian_swap(m24);
 
-HL_API HlBool hlVector3Equals(const HlVector3* HL_RESTRICT a,
-    const HlVector3* HL_RESTRICT b);
+        hl::endian_swap(m31);
+        hl::endian_swap(m32);
+        hl::endian_swap(m33);
+        hl::endian_swap(m34);
 
-HL_API HlBool hlVector4Equals(const HlVector4* HL_RESTRICT a,
-    const HlVector4* HL_RESTRICT b);
+        hl::endian_swap(m41);
+        hl::endian_swap(m42);
+        hl::endian_swap(m43);
+        hl::endian_swap(m44);
+    }
 
-HL_API HlBool hlAABBEquals(const HlAABB* HL_RESTRICT a,
-    const HlAABB* HL_RESTRICT b);
+    matrix4x4() noexcept = default;
 
-#define hlDegreesToRadians(degrees) ((degrees) * (HL_PI / 180))
-#define hlRadiansToDegrees(radians) ((radians) * (180 / HL_PI))
+    constexpr matrix4x4(
+        vec4 m1, vec4 m2, vec4 m3, vec4 m4) noexcept :
+        m11(m1.x), m12(m1.y), m13(m1.z), m14(m1.w),
+        m21(m2.x), m22(m2.y), m23(m2.z), m24(m2.w),
+        m31(m3.x), m32(m3.y), m33(m3.z), m34(m3.w),
+        m41(m4.x), m42(m4.y), m43(m4.z), m44(m4.w) {}
 
-#ifndef HL_NO_EXTERNAL_WRAPPERS
-HL_API double hlDegreesToRadiansExt(double degrees);
-HL_API double hlRadiansToDegreesExt(double radians);
-#endif
+    constexpr matrix4x4(
+        float m11, float m12, float m13, float m14,
+        float m21, float m22, float m23, float m24,
+        float m31, float m32, float m33, float m34,
+        float m41, float m42, float m43, float m44) noexcept :
+        m11(m11), m12(m12), m13(m13), m14(m14),
+        m21(m21), m22(m22), m23(m23), m24(m24),
+        m31(m31), m32(m32), m33(m33), m34(m34),
+        m41(m41), m42(m42), m43(m43), m44(m44) {}
+};
 
-#ifdef __cplusplus
-}
-#endif
+HL_STATIC_ASSERT_SIZE(matrix4x4, 64);
+} // hl
 #endif
