@@ -270,6 +270,11 @@ struct vec3_base
         hl::endian_swap(z);
     }
 
+    constexpr vec2_base<T> to_vec2() const noexcept
+    {
+        return vec2_base<T>(x, y);
+    }
+
     inline bool operator==(const vec3_base<T>& other) const noexcept
     {
         return (x == other.x && y == other.y &&
@@ -310,6 +315,16 @@ struct vec4_base
         hl::endian_swap(y);
         hl::endian_swap(z);
         hl::endian_swap(w);
+    }
+
+    constexpr vec2_base<T> to_vec2() const noexcept
+    {
+        return vec2_base<T>(x, y);
+    }
+
+    constexpr vec3_base<T> to_vec3() const noexcept
+    {
+        return vec3_base<T>(x, y, z);
     }
 
     constexpr bool operator==(const vec4_base<T>& other) const noexcept
