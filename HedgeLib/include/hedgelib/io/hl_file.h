@@ -4,6 +4,8 @@
 
 namespace hl
 {
+class blob;
+
 namespace file
 {
 enum class mode
@@ -39,6 +41,13 @@ HL_API void save(const void* data, std::size_t dataSize, const nchar* filePath);
 inline void save(const void* data, std::size_t dataSize, const nstring& filePath)
 {
     return save(data, dataSize, filePath.c_str());
+}
+
+HL_API void save(const blob& fileData, const nchar* filePath);
+
+inline void save(const blob& fileData, const nstring& filePath)
+{
+    save(fileData, filePath.c_str());
 }
 } // file
 

@@ -1,4 +1,5 @@
 #include "hedgelib/io/hl_file.h"
+#include "hedgelib/hl_blob.h"
 
 #ifdef _WIN32
 #include "../hl_in_win32.h"
@@ -43,6 +44,11 @@ void save(const void* data, std::size_t dataSize, const nchar* filePath)
 
     // Write all bytes in the buffer to the file.
     file.write(dataSize, data);
+}
+
+void save(const blob& fileData, const nchar* filePath)
+{
+    save(fileData.data(), fileData.size(), filePath);
 }
 } // file
 
