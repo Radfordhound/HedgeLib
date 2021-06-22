@@ -3,8 +3,11 @@
 #include "hedgelib/io/hl_file.h"
 #include "hedgelib/io/hl_path.h"
 #include "hedgelib/hl_blob.h"
+
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
+
 #include <cstring>
 
 namespace hl
