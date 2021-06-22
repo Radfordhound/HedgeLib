@@ -8,11 +8,7 @@ namespace hh
 {
 namespace mirage
 {
-namespace shader
-{
-namespace param
-{
-struct resource
+struct raw_shader_param_resource
 {
     /** @brief The name of the shader resource this parameter maps to. */
     off32<char> name;
@@ -32,9 +28,9 @@ struct resource
     }
 };
 
-HL_STATIC_ASSERT_SIZE(resource, 8);
+HL_STATIC_ASSERT_SIZE(raw_shader_param_resource, 8);
 
-struct constant
+struct raw_shader_param_constant
 {
     /** @brief The name of the shader constant this parameter maps to. */
     off32<char> name;
@@ -54,17 +50,15 @@ struct constant
     }
 };
 
-HL_STATIC_ASSERT_SIZE(constant, 8);
+HL_STATIC_ASSERT_SIZE(raw_shader_param_constant, 8);
 
-namespace v2
+struct raw_shader_param_v2
 {
-struct header
-{
-    arr32<off32<constant>> floats;
-    arr32<off32<constant>> ints;
-    arr32<off32<constant>> bools;
-    arr32<off32<resource>> textures; // TODO: Are these actually samplers?
-    arr32<off32<resource>> unknown2; // TODO: Probably another type of shader resource?
+    arr32<off32<raw_shader_param_constant>> floats;
+    arr32<off32<raw_shader_param_constant>> ints;
+    arr32<off32<raw_shader_param_constant>> bools;
+    arr32<off32<raw_shader_param_resource>> textures; // TODO: Are these actually samplers?
+    arr32<off32<raw_shader_param_resource>> unknown2; // TODO: Probably another type of shader resource?
     
     template<bool swapOffsets = true>
     void endian_swap() noexcept
@@ -80,24 +74,18 @@ struct header
     // TODO: Add parse function.
 };
 
-HL_STATIC_ASSERT_SIZE(header, 0x28);
-} // v2
+HL_STATIC_ASSERT_SIZE(raw_shader_param_v2, 0x28);
 
-// TODO: read/load functions.
-} // param
-
-namespace list
-{
-enum class vertex_sub_permutation : u32
+enum class raw_vertex_shader_sub_permutation : u32
 {
     none = bit_flag<u32>(0U),
     const_tex_coord = bit_flag<u32>(1U),
     all = 3U
 };
 
-struct vertex_permutation
+struct raw_vertex_shader_permutation
 {
-    /** @brief See hl::hh::mirage::shader::list::vertex_sub_permutation. */
+    /** @brief See hl::hh::mirage::raw_vertex_shader_sub_permutation. */
     u32 subPermutations;
     off32<char> name;
     off32<char> vertexShaderName;
@@ -111,9 +99,9 @@ struct vertex_permutation
     }
 };
 
-HL_STATIC_ASSERT_SIZE(vertex_permutation, 12);
+HL_STATIC_ASSERT_SIZE(raw_vertex_shader_permutation, 12);
 
-enum class pixel_sub_permutation : u32
+enum class raw_pixel_shader_sub_permutation : u32
 {
     none = bit_flag<u32>(0U),
     const_tex_coord = bit_flag<u32>(1U),
@@ -126,13 +114,13 @@ enum class pixel_sub_permutation : u32
     all = 0xFFU
 };
 
-struct pixel_permutation
+struct raw_pixel_shader_permutation
 {
-    /** @brief See hl::hh::mirage::shader::list::pixel_sub_permutation. */
+    /** @brief See hl::hh::mirage::raw_pixel_shader_sub_permutation. */
     u32 subPermutations;
     off32<char> name;
     off32<char> pixelShaderName;
-    arr32<off32<vertex_permutation>> vertexPermutations;
+    arr32<off32<raw_vertex_shader_permutation>> vertexPermutations;
 
     template<bool swapOffsets = true>
     void endian_swap() noexcept
@@ -144,13 +132,11 @@ struct pixel_permutation
     }
 };
 
-HL_STATIC_ASSERT_SIZE(pixel_permutation, 0x14);
+HL_STATIC_ASSERT_SIZE(raw_pixel_shader_permutation, 0x14);
 
-namespace v0
+struct raw_shader_list_v0
 {
-struct header
-{
-    arr32<off32<pixel_permutation>> pixelPermutations;
+    arr32<off32<raw_pixel_shader_permutation>> pixelPermutations;
     
     template<bool swapOffsets = true>
     void endian_swap() noexcept
@@ -162,15 +148,9 @@ struct header
     // TODO: Add parse function.
 };
 
-HL_STATIC_ASSERT_SIZE(header, 8);
-}
+HL_STATIC_ASSERT_SIZE(raw_shader_list_v0, 8);
 
-// TODO: read/load functions.
-} // list
-
-namespace v2
-{
-struct header
+struct raw_shader_v2
 {
     /**
         @brief The name of the file (without its extension) that
@@ -191,18 +171,14 @@ struct header
     // TODO: Add parse function.
 };
 
-HL_STATIC_ASSERT_SIZE(header, 12);
-} // v2
-
-// TODO: read/load functions.
-} // shader
+HL_STATIC_ASSERT_SIZE(raw_shader_v2, 12);
 } // mirage
 
 namespace needle
 {
 constexpr u8 sig[8] = { 'H', 'H', 'N', 'E', 'E', 'D', 'L', 'E' };
 
-struct header
+struct raw_header
 {
     /** @brief "HHNEEDLE" signature. */
     u8 signature[8];
@@ -226,20 +202,11 @@ struct header
     }
 };
 
-HL_STATIC_ASSERT_SIZE(header, 12);
+HL_STATIC_ASSERT_SIZE(raw_header, 12);
 
-namespace shader
-{
-namespace list
-{
-// TODO
-} // list
+//constexpr u8 sig[8] = { 'H', 'N', 'S', 'H', 'V', '0', '0', '2' };
 
-namespace v2
-{
-constexpr u8 sig[8] = { 'H', 'N', 'S', 'H', 'V', '0', '0', '2' };
-
-struct resource
+struct raw_resource
 {
     /** @brief Array count?? */
     u32 unknown1; // TODO: Figure this out.
@@ -263,9 +230,9 @@ struct resource
     }
 };
 
-HL_STATIC_ASSERT_SIZE(resource, 8);
+HL_STATIC_ASSERT_SIZE(raw_resource, 8);
 
-struct constant_buffer
+struct raw_constant_buffer
 {
     /** @brief Array count?? */
     u32 unknown1; // TODO: Figure this out.
@@ -291,9 +258,9 @@ struct constant_buffer
     }
 };
 
-HL_STATIC_ASSERT_SIZE(constant_buffer, 12);
+HL_STATIC_ASSERT_SIZE(raw_constant_buffer, 12);
 
-struct constant
+struct raw_constant
 {
     /** @brief Array count?? */
     u32 unknown1; // TODO: Figure this out.
@@ -321,9 +288,9 @@ struct constant
     }
 };
 
-HL_STATIC_ASSERT_SIZE(constant, 16);
+HL_STATIC_ASSERT_SIZE(raw_constant, 16);
 
-struct params_container
+struct raw_params_container
 {
     /** @brief The complete size of this data, including this "size" value. */
     u32 size;
@@ -355,9 +322,9 @@ struct params_container
     }
 };
 
-HL_STATIC_ASSERT_SIZE(params_container, 4);
+HL_STATIC_ASSERT_SIZE(raw_params_container, 4);
 
-enum class param_type : u32
+enum class raw_param_type : u32
 {
     res_texture = 3U,
     res_sampler = 4U, // TODO: Is this correct?
@@ -367,9 +334,9 @@ enum class param_type : u32
     const_float = 8U
 };
 
-struct typed_params
+struct raw_typed_params
 {
-    /** @brief See hl::hh::needle::shader::v2::param_type. */
+    /** @brief See hl::hh::needle::raw_param_type. */
     u32 type;
 
     template<bool swapOffsets = true>
@@ -378,20 +345,20 @@ struct typed_params
         hl::endian_swap(type);
     }
 
-    inline const params_container& params() const noexcept
+    inline const raw_params_container& params() const noexcept
     {
-        return *reinterpret_cast<const params_container*>(this + 1);
+        return *reinterpret_cast<const raw_params_container*>(this + 1);
     }
 
-    inline params_container& params() noexcept
+    inline raw_params_container& params() noexcept
     {
-        return *reinterpret_cast<params_container*>(this + 1);
+        return *reinterpret_cast<raw_params_container*>(this + 1);
     }
 };
 
-HL_STATIC_ASSERT_SIZE(typed_params, 4);
+HL_STATIC_ASSERT_SIZE(raw_typed_params, 4);
 
-struct typed_params_container
+struct raw_typed_params_container
 {
     /** @brief The complete size of this data, including this "size" value. */
     u32 size;
@@ -402,31 +369,31 @@ struct typed_params_container
         hl::endian_swap(size);
     }
 
-    inline const typed_params* first_type() const noexcept
+    inline const raw_typed_params* first_type() const noexcept
     {
-        return reinterpret_cast<const typed_params*>(this + 1);
+        return reinterpret_cast<const raw_typed_params*>(this + 1);
     }
 
-    inline typed_params* first_type() noexcept
+    inline raw_typed_params* first_type() noexcept
     {
-        return reinterpret_cast<typed_params*>(this + 1);
+        return reinterpret_cast<raw_typed_params*>(this + 1);
     }
 
-    const typed_params_container* next() const noexcept
+    const raw_typed_params_container* next() const noexcept
     {
-        return ptradd<typed_params_container>(this, size);
+        return ptradd<raw_typed_params_container>(this, size);
     }
 
-    typed_params_container* next() noexcept
+    raw_typed_params_container* next() noexcept
     {
-        return const_cast<typed_params_container*>(const_cast<
-            const typed_params_container*>(this)->next());
+        return const_cast<raw_typed_params_container*>(const_cast<
+            const raw_typed_params_container*>(this)->next());
     }
 };
 
-HL_STATIC_ASSERT_SIZE(typed_params_container, 4);
+HL_STATIC_ASSERT_SIZE(raw_typed_params_container, 4);
 
-struct code_container
+struct raw_code_container
 {
     /** @brief The size of the shader data, *NOT* including this "size" value. */
     u32 size;
@@ -448,9 +415,9 @@ struct code_container
     }
 };
 
-HL_STATIC_ASSERT_SIZE(code_container, 4);
+HL_STATIC_ASSERT_SIZE(raw_code_container, 4);
 
-struct variant
+struct raw_shader_variant
 {
     /** @brief The complete size of this data, including this "size" value. */
     u32 size;
@@ -461,44 +428,44 @@ struct variant
         hl::endian_swap(size);
     }
 
-    inline const code_container* bytecode() const noexcept
+    inline const raw_code_container* bytecode() const noexcept
     {
-        return reinterpret_cast<const code_container*>(this + 1);
+        return reinterpret_cast<const raw_code_container*>(this + 1);
     }
 
-    inline code_container* bytecode() noexcept
+    inline raw_code_container* bytecode() noexcept
     {
-        return reinterpret_cast<code_container*>(this + 1);
+        return reinterpret_cast<raw_code_container*>(this + 1);
     }
 
-    HL_API const code_container* input_bytecode() const noexcept;
-    HL_API code_container* input_bytecode() noexcept;
-    HL_API const typed_params_container* typed_params() const noexcept;
-    HL_API typed_params_container* typed_params() noexcept;
+    HL_API const raw_code_container* input_bytecode() const noexcept;
+    HL_API raw_code_container* input_bytecode() noexcept;
+    HL_API const raw_typed_params_container* typed_params() const noexcept;
+    HL_API raw_typed_params_container* typed_params() noexcept;
 
-    const variant* next() const noexcept
+    const raw_shader_variant* next() const noexcept
     {
-        return ptradd<variant>(this, size);
+        return ptradd<raw_shader_variant>(this, size);
     }
 
-    variant* next() noexcept
+    raw_shader_variant* next() noexcept
     {
-        return const_cast<variant*>(const_cast<
-            const variant*>(this)->next());
+        return const_cast<raw_shader_variant*>(const_cast<
+            const raw_shader_variant*>(this)->next());
     }
 };
 
-HL_STATIC_ASSERT_SIZE(variant, 4);
+HL_STATIC_ASSERT_SIZE(raw_shader_variant, 4);
 
-enum class permutation_type
+enum class raw_permutation_type
 {
     permutation = 0U, // TODO: This needs a better name. Is this actually a pixel permutation?
     texture = 1U // TODO: Is this correct? Is this actually a vertex permutation?
 };
 
-struct permutation
+struct raw_permutation
 {
-    /** @brief See hl::hh::needle::shader::v2::permutation_type. */
+    /** @brief See hl::hh::needle::raw_permutation_type. */
     u32 type;
 
     template<bool swapOffsets = true>
@@ -517,21 +484,23 @@ struct permutation
         return reinterpret_cast<char*>(this + 1);
     }
 
-    HL_API const permutation* next() const noexcept;
+    HL_API const raw_permutation* next() const noexcept;
 
-    permutation* next() noexcept
+    raw_permutation* next() noexcept
     {
-        return const_cast<permutation*>(const_cast<
-            const permutation*>(this)->next());
+        return const_cast<raw_permutation*>(const_cast<
+            const raw_permutation*>(this)->next());
     }
 };
 
-HL_STATIC_ASSERT_SIZE(permutation, 4);
+HL_STATIC_ASSERT_SIZE(raw_permutation, 4);
 
-struct header
+struct raw_shader_v2
 {
-    /** @brief "HNSHV002" signature. */
-    u8 signature[8];
+    /** @brief "HNSH" signature. */
+    u8 signature[4];
+    /** @brief "V002" string. */
+    u8 version[4];
     /** @brief The complete size of this data, including this "size" value. */
     u32 size;
     /** @brief Always 0? */
@@ -551,24 +520,20 @@ struct header
         return (1U << permutationCount);
     }
 
-    inline const permutation* first_permutation() const noexcept
+    inline const raw_permutation* first_permutation() const noexcept
     {
-        return reinterpret_cast<const permutation*>(this + 1);
+        return reinterpret_cast<const raw_permutation*>(this + 1);
     }
 
-    inline permutation* first_permutation() noexcept
+    inline raw_permutation* first_permutation() noexcept
     {
-        return reinterpret_cast<permutation*>(this + 1);
+        return reinterpret_cast<raw_permutation*>(this + 1);
     }
 
     HL_API void fix();
 };
 
-HL_STATIC_ASSERT_SIZE(header, 0x14);
-} // v2
-
-// TODO
-} // shader
+HL_STATIC_ASSERT_SIZE(raw_shader_v2, 0x14);
 } // needle
 } // hh
 } // hl

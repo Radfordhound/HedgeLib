@@ -7,35 +7,31 @@ namespace hh
 {
 namespace needle
 {
-namespace shader
+const raw_code_container* raw_shader_variant::input_bytecode() const noexcept
 {
-namespace v2
-{
-const code_container* variant::input_bytecode() const noexcept
-{
-    const code_container* container = bytecode();
-    return ptradd<code_container>(container->data(), container->size);
+    const raw_code_container* container = bytecode();
+    return ptradd<raw_code_container>(container->data(), container->size);
 }
 
-code_container* variant::input_bytecode() noexcept
+raw_code_container* raw_shader_variant::input_bytecode() noexcept
 {
-    code_container* container = bytecode();
-    return ptradd<code_container>(container->data(), container->size);
+    raw_code_container* container = bytecode();
+    return ptradd<raw_code_container>(container->data(), container->size);
 }
 
-const typed_params_container* variant::typed_params() const noexcept
+const raw_typed_params_container* raw_shader_variant::typed_params() const noexcept
 {
-    const code_container* inputBytecode = input_bytecode();
-    return ptradd<typed_params_container>(inputBytecode->data(), inputBytecode->size);
+    const raw_code_container* inputBytecode = input_bytecode();
+    return ptradd<raw_typed_params_container>(inputBytecode->data(), inputBytecode->size);
 }
 
-typed_params_container* variant::typed_params() noexcept
+raw_typed_params_container* raw_shader_variant::typed_params() noexcept
 {
-    code_container* inputBytecode = input_bytecode();
-    return ptradd<typed_params_container>(inputBytecode->data(), inputBytecode->size);
+    raw_code_container* inputBytecode = input_bytecode();
+    return ptradd<raw_typed_params_container>(inputBytecode->data(), inputBytecode->size);
 }
 
-const permutation* permutation::next() const noexcept
+const raw_permutation* raw_permutation::next() const noexcept
 {
     // Skip to the end of the name.
     const char* namePtr = name();
@@ -48,17 +44,17 @@ const permutation* permutation::next() const noexcept
     while (*(++namePtr) == '\0') {}
     
     // Return the pointer.
-    return reinterpret_cast<const permutation*>(namePtr);
+    return reinterpret_cast<const raw_permutation*>(namePtr);
 }
 
-void header::fix()
+void raw_shader_v2::fix()
 {
 #ifndef HL_IS_BIG_ENDIAN
     // Endian-swap header.
     endian_swap();
 
     // Endian-swap permutations if necessary.
-    permutation* permutationPtr = first_permutation();
+    raw_permutation* permutationPtr = first_permutation();
     for (u32 i = 0; i < permutationCount; ++i)
     {
         permutationPtr->endian_swap();
@@ -79,18 +75,18 @@ void header::fix()
     u32 variantCount = *(variantIndexPtr++);
 
     // Endian-swap shader variants.
-    variant* variantPtr = reinterpret_cast<variant*>(variantIndexPtr);
+    raw_shader_variant* variantPtr = reinterpret_cast<raw_shader_variant*>(variantIndexPtr);
     for (u32 i = 0; i < variantCount; ++i)
     {
         // Endian-swap shader variant.
         variantPtr->endian_swap();
 
         // Get next shader variant pointer.
-        variant* nextVariantPtr = variantPtr->next();
+        raw_shader_variant* nextVariantPtr = variantPtr->next();
 
         // Endian-swap bytecode if necessary.
-        code_container* codeContainerPtr = variantPtr->bytecode();
-        if (codeContainerPtr < reinterpret_cast<code_container*>(nextVariantPtr))
+        raw_code_container* codeContainerPtr = variantPtr->bytecode();
+        if (codeContainerPtr < reinterpret_cast<raw_code_container*>(nextVariantPtr))
         {
             codeContainerPtr->endian_swap();
         }
@@ -102,7 +98,7 @@ void header::fix()
 
         // Endian-swap input bytecode if necessary.
         codeContainerPtr = variantPtr->input_bytecode();
-        if (codeContainerPtr < reinterpret_cast<code_container*>(nextVariantPtr))
+        if (codeContainerPtr < reinterpret_cast<raw_code_container*>(nextVariantPtr))
         {
             codeContainerPtr->endian_swap();
         }
@@ -113,61 +109,67 @@ void header::fix()
         }
 
         // Endian-swap typed params containers.
-        typed_params_container* typedParamsContPtr = variantPtr->typed_params();
-        while (typedParamsContPtr < reinterpret_cast<typed_params_container*>(nextVariantPtr))
+        raw_typed_params_container* typedParamsContPtr = variantPtr->typed_params();
+        while (typedParamsContPtr < reinterpret_cast<raw_typed_params_container*>(nextVariantPtr))
         {
             // Endian-swap typed params container.
             typedParamsContPtr->endian_swap();
 
             // Get next typed params container pointer.
-            typed_params_container* nextTypedParamsContPtr = typedParamsContPtr->next();
+            raw_typed_params_container* nextTypedParamsContPtr = typedParamsContPtr->next();
 
             // Endian-swap typed params.
-            typed_params* typedParamsPtr = typedParamsContPtr->first_type();
-            while (typedParamsPtr < reinterpret_cast<typed_params*>(nextTypedParamsContPtr))
+            raw_typed_params* typedParamsPtr = typedParamsContPtr->first_type();
+            while (typedParamsPtr < reinterpret_cast<raw_typed_params*>(nextTypedParamsContPtr))
             {
                 // Endian-swap typed params.
                 typedParamsPtr->endian_swap();
 
                 // Endian-swap params container.
-                params_container& params = typedParamsPtr->params();
+                raw_params_container& params = typedParamsPtr->params();
                 void* curParam = params.first_param();
                 void* paramsEnd = params.end();
 
-                switch (static_cast<param_type>(typedParamsPtr->type))
+                switch (static_cast<raw_param_type>(typedParamsPtr->type))
                 {
-                case param_type::res_texture:
-                case param_type::res_sampler:
+                case raw_param_type::res_texture:
+                case raw_param_type::res_sampler:
                 {
                     while (curParam < paramsEnd)
                     {
-                        resource* curRes = static_cast<resource*>(curParam);
+                        raw_resource* curRes = static_cast<raw_resource*>(curParam);
                         curRes->endian_swap();
                     }
                     break;
                 }
 
-                case param_type::constant_buffer:
-                    // TODO
+                case raw_param_type::constant_buffer:
+                    while (curParam < paramsEnd)
+                    {
+                        raw_constant_buffer* curBuf = static_cast<raw_constant_buffer*>(curParam);
+                        curBuf->endian_swap();
+                    }
                     break;
 
-                case param_type::const_bool:
-                case param_type::const_int:
-                case param_type::const_float:
-                    // TODO
+                case raw_param_type::const_bool:
+                case raw_param_type::const_int:
+                case raw_param_type::const_float:
+                    while (curParam < paramsEnd)
+                    {
+                        raw_constant* curConst = static_cast<raw_constant*>(curParam);
+                        curConst->endian_swap();
+                    }
                     break;
                 }
             }
 
-            // TODO
+            // TODO?
 
             typedParamsContPtr = nextTypedParamsContPtr;
         }
     }
 #endif
 }
-} // v2
-} // shader
 } // needle
 } // hh
 } // hl
