@@ -79,40 +79,26 @@ void material::in_add_to_material(std::string& utf8TexFilePath,
     // Parse float4 parameters.
     for (auto& float4Param : float4Params)
     {
-        if (float4Param.name == "diffuse" &&
-            !float4Param.values.empty())
+        if (!float4Param.values.empty())
         {
-            mat.diffuseColor = vec3(
-                float4Param.values[0].x,
-                float4Param.values[0].y,
-                float4Param.values[0].z);
-        }
+            if (float4Param.name == "diffuse")
+            {
+                mat.diffuseColor = float4Param.values[0].to_vec3();
+            }
+            else if (float4Param.name == "ambient")
+            {
+                mat.ambientColor = float4Param.values[0].to_vec3();
+            }
+            else if (float4Param.name == "specular")
+            {
+                mat.specularColor = float4Param.values[0].to_vec3();
+            }
+            else if (float4Param.name == "emissive")
+            {
+                mat.emissiveColor = float4Param.values[0].to_vec3();
+            }
 
-        if (float4Param.name == "ambient" &&
-            !float4Param.values.empty())
-        {
-            mat.ambientColor = vec3(
-                float4Param.values[0].x,
-                float4Param.values[0].y,
-                float4Param.values[0].z);
-        }
-
-        if (float4Param.name == "specular" &&
-            !float4Param.values.empty())
-        {
-            mat.specularColor = vec3(
-                float4Param.values[0].x,
-                float4Param.values[0].y,
-                float4Param.values[0].z);
-        }
-        
-        if (float4Param.name == "emissive" &&
-            !float4Param.values.empty())
-        {
-            mat.emissiveColor = vec3(
-                float4Param.values[0].x,
-                float4Param.values[0].y,
-                float4Param.values[0].z);
+            // TODO
         }
     }
 
@@ -133,36 +119,7 @@ void material::in_add_to_material(std::string& utf8TexFilePath,
             utf8TexFilePath.erase(utf8TexFileNamePos);
         }
 
-        if (!mat.diffuseTex && texEntry.type == "diffuse")
-        {
-            mat.diffuseTex = tex;
-        }
-        else if (!mat.specularTex && texEntry.type == "specular")
-        {
-            mat.specularTex = tex;
-        }
-        else if (!mat.ambientTex && texEntry.type == "ambient")
-        {
-            mat.ambientTex = tex;
-        }
-        else if (!mat.normalTex && texEntry.type == "normal")
-        {
-            mat.normalTex = tex;
-        }
-        else if (!mat.reflectionTex && texEntry.type == "reflection")
-        {
-            mat.reflectionTex = tex;
-        }
-        else if (!mat.displacementTex && texEntry.type == "displacement")
-        {
-            mat.displacementTex = tex;
-        }
-        else
-        {
-            //__debugbreak(); // TODO: REMOVE THIS LINE!!!
-        }
-
-        // TODO: Other texture types.
+        mat.textures.emplace_back(texEntry.get_map_slot_type(), *tex);
     }
 
     // TODO

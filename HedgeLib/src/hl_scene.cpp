@@ -742,47 +742,54 @@ static FbxSurfaceMaterial* in_fbx_add_material(const material& mat,
 
     newFbxMat->ShadingModel.Set("Phong");
 
+    // Set colors.
     newFbxMat->Diffuse.Set(FbxDouble3(mat.diffuseColor.x,
         mat.diffuseColor.y, mat.diffuseColor.z));
 
-    // TODO
+    newFbxMat->Specular.Set(FbxDouble3(mat.specularColor.x,
+        mat.specularColor.y, mat.specularColor.z));
 
-    // Connect diffuse texture, if any.
-    if (mat.diffuseTex)
+    newFbxMat->Ambient.Set(FbxDouble3(mat.ambientColor.x,
+        mat.ambientColor.y, mat.ambientColor.z));
+
+    newFbxMat->Emissive.Set(FbxDouble3(mat.emissiveColor.x,
+        mat.emissiveColor.y, mat.emissiveColor.z));
+
+    // Connect textures.
+    for (auto& texMap : mat.textures)
     {
-        newFbxMat->Diffuse.ConnectSrcObject(in_fbx_get_or_add_texture(
-            *mat.diffuseTex, fbxTextures));
-    }
+        switch (texMap.slot)
+        {
+        case map_slot_type::diffuse:
+            newFbxMat->Diffuse.ConnectSrcObject(in_fbx_get_or_add_texture(
+                *texMap.tex, fbxTextures));
+            break;
 
-    // Connect specular texture, if any.
-    if (mat.specularTex)
-    {
-        newFbxMat->Specular.ConnectSrcObject(in_fbx_get_or_add_texture(
-            *mat.specularTex, fbxTextures));
-    }
+        case map_slot_type::specular:
+            newFbxMat->Specular.ConnectSrcObject(in_fbx_get_or_add_texture(
+                *texMap.tex, fbxTextures));
+            break;
 
-    // Connect ambient texture, if any.
-    if (mat.ambientTex)
-    {
-        newFbxMat->Ambient.ConnectSrcObject(in_fbx_get_or_add_texture(
-            *mat.ambientTex, fbxTextures));
-    }
+        case map_slot_type::ambient:
+            newFbxMat->Ambient.ConnectSrcObject(in_fbx_get_or_add_texture(
+                *texMap.tex, fbxTextures));
+            break;
 
-    // Connect normal texture, if any.
-    if (mat.normalTex)
-    {
-        newFbxMat->NormalMap.ConnectSrcObject(in_fbx_get_or_add_texture(
-            *mat.normalTex, fbxTextures));
-    }
+        case map_slot_type::normal:
+            newFbxMat->NormalMap.ConnectSrcObject(in_fbx_get_or_add_texture(
+                *texMap.tex, fbxTextures));
+            break;
 
-    // Connect reflection texture, if any.
-    if (mat.reflectionTex)
-    {
-        newFbxMat->Reflection.ConnectSrcObject(in_fbx_get_or_add_texture(
-            *mat.reflectionTex, fbxTextures));
-    }
+        case map_slot_type::reflection:
+            newFbxMat->Reflection.ConnectSrcObject(in_fbx_get_or_add_texture(
+                *texMap.tex, fbxTextures));
+            break;
 
-    // TODO: Connect other textures.
+        default:
+            // TODO: Log warning about unsupported map slot type.
+            break;
+        }
+    }
 
     fbxMats.emplace(&mat, newFbxMat.get());
     return newFbxMat.release();

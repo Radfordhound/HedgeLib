@@ -30,6 +30,39 @@ void texture_entry::fix(void* rawData)
     }
 }
 
+map_slot_type texture_entry::get_map_slot_type() const
+{
+    if (type == "diffuse")
+    {
+        return map_slot_type::diffuse;
+    }
+    else if (type == "specular")
+    {
+        return map_slot_type::specular;
+    }
+    else if (type == "ambient")
+    {
+        return map_slot_type::ambient;
+    }
+    else if (type == "normal")
+    {
+        return map_slot_type::normal;
+    }
+    else if (type == "reflection")
+    {
+        return map_slot_type::reflection;
+    }
+    else if (type == "displacement")
+    {
+        return map_slot_type::displacement;
+    }
+    else
+    {
+        //__debugbreak(); // TODO: REMOVE THIS LINE!!!
+        return map_slot_type::unknown;
+    }
+}
+
 void texture_entry::parse(const raw_texture_entry_v1& rawTexEntry)
 {
     texName = rawTexEntry.texName.get();

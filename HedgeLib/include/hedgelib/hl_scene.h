@@ -184,6 +184,26 @@ struct texture
         utf8FilePath(std::move(utf8FilePath)) {}
 };
 
+enum class map_slot_type
+{
+    unknown = 0,
+    diffuse,
+    specular,
+    ambient,
+    normal,
+    reflection,
+    displacement
+};
+
+struct texture_map
+{
+    map_slot_type slot;
+    texture* tex;
+
+    texture_map(map_slot_type slot, texture& tex) noexcept :
+        slot(slot), tex(&tex) {}
+};
+
 class material
 {
     friend hl::scene;
@@ -208,12 +228,7 @@ public:
     vec3 specularColor = vec3::one;
     vec3 ambientColor = vec3::zero;
     vec3 emissiveColor = vec3::zero;
-    texture* diffuseTex = nullptr;
-    texture* specularTex = nullptr;
-    texture* ambientTex = nullptr;
-    texture* normalTex = nullptr;
-    texture* reflectionTex = nullptr;
-    texture* displacementTex = nullptr;
+    std::vector<texture_map> textures;
 
     inline const hl::scene& scene() const noexcept
     {

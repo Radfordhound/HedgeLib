@@ -1,5 +1,6 @@
 #ifndef HL_HH_TEXTURE_H_INCLUDED
 #define HL_HH_TEXTURE_H_INCLUDED
+#include "../hl_scene.h"
 #include "../io/hl_hh_mirage.h"
 
 namespace hl
@@ -76,6 +77,8 @@ struct texture_entry
     constexpr static const nchar ext[] = HL_NTEXT(".texture");
 
     HL_API static void fix(void* rawData);
+
+    HL_API map_slot_type get_map_slot_type() const;
 
     HL_API void parse(const raw_texture_entry_v1& rawTexEntry);
     HL_API void parse(const void* rawData);
