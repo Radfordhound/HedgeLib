@@ -52,14 +52,14 @@ for:
         brew install glm lz4 zlib
         mkdir build
         cd build
-        cmake -DCMAKE_BUILD_TYPE=Release ../
+        mkdir "$env:APPVEYOR_BUILD_FOLDER/bin"
+        cmake "-DCMAKE_INSTALL_PREFIX=$env:APPVEYOR_BUILD_FOLDER/bin" -DCMAKE_BUILD_TYPE=Release ../
   build: off
   build_script:
     - ps: |
-        mkdir "$env:APPVEYOR_BUILD_FOLDER/bin"
-        make "DESTDIR=$env:APPVEYOR_BUILD_FOLDER/bin" install
-        Copy-Item "$env:APPVEYOR_BUILD_FOLDER\License.txt" -Destination "$env:APPVEYOR_BUILD_FOLDER\bin\License.txt"
-        Copy-Item "$env:APPVEYOR_BUILD_FOLDER\Third-Party-Licenses.txt" -Destination "$env:APPVEYOR_BUILD_FOLDER\bin\Third-Party-Licenses.txt"
+        make install
+        Copy-Item "$env:APPVEYOR_BUILD_FOLDER/License.txt" -Destination "$env:APPVEYOR_BUILD_FOLDER/bin/License.txt"
+        Copy-Item "$env:APPVEYOR_BUILD_FOLDER/Third-Party-Licenses.txt" -Destination "$env:APPVEYOR_BUILD_FOLDER/bin/Third-Party-Licenses.txt"
   artifacts:
     - path: bin
       name: HedgeLib
@@ -74,14 +74,14 @@ for:
         sudo apt install -yq libglm-dev liblz4-dev zlib1g-dev
         mkdir build
         cd build
-        cmake -DCMAKE_BUILD_TYPE=Release ../
+        mkdir "$env:APPVEYOR_BUILD_FOLDER/bin"
+        cmake "-DCMAKE_INSTALL_PREFIX=$env:APPVEYOR_BUILD_FOLDER/bin" -DCMAKE_BUILD_TYPE=Release ../
   build: off
   build_script:
     - ps: |
-        mkdir "$env:APPVEYOR_BUILD_FOLDER/bin"
-        make CPP=g++-9 CXX=g++-9 LD=g++-9 "DESTDIR=$env:APPVEYOR_BUILD_FOLDER/bin" install
-        Copy-Item "$env:APPVEYOR_BUILD_FOLDER\License.txt" -Destination "$env:APPVEYOR_BUILD_FOLDER\bin\License.txt"
-        Copy-Item "$env:APPVEYOR_BUILD_FOLDER\Third-Party-Licenses.txt" -Destination "$env:APPVEYOR_BUILD_FOLDER\bin\Third-Party-Licenses.txt"
+        make CPP=g++-9 CXX=g++-9 LD=g++-9 install
+        Copy-Item "$env:APPVEYOR_BUILD_FOLDER/License.txt" -Destination "$env:APPVEYOR_BUILD_FOLDER/bin/License.txt"
+        Copy-Item "$env:APPVEYOR_BUILD_FOLDER/Third-Party-Licenses.txt" -Destination "$env:APPVEYOR_BUILD_FOLDER/bin/Third-Party-Licenses.txt"
   artifacts:
     - path: bin
       name: HedgeLib

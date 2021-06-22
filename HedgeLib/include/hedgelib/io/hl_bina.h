@@ -8,6 +8,10 @@
 #undef major
 #endif
 
+#ifdef minor
+#undef minor
+#endif
+
 namespace hl
 {
 namespace bina
