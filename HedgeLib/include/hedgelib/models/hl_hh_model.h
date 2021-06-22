@@ -1,6 +1,5 @@
 #ifndef HL_HH_MODEL_H_INCLUDED
 #define HL_HH_MODEL_H_INCLUDED
-//#include "hl_model.h"
 #include "../hl_scene.h"
 #include "../io/hl_hh_mirage.h"
 #include <unordered_set>

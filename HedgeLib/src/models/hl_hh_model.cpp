@@ -2045,14 +2045,23 @@ void skeletal_model::add_to_node(hl::node& parentNode, bool includeLibGensTags) 
     }
 
     // Add mesh groups to model.
+    std::size_t unnamedMeshGroupCount = 0;
     for (std::size_t i = 0; i < meshGroups.size(); ++i)
     {
         hl::node* meshGroupNode;
         if (fallbackParentNode->children().size())
         {
-            meshGroupNode = &fallbackParentNode->add_child(
-                (!meshGroups[i].name.empty()) ? meshGroups[i].name :
-                fallbackParentNode->name);
+            std::string meshGroupName((!meshGroups[i].name.empty()) ?
+                meshGroups[i].name : fallbackParentNode->name);
+
+            if (meshGroups[i].name.empty() && unnamedMeshGroupCount++)
+            {
+                meshGroupName += " (";
+                meshGroupName += std::to_string(unnamedMeshGroupCount);
+                meshGroupName += ')';
+            }
+
+            meshGroupNode = &fallbackParentNode->add_child(std::move(meshGroupName));
         }
         else
         {
