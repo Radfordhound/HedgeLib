@@ -2312,27 +2312,18 @@ void skeletal_model::add_to_node(hl::node& parentNode, bool includeLibGensTags) 
     std::size_t unnamedMeshGroupCount = 0;
     for (std::size_t i = 0; i < meshGroups.size(); ++i)
     {
-        hl::node* meshGroupNode;
-        if (fallbackParentNode->children().size())
-        {
-            std::string meshGroupName((!meshGroups[i].name.empty()) ?
-                meshGroups[i].name : fallbackParentNode->name);
+        std::string meshGroupName((!meshGroups[i].name.empty()) ?
+            meshGroups[i].name : fallbackParentNode->name);
 
-            if (meshGroups[i].name.empty() && unnamedMeshGroupCount++)
-            {
-                meshGroupName += " (";
-                meshGroupName += std::to_string(unnamedMeshGroupCount);
-                meshGroupName += ')';
-            }
-
-            meshGroupNode = &fallbackParentNode->add_child(std::move(meshGroupName));
-        }
-        else
+        if (meshGroups[i].name.empty() && unnamedMeshGroupCount++)
         {
-            meshGroupNode = fallbackParentNode;
+            meshGroupName += " (";
+            meshGroupName += std::to_string(unnamedMeshGroupCount);
+            meshGroupName += ')';
         }
 
-        meshGroups[i].add_to_node(*meshGroupNode, topType, &nodes, includeLibGensTags);
+        hl::node& meshGroupNode = fallbackParentNode->add_child(std::move(meshGroupName));
+        meshGroups[i].add_to_node(meshGroupNode, topType, &nodes, includeLibGensTags);
     }
 }
 
