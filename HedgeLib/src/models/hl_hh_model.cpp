@@ -954,6 +954,17 @@ static void in_swap_recursive(arr32<off32<raw_mesh_group>>& groups)
     }
 }
 
+void raw_terrain_model_v5::fix()
+{
+#ifndef HL_IS_BIG_ENDIAN
+    // Swap terrain model header.
+    endian_swap<false>();
+
+    // Swap mesh groups.
+    in_swap_recursive(meshGroups);
+#endif
+}
+
 void raw_skeletal_model_v2::fix()
 {
 #ifndef HL_IS_BIG_ENDIAN
@@ -1656,16 +1667,6 @@ void mesh_group::get_unique_material_names(std::unordered_set<std::string>& uniq
 void mesh_group::add_to_node(hl::node& node, topology_type topType,
     const std::vector<mirage::node>* hhNodes, bool includeLibGensTags) const
 {
-    //// Create a dedicated node for this mesh group if this mesh group has no name.
-    //hl::node* parentNode;
-    //if (name.empty())
-    //{
-    //    node.add_child();
-    //    std::unique_ptr<hl::node> meshNode(new node(name));
-    //    parentObjectPtr = object.get();
-    //    parentNode.children.emplace_back(std::move(object));
-    //}
-
     // Add LibGens NAME tag to node if necessary.
     if (includeLibGensTags && !name.empty())
     {
@@ -1952,17 +1953,280 @@ void model::import_materials(const nchar* materialDir, scene& scene,
 
 void terrain_model::fix(void* rawData)
 {
-    // TODO
+    // Fix mirage data.
+    mirage::fix(rawData);
+
+    // Get terrain model data and version number.
+    u32 version;
+    void* mdlData = get_data(rawData, &version);
+    if (!mdlData) return;
+
+    // Fix terrain model data based on version number.
+    switch (version)
+    {
+    case 5:
+        static_cast<raw_terrain_model_v5*>(mdlData)->fix();
+        break;
+
+    default:
+        throw std::runtime_error("Unsupported HH terrain model version");
+    }
 }
 
-terrain_model::terrain_model(const void* rawData)
+void terrain_model::add_to_node(hl::node& parentNode, bool includeLibGensTags) const
 {
-    // TODO
+    // Get model topology type.
+    const topology_type topType = get_topology_type();
+
+    // Add node for model.
+    hl::node& modelNode = parentNode.add_child(name);
+
+    // Add mesh groups to model.
+    std::size_t unnamedMeshGroupCount = 0;
+    for (std::size_t i = 0; i < meshGroups.size(); ++i)
+    {
+        std::string meshGroupName((!meshGroups[i].name.empty()) ?
+            meshGroups[i].name : modelNode.name);
+
+        if (meshGroups[i].name.empty() && unnamedMeshGroupCount++)
+        {
+            meshGroupName += " (";
+            meshGroupName += std::to_string(unnamedMeshGroupCount);
+            meshGroupName += ')';
+        }
+
+        hl::node& meshGroupNode = modelNode.add_child(std::move(meshGroupName));
+        meshGroups[i].add_to_node(meshGroupNode, topType, nullptr, includeLibGensTags);
+    }
 }
 
-terrain_model::terrain_model(const nchar* filePath)
+void terrain_model::parse(const raw_terrain_model_v5& rawMdl)
 {
-    // TODO
+    // Parse mesh groups.
+    in_parse(rawMdl.meshGroups);
+}
+
+void terrain_model::parse(const void* rawData)
+{
+    // Get terrain model data and version number.
+    u32 version;
+    const void* mdlData = get_data(rawData, &version);
+    if (!mdlData) return; // TODO: Should this be an error?
+
+    // Parse terrain model data based on version number.
+    switch (version)
+    {
+    case 5:
+        parse(*static_cast<const raw_terrain_model_v5*>(mdlData));
+        break;
+
+    default:
+        throw std::runtime_error("Unsupported HH terrain model version");
+    }
+
+    // Parse sample chunk nodes if necessary.
+    if (has_sample_chunk_header_fixed(rawData))
+    {
+        // Ensure that we have Model node.
+        const sample_chunk::raw_header* rawHeader = static_cast<
+            const sample_chunk::raw_header*>(rawData);
+
+        const sample_chunk::raw_node* rawModelNode =
+            rawHeader->get_node("Model", false);
+
+        if (!rawModelNode) return;
+
+        // If we have NodesExt node, parse per-node parameters.
+        const sample_chunk::raw_node* rawNodesExtNode =
+            rawModelNode->get_child("NodesExt", false);
+
+        // Parse model parameters.
+        const sample_chunk::raw_node* curRawMdlProperty = rawModelNode->children();
+        while (curRawMdlProperty)
+        {
+            // Stop if we've reached the Contexts node.
+            if (std::memcmp(curRawMdlProperty->name, "Contexts", 8) == 0)
+            {
+                break;
+            }
+
+            // Parse model parameter.
+            properties.emplace_back(*curRawMdlProperty);
+            curRawMdlProperty = curRawMdlProperty->next();
+        }
+    }
+}
+
+void terrain_model::load(const nchar* filePath)
+{
+    blob rawMdl(filePath);
+    fix(rawMdl);
+    parse(rawMdl);
+}
+
+void terrain_model::write(stream& stream, off_table& offTable,
+    u32 version, bool useSampleChunks) const
+{
+    // Start writing sample chunk nodes if necessary.
+    const std::size_t basePos = stream.tell();
+    std::size_t contextsPos;
+
+    if (useSampleChunks)
+    {
+        // Start writing Model sample chunk node.
+        sample_chunk::raw_node::start_write("Model", stream);
+
+        // Write per-model sample chunk nodes.
+        for (auto& mdlParam : properties)
+        {
+            // Start writing model parameter.
+            const std::size_t curMdlParamPos = stream.tell();
+            sample_chunk::raw_node::start_write(mdlParam.get_name(),
+                stream, mdlParam.value);
+
+            // Finish writing model parameter.
+            sample_chunk::raw_node::finish_write(curMdlParamPos,
+                sample_chunk::node_flags::is_leaf, stream);
+        }
+
+        // Start writing Contexts sample chunk node.
+        contextsPos = stream.tell();
+        sample_chunk::raw_node::start_write("Contexts", stream, version);
+
+        // Finish writing Contexts sample chunk node.
+        // TODO: Don't do this until after writing model data in pre-Tokyo2020 sample chunk versions (like LW and Forces)
+        sample_chunk::raw_node::finish_write(contextsPos,
+            sample_chunk::node_flags::is_leaf |
+            sample_chunk::node_flags::is_last_child, stream);
+    }
+
+    // Write skeletal model header based on version.
+    const std::size_t rawMdlPos = stream.tell();
+    switch (version)
+    {
+    case 5:
+    {
+        // Generate raw V5 terrain model header.
+        raw_terrain_model_v5 rawMdl =
+        {
+            { static_cast<u32>(meshGroups.size()), static_cast<u32>(    // meshGroups
+                rawMdlPos + sizeof(raw_terrain_model_v5) - basePos) },
+
+            nullptr,                                                    // name
+            0                                                           // flags
+        };
+
+        // Endian-swap header if necessary.
+#ifndef HL_IS_BIG_ENDIAN
+        rawMdl.endian_swap();
+#endif
+
+        // Write header to stream.
+        stream.write_obj(rawMdl);
+        break;
+    }
+
+    default:
+        throw std::runtime_error("Unsupported HH terrain model version");
+    }
+
+    // Add meshes/mesh groups offset to offset table.
+    offTable.push_back(rawMdlPos + 4);
+
+    // Write meshes/mesh groups as necessary.
+    switch (version)
+    {
+    case 5:
+        // Write placeholder offsets for mesh groups.
+        std::size_t curMeshGroupOffPos = stream.tell();
+        stream.write_nulls(sizeof(off32<raw_mesh_group>) * meshGroups.size());
+
+        // Write mesh groups and fill-in placeholder offsets.
+        for (auto& meshGroup : meshGroups)
+        {
+            // Fill-in placeholder mesh group offset.
+            stream.fix_off32(basePos, curMeshGroupOffPos, needs_endian_swap, offTable);
+
+            // Write mesh group.
+            meshGroup.write(basePos, stream, offTable);
+
+            // Increase current mesh group offset position.
+            curMeshGroupOffPos += sizeof(off32<raw_mesh_group>);
+        }
+        break;
+    }
+
+    // Write root node name if necessary.
+    switch (version)
+    {
+    case 5:
+        stream.fix_off32(basePos, rawMdlPos + offsetof(raw_terrain_model_v5, name),
+            needs_endian_swap, offTable);
+
+        stream.write_str(name);
+        stream.pad(4);
+        break;
+    }
+
+    // Finish writing sample chunk nodes if necessary.
+    if (useSampleChunks)
+    {
+        // Finish writing Model sample chunk node.
+        // TODO: Allow user to specify that this is *NOT* the last sample chunk they're going to write to the file?
+        sample_chunk::raw_node::finish_write(basePos,
+            sample_chunk::node_flags::is_last_child, stream);
+    }
+}
+
+void terrain_model::save(stream& stream, u32 version,
+    bool useSampleChunks, const char* fileName) const
+{
+    // Start writing header.
+    const std::size_t headerPos = stream.tell();
+    if (useSampleChunks)
+    {
+        sample_chunk::raw_header::start_write(stream);
+    }
+    else
+    {
+        raw_header::start_write(version, stream);
+    }
+
+    // Write model data.
+    off_table offTable;
+    const std::size_t dataPos = stream.tell();
+
+    write(stream, offTable, version, useSampleChunks);
+
+    // Finish writing header.
+    if (useSampleChunks)
+    {
+        sample_chunk::raw_header::finish_write(
+            headerPos, dataPos, offTable, stream);
+    }
+    else
+    {
+        raw_header::finish_write(headerPos,
+            offTable, stream, fileName);
+    }
+}
+
+void terrain_model::save(const nchar* filePath,
+    u32 version, bool useSampleChunks) const
+{
+    file_stream stream(filePath, file::mode::write);
+    save(stream, version, useSampleChunks);
+}
+
+void terrain_model::save(stream& stream) const
+{
+    save(stream, 5, has_parameters());
+}
+
+void terrain_model::save(const nchar* filePath) const
+{
+    file_stream stream(filePath, file::mode::write);
+    save(stream);
 }
 
 void skeletal_model::fix(void* rawData)
@@ -2597,7 +2861,6 @@ void skeletal_model::save(const nchar* filePath,
 #endif
 
     const char* fileNamePtr;
-
     if (version == 2)
     {
 #ifdef HL_IN_WIN32_UNICODE
@@ -2607,16 +2870,18 @@ void skeletal_model::save(const nchar* filePath,
         fileNamePtr = path::get_name(filePath);
 #endif
     }
+    else
+    {
+        fileNamePtr = nullptr;
+    }
 
     file_stream stream(filePath, file::mode::write);
-    save(stream, version, useSampleChunks,
-        (version == 2) ? fileNamePtr : nullptr);
+    save(stream, version, useSampleChunks, fileNamePtr);
 }
 
 void skeletal_model::save(stream& stream) const
 {
-    const bool useSampleChunks = (!properties.empty() || has_per_node_parameters());
-    save(stream, 5, useSampleChunks);
+    save(stream, 5, has_parameters());
 }
 
 void skeletal_model::save(const nchar* filePath) const

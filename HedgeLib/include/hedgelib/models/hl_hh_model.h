@@ -415,7 +415,7 @@ struct raw_terrain_model_v5
         hl::endian_swap(flags);
     }
 
-    // TODO: Fix function.
+    HL_API void fix();
 };
 
 HL_STATIC_ASSERT_SIZE(raw_terrain_model_v5, 16);
@@ -663,6 +663,11 @@ public:
     using const_iterator = std::vector<mesh_group>::const_iterator;
     using iterator = std::vector<mesh_group>::iterator;
 
+    inline bool has_per_model_parameters() const noexcept
+    {
+        return !properties.empty();
+    }
+
     HL_API topology_type get_topology_type() const;
 
     HL_API void get_unique_material_names(std::unordered_set<std::string>& uniqueMatNames) const;
@@ -711,14 +716,64 @@ public:
 
 struct terrain_model : public model
 {
-    node root;
+    std::string name;
     // TODO: flags
 
     HL_API static void fix(void* rawData);
 
+    inline bool has_parameters() const noexcept
+    {
+        return has_per_model_parameters();
+    }
+
+    HL_API void add_to_node(hl::node& parentNode, bool includeLibGensTags = true) const;
+
+    void add_to_scene(scene& scene, bool includeLibGensTags = true) const
+    {
+        add_to_node(scene.root_node(), includeLibGensTags);
+    }
+
+    HL_API void parse(const raw_terrain_model_v5& rawMdl);
+    HL_API void parse(const void* rawData);
+
+    HL_API void load(const nchar* filePath);
+
+    inline void load(const nstring& filePath)
+    {
+        load(filePath);
+    }
+
+    HL_API void write(stream& stream, off_table& offTable,
+        u32 version, bool useSampleChunks) const;
+
+    HL_API void save(stream& stream, u32 version, bool useSampleChunks,
+        const char* fileName = nullptr) const;
+
+    HL_API void save(const nchar* filePath, u32 version, bool useSampleChunks) const;
+
+    inline void save(const nstring& filePath, u32 version, bool useSampleChunks) const
+    {
+        save(filePath.c_str(), version, useSampleChunks);
+    }
+
+    HL_API void save(stream& stream) const;
+    HL_API void save(const nchar* filePath) const;
+
+    inline void save(const nstring& filePath) const
+    {
+        save(filePath.c_str());
+    }
+
     terrain_model() = default;
-    HL_API terrain_model(const void* rawData);
-    HL_API terrain_model(const nchar* filePath);
+    terrain_model(const void* rawData)
+    {
+        parse(rawData);
+    }
+
+    terrain_model(const nchar* filePath)
+    {
+        load(filePath);
+    }
 
     inline terrain_model(const nstring& filePath) :
         terrain_model(filePath.c_str()) {}
@@ -736,11 +791,6 @@ struct skeletal_model : public model
     constexpr static const nchar ext[] = HL_NTEXT(".model");
 
     HL_API static void fix(void* rawData);
-
-    inline bool has_per_model_parameters() const noexcept
-    {
-        return !properties.empty();
-    }
 
     HL_API bool has_per_node_parameters() const noexcept;
 
