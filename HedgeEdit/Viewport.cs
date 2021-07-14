@@ -17,7 +17,7 @@ namespace HedgeEdit
 
         public static Vector3 CameraPos = Vector3.Zero, CameraRot = new Vector3(-90, 0, 0);
         public static Vector3 CameraForward { get; private set; } = new Vector3(0, 0, -1);
-        public static float FOV = 40.0f, NearDistance = 0.1f, FarDistance = 1000000f;
+        public static float FOV = 40.0f, ZoomFactor = 1.0f, NearDistance = 0.1f, FarDistance = 1000000f;
         public static bool IsMovingCamera = false;
 
         private static GLControl vp = null;
@@ -157,8 +157,33 @@ namespace HedgeEdit
                 CameraPos + CameraForward, camUp);
 
             var projection = Matrix4.CreatePerspectiveFieldOfView(
-                MathHelper.DegreesToRadians(FOV),
+                MathHelper.DegreesToRadians(RecalculateFOV(FOV, (float)vp.Width / vp.Height, 16f / 9f, ZoomFactor, 0)),
                 (float)vp.Width / vp.Height, NearDistance, FarDistance);
+            
+            float RecalculateFOV(float FOV, float AspectRatio, float ConditionalAspect, float ZoomFactor, int AspectAxis)
+            {
+                return 2f * (float)Math.Atan((float)Math.Tan(FOV / 2f) / CalculateVerticalAspect(AspectRatio, ConditionalAspect, AspectAxis) * ZoomFactor);
+            }
+
+            float CalculateVerticalAspect(float AspectRatio, float ConditionalAspect, int AspectAxis)
+            {
+                switch (AspectAxis)
+                {
+                    default:
+                        if (AspectRatio < ConditionalAspect)
+                        {
+                            goto case 2;
+                        }
+                        else
+                        {
+                            goto case 1;
+                        }
+                    case 1:
+                        return ConditionalAspect / ConditionalAspect;
+                    case 2:
+                        return AspectRatio / ConditionalAspect;
+                }
+            }
 
             prevMousePos = Cursor.Position;
 
