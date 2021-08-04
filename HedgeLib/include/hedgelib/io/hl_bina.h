@@ -922,6 +922,8 @@ inline void fix(void* rawData, std::size_t dataSize)
     {
         // Compatibility with files extracted using PacPack.
         pac_pack_meta* pacPackMetadata = get_pac_pack_meta(rawData, dataSize);
+        if (!pacPackMetadata) return;
+
         const endian_flag endianFlag = pacPackMetadata->guess_endianness(rawData, dataSize);
 
         pacPackMetadata->fix(rawData, endianFlag);
