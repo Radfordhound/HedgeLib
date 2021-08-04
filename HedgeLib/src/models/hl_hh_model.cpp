@@ -2002,6 +2002,9 @@ void terrain_model::parse(const raw_terrain_model_v5& rawMdl)
 {
     // Parse mesh groups.
     in_parse(rawMdl.meshGroups);
+
+    // Parse name.
+    name = rawMdl.name.get();
 }
 
 void terrain_model::parse(const void* rawData)
