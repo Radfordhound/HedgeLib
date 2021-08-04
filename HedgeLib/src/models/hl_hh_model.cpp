@@ -1725,7 +1725,71 @@ void mesh_group::write(std::size_t basePos, stream& stream, off_table& offTable)
     punch.write(basePos, stream, offTable);
 
     // Write special mesh slots.
-    // TODO
+
+    // Early out if we don't have anything to write.
+    if (special.empty())
+    {
+        return;
+    }
+
+    // Prepare special mesh group type offsets.
+    const std::size_t specialMeshGroupTypeOffsetsPos = stream.tell();
+    stream.fix_off32(basePos, rawMeshGroupPos + 28, needs_endian_swap, offTable);
+    stream.write_nulls(sizeof(off32<char>) * special.size());
+
+    // Write special mesh group types.
+    for (std::size_t i = 0; i < special.size(); i++)
+    {
+        // Fix special mesh group type offset.
+        stream.fix_off32(basePos, specialMeshGroupTypeOffsetsPos + i * sizeof(off32<char>), needs_endian_swap, offTable);
+
+        // Write type.
+        stream.write_str(special[i].type);
+        stream.pad(4);
+    }
+
+    // Prepare special mesh count offsets.
+    const std::size_t specialMeshCountOffsetsPos = stream.tell();
+    stream.fix_off32(basePos, rawMeshGroupPos + 32, needs_endian_swap, offTable);
+    stream.write_nulls(sizeof(off32<u32>) * special.size());
+
+    // Write special mesh counts.
+    for (std::size_t i = 0; i < special.size(); i++)
+    {
+        // Fix special mesh count offset.
+        stream.fix_off32(basePos, specialMeshCountOffsetsPos + i * sizeof(off32<u32>), needs_endian_swap, offTable);
+
+        // Write special mesh count.
+        u32 specialMeshCount = static_cast<u32>(special[i].size());
+
+        // Endian swap if necessary.
+#ifndef HL_IS_BIG_ENDIAN
+        endian_swap(specialMeshCount);
+#endif
+
+        stream.write_obj(specialMeshCount);
+    }
+
+    // Prepare special mesh group offsets.
+    const std::size_t specialMeshGroupOffsetsPos = stream.tell();
+    stream.fix_off32(basePos, rawMeshGroupPos + 36, needs_endian_swap, offTable);
+    stream.write_nulls(sizeof(off32<off32<raw_mesh>>) * special.size());
+
+    // Write special mesh groups.
+    for (std::size_t i = 0; i < special.size(); i++)
+    {
+        // Prepare special mesh offsets.
+        const std::size_t specialMeshOffsetsPos = stream.tell();
+        stream.fix_off32(basePos, specialMeshGroupOffsetsPos + i * sizeof(off32<off32<raw_mesh>>), needs_endian_swap, offTable);
+        stream.write_nulls(sizeof(off32<raw_mesh>) * special[i].size());
+
+        // Write special meshes.
+        for (std::size_t j = 0; j < special[i].size(); j++)
+        {
+            stream.fix_off32(basePos, specialMeshOffsetsPos + j * sizeof(off32<raw_mesh>), needs_endian_swap, offTable);
+            special[i][j].write(basePos, stream, offTable);
+        }
+    }
 }
 
 mesh_group::mesh_group(const raw_mesh_group& rawGroup) :
