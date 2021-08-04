@@ -505,12 +505,12 @@ void header::fix()
 {
 #ifndef HL_IS_BIG_ENDIAN
     // Swap header.
-    endian_swap();
+    endian_swap<false>();
 
     // Fix entries.
     for (auto& entryOff : entries)
     {
-        hl::endian_swap(*entryOff);
+        hl::endian_swap<false>(*entryOff);
     }
 #endif
 }
@@ -551,7 +551,7 @@ void write(const packed_file_info& pfi,
 
         // Add entries offset to offset table.
         offTable.push_back(dataPos + offsetof(
-            header, entries));
+            header, entries) + 4);
     }
 
     // Get current offset position.
