@@ -841,10 +841,8 @@ static void in_swap_vertex(const raw_vertex_element& rawVtxElem, void* rawVtx)
     case vertex_format::byte4:
     case vertex_format::ubyte4_norm:
     case vertex_format::byte4_norm:
-    {
-        // TODO: We purposely swap nothing here. Is this correct?
+        endian_swap(*static_cast<u32*>(rawVtx));
         break;
-    }
 
     case vertex_format::short2:
     case vertex_format::short2_norm:
