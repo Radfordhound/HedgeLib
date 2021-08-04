@@ -221,13 +221,13 @@ struct raw_node
     template<typename T = void>
     inline const T* data() const noexcept
     {
-        return (this + 1);
+        return reinterpret_cast<const T*>(this + 1);
     }
 
     template<typename T = void>
     inline T* data() noexcept
     {
-        return (this + 1);
+        return reinterpret_cast<T*>(this + 1);
     }
 
     HL_API const raw_node* get_child(const char* name, bool recursive = true) const;
