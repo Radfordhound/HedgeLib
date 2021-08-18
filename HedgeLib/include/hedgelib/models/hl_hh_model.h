@@ -733,9 +733,14 @@ struct terrain_model : public model
 
     HL_API static void fix(void* rawData);
 
-    inline bool has_parameters() const noexcept
+    bool has_per_node_parameters() const noexcept
     {
-        return has_per_model_parameters();
+        return in_has_per_node_parameters(1, &rootNode);
+    }
+
+    bool has_parameters() const noexcept
+    {
+        return (has_per_model_parameters() || has_per_node_parameters());
     }
 
     HL_API void add_to_node(hl::node& parentNode, bool includeLibGensTags = true) const;
