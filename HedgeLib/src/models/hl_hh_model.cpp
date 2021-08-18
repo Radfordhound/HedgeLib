@@ -1859,8 +1859,28 @@ hl::node& node::add_to_node(hl::node& parentNode,
     return newNode;
 }
 
+void node::parse_sample_chunk_params(
+    const sample_chunk::raw_node& rawNodePrmsNode)
+{
+    // Parse SCA parameters.
+    const sample_chunk::raw_node* rawScaParamNode =
+        rawNodePrmsNode.get_child("SCAParam", false);
+
+    if (rawScaParamNode)
+    {
+        const sample_chunk::raw_node* rawNodeParamNode =
+            rawScaParamNode->children();
+
+        while (rawNodeParamNode)
+        {
+            scaParams.emplace_back(*rawNodeParamNode);
+            rawNodeParamNode = rawNodeParamNode->next();
+        }
+    }
+}
+
 void node::write_sample_chunk_params(u32 nodeIndex,
-    u32 lastNodeIndex, stream& stream) const
+    bool isLastNode, stream& stream) const
 {
     // Return early if this node has no parameters.
     if (scaParams.empty()) return;
@@ -1899,7 +1919,7 @@ void node::write_sample_chunk_params(u32 nodeIndex,
 
     // Compute NodePrms sample chunk node flags.
     sample_chunk::node_flags flags = sample_chunk::node_flags::none;
-    if (nodeIndex == lastNodeIndex)
+    if (isLastNode)
     {
         flags |= sample_chunk::node_flags::is_last_child;
     }
@@ -1935,7 +1955,21 @@ void node::write(std::size_t basePos,
     stream.pad(4);
 }
 
-void model::in_parse(const arr32<off32<raw_mesh_group>>& rawMeshGroups)
+bool model::in_has_per_node_parameters(std::size_t nodeCount,
+    const node* nodes) const noexcept
+{
+    for (std::size_t i = 0; i < nodeCount; ++i)
+    {
+        if (!nodes[i].scaParams.empty())
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void model::in_parse_mesh_groups(const arr32<off32<raw_mesh_group>>& rawMeshGroups)
 {
     // Reserve space for mesh groups.
     meshGroups.reserve(rawMeshGroups.count);
@@ -1945,6 +1979,124 @@ void model::in_parse(const arr32<off32<raw_mesh_group>>& rawMeshGroups)
     {
         meshGroups.emplace_back(*rawMeshGroupOff);
     }
+}
+
+void model::in_parse_sample_chunk_nodes(const void* rawData,
+    std::size_t nodeCount, node* nodes)
+{
+    // Parse sample chunk nodes if necessary.
+    if (has_sample_chunk_header_fixed(rawData))
+    {
+        // Ensure that we have Model node.
+        const sample_chunk::raw_header* rawHeader = static_cast<
+            const sample_chunk::raw_header*>(rawData);
+
+        const sample_chunk::raw_node* rawModelNode =
+            rawHeader->get_node("Model", false);
+
+        if (!rawModelNode) return;
+
+        // If we have NodesExt node, parse per-node parameters.
+        const sample_chunk::raw_node* rawNodesExtNode =
+            rawModelNode->get_child("NodesExt", false);
+
+        const sample_chunk::raw_node* curRawMdlProperty;
+
+        if (rawNodesExtNode)
+        {
+            const sample_chunk::raw_node* rawNodePrmsNode =
+                rawNodesExtNode->get_child("NodePrms", false);
+
+            while (rawNodePrmsNode)
+            {
+                // Parse NodePrms if node index is valid.
+                if (rawNodePrmsNode->value < nodeCount)
+                {
+                    nodes[rawNodePrmsNode->value].parse_sample_chunk_params(*rawNodePrmsNode);
+                }
+                else
+                {
+                    // TODO: Log warning about invalid node index.
+                }
+
+                rawNodePrmsNode = rawNodePrmsNode->next_of_name("NodePrms");
+            }
+
+            curRawMdlProperty = rawNodesExtNode->next();
+        }
+        else
+        {
+            curRawMdlProperty = rawModelNode->children();
+        }
+
+        // Parse model parameters.
+        while (curRawMdlProperty)
+        {
+            // Stop if we've reached the Contexts node.
+            if (std::memcmp(curRawMdlProperty->name, "Contexts", 8) == 0)
+            {
+                break;
+            }
+
+            // Parse model parameter.
+            properties.emplace_back(*curRawMdlProperty);
+            curRawMdlProperty = curRawMdlProperty->next();
+        }
+    }
+}
+
+std::size_t model::in_write_sample_chunk_nodes(std::size_t nodeCount,
+    const node* nodes, header_type headerType, u32 version, stream& stream) const
+{
+    // Start writing Model sample chunk node.
+    sample_chunk::raw_node::start_write("Model", stream);
+
+    // Write per-node sample chunk nodes if necessary.
+    if (in_has_per_node_parameters(nodeCount, nodes))
+    {
+        // Start writing NodesExt sample chunk node.
+        const std::size_t nodesExtPos = stream.tell();
+        sample_chunk::raw_node::start_write("NodesExt", stream);
+
+        // Write per-node sample chunk nodes.
+        for (std::size_t i = 0; i < nodeCount; ++i)
+        {
+            const bool isLastNode = (i == (nodeCount - 1));
+            nodes[i].write_sample_chunk_params(
+                static_cast<u32>(i), isLastNode, stream);
+        }
+
+        // Finish writing NodesExt sample chunk node.
+        sample_chunk::raw_node::finish_write(nodesExtPos,
+            sample_chunk::node_flags::none, stream);
+    }
+
+    // Write per-model sample chunk nodes.
+    for (auto& mdlParam : properties)
+    {
+        // Start writing model parameter.
+        const std::size_t curMdlParamPos = stream.tell();
+        sample_chunk::raw_node::start_write(mdlParam.get_name(),
+            stream, mdlParam.value);
+
+        // Finish writing model parameter.
+        sample_chunk::raw_node::finish_write(curMdlParamPos,
+            sample_chunk::node_flags::is_leaf, stream);
+    }
+
+    // Start writing Contexts sample chunk node.
+    std::size_t contextsPos = stream.tell();
+    sample_chunk::raw_node::start_write("Contexts", stream, version);
+
+    // Finish writing Contexts sample chunk node now if necessary.
+    if (headerType == header_type::sample_chunk_v2)
+    {
+        sample_chunk::raw_node::finish_write(contextsPos,
+            sample_chunk::node_flags::is_leaf |
+            sample_chunk::node_flags::is_last_child, stream);
+    }
+
+    return contextsPos;
 }
 
 topology_type model::get_topology_type() const
@@ -2041,7 +2193,7 @@ void terrain_model::add_to_node(hl::node& parentNode, bool includeLibGensTags) c
     const topology_type topType = get_topology_type();
 
     // Add node for model.
-    hl::node& modelNode = parentNode.add_child(name);
+    hl::node& modelNode = parentNode.add_child(rootNode.name);
 
     // Add mesh groups to model.
     std::size_t unnamedMeshGroupCount = 0;
@@ -2065,10 +2217,10 @@ void terrain_model::add_to_node(hl::node& parentNode, bool includeLibGensTags) c
 void terrain_model::parse(const raw_terrain_model_v5& rawMdl)
 {
     // Parse mesh groups.
-    in_parse(rawMdl.meshGroups);
+    in_parse_mesh_groups(rawMdl.meshGroups);
 
-    // Parse name.
-    name = rawMdl.name.get();
+    // Parse root node.
+    rootNode = node(rawMdl.name.get());
 }
 
 void terrain_model::parse(const void* rawData)
@@ -2089,37 +2241,8 @@ void terrain_model::parse(const void* rawData)
         throw std::runtime_error("Unsupported HH terrain model version");
     }
 
-    // Parse sample chunk nodes if necessary.
-    if (has_sample_chunk_header_fixed(rawData))
-    {
-        // Ensure that we have Model node.
-        const sample_chunk::raw_header* rawHeader = static_cast<
-            const sample_chunk::raw_header*>(rawData);
-
-        const sample_chunk::raw_node* rawModelNode =
-            rawHeader->get_node("Model", false);
-
-        if (!rawModelNode) return;
-
-        // If we have NodesExt node, parse per-node parameters.
-        const sample_chunk::raw_node* rawNodesExtNode =
-            rawModelNode->get_child("NodesExt", false);
-
-        // Parse model parameters.
-        const sample_chunk::raw_node* curRawMdlProperty = rawModelNode->children();
-        while (curRawMdlProperty)
-        {
-            // Stop if we've reached the Contexts node.
-            if (std::memcmp(curRawMdlProperty->name, "Contexts", 8) == 0)
-            {
-                break;
-            }
-
-            // Parse model parameter.
-            properties.emplace_back(*curRawMdlProperty);
-            curRawMdlProperty = curRawMdlProperty->next();
-        }
-    }
+    // Parse sample chunk nodes.
+    in_parse_sample_chunk_nodes(rawData, 1, &rootNode);
 }
 
 void terrain_model::load(const nchar* filePath)
@@ -2130,39 +2253,16 @@ void terrain_model::load(const nchar* filePath)
 }
 
 void terrain_model::write(stream& stream, off_table& offTable,
-    u32 version, bool useSampleChunks) const
+    header_type headerType, u32 version) const
 {
     // Start writing sample chunk nodes if necessary.
     const std::size_t basePos = stream.tell();
     std::size_t contextsPos;
 
-    if (useSampleChunks)
+    if (headerType != header_type::standard)
     {
-        // Start writing Model sample chunk node.
-        sample_chunk::raw_node::start_write("Model", stream);
-
-        // Write per-model sample chunk nodes.
-        for (auto& mdlParam : properties)
-        {
-            // Start writing model parameter.
-            const std::size_t curMdlParamPos = stream.tell();
-            sample_chunk::raw_node::start_write(mdlParam.get_name(),
-                stream, mdlParam.value);
-
-            // Finish writing model parameter.
-            sample_chunk::raw_node::finish_write(curMdlParamPos,
-                sample_chunk::node_flags::is_leaf, stream);
-        }
-
-        // Start writing Contexts sample chunk node.
-        contextsPos = stream.tell();
-        sample_chunk::raw_node::start_write("Contexts", stream, version);
-
-        // Finish writing Contexts sample chunk node.
-        // TODO: Don't do this until after writing model data in pre-Tokyo2020 sample chunk versions (like LW and Forces)
-        sample_chunk::raw_node::finish_write(contextsPos,
-            sample_chunk::node_flags::is_leaf |
-            sample_chunk::node_flags::is_last_child, stream);
+        contextsPos = in_write_sample_chunk_nodes(1,
+            &rootNode, headerType, version, stream);
     }
 
     // Write skeletal model header based on version.
@@ -2228,14 +2328,22 @@ void terrain_model::write(stream& stream, off_table& offTable,
         stream.fix_off32(basePos, rawMdlPos + offsetof(raw_terrain_model_v5, name),
             needs_endian_swap, offTable);
 
-        stream.write_str(name);
+        stream.write_str(rootNode.name);
         stream.pad(4);
         break;
     }
 
     // Finish writing sample chunk nodes if necessary.
-    if (useSampleChunks)
+    if (headerType != header_type::standard)
     {
+        // Finish writing Contexts node now if necessary.
+        if (headerType == header_type::sample_chunk_v1)
+        {
+            sample_chunk::raw_node::finish_write(contextsPos,
+                sample_chunk::node_flags::is_leaf |
+                sample_chunk::node_flags::is_last_child, stream);
+        }
+
         // Finish writing Model sample chunk node.
         // TODO: Allow user to specify that this is *NOT* the last sample chunk they're going to write to the file?
         sample_chunk::raw_node::finish_write(basePos,
@@ -2243,49 +2351,51 @@ void terrain_model::write(stream& stream, off_table& offTable,
     }
 }
 
-void terrain_model::save(stream& stream, u32 version,
-    bool useSampleChunks, const char* fileName) const
+void terrain_model::save(stream& stream, header_type headerType,
+    u32 version, const char* fileName) const
 {
     // Start writing header.
     const std::size_t headerPos = stream.tell();
-    if (useSampleChunks)
+    if (headerType == header_type::standard)
     {
-        sample_chunk::raw_header::start_write(stream);
+        raw_header::start_write(version, stream);
     }
     else
     {
-        raw_header::start_write(version, stream);
+        sample_chunk::raw_header::start_write(stream);
     }
 
     // Write model data.
     off_table offTable;
     const std::size_t dataPos = stream.tell();
 
-    write(stream, offTable, version, useSampleChunks);
+    write(stream, offTable, headerType, version);
 
     // Finish writing header.
-    if (useSampleChunks)
-    {
-        sample_chunk::raw_header::finish_write(
-            headerPos, dataPos, offTable, stream);
-    }
-    else
+    if (headerType == header_type::standard)
     {
         raw_header::finish_write(headerPos,
             offTable, stream, fileName);
     }
+    else
+    {
+        sample_chunk::raw_header::finish_write(
+            headerPos, dataPos, offTable, stream);
+    }
 }
 
 void terrain_model::save(const nchar* filePath,
-    u32 version, bool useSampleChunks) const
+    header_type headerType, u32 version) const
 {
     file_stream stream(filePath, file::mode::write);
-    save(stream, version, useSampleChunks);
+    save(stream, headerType, version);
 }
 
 void terrain_model::save(stream& stream) const
 {
-    save(stream, 5, has_parameters());
+    save(stream, has_parameters() ?
+        header_type::sample_chunk_v1 :
+        header_type::standard, 5);
 }
 
 void terrain_model::save(const nchar* filePath) const
@@ -2324,15 +2434,7 @@ void skeletal_model::fix(void* rawData)
 
 bool skeletal_model::has_per_node_parameters() const noexcept
 {
-    for (auto& node : nodes)
-    {
-        if (!node.scaParams.empty())
-        {
-            return true;
-        }
-    }
-
-    return false;
+    return in_has_per_node_parameters(nodes.size(), nodes.data());
 }
 
 void skeletal_model::add_to_node(hl::node& parentNode, bool includeLibGensTags) const
@@ -2422,7 +2524,7 @@ void skeletal_model::parse(const raw_skeletal_model_v4& rawMdl)
 void skeletal_model::parse(const raw_skeletal_model_v5& rawMdl)
 {
     // Parse mesh groups.
-    in_parse(rawMdl.meshGroups);
+    in_parse_mesh_groups(rawMdl.meshGroups);
 
     // TODO: Parse unknown1
 
@@ -2462,72 +2564,8 @@ void skeletal_model::parse(const void* rawData)
         throw std::runtime_error("Unsupported HH skeletal model version");
     }
 
-    // Parse sample chunk nodes if necessary.
-    if (has_sample_chunk_header_fixed(rawData))
-    {
-        // Ensure that we have Model node.
-        const sample_chunk::raw_header* rawHeader = static_cast<
-            const sample_chunk::raw_header*>(rawData);
-
-        const sample_chunk::raw_node* rawModelNode =
-            rawHeader->get_node("Model", false);
-
-        if (!rawModelNode) return;
-
-        // If we have NodesExt node, parse per-node parameters.
-        const sample_chunk::raw_node* rawNodesExtNode =
-            rawModelNode->get_child("NodesExt", false);
-
-        const sample_chunk::raw_node* curRawMdlProperty;
-
-        if (rawNodesExtNode)
-        {
-            const sample_chunk::raw_node* rawNodePrmsNode =
-                rawNodesExtNode->get_child("NodePrms", false);
-
-            while (rawNodePrmsNode)
-            {
-                const sample_chunk::raw_node* rawScaParamNode =
-                    rawNodePrmsNode->get_child("SCAParam", false);
-
-                if (rawScaParamNode)
-                {
-                    const sample_chunk::raw_node* rawNodeParamNode =
-                        rawScaParamNode->children();
-
-                    while (rawNodeParamNode)
-                    {
-                        nodes[rawNodePrmsNode->value].scaParams.emplace_back(
-                            *rawNodeParamNode);
-
-                        rawNodeParamNode = rawNodeParamNode->next();
-                    }
-                }
-
-                rawNodePrmsNode = rawNodePrmsNode->next_of_name("NodePrms");
-            }
-
-            curRawMdlProperty = rawNodesExtNode->next();
-        }
-        else
-        {
-            curRawMdlProperty = rawModelNode->children();
-        }
-
-        // Parse model parameters.
-        while (curRawMdlProperty)
-        {
-            // Stop if we've reached the Contexts node.
-            if (std::memcmp(curRawMdlProperty->name, "Contexts", 8) == 0)
-            {
-                break;
-            }
-
-            // Parse model parameter.
-            properties.emplace_back(*curRawMdlProperty);
-            curRawMdlProperty = curRawMdlProperty->next();
-        }
-    }
+    // Parse sample chunk nodes.
+    in_parse_sample_chunk_nodes(rawData, nodes.size(), nodes.data());
 }
 
 void skeletal_model::load(const nchar* filePath)
@@ -2538,60 +2576,16 @@ void skeletal_model::load(const nchar* filePath)
 }
 
 void skeletal_model::write(stream& stream, off_table& offTable,
-    u32 version, bool useSampleChunks) const
+    header_type headerType, u32 version) const
 {
     // Start writing sample chunk nodes if necessary.
     const std::size_t basePos = stream.tell();
     std::size_t contextsPos;
 
-    if (useSampleChunks)
+    if (headerType != header_type::standard)
     {
-        // Start writing Model sample chunk node.
-        sample_chunk::raw_node::start_write("Model", stream);
-        
-        // Write per-node sample chunk nodes if necessary.
-        if (has_per_node_parameters())
-        {
-            // Start writing NodesExt sample chunk node.
-            const std::size_t nodesExtPos = stream.tell();
-            sample_chunk::raw_node::start_write("NodesExt", stream);
-
-            // Write per-node sample chunk nodes.
-            const u32 nodeCount = static_cast<u32>(nodes.size());
-            const u32 lastBoneIndex = (nodeCount - 1);
-
-            for (u32 i = 0; i < nodeCount; ++i)
-            {
-                nodes[i].write_sample_chunk_params(i, lastBoneIndex, stream);
-            }
-
-            // Finish writing NodesExt sample chunk node.
-            sample_chunk::raw_node::finish_write(nodesExtPos,
-                sample_chunk::node_flags::none, stream);
-        }
-
-        // Write per-model sample chunk nodes.
-        for (auto& mdlParam : properties)
-        {
-            // Start writing model parameter.
-            const std::size_t curMdlParamPos = stream.tell();
-            sample_chunk::raw_node::start_write(mdlParam.get_name(),
-                stream, mdlParam.value);
-
-            // Finish writing model parameter.
-            sample_chunk::raw_node::finish_write(curMdlParamPos,
-                sample_chunk::node_flags::is_leaf, stream);
-        }
-
-        // Start writing Contexts sample chunk node.
-        contextsPos = stream.tell();
-        sample_chunk::raw_node::start_write("Contexts", stream, version);
-
-        // Finish writing Contexts sample chunk node.
-        // TODO: Don't do this until after writing model data in pre-Tokyo2020 sample chunk versions (like LW and Forces)
-        sample_chunk::raw_node::finish_write(contextsPos,
-            sample_chunk::node_flags::is_leaf |
-            sample_chunk::node_flags::is_last_child, stream);
+        contextsPos = in_write_sample_chunk_nodes(nodes.size(),
+            nodes.data(), headerType, version, stream);
     }
 
     // Write skeletal model header based on version.
@@ -2867,8 +2861,16 @@ void skeletal_model::write(stream& stream, off_table& offTable,
     // TODO: Write unknown3s if necessary.
 
     // Finish writing sample chunk nodes if necessary.
-    if (useSampleChunks)
+    if (headerType != header_type::standard)
     {
+        // Finish writing Contexts node now if necessary.
+        if (headerType == header_type::sample_chunk_v1)
+        {
+            sample_chunk::raw_node::finish_write(contextsPos,
+                sample_chunk::node_flags::is_leaf |
+                sample_chunk::node_flags::is_last_child, stream);
+        }
+
         // Finish writing Model sample chunk node.
         // TODO: Allow user to specify that this is *NOT* the last sample chunk they're going to write to the file?
         sample_chunk::raw_node::finish_write(basePos,
@@ -2876,41 +2878,41 @@ void skeletal_model::write(stream& stream, off_table& offTable,
     }
 }
 
-void skeletal_model::save(stream& stream, u32 version,
-    bool useSampleChunks, const char* fileName) const
+void skeletal_model::save(stream& stream, header_type headerType,
+    u32 version, const char* fileName) const
 {
     // Start writing header.
     const std::size_t headerPos = stream.tell();
-    if (useSampleChunks)
+    if (headerType == header_type::standard)
     {
-        sample_chunk::raw_header::start_write(stream);
+        raw_header::start_write(version, stream);
     }
     else
     {
-        raw_header::start_write(version, stream);
+        sample_chunk::raw_header::start_write(stream);
     }
 
     // Write model data.
     off_table offTable;
     const std::size_t dataPos = stream.tell();
 
-    write(stream, offTable, version, useSampleChunks);
+    write(stream, offTable, headerType, version);
 
     // Finish writing header.
-    if (useSampleChunks)
-    {
-        sample_chunk::raw_header::finish_write(
-            headerPos, dataPos, offTable, stream);
-    }
-    else
+    if (headerType == header_type::standard)
     {
         raw_header::finish_write(headerPos,
             offTable, stream, fileName);
     }
+    else
+    {
+        sample_chunk::raw_header::finish_write(
+            headerPos, dataPos, offTable, stream);
+    }
 }
 
 void skeletal_model::save(const nchar* filePath,
-    u32 version, bool useSampleChunks) const
+    header_type headerType, u32 version) const
 {
 #ifdef HL_IN_WIN32_UNICODE
     std::string fileName;
@@ -2932,12 +2934,14 @@ void skeletal_model::save(const nchar* filePath,
     }
 
     file_stream stream(filePath, file::mode::write);
-    save(stream, version, useSampleChunks, fileNamePtr);
+    save(stream, headerType, version, fileNamePtr);
 }
 
 void skeletal_model::save(stream& stream) const
 {
-    save(stream, 5, has_parameters());
+    save(stream, has_parameters() ?
+        header_type::sample_chunk_v1 :
+        header_type::standard, 5);
 }
 
 void skeletal_model::save(const nchar* filePath) const

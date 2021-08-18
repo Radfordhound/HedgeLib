@@ -15,6 +15,25 @@ constexpr bool needs_endian_swap =
     true;
 #endif
 
+enum class header_type
+{
+    /** @brief The "standard" mirage header used in all HH1 games. */
+    standard = 0,
+
+    /**
+        @brief The V1 sample chunk header used in all HH1/HH2 games
+        from Sonic Lost World, up to, and including, Sonic Forces.
+    */
+    sample_chunk_v1,
+
+    /**
+        @brief The V2 sample chunk header used in all HH2 games
+        from M&S Tokyo 2020 and beyond.
+    */
+    sample_chunk_v2
+};
+
+
 class const_off_table_handle
 {
 protected:

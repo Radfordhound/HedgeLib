@@ -627,8 +627,11 @@ struct node
         const std::vector<node>* nodes = nullptr,
         bool addAsBone = false) const;
 
+    HL_API void parse_sample_chunk_params(
+        const sample_chunk::raw_node& rawNodePrmsNode);
+
     HL_API void write_sample_chunk_params(u32 nodeIndex,
-        u32 lastNodeIndex, stream& stream) const;
+        bool isLastNode, stream& stream) const;
 
     HL_API void write(std::size_t basePos,
         stream& stream, off_table& offTable) const;
@@ -652,16 +655,25 @@ struct node
 class model
 {
 protected:
-    HL_API void in_parse(const arr32<off32<raw_mesh_group>>& rawMeshGroups);
+    HL_API bool in_has_per_node_parameters(std::size_t nodeCount,
+        const node* nodes) const noexcept;
+
+    HL_API void in_parse_mesh_groups(const arr32<off32<raw_mesh_group>>& rawMeshGroups);
+
+    HL_API void in_parse_sample_chunk_nodes(const void* rawData,
+        std::size_t nodeCount, node* nodes);
+
+    HL_API std::size_t in_write_sample_chunk_nodes(std::size_t nodeCount,
+        const node* nodes, header_type headerType, u32 version, stream& stream) const;
 
     model() = default;
 
 public:
-    std::vector<mesh_group> meshGroups;
-    std::vector<sample_chunk::property> properties;
-
     using const_iterator = std::vector<mesh_group>::const_iterator;
     using iterator = std::vector<mesh_group>::iterator;
+
+    std::vector<mesh_group> meshGroups;
+    std::vector<sample_chunk::property> properties;
 
     inline bool has_per_model_parameters() const noexcept
     {
@@ -716,7 +728,7 @@ public:
 
 struct terrain_model : public model
 {
-    std::string name;
+    node rootNode;
     // TODO: flags
 
     HL_API static void fix(void* rawData);
@@ -744,16 +756,16 @@ struct terrain_model : public model
     }
 
     HL_API void write(stream& stream, off_table& offTable,
-        u32 version, bool useSampleChunks) const;
+        header_type headerType, u32 version) const;
 
-    HL_API void save(stream& stream, u32 version, bool useSampleChunks,
-        const char* fileName = nullptr) const;
+    HL_API void save(stream& stream, header_type headerType,
+        u32 version, const char* fileName = nullptr) const;
 
-    HL_API void save(const nchar* filePath, u32 version, bool useSampleChunks) const;
+    HL_API void save(const nchar* filePath, header_type headerType, u32 version) const;
 
-    inline void save(const nstring& filePath, u32 version, bool useSampleChunks) const
+    inline void save(const nstring& filePath, header_type headerType, u32 version) const
     {
-        save(filePath.c_str(), version, useSampleChunks);
+        save(filePath.c_str(), headerType, version);
     }
 
     HL_API void save(stream& stream) const;
@@ -819,16 +831,16 @@ struct skeletal_model : public model
     }
 
     HL_API void write(stream& stream, off_table& offTable,
-        u32 version, bool useSampleChunks) const;
+        header_type headerType, u32 version) const;
 
-    HL_API void save(stream& stream, u32 version, bool useSampleChunks,
+    HL_API void save(stream& stream, header_type headerType, u32 version,
         const char* fileName = nullptr) const;
 
-    HL_API void save(const nchar* filePath, u32 version, bool useSampleChunks) const;
+    HL_API void save(const nchar* filePath, header_type headerType, u32 version) const;
 
-    inline void save(const nstring& filePath, u32 version, bool useSampleChunks) const
+    inline void save(const nstring& filePath, header_type headerType, u32 version) const
     {
-        save(filePath.c_str(), version, useSampleChunks);
+        save(filePath.c_str(), headerType, version);
     }
 
     HL_API void save(stream& stream) const;
