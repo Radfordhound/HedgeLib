@@ -434,14 +434,16 @@ void terrain_instance_info::save(stream& stream, u32 version, const char* fileNa
 {
     // Start writing header.
     const std::size_t headerPos = stream.tell();
-    raw_header::start_write(version, stream);
+    standard::raw_header::start_write(stream);
 
     // Write terrain instance info data.
     off_table offTable;
     write(stream, offTable, version);
 
     // Finish writing header.
-    raw_header::finish_write(headerPos, offTable, stream, fileName);
+    standard::raw_header::finish_write(headerPos,
+        headerPos + sizeof(standard::raw_header),
+        version, offTable, stream, fileName);
 }
 
 void terrain_instance_info::save(const nchar* filePath, u32 version) const

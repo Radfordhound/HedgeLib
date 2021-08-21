@@ -774,6 +774,24 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
     }
 }
 
+bool raw_terrain_model_v5::is_revision2() const
+{
+    // HACK: Since Sonic Team didn't bother upping the version number, there's no
+    // "clean" way to check which revision of the format this is. So, we check to
+    // see if any of the pointers in the struct point *before* where the revision 2
+    // struct is supposed to end. If so, it must be a revision 1 struct.
+    const std::uintptr_t rev2_endAddr = reinterpret_cast<
+        std::uintptr_t>(ptradd(this, sizeof(*this)));
+
+    const std::uintptr_t meshGroupsAddr = reinterpret_cast<
+        std::uintptr_t>(meshGroups.get());
+
+    const std::uintptr_t nameAddr = reinterpret_cast<
+        std::uintptr_t>(name.get());
+
+    return (meshGroupsAddr >= rev2_endAddr && nameAddr >= rev2_endAddr);
+}
+
 static void in_swap_vertex(const raw_vertex_element& rawVtxElem, void* rawVtx)
 {
     // Swap vertex based on vertex element.
@@ -1022,16 +1040,14 @@ void raw_skeletal_model_v5::fix()
 #endif
 }
 
-void texture_unit::write(std::size_t basePos, stream& stream, off_table& offTable) const
+void texture_unit::write(writer& writer) const
 {
     // Generate raw texture unit.
-    const std::size_t rawTexUnitPos = stream.tell();
+    auto nameOff = writer.add_offset();
     raw_texture_unit rawTexUnit =
     {
-        static_cast<u32>(rawTexUnitPos + sizeof(                        // name
-            raw_texture_unit) - basePos),
-
-        id                                                              // id
+        nullptr,                                                        // name
+        index                                                           // index
     };
 
     // Endian-swap texture unit if necessary.
@@ -1040,18 +1056,16 @@ void texture_unit::write(std::size_t basePos, stream& stream, off_table& offTabl
 #endif
 
     // Write texture unit to stream.
-    stream.write_obj(rawTexUnit);
-
-    // Add texture unit name offset to offset table.
-    offTable.push_back(rawTexUnitPos);
+    writer.stream().write_obj(rawTexUnit);
 
     // Write texture unit name.
-    stream.write_str(name);
-    stream.pad(4);
+    nameOff.fix();
+    writer.stream().write_str(name);
+    writer.stream().pad(4);
 }
 
 texture_unit::texture_unit(const raw_texture_unit& rawTexUnit) :
-    name(rawTexUnit.name.get()), id(rawTexUnit.id) {}
+    name(rawTexUnit.name.get()), index(rawTexUnit.index) {}
 
 static void in_mesh_add_faces_strips(const mesh& hhMesh, hl::mesh& hlMesh)
 {
@@ -1398,16 +1412,20 @@ hl::mesh& mesh::add_to_node(hl::node& node, topology_type topType,
     return static_cast<hl::mesh&>(*node.attributes.back());
 }
 
-void mesh::write(std::size_t basePos, stream& stream, off_table& offTable) const
+void mesh::write(writer& writer) const
 {
     // Generate raw mesh.
-    const std::size_t rawMeshPos = stream.tell();
+    auto matNameOff = writer.add_offset(offsetof(raw_mesh, materialName));
+    auto facesOff = writer.add_offset(offsetof(raw_mesh, faces.data));
+    auto verticesOff = writer.add_offset(offsetof(raw_mesh, vertices));
+    auto vtxElemsOff = writer.add_offset(offsetof(raw_mesh, vertexElements));
+    auto boneNodeIndicesOff = writer.add_offset(offsetof(raw_mesh, boneNodeIndices.data));
+    auto textureUnitsOff = writer.add_offset(offsetof(raw_mesh, textureUnits.data));
+
     raw_mesh rawMesh =
     {
         nullptr,                                                        // materialName
-        { static_cast<u32>(faces.size()), static_cast<u32>(             // faces
-            rawMeshPos + sizeof(raw_mesh) - basePos) },
-
+        { static_cast<u32>(faces.size()), nullptr },                    // faces
         vertexCount,                                                    // vertexCount
         vertexSize,                                                     // vertexSize
         nullptr,                                                        // vertices
@@ -1422,29 +1440,26 @@ void mesh::write(std::size_t basePos, stream& stream, off_table& offTable) const
 #endif
 
     // Write raw mesh to stream.
-    stream.write_obj(rawMesh);
-
-    // Add faces offset to offset table.
-    offTable.push_back(rawMeshPos + 8);
+    writer.stream().write_obj(rawMesh);
 
     // Write faces.
+    facesOff.fix();
+
 #ifndef HL_IS_BIG_ENDIAN
     for (auto face : faces)
     {
         hl::endian_swap(face);
-        stream.write_obj(face);
+        writer.stream().write_obj(face);
     }
 #else
-    stream.write_arr(faces.size(), faces.data());
+    writer.stream().write_arr(faces.size(), faces.data());
 #endif
 
-    stream.pad(4);
-
-    // Fill-in vertices offset.
-    stream.fix_off32(basePos, rawMeshPos + offsetof(raw_mesh,
-        vertices), needs_endian_swap, offTable);
+    writer.stream().pad(4);
 
     // Write vertices.
+    verticesOff.fix();
+
 #ifndef HL_IS_BIG_ENDIAN
     std::unique_ptr<u8[]> tmpVertexBuf(new u8[vertexSize]);
     const u8* curVtx = vertices.get();
@@ -1461,30 +1476,28 @@ void mesh::write(std::size_t basePos, stream& stream, off_table& offTable) const
         }
 
         // Write swapped vertex to stream.
-        stream.write_all(vertexSize, tmpVertexBuf.get());
+        writer.stream().write_all(vertexSize, tmpVertexBuf.get());
 
         // Increase vertices pointer.
         curVtx += vertexSize;
     }
 #else
-    stream.write_all(static_cast<std::size_t>(
+    writer.stream().write_all(static_cast<std::size_t>(
         vertexSize) * vertexCount, vertices.get());
 #endif
 
-    // Fill-in vertex elements offset.
-    stream.fix_off32(basePos, rawMeshPos + offsetof(raw_mesh,
-        vertexElements), needs_endian_swap, offTable);
-
     // Write vertex elements.
+    vtxElemsOff.fix();
+
 #ifndef HL_IS_BIG_ENDIAN
     for (auto& vtxElem : vertexElements)
     {
         raw_vertex_element tmpVtxElem = vtxElem;
         tmpVtxElem.endian_swap();
-        stream.write_obj(tmpVtxElem);
+        writer.stream().write_obj(tmpVtxElem);
     }
 #else
-    stream.write_arr(vertexElements.size(), vertexElements.data());
+    writer.stream().write_arr(vertexElements.size(), vertexElements.data());
 #endif
 
     // Write last vertex element.
@@ -1502,44 +1515,37 @@ void mesh::write(std::size_t basePos, stream& stream, off_table& offTable) const
     lastRawVtxElem.endian_swap();
 #endif
 
-    stream.write_obj(lastRawVtxElem);
-
-    // Fill-in node indices offset.
-    stream.fix_off32(basePos, rawMeshPos + offsetof(raw_mesh,
-        boneNodeIndices) + 4, needs_endian_swap, offTable);
+    writer.stream().write_obj(lastRawVtxElem);
 
     // Write node indices.
-    stream.write_arr(boneNodeIndices.size(), boneNodeIndices.data());
-    stream.pad(4);
-
-    // Fill-in texture units offset.
-    stream.fix_off32(basePos, rawMeshPos + offsetof(raw_mesh,
-        textureUnits) + 4, needs_endian_swap, offTable);
+    boneNodeIndicesOff.fix();
+    writer.stream().write_arr(boneNodeIndices.size(), boneNodeIndices.data());
+    writer.stream().pad(4);
 
     // Write placeholder texture unit offsets.
-    std::size_t curTexUnitOffPos = stream.tell();
-    stream.write_nulls(sizeof(off32<raw_texture_unit>) * textureUnits.size());
+    textureUnitsOff.fix();
+    std::size_t curTexUnitOffPos = writer.stream().tell();
+    writer.stream().write_nulls(sizeof(off32<raw_texture_unit>) * textureUnits.size());
 
     // Write texture units and fill-in placeholder texture unit offsets.
     for (auto& textureUnit : textureUnits)
     {
         // Fill-in texture unit placeholder offset.
-        stream.fix_off32(basePos, curTexUnitOffPos, needs_endian_swap, offTable);
+        writer.stream().fix_off32(writer.data_pos(),
+            curTexUnitOffPos, needs_endian_swap,
+            writer.off_table());
 
         // Write texture unit.
-        textureUnit.write(basePos, stream, offTable);
+        textureUnit.write(writer);
 
         // Increase texture unit offset position.
         curTexUnitOffPos += sizeof(off32<raw_texture_unit>);
     }
 
-    // Fill-in material name offset.
-    stream.fix_off32(basePos, rawMeshPos + offsetof(raw_mesh,
-        materialName), needs_endian_swap, offTable);
-
     // Write material name.
-    stream.write_str(materialName);
-    stream.pad(4);
+    matNameOff.fix();
+    writer.stream().write_str(materialName);
+    writer.stream().pad(4);
 }
 
 static const raw_vertex_element* in_get_last_vtx_elem(const raw_vertex_element* rawVtxElem)
@@ -1599,20 +1605,21 @@ void mesh_slot::add_to_node(hl::node& node, topology_type topType,
     }
 }
 
-void mesh_slot::write(std::size_t basePos, stream& stream, off_table& offTable) const
+void mesh_slot::write(writer& writer) const
 {
     // Write placeholder mesh offsets.
-    std::size_t curMeshOffPos = stream.tell();
-    stream.write_nulls(sizeof(off32<raw_mesh>) * size());
+    std::size_t curMeshOffPos = writer.stream().tell();
+    writer.stream().write_nulls(sizeof(off32<raw_mesh>) * size());
 
     // Write meshes and fill-in placeholder mesh offsets.
     for (auto& mesh : *this)
     {
         // Fill-in placeholder mesh offset.
-        stream.fix_off32(basePos, curMeshOffPos, needs_endian_swap, offTable);
+        writer.stream().fix_off32(writer.data_pos(), curMeshOffPos,
+            needs_endian_swap, writer.off_table());
 
         // Write mesh.
-        mesh.write(basePos, stream, offTable);
+        mesh.write(writer);
 
         // Increase current mesh offset position.
         curMeshOffPos += sizeof(off32<raw_mesh>);
@@ -1685,10 +1692,16 @@ void mesh_group::add_to_node(hl::node& node, topology_type topType,
     }
 }
 
-void mesh_group::write(std::size_t basePos, stream& stream, off_table& offTable) const
+void mesh_group::write(writer& writer, u32 revision) const
 {
     // Generate raw mesh group.
-    const std::size_t rawMeshGroupPos = stream.tell();
+    auto opaqOff = writer.add_offset(offsetof(raw_mesh_group, opaq.data));
+    auto transOff = writer.add_offset(offsetof(raw_mesh_group, trans.data));
+    auto punchOff = writer.add_offset(offsetof(raw_mesh_group, punch.data));
+    auto specialTypesOff = writer.add_offset(offsetof(raw_mesh_group, special.types));
+    auto specialCountsOff = writer.add_offset(offsetof(raw_mesh_group, special.meshCounts));
+    auto specialMeshesOff = writer.add_offset(offsetof(raw_mesh_group, special.meshes));
+
     raw_mesh_group rawMeshGroup =
     {
         { static_cast<u32>(opaq.size()), nullptr },                     // opaq
@@ -1708,56 +1721,68 @@ void mesh_group::write(std::size_t basePos, stream& stream, off_table& offTable)
 #endif
 
     // Write raw mesh group to stream.
-    stream.write_obj(rawMeshGroup);
+    writer.stream().write_obj(rawMeshGroup);
 
     // Write mesh group name.
-    stream.write_str(name);
-    stream.pad(4);
+    writer.stream().write_str(name);
+    writer.stream().pad(4);
 
     // Write normal mesh slots.
-    stream.fix_off32(basePos, rawMeshGroupPos + 4, needs_endian_swap, offTable);
-    opaq.write(basePos, stream, offTable);
+    opaqOff.fix();
+    opaq.write(writer);
 
-    stream.fix_off32(basePos, rawMeshGroupPos + 12, needs_endian_swap, offTable);
-    trans.write(basePos, stream, offTable);
+    transOff.fix();
+    trans.write(writer);
 
-    stream.fix_off32(basePos, rawMeshGroupPos + 20, needs_endian_swap, offTable);
-    punch.write(basePos, stream, offTable);
+    punchOff.fix();
+    punch.write(writer);
 
-    // Write special mesh slots.
-
-    // Early out if we don't have anything to write.
+    // Early out if there are no special meshes.
     if (special.empty())
     {
+        // Revision 1 fills in offsets anyway even if there
+        // are no special meshes; replicate that here.
+        if (revision < 2)
+        {
+            specialTypesOff.fix();
+            specialCountsOff.fix();
+            specialMeshesOff.fix();
+        }
+
         return;
     }
 
-    // Prepare special mesh group type offsets.
-    const std::size_t specialMeshGroupTypeOffsetsPos = stream.tell();
-    stream.fix_off32(basePos, rawMeshGroupPos + 28, needs_endian_swap, offTable);
-    stream.write_nulls(sizeof(off32<char>) * special.size());
+    // Write placeholder special mesh group type offsets.
+    std::size_t curOffPos = writer.stream().tell();
+    specialTypesOff.fix();
+    writer.stream().write_nulls(sizeof(off32<char>) * special.size());
 
     // Write special mesh group types.
     for (std::size_t i = 0; i < special.size(); i++)
     {
         // Fix special mesh group type offset.
-        stream.fix_off32(basePos, specialMeshGroupTypeOffsetsPos + i * sizeof(off32<char>), needs_endian_swap, offTable);
+        writer.stream().fix_off32(writer.data_pos(), curOffPos,
+            needs_endian_swap, writer.off_table());
 
         // Write type.
-        stream.write_str(special[i].type);
-        stream.pad(4);
+        writer.stream().write_str(special[i].type);
+        writer.stream().pad(4);
+
+        // Increase current offset position.
+        curOffPos += sizeof(off32<char>);
     }
 
-    // Prepare special mesh count offsets.
-    const std::size_t specialMeshCountOffsetsPos = stream.tell();
-    stream.fix_off32(basePos, rawMeshGroupPos + 32, needs_endian_swap, offTable);
-    stream.write_nulls(sizeof(off32<u32>) * special.size());
+    // Write placeholder special mesh count offsets.
+    curOffPos = writer.stream().tell();
+    specialCountsOff.fix();
+    writer.stream().write_nulls(sizeof(off32<u32>) * special.size());
 
     // Write special mesh counts.
     for (std::size_t i = 0; i < special.size(); i++)
     {
         // Fix special mesh count offset.
-        stream.fix_off32(basePos, specialMeshCountOffsetsPos + i * sizeof(off32<u32>), needs_endian_swap, offTable);
+        writer.stream().fix_off32(writer.data_pos(), curOffPos,
+            needs_endian_swap, writer.off_table());
 
         // Write special mesh count.
         u32 specialMeshCount = static_cast<u32>(special[i].size());
@@ -1767,28 +1792,40 @@ void mesh_group::write(std::size_t basePos, stream& stream, off_table& offTable)
         endian_swap(specialMeshCount);
 #endif
 
-        stream.write_obj(specialMeshCount);
+        writer.stream().write_obj(specialMeshCount);
+
+        // Increase current offset position.
+        curOffPos += sizeof(off32<u32>);
     }
 
-    // Prepare special mesh group offsets.
-    const std::size_t specialMeshGroupOffsetsPos = stream.tell();
-    stream.fix_off32(basePos, rawMeshGroupPos + 36, needs_endian_swap, offTable);
-    stream.write_nulls(sizeof(off32<off32<raw_mesh>>) * special.size());
+    // Write placeholder special mesh group offsets.
+    curOffPos = writer.stream().tell();
+    specialMeshesOff.fix();
+    writer.stream().write_nulls(sizeof(off32<off32<raw_mesh>>) * special.size());
 
     // Write special mesh groups.
     for (std::size_t i = 0; i < special.size(); i++)
     {
-        // Prepare special mesh offsets.
-        const std::size_t specialMeshOffsetsPos = stream.tell();
-        stream.fix_off32(basePos, specialMeshGroupOffsetsPos + i * sizeof(off32<off32<raw_mesh>>), needs_endian_swap, offTable);
-        stream.write_nulls(sizeof(off32<raw_mesh>) * special[i].size());
+        // Write placeholder special mesh offsets.
+        std::size_t curMeshOffPos = writer.stream().tell();
+        writer.stream().fix_off32(writer.data_pos(), curOffPos,
+            needs_endian_swap, writer.off_table());
+
+        writer.stream().write_nulls(sizeof(off32<raw_mesh>) * special[i].size());
 
         // Write special meshes.
-        for (std::size_t j = 0; j < special[i].size(); j++)
+        for (std::size_t i2 = 0; i2 < special[i].size(); i2++)
         {
-            stream.fix_off32(basePos, specialMeshOffsetsPos + j * sizeof(off32<raw_mesh>), needs_endian_swap, offTable);
-            special[i][j].write(basePos, stream, offTable);
+            writer.stream().fix_off32(writer.data_pos(), curMeshOffPos,
+                needs_endian_swap, writer.off_table());
+
+            special[i][i2].write(writer);
+
+            curMeshOffPos += sizeof(off32<raw_mesh>);
         }
+
+        // Increase current offset position.
+        curOffPos += sizeof(off32<off32<raw_mesh>>);
     }
 }
 
@@ -1880,63 +1917,34 @@ void node::parse_sample_chunk_params(
 }
 
 void node::write_sample_chunk_params(u32 nodeIndex,
-    bool isLastNode, stream& stream) const
+    sample_chunk::node_writer& nodesExt) const
 {
     // Return early if this node has no parameters.
     if (scaParams.empty()) return;
 
-    // Start writing NodePrms sample chunk node.
-    const std::size_t nodePrmsPos = stream.tell();
-    sample_chunk::raw_node::start_write("NodePrms", stream, nodeIndex);
-
-    // Start writing SCAParam sample chunk node.
-    const std::size_t scaParamPos = stream.tell();
-    sample_chunk::raw_node::start_write("SCAParam", stream);
+    // Start writing NodePrms and SCAParam sample chunk nodes.
+    auto nodePrms = nodesExt.add_child("NodePrms", nodeIndex);
+    auto scaParam = nodePrms->add_child("SCAParam");
 
     // Write SCA parameters.
-    const std::size_t lastScaParamIndex = (scaParams.size() - 1);
-    for (std::size_t i = 0; i < scaParams.size(); ++i)
+    for (auto& curSCAParam : scaParams)
     {
-        // Start writing SCA parameter.
-        const std::size_t curScaParamPos = stream.tell();
-        sample_chunk::raw_node::start_write(scaParams[i].get_name(),
-            stream, scaParams[i].value);
-
-        // Compute SCA parameter flags.
-        sample_chunk::node_flags flags = sample_chunk::node_flags::is_leaf;
-        if (i == lastScaParamIndex)
-        {
-            flags |= sample_chunk::node_flags::is_last_child;
-        }
-
-        // Finish writing SCA parameter.
-        sample_chunk::raw_node::finish_write(curScaParamPos, flags, stream);
+        scaParam->add_child(curSCAParam)->finish_write();
     }
 
-    // Finish writing SCAParam sample chunk node.
-    sample_chunk::raw_node::finish_write(scaParamPos,
-        sample_chunk::node_flags::is_last_child, stream);
-
-    // Compute NodePrms sample chunk node flags.
-    sample_chunk::node_flags flags = sample_chunk::node_flags::none;
-    if (isLastNode)
-    {
-        flags |= sample_chunk::node_flags::is_last_child;
-    }
-
-    // Finish writing NodePrms sample chunk node.
-    sample_chunk::raw_node::finish_write(nodePrmsPos, flags, stream);
+    // Finish writing SCAParam and NodePrms sample chunk nodes.
+    scaParam->finish_write();
+    nodePrms->finish_write();
 }
 
-void node::write(std::size_t basePos,
-    stream& stream, off_table& offTable) const
+void node::write(writer& writer) const
 {
     // Generate raw node.
-    const std::size_t rawNodePos = stream.tell();
+    auto nameOff = writer.add_offset(offsetof(raw_node, name));
     raw_node rawNode =
     {
         static_cast<s32>(parentIndex),                                  // parentIndex
-        static_cast<u32>(rawNodePos + sizeof(raw_node) - basePos)       // name
+        nullptr                                                         // name
     };
 
     // Endian-swap raw node if necessary.
@@ -1945,14 +1953,12 @@ void node::write(std::size_t basePos,
 #endif
 
     // Write raw node to stream.
-    stream.write_obj(rawNode);
+    writer.stream().write_obj(rawNode);
 
-    // Add raw node name offset to offset table.
-    offTable.push_back(rawNodePos + offsetof(raw_node, name));
-    
     // Write raw node name.
-    stream.write_str(name);
-    stream.pad(4);
+    nameOff.fix();
+    writer.stream().write_str(name);
+    writer.stream().pad(4);
 }
 
 bool model::in_has_per_node_parameters(std::size_t nodeCount,
@@ -2045,58 +2051,31 @@ void model::in_parse_sample_chunk_nodes(const void* rawData,
     }
 }
 
-std::size_t model::in_write_sample_chunk_nodes(std::size_t nodeCount,
-    const node* nodes, header_type headerType, u32 version, stream& stream) const
+void model::in_write_sample_chunk_nodes(std::size_t nodeCount,
+    const node* nodes, sample_chunk::node_writer& writer) const
 {
-    // Start writing Model sample chunk node.
-    sample_chunk::raw_node::start_write("Model", stream);
-
     // Write per-node sample chunk nodes if necessary.
     if (in_has_per_node_parameters(nodeCount, nodes))
     {
         // Start writing NodesExt sample chunk node.
-        const std::size_t nodesExtPos = stream.tell();
-        sample_chunk::raw_node::start_write("NodesExt", stream);
+        auto nodesExt = writer.add_child("NodesExt");
 
         // Write per-node sample chunk nodes.
         for (std::size_t i = 0; i < nodeCount; ++i)
         {
-            const bool isLastNode = (i == (nodeCount - 1));
             nodes[i].write_sample_chunk_params(
-                static_cast<u32>(i), isLastNode, stream);
+                static_cast<u32>(i), *nodesExt);
         }
 
         // Finish writing NodesExt sample chunk node.
-        sample_chunk::raw_node::finish_write(nodesExtPos,
-            sample_chunk::node_flags::none, stream);
+        nodesExt->finish_write();
     }
 
     // Write per-model sample chunk nodes.
     for (auto& mdlParam : properties)
     {
-        // Start writing model parameter.
-        const std::size_t curMdlParamPos = stream.tell();
-        sample_chunk::raw_node::start_write(mdlParam.get_name(),
-            stream, mdlParam.value);
-
-        // Finish writing model parameter.
-        sample_chunk::raw_node::finish_write(curMdlParamPos,
-            sample_chunk::node_flags::is_leaf, stream);
+        writer.add_child(mdlParam)->finish_write();
     }
-
-    // Start writing Contexts sample chunk node.
-    std::size_t contextsPos = stream.tell();
-    sample_chunk::raw_node::start_write("Contexts", stream, version);
-
-    // Finish writing Contexts sample chunk node now if necessary.
-    if (headerType == header_type::sample_chunk_v2)
-    {
-        sample_chunk::raw_node::finish_write(contextsPos,
-            sample_chunk::node_flags::is_leaf |
-            sample_chunk::node_flags::is_last_child, stream);
-    }
-
-    return contextsPos;
 }
 
 topology_type model::get_topology_type() const
@@ -2252,42 +2231,46 @@ void terrain_model::load(const nchar* filePath)
     parse(rawMdl);
 }
 
-void terrain_model::write(stream& stream, off_table& offTable,
-    header_type headerType, u32 version) const
+void terrain_model::write(writer& writer, header_type headerType,
+    u32 version, u32 revision, const char* fileName) const
 {
-    // Start writing sample chunk nodes if necessary.
-    const std::size_t basePos = stream.tell();
-    std::size_t contextsPos;
-
+    // Start writing model.
+    auto modelNode = writer.start_write(headerType, "Model");
     if (headerType != header_type::standard)
     {
-        contextsPos = in_write_sample_chunk_nodes(1,
-            &rootNode, headerType, version, stream);
+        in_write_sample_chunk_nodes(1, &rootNode, *modelNode);
     }
 
-    // Write skeletal model header based on version.
-    const std::size_t rawMdlPos = stream.tell();
+    writer.start_write_data(version);
+
+    // Write terrain model header based on version.
+    off_handle meshGroupsOff, nameOff;
     switch (version)
     {
     case 5:
     {
         // Generate raw V5 terrain model header.
+        const u32 flags = static_cast<u32>((isInstanced) ?
+            raw_terrain_model_flags::is_instanced :
+            raw_terrain_model_flags::none);
+
+        meshGroupsOff = writer.add_offset(offsetof(raw_terrain_model_v5, meshGroups.data));
+        nameOff = writer.add_offset(offsetof(raw_terrain_model_v5, name));
+
         raw_terrain_model_v5 rawMdl =
         {
-            { static_cast<u32>(meshGroups.size()), static_cast<u32>(    // meshGroups
-                rawMdlPos + sizeof(raw_terrain_model_v5) - basePos) },
-
+            { static_cast<u32>(meshGroups.size()), nullptr },           // meshGroups
             nullptr,                                                    // name
-            0                                                           // flags
+            flags                                                       // flags
         };
 
         // Endian-swap header if necessary.
 #ifndef HL_IS_BIG_ENDIAN
-        rawMdl.endian_swap();
+        rawMdl.endian_swap(revision >= 2);
 #endif
 
         // Write header to stream.
-        stream.write_obj(rawMdl);
+        writer.stream().write_all((revision >= 2) ? 16 : 12, &rawMdl);
         break;
     }
 
@@ -2295,25 +2278,25 @@ void terrain_model::write(stream& stream, off_table& offTable,
         throw std::runtime_error("Unsupported HH terrain model version");
     }
 
-    // Add meshes/mesh groups offset to offset table.
-    offTable.push_back(rawMdlPos + 4);
-
     // Write meshes/mesh groups as necessary.
+    meshGroupsOff.fix();
     switch (version)
     {
     case 5:
         // Write placeholder offsets for mesh groups.
-        std::size_t curMeshGroupOffPos = stream.tell();
-        stream.write_nulls(sizeof(off32<raw_mesh_group>) * meshGroups.size());
+        std::size_t curMeshGroupOffPos = writer.stream().tell();
+        writer.stream().write_nulls(sizeof(off32<raw_mesh_group>) * meshGroups.size());
 
         // Write mesh groups and fill-in placeholder offsets.
         for (auto& meshGroup : meshGroups)
         {
             // Fill-in placeholder mesh group offset.
-            stream.fix_off32(basePos, curMeshGroupOffPos, needs_endian_swap, offTable);
+            writer.stream().fix_off32(writer.data_pos(),
+                curMeshGroupOffPos, needs_endian_swap,
+                writer.off_table());
 
             // Write mesh group.
-            meshGroup.write(basePos, stream, offTable);
+            meshGroup.write(writer, revision);
 
             // Increase current mesh group offset position.
             curMeshGroupOffPos += sizeof(off32<raw_mesh_group>);
@@ -2325,63 +2308,22 @@ void terrain_model::write(stream& stream, off_table& offTable,
     switch (version)
     {
     case 5:
-        stream.fix_off32(basePos, rawMdlPos + offsetof(raw_terrain_model_v5, name),
-            needs_endian_swap, offTable);
-
-        stream.write_str(rootNode.name);
-        stream.pad(4);
+        nameOff.fix();
+        writer.stream().write_str(rootNode.name);
+        writer.stream().pad(4);
         break;
     }
 
-    // Finish writing sample chunk nodes if necessary.
-    if (headerType != header_type::standard)
-    {
-        // Finish writing Contexts node now if necessary.
-        if (headerType == header_type::sample_chunk_v1)
-        {
-            sample_chunk::raw_node::finish_write(contextsPos,
-                sample_chunk::node_flags::is_leaf |
-                sample_chunk::node_flags::is_last_child, stream);
-        }
-
-        // Finish writing Model sample chunk node.
-        // TODO: Allow user to specify that this is *NOT* the last sample chunk they're going to write to the file?
-        sample_chunk::raw_node::finish_write(basePos,
-            sample_chunk::node_flags::is_last_child, stream);
-    }
+    // Finish writing.
+    writer.finish_write(fileName);
 }
 
-void terrain_model::save(stream& stream, header_type headerType,
-    u32 version, const char* fileName) const
+void terrain_model::save(const nchar* filePath,
+    header_type headerType, u32 version, u32 revision) const
 {
-    // Start writing header.
-    const std::size_t headerPos = stream.tell();
-    if (headerType == header_type::standard)
-    {
-        raw_header::start_write(version, stream);
-    }
-    else
-    {
-        sample_chunk::raw_header::start_write(stream);
-    }
-
-    // Write model data.
-    off_table offTable;
-    const std::size_t dataPos = stream.tell();
-
-    write(stream, offTable, headerType, version);
-
-    // Finish writing header.
-    if (headerType == header_type::standard)
-    {
-        raw_header::finish_write(headerPos,
-            offTable, stream, fileName);
-    }
-    else
-    {
-        sample_chunk::raw_header::finish_write(
-            headerPos, dataPos, offTable, stream);
-    }
+    file_stream stream(filePath, file::mode::write);
+    save(stream, headerType, version, revision,
+        (revision >= 2) ? nullptr : "");
 }
 
 void terrain_model::save(const nchar* filePath,
@@ -2395,7 +2337,7 @@ void terrain_model::save(stream& stream) const
 {
     save(stream, has_parameters() ?
         header_type::sample_chunk_v1 :
-        header_type::standard, 5);
+        header_type::standard);
 }
 
 void terrain_model::save(const nchar* filePath) const
@@ -2575,21 +2517,23 @@ void skeletal_model::load(const nchar* filePath)
     parse(rawMdl);
 }
 
-void skeletal_model::write(stream& stream, off_table& offTable,
-    header_type headerType, u32 version) const
+void skeletal_model::write(writer& writer, header_type headerType,
+    u32 version, const char* fileName) const
 {
-    // Start writing sample chunk nodes if necessary.
-    const std::size_t basePos = stream.tell();
-    std::size_t contextsPos;
-
+    // Start writing model.
+    auto modelNode = writer.start_write(headerType, "Model");
     if (headerType != header_type::standard)
     {
-        contextsPos = in_write_sample_chunk_nodes(nodes.size(),
-            nodes.data(), headerType, version, stream);
+        in_write_sample_chunk_nodes(nodes.size(),
+            nodes.data(), *modelNode);
     }
 
+    writer.start_write_data(version);
+
     // Write skeletal model header based on version.
-    const std::size_t rawMdlPos = stream.tell();
+    off_handle meshesOff, unknown1Off, unknown2Off, unknown3Off,
+        nodesOff, nodeMatricesOff, boundsOff;
+
     switch (version)
     {
     case 2:
@@ -2598,11 +2542,16 @@ void skeletal_model::write(stream& stream, off_table& offTable,
         const std::size_t meshCount = (meshGroups.empty()) ?
             0 : meshGroups[0].opaq.size();
 
+        meshesOff = writer.add_offset(offsetof(raw_skeletal_model_v2, meshes.data));
+        unknown1Off = writer.add_offset(offsetof(raw_skeletal_model_v2, unknown1.data));
+        unknown2Off = writer.add_offset(offsetof(raw_skeletal_model_v2, unknown2.data));
+        nodesOff = writer.add_offset(offsetof(raw_skeletal_model_v2, nodes));
+        nodeMatricesOff = writer.add_offset(offsetof(raw_skeletal_model_v2, nodeMatrices));
+        boundsOff = writer.add_offset(offsetof(raw_skeletal_model_v2, bounds));
+
         raw_skeletal_model_v2 rawMdl =
         {
-            { static_cast<u32>(meshCount), static_cast<u32>(            // meshes
-                rawMdlPos + sizeof(raw_skeletal_model_v2) - basePos) },
-
+            { static_cast<u32>(meshCount), nullptr },                   // meshes
             { 0, nullptr },                                             // unknown1
             { 0, nullptr },                                             // unknown2
             static_cast<u32>(nodes.size()),                             // nodeCount
@@ -2618,18 +2567,24 @@ void skeletal_model::write(stream& stream, off_table& offTable,
 #endif
 
         // Write header to stream.
-        stream.write_obj(rawMdl);
+        writer.stream().write_obj(rawMdl);
         break;
     }
 
     case 4:
     {
         // Generate raw V4 skeletal model header.
+        meshesOff = writer.add_offset(offsetof(raw_skeletal_model_v4, meshGroups.data));
+        unknown1Off = writer.add_offset(offsetof(raw_skeletal_model_v4, unknown1.data));
+        unknown2Off = writer.add_offset(offsetof(raw_skeletal_model_v4, unknown2.data));
+        unknown3Off = writer.add_offset(offsetof(raw_skeletal_model_v4, unknown3.data));
+        nodesOff = writer.add_offset(offsetof(raw_skeletal_model_v4, nodes));
+        nodeMatricesOff = writer.add_offset(offsetof(raw_skeletal_model_v4, nodeMatrices));
+        boundsOff = writer.add_offset(offsetof(raw_skeletal_model_v4, bounds));
+
         raw_skeletal_model_v4 rawMdl =
         {
-            { static_cast<u32>(meshGroups.size()), static_cast<u32>(    // meshGroups
-                rawMdlPos + sizeof(raw_skeletal_model_v4) - basePos) },
-
+            { static_cast<u32>(meshGroups.size()), nullptr },           // meshGroups
             { 0, nullptr },                                             // unknown1
             { 0, nullptr },                                             // unknown2
             { 0, nullptr },                                             // unknown3
@@ -2645,18 +2600,22 @@ void skeletal_model::write(stream& stream, off_table& offTable,
 #endif
 
         // Write header to stream.
-        stream.write_obj(rawMdl);
+        writer.stream().write_obj(rawMdl);
         break;
     }
 
     case 5:
     {
         // Generate raw V5 skeletal model header.
+        meshesOff = writer.add_offset(offsetof(raw_skeletal_model_v5, meshGroups.data));
+        unknown1Off = writer.add_offset(offsetof(raw_skeletal_model_v5, unknown1.data));
+        nodesOff = writer.add_offset(offsetof(raw_skeletal_model_v5, nodes));
+        nodeMatricesOff = writer.add_offset(offsetof(raw_skeletal_model_v5, nodeMatrices));
+        boundsOff = writer.add_offset(offsetof(raw_skeletal_model_v5, bounds));
+
         raw_skeletal_model_v5 rawMdl =
         {
-            { static_cast<u32>(meshGroups.size()), static_cast<u32>(    // meshGroups
-                rawMdlPos + sizeof(raw_skeletal_model_v5) - basePos) },
-
+            { static_cast<u32>(meshGroups.size()), nullptr },           // meshGroups
             { 0, nullptr },                                             // unknown1
             static_cast<u32>(nodes.size()),                             // nodeCount
             nullptr,                                                    // nodes
@@ -2670,7 +2629,7 @@ void skeletal_model::write(stream& stream, off_table& offTable,
 #endif
 
         // Write header to stream.
-        stream.write_obj(rawMdl);
+        writer.stream().write_obj(rawMdl);
         break;
     }
 
@@ -2678,33 +2637,33 @@ void skeletal_model::write(stream& stream, off_table& offTable,
         throw std::runtime_error("Unsupported HH skeletal model version");
     }
 
-    // Add meshes/mesh groups offset to offset table.
-    offTable.push_back(rawMdlPos + 4);
-
     // Write meshes/mesh groups as necessary.
+    meshesOff.fix();
     switch (version)
     {
     case 2:
         if (!meshGroups.empty())
         {
-            meshGroups[0].opaq.write(basePos, stream, offTable);
+            meshGroups[0].opaq.write(writer);
         }
         break;
 
     case 4:
     case 5:
         // Write placeholder offsets for mesh groups.
-        std::size_t curMeshGroupOffPos = stream.tell();
-        stream.write_nulls(sizeof(off32<raw_mesh_group>) * meshGroups.size());
+        std::size_t curMeshGroupOffPos = writer.stream().tell();
+        writer.stream().write_nulls(sizeof(off32<raw_mesh_group>) * meshGroups.size());
 
         // Write mesh groups and fill-in placeholder offsets.
         for (auto& meshGroup : meshGroups)
         {
             // Fill-in placeholder mesh group offset.
-            stream.fix_off32(basePos, curMeshGroupOffPos, needs_endian_swap, offTable);
+            writer.stream().fix_off32(writer.data_pos(),
+                curMeshGroupOffPos, needs_endian_swap,
+                writer.off_table());
 
             // Write mesh group.
-            meshGroup.write(basePos, stream, offTable);
+            meshGroup.write(writer);
 
             // Increase current mesh group offset position.
             curMeshGroupOffPos += sizeof(off32<raw_mesh_group>);
@@ -2712,203 +2671,83 @@ void skeletal_model::write(stream& stream, off_table& offTable,
         break;
     }
 
-    // Fill-in unknown1 offset if necessary.
+    // Write unknown1s if necessary.
     switch (version)
     {
     case 2:
-        stream.fix_off32(basePos, rawMdlPos + offsetof(raw_skeletal_model_v2,
-            unknown1) + 4, needs_endian_swap, offTable);
-        break;
-
     case 4:
-        stream.fix_off32(basePos, rawMdlPos + offsetof(raw_skeletal_model_v4,
-            unknown1) + 4, needs_endian_swap, offTable);
-        break;
-
     case 5:
-        stream.fix_off32(basePos, rawMdlPos + offsetof(raw_skeletal_model_v5,
-            unknown1) + 4, needs_endian_swap, offTable);
+        unknown1Off.fix();
+        // TODO: Write unknown1s if necessary.
         break;
     }
 
-    // TODO: Write unknown1s if necessary.
-
-    // Fill-in unknown2 offset if necessary.
+    // Write unknown2s if necessary.
     switch (version)
     {
     case 2:
-        stream.fix_off32(basePos, rawMdlPos + offsetof(raw_skeletal_model_v2,
-            unknown2) + 4, needs_endian_swap, offTable);
-        break;
-
     case 4:
-        stream.fix_off32(basePos, rawMdlPos + offsetof(raw_skeletal_model_v4,
-            unknown2) + 4, needs_endian_swap, offTable);
+        unknown2Off.fix();
+        // TODO: Write unknown2s if necessary.
         break;
     }
 
-    // TODO: Write unknown2s if necessary.
-
-    // Fill-in unknown3 offset if necessary.
+    // Write unknown3s if necessary.
     switch (version)
     {
     case 4:
-        stream.fix_off32(basePos, rawMdlPos + offsetof(raw_skeletal_model_v4,
-            unknown3) + 4, needs_endian_swap, offTable);
-        break;
-    }
-
-    // TODO: Write unknown3s if necessary.
-
-    // Fill-in nodes offset if necessary.
-    switch (version)
-    {
-    case 2:
-        stream.fix_off32(basePos, rawMdlPos + offsetof(raw_skeletal_model_v2,
-            nodes), needs_endian_swap, offTable);
-        break;
-
-    case 4:
-        stream.fix_off32(basePos, rawMdlPos + offsetof(raw_skeletal_model_v4,
-            nodes), needs_endian_swap, offTable);
-        break;
-
-    case 5:
-        stream.fix_off32(basePos, rawMdlPos + offsetof(raw_skeletal_model_v5,
-            nodes), needs_endian_swap, offTable);
+        unknown3Off.fix();
+        // TODO: Write unknown3s if necessary.
         break;
     }
 
     // Write node placeholder offsets.
-    std::size_t curBoneOffPos = stream.tell();
-    stream.write_nulls(sizeof(off32<raw_node>) * nodes.size());
+    nodesOff.fix();
+    std::size_t curNodeOffPos = writer.stream().tell();
+    writer.stream().write_nulls(sizeof(off32<raw_node>) * nodes.size());
 
     // Write nodes and fill-in node placeholder offsets.
     for (auto& node : nodes)
     {
         // Fill-in node placeholder offset.
-        stream.fix_off32(basePos, curBoneOffPos, needs_endian_swap, offTable);
+        writer.stream().fix_off32(writer.data_pos(), curNodeOffPos,
+            needs_endian_swap, writer.off_table());
         
         // Write node.
-        node.write(basePos, stream, offTable);
+        node.write(writer);
 
         // Increase current node offset position.
-        curBoneOffPos += sizeof(off32<raw_node>);
-    }
-
-    // Fill-in node matrices offset if necessary.
-    switch (version)
-    {
-    case 2:
-        stream.fix_off32(basePos, rawMdlPos + offsetof(raw_skeletal_model_v2,
-            nodeMatrices), needs_endian_swap, offTable);
-        break;
-
-    case 4:
-        stream.fix_off32(basePos, rawMdlPos + offsetof(raw_skeletal_model_v4,
-            nodeMatrices), needs_endian_swap, offTable);
-        break;
-
-    case 5:
-        stream.fix_off32(basePos, rawMdlPos + offsetof(raw_skeletal_model_v5,
-            nodeMatrices), needs_endian_swap, offTable);
-        break;
+        curNodeOffPos += sizeof(off32<raw_node>);
     }
 
     // Write node matrices.
+    nodeMatricesOff.fix();
     for (auto& node : nodes)
     {
 #ifndef HL_IS_BIG_ENDIAN
         matrix4x4 nodeMatrix = node.matrix;
         nodeMatrix.endian_swap();
-        stream.write_obj(nodeMatrix);
+        writer.stream().write_obj(nodeMatrix);
 #else
-        stream.write_obj(node.matrix);
+        writer.stream().write_obj(node.matrix);
 #endif
     }
 
-    // Fill-in bounds offset if necessary.
-    switch (version)
-    {
-    case 2:
-        stream.fix_off32(basePos, rawMdlPos + offsetof(raw_skeletal_model_v2,
-            bounds), needs_endian_swap, offTable);
-        break;
-
-    case 4:
-        stream.fix_off32(basePos, rawMdlPos + offsetof(raw_skeletal_model_v4,
-            bounds), needs_endian_swap, offTable);
-        break;
-
-    case 5:
-        stream.fix_off32(basePos, rawMdlPos + offsetof(raw_skeletal_model_v5,
-            bounds), needs_endian_swap, offTable);
-        break;
-    }
-
     // Write bounds.
-    stream.write_nulls(sizeof(aabb)); // TODO: GET RID OF THIS LINE AND DO THIS CORRECTLY!!!
+    boundsOff.fix();
+    writer.stream().write_nulls(sizeof(aabb)); // TODO: GET RID OF THIS LINE AND DO THIS CORRECTLY!!!
 
-    // Fill-in unknown3 offset if necessary.
+    // Write unknown3s if necessary.
     switch (version)
     {
     case 2:
-        stream.fix_off32(basePos, rawMdlPos + offsetof(raw_skeletal_model_v2,
-            unknown3), needs_endian_swap, offTable);
+        // TODO: Write unknown3s if necessary.
+        unknown3Off.fix();
         break;
     }
 
-    // TODO: Write unknown3s if necessary.
-
-    // Finish writing sample chunk nodes if necessary.
-    if (headerType != header_type::standard)
-    {
-        // Finish writing Contexts node now if necessary.
-        if (headerType == header_type::sample_chunk_v1)
-        {
-            sample_chunk::raw_node::finish_write(contextsPos,
-                sample_chunk::node_flags::is_leaf |
-                sample_chunk::node_flags::is_last_child, stream);
-        }
-
-        // Finish writing Model sample chunk node.
-        // TODO: Allow user to specify that this is *NOT* the last sample chunk they're going to write to the file?
-        sample_chunk::raw_node::finish_write(basePos,
-            sample_chunk::node_flags::is_last_child, stream);
-    }
-}
-
-void skeletal_model::save(stream& stream, header_type headerType,
-    u32 version, const char* fileName) const
-{
-    // Start writing header.
-    const std::size_t headerPos = stream.tell();
-    if (headerType == header_type::standard)
-    {
-        raw_header::start_write(version, stream);
-    }
-    else
-    {
-        sample_chunk::raw_header::start_write(stream);
-    }
-
-    // Write model data.
-    off_table offTable;
-    const std::size_t dataPos = stream.tell();
-
-    write(stream, offTable, headerType, version);
-
-    // Finish writing header.
-    if (headerType == header_type::standard)
-    {
-        raw_header::finish_write(headerPos,
-            offTable, stream, fileName);
-    }
-    else
-    {
-        sample_chunk::raw_header::finish_write(
-            headerPos, dataPos, offTable, stream);
-    }
+    // Finish writing.
+    writer.finish_write(fileName);
 }
 
 void skeletal_model::save(const nchar* filePath,

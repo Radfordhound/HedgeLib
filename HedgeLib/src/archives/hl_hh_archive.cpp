@@ -666,13 +666,15 @@ void save(const packed_file_info& pfi,
     file_stream file(filePath, file::mode::write);
 
     // Start writing HH mirage header.
-    mirage::raw_header::start_write(version, file);
+    mirage::standard::raw_header::start_write(file);
 
     // Write PFI data.
-    write(pfi, version, sizeof(mirage::raw_header), offTable, file);
+    write(pfi, version, sizeof(mirage::standard::raw_header), offTable, file);
 
     // Finish writing HH mirage header.
-    mirage::raw_header::finish_write(0, offTable, file, "");
+    mirage::standard::raw_header::finish_write(0,
+        sizeof(mirage::standard::raw_header),
+        version, offTable, file, "");
 }
 } // pfi
 } // hh

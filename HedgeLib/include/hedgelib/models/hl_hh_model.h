@@ -118,13 +118,15 @@ enum class vertex_type : u8
 struct raw_texture_unit
 {
     off32<char> name;
-    u32 id; // TODO: Why does this look like it's litle-endian? Is this actually a byte?
+    u8 index;
+    u8 padding1;
+    u8 padding2;
+    u8 padding3;
 
     template<bool swapOffsets = true>
     void endian_swap() noexcept
     {
         hl::endian_swap<swapOffsets>(name);
-        hl::endian_swap(id);
     }
 };
 
@@ -401,18 +403,52 @@ struct raw_node
 
 HL_STATIC_ASSERT_SIZE(raw_node, 8);
 
+enum class raw_terrain_model_flags : u32
+{
+    none = 0,
+
+    /**
+        @brief This terrain model is used by one or
+        more .terrain-instanceinfo files.
+    */
+    is_instanced = 1
+};
+
 struct raw_terrain_model_v5
 {
     arr32<off32<raw_mesh_group>> meshGroups;
     off32<char> name;
-    u32 flags; // TODO: Figure this out and make this an enum.
+
+    /**
+        @brief See hl::hh::mirage::raw_terrain_model_flags.
+        
+        NOTE: This value is NOT present in Sonic Unleashed!!!
+        It is only present in "revision 2" of the v5 format, used from
+        Sonic Generations onwards. Attempting to use it in data from any
+        lower revision will cause your code to read unrelated memory!!!
+
+        Use is_revision2() to automagically determine if this value is available.
+    */
+    u32 rev2_flags;
+
+    HL_API bool is_revision2() const;
+
+    template<bool swapOffsets = true>
+    void endian_swap(bool isRevision2) noexcept
+    {
+        hl::endian_swap<swapOffsets>(meshGroups);
+        hl::endian_swap<swapOffsets>(name);
+        
+        if (isRevision2)
+        {
+            hl::endian_swap(rev2_flags);
+        }
+    }
 
     template<bool swapOffsets = true>
     void endian_swap() noexcept
     {
-        hl::endian_swap<swapOffsets>(meshGroups);
-        hl::endian_swap<swapOffsets>(name);
-        hl::endian_swap(flags);
+        endian_swap<swapOffsets>(is_revision2());
     }
 
     HL_API void fix();
@@ -506,19 +542,19 @@ HL_STATIC_ASSERT_SIZE(raw_skeletal_model_v5, 0x20);
 struct texture_unit
 {
     std::string name;
-    u32 id;
+    u8 index;
 
-    HL_API void write(std::size_t basePos, stream& stream, off_table& offTable) const;
+    HL_API void write(writer& writer) const;
 
     texture_unit() = default;
-    texture_unit(const char* name, u32 id = 0) :
-        name(name), id(id) {}
+    texture_unit(const char* name, u8 index = 0) :
+        name(name), index(index) {}
 
-    texture_unit(const std::string& name, u32 id = 0) :
-        name(name), id(id) {}
+    texture_unit(const std::string& name, u8 index = 0) :
+        name(name), index(index) {}
 
-    texture_unit(std::string&& name, u32 id = 0) :
-        name(std::move(name)), id(id) {}
+    texture_unit(std::string&& name, u8 index = 0) :
+        name(std::move(name)), index(index) {}
 
     HL_API texture_unit(const raw_texture_unit& rawTexUnit);
 };
@@ -540,7 +576,7 @@ struct mesh
         bool includeLibGensTags = true,
         const char* libGensLayerName = nullptr) const;
 
-    HL_API void write(std::size_t basePos, stream& stream, off_table& offTable) const;
+    HL_API void write(writer& writer) const;
 
     mesh() = default;
     HL_API mesh(const raw_mesh& rawMesh);
@@ -556,7 +592,7 @@ struct mesh_slot : public std::vector<mesh>
         bool includeLibGensTags = true,
         const char* libGensLayerName = nullptr) const;
 
-    HL_API void write(std::size_t basePos, stream& stream, off_table& offTable) const;
+    HL_API void write(writer& writer) const;
 
     mesh_slot() = default;
     HL_API mesh_slot(const raw_mesh_slot& rawSlot);
@@ -604,8 +640,7 @@ struct mesh_group
         const std::vector<mirage::node>* hhNodes = nullptr,
         bool includeLibGensTags = true) const;
 
-    HL_API void write(std::size_t basePos,
-        stream& stream, off_table& offTable) const;
+    HL_API void write(writer& writer, u32 revision = 2) const;
 
     mesh_group() = default;
     mesh_group(const char* name) : name(name) {}
@@ -631,10 +666,9 @@ struct node
         const sample_chunk::raw_node& rawNodePrmsNode);
 
     HL_API void write_sample_chunk_params(u32 nodeIndex,
-        bool isLastNode, stream& stream) const;
+        sample_chunk::node_writer& nodesExt) const;
 
-    HL_API void write(std::size_t basePos,
-        stream& stream, off_table& offTable) const;
+    HL_API void write(writer& writer) const;
 
     node() = default;
     
@@ -663,8 +697,8 @@ protected:
     HL_API void in_parse_sample_chunk_nodes(const void* rawData,
         std::size_t nodeCount, node* nodes);
 
-    HL_API std::size_t in_write_sample_chunk_nodes(std::size_t nodeCount,
-        const node* nodes, header_type headerType, u32 version, stream& stream) const;
+    HL_API void in_write_sample_chunk_nodes(std::size_t nodeCount,
+        const node* nodes, sample_chunk::node_writer& writer) const;
 
     model() = default;
 
@@ -729,7 +763,7 @@ public:
 struct terrain_model : public model
 {
     node rootNode;
-    // TODO: flags
+    bool isInstanced;
 
     HL_API static void fix(void* rawData);
 
@@ -760,15 +794,41 @@ struct terrain_model : public model
         load(filePath);
     }
 
-    HL_API void write(stream& stream, off_table& offTable,
-        header_type headerType, u32 version) const;
+    HL_API void write(writer& writer, header_type headerType,
+        u32 version = 5, u32 revision = 2, const char* fileName = nullptr) const;
 
-    HL_API void save(stream& stream, header_type headerType,
-        u32 version, const char* fileName = nullptr) const;
+    inline void write(writer& writer, header_type headerType,
+        u32 version, u32 revision, const std::string& fileName) const
+    {
+        write(writer, headerType, version, revision, fileName.c_str());
+    }
 
-    HL_API void save(const nchar* filePath, header_type headerType, u32 version) const;
+    inline void save(stream& stream, header_type headerType,
+        u32 version = 5, u32 revision = 2, const char* fileName = nullptr) const
+    {
+        write(writer(stream), headerType, version, revision, fileName);
+    }
 
-    inline void save(const nstring& filePath, header_type headerType, u32 version) const
+    inline void save(stream& stream, header_type headerType,
+        u32 version, u32 revision, const std::string& fileName) const
+    {
+        save(stream, headerType, version, revision, fileName.c_str());
+    }
+
+    HL_API void save(const nchar* filePath, header_type headerType,
+        u32 version, u32 revision) const;
+
+    inline void save(const nstring& filePath, header_type headerType,
+        u32 version, u32 revision) const
+    {
+        save(filePath.c_str(), headerType, version, revision);
+    }
+
+    HL_API void save(const nchar* filePath, header_type headerType,
+        u32 version = 5) const;
+
+    inline void save(const nstring& filePath, header_type headerType,
+        u32 version = 5) const
     {
         save(filePath.c_str(), headerType, version);
     }
@@ -835,15 +895,30 @@ struct skeletal_model : public model
         load(filePath);
     }
 
-    HL_API void write(stream& stream, off_table& offTable,
-        header_type headerType, u32 version) const;
+    HL_API void write(writer& writer, header_type headerType,
+        u32 version = 5, const char* fileName = nullptr) const;
 
-    HL_API void save(stream& stream, header_type headerType, u32 version,
-        const char* fileName = nullptr) const;
+    inline void write(writer& writer, header_type headerType,
+        u32 version, const std::string& fileName) const
+    {
+        write(writer, headerType, version, fileName.c_str());
+    }
 
-    HL_API void save(const nchar* filePath, header_type headerType, u32 version) const;
+    inline void save(stream& stream, header_type headerType,
+        u32 version = 5, const char* fileName = nullptr) const
+    {
+        write(writer(stream), headerType, version, fileName);
+    }
 
-    inline void save(const nstring& filePath, header_type headerType, u32 version) const
+    inline void save(stream& stream, header_type headerType,
+        u32 version, const std::string& fileName) const
+    {
+        save(stream, headerType, version, fileName.c_str());
+    }
+
+    HL_API void save(const nchar* filePath, header_type headerType, u32 version = 5) const;
+
+    inline void save(const nstring& filePath, header_type headerType, u32 version = 5) const
     {
         save(filePath.c_str(), headerType, version);
     }
