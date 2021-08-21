@@ -806,7 +806,8 @@ struct terrain_model : public model
     inline void save(stream& stream, header_type headerType,
         u32 version = 5, u32 revision = 2, const char* fileName = nullptr) const
     {
-        write(writer(stream), headerType, version, revision, fileName);
+        writer writer(stream);
+        write(writer, headerType, version, revision, fileName);
     }
 
     inline void save(stream& stream, header_type headerType,
@@ -907,7 +908,8 @@ struct skeletal_model : public model
     inline void save(stream& stream, header_type headerType,
         u32 version = 5, const char* fileName = nullptr) const
     {
-        write(writer(stream), headerType, version, fileName);
+        writer writer(stream);
+        write(writer, headerType, version, fileName);
     }
 
     inline void save(stream& stream, header_type headerType,
