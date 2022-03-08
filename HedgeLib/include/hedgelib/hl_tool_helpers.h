@@ -30,6 +30,14 @@ namespace hl
 #define HL_NMAIN main
 #endif
 
+#ifdef NDEBUG
+#define HL_RELEASE_TRY try
+#define HL_RELEASE_CATCH(catchExpression, code) catch (catchExpression) { code }
+#else
+#define HL_RELEASE_TRY
+#define HL_RELEASE_CATCH(catchExpression, code)
+#endif
+
 /**
     @brief Native-character version of std::fgetc.
     @param stream   The stream to get a native character from.
