@@ -27,7 +27,7 @@ const char* const data_types[] =
 #include "hl_in_pacx_type_autogen.h"
 };
 
-const std::size_t data_type_count = HL_CARR_COUNT(data_types);
+const std::size_t data_type_count = HL_COUNT_OF(data_types);
 
 static const char* const in_get_data_type(data_type type) noexcept
 {
@@ -44,7 +44,7 @@ const supported_ext lw_exts[] =
 #include "hl_in_pacx_type_autogen.h"
 };
 
-const std::size_t lw_ext_count = HL_CARR_COUNT(lw_exts);
+const std::size_t lw_ext_count = HL_COUNT_OF(lw_exts);
 
 // Auto-generate Rio 2016 supported extensions array.
 const supported_ext rio_exts[] =
@@ -56,7 +56,7 @@ const supported_ext rio_exts[] =
 #include "hl_in_pacx_type_autogen.h"
 };
 
-const std::size_t rio_ext_count = HL_CARR_COUNT(rio_exts);
+const std::size_t rio_ext_count = HL_COUNT_OF(rio_exts);
 
 // Auto-generate Forces supported extensions array.
 const supported_ext forces_exts[] =
@@ -68,7 +68,7 @@ const supported_ext forces_exts[] =
 #include "hl_in_pacx_type_autogen.h"
 };
 
-const std::size_t forces_ext_count = HL_CARR_COUNT(forces_exts);
+const std::size_t forces_ext_count = HL_COUNT_OF(forces_exts);
 
 // Auto-generate Tokyo Olympic Games supported extensions array.
 const supported_ext tokyo1_exts[] =
@@ -80,7 +80,7 @@ const supported_ext tokyo1_exts[] =
 #include "hl_in_pacx_type_autogen.h"
 };
 
-const std::size_t tokyo1_ext_count = HL_CARR_COUNT(tokyo1_exts);
+const std::size_t tokyo1_ext_count = HL_COUNT_OF(tokyo1_exts);
 
 // Auto-generate Tokyo 2020 supported extensions array.
 const supported_ext tokyo2_exts[] =
@@ -92,7 +92,7 @@ const supported_ext tokyo2_exts[] =
 #include "hl_in_pacx_type_autogen.h"
 };
 
-const std::size_t tokyo2_ext_count = HL_CARR_COUNT(tokyo2_exts);
+const std::size_t tokyo2_ext_count = HL_COUNT_OF(tokyo2_exts);
 
 // Auto-generate Sakura Wars supported extensions array.
 const supported_ext sakura_exts[] =
@@ -104,7 +104,7 @@ const supported_ext sakura_exts[] =
 #include "hl_in_pacx_type_autogen.h"
 };
 
-const std::size_t sakura_ext_count = HL_CARR_COUNT(sakura_exts);
+const std::size_t sakura_ext_count = HL_COUNT_OF(sakura_exts);
 
 // Auto-generate Puyo Puyo Tetris 2 supported extensions array.
 const supported_ext ppt2_exts[] =
@@ -116,7 +116,7 @@ const supported_ext ppt2_exts[] =
 #include "hl_in_pacx_type_autogen.h"
 };
 
-const std::size_t ppt2_ext_count = HL_CARR_COUNT(ppt2_exts);
+const std::size_t ppt2_ext_count = HL_COUNT_OF(ppt2_exts);
 
 static const supported_ext& in_get_supported_ext(const nchar* ext,
     const supported_ext* exts, const std::size_t extCount)

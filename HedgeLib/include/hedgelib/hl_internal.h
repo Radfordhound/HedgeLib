@@ -948,7 +948,7 @@ public:
 };
 
 /* Miscellaneous helpers */
-#define HL_CARR_COUNT(arr) (sizeof(arr) / sizeof(*(arr)))
+#define HL_COUNT_OF(arr) (sizeof(arr) / sizeof(*(arr)))
 
 /**
     @brief Creates a signature in the form of a 32-bit unsigned integer at compile-time.
