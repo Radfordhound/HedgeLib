@@ -1,9 +1,9 @@
 #include "../hl_in_blob.h"
-#include "hedgelib/hl_compression.h"
 #include "hedgelib/archives/hl_pacx.h"
 #include "hedgelib/effects/hl_grif.h"
 #include "hedgelib/io/hl_mem_stream.h"
 #include "hedgelib/io/hl_file.h"
+#include "hedgelib/io/hl_path.h"
 #include <cstring>
 #include <iterator>
 #include <random>
@@ -1422,13 +1422,13 @@ static void in_data_entry_write(const in_file_metadata& file,
     data_entry dataEntry =
     {
         static_cast<u32>(file.entry->size()),   // dataSize
+        0,                                      // dataPtr
         0,                                      // unknown1
-        0,                                      // unknown2
         static_cast<u8>((isHere) ?              // flags
             data_flags::none :
             data_flags::not_here),
-        0,                                      // padding1
-        0                                       // padding2
+        0,                                      // status
+        0                                       // unknown2
     };
 
     const std::size_t dataPos = (stream.tell() + sizeof(dataEntry));
@@ -1506,11 +1506,11 @@ static void in_dep_table_write(const in_dep_metadata_list& deps,
     data_entry dataEntry =
     {
         static_cast<u32>(dataSize),         // dataSize
+        0,                                  // dataPtr
         0,                                  // unknown1
-        0,                                  // unknown2
         static_cast<u8>(data_flags::none),  // flags
-        0,                                  // padding1
-        0                                   // padding2
+        0,                                  // status
+        0                                   // unknown2
     };
 
     // Endian-swap data entry if necessary.
@@ -4192,62 +4192,6 @@ void in_read_deps(const v4::header* header, const v3::header* rootHeader,
         }
     }
 }
-
-//template<typename dep_list_t, typename dep_info_t>
-//void in_write(const archive_entry_list& arc, bina::ver version,
-//    u32 splitLimit, u32 dataAlignment, u32 maxChunkSize,
-//    bool noCompress, const std::vector<std::string>* parentPaths,
-//    bina::endian_flag endianFlag, const std::size_t extCount,
-//    const supported_ext* exts, const nchar* fileName, stream& stream)
-//{
-//    // Verify that dataAlignment is a multiple of 4.
-//    if ((dataAlignment % 4) != 0)
-//    {
-//        HL_ERROR(error_type::invalid_args, "dataAlignment");
-//    }
-//
-//    // Generate file and type metadata.
-//    v3::in_file_metadata_list fileMetadata;
-//    v3::in_type_metadata_list typeMetadata;
-//    unsigned short splitCount = 0;
-//
-//    if (!arc.empty())
-//    {
-//        // Generate file and type metadata.
-//        const bool hasSplitTypes = v3::in_generate_metadata(arc,
-//            endianFlag, exts, extCount, fileMetadata, typeMetadata);
-//
-//        // Split data up if necessary.
-//        if (splitLimit && hasSplitTypes)
-//        {
-//            splitCount = typeMetadata.split_up(splitLimit, dataAlignment);
-//        }
-//    }
-//
-//    // Generate PACx unique identifier.
-//    const u32 uid = v3::generate_uid();
-//
-//    // Generate splits if necessary.
-//    dep_list_t deps;
-//    std::size_t totalSize = 0;
-//
-//    if (splitCount)
-//    {
-//        in_generate_splits(fileName, version, uid, splitCount,
-//            typeMetadata, splitLimit, dataAlignment, maxChunkSize,
-//            endianFlag, (noCompress) ? nullptr : &totalSize, deps);
-//    }
-//
-//    // Generate internal root data.
-//    mem_stream rootInternalFile;
-//    const std::size_t depTablePos = v3::in_write(version, USHRT_MAX,
-//        uid, typeMetadata, splitLimit, dataAlignment, endianFlag,
-//        deps, nullptr, rootInternalFile);
-//
-//    // Write PACxV4 data to file.
-//    deps.write_v4_data(uid, rootInternalFile, maxChunkSize,
-//        depTablePos, parentPaths, endianFlag, stream);
-//}
 
 blob lz4_dep_info::decompress_dep(const void* pac) const
 {

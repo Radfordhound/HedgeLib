@@ -4,7 +4,7 @@
 #include "../hl_blob.h"
 #include "../io/hl_bina.h"
 #include "../io/hl_stream.h"
-#include "../io/hl_path.h"
+#include "../hl_compression.h"
 
 namespace hl
 {
@@ -155,16 +155,16 @@ struct data_entry
         padding, starting immediately after this data_entry struct.
     */
     u32 dataSize;
+    /** @brief Set internally by the game. Always 0 in actual files. */
+    u32 dataPtr;
     /** @brief Always 0? */
     u32 unknown1;
-    /** @brief Always 0? */
-    u32 unknown2;
     /** @brief See hl::pacx::v2::data_flags. */
     u8 flags;
-    /** @brief Included so garbage data doesn't get writtten. */
-    u8 padding1;
-    /** @brief Included so garbage data doesn't get writtten. */
-    u16 padding2;
+    /** @brief Set internally by the game. Always 0 in actual files. */
+    u8 status;
+    /** @brief Always 0? */
+    u16 unknown2;
 
     template<bool swapOffsets = true>
     inline void endian_swap() noexcept
