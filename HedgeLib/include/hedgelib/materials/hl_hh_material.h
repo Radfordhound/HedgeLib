@@ -15,13 +15,13 @@ namespace mirage
 template<typename T>
 struct raw_material_param
 {
-    /** @brief Always 2 or 0? */
+    /** @brief Always 2 or 0? Apparently unused at least in Generations. */
     u8 flag1;
-    /** @brief Always 0? */
+    /** @brief Always 0? Apparently unused at least in Generations. */
     u8 flag2;
     /** @brief How many values are in the array pointed to by values. */
     u8 valueCount;
-    /** @brief Always 0? */
+    /** @brief Always 0? Apparently unused at least in Generations. */
     u8 flag3;
     off32<char> name;
     off32<T> values;

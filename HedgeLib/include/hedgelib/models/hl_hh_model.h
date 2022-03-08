@@ -879,7 +879,7 @@ struct skeletal_model : public model
 
     HL_API void add_to_node(hl::node& parentNode, bool includeLibGensTags = true) const;
 
-    void add_to_scene(scene& scene, bool includeLibGensTags = true) const
+    inline void add_to_scene(scene& scene, bool includeLibGensTags = true) const
     {
         add_to_node(scene.root_node(), includeLibGensTags);
     }

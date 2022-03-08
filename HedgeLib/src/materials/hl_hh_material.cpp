@@ -85,13 +85,13 @@ void material::in_add_to_material(std::string& utf8TexFilePath,
             {
                 mat.diffuseColor = float4Param.values[0].to_vec3();
             }
-            else if (float4Param.name == "ambient")
-            {
-                mat.ambientColor = float4Param.values[0].to_vec3();
-            }
             else if (float4Param.name == "specular")
             {
                 mat.specularColor = float4Param.values[0].to_vec3();
+            }
+            else if (float4Param.name == "ambient")
+            {
+                mat.ambientColor = float4Param.values[0].to_vec3();
             }
             else if (float4Param.name == "emissive")
             {

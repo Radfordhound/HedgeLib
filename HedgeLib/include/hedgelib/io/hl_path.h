@@ -180,7 +180,7 @@ struct in_split_iterator<0, char_t>
         return (++(*lastCharPtr) <= static_cast<char_t>('9'));
     }
 };
-}
+} // internal
 
 template<std::size_t splitCharCount, typename char_t = nchar>
 class split_iterator
