@@ -79,5 +79,6 @@ endif()
 # Install license file
 install(FILES
     ${PROJECT_SOURCE_DIR}/LICENSE.txt
+    ${PROJECT_SOURCE_DIR}/THIRD-PARTY-LICENSES.txt
     DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/hedgelib
 )
