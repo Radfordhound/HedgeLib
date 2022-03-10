@@ -5,8 +5,8 @@
 build/
 
 # Other
+Dependencies/
 Ignored/
-HedgeTest/
 imgui.ini
 
 # Visual Studio Code

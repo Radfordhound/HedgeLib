@@ -1,0 +1,52 @@
+@PACKAGE_INIT@
+
+set(HEDGELIB_IS_SHARED_LIB @BUILD_SHARED_LIBS@)
+set(HEDGELIB_USES_FBX_SDK @HEDGELIB_USES_FBX_SDK@)
+
+if(NOT HEDGELIB_IS_SHARED_LIB)
+    include(CMakeFindDependencyMacro)
+    list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
+
+    if(WIN32)
+        list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/../../..)
+    endif()
+
+    if(HEDGELIB_USES_FBX_SDK)
+        if(NOT TARGET fbx::sdk)
+            find_dependency(Fbx)
+        endif()
+    endif()
+
+    if(NOT TARGET robin_hood::robin_hood)
+        set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
+        find_dependency(robin_hood)
+        unset(CMAKE_FIND_PACKAGE_PREFER_CONFIG)
+    endif()
+
+    if(NOT TARGET glm::glm)
+        find_dependency(glm)
+        if(TARGET glm AND NOT TARGET glm::glm)
+            add_library(glm::glm ALIAS glm)
+        endif()
+    endif()
+
+    if(NOT TARGET LZ4::LZ4)
+        find_dependency(LZ4)
+    endif()
+
+    if(NOT TARGET ZLIB::ZLIB)
+        find_dependency(ZLIB)
+    endif()
+
+    list(REMOVE_AT CMAKE_MODULE_PATH -1)
+
+    if(WIN32)
+        list(REMOVE_AT CMAKE_PREFIX_PATH -1)
+    endif()
+
+    set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ${OLD_CMAKE_FIND_PACKAGE_PREFER_CONFIG})
+endif()
+
+if(NOT TARGET HedgeLib::HedgeLib)
+    include("${CMAKE_CURRENT_LIST_DIR}/HedgeLibTargets.cmake")
+endif()

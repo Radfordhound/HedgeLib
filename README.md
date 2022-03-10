@@ -120,19 +120,24 @@ If you're having trouble building with the following instructions, please [creat
 
 **IMPORTANT:** Be sure to select "Add CMake to the system PATH for all users" during the CMake installation, or you'll experience an error while following these steps.
 
-**2: Open a Command Prompt or PowerShell window and clone the HedgeLib repository:**
-```
+**2: Open a PowerShell window and clone the HedgeLib repository:**
+```ps
 git clone https://github.com/Radfordhound/HedgeLib.git
 ```
 
 **3: Go into the HedgeLib folder and switch to the HedgeLib++ branch:**
-```
+```ps
 cd HedgeLib
 git switch HedgeLib++
 ```
 
-**4: Generate a Visual Studio Solution (.sln file) with CMake:**
+**4: Download dependencies using the included Powershell script:**
+```ps
+.\Get-Dependencies.ps1
 ```
+
+**5: Generate a Visual Studio Solution (.sln file) with CMake:**
+```ps
 mkdir build
 cd build
 cmake -G "Visual Studio 16 2019" -A x64 ../
@@ -178,7 +183,7 @@ x64     | 64-bit x86 Architecture
 ARM     | 32-bit ARM Architecture
 ARM64   | 64-bit ARM Architecture
 
-**5: Open the resulting HedgeLib.sln file (contained within the "build" directory) in Visual Studio and click "Build" -> "Build Solution"** (or press Ctrl+Shift+B).
+**6: Open the resulting HedgeLib.sln file (contained within the "build" directory) in Visual Studio and click "Build" -> "Build Solution"** (or press Ctrl+Shift+B).
 
 If building succeeds, the resulting .exe files will be located within the build/**(program name)**/**(configuration)** directory (e.g. build/HedgeArcPack/Debug/HedgeArcPack.exe)
 

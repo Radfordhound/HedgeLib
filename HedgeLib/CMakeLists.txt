@@ -1,160 +1,6 @@
-# Require at least C++11
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
 # Set directories
 set(HEDGELIB_INCLUDE_DIR "include")
 set(HEDGELIB_SOURCE_DIR "src")
-
-# Setup FBX sdk
-find_package(Fbx)
-
-if(FBX_FOUND)
-    add_compile_definitions(HL_USE_FBX_SDK)
-
-    list(APPEND HEDGELIB_DEPEND_LIBS_NO_INSTALL ${FBX_LIBRARIES})
-    list(APPEND HEDGELIB_DEPEND_INCLUDES ${FBX_INCLUDE_DIRS})
-endif()
-
-# Download robin_hood
-message(STATUS "Downloading and/or configuring robin_hood as necessary...")
-FetchContent_Declare(
-    robin_hood
-    GIT_REPOSITORY https://github.com/martinus/robin-hood-hashing
-    GIT_TAG origin/master
-)
-
-# Setup robin_hood
-FetchContent_MakeAvailable(robin_hood)
-list(APPEND HEDGELIB_DEPEND_LIBS robin_hood)
-
-# Attempt to find glm in system libraries
-message(STATUS "Searching for glm...")
-find_package(glm CONFIG QUIET)
-
-# If glm could not be found, download it from GitHub
-if(NOT TARGET glm::glm AND NOT TARGET glm)
-    # Download glm
-    message(STATUS "Could not find glm in system paths; falling back to full source compilation.")
-    message(STATUS "Downloading and/or configuring glm as necessary...")
-
-    FetchContent_Declare(
-        glm
-        GIT_REPOSITORY https://github.com/g-truc/glm
-        GIT_TAG origin/master
-        GIT_SHALLOW 1
-    )
-
-    # Setup glm
-    FetchContent_MakeAvailable(glm)
-
-    # Put glm source code into dependencies group
-    set_target_properties(uninstall PROPERTIES FOLDER Dependencies)
-
-    # Work around bug on macOS that causes clang to attempt to link to
-    # glm despite it having no actual compiled binaries to link to.
-    if(APPLE)
-        list(APPEND HEDGELIB_DEPEND_INCLUDES ${GLM_INCLUDE_DIRS})
-    else()
-        list(APPEND HEDGELIB_DEPEND_LIBS glm)
-    endif()
-else()
-    # Work around bug on macOS that causes clang to attempt to link to
-    # glm despite it having no actual compiled binaries to link to.
-    if(APPLE)
-        list(APPEND HEDGELIB_DEPEND_INCLUDES ${GLM_INCLUDE_DIRS})
-    else()
-        list(APPEND HEDGELIB_DEPEND_LIBS_NO_INSTALL glm)
-    endif()
-endif()
-
-# Attempt to find lz4 in system libraries
-if(NOT HEDGELIB_FORCE_STATIC_LINK_DEPS)
-    message(STATUS "Searching for lz4...")
-    find_library(HEDGELIB_LZ4_LIB_PATH lz4)
-    find_path(HEDGELIB_LZ4_INC_PATH lz4.h)
-
-    if(NOT HEDGELIB_LZ4_LIB_PATH OR NOT HEDGELIB_LZ4_INC_PATH)
-        message(STATUS "Could not find lz4 in system paths; falling back to full source compilation.")
-    endif()
-endif()
-
-# If lz4 could not be found, download it from GitHub
-if(NOT HEDGELIB_LZ4_LIB_PATH OR NOT HEDGELIB_LZ4_INC_PATH)
-    # Download lz4
-    message(STATUS "Downloading and/or configuring lz4 as necessary...")
-    FetchContent_Declare(
-        lz4
-        GIT_REPOSITORY https://github.com/lz4/lz4.git
-        GIT_TAG origin/dev
-        SOURCE_SUBDIR build/cmake
-    )
-
-    # Disable building lz4 executables by default; we only need the library
-    option(LZ4_BUILD_CLI "Build lz4 program" OFF)
-    option(LZ4_BUILD_LEGACY_LZ4C "Build lz4c progam with legacy argument support" OFF)
-
-    # Setup lz4
-    FetchContent_MakeAvailable(lz4)
-    list(APPEND HEDGELIB_DEPEND_LIBS lz4_static)
-    get_target_property(HEDGELIB_LZ4_INC_PATH lz4_static INCLUDE_DIRECTORIES)
-
-    # Put lz4 source code into dependencies group
-    set_target_properties(lz4_static PROPERTIES FOLDER Dependencies)
-else()
-    list(APPEND HEDGELIB_DEPEND_LIBS_NO_INSTALL ${HEDGELIB_LZ4_LIB_PATH})
-endif()
-
-list(APPEND HEDGELIB_DEPEND_INCLUDES ${HEDGELIB_LZ4_INC_PATH})
-
-# Attempt to find zlib in system libraries
-if(NOT HEDGELIB_FORCE_STATIC_LINK_DEPS)
-    message(STATUS "Searching for zlib...")
-    
-    # On unix-like systems, "zlib" is named "libz" instead
-    if(UNIX)
-        set(ZLIB_NAME z)
-    else()
-        set(ZLIB_NAME zlib)
-    endif()
-
-    find_library(HEDGELIB_ZLIB_LIB_PATH ${ZLIB_NAME})
-    find_path(HEDGELIB_ZLIB_INC_PATH zlib.h)
-
-    if(NOT HEDGELIB_ZLIB_LIB_PATH OR NOT HEDGELIB_ZLIB_INC_PATH)
-        message(STATUS "Could not find zlib in system paths; falling back to full source compilation.")
-    endif()
-endif()
-
-# If zlib could not be found, download it from GitHub
-if(NOT HEDGELIB_ZLIB_LIB_PATH OR NOT HEDGELIB_ZLIB_INC_PATH)
-    # Download zlib
-    message(STATUS "Downloading and/or configuring zlib as necessary...")
-    FetchContent_Declare(
-        zlib
-        GIT_REPOSITORY https://github.com/madler/zlib.git
-        GIT_TAG origin/master
-    )
-
-    # Disable installing zlib
-    set(SKIP_INSTALL_ALL true)
-
-    # Setup zlib
-    FetchContent_MakeAvailable(zlib)
-    list(APPEND HEDGELIB_DEPEND_LIBS zlibstatic)
-    get_target_property(HEDGELIB_ZLIB_INC_PATH zlibstatic INCLUDE_DIRECTORIES)
-
-    # Put zlib source code into dependencies group
-    set_target_properties(zlibstatic PROPERTIES FOLDER Dependencies)
-    set_target_properties(zlib PROPERTIES FOLDER Dependencies)
-    set_target_properties(example PROPERTIES FOLDER Dependencies)
-    set_target_properties(minigzip PROPERTIES FOLDER Dependencies)
-else()
-    list(APPEND HEDGELIB_DEPEND_LIBS_NO_INSTALL ${HEDGELIB_ZLIB_LIB_PATH})
-endif()
-
-list(APPEND HEDGELIB_DEPEND_INCLUDES ${HEDGELIB_ZLIB_INC_PATH})
 
 # Set includes
 set(HEDGELIB_INCLUDES
@@ -183,7 +29,7 @@ set(HEDGELIB_INCLUDES
     "${HEDGELIB_INCLUDE_DIR}/hedgelib/hl_tables.h"
     "${HEDGELIB_INCLUDE_DIR}/hedgelib/hl_text.h"
     "${HEDGELIB_INCLUDE_DIR}/hedgelib/hl_tool_helpers.h"
-    )
+)
 
 # Set sources
 set(HEDGELIB_SOURCES
@@ -214,49 +60,194 @@ set(HEDGELIB_SOURCES
     "${HEDGELIB_SOURCE_DIR}/hl_scene.cpp"
     "${HEDGELIB_SOURCE_DIR}/hl_text.cpp"
     "${HEDGELIB_SOURCE_DIR}/hl_tool_helpers.cpp"
-    )
+)
 
 # Setup library
 add_library(HedgeLib ${HEDGELIB_INCLUDES} ${HEDGELIB_SOURCES})
 add_library(HedgeLib::HedgeLib ALIAS HedgeLib)
 
-target_include_directories(HedgeLib
-    PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${HEDGELIB_INCLUDE_DIR}>
-        $<INSTALL_INTERFACE:${HEDGELIB_INCLUDE_DIR}>
-    PRIVATE
-        ${HEDGELIB_DEPEND_INCLUDES})
+set_target_properties(HedgeLib PROPERTIES
+    CXX_EXTENSIONS OFF
+    CXX_STANDARD 11
+    CXX_STANDARD_REQUIRED ON
+    ${HEDGELIB_USE_DEBUG_POSTFIX}
+)
 
+# Setup DLL preprocessor definitions
+if(BUILD_SHARED_LIBS)
+    target_compile_definitions(HedgeLib
+        PUBLIC HL_IS_DLL
+        PRIVATE HL_IS_BUILDING_DLL
+    )
+endif()
+
+# Disable intrinsics if requested
 if(HEDGELIB_DISABLE_INTRINSICS)
-    # Disable intrinsics if requested
     target_compile_definitions(HedgeLib PUBLIC HL_DISABLE_INTRINSICS)
 endif()
 
+# Setup platform-specific stuff
 if(WIN32)
+    # Force usage of ANSI Win32 API if requested
     if(HEDGELIB_WIN32_FORCE_ANSI)
-        # Force usage of ANSI Win32 API if requested
         target_compile_definitions(HedgeLib PUBLIC HL_WIN32_FORCE_ANSI)
     endif()
-endif()
 
-if(UNIX)
-    # Use "libhedge" instead of "libHedgeLib" on Unix-based
-    # platforms to follow Unix naming conventions
+# Use "libhedge" instead of "libHedgeLib" on Unix-based
+# platforms to follow Unix naming conventions
+elseif(UNIX)
     set_target_properties(HedgeLib PROPERTIES OUTPUT_NAME "hedge")
 endif()
 
+# Setup FBX SDK
+if(NOT TARGET fbx::sdk)
+    # TODO: Update FindFbx.cmake to account for arm64!
+    find_package(Fbx)
+endif()
+
+if(TARGET fbx::sdk)
+    set(HEDGELIB_USES_FBX_SDK ON)
+    target_compile_definitions(HedgeLib PRIVATE HL_USE_FBX_SDK)
+    list(APPEND HEDGELIB_PRIVATE_DEPEND_LIBS fbx::sdk)
+endif()
+
+# Attempt to find robin_hood in system libraries
+if(NOT TARGET robin_hood::robin_hood)
+    message(STATUS "Searching for robin_hood...")
+    set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
+    find_package(robin_hood QUIET REQUIRED)
+    unset(CMAKE_FIND_PACKAGE_PREFER_CONFIG)
+endif()
+
+# Attempt to find glm in system libraries
+if(NOT TARGET glm::glm)
+    message(STATUS "Searching for glm...")
+    find_package(glm QUIET REQUIRED)
+    if(TARGET glm AND NOT TARGET glm::glm)
+        add_library(glm::glm ALIAS glm)
+    endif()
+endif()
+
+list(APPEND HEDGELIB_PRIVATE_DEPEND_LIBS glm::glm)
+
+# TODO: Do we actually need this workaround, or did I just misunderstand something?
+
+## Work around bug on macOS that causes clang to attempt to link to
+## glm despite it having no actual compiled binaries to link to.
+#if(APPLE)
+    #list(APPEND HEDGELIB_PRIVATE_INCLUDE_DIRS ${GLM_INCLUDE_DIRS})
+#else()
+    #list(APPEND HEDGELIB_PRIVATE_DEPEND_LIBS glm)
+#endif()
+
+# Attempt to find lz4 in system libraries
+if(NOT TARGET LZ4::LZ4)
+    message(STATUS "Searching for lz4...")
+    find_package(LZ4 QUIET REQUIRED)
+endif()
+
+list(APPEND HEDGELIB_PRIVATE_DEPEND_LIBS LZ4::LZ4)
+
+# Attempt to find zlib in system libraries
+if(NOT TARGET ZLIB::ZLIB)
+    message(STATUS "Searching for zlib...")
+    find_package(ZLIB QUIET REQUIRED)
+endif()
+
+list(APPEND HEDGELIB_PRIVATE_DEPEND_LIBS ZLIB::ZLIB)
+
 # Setup dependencies
-target_link_libraries(HedgeLib ${HEDGELIB_DEPEND_LIBS} ${HEDGELIB_DEPEND_LIBS_NO_INSTALL})
+target_include_directories(HedgeLib
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${HEDGELIB_INCLUDE_DIR}>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    PRIVATE
+        ${HEDGELIB_PRIVATE_INCLUDE_DIRS}
+)
 
-# Setup install
-include(GNUInstallDirs)
-install(TARGETS HedgeLib ${HEDGELIB_DEPEND_LIBS}
-    EXPORT HedgeLib
+target_link_libraries(HedgeLib
+    PRIVATE ${HEDGELIB_PRIVATE_DEPEND_LIBS}
+)
+
+# Install include files
+install(DIRECTORY ${HEDGELIB_INCLUDE_DIR}/hedgelib
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+# Setup CMake package config files
+install(TARGETS HedgeLib
+    EXPORT HedgeLibTargets
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
 
-install(DIRECTORY ${HEDGELIB_INCLUDE_DIR}/hedgelib DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-install(EXPORT HedgeLib
-    FILE HedgeLibConfig.cmake
+set(HEDGELIB_INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/HedgeLib)
+
+install(EXPORT HedgeLibTargets
+    FILE HedgeLibTargets.cmake
     NAMESPACE HedgeLib::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/HedgeLib)
+    DESTINATION ${HEDGELIB_INSTALL_CONFIGDIR}
+)
+
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/HedgeLibConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY AnyNewerVersion
+)
+
+configure_package_config_file(
+    ${PROJECT_SOURCE_DIR}/cmake/HedgeLibConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/HedgeLibConfig.cmake
+    INSTALL_DESTINATION ${HEDGELIB_INSTALL_CONFIGDIR}
+)
+
+set(HEDGELIB_INSTALL_CONFIG_FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/HedgeLibConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/HedgeLibConfigVersion.cmake
+)
+
+if(NOT BUILD_SHARED_LIBS)
+    if(HEDGELIB_USES_FBX_SDK)
+        list(APPEND HEDGELIB_INSTALL_CONFIG_FILES
+            ${PROJECT_SOURCE_DIR}/cmake/modules/FindFbx.cmake
+        )
+    endif()
+
+    list(APPEND HEDGELIB_INSTALL_CONFIG_FILES
+        ${PROJECT_SOURCE_DIR}/cmake/modules/FindLZ4.cmake
+    )
+
+    list(APPEND HEDGELIB_INSTALL_CONFIG_FILES
+        ${PROJECT_SOURCE_DIR}/cmake/modules/Findrobin_hood.cmake
+    )
+endif()
+
+install(FILES
+    ${HEDGELIB_INSTALL_CONFIG_FILES}
+    DESTINATION ${HEDGELIB_INSTALL_CONFIGDIR}
+)
+
+# Export HedgeLib
+if(NOT BUILD_SHARED_LIBS)
+    if(HEDGELIB_USES_FBX_SDK)
+        configure_file(
+            ${PROJECT_SOURCE_DIR}/cmake/modules/FindFbx.cmake
+            ${CMAKE_CURRENT_BINARY_DIR}/FindFbx.cmake
+            COPYONLY
+        )
+    endif()
+
+    configure_file(
+        ${PROJECT_SOURCE_DIR}/cmake/modules/FindLZ4.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/FindLZ4.cmake
+        COPYONLY
+    )
+endif()
+
+export(EXPORT HedgeLibTargets
+    FILE ${CMAKE_CURRENT_BINARY_DIR}/HedgeLibTargets.cmake
+    NAMESPACE HedgeLib::
+)
+
+export(PACKAGE HedgeLib)
