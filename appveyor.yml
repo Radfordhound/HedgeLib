@@ -53,7 +53,8 @@ for:
         git clone https://github.com/martinus/robin-hood-hashing.git
         cd robin-hood-hashing
         cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-        sudo cmake --build build --target install --config Release
+        sudo cmake --build build --config Release
+        sudo cmake --install build --config Release
         cd ../../
         brew install glm lz4 zlib
         mkdir "$env:APPVEYOR_BUILD_FOLDER/bin"
@@ -71,7 +72,8 @@ for:
         git clone https://github.com/martinus/robin-hood-hashing.git
         cd robin-hood-hashing
         cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-        sudo cmake --build build --target install --config Release
+        cmake --build build --config Release
+        sudo cmake --install build --config Release
         cd ../../
         sudo apt install -yq libglm-dev liblz4-dev zlib1g-dev
         mkdir "$env:APPVEYOR_BUILD_FOLDER/bin"

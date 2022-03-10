@@ -49,7 +49,7 @@ function Install-CMakeProject {
 
     try {
         # Generate CMake files for project
-        & cmake ../src/$SourcePath $Arguments $InstallPrefixArgument
+        & cmake -Wno-deprecated ../src/$SourcePath $Arguments $InstallPrefixArgument
         if (!$?) {
             throw "Failed to generate files for CMake project $Name"
         }
@@ -58,7 +58,6 @@ function Install-CMakeProject {
         if ($BuildDebugConfig) {
             Write-Host "Building $Name in Debug configuration..." -ForegroundColor Green
             & cmake --build . --config Debug
-            #& cmake --build ../src/$SourcePath --target install
 
             if (!$?) {
                 throw "Failed to build CMake project $Name in Debug configuration"
