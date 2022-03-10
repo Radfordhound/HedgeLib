@@ -131,6 +131,7 @@ $Dependencies += { Install-CMakeProject -Name "zlib" `
 $Dependencies += { Install-CMakeProject -Name "glfw3" `
     -Url https://github.com/glfw/glfw/archive/refs/heads/master.zip `
     -SourcePath "glfw-master"
+    -Arguments "-DGLFW_BUILD_EXAMPLES=OFF", "-DGLFW_BUILD_TESTS=OFF"
 }
 
 for ($i = 0; $i -lt $Dependencies.Length; $i++) {
