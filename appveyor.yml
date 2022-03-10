@@ -23,8 +23,7 @@ build: off
 build_script:
     - ps: |
         cmake --build build --config Release
-        Get-ChildItem
-        sudo cmake --install build --config Release
+        cmake --install build --config Release
 
 artifacts:
     - path: bin
