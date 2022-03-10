@@ -1,23 +1,23 @@
 HedgeLib, HedgeRender, and the HedgeTools are all released under the MIT License as detailed
-within the included "License.txt". However, HedgeLib, HedgeRender, and the HedgeTools all
-additionally rely on third-party libraries which have been released under their own licenses.
+within the included "LICENSE.txt". However, HedgeLib, HedgeRender, and the HedgeTools all
+additionally rely on several third-party libraries, which have each been released under
+their own licenses.
 
 This file details each one of those third-party libraries and their corresponding licenses.
 
 ===================================================================================
 == FBX SDK
-== (Used for FBX serialization in HedgeLib)
+== (Used for FBX serialization in HedgeLib and the HedgeTools)
 ===================================================================================
 
 This software contains Autodesk® FBX® code developed by Autodesk, Inc. Copyright 2019 Autodesk, Inc. All rights, reserved. Such code is provided “as is” and Autodesk, Inc. disclaims any and all warranties, whether express or implied, including without limitation the implied warranties of merchantability, fitness for a particular purpose or non-infringement of third party rights. In no event shall Autodesk, Inc. be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services; loss of use, data, or profits; or business interruption) however caused and on any theory of liability, whether in contract, strict liability, or tort (including negligence or otherwise) arising in any way out of such code.
 
 
 ===================================================================================
-== robin_hood
+== robin-hood-hashing
 == (Used for hash maps and other hashing operations in HedgeLib,
 == HedgeRender, and the HedgeTools)
 ===================================================================================
-
 MIT License
 
 Copyright (c) 2018-2021 Martin Ankerl
@@ -43,8 +43,8 @@ SOFTWARE.
 
 ===================================================================================
 == GLM
-== (Used for SIMD-optimized vector/matrix/quaternion math in HedgeLib,
-== HedgeRender, and the HedgeTools)
+== (Used for SIMD-optimized vector/matrix/quaternion math in
+== HedgeLib and the HedgeTools)
 ===================================================================================
 
 The MIT License
@@ -72,7 +72,8 @@ THE SOFTWARE.
 
 ===================================================================================
 == lz4
-== (Used for lz4 compression/decompression of PACxV4 .pac files in HedgeLib)
+== (Used for lz4 compression/decompression of PACx V4 files in
+== HedgeLib and the HedgeTools)
 ===================================================================================
 
 LZ4 Library
@@ -103,7 +104,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ===================================================================================
 == zlib
-== (Used for deflate ("zlib") compression/decompression throughout HedgeLib)
+== (Used for deflate compression/decompression throughout HedgeLib)
 ===================================================================================
 
 Copyright (C) 1995-2017 Jean-loup Gailly and Mark Adler
@@ -126,4 +127,33 @@ freely, subject to the following restrictions:
 
 Jean-loup Gailly        Mark Adler
 jloup@gzip.org          madler@alumni.caltech.edu
+
+
+===================================================================================
+== GLFW
+== (Used for window management in the HedgeTools)
+===================================================================================
+
+Copyright (c) 2002-2006 Marcus Geelnard
+
+Copyright (c) 2006-2019 Camilla Löwy
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software. If you use this software
+   in a product, an acknowledgment in the product documentation would
+   be appreciated but is not required.
+
+2. Altered source versions must be plainly marked as such, and must not
+   be misrepresented as being the original software.
+
+3. This notice may not be removed or altered from any source
+   distribution.
 

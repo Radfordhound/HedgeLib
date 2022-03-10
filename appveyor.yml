@@ -22,9 +22,9 @@ matrix:
 build: off
 build_script:
     - ps: |
-        cmake --build build --target install --config Release
-        Copy-Item "$env:APPVEYOR_BUILD_FOLDER/License.txt" -Destination "$env:APPVEYOR_BUILD_FOLDER/bin/License.txt"
-        Copy-Item "$env:APPVEYOR_BUILD_FOLDER/Third-Party-Licenses.txt" -Destination "$env:APPVEYOR_BUILD_FOLDER/bin/Third-Party-Licenses.txt"
+        cmake --build build --config Release
+        Get-ChildItem
+        sudo cmake --install build --config Release
 
 artifacts:
     - path: bin
@@ -39,7 +39,7 @@ for:
   install:
     - ps: |
         mkdir "$env:APPVEYOR_BUILD_FOLDER\bin"
-        .\Get-Dependencies.ps1
+        .\Get-Dependencies.ps1 -Architecture $env:PLATFORM
         cmake -S . -B build "-DCMAKE_INSTALL_PREFIX=$env:APPVEYOR_BUILD_FOLDER\bin" -G "Visual Studio 17 2022" -A $env:PLATFORM
 -
   matrix:

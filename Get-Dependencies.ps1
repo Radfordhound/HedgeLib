@@ -1,6 +1,7 @@
 param(
     # The directory to install the dependencies into
-    $DependenciesDirectory = 'Dependencies'
+    $DependenciesDirectory = 'Dependencies',
+    $Architecture = ('Win32', 'x64')[[Environment]::Is64BitOperatingSystem]
 )
 
 # Create dependencies directory
@@ -49,7 +50,7 @@ function Install-CMakeProject {
 
     try {
         # Generate CMake files for project
-        & cmake -Wno-deprecated ../src/$SourcePath $Arguments $InstallPrefixArgument
+        & cmake -Wno-deprecated -A $Architecture ../src/$SourcePath $Arguments $InstallPrefixArgument
         if (!$?) {
             throw "Failed to generate files for CMake project $Name"
         }
@@ -130,7 +131,7 @@ $Dependencies += { Install-CMakeProject -Name "zlib" `
 
 $Dependencies += { Install-CMakeProject -Name "glfw3" `
     -Url https://github.com/glfw/glfw/archive/refs/heads/master.zip `
-    -SourcePath "glfw-master"
+    -SourcePath "glfw-master" `
     -Arguments "-DGLFW_BUILD_EXAMPLES=OFF", "-DGLFW_BUILD_TESTS=OFF"
 }
 
