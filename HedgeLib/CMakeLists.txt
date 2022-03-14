@@ -91,6 +91,12 @@ if(WIN32)
     # Force usage of ANSI Win32 API if requested
     if(HEDGELIB_WIN32_FORCE_ANSI)
         target_compile_definitions(HedgeLib PUBLIC HL_WIN32_FORCE_ANSI)
+    else()
+        target_compile_definitions(HedgeLib
+            PRIVATE
+                _UNICODE
+                UNICODE
+        )
     endif()
 
 # Use "libhedge" instead of "libHedgeLib" on Unix-based
@@ -99,7 +105,7 @@ elseif(UNIX)
     set_target_properties(HedgeLib PROPERTIES OUTPUT_NAME "hedge")
 endif()
 
-# Setup FBX SDK
+# Find FBX SDK and add it to HedgeLib dependencies
 if(NOT TARGET fbx::sdk)
     # TODO: Update FindFbx.cmake to account for arm64!
     find_package(Fbx)
@@ -111,7 +117,7 @@ if(TARGET fbx::sdk)
     list(APPEND HEDGELIB_PRIVATE_DEPEND_LIBS fbx::sdk)
 endif()
 
-# Attempt to find robin_hood in system libraries
+# Find robin_hood and add it to HedgeLib dependencies
 if(NOT TARGET robin_hood::robin_hood)
     message(STATUS "Searching for robin_hood...")
     set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
@@ -119,7 +125,9 @@ if(NOT TARGET robin_hood::robin_hood)
     unset(CMAKE_FIND_PACKAGE_PREFER_CONFIG)
 endif()
 
-# Attempt to find glm in system libraries
+list(APPEND HEDGELIB_PRIVATE_DEPEND_LIBS robin_hood::robin_hood)
+
+# Find glm and add it to HedgeLib dependencies
 if(NOT TARGET glm::glm)
     message(STATUS "Searching for glm...")
     find_package(glm QUIET REQUIRED)
@@ -140,7 +148,7 @@ list(APPEND HEDGELIB_PRIVATE_DEPEND_LIBS glm::glm)
     #list(APPEND HEDGELIB_PRIVATE_DEPEND_LIBS glm)
 #endif()
 
-# Attempt to find lz4 in system libraries
+# Find LZ4 and add it to HedgeLib dependencies
 if(NOT TARGET LZ4::LZ4)
     message(STATUS "Searching for lz4...")
     find_package(LZ4 QUIET REQUIRED)
@@ -148,7 +156,7 @@ endif()
 
 list(APPEND HEDGELIB_PRIVATE_DEPEND_LIBS LZ4::LZ4)
 
-# Attempt to find zlib in system libraries
+# Find ZLIB and add it to HedgeLib dependencies
 if(NOT TARGET ZLIB::ZLIB)
     message(STATUS "Searching for zlib...")
     find_package(ZLIB QUIET REQUIRED)

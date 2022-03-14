@@ -44,7 +44,7 @@ if(ROBIN_HOOD_INCLUDE_DIR)
     set(ROBIN_HOOD_VERSION ${ROBIN_HOOD_VERSION_MAJOR}.${ROBIN_HOOD_VERSION_MINOR}.${ROBIN_HOOD_VERSION_PATCH})
 
     # Create CMake library
-    add_library(robin_hood INTERFACE)
+    add_library(robin_hood INTERFACE IMPORTED)
     add_library(robin_hood::robin_hood ALIAS robin_hood)
 
     target_include_directories(robin_hood
