@@ -30,14 +30,24 @@ else()
     set(HEDGELIB_ROOT_CMAKE_FILE OFF)
 endif()
 
+option(HEDGELIB_BUILD_HEDGERENDER
+    "Build the HedgeRender libraries (NOTE: this is done regardless of this option if HEDGELIB_BUILD_HEDGETOOLS is set)"
+    ${HEDGELIB_ROOT_CMAKE_FILE}
+)
+
 option(HEDGELIB_BUILD_HEDGETOOLS
     "Build the HedgeTools"
     ${HEDGELIB_ROOT_CMAKE_FILE}
 )
 
 option(BUILD_SHARED_LIBS
-    "Build HedgeLib as a shared library instead of static"
+    "Build HedgeLib and HedgeRender as shared libraries instead of static"
     OFF
+)
+
+option(HEDGERENDER_USE_IMGUI
+    "Build HedgeRender with Imgui (NOTE: this is required to build HedgeEdit)"
+    ON
 )
 
 option(HEDGELIB_DISABLE_INTRINSICS
@@ -70,6 +80,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # Build HedgeLib
 add_subdirectory(HedgeLib)
+
+# Build HedgeRender if requested or required
+if(HEDGELIB_BUILD_HEDGERENDER OR HEDGELIB_BUILD_HEDGETOOLS)
+    add_subdirectory(HedgeRender)
+endif()
 
 # Build HedgeTools if requested
 if(HEDGELIB_BUILD_HEDGETOOLS)

@@ -47,8 +47,7 @@ for:
 
   install:
     - ps: |
-        mkdir Dependencies
-        cd Dependencies
+        mkdir Dependencies; cd Dependencies
         git clone https://github.com/martinus/robin-hood-hashing.git
         cd robin-hood-hashing
         cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRH_STANDALONE_PROJECT=OFF
@@ -64,16 +63,17 @@ for:
       - image: Ubuntu
 
   install:
-    - sh: if [ "$PLATFORM" == "x86" ]; then sudo apt-get update; sudo apt-get install -yq gcc-9-multilib g++-9-multilib; fi
+    - sh: |
+        if [ "$PLATFORM" == "x86" ]; then sudo apt-get update; sudo apt-get install -yq gcc-9-multilib g++-9-multilib; fi
+        wget -qO - https://gist.githubusercontent.com/Radfordhound/6e6ce00535d14ae87d606ece93f1e336/raw/9796f644bdedaa174ed580a8aa6874ab82853170/install-lunarg-ubuntu-repo.sh | sh
     - ps: |
-        mkdir Dependencies
-        cd Dependencies
+        mkdir Dependencies; cd Dependencies
         git clone https://github.com/martinus/robin-hood-hashing.git
         cd robin-hood-hashing
         cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRH_STANDALONE_PROJECT=OFF
         cmake --build build --config Release
         sudo cmake --install build --config Release
         cd ../../
-        sudo apt install -yq libglm-dev liblz4-dev zlib1g-dev
+        sudo apt install -yq libglm-dev liblz4-dev zlib1g-dev libglfw3-dev vulkan-sdk
         mkdir "$env:APPVEYOR_BUILD_FOLDER/bin"
         cmake -S . -B build "-DCMAKE_INSTALL_PREFIX=$env:APPVEYOR_BUILD_FOLDER/bin" -DCMAKE_BUILD_TYPE=Release

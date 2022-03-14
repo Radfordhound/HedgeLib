@@ -1,0 +1,29 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+if(WIN32)
+    list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/../../..)
+endif()
+
+if(NOT TARGET robin_hood::robin_hood)
+    set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
+    find_dependency(robin_hood)
+    unset(CMAKE_FIND_PACKAGE_PREFER_CONFIG)
+endif()
+
+if(NOT TARGET HedgeLib::HedgeRender_Base)
+    find_dependency(HedgeRender_Base)
+endif()
+
+if(NOT TARGET Vulkan::Vulkan)
+    find_dependency(Vulkan)
+endif()
+
+if(WIN32)
+    list(REMOVE_AT CMAKE_PREFIX_PATH -1)
+endif()
+
+if(NOT TARGET HedgeLib::HedgeRender_GFX)
+    include("${CMAKE_CURRENT_LIST_DIR}/HedgeRender_GFXTargets.cmake")
+endif()

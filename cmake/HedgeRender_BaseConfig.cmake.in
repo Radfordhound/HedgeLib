@@ -1,0 +1,11 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+if(NOT TARGET HedgeLib::HedgeLib)
+    find_dependency(HedgeLib)
+endif()
+
+if(NOT TARGET HedgeLib::HedgeRender_Base)
+    include("${CMAKE_CURRENT_LIST_DIR}/HedgeRender_BaseTargets.cmake")
+endif()
