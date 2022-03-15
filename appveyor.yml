@@ -42,7 +42,7 @@ for:
         Write-Host "Downloading Vulkan SDK..." -ForegroundColor Green
         Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe" -OutFile "Dependencies\vulkan-sdk.exe"
         Write-Host "Installing Vulkan SDK..." -ForegroundColor Green
-        .\Dependencies\vulkan-sdk.exe /S
+        Start-Process -FilePath Dependencies\vulkan-sdk.exe -ArgumentList "/S" -Verb RunAs
         cmake -S . -B build "-DCMAKE_INSTALL_PREFIX=$env:APPVEYOR_BUILD_FOLDER\bin" -G "Visual Studio 17 2022" -A $env:PLATFORM
 -
   matrix:
