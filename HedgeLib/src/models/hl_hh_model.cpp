@@ -2106,8 +2106,8 @@ std::unordered_set<std::string> model::get_unique_material_names() const
     return uniqueMatNames;
 }
 
-void model::import_materials(const nchar* materialDir, scene& scene,
-    bool merge, bool includeLibGensTags)
+void model::import_materials(const nchar* materialDir,
+    scene& scene, bool merge, bool includeLibGensTags)
 {
     nstring matPath = materialDir;
     if (path::combine_needs_sep1(matPath))
@@ -2127,7 +2127,7 @@ void model::import_materials(const nchar* materialDir, scene& scene,
             matName;
 #endif
 
-        matPath += material::ext;
+        matPath += material::ext();
 
         if (path::exists(matPath))
         {
