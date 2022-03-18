@@ -41,11 +41,11 @@ for:
         .\Get-Dependencies.ps1 -Architecture $env:PLATFORM
         Write-Host "Downloading Vulkan SDK..." -ForegroundColor Green
         Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe" -OutFile "Dependencies\vulkan-sdk.exe"
-        Get-ChildItem -Path Dependencies
         Write-Host "Installing Vulkan SDK..." -ForegroundColor Green
         .\Dependencies\vulkan-sdk.exe --accept-licenses --default-answer --confirm-command install com.lunarg.vulkan.32bit
-        Get-ChildItem -Path Dependencies
-        Get-ChildItem -Path "C:\"
+        Write-Host $env:VULKAN_SDK
+        $env:VULKAN_SDK = (Get-ChildItem C:\VulkanSDK\).FullName
+        Write-Host $env:VULKAN_SDK
         cmake -S . -B build "-DCMAKE_INSTALL_PREFIX=$env:APPVEYOR_BUILD_FOLDER\bin" -G "Visual Studio 17 2022" -A $env:PLATFORM
 -
   matrix:
@@ -55,11 +55,12 @@ for:
   install:
     - sh: |
         mkdir Dependencies
-        mkdir Dependencies/vulkan-sdk
+        mkdir Dependencies/VulkanSDK
         curl https://sdk.lunarg.com/sdk/download/latest/mac/vulkan-sdk.dmg --output Dependencies/vulkan-sdk.dmg
-        VOLUME=$(hdiutil attach -nobrowse Dependencies/vulkan-sdk.dmg | awk 'END {$1=$2=""; print $0}'; exit ${PIPESTATUS[0]}) && (rsync -a "$VOLUME"/*.* Dependencies/vulkan-sdk-install/; SYNCED=$?(hdiutil detach -force -quiet "$VOLUME" || exit $?) && exit "$SYNCED")
-        ls Dependencies/vulkan-sdk-install
-        sudo ./Dependencies/vulkan-sdk-install/InstallVulkan.app/Contents/MacOS/InstallVulkan --root "Dependencies/VulkanSDK" --accept-licenses --default-answer --confirm-command install
+        VOLUME=`hdiutil attach Dependencies/vulkan-sdk.dmg | grep Volumes | awk '{print $3}'`
+        cp -rf "$VOLUME/*.app" /Applications
+        hdiutil detach $VOLUME
+        sudo ./Applications/InstallVulkan.app/Contents/MacOS/InstallVulkan --root "Dependencies/VulkanSDK" --accept-licenses --default-answer --confirm-command install
         ls Dependencies/VulkanSDK
         sudo ./Dependencies/VulkanSDK/install_vulkan.py
     - ps: |
