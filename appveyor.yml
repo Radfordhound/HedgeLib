@@ -58,11 +58,9 @@ for:
         VOLUME=`hdiutil attach Dependencies/vulkan-sdk.dmg | grep Volumes | awk '{print $3}'`
         cp -rf "$VOLUME/InstallVulkan.app" InstallVulkan.app
         hdiutil detach $VOLUME
-        ls InstallVulkan.app
         mkdir Dependencies/VulkanSDK
-        sudo ./InstallVulkan.app/Contents/MacOS/InstallVulkan --root "Dependencies/VulkanSDK" --accept-licenses --default-answer --confirm-command install
+        sudo ./InstallVulkan.app/Contents/MacOS/InstallVulkan --root "$APPVEYOR_BUILD_FOLDER/Dependencies/VulkanSDK" --accept-licenses --default-answer --confirm-command install
         ls Dependencies/VulkanSDK
-        sudo ./Dependencies/VulkanSDK/install_vulkan.py
     - ps: |
         cd Dependencies
         git clone https://github.com/martinus/robin-hood-hashing.git
