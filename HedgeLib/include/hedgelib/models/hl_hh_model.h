@@ -786,10 +786,7 @@ public:
     node rootNode;
     bool isInstanced;
 
-    constexpr static auto& ext() noexcept
-    {
-        return HL_NTEXT(".terrain-model");
-    }
+    inline constexpr static nchar ext[] = HL_NTEXT(".terrain-model");
 
     HL_API static void fix(void* rawData);
 
@@ -891,10 +888,7 @@ public:
     // TODO: Should bounds be a field, or just computed automatically at write time?
     // TODO: the other unknown3
 
-    constexpr static auto& ext() noexcept
-    {
-        return HL_NTEXT(".model");
-    }
+    inline constexpr static nchar ext[] = HL_NTEXT(".model");
 
     HL_API static void fix(void* rawData);
 

@@ -145,10 +145,7 @@ public:
     std::vector<material_param<bvec4>> bool4Params;
     mirage::texset texset;
 
-    constexpr static auto& ext() noexcept
-    {
-        return HL_NTEXT(".material");
-    }
+    inline constexpr static nchar ext[] = HL_NTEXT(".material");
 
     HL_API static void fix(void* rawData);
 

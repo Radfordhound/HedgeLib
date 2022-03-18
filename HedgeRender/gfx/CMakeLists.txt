@@ -75,7 +75,7 @@ add_library(HedgeRender::HedgeRender_GFX ALIAS HedgeRender_GFX)
 
 set_target_properties(HedgeRender_GFX PROPERTIES
     CXX_EXTENSIONS OFF
-    CXX_STANDARD 14
+    CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
     ${HEDGELIB_USE_DEBUG_POSTFIX}
     FOLDER HedgeRender

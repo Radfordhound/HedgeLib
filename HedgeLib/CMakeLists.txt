@@ -68,7 +68,7 @@ add_library(HedgeLib::HedgeLib ALIAS HedgeLib)
 
 set_target_properties(HedgeLib PROPERTIES
     CXX_EXTENSIONS OFF
-    CXX_STANDARD 11
+    CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
     ${HEDGELIB_USE_DEBUG_POSTFIX}
 )

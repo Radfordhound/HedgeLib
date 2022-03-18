@@ -18,7 +18,7 @@ add_library(HedgeRender::HedgeRender_Ext_GLFW ALIAS HedgeRender_Ext_GLFW)
 
 set_target_properties(HedgeRender_Ext_GLFW PROPERTIES
     CXX_EXTENSIONS OFF
-    CXX_STANDARD 11
+    CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
     FOLDER HedgeRender
 )

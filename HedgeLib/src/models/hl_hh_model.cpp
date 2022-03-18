@@ -2127,7 +2127,7 @@ void model::import_materials(const nchar* materialDir,
             matName;
 #endif
 
-        matPath += material::ext();
+        matPath += material::ext;
 
         if (path::exists(matPath))
         {

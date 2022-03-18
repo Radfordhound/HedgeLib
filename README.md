@@ -13,7 +13,7 @@ As such, you don't have to manually build any of the tools/libraries in this rep
 - [Latest (development) builds](https://ci.appveyor.com/project/Radfordhound/hedgelib)
 
 ## HedgeLib
-HedgeLib is C++11 library [under the MIT license](LICENSE.txt) that aims to make modding games in the Sonic the Hedgehog franchise easier, similar to [Dario's excellent "LibGens"](https://github.com/DarioSamo/libgens-sonicglvl).
+HedgeLib is C++17 library [under the MIT license](LICENSE.txt) that aims to make modding games in the Sonic the Hedgehog franchise easier, similar to [Dario's excellent "LibGens"](https://github.com/DarioSamo/libgens-sonicglvl).
 
 Right now, HedgeLib supports the following:
 
@@ -40,7 +40,7 @@ Right now, HedgeLib supports the following:
 - Packed File Indexes (.pfi)
 
 ## HedgeRender
-A "simple" C++14 graphics/rendering engine designed around Vulkan.
+A "simple" C++17 graphics/rendering engine designed around Vulkan.
 Some of the features include:
 
 - A simple render graph system that allows for specifying render passes/subpasses in a simple yet powerful manner.
@@ -54,7 +54,7 @@ A collection of miscellaneous tools that utilize HedgeLib.
 - [HedgeArcPack](HedgeTools/HedgeArcPack)
   * A C++17 Command-Line tool that allows quick and powerful extraction and generation of archiving formats from all games HedgeLib supports.
 - [HedgeOffsets](HedgeTools/HedgeOffsets)
-  * A C++11 Command-Line tool that reads the offset table in BINA/Hedgehog Engine formats and prints each offset. Useful for debugging and reverse-engineering of undocumented formats which contain an offset table.
+  * A C++17 Command-Line tool that reads the offset table in BINA/Hedgehog Engine formats and prints each offset. Useful for debugging and reverse-engineering of undocumented formats which contain an offset table.
 
 # Manually Building
 Building HedgeLib is supposed to be easy.
