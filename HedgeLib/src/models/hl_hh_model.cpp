@@ -18,44 +18,44 @@ namespace mirage
 {
 void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
 {
-    switch (static_cast<vertex_format>(format))
+    switch (static_cast<raw_vertex_format>(format))
     {
-    case vertex_format::float1:
+    case raw_vertex_format::float1:
     {
         const float* f = static_cast<const float*>(vtx);
         vec = vec4(f[0], 0.0f, 0.0f, 0.0f);
         break;
     }
 
-    case vertex_format::float2:
+    case raw_vertex_format::float2:
     {
         const float* f = static_cast<const float*>(vtx);
         vec = vec4(f[0], f[1], 0.0f, 0.0f);
         break;
     }
 
-    case vertex_format::float3:
+    case raw_vertex_format::float3:
     {
         const float* f = static_cast<const float*>(vtx);
         vec = vec4(f[0], f[1], f[2], 0.0f);
         break;
     }
 
-    case vertex_format::float4:
+    case raw_vertex_format::float4:
     {
         const float* f = static_cast<const float*>(vtx);
         vec = vec4(f[0], f[1], f[2], f[3]);
         break;
     }
 
-    case vertex_format::int1:
+    case raw_vertex_format::int1:
     {
         const s32* v = static_cast<const s32*>(vtx);
         vec = vec4(static_cast<float>(v[0]), 0.0f, 0.0f, 0.0f);
         break;
     }
 
-    case vertex_format::int2:
+    case raw_vertex_format::int2:
     {
         const s32* v = static_cast<const s32*>(vtx);
         vec = vec4(static_cast<float>(v[0]),
@@ -63,7 +63,7 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
 
-    case vertex_format::int4:
+    case raw_vertex_format::int4:
     {
         const s32* v = static_cast<const s32*>(vtx);
         vec = vec4(static_cast<float>(v[0]),
@@ -73,14 +73,14 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
 
-    case vertex_format::uint1:
+    case raw_vertex_format::uint1:
     {
         const u32* v = static_cast<const u32*>(vtx);
         vec = vec4(static_cast<float>(v[0]), 0.0f, 0.0f, 0.0f);
         break;
     }
 
-    case vertex_format::uint2:
+    case raw_vertex_format::uint2:
     {
         const u32* v = static_cast<const u32*>(vtx);
         vec = vec4(static_cast<float>(v[0]),
@@ -88,7 +88,7 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
 
-    case vertex_format::uint4:
+    case raw_vertex_format::uint4:
     {
         const u32* v = static_cast<const u32*>(vtx);
         vec = vec4(static_cast<float>(v[0]),
@@ -98,14 +98,14 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
 
-    case vertex_format::int1_norm:
+    case raw_vertex_format::int1_norm:
     {
         const u32* v = static_cast<const u32*>(vtx);
         vec = vec4(math::snorm_to_float(v[0]), 0.0f, 0.0f, 0.0f);
         break;
     }
 
-    case vertex_format::int2_norm:
+    case raw_vertex_format::int2_norm:
     {
         const u32* v = static_cast<const u32*>(vtx);
         vec = vec4(math::snorm_to_float(v[0]),
@@ -113,7 +113,7 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
 
-    case vertex_format::int4_norm:
+    case raw_vertex_format::int4_norm:
     {
         const u32* v = static_cast<const u32*>(vtx);
         vec = vec4(math::snorm_to_float(v[0]),
@@ -123,14 +123,14 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
 
-    case vertex_format::uint1_norm:
+    case raw_vertex_format::uint1_norm:
     {
         const u32* v = static_cast<const u32*>(vtx);
         vec = vec4(math::unorm_to_float(v[0]), 0.0f, 0.0f, 0.0f);
         break;
     }
 
-    case vertex_format::uint2_norm:
+    case raw_vertex_format::uint2_norm:
     {
         const u32* v = static_cast<const u32*>(vtx);
         vec = vec4(math::unorm_to_float(v[0]),
@@ -138,7 +138,7 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
 
-    case vertex_format::uint4_norm:
+    case raw_vertex_format::uint4_norm:
     {
         const u32* v = static_cast<const u32*>(vtx);
         vec = vec4(math::unorm_to_float(v[0]),
@@ -148,7 +148,7 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
 
-    case vertex_format::d3d_color:
+    case raw_vertex_format::d3d_color:
     {
         // TODO: Is this correct?
         const u8* v = static_cast<const u8*>(vtx);
@@ -159,21 +159,21 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
 
-    case vertex_format::ubyte4:
+    case raw_vertex_format::ubyte4:
     {
         const u8* v = static_cast<const u8*>(vtx);
         vec = vec4(v[0], v[1], v[2], v[3]);
         break;
     }
 
-    case vertex_format::byte4:
+    case raw_vertex_format::byte4:
     {
         const s8* v = static_cast<const s8*>(vtx);
         vec = vec4(v[0], v[1], v[2], v[3]);
         break;
     }
 
-    case vertex_format::ubyte4_norm:
+    case raw_vertex_format::ubyte4_norm:
     {
         const u8* v = static_cast<const u8*>(vtx);
         vec = vec4(math::unorm_to_float(v[0]),
@@ -183,7 +183,7 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
 
-    case vertex_format::byte4_norm:
+    case raw_vertex_format::byte4_norm:
     {
         const u8* v = static_cast<const u8*>(vtx);
         vec = vec4(math::snorm_to_float(v[0]),
@@ -193,35 +193,35 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
 
-    case vertex_format::short2:
+    case raw_vertex_format::short2:
     {
         const s16* v = static_cast<const s16*>(vtx);
         vec = vec4(v[0], v[1], 0.0f, 0.0f);
         break;
     }
 
-    case vertex_format::short4:
+    case raw_vertex_format::short4:
     {
         const s16* v = static_cast<const s16*>(vtx);
         vec = vec4(v[0], v[1], v[2], v[3]);
         break;
     }
 
-    case vertex_format::ushort2:
+    case raw_vertex_format::ushort2:
     {
         const u16* v = static_cast<const u16*>(vtx);
         vec = vec4(v[0], v[1], 0.0f, 0.0f);
         break;
     }
 
-    case vertex_format::ushort4:
+    case raw_vertex_format::ushort4:
     {
         const u16* v = static_cast<const u16*>(vtx);
         vec = vec4(v[0], v[1], v[2], v[3]);
         break;
     }
 
-    case vertex_format::short2_norm:
+    case raw_vertex_format::short2_norm:
     {
         const u16* v = static_cast<const u16*>(vtx);
         vec = vec4(math::snorm_to_float(v[0]),
@@ -229,7 +229,7 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
 
-    case vertex_format::short4_norm:
+    case raw_vertex_format::short4_norm:
     {
         const u16* v = static_cast<const u16*>(vtx);
         vec = vec4(math::snorm_to_float(v[0]),
@@ -239,7 +239,7 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
 
-    case vertex_format::ushort2_norm:
+    case raw_vertex_format::ushort2_norm:
     {
         const u16* v = static_cast<const u16*>(vtx);
         vec = vec4(math::unorm_to_float(v[0]),
@@ -247,7 +247,7 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
 
-    case vertex_format::ushort4_norm:
+    case raw_vertex_format::ushort4_norm:
     {
         const u16* v = static_cast<const u16*>(vtx);
         vec = vec4(math::unorm_to_float(v[0]),
@@ -257,7 +257,7 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
 
-    case vertex_format::udec3:
+    case raw_vertex_format::udec3:
     {
         // TODO: Is this correct??
         const u32 v = *static_cast<const u32*>(vtx);
@@ -268,9 +268,9 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
 
-    //case vertex_format::dec3: // TODO
+    //case raw_vertex_format::dec3: // TODO
 
-    case vertex_format::udec3_norm:
+    case raw_vertex_format::udec3_norm:
     {
         // TODO: Is this correct??
         const u32 v = *static_cast<const u32*>(vtx);
@@ -281,7 +281,7 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
 
-    case vertex_format::dec3_norm:
+    case raw_vertex_format::dec3_norm:
     {
         // TODO: Is this correct??
         const u32 v = *static_cast<const u32*>(vtx);
@@ -293,10 +293,10 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
     }
 
     // TODO
-    //case vertex_format::udec4:
-    //case vertex_format::dec4:
+    //case raw_vertex_format::udec4:
+    //case raw_vertex_format::dec4:
 
-    case vertex_format::udec4_norm:
+    case raw_vertex_format::udec4_norm:
     {
         // TODO: Is this correct??
         const u32 v = *static_cast<const u32*>(vtx);
@@ -307,7 +307,7 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
 
-    case vertex_format::dec4_norm:
+    case raw_vertex_format::dec4_norm:
     {
         // TODO: Is this correct??
         const u32 v = *static_cast<const u32*>(vtx);
@@ -318,10 +318,10 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
     // TODO
-    //case vertex_format::uhend3:
-    //case vertex_format::hend3:
+    //case raw_vertex_format::uhend3:
+    //case raw_vertex_format::hend3:
 
-    case vertex_format::uhend3_norm:
+    case raw_vertex_format::uhend3_norm:
     {
         // TODO: Is this correct??
         const u32 v = *static_cast<const u32*>(vtx);
@@ -332,7 +332,7 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
 
-    case vertex_format::hend3_norm:
+    case raw_vertex_format::hend3_norm:
     {
         // TODO: Is this correct??
         const u32 v = *static_cast<const u32*>(vtx);
@@ -344,10 +344,10 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
     }
 
     // TODO
-    /*case vertex_format::udhen3:
-    case vertex_format::dhen3:*/
+    /*case raw_vertex_format::udhen3:
+    case raw_vertex_format::dhen3:*/
 
-    case vertex_format::udhen3_norm:
+    case raw_vertex_format::udhen3_norm:
     {
         // TODO: Is this correct??
         const u32 v = *static_cast<const u32*>(vtx);
@@ -358,7 +358,7 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
 
-    case vertex_format::dhen3_norm:
+    case raw_vertex_format::dhen3_norm:
     {
         // TODO: Is this correct??
         const u32 v = *static_cast<const u32*>(vtx);
@@ -369,7 +369,7 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
 
-    case vertex_format::float16_2:
+    case raw_vertex_format::float16_2:
     {
         const glm::uint v = *static_cast<const glm::uint*>(vtx);
         const glm::vec2 unpackedV = glm::unpackHalf2x16(v);
@@ -378,7 +378,7 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
         break;
     }
 
-    case vertex_format::float16_4:
+    case raw_vertex_format::float16_4:
     {
         const glm::uint v = *static_cast<const glm::uint*>(vtx);
         const glm::vec2 unpackedV = glm::unpackHalf2x16(v);
@@ -394,16 +394,16 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
 
 void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
 {
-    switch (static_cast<vertex_format>(format))
+    switch (static_cast<raw_vertex_format>(format))
     {
-    case vertex_format::float1:
+    case raw_vertex_format::float1:
     {
         const float* f = static_cast<const float*>(vtx);
         ivec = ivec4(static_cast<int>(f[0]), 0, 0, 0);
         break;
     }
 
-    case vertex_format::float2:
+    case raw_vertex_format::float2:
     {
         const float* f = static_cast<const float*>(vtx);
         ivec = ivec4(static_cast<int>(f[0]),
@@ -411,7 +411,7 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::float3:
+    case raw_vertex_format::float3:
     {
         const float* f = static_cast<const float*>(vtx);
         ivec = ivec4(static_cast<int>(f[0]),
@@ -420,7 +420,7 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::float4:
+    case raw_vertex_format::float4:
     {
         const float* f = static_cast<const float*>(vtx);
         ivec = ivec4(static_cast<int>(f[0]),
@@ -430,14 +430,14 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::int1:
+    case raw_vertex_format::int1:
     {
         const s32* v = static_cast<const s32*>(vtx);
         ivec = ivec4(static_cast<int>(v[0]), 0, 0, 0);
         break;
     }
 
-    case vertex_format::int2:
+    case raw_vertex_format::int2:
     {
         const s32* v = static_cast<const s32*>(vtx);
         ivec = ivec4(static_cast<int>(v[0]),
@@ -445,21 +445,21 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::int4:
+    case raw_vertex_format::int4:
     {
         const s32* v = static_cast<const s32*>(vtx);
         ivec = ivec4(v[0], v[1], v[2], v[3]);
         break;
     }
 
-    case vertex_format::uint1:
+    case raw_vertex_format::uint1:
     {
         const u32* v = static_cast<const u32*>(vtx);
         ivec = ivec4(static_cast<int>(v[0]), 0, 0, 0);
         break;
     }
 
-    case vertex_format::uint2:
+    case raw_vertex_format::uint2:
     {
         const u32* v = static_cast<const u32*>(vtx);
         ivec = ivec4(static_cast<int>(v[0]),
@@ -467,14 +467,14 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::uint4:
+    case raw_vertex_format::uint4:
     {
         const u32* v = static_cast<const u32*>(vtx);
         ivec = ivec4(v[0], v[1], v[2], v[3]);
         break;
     }
 
-    case vertex_format::int1_norm:
+    case raw_vertex_format::int1_norm:
     {
         const u32* v = static_cast<const u32*>(vtx);
         ivec = ivec4(static_cast<int>(math::snorm_to_float(v[0])),
@@ -482,7 +482,7 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::int2_norm:
+    case raw_vertex_format::int2_norm:
     {
         const u32* v = static_cast<const u32*>(vtx);
         ivec = ivec4(static_cast<int>(math::snorm_to_float(v[0])),
@@ -490,7 +490,7 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::int4_norm:
+    case raw_vertex_format::int4_norm:
     {
         const u32* v = static_cast<const u32*>(vtx);
         ivec = ivec4(static_cast<int>(math::snorm_to_float(v[0])),
@@ -500,7 +500,7 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::uint1_norm:
+    case raw_vertex_format::uint1_norm:
     {
         const u32* v = static_cast<const u32*>(vtx);
         ivec = ivec4(static_cast<int>(math::unorm_to_float(v[0])),
@@ -508,7 +508,7 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::uint2_norm:
+    case raw_vertex_format::uint2_norm:
     {
         const u32* v = static_cast<const u32*>(vtx);
         ivec = ivec4(static_cast<int>(math::unorm_to_float(v[0])),
@@ -516,7 +516,7 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::uint4_norm:
+    case raw_vertex_format::uint4_norm:
     {
         const u32* v = static_cast<const u32*>(vtx);
         ivec = ivec4(static_cast<int>(math::unorm_to_float(v[0])),
@@ -526,7 +526,7 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::d3d_color:
+    case raw_vertex_format::d3d_color:
     {
         // TODO: Is this correct?
         const u8* v = static_cast<const u8*>(vtx);
@@ -537,21 +537,21 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::ubyte4:
+    case raw_vertex_format::ubyte4:
     {
         const u8* v = static_cast<const u8*>(vtx);
         ivec = ivec4(v[0], v[1], v[2], v[3]);
         break;
     }
 
-    case vertex_format::byte4:
+    case raw_vertex_format::byte4:
     {
         const s8* v = static_cast<const s8*>(vtx);
         ivec = ivec4(v[0], v[1], v[2], v[3]);
         break;
     }
 
-    case vertex_format::ubyte4_norm:
+    case raw_vertex_format::ubyte4_norm:
     {
         const u8* v = static_cast<const u8*>(vtx);
         ivec = ivec4(static_cast<int>(math::unorm_to_float(v[0])),
@@ -561,7 +561,7 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::byte4_norm:
+    case raw_vertex_format::byte4_norm:
     {
         const u8* v = static_cast<const u8*>(vtx);
         ivec = ivec4(static_cast<int>(math::snorm_to_float(v[0])),
@@ -571,35 +571,35 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::short2:
+    case raw_vertex_format::short2:
     {
         const s16* v = static_cast<const s16*>(vtx);
         ivec = ivec4(v[0], v[1], 0, 0);
         break;
     }
 
-    case vertex_format::short4:
+    case raw_vertex_format::short4:
     {
         const s16* v = static_cast<const s16*>(vtx);
         ivec = ivec4(v[0], v[1], v[2], v[3]);
         break;
     }
 
-    case vertex_format::ushort2:
+    case raw_vertex_format::ushort2:
     {
         const u16* v = static_cast<const u16*>(vtx);
         ivec = ivec4(v[0], v[1], 0, 0);
         break;
     }
 
-    case vertex_format::ushort4:
+    case raw_vertex_format::ushort4:
     {
         const u16* v = static_cast<const u16*>(vtx);
         ivec = ivec4(v[0], v[1], v[2], v[3]);
         break;
     }
 
-    case vertex_format::short2_norm:
+    case raw_vertex_format::short2_norm:
     {
         const u16* v = static_cast<const u16*>(vtx);
         ivec = ivec4(static_cast<int>(math::snorm_to_float(v[0])),
@@ -607,7 +607,7 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::short4_norm:
+    case raw_vertex_format::short4_norm:
     {
         const u16* v = static_cast<const u16*>(vtx);
         ivec = ivec4(static_cast<int>(math::snorm_to_float(v[0])),
@@ -617,7 +617,7 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::ushort2_norm:
+    case raw_vertex_format::ushort2_norm:
     {
         const u16* v = static_cast<const u16*>(vtx);
         ivec = ivec4(static_cast<int>(math::unorm_to_float(v[0])),
@@ -625,7 +625,7 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::ushort4_norm:
+    case raw_vertex_format::ushort4_norm:
     {
         const u16* v = static_cast<const u16*>(vtx);
         ivec = ivec4(static_cast<int>(math::unorm_to_float(v[0])),
@@ -635,7 +635,7 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::udec3:
+    case raw_vertex_format::udec3:
     {
         // TODO: Is this correct??
         const u32 v = *static_cast<const u32*>(vtx);
@@ -646,9 +646,9 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    //case vertex_format::dec3: // TODO
+    //case raw_vertex_format::dec3: // TODO
 
-    case vertex_format::udec3_norm:
+    case raw_vertex_format::udec3_norm:
     {
         // TODO: Is this correct??
         const u32 v = *static_cast<const u32*>(vtx);
@@ -659,7 +659,7 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::dec3_norm:
+    case raw_vertex_format::dec3_norm:
     {
         // TODO: Is this correct??
         const u32 v = *static_cast<const u32*>(vtx);
@@ -671,10 +671,10 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
     }
 
     // TODO
-    //case vertex_format::udec4:
-    //case vertex_format::dec4:
+    //case raw_vertex_format::udec4:
+    //case raw_vertex_format::dec4:
 
-    case vertex_format::udec4_norm:
+    case raw_vertex_format::udec4_norm:
     {
         // TODO: Is this correct??
         const u32 v = *static_cast<const u32*>(vtx);
@@ -685,7 +685,7 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::dec4_norm:
+    case raw_vertex_format::dec4_norm:
     {
         // TODO: Is this correct??
         const u32 v = *static_cast<const u32*>(vtx);
@@ -696,10 +696,10 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
     // TODO
-    //case vertex_format::uhend3:
-    //case vertex_format::hend3:
+    //case raw_vertex_format::uhend3:
+    //case raw_vertex_format::hend3:
 
-    case vertex_format::uhend3_norm:
+    case raw_vertex_format::uhend3_norm:
     {
         // TODO: Is this correct??
         const u32 v = *static_cast<const u32*>(vtx);
@@ -710,7 +710,7 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::hend3_norm:
+    case raw_vertex_format::hend3_norm:
     {
         // TODO: Is this correct??
         const u32 v = *static_cast<const u32*>(vtx);
@@ -722,10 +722,10 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
     }
 
     // TODO
-    /*case vertex_format::udhen3:
-    case vertex_format::dhen3:*/
+    /*case raw_vertex_format::udhen3:
+    case raw_vertex_format::dhen3:*/
 
-    case vertex_format::udhen3_norm:
+    case raw_vertex_format::udhen3_norm:
     {
         // TODO: Is this correct??
         const u32 v = *static_cast<const u32*>(vtx);
@@ -736,7 +736,7 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::dhen3_norm:
+    case raw_vertex_format::dhen3_norm:
     {
         // TODO: Is this correct??
         const u32 v = *static_cast<const u32*>(vtx);
@@ -747,7 +747,7 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::float16_2:
+    case raw_vertex_format::float16_2:
     {
         const glm::uint v = *static_cast<const glm::uint*>(vtx);
         const glm::vec2 unpackedV = glm::unpackHalf2x16(v);
@@ -757,7 +757,7 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
         break;
     }
 
-    case vertex_format::float16_4:
+    case raw_vertex_format::float16_4:
     {
         const glm::uint v = *static_cast<const glm::uint*>(vtx);
         const glm::vec2 unpackedV = glm::unpackHalf2x16(v);
@@ -795,87 +795,87 @@ bool raw_terrain_model_v5::is_revision2() const
 static void in_swap_vertex(const raw_vertex_element& rawVtxElem, void* rawVtx)
 {
     // Swap vertex based on vertex element.
-    switch (static_cast<vertex_format>(rawVtxElem.format))
+    switch (static_cast<raw_vertex_format>(rawVtxElem.format))
     {
-    case vertex_format::float1:
+    case raw_vertex_format::float1:
         endian_swap(*static_cast<float*>(rawVtx));
         break;
 
-    case vertex_format::float2:
+    case raw_vertex_format::float2:
         endian_swap(*static_cast<vec2*>(rawVtx));
         break;
 
-    case vertex_format::float3:
+    case raw_vertex_format::float3:
         endian_swap(*static_cast<vec3*>(rawVtx));
         break;
 
-    case vertex_format::float4:
+    case raw_vertex_format::float4:
         endian_swap(*static_cast<vec4*>(rawVtx));
         break;
 
-    case vertex_format::int1:
-    case vertex_format::int1_norm:
-    case vertex_format::uint1:
-    case vertex_format::uint1_norm:
-    case vertex_format::d3d_color: // TODO: Is this correct? Or do we not swap these?
-    case vertex_format::udec3:
-    case vertex_format::dec3:
-    case vertex_format::udec3_norm:
-    case vertex_format::dec3_norm:
-    case vertex_format::udec4:
-    case vertex_format::dec4:
-    case vertex_format::udec4_norm:
-    case vertex_format::dec4_norm:
-    case vertex_format::uhend3:
-    case vertex_format::hend3:
-    case vertex_format::uhend3_norm:
-    case vertex_format::hend3_norm:
-    case vertex_format::udhen3:
-    case vertex_format::dhen3:
-    case vertex_format::udhen3_norm:
-    case vertex_format::dhen3_norm:
+    case raw_vertex_format::int1:
+    case raw_vertex_format::int1_norm:
+    case raw_vertex_format::uint1:
+    case raw_vertex_format::uint1_norm:
+    case raw_vertex_format::d3d_color: // TODO: Is this correct? Or do we not swap these?
+    case raw_vertex_format::udec3:
+    case raw_vertex_format::dec3:
+    case raw_vertex_format::udec3_norm:
+    case raw_vertex_format::dec3_norm:
+    case raw_vertex_format::udec4:
+    case raw_vertex_format::dec4:
+    case raw_vertex_format::udec4_norm:
+    case raw_vertex_format::dec4_norm:
+    case raw_vertex_format::uhend3:
+    case raw_vertex_format::hend3:
+    case raw_vertex_format::uhend3_norm:
+    case raw_vertex_format::hend3_norm:
+    case raw_vertex_format::udhen3:
+    case raw_vertex_format::dhen3:
+    case raw_vertex_format::udhen3_norm:
+    case raw_vertex_format::dhen3_norm:
         endian_swap(*static_cast<u32*>(rawVtx));
         break;
 
-    case vertex_format::int2:
-    case vertex_format::int2_norm:
-    case vertex_format::uint2:
-    case vertex_format::uint2_norm:
+    case raw_vertex_format::int2:
+    case raw_vertex_format::int2_norm:
+    case raw_vertex_format::uint2:
+    case raw_vertex_format::uint2_norm:
         endian_swap(*(static_cast<u32*>(rawVtx)));
         endian_swap(*(static_cast<u32*>(rawVtx) + 1));
         break;
 
-    case vertex_format::int4:
-    case vertex_format::int4_norm:
-    case vertex_format::uint4:
-    case vertex_format::uint4_norm:
+    case raw_vertex_format::int4:
+    case raw_vertex_format::int4_norm:
+    case raw_vertex_format::uint4:
+    case raw_vertex_format::uint4_norm:
         endian_swap(*(static_cast<u32*>(rawVtx)));
         endian_swap(*(static_cast<u32*>(rawVtx) + 1));
         endian_swap(*(static_cast<u32*>(rawVtx) + 2));
         endian_swap(*(static_cast<u32*>(rawVtx) + 3));
         break;
 
-    case vertex_format::ubyte4:
-    case vertex_format::byte4:
-    case vertex_format::ubyte4_norm:
-    case vertex_format::byte4_norm:
+    case raw_vertex_format::ubyte4:
+    case raw_vertex_format::byte4:
+    case raw_vertex_format::ubyte4_norm:
+    case raw_vertex_format::byte4_norm:
         endian_swap(*static_cast<u32*>(rawVtx));
         break;
 
-    case vertex_format::short2:
-    case vertex_format::short2_norm:
-    case vertex_format::ushort2:
-    case vertex_format::ushort2_norm:
-    case vertex_format::float16_2:
+    case raw_vertex_format::short2:
+    case raw_vertex_format::short2_norm:
+    case raw_vertex_format::ushort2:
+    case raw_vertex_format::ushort2_norm:
+    case raw_vertex_format::float16_2:
         endian_swap(*(static_cast<u16*>(rawVtx)));
         endian_swap(*(static_cast<u16*>(rawVtx) + 1));
         break;
 
-    case vertex_format::short4:
-    case vertex_format::short4_norm:
-    case vertex_format::ushort4:
-    case vertex_format::ushort4_norm:
-    case vertex_format::float16_4:
+    case raw_vertex_format::short4:
+    case raw_vertex_format::short4_norm:
+    case raw_vertex_format::ushort4:
+    case raw_vertex_format::ushort4_norm:
+    case raw_vertex_format::float16_4:
         endian_swap(*(static_cast<u16*>(rawVtx)));
         endian_swap(*(static_cast<u16*>(rawVtx) + 1));
         endian_swap(*(static_cast<u16*>(rawVtx) + 2));
@@ -904,11 +904,11 @@ static void in_swap_recursive(raw_mesh& mesh)
     {
         curVtxElem->endian_swap<false>();
     }
-    while ((curVtxElem++)->format != static_cast<u32>(vertex_format::last_entry));
+    while ((curVtxElem++)->format != static_cast<u32>(raw_vertex_format::last_entry));
 
     // Swap vertices based on vertex format.
     curVtxElem = mesh.vertexElements.get();
-    while (curVtxElem->format != static_cast<u32>(vertex_format::last_entry))
+    while (curVtxElem->format != static_cast<u32>(raw_vertex_format::last_entry))
     {
         // Swap vertices based on vertex element.
         void* curVtx = ptradd(mesh.vertices.get(), curVtxElem->offset);
@@ -1043,7 +1043,7 @@ void raw_skeletal_model_v5::fix()
 void texture_unit::write(writer& writer) const
 {
     // Generate raw texture unit.
-    auto nameOff = writer.add_offset();
+    const auto nameOff = writer.tell();
     raw_texture_unit rawTexUnit =
     {
         nullptr,                                                        // name
@@ -1056,12 +1056,12 @@ void texture_unit::write(writer& writer) const
 #endif
 
     // Write texture unit to stream.
-    writer.stream().write_obj(rawTexUnit);
+    writer.write_obj(rawTexUnit);
 
     // Write texture unit name.
-    nameOff.fix();
-    writer.stream().write_str(name);
-    writer.stream().pad(4);
+    writer.fix_offset(nameOff);
+    writer.write_str(name);
+    writer.pad(4);
 }
 
 texture_unit::texture_unit(const raw_texture_unit& rawTexUnit) :
@@ -1120,7 +1120,7 @@ static void in_mesh_add_faces_strips(const mesh& hhMesh, hl::mesh& hlMesh)
     }
 }
 
-hl::mesh& mesh::add_to_node(hl::node& node, topology_type topType,
+hl::mesh& mesh::add_to_node(hl::node& node, raw_topology_type topType,
     const std::vector<mirage::node>* hhNodes, bool includeLibGensTags,
     const char* libGensLayerName) const
 {
@@ -1144,32 +1144,32 @@ hl::mesh& mesh::add_to_node(hl::node& node, topology_type topType,
     {
         switch (vtxElem.type)
         {
-        case vertex_type::position:
+        case raw_vertex_type::position:
             hasVertices = true;
             break;
 
-        case vertex_type::blend_weight:
+        case raw_vertex_type::blend_weight:
             hasBoneWeights = true;
             break;
 
-        case vertex_type::blend_indices:
+        case raw_vertex_type::blend_indices:
             hasBones = true;
             break;
 
-        case vertex_type::psize:
-        case vertex_type::tess_factor:
-        case vertex_type::position_t:
-        case vertex_type::fog:
-        case vertex_type::depth:
-        case vertex_type::sample:
+        case raw_vertex_type::psize:
+        case raw_vertex_type::tess_factor:
+        case raw_vertex_type::position_t:
+        case raw_vertex_type::fog:
+        case raw_vertex_type::depth:
+        case raw_vertex_type::sample:
             // TODO
             continue;
 
-        case vertex_type::normal:
+        case raw_vertex_type::normal:
             hasNormals = true;
             break;
 
-        case vertex_type::texcoord:
+        case raw_vertex_type::texcoord:
             if (vtxElem.index > 3)
             {
                 // TODO: Log warning about how only 4 UV channels are supported.
@@ -1182,15 +1182,15 @@ hl::mesh& mesh::add_to_node(hl::node& node, topology_type topType,
             hasUVs = true;
             break;
 
-        case vertex_type::tangent:
+        case raw_vertex_type::tangent:
             hasTangents = true;
             break;
 
-        case vertex_type::binormal:
+        case raw_vertex_type::binormal:
             hasBinormals = true;
             break;
 
-        case vertex_type::color:
+        case raw_vertex_type::color:
             hasColors = true;
             break;
         }
@@ -1252,15 +1252,15 @@ hl::mesh& mesh::add_to_node(hl::node& node, topology_type topType,
         std::vector<vec4>* meshVtxVector;
         switch (vtxElem.type)
         {
-        case vertex_type::position:
+        case raw_vertex_type::position:
             meshVtxVector = &mesh->vertices;
             break;
 
-        case vertex_type::blend_weight:
+        case raw_vertex_type::blend_weight:
             meshVtxVector = &mesh->boneWeights;
             break;
 
-        case vertex_type::blend_indices:
+        case raw_vertex_type::blend_indices:
         {
             if (!hhNodes) continue;
 
@@ -1306,14 +1306,14 @@ hl::mesh& mesh::add_to_node(hl::node& node, topology_type topType,
             continue;
         }
 
-        case vertex_type::normal:
+        case raw_vertex_type::normal:
             meshVtxVector = &mesh->normals;
             break;
 
         // TODO
-        //case vertex_type::psize = 4,
+        //case raw_vertex_type::psize = 4,
 
-        case vertex_type::texcoord:
+        case raw_vertex_type::texcoord:
         {
             if (vtxElem.index > 3) continue;
 
@@ -1334,26 +1334,26 @@ hl::mesh& mesh::add_to_node(hl::node& node, topology_type topType,
             continue;
         }
 
-        case vertex_type::tangent:
+        case raw_vertex_type::tangent:
             meshVtxVector = &mesh->tangents;
             break;
 
-        case vertex_type::binormal:
+        case raw_vertex_type::binormal:
             meshVtxVector = &mesh->binormals;
             break;
 
         // TODO
-        //case vertex_type::tess_factor = 8,
-        //case vertex_type::position_t = 9,
+        //case raw_vertex_type::tess_factor = 8,
+        //case raw_vertex_type::position_t = 9,
 
-        case vertex_type::color:
+        case raw_vertex_type::color:
             meshVtxVector = &mesh->colors;
             break;
 
         // TODO?
-        //case vertex_type::fog = 11,
-        //case vertex_type::depth = 12,
-        //case vertex_type::sample = 13:
+        //case raw_vertex_type::fog = 11,
+        //case raw_vertex_type::depth = 12,
+        //case raw_vertex_type::sample = 13:
 
         default:
             continue;
@@ -1378,11 +1378,11 @@ hl::mesh& mesh::add_to_node(hl::node& node, topology_type topType,
     // Convert faces as necessary and store them in mesh.
     switch (topType)
     {
-    case topology_type::triangle_list:
+    case raw_topology_type::triangle_list:
         mesh->faces.assign(faces.begin(), faces.end());
         break;
 
-    case topology_type::triangle_strip:
+    case raw_topology_type::triangle_strip:
         in_mesh_add_faces_strips(*this, *mesh);
         break;
 
@@ -1415,12 +1415,12 @@ hl::mesh& mesh::add_to_node(hl::node& node, topology_type topType,
 void mesh::write(writer& writer) const
 {
     // Generate raw mesh.
-    auto matNameOff = writer.add_offset(offsetof(raw_mesh, materialName));
-    auto facesOff = writer.add_offset(offsetof(raw_mesh, faces.data));
-    auto verticesOff = writer.add_offset(offsetof(raw_mesh, vertices));
-    auto vtxElemsOff = writer.add_offset(offsetof(raw_mesh, vertexElements));
-    auto boneNodeIndicesOff = writer.add_offset(offsetof(raw_mesh, boneNodeIndices.data));
-    auto textureUnitsOff = writer.add_offset(offsetof(raw_mesh, textureUnits.data));
+    const auto matNameOff = writer.tell(offsetof(raw_mesh, materialName));
+    const auto facesOff = writer.tell(offsetof(raw_mesh, faces.data));
+    const auto verticesOff = writer.tell(offsetof(raw_mesh, vertices));
+    const auto vtxElemsOff = writer.tell(offsetof(raw_mesh, vertexElements));
+    const auto boneNodeIndicesOff = writer.tell(offsetof(raw_mesh, boneNodeIndices.data));
+    const auto textureUnitsOff = writer.tell(offsetof(raw_mesh, textureUnits.data));
 
     raw_mesh rawMesh =
     {
@@ -1440,25 +1440,25 @@ void mesh::write(writer& writer) const
 #endif
 
     // Write raw mesh to stream.
-    writer.stream().write_obj(rawMesh);
+    writer.write_obj(rawMesh);
 
     // Write faces.
-    facesOff.fix();
+    writer.fix_offset(facesOff);
 
 #ifndef HL_IS_BIG_ENDIAN
     for (auto face : faces)
     {
         hl::endian_swap(face);
-        writer.stream().write_obj(face);
+        writer.write_obj(face);
     }
 #else
-    writer.stream().write_arr(faces.size(), faces.data());
+    writer.write_arr(faces.size(), faces.data());
 #endif
 
-    writer.stream().pad(4);
+    writer.pad(4);
 
     // Write vertices.
-    verticesOff.fix();
+    writer.fix_offset(verticesOff);
 
 #ifndef HL_IS_BIG_ENDIAN
     std::unique_ptr<u8[]> tmpVertexBuf(new u8[vertexSize]);
@@ -1476,28 +1476,28 @@ void mesh::write(writer& writer) const
         }
 
         // Write swapped vertex to stream.
-        writer.stream().write_all(vertexSize, tmpVertexBuf.get());
+        writer.write_all(vertexSize, tmpVertexBuf.get());
 
         // Increase vertices pointer.
         curVtx += vertexSize;
     }
 #else
-    writer.stream().write_all(static_cast<std::size_t>(
-        vertexSize) * vertexCount, vertices.get());
+    writer.write_all(static_cast<std::size_t>(vertexSize) *
+        vertexCount, vertices.get());
 #endif
 
     // Write vertex elements.
-    vtxElemsOff.fix();
+    writer.fix_offset(vtxElemsOff);
 
 #ifndef HL_IS_BIG_ENDIAN
     for (auto& vtxElem : vertexElements)
     {
         raw_vertex_element tmpVtxElem = vtxElem;
         tmpVtxElem.endian_swap();
-        writer.stream().write_obj(tmpVtxElem);
+        writer.write_obj(tmpVtxElem);
     }
 #else
-    writer.stream().write_arr(vertexElements.size(), vertexElements.data());
+    writer.write_arr(vertexElements.size(), vertexElements.data());
 #endif
 
     // Write last vertex element.
@@ -1505,9 +1505,9 @@ void mesh::write(writer& writer) const
     {
         255,                                                            // stream
         0,                                                              // offset
-        static_cast<u32>(vertex_format::last_entry),                    // format
-        vertex_method::normal,                                          // method
-        vertex_type::position,                                          // type
+        static_cast<u32>(raw_vertex_format::last_entry),                // format
+        raw_vertex_method::normal,                                      // method
+        raw_vertex_type::position,                                      // type
         0                                                               // padding
     };
 
@@ -1515,25 +1515,23 @@ void mesh::write(writer& writer) const
     lastRawVtxElem.endian_swap();
 #endif
 
-    writer.stream().write_obj(lastRawVtxElem);
+    writer.write_obj(lastRawVtxElem);
 
     // Write node indices.
-    boneNodeIndicesOff.fix();
-    writer.stream().write_arr(boneNodeIndices.size(), boneNodeIndices.data());
-    writer.stream().pad(4);
+    writer.fix_offset(boneNodeIndicesOff);
+    writer.write_arr(boneNodeIndices.size(), boneNodeIndices.data());
+    writer.pad(4);
 
     // Write placeholder texture unit offsets.
-    textureUnitsOff.fix();
-    std::size_t curTexUnitOffPos = writer.stream().tell();
-    writer.stream().write_nulls(sizeof(off32<raw_texture_unit>) * textureUnits.size());
+    writer.fix_offset(textureUnitsOff);
+    std::size_t curTexUnitOffPos = writer.tell();
+    writer.write_nulls(sizeof(off32<raw_texture_unit>) * textureUnits.size());
 
     // Write texture units and fill-in placeholder texture unit offsets.
     for (auto& textureUnit : textureUnits)
     {
         // Fill-in texture unit placeholder offset.
-        writer.stream().fix_off32(writer.data_pos(),
-            curTexUnitOffPos, needs_endian_swap,
-            writer.off_table());
+        writer.fix_offset(curTexUnitOffPos);
 
         // Write texture unit.
         textureUnit.write(writer);
@@ -1543,14 +1541,14 @@ void mesh::write(writer& writer) const
     }
 
     // Write material name.
-    matNameOff.fix();
-    writer.stream().write_str(materialName);
-    writer.stream().pad(4);
+    writer.fix_offset(matNameOff);
+    writer.write_str(materialName);
+    writer.pad(4);
 }
 
 static const raw_vertex_element* in_get_last_vtx_elem(const raw_vertex_element* rawVtxElem)
 {
-    while (rawVtxElem->format != static_cast<u32>(vertex_format::last_entry))
+    while (rawVtxElem->format != static_cast<u32>(raw_vertex_format::last_entry))
     {
         ++rawVtxElem;
     }
@@ -1594,7 +1592,7 @@ void mesh_slot::get_unique_material_names(std::unordered_set<std::string>& uniqu
     }
 }
 
-void mesh_slot::add_to_node(hl::node& node, topology_type topType,
+void mesh_slot::add_to_node(hl::node& node, raw_topology_type topType,
     const std::vector<mirage::node>* hhNodes, bool includeLibGensTags,
     const char* libGensLayerName) const
 {
@@ -1608,15 +1606,14 @@ void mesh_slot::add_to_node(hl::node& node, topology_type topType,
 void mesh_slot::write(writer& writer) const
 {
     // Write placeholder mesh offsets.
-    std::size_t curMeshOffPos = writer.stream().tell();
-    writer.stream().write_nulls(sizeof(off32<raw_mesh>) * size());
+    std::size_t curMeshOffPos = writer.tell();
+    writer.write_nulls(sizeof(off32<raw_mesh>) * size());
 
     // Write meshes and fill-in placeholder mesh offsets.
     for (auto& mesh : *this)
     {
         // Fill-in placeholder mesh offset.
-        writer.stream().fix_off32(writer.data_pos(), curMeshOffPos,
-            needs_endian_swap, writer.off_table());
+        writer.fix_offset(curMeshOffPos);
 
         // Write mesh.
         mesh.write(writer);
@@ -1669,7 +1666,7 @@ void mesh_group::get_unique_material_names(std::unordered_set<std::string>& uniq
     }
 }
 
-void mesh_group::add_to_node(hl::node& node, topology_type topType,
+void mesh_group::add_to_node(hl::node& node, raw_topology_type topType,
     const std::vector<mirage::node>* hhNodes, bool includeLibGensTags) const
 {
     // Add LibGens NAME tag to node if necessary.
@@ -1695,12 +1692,12 @@ void mesh_group::add_to_node(hl::node& node, topology_type topType,
 void mesh_group::write(writer& writer, u32 revision) const
 {
     // Generate raw mesh group.
-    auto opaqOff = writer.add_offset(offsetof(raw_mesh_group, opaq.data));
-    auto transOff = writer.add_offset(offsetof(raw_mesh_group, trans.data));
-    auto punchOff = writer.add_offset(offsetof(raw_mesh_group, punch.data));
-    auto specialTypesOff = writer.add_offset(offsetof(raw_mesh_group, special.types));
-    auto specialCountsOff = writer.add_offset(offsetof(raw_mesh_group, special.meshCounts));
-    auto specialMeshesOff = writer.add_offset(offsetof(raw_mesh_group, special.meshes));
+    const auto opaqOff = writer.tell(offsetof(raw_mesh_group, opaq.data));
+    const auto transOff = writer.tell(offsetof(raw_mesh_group, trans.data));
+    const auto punchOff = writer.tell(offsetof(raw_mesh_group, punch.data));
+    const auto specialTypesOff = writer.tell(offsetof(raw_mesh_group, special.types));
+    const auto specialCountsOff = writer.tell(offsetof(raw_mesh_group, special.meshCounts));
+    const auto specialMeshesOff = writer.tell(offsetof(raw_mesh_group, special.meshes));
 
     raw_mesh_group rawMeshGroup =
     {
@@ -1721,20 +1718,20 @@ void mesh_group::write(writer& writer, u32 revision) const
 #endif
 
     // Write raw mesh group to stream.
-    writer.stream().write_obj(rawMeshGroup);
+    writer.write_obj(rawMeshGroup);
 
     // Write mesh group name.
-    writer.stream().write_str(name);
-    writer.stream().pad(4);
+    writer.write_str(name);
+    writer.pad(4);
 
     // Write normal mesh slots.
-    opaqOff.fix();
+    writer.fix_offset(opaqOff);
     opaq.write(writer);
 
-    transOff.fix();
+    writer.fix_offset(transOff);
     trans.write(writer);
 
-    punchOff.fix();
+    writer.fix_offset(punchOff);
     punch.write(writer);
 
     // Early out if there are no special meshes.
@@ -1744,45 +1741,43 @@ void mesh_group::write(writer& writer, u32 revision) const
         // are no special meshes; replicate that here.
         if (revision < 2)
         {
-            specialTypesOff.fix();
-            specialCountsOff.fix();
-            specialMeshesOff.fix();
+            writer.fix_offset(specialTypesOff);
+            writer.fix_offset(specialCountsOff);
+            writer.fix_offset(specialMeshesOff);
         }
 
         return;
     }
 
     // Write placeholder special mesh group type offsets.
-    std::size_t curOffPos = writer.stream().tell();
-    specialTypesOff.fix();
-    writer.stream().write_nulls(sizeof(off32<char>) * special.size());
+    std::size_t curOffPos = writer.tell();
+    writer.fix_offset(specialTypesOff);
+    writer.write_nulls(sizeof(off32<char>) * special.size());
 
     // Write special mesh group types.
     for (std::size_t i = 0; i < special.size(); i++)
     {
         // Fix special mesh group type offset.
-        writer.stream().fix_off32(writer.data_pos(), curOffPos,
-            needs_endian_swap, writer.off_table());
+        writer.fix_offset(curOffPos);
 
         // Write type.
-        writer.stream().write_str(special[i].type);
-        writer.stream().pad(4);
+        writer.write_str(special[i].type);
+        writer.pad(4);
 
         // Increase current offset position.
         curOffPos += sizeof(off32<char>);
     }
 
     // Write placeholder special mesh count offsets.
-    curOffPos = writer.stream().tell();
-    specialCountsOff.fix();
-    writer.stream().write_nulls(sizeof(off32<u32>) * special.size());
+    curOffPos = writer.tell();
+    writer.fix_offset(specialCountsOff);
+    writer.write_nulls(sizeof(off32<u32>) * special.size());
 
     // Write special mesh counts.
     for (std::size_t i = 0; i < special.size(); i++)
     {
         // Fix special mesh count offset.
-        writer.stream().fix_off32(writer.data_pos(), curOffPos,
-            needs_endian_swap, writer.off_table());
+        writer.fix_offset(curOffPos);
 
         // Write special mesh count.
         u32 specialMeshCount = static_cast<u32>(special[i].size());
@@ -1792,33 +1787,29 @@ void mesh_group::write(writer& writer, u32 revision) const
         endian_swap(specialMeshCount);
 #endif
 
-        writer.stream().write_obj(specialMeshCount);
+        writer.write_obj(specialMeshCount);
 
         // Increase current offset position.
         curOffPos += sizeof(off32<u32>);
     }
 
     // Write placeholder special mesh group offsets.
-    curOffPos = writer.stream().tell();
-    specialMeshesOff.fix();
-    writer.stream().write_nulls(sizeof(off32<off32<raw_mesh>>) * special.size());
+    curOffPos = writer.tell();
+    writer.fix_offset(specialMeshesOff);
+    writer.write_nulls(sizeof(off32<off32<raw_mesh>>) * special.size());
 
     // Write special mesh groups.
     for (std::size_t i = 0; i < special.size(); i++)
     {
         // Write placeholder special mesh offsets.
-        std::size_t curMeshOffPos = writer.stream().tell();
-        writer.stream().fix_off32(writer.data_pos(), curOffPos,
-            needs_endian_swap, writer.off_table());
-
-        writer.stream().write_nulls(sizeof(off32<raw_mesh>) * special[i].size());
+        std::size_t curMeshOffPos = writer.tell();
+        writer.fix_offset(curOffPos);
+        writer.write_nulls(sizeof(off32<raw_mesh>) * special[i].size());
 
         // Write special meshes.
         for (std::size_t i2 = 0; i2 < special[i].size(); i2++)
         {
-            writer.stream().fix_off32(writer.data_pos(), curMeshOffPos,
-                needs_endian_swap, writer.off_table());
-
+            writer.fix_offset(curMeshOffPos);
             special[i][i2].write(writer);
 
             curMeshOffPos += sizeof(off32<raw_mesh>);
@@ -1916,31 +1907,30 @@ void node::parse_sample_chunk_params(
     }
 }
 
-void node::write_sample_chunk_params(u32 nodeIndex,
-    sample_chunk::node_writer& nodesExt) const
+void node::write_sample_chunk_params(u32 nodeIndex, writer& writer) const
 {
     // Return early if this node has no parameters.
     if (scaParams.empty()) return;
 
     // Start writing NodePrms and SCAParam sample chunk nodes.
-    auto nodePrms = nodesExt.add_child("NodePrms", nodeIndex);
-    auto scaParam = nodePrms->add_child("SCAParam");
+    writer.start_node("NodePrms", nodeIndex);
+    writer.start_node("SCAParam");
 
     // Write SCA parameters.
     for (auto& curSCAParam : scaParams)
     {
-        scaParam->add_child(curSCAParam)->finish_write();
+        writer.write_node(curSCAParam);
     }
 
     // Finish writing SCAParam and NodePrms sample chunk nodes.
-    scaParam->finish_write();
-    nodePrms->finish_write();
+    writer.finish_node();
+    writer.finish_node();
 }
 
 void node::write(writer& writer) const
 {
     // Generate raw node.
-    auto nameOff = writer.add_offset(offsetof(raw_node, name));
+    const auto nameOff = writer.tell(offsetof(raw_node, name));
     raw_node rawNode =
     {
         static_cast<s32>(parentIndex),                                  // parentIndex
@@ -1953,15 +1943,15 @@ void node::write(writer& writer) const
 #endif
 
     // Write raw node to stream.
-    writer.stream().write_obj(rawNode);
+    writer.write_obj(rawNode);
 
     // Write raw node name.
-    nameOff.fix();
-    writer.stream().write_str(name);
-    writer.stream().pad(4);
+    writer.fix_offset(nameOff);
+    writer.write_str(name);
+    writer.pad(4);
 }
 
-bool model::in_has_per_node_parameters(std::size_t nodeCount,
+bool model::in_has_per_node_params(std::size_t nodeCount,
     const node* nodes) const noexcept
 {
     for (std::size_t i = 0; i < nodeCount; ++i)
@@ -2045,52 +2035,60 @@ void model::in_parse_sample_chunk_nodes(const void* rawData,
             }
 
             // Parse model parameter.
-            properties.emplace_back(*curRawMdlProperty);
+            params.emplace_back(*curRawMdlProperty);
             curRawMdlProperty = curRawMdlProperty->next();
         }
     }
 }
 
 void model::in_write_sample_chunk_nodes(std::size_t nodeCount,
-    const node* nodes, sample_chunk::node_writer& writer) const
+    const node* nodes, writer& writer) const
 {
     // Write per-node sample chunk nodes if necessary.
-    if (in_has_per_node_parameters(nodeCount, nodes))
+    if (in_has_per_node_params(nodeCount, nodes))
     {
         // Start writing NodesExt sample chunk node.
-        auto nodesExt = writer.add_child("NodesExt");
+        writer.start_node("NodesExt");
 
         // Write per-node sample chunk nodes.
         for (std::size_t i = 0; i < nodeCount; ++i)
         {
             nodes[i].write_sample_chunk_params(
-                static_cast<u32>(i), *nodesExt);
+                static_cast<u32>(i), writer);
         }
 
         // Finish writing NodesExt sample chunk node.
-        nodesExt->finish_write();
+        writer.finish_node();
     }
 
     // Write per-model sample chunk nodes.
-    for (auto& mdlParam : properties)
+    for (auto& mdlParam : params)
     {
-        writer.add_child(mdlParam)->finish_write();
+        writer.write_node(mdlParam);
     }
 }
 
-topology_type model::get_topology_type() const
+const sample_chunk::property* model::get_param(const char* name) const
 {
-    // Get topology type if one was specified.
-    for (auto& property : properties)
+    for (auto& param : params)
     {
-        if (std::strcmp(property.get_name(), "Topology") == 0)
+        if (std::strcmp(param.get_name(), name) == 0)
         {
-            return static_cast<topology_type>(property.value);
+            return &param;
         }
     }
 
-    // Otherwise, default to triangle strips.
-    return topology_type::triangle_strip;
+    return nullptr;
+}
+
+raw_topology_type model::get_topology_type() const
+{
+    // Get toplogy parameter, if any.
+    const auto topologyProp = get_param("Topology");
+
+    // Return value, defaulting to triangle strips if there was no topology property.
+    return (!topologyProp) ? raw_topology_type::triangle_strip :
+        static_cast<raw_topology_type>(topologyProp->value);
 }
 
 void model::get_unique_material_names(std::unordered_set<std::string>& uniqueMatNames) const
@@ -2144,6 +2142,23 @@ void model::import_materials(const nchar* materialDir, scene& scene,
     }
 }
 
+header_type terrain_model::in_get_default_header_type() const
+{
+    if (has_params())
+    {
+        // Default to sample chunk V2 if we have a Topology parameter, or V1 otherwise.
+        const auto topologyProp = get_param("Topology");
+        return (topologyProp) ?
+            header_type::sample_chunk_v2 :
+            header_type::sample_chunk_v1;
+    }
+    else
+    {
+        // Default to standard if we have no parameters.
+        return header_type::standard;
+    }
+}
+
 void terrain_model::fix(void* rawData)
 {
     // Fix mirage data.
@@ -2169,7 +2184,7 @@ void terrain_model::fix(void* rawData)
 void terrain_model::add_to_node(hl::node& parentNode, bool includeLibGensTags) const
 {
     // Get model topology type.
-    const topology_type topType = get_topology_type();
+    const raw_topology_type topType = get_topology_type();
 
     // Add node for model.
     hl::node& modelNode = parentNode.add_child(rootNode.name);
@@ -2235,16 +2250,17 @@ void terrain_model::write(writer& writer, header_type headerType,
     u32 version, u32 revision, const char* fileName) const
 {
     // Start writing model.
-    auto modelNode = writer.start_write(headerType, "Model");
+    writer.start(headerType);
     if (headerType != header_type::standard)
     {
-        in_write_sample_chunk_nodes(1, &rootNode, *modelNode);
+        writer.start_node("Model");
+        in_write_sample_chunk_nodes(1, &rootNode, writer);
     }
 
-    writer.start_write_data(version);
+    writer.start_data(version);
 
     // Write terrain model header based on version.
-    off_handle meshGroupsOff, nameOff;
+    std::size_t meshGroupsOff, nameOff;
     switch (version)
     {
     case 5:
@@ -2254,8 +2270,8 @@ void terrain_model::write(writer& writer, header_type headerType,
             raw_terrain_model_flags::is_instanced :
             raw_terrain_model_flags::none);
 
-        meshGroupsOff = writer.add_offset(offsetof(raw_terrain_model_v5, meshGroups.data));
-        nameOff = writer.add_offset(offsetof(raw_terrain_model_v5, name));
+        meshGroupsOff = writer.tell(offsetof(raw_terrain_model_v5, meshGroups.data));
+        nameOff = writer.tell(offsetof(raw_terrain_model_v5, name));
 
         raw_terrain_model_v5 rawMdl =
         {
@@ -2270,7 +2286,7 @@ void terrain_model::write(writer& writer, header_type headerType,
 #endif
 
         // Write header to stream.
-        writer.stream().write_all((revision >= 2) ? 16 : 12, &rawMdl);
+        writer.write_all((revision >= 2) ? 16 : 12, &rawMdl);
         break;
     }
 
@@ -2279,21 +2295,19 @@ void terrain_model::write(writer& writer, header_type headerType,
     }
 
     // Write meshes/mesh groups as necessary.
-    meshGroupsOff.fix();
+    writer.fix_offset(meshGroupsOff);
     switch (version)
     {
     case 5:
         // Write placeholder offsets for mesh groups.
-        std::size_t curMeshGroupOffPos = writer.stream().tell();
-        writer.stream().write_nulls(sizeof(off32<raw_mesh_group>) * meshGroups.size());
+        std::size_t curMeshGroupOffPos = writer.tell();
+        writer.write_nulls(sizeof(off32<raw_mesh_group>) * meshGroups.size());
 
         // Write mesh groups and fill-in placeholder offsets.
         for (auto& meshGroup : meshGroups)
         {
             // Fill-in placeholder mesh group offset.
-            writer.stream().fix_off32(writer.data_pos(),
-                curMeshGroupOffPos, needs_endian_swap,
-                writer.off_table());
+            writer.fix_offset(curMeshGroupOffPos);
 
             // Write mesh group.
             meshGroup.write(writer, revision);
@@ -2308,14 +2322,22 @@ void terrain_model::write(writer& writer, header_type headerType,
     switch (version)
     {
     case 5:
-        nameOff.fix();
-        writer.stream().write_str(rootNode.name);
-        writer.stream().pad(4);
+        writer.fix_offset(nameOff);
+        writer.write_str(rootNode.name);
+        writer.pad(4);
         break;
     }
 
     // Finish writing.
-    writer.finish_write(fileName);
+    writer.finish_data();
+    writer.finish(fileName);
+}
+
+void terrain_model::save(stream& stream, header_type headerType,
+    u32 version, u32 revision, const char* fileName) const
+{
+    writer writer(stream);
+    write(writer, headerType, version, revision, fileName);
 }
 
 void terrain_model::save(const nchar* filePath,
@@ -2335,15 +2357,30 @@ void terrain_model::save(const nchar* filePath,
 
 void terrain_model::save(stream& stream) const
 {
-    save(stream, has_parameters() ?
-        header_type::sample_chunk_v1 :
-        header_type::standard);
+    save(stream, in_get_default_header_type());
 }
 
 void terrain_model::save(const nchar* filePath) const
 {
     file_stream stream(filePath, file::mode::write);
     save(stream);
+}
+
+header_type skeletal_model::in_get_default_header_type() const
+{
+    if (has_params())
+    {
+        // Default to sample chunk V2 if we have a Topology parameter, or V1 otherwise.
+        const auto topologyProp = get_param("Topology");
+        return (topologyProp) ?
+            header_type::sample_chunk_v2 :
+            header_type::sample_chunk_v1;
+    }
+    else
+    {
+        // Default to standard if we have no parameters.
+        return header_type::standard;
+    }
 }
 
 void skeletal_model::fix(void* rawData)
@@ -2374,15 +2411,15 @@ void skeletal_model::fix(void* rawData)
     }
 }
 
-bool skeletal_model::has_per_node_parameters() const noexcept
+bool skeletal_model::has_per_node_params() const noexcept
 {
-    return in_has_per_node_parameters(nodes.size(), nodes.data());
+    return in_has_per_node_params(nodes.size(), nodes.data());
 }
 
 void skeletal_model::add_to_node(hl::node& parentNode, bool includeLibGensTags) const
 {
     // Get model topology type.
-    const topology_type topType = get_topology_type();
+    const raw_topology_type topType = get_topology_type();
 
     // Add nodes to the scene.
     std::unique_ptr<hl::node*[]> nodePtrs(new hl::node*[nodes.size()]);
@@ -2521,17 +2558,18 @@ void skeletal_model::write(writer& writer, header_type headerType,
     u32 version, const char* fileName) const
 {
     // Start writing model.
-    auto modelNode = writer.start_write(headerType, "Model");
+    writer.start(headerType);
     if (headerType != header_type::standard)
     {
+        writer.start_node("Model");
         in_write_sample_chunk_nodes(nodes.size(),
-            nodes.data(), *modelNode);
+            nodes.data(), writer);
     }
 
-    writer.start_write_data(version);
+    writer.start_data(version);
 
     // Write skeletal model header based on version.
-    off_handle meshesOff, unknown1Off, unknown2Off, unknown3Off,
+    std::size_t meshesOff, unknown1Off, unknown2Off, unknown3Off,
         nodesOff, nodeMatricesOff, boundsOff;
 
     switch (version)
@@ -2542,12 +2580,13 @@ void skeletal_model::write(writer& writer, header_type headerType,
         const std::size_t meshCount = (meshGroups.empty()) ?
             0 : meshGroups[0].opaq.size();
 
-        meshesOff = writer.add_offset(offsetof(raw_skeletal_model_v2, meshes.data));
-        unknown1Off = writer.add_offset(offsetof(raw_skeletal_model_v2, unknown1.data));
-        unknown2Off = writer.add_offset(offsetof(raw_skeletal_model_v2, unknown2.data));
-        nodesOff = writer.add_offset(offsetof(raw_skeletal_model_v2, nodes));
-        nodeMatricesOff = writer.add_offset(offsetof(raw_skeletal_model_v2, nodeMatrices));
-        boundsOff = writer.add_offset(offsetof(raw_skeletal_model_v2, bounds));
+        meshesOff = writer.tell(offsetof(raw_skeletal_model_v2, meshes.data));
+        unknown1Off = writer.tell(offsetof(raw_skeletal_model_v2, unknown1.data));
+        unknown2Off = writer.tell(offsetof(raw_skeletal_model_v2, unknown2.data));
+        nodesOff = writer.tell(offsetof(raw_skeletal_model_v2, nodes));
+        nodeMatricesOff = writer.tell(offsetof(raw_skeletal_model_v2, nodeMatrices));
+        boundsOff = writer.tell(offsetof(raw_skeletal_model_v2, bounds));
+        unknown3Off = writer.tell(offsetof(raw_skeletal_model_v2, unknown3));
 
         raw_skeletal_model_v2 rawMdl =
         {
@@ -2567,20 +2606,20 @@ void skeletal_model::write(writer& writer, header_type headerType,
 #endif
 
         // Write header to stream.
-        writer.stream().write_obj(rawMdl);
+        writer.write_obj(rawMdl);
         break;
     }
 
     case 4:
     {
         // Generate raw V4 skeletal model header.
-        meshesOff = writer.add_offset(offsetof(raw_skeletal_model_v4, meshGroups.data));
-        unknown1Off = writer.add_offset(offsetof(raw_skeletal_model_v4, unknown1.data));
-        unknown2Off = writer.add_offset(offsetof(raw_skeletal_model_v4, unknown2.data));
-        unknown3Off = writer.add_offset(offsetof(raw_skeletal_model_v4, unknown3.data));
-        nodesOff = writer.add_offset(offsetof(raw_skeletal_model_v4, nodes));
-        nodeMatricesOff = writer.add_offset(offsetof(raw_skeletal_model_v4, nodeMatrices));
-        boundsOff = writer.add_offset(offsetof(raw_skeletal_model_v4, bounds));
+        meshesOff = writer.tell(offsetof(raw_skeletal_model_v4, meshGroups.data));
+        unknown1Off = writer.tell(offsetof(raw_skeletal_model_v4, unknown1.data));
+        unknown2Off = writer.tell(offsetof(raw_skeletal_model_v4, unknown2.data));
+        unknown3Off = writer.tell(offsetof(raw_skeletal_model_v4, unknown3.data));
+        nodesOff = writer.tell(offsetof(raw_skeletal_model_v4, nodes));
+        nodeMatricesOff = writer.tell(offsetof(raw_skeletal_model_v4, nodeMatrices));
+        boundsOff = writer.tell(offsetof(raw_skeletal_model_v4, bounds));
 
         raw_skeletal_model_v4 rawMdl =
         {
@@ -2600,18 +2639,18 @@ void skeletal_model::write(writer& writer, header_type headerType,
 #endif
 
         // Write header to stream.
-        writer.stream().write_obj(rawMdl);
+        writer.write_obj(rawMdl);
         break;
     }
 
     case 5:
     {
         // Generate raw V5 skeletal model header.
-        meshesOff = writer.add_offset(offsetof(raw_skeletal_model_v5, meshGroups.data));
-        unknown1Off = writer.add_offset(offsetof(raw_skeletal_model_v5, unknown1.data));
-        nodesOff = writer.add_offset(offsetof(raw_skeletal_model_v5, nodes));
-        nodeMatricesOff = writer.add_offset(offsetof(raw_skeletal_model_v5, nodeMatrices));
-        boundsOff = writer.add_offset(offsetof(raw_skeletal_model_v5, bounds));
+        meshesOff = writer.tell(offsetof(raw_skeletal_model_v5, meshGroups.data));
+        unknown1Off = writer.tell(offsetof(raw_skeletal_model_v5, unknown1.data));
+        nodesOff = writer.tell(offsetof(raw_skeletal_model_v5, nodes));
+        nodeMatricesOff = writer.tell(offsetof(raw_skeletal_model_v5, nodeMatrices));
+        boundsOff = writer.tell(offsetof(raw_skeletal_model_v5, bounds));
 
         raw_skeletal_model_v5 rawMdl =
         {
@@ -2629,7 +2668,7 @@ void skeletal_model::write(writer& writer, header_type headerType,
 #endif
 
         // Write header to stream.
-        writer.stream().write_obj(rawMdl);
+        writer.write_obj(rawMdl);
         break;
     }
 
@@ -2638,7 +2677,7 @@ void skeletal_model::write(writer& writer, header_type headerType,
     }
 
     // Write meshes/mesh groups as necessary.
-    meshesOff.fix();
+    writer.fix_offset(meshesOff);
     switch (version)
     {
     case 2:
@@ -2651,16 +2690,14 @@ void skeletal_model::write(writer& writer, header_type headerType,
     case 4:
     case 5:
         // Write placeholder offsets for mesh groups.
-        std::size_t curMeshGroupOffPos = writer.stream().tell();
-        writer.stream().write_nulls(sizeof(off32<raw_mesh_group>) * meshGroups.size());
+        std::size_t curMeshGroupOffPos = writer.tell();
+        writer.write_nulls(sizeof(off32<raw_mesh_group>) * meshGroups.size());
 
         // Write mesh groups and fill-in placeholder offsets.
         for (auto& meshGroup : meshGroups)
         {
             // Fill-in placeholder mesh group offset.
-            writer.stream().fix_off32(writer.data_pos(),
-                curMeshGroupOffPos, needs_endian_swap,
-                writer.off_table());
+            writer.fix_offset(curMeshGroupOffPos);
 
             // Write mesh group.
             meshGroup.write(writer);
@@ -2677,7 +2714,7 @@ void skeletal_model::write(writer& writer, header_type headerType,
     case 2:
     case 4:
     case 5:
-        unknown1Off.fix();
+        writer.fix_offset(unknown1Off);
         // TODO: Write unknown1s if necessary.
         break;
     }
@@ -2687,7 +2724,7 @@ void skeletal_model::write(writer& writer, header_type headerType,
     {
     case 2:
     case 4:
-        unknown2Off.fix();
+        writer.fix_offset(unknown2Off);
         // TODO: Write unknown2s if necessary.
         break;
     }
@@ -2696,22 +2733,21 @@ void skeletal_model::write(writer& writer, header_type headerType,
     switch (version)
     {
     case 4:
-        unknown3Off.fix();
+        writer.fix_offset(unknown3Off);
         // TODO: Write unknown3s if necessary.
         break;
     }
 
     // Write node placeholder offsets.
-    nodesOff.fix();
-    std::size_t curNodeOffPos = writer.stream().tell();
-    writer.stream().write_nulls(sizeof(off32<raw_node>) * nodes.size());
+    writer.fix_offset(nodesOff);
+    std::size_t curNodeOffPos = writer.tell();
+    writer.write_nulls(sizeof(off32<raw_node>) * nodes.size());
 
     // Write nodes and fill-in node placeholder offsets.
     for (auto& node : nodes)
     {
         // Fill-in node placeholder offset.
-        writer.stream().fix_off32(writer.data_pos(), curNodeOffPos,
-            needs_endian_swap, writer.off_table());
+        writer.fix_offset(curNodeOffPos);
         
         // Write node.
         node.write(writer);
@@ -2721,33 +2757,41 @@ void skeletal_model::write(writer& writer, header_type headerType,
     }
 
     // Write node matrices.
-    nodeMatricesOff.fix();
+    writer.fix_offset(nodeMatricesOff);
     for (auto& node : nodes)
     {
 #ifndef HL_IS_BIG_ENDIAN
         matrix4x4 nodeMatrix = node.matrix;
         nodeMatrix.endian_swap();
-        writer.stream().write_obj(nodeMatrix);
+        writer.write_obj(nodeMatrix);
 #else
-        writer.stream().write_obj(node.matrix);
+        writer.write_obj(node.matrix);
 #endif
     }
 
     // Write bounds.
-    boundsOff.fix();
-    writer.stream().write_nulls(sizeof(aabb)); // TODO: GET RID OF THIS LINE AND DO THIS CORRECTLY!!!
+    writer.fix_offset(boundsOff);
+    writer.write_nulls(sizeof(aabb)); // TODO: GET RID OF THIS LINE AND DO THIS CORRECTLY!!!
 
     // Write unknown3s if necessary.
     switch (version)
     {
     case 2:
+        writer.fix_offset(unknown3Off);
         // TODO: Write unknown3s if necessary.
-        unknown3Off.fix();
         break;
     }
 
     // Finish writing.
-    writer.finish_write(fileName);
+    writer.finish_data();
+    writer.finish(fileName);
+}
+
+void skeletal_model::save(stream& stream, header_type headerType,
+    u32 version, const char* fileName) const
+{
+    writer writer(stream);
+    write(writer, headerType, version, fileName);
 }
 
 void skeletal_model::save(const nchar* filePath,
@@ -2778,9 +2822,8 @@ void skeletal_model::save(const nchar* filePath,
 
 void skeletal_model::save(stream& stream) const
 {
-    save(stream, has_parameters() ?
-        header_type::sample_chunk_v1 :
-        header_type::standard, 5);
+    // TODO: Use version 2 or 4 instead if necessary.
+    save(stream, in_get_default_header_type());
 }
 
 void skeletal_model::save(const nchar* filePath) const

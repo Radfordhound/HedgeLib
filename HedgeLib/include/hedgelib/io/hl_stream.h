@@ -50,29 +50,34 @@ public:
         return m_curPos;
     }
 
+    inline std::size_t tell(long off) const noexcept
+    {
+        return (m_curPos + off);
+    }
+
     HL_API void read_all(std::size_t size, void* buf);
     HL_API void write_all(std::size_t size, const void* buf);
 
     template<typename T>
-    void read_obj(T& obj)
+    inline void read_obj(T& obj)
     {
         read_all(sizeof(T), &obj);
     }
 
     template<typename T>
-    void write_obj(const T& obj)
+    inline void write_obj(const T& obj)
     {
         write_all(sizeof(T), &obj);
     }
 
     template<typename T>
-    void read_arr(std::size_t count, T* arr)
+    inline void read_arr(std::size_t count, T* arr)
     {
         read_all(sizeof(T) * count, arr);
     }
 
     template<typename T>
-    void write_arr(std::size_t count, const T* arr)
+    inline void write_arr(std::size_t count, const T* arr)
     {
         write_all(sizeof(T) * count, arr);
     }
@@ -110,6 +115,88 @@ public:
 
     HL_API void align(std::size_t stride);
     HL_API void pad(std::size_t stride);
+};
+
+class writer_base
+{
+protected:
+    hl::stream* m_stream;
+
+public:
+    inline const hl::stream& stream() const noexcept
+    {
+        return *m_stream;
+    }
+
+    inline hl::stream& stream() noexcept
+    {
+        return *m_stream;
+    }
+
+    inline std::size_t write(std::size_t size, const void* buf)
+    {
+        m_stream->write(size, buf);
+    }
+
+    inline void flush()
+    {
+        m_stream->flush();
+    }
+
+    inline std::size_t get_size()
+    {
+        m_stream->get_size();
+    }
+
+    inline std::size_t tell() const noexcept
+    {
+        return m_stream->tell();
+    }
+
+    inline std::size_t tell(long off) const noexcept
+    {
+        return m_stream->tell(off);
+    }
+
+    inline void write_all(std::size_t size, const void* buf)
+    {
+        m_stream->write_all(size, buf);
+    }
+
+    template<typename T>
+    inline void write_obj(const T& obj)
+    {
+        m_stream->write_obj(obj);
+    }
+
+    template<typename T>
+    inline void write_arr(std::size_t count, const T* arr)
+    {
+        m_stream->write_arr(count, arr);
+    }
+
+    inline void write_nulls(std::size_t amount)
+    {
+        m_stream->write_nulls(amount);
+    }
+
+    inline std::size_t write_str(const char* str)
+    {
+        return m_stream->write_str(str);
+    }
+
+    inline std::size_t write_str(const std::string& str)
+    {
+        return m_stream->write_str(str);
+    }
+
+    inline void pad(std::size_t stride)
+    {
+        m_stream->pad(stride);
+    }
+
+    inline writer_base(hl::stream& stream) noexcept :
+        m_stream(&stream) {}
 };
 } // hl
 #endif

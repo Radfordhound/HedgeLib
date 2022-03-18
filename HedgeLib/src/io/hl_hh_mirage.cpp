@@ -1,5 +1,6 @@
 #include "hedgelib/io/hl_hh_mirage.h"
 #include <cstring>
+#include <cassert>
 
 namespace hl
 {
@@ -153,7 +154,7 @@ const raw_node* raw_node::get_child(const char* name, bool recursive) const
     return in_get_child(children(), nameBuf, recursive);
 }
 
-void raw_node::start_write(const char* name, stream& stream, u32 value)
+void raw_node::start_write(const char* name, u32 value, stream& stream)
 {
     // Generate placeholder sample chunk node.
     raw_node rawNode;
@@ -171,41 +172,28 @@ void raw_node::start_write(const char* name, stream& stream, u32 value)
 }
 
 static void in_raw_node_finish_write(std::size_t nodePos,
-    u32 fileSizeAndFlags, stream& stream)
+    u32 nodeSizeAndFlags, stream& stream)
 {
-    // Endian-swap file size and flags if necessary.
+    // Endian-swap node size and flags if necessary.
 #ifndef HL_IS_BIG_ENDIAN
-    hl::endian_swap(fileSizeAndFlags);
+    hl::endian_swap(nodeSizeAndFlags);
 #endif
 
-    // Fill-in file size and flags.
+    // Fill-in node size and flags.
     stream.jump_to(nodePos);
-    stream.write_obj(fileSizeAndFlags);
+    stream.write_obj(nodeSizeAndFlags);
 }
 
 void raw_node::finish_write(std::size_t nodePos,
     std::size_t nodeEndPos, node_flags flags, stream& stream)
 {
-    // Generate file size and flags.
+    // Generate node size and flags.
     const std::size_t endPos = stream.tell();
-    u32 fileSizeAndFlags = (static_cast<u32>(flags) |
+    const u32 nodeSizeAndFlags = (static_cast<u32>(flags) |
         static_cast<u32>(nodeEndPos - nodePos));
 
     // Finish writing node and jump back to end position.
-    in_raw_node_finish_write(nodePos, fileSizeAndFlags, stream);
-    stream.jump_to(endPos);
-}
-
-void raw_node::finish_write(std::size_t nodePos,
-    node_flags flags, stream& stream)
-{
-    // Generate file size and flags.
-    const std::size_t endPos = stream.tell();
-    u32 fileSizeAndFlags = (static_cast<u32>(flags) |
-        static_cast<u32>(endPos - nodePos));
-
-    // Finish writing node and jump back to end position.
-    in_raw_node_finish_write(nodePos, fileSizeAndFlags, stream);
+    in_raw_node_finish_write(nodePos, nodeSizeAndFlags, stream);
     stream.jump_to(endPos);
 }
 
@@ -265,14 +253,14 @@ void raw_header::start_write(stream& stream)
 }
 
 void raw_header::finish_write(std::size_t headerPos,
-    std::size_t dataPos, off_table& offTable, stream& stream)
+    std::size_t basePos, off_table& offTable, stream& stream)
 {
     // Pad file for offset table.
     stream.pad(16);
 
     // Write offset table.
     const std::size_t offTablePos = stream.tell();
-    offsets_write(dataPos, offTable, stream);
+    offsets_write(basePos, offTable, stream);
 
     // Get end of stream position.
     const std::size_t endPos = stream.tell();
@@ -324,68 +312,6 @@ property::property(const raw_node& rawNode) :
 {
     std::memcpy(m_name, rawNode.name, 8);
     m_name[8] = '\0';
-}
-
-node_writer::node_writer(writer& writer) :
-    m_writer(&writer),
-    m_pos(writer.m_stream->tell()) {}
-
-void node_writer::in_real_finish_write()
-{
-    // Call finish_write if we haven't yet.
-    if (!is_finished())
-    {
-        finish_write();
-    }
-
-    // Generate file size and flags.
-    const std::size_t endPos = m_writer->m_stream->tell();
-    u32 fileSizeAndFlags = (m_flags & static_cast<u32>(~node_flags::is_root));
-
-    // Finish writing node and jump back to end position.
-    in_raw_node_finish_write(m_pos, fileSizeAndFlags, *m_writer->m_stream);
-    m_writer->m_stream->jump_to(endPos);
-}
-
-void node_writer::start_write(const char* name, u32 value)
-{
-    raw_node::start_write(name, *m_writer->m_stream, value);
-}
-
-node_writer* node_writer::add_child(const char* name, u32 value)
-{
-    // Unset this node's leaf flag, as this node is no longer a leaf.
-    m_flags &= static_cast<u32>(~node_flags::is_leaf);
-
-    // Add a new child node to the writer's global node list.
-    const std::size_t newLastChildIndex = m_writer->m_nodes.size();
-    std::unique_ptr<sample_chunk::node_writer> newLastChildTmpPtr(
-        new sample_chunk::node_writer(*m_writer));
-
-    m_writer->m_nodes.emplace_back(std::move(newLastChildTmpPtr));
-
-    // Start writing the new child node.
-    node_writer& newLastChild = *m_writer->m_nodes[newLastChildIndex];
-    newLastChild.start_write(name, value);
-
-    // If this node already had a child, unset that child's last child flag, as
-    // that node is no longer the last child of this node.
-    if (m_lastChildIndex != 0)
-    {
-        m_writer->m_nodes[m_lastChildIndex]->m_flags &=
-            static_cast<u32>(~node_flags::is_last_child);
-    }
-
-    // Update this node's last child index, and return a reference to the last child.
-    m_lastChildIndex = newLastChildIndex;
-    return &newLastChild;
-}
-
-void node_writer::finish_write()
-{
-    // HACK: Use root flag as a marker that means we finished writing this node.
-    m_flags |= (static_cast<u32>(node_flags::is_root) |
-        static_cast<u32>(m_writer->stream().tell() - m_pos));
 }
 
 void make_node_name(const char* name, char* dst, bool appendNull)
@@ -450,13 +376,13 @@ void offsets_fix(off_table_handle offsets, void* base)
     }
 }
 
-void offsets_write_no_sort(std::size_t dataPos,
+void offsets_write_no_sort(std::size_t basePos,
     const off_table& offTable, stream& stream)
 {
     for (std::size_t offPos : offTable)
     {
         // Get relative offset position.
-        u32 relOffPos = static_cast<u32>(offPos - dataPos);
+        u32 relOffPos = static_cast<u32>(offPos - basePos);
 
         // Endian-swap relative offset position if necessary.
 #ifndef HL_IS_BIG_ENDIAN
@@ -468,23 +394,22 @@ void offsets_write_no_sort(std::size_t dataPos,
     }
 }
 
-void offsets_write(std::size_t dataPos,
+void offsets_write(std::size_t basePos,
     off_table& offTable, stream& stream)
 {
     // Sort offset table.
     std::sort(offTable.begin(), offTable.end());
 
     // Write sorted offsets.
-    offsets_write_no_sort(dataPos, offTable, stream);
-}
-void off_handle::fix()
-{
-    m_writer->stream().fix_off32(m_writer->data_pos(),
-        m_offPos, needs_endian_swap, m_writer->off_table());
+    offsets_write_no_sort(basePos, offTable, stream);
 }
 
-sample_chunk::node_writer* writer::start_write(header_type headerType,
-    const char* nodeName, u32 nodeValue)
+void writer::fix_offset(std::size_t pos)
+{
+    m_stream->fix_off32(m_basePos, pos, needs_endian_swap, m_offTable);
+}
+
+void writer::start(header_type headerType)
 {
     // Store header type and position.
     m_headerType = headerType;
@@ -492,104 +417,145 @@ sample_chunk::node_writer* writer::start_write(header_type headerType,
 
     if (headerType == header_type::standard)
     {
-        // Store data position.
-        m_dataPos = (m_headerPos + sizeof(standard::raw_header));
+        // Store base position.
+        m_basePos = (m_headerPos + sizeof(standard::raw_header));
 
         // Start writing standard header.
         standard::raw_header::start_write(*m_stream);
     }
     else
     {
-        // Store data position.
-        m_dataPos = (m_headerPos + sizeof(sample_chunk::raw_header));
+        // Store base position.
+        m_basePos = (m_headerPos + sizeof(sample_chunk::raw_header));
 
         // Start writing sample chunk header.
         sample_chunk::raw_header::start_write(*m_stream);
-
-        // Start writing initial node if requested.
-        if (nodeName)
-        {
-            // Create sample chunk node writer.
-            std::unique_ptr<sample_chunk::node_writer> nodeTmpPtr(
-                new sample_chunk::node_writer(*this));
-
-            m_nodes.emplace_back(std::move(nodeTmpPtr));
-
-            // Start writing initial sample chunk node.
-            sample_chunk::node_writer& node = *m_nodes.back();
-            node.start_write(nodeName, nodeValue);
-            return &node;
-        }
     }
-
-    return nullptr;
 }
 
-void writer::start_write_data(u32 version)
+void writer::start_node(const char* name, u32 value)
+{
+    using namespace sample_chunk;
+
+    // Update existing nodes if necessary.
+    const std::size_t curNodeIndex = m_nodes.size();
+    if (m_curUnfinishedNodeIndex != SIZE_MAX)
+    {
+        // If the current unfinished node has a child, we need to unset its
+        // "last child" flag, as it's about to no longer be the last child.
+        auto& curUnfinishedNode = m_nodes[m_curUnfinishedNodeIndex];
+        if (curUnfinishedNode.lastChildIndex != 0)
+        {
+            auto& lastChild = m_nodes[curUnfinishedNode.lastChildIndex];
+            lastChild.flagsAndSize &= ~static_cast<u32>(node_flags::is_last_child);
+        }
+
+        // Otherwise, this node will be the first child of the current unfinished
+        // node, so we want to unset the unfinished node's "is leaf" flag.
+        else
+        {
+            curUnfinishedNode.flagsAndSize &= ~static_cast<u32>(node_flags::is_leaf);
+        }
+
+        // Update the last current unfinished node's last child index.
+        curUnfinishedNode.lastChildIndex = curNodeIndex;
+    }
+
+    // Add a new node and update the current unfinished node index.
+    m_nodes.emplace_back(m_stream->tell(), m_curUnfinishedNodeIndex);
+    m_curUnfinishedNodeIndex = curNodeIndex;
+
+    // Start writing the new node.
+    raw_node::start_write(name, value, *m_stream);
+}
+
+void writer::finish_node()
+{
+    using namespace sample_chunk;
+
+    assert(m_curUnfinishedNodeIndex != SIZE_MAX &&
+        "You must call writer::finish_node exactly once per writer::start_node call");
+
+    // Mark the current unfinished node as being finished and store its size.
+    auto& curNode = m_nodes[m_curUnfinishedNodeIndex];
+    curNode.flagsAndSize |= static_cast<u32>(m_stream->tell() - curNode.pos);
+    curNode.mark_finished();
+
+    // Update the current unfinished node index.
+    m_curUnfinishedNodeIndex = curNode.parentIndex;
+}
+
+void writer::start_data(u32 version)
 {
     // Store data version.
     m_dataVersion = version;
 
     if (m_headerType == header_type::standard)
     {
-        // Update data position.
-        m_dataPos = m_stream->tell();
+        // Update base position.
+        m_basePos = m_stream->tell();
     }
 
     else if (!m_nodes.empty())
     {
         // Start writing contexts node.
-        auto& node = *m_nodes.front();
-        auto contextsNode = node.add_child("Contexts", version);
+        start_node("Contexts", version);
 
         // Finish writing contexts node now if necessary.
         if (m_headerType == header_type::sample_chunk_v2)
         {
-            contextsNode->finish_write();
+            finish_node();
         }
     }
 }
 
-off_handle writer::add_offset(std::size_t relOffPos)
+void writer::finish_data()
 {
-    // Get absolute offset position.
-    const std::size_t offPos = (m_stream->tell() + relOffPos);
-
-    // Construct a handle for this offset and return it.
-    return off_handle(*this, offPos);
+    // Finish writing contexts node if necessary.
+    if (m_headerType == header_type::sample_chunk_v1)
+    {
+        finish_node();
+    }
 }
 
-void writer::finish_write(const char* fileName)
+void writer::finish(const char* fileName)
 {
+    using namespace sample_chunk;
+
     if (m_headerType == header_type::standard)
     {
         // Finish writing standard header.
         standard::raw_header::finish_write(m_headerPos,
-            m_dataPos, m_dataVersion, m_offTable,
+            m_basePos, m_dataVersion, m_offTable,
             *m_stream, fileName);
     }
     else
     {
-        // Finish writing all non-initial sample chunk nodes.
-        for (std::size_t i = 1; i < m_nodes.size(); ++i)
+        // Mark all unfinished sample chunk nodes as being finished.
+        while (m_curUnfinishedNodeIndex != SIZE_MAX)
         {
-            m_nodes[i]->in_real_finish_write();
+            finish_node();
         }
 
-        // Pad to 16.
-        m_stream->pad(16); // TODO: Do we do this with sample chunk v2??
-
-        // Finish writing initial sample chunk node.
-        if (!m_nodes.empty())
+        // Actually finish writing all sample chunk nodes to the stream.
+        const std::size_t endPos = m_stream->tell();
+        for (auto& node : m_nodes)
         {
-            m_nodes.front()->in_real_finish_write();
+            in_raw_node_finish_write(node.pos, node.flagsAndSize, *m_stream);
         }
+
+        m_stream->jump_to(endPos);
 
         // Finish writing sample chunk header.
         sample_chunk::raw_header::finish_write(m_headerPos,
-            m_dataPos, m_offTable, *m_stream);
+            m_basePos, m_offTable, *m_stream);
     }
 }
+
+writer::writer(hl::stream& stream) :
+    writer_base(stream),
+    m_headerPos(stream.tell()),
+    m_basePos(m_headerPos) {}
 } // mirage
 } // hh
 } // hl
