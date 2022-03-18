@@ -4,7 +4,7 @@
 
 #ifdef _MSC_VER
 #include <malloc.h>
-#elif defined(__cpp_aligned_new)
+#elif defined(__cpp_aligned_new) && !defined(__APPLE__)
 #include <cstdlib>
 #include <cstring>
 #else
@@ -84,7 +84,7 @@ void* aligned_malloc(std::size_t size, std::size_t alignment)
 {
 #ifdef _MSC_VER // MSVC
     return _aligned_malloc(size, alignment);
-#elif defined(__cpp_aligned_new) // C++17
+#elif defined(__cpp_aligned_new) && !defined(__APPLE__) // C++17
     return std::aligned_alloc(alignment, size);
 #else // POSIX
     void* ptr = nullptr;
@@ -97,7 +97,7 @@ void* aligned_realloc(void* ptr, std::size_t size, std::size_t alignment)
 {
 #ifdef _MSC_VER // MSVC
     return _aligned_realloc(ptr, size, alignment);
-#elif defined(__cpp_aligned_new) // C++17
+#elif defined(__cpp_aligned_new) && !defined(__APPLE__) // C++17
     void* newPtr = std::aligned_alloc(alignment, size);
     if (newPtr)
     {
@@ -122,7 +122,7 @@ void aligned_free(void* ptr)
 {
 #ifdef _MSC_VER // MSVC
     _aligned_free(ptr);
-#elif defined(__cpp_aligned_new) // C++17
+#elif defined(__cpp_aligned_new) && !defined(__APPLE__) // C++17
     std::free(ptr);
 #else // POSIX
     free(ptr);
