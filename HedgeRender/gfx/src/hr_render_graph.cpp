@@ -239,7 +239,7 @@ in_render_graph& in_render_graph::operator=(in_render_graph&& other) noexcept
         passes = std::move(other.passes);
         subpasses = std::move(other.subpasses);
         vkClearValues = std::move(other.vkClearValues);
-        vkFramebuffersPerImagePass = std::move(vkFramebuffersPerImagePass);
+        vkFramebuffersPerImagePass = std::move(other.vkFramebuffersPerImagePass);
         vkFramebuffers = std::move(other.vkFramebuffers);
         resources = std::move(other.resources);
 
@@ -259,9 +259,9 @@ in_render_graph::in_render_graph(in_render_graph&& other) noexcept :
     passes(std::move(other.passes)),
     subpasses(std::move(other.subpasses)),
     vkClearValues(std::move(other.vkClearValues)),
-    vkFramebuffersPerImagePass(std::move(vkFramebuffersPerImagePass)),
-    vkFramebuffers(std::move(vkFramebuffers)),
-    resources(std::move(resources))
+    vkFramebuffersPerImagePass(std::move(other.vkFramebuffersPerImagePass)),
+    vkFramebuffers(std::move(other.vkFramebuffers)),
+    resources(std::move(other.resources))
 {
     other.m_vkDevice = VK_NULL_HANDLE;
 }

@@ -127,7 +127,7 @@ shader_parameter_group::shader_parameter_group(render_device& device,
 shader_parameter_group::shader_parameter_group(shader_parameter_group&& other) noexcept :
     m_vkDevice(other.m_vkDevice),
     m_vkDescSetLayout(other.m_vkDescSetLayout),
-    m_vkPushConstantRanges(std::move(m_vkPushConstantRanges))
+    m_vkPushConstantRanges(std::move(other.m_vkPushConstantRanges))
 {
     other.m_vkDevice = VK_NULL_HANDLE;
 }
