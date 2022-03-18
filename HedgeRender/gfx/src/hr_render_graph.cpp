@@ -477,7 +477,7 @@ static const render_pass_builder* in_vulkan_get_present_pass(
             subpass != pass->subpasses().rend();
             ++subpass)
         {
-            if (subpass->attachments().contains(render_graph_builder::screen_output))
+            if (subpass->attachments().contains(render_graph_builder::screen_output()))
             {
                 return &(*pass);
             }
@@ -510,7 +510,7 @@ render_graph render_graph_builder::build(render_device& device)
         static_cast<render_resource_id>(m_resources.size()));
 
     // The default "screen output" resource always requires a subpass dependency.
-    resState[screen_output].needsDependency = true;
+    resState[screen_output()].needsDependency = true;
 
     // Get the final render pass which uses the screen output resource.
     auto presentPass = in_vulkan_get_present_pass(m_passes);
@@ -558,7 +558,7 @@ render_graph render_graph_builder::build(render_device& device)
                     // Generate Vulkan attachment.
                     // (NOTE: We don't need to create a resource for the screen output; just
                     // set these to nullptr for now and fill the pointer in properly later.)
-                    graph->vkAttachments.push_back((attachInfo.first == screen_output) ?
+                    graph->vkAttachments.push_back((attachInfo.first == screen_output()) ?
                         VK_NULL_HANDLE : graph->add_new_resource(
                             device.m_swapChain.vkSurfaceFormat.format,
                             device.m_swapChain.vkSurfaceExtent.width,
@@ -750,7 +750,7 @@ render_graph render_graph_builder::build(render_device& device)
 
         // Get screen output attachment index, or SIZE_MAX if
         // this pass doesn't use the screen output.
-        auto& screenOutputRes = resState[screen_output];
+        auto& screenOutputRes = resState[screen_output()];
         const std::size_t screenOutputAttachIndex =
             (screenOutputRes.mostRecentPass != &(*pass)) ? SIZE_MAX :
             (graphFirstAttachmentIndex + screenOutputRes.vkAttachmentIndex);
@@ -796,7 +796,5 @@ render_graph render_graph_builder::build(render_device& device)
     graph->create_framebuffers(device.m_swapChain);
     return graph.release();
 }
-
-constexpr render_resource_id render_graph_builder::screen_output;
 } // gfx
 } // hr

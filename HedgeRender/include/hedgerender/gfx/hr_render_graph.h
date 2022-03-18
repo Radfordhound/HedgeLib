@@ -260,7 +260,10 @@ class render_graph_builder
     std::vector<render_pass_builder> m_passes;
 
 public:
-    constexpr static render_resource_id screen_output = 0;
+    constexpr static render_resource_id screen_output() noexcept
+    {
+        return 0;
+    }
 
     inline const std::vector<render_pass_builder>& passes() const noexcept
     {
