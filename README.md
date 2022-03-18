@@ -61,29 +61,25 @@ Building HedgeLib is supposed to be easy.
 If you're having trouble building with the following instructions, please [create an issue](https://github.com/Radfordhound/HedgeLib/issues/new).
 
 ## Windows (Visual Studio)
-### 1: Install the following utilities (if you haven't already)
+### 1: Install the following prerequisites (if you haven't already)
 - [CMake](https://cmake.org/download/)
 - [git](https://git-scm.com/download/win)
+- [Vulkan SDK](https://vulkan.lunarg.com/sdk/home#windows) (**NOTE:** Only required for HedgeRender/HedgeEdit)
 
 **IMPORTANT:** Be sure to select "Add CMake to the system PATH for all users" during the CMake installation, or you'll encounter an error while following these steps!
 
 ### 2: Open a PowerShell window and clone the HedgeLib repository
 ```ps
 git clone https://github.com/Radfordhound/HedgeLib.git
-```
-
-### 3: Go into the HedgeLib folder and switch to the HedgeLib++ branch
-```ps
 cd HedgeLib
-git switch HedgeLib++
 ```
 
-### 4: Download dependencies using the included Powershell script
+### 3: Download dependencies using the included Powershell script
 ```ps
 .\Get-Dependencies.ps1
 ```
 
-### 5: Generate a Visual Studio Solution (.sln file) with CMake
+### 4: Generate a Visual Studio Solution (.sln file) with CMake
 ```ps
 cmake -S . -B build
 ```
@@ -107,39 +103,40 @@ Visual Studio 15 2017     | Visual Studio 2017
 Visual Studio 14 2015     | Visual Studio 2015
 
 
-### 6: Open the resulting HedgeLib.sln file (contained within the "build" directory) in Visual Studio and build
+### 5: Open the resulting HedgeLib.sln file (contained within the "build" directory) in Visual Studio and build
 Done!
 
 ## macOS
-### 1: Open a terminal and install Homebrew (if you don't already have it)
-```
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+### 1: Install the following prerequisites (if you haven't already)
+- [Homebrew](https://brew.sh/)
+- [Vulkan SDK](https://vulkan.lunarg.com/sdk/home#mac) (**NOTE:** Only required for HedgeRender/HedgeEdit)
+
+### 2: Open a terminal window and install the required dependencies
+
+Install all pre-packaged dependencies:
+
+```sh
+brew install cmake git glm lz4 zlib glfw
 ```
 
-### 2: Install the required dependencies
-```
-brew install cmake git glm lz4 zlib glfw vulkan-headers molten-vk
-mkdir Dependencies && cd Dependencies
+Build/install Robin-hood-hashing:
+
+```sh
 git clone https://github.com/martinus/robin-hood-hashing.git
 cd robin-hood-hashing
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRH_STANDALONE_PROJECT=OFF
 cmake --build build --config Release
 sudo cmake --install build --config Release
-cd ../../
+cd ../
 ```
 
 ### 3: Clone the HedgeLib repository
-```
+```sh
 git clone https://github.com/Radfordhound/HedgeLib.git
-```
-
-### 4: Go into the HedgeLib folder and switch to the HedgeLib++ branch
-```
 cd HedgeLib
-git switch HedgeLib++
 ```
 
-### 5: Generate Makefiles or Xcode project files with CMake
+### 4: Generate Makefiles or Xcode project files with CMake
 
 You can build using Makefiles, or using an Xcode project.
 
@@ -148,34 +145,36 @@ You can build using Makefiles, or using an Xcode project.
 
 Pick whichever one you prefer.
 
-#### To generate Makefiles:
-```
+#### To generate Makefiles
+```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 ```
 
 **OPTIONAL:** Replace ```Debug``` in the above command with ```Release``` to generate Release build Makefiles.
 
-#### To generate an Xcode project:
-```
+#### To generate an Xcode project
+```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -G "Xcode"
 ```
 
 **NOTE:** If you get this weird error:
+
 ```
 CMake Error: Xcode 1.5 not supported.
 ```
 
 It means CMake isn't finding the correct Xcode installation. To fix it, run the following commands, but with "/Applications/Xcode_10.1.app" replaced with the path to your machine's Xcode.app file:
-```
+
+```sh
 sudo /usr/bin/xcode-select --switch /Applications/Xcode_10.1.app
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -G "Xcode"
 ```
 
-### 6: Build the code
+### 5: Build the code
 
 **If you generated Makefiles**, execute the following command to build:
 
-```
+```sh
 cmake --build build
 ```
 
@@ -186,57 +185,71 @@ Done!
 ## Linux
 ### 1: Install the required dependencies (or equivalents)
 
-Ubuntu/Debian-based distros:
-```
+#### Ubuntu/Debian
+
+Install Vulkan SDK Repository:
+
+```sh
 wget -qO - https://gist.githubusercontent.com/Radfordhound/6e6ce00535d14ae87d606ece93f1e336/raw/9796f644bdedaa174ed580a8aa6874ab82853170/install-lunarg-ubuntu-repo.sh | sh
-mkdir Dependencies && cd Dependencies
+```
+
+Install all pre-packaged dependencies:
+
+```sh
+sudo apt install git build-essential cmake libglm-dev liblz4-dev zlib1g-dev libglfw3-dev vulkan-sdk
+```
+
+Build/install Robin-hood-hashing:
+
+```sh
 git clone https://github.com/martinus/robin-hood-hashing.git
 cd robin-hood-hashing
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRH_STANDALONE_PROJECT=OFF
 cmake --build build --config Release
 sudo cmake --install build --config Release
-cd ../../
-sudo apt install -yq git build-essential cmake libglm-dev liblz4-dev zlib1g-dev libglfw3-dev vulkan-sdk
+cd ../
 ```
 
-Arch-based distros:
-```
+#### Arch
+```sh
 sudo pacman -S git gcc make cmake glm lz4 zlib glfw-wayland vulkan-headers vulkan-validation-layers shaderc
 yay -S robin-hood-hashing
 ```
 
-Void-based distros:
-```
+#### Void
+
+Install all pre-packaged dependencies:
+
+```sh
 sudo xbps-install -S git gcc make cmake glm liblz4-devel zlib-devel glfw-devel Vulkan-Headers Vulkan-ValidationLayers shaderc
-mkdir Dependencies && cd Dependencies
+```
+
+Build/install Robin-hood-hashing:
+
+```sh
 git clone https://github.com/martinus/robin-hood-hashing.git
 cd robin-hood-hashing
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRH_STANDALONE_PROJECT=OFF
 cmake --build build --config Release
 sudo cmake --install build --config Release
-cd ../../
+cd ../
 ```
 
 ### 2: Clone the HedgeLib repository
-```
+```sh
 git clone https://github.com/Radfordhound/HedgeLib.git
-```
-
-### 3: Go into the HedgeLib folder and switch to the HedgeLib++ branch
-```
 cd HedgeLib
-git switch HedgeLib++
 ```
 
-### 4: Generate Makefiles with CMake
-```
+### 3: Generate Makefiles with CMake
+```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 ```
 
 **OPTIONAL:** Replace ```Debug``` in the above command with ```Release``` to generate Release build Makefiles.
 
-### 5: Build the code with CMake
-```
+### 4: Build the code with CMake
+```sh
 cmake --build build
 ```
 
