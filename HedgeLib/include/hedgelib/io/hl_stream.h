@@ -135,7 +135,7 @@ public:
 
     inline std::size_t write(std::size_t size, const void* buf)
     {
-        m_stream->write(size, buf);
+        return m_stream->write(size, buf);
     }
 
     inline void flush()
@@ -145,7 +145,7 @@ public:
 
     inline std::size_t get_size()
     {
-        m_stream->get_size();
+        return m_stream->get_size();
     }
 
     inline std::size_t tell() const noexcept
