@@ -54,13 +54,13 @@ for:
   install:
     - sh: |
         mkdir Dependencies
-        mkdir Dependencies/VulkanSDK
         curl https://sdk.lunarg.com/sdk/download/latest/mac/vulkan-sdk.dmg --output Dependencies/vulkan-sdk.dmg
         VOLUME=`hdiutil attach Dependencies/vulkan-sdk.dmg | grep Volumes | awk '{print $3}'`
-        ls "$VOLUME"
-        cp -rf "$VOLUME/InstallVulkan.app" /Applications
+        cp -rf "$VOLUME/InstallVulkan.app" InstallVulkan.app
         hdiutil detach $VOLUME
-        sudo ./Applications/InstallVulkan.app/Contents/MacOS/InstallVulkan --root "Dependencies/VulkanSDK" --accept-licenses --default-answer --confirm-command install
+        ls InstallVulkan.app
+        mkdir Dependencies/VulkanSDK
+        sudo ./InstallVulkan.app/Contents/MacOS/InstallVulkan --root "Dependencies/VulkanSDK" --accept-licenses --default-answer --confirm-command install
         ls Dependencies/VulkanSDK
         sudo ./Dependencies/VulkanSDK/install_vulkan.py
     - ps: |
