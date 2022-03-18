@@ -85,7 +85,7 @@ struct in_desc_pools
 
 struct in_swap_chain
 {
-    VkSwapchainKHR vkSwapChain = nullptr;
+    VkSwapchainKHR vkSwapChain = VK_NULL_HANDLE;
     VkSurfaceKHR vkSurface;
     VkSurfaceFormatKHR vkSurfaceFormat;
     VkSurfaceCapabilitiesKHR vkSurfaceCapabilities;

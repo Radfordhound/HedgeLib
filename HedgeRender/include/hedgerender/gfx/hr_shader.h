@@ -44,8 +44,8 @@ public:
 
 class shader_parameter_group : public non_copyable
 {
-    VkDevice m_vkDevice = nullptr;
-    VkDescriptorSetLayout m_vkDescSetLayout = nullptr;
+    VkDevice m_vkDevice = VK_NULL_HANDLE;
+    VkDescriptorSetLayout m_vkDescSetLayout = VK_NULL_HANDLE;
     fixed_array<VkPushConstantRange, uint32_t> m_vkPushConstantRanges;
 
 public:
@@ -83,9 +83,9 @@ public:
 
 class shader : public non_copyable
 {
-    VkDevice m_vkDevice = nullptr;
+    VkDevice m_vkDevice = VK_NULL_HANDLE;
     std::string m_entryPoint;
-    VkShaderModule m_vkShaderModule = nullptr;
+    VkShaderModule m_vkShaderModule = VK_NULL_HANDLE;
 
 public:
     inline VkShaderModule handle() const noexcept

@@ -20,7 +20,7 @@ class instance : public non_copyable
 {
     friend render_device;
 
-    VkInstance m_vkInstance = nullptr;
+    VkInstance m_vkInstance = VK_NULL_HANDLE;
     bool m_isDebug;
 
 public:
@@ -36,7 +36,7 @@ public:
 
     HR_GFX_API instance& operator=(instance&& other) noexcept;
 
-    instance(VkInstance vkInstance = nullptr, bool isDebug = is_debug_build) noexcept :
+    instance(VkInstance vkInstance = VK_NULL_HANDLE, bool isDebug = is_debug_build) noexcept :
         m_vkInstance(vkInstance),
         m_isDebug(isDebug) {}
 

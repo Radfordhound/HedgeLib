@@ -47,7 +47,7 @@ instance& instance::operator=(instance&& other) noexcept
         m_vkInstance = other.m_vkInstance;
         m_isDebug = other.m_isDebug;
 
-        other.m_vkInstance = nullptr;
+        other.m_vkInstance = VK_NULL_HANDLE;
     }
 
     return *this;
@@ -170,7 +170,7 @@ instance::instance(instance&& other) noexcept :
     m_vkInstance(other.m_vkInstance),
     m_isDebug(other.m_isDebug)
 {
-    other.m_vkInstance = nullptr;
+    other.m_vkInstance = VK_NULL_HANDLE;
 }
 } // gfx
 } // hr

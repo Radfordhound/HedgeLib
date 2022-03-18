@@ -26,8 +26,8 @@ pipeline_layout& pipeline_layout::operator=(pipeline_layout&& other) noexcept
         m_vkDevice = other.m_vkDevice;
         m_vkPipelineLayout = other.m_vkPipelineLayout;
 
-        other.m_vkDevice = nullptr;
-        other.m_vkPipelineLayout = nullptr;
+        other.m_vkDevice = VK_NULL_HANDLE;
+        other.m_vkPipelineLayout = VK_NULL_HANDLE;
     }
 
     return *this;
@@ -110,8 +110,8 @@ pipeline_layout::pipeline_layout(pipeline_layout&& other) noexcept :
     m_vkDevice(other.m_vkDevice),
     m_vkPipelineLayout(other.m_vkPipelineLayout)
 {
-    other.m_vkDevice = nullptr;
-    other.m_vkPipelineLayout = nullptr;
+    other.m_vkDevice = VK_NULL_HANDLE;
+    other.m_vkPipelineLayout = VK_NULL_HANDLE;
 }
 
 void pipeline::destroy() noexcept
@@ -129,8 +129,8 @@ pipeline& pipeline::operator=(pipeline&& other) noexcept
         m_vkDevice = other.m_vkDevice;
         m_vkPipeline = other.m_vkPipeline;
 
-        other.m_vkDevice = nullptr;
-        other.m_vkPipeline = nullptr;
+        other.m_vkDevice = VK_NULL_HANDLE;
+        other.m_vkPipeline = VK_NULL_HANDLE;
     }
 
     return *this;
@@ -394,13 +394,13 @@ static VkPipeline in_vulkan_create_pipeline(VkDevice vkDevice,
         desc.layout,                                                    // layout
         pass.vkRenderPass,                                              // renderPass
         desc.subpassIndex,                                              // subpass
-        nullptr,                                                        // basePipelineHandle
+        VK_NULL_HANDLE,                                                 // basePipelineHandle
         -1                                                              // basePipelineIndex
     };
 
     // Create Vulkan graphics pipeline.
     VkPipeline vkPipeline;
-    if (vkCreateGraphicsPipelines(vkDevice, nullptr, 1,
+    if (vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1,
         &vkPipelineCreateInfo, nullptr, &vkPipeline) != VK_SUCCESS)
     {
         throw std::runtime_error("Could not create Vulkan graphics pipeline");
@@ -418,8 +418,8 @@ pipeline::pipeline(pipeline&& other) noexcept :
     m_vkDevice(other.m_vkDevice),
     m_vkPipeline(other.m_vkPipeline)
 {
-    other.m_vkDevice = nullptr;
-    other.m_vkPipeline = nullptr;
+    other.m_vkDevice = VK_NULL_HANDLE;
+    other.m_vkPipeline = VK_NULL_HANDLE;
 }
 } // gfx
 } // hr

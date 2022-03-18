@@ -13,7 +13,7 @@ class image;
 
 class cmd_list : public non_copyable
 {
-    VkCommandBuffer m_vkCmdBuf = nullptr;
+    VkCommandBuffer m_vkCmdBuf = VK_NULL_HANDLE;
 
 public:
     inline VkCommandBuffer handle() const noexcept

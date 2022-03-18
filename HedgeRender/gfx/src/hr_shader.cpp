@@ -39,7 +39,7 @@ shader_parameter_group& shader_parameter_group::operator=(
         m_vkDescSetLayout = other.m_vkDescSetLayout;
         m_vkPushConstantRanges = std::move(other.m_vkPushConstantRanges);
 
-        other.m_vkDevice = nullptr;
+        other.m_vkDevice = VK_NULL_HANDLE;
     }
 
     return *this;
@@ -129,7 +129,7 @@ shader_parameter_group::shader_parameter_group(shader_parameter_group&& other) n
     m_vkDescSetLayout(other.m_vkDescSetLayout),
     m_vkPushConstantRanges(std::move(m_vkPushConstantRanges))
 {
-    other.m_vkDevice = nullptr;
+    other.m_vkDevice = VK_NULL_HANDLE;
 }
 
 void shader::destroy() noexcept
@@ -148,7 +148,7 @@ shader& shader::operator=(shader&& other) noexcept
         m_entryPoint = std::move(other.m_entryPoint);
         m_vkShaderModule = other.m_vkShaderModule;
 
-        other.m_vkDevice = nullptr;
+        other.m_vkDevice = VK_NULL_HANDLE;
     }
 
     return *this;
@@ -188,7 +188,7 @@ shader::shader(shader&& other) noexcept :
     m_entryPoint(std::move(other.m_entryPoint)),
     m_vkShaderModule(other.m_vkShaderModule)
 {
-    other.m_vkDevice = nullptr;
+    other.m_vkDevice = VK_NULL_HANDLE;
 }
 
 void shader_data_allocator::in_steal(shader_data_allocator&& other) noexcept

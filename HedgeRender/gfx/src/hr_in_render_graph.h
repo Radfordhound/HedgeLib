@@ -12,7 +12,7 @@ struct in_swap_chain;
 struct in_render_pass
 {
     std::unique_ptr<render_pass> passData;
-    VkRenderPass vkRenderPass = nullptr;
+    VkRenderPass vkRenderPass = VK_NULL_HANDLE;
     std::size_t firstSubpassIndex;
     std::size_t subpassCount;
     std::size_t firstClearValueIndex;
@@ -44,9 +44,9 @@ struct in_render_subpass
 
 struct in_render_resource
 {
-    VkImage vkImage = nullptr;
-    VmaAllocation vmaAlloc = nullptr;
-    VkImageView vkImageView = nullptr;
+    VkImage vkImage = VK_NULL_HANDLE;
+    VmaAllocation vmaAlloc = VK_NULL_HANDLE;
+    VkImageView vkImageView = VK_NULL_HANDLE;
 
     void destroy(VkDevice vkDevice, VmaAllocator vmaAllocator) noexcept;
 };

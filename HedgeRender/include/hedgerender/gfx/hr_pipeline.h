@@ -13,8 +13,8 @@ class shader;
 
 class pipeline_layout : public non_copyable
 {
-    VkDevice m_vkDevice = nullptr;
-    VkPipelineLayout m_vkPipelineLayout = nullptr;
+    VkDevice m_vkDevice = VK_NULL_HANDLE;
+    VkPipelineLayout m_vkPipelineLayout = VK_NULL_HANDLE;
 
 public:
     inline VkPipelineLayout handle() const noexcept
@@ -102,7 +102,7 @@ public:
 class pipeline_desc
 {
 public:
-    VkPipelineLayout layout = nullptr;
+    VkPipelineLayout layout = VK_NULL_HANDLE;
     shader* vertexShader = nullptr;
     shader* pixelShader = nullptr;
     const input_layout* inputLayouts = nullptr;
@@ -119,8 +119,8 @@ public:
 
 class pipeline : public non_copyable
 {
-    VkDevice m_vkDevice = nullptr;
-    VkPipeline m_vkPipeline = nullptr;
+    VkDevice m_vkDevice = VK_NULL_HANDLE;
+    VkPipeline m_vkPipeline = VK_NULL_HANDLE;
 
 public:
     inline VkPipeline handle() const noexcept

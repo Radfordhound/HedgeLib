@@ -87,7 +87,7 @@ in_render_resource& in_render_graph::add_new_resource(
         0,                                                              // requiredFlags
         VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT,                        // preferredFlags
         0,                                                              // memoryTypeBits
-        nullptr,                                                        // pool
+        VK_NULL_HANDLE,                                                 // pool
         nullptr,                                                        // pUserData
         0                                                               // priority
     };
@@ -153,7 +153,7 @@ void in_render_graph::create_framebuffers(const in_swap_chain& swapChain)
         VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,                  // sType
         nullptr,                                                    // pNext
         0,                                                          // flags
-        nullptr,                                                    // renderPass
+        VK_NULL_HANDLE,                                             // renderPass
         0,                                                          // attachmentCount
         nullptr,                                                    // pAttachments
         swapChain.vkSurfaceExtent.width,                            // width
@@ -243,7 +243,7 @@ in_render_graph& in_render_graph::operator=(in_render_graph&& other) noexcept
         vkFramebuffers = std::move(other.vkFramebuffers);
         resources = std::move(other.resources);
 
-        other.m_vkDevice = nullptr;
+        other.m_vkDevice = VK_NULL_HANDLE;
     }
 
     return *this;
@@ -263,7 +263,7 @@ in_render_graph::in_render_graph(in_render_graph&& other) noexcept :
     vkFramebuffers(std::move(vkFramebuffers)),
     resources(std::move(resources))
 {
-    other.m_vkDevice = nullptr;
+    other.m_vkDevice = VK_NULL_HANDLE;
 }
 } // internal
 
@@ -558,8 +558,9 @@ render_graph render_graph_builder::build(render_device& device)
                     // Generate Vulkan attachment.
                     // (NOTE: We don't need to create a resource for the screen output; just
                     // set these to nullptr for now and fill the pointer in properly later.)
-                    graph->vkAttachments.push_back((attachInfo.first == screen_output) ? nullptr :
-                        graph->add_new_resource(device.m_swapChain.vkSurfaceFormat.format,
+                    graph->vkAttachments.push_back((attachInfo.first == screen_output) ?
+                        VK_NULL_HANDLE : graph->add_new_resource(
+                            device.m_swapChain.vkSurfaceFormat.format,
                             device.m_swapChain.vkSurfaceExtent.width,
                             device.m_swapChain.vkSurfaceExtent.height).vkImageView);
 

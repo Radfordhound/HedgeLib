@@ -263,7 +263,7 @@ buffer::buffer(res_allocator& allocator, memory_type memType,
         0,                                                              // requiredFlags
         in_vulkan_get_memory_prop_flags(memType),                       // preferredFlags
         0,                                                              // memoryTypeBits
-        nullptr,                                                        // pool
+        VK_NULL_HANDLE,                                                 // pool
         nullptr,                                                        // pUserData
         0                                                               // priority
     };
@@ -431,7 +431,7 @@ image::image(res_allocator& allocator, memory_type memType, VkImageType vkImageT
         0,                                                              // requiredFlags
         in_vulkan_get_memory_prop_flags(memType),                       // preferredFlags
         0,                                                              // memoryTypeBits
-        nullptr,                                                        // pool
+        VK_NULL_HANDLE,                                                 // pool
         nullptr,                                                        // pUserData
         0                                                               // priority
     };
@@ -481,7 +481,7 @@ image_view& image_view::operator=(image_view&& other) noexcept
         m_vkDevice = other.m_vkDevice;
         m_vkImageView = other.m_vkImageView;
 
-        other.m_vkDevice = nullptr;
+        other.m_vkDevice = VK_NULL_HANDLE;
     }
     
     return *this;
@@ -568,7 +568,7 @@ image_view::image_view(image_view&& other) noexcept :
     m_vkDevice(other.m_vkDevice),
     m_vkImageView(other.m_vkImageView)
 {
-    other.m_vkDevice = nullptr;
+    other.m_vkDevice = VK_NULL_HANDLE;
 }
 
 void sampler::destroy() noexcept
@@ -586,7 +586,7 @@ sampler& sampler::operator=(sampler&& other) noexcept
         m_vkDevice = other.m_vkDevice;
         m_vkSampler = other.m_vkSampler;
 
-        other.m_vkDevice = nullptr;
+        other.m_vkDevice = VK_NULL_HANDLE;
     }
 
     return *this;
@@ -635,7 +635,7 @@ sampler::sampler(sampler&& other) noexcept :
     m_vkDevice(other.m_vkDevice),
     m_vkSampler(other.m_vkSampler)
 {
-    other.m_vkDevice = nullptr;
+    other.m_vkDevice = VK_NULL_HANDLE;
 }
 } // gfx
 } // hr

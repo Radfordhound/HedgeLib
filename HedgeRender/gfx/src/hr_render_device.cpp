@@ -167,7 +167,7 @@ void in_swap_chain::create(VkPhysicalDevice vkPhyDev,
     if (vkResult != VK_SUCCESS)
     {
         vkSwapChainImageViews.reset();
-        vkSwapChain = nullptr;
+        vkSwapChain = VK_NULL_HANDLE;
         throw std::runtime_error("Could not create Vulkan swap chain");
     }
 

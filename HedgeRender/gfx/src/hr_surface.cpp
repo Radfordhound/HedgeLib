@@ -56,7 +56,7 @@ surface& surface::operator=(surface&& other) noexcept
         m_vkInstance = other.m_vkInstance;
         m_vkSurface = other.m_vkSurface;
 
-        other.m_vkSurface = nullptr;
+        other.m_vkSurface = VK_NULL_HANDLE;
     }
 
     return *this;
@@ -66,7 +66,7 @@ surface::surface(surface&& other) noexcept :
     m_vkInstance(other.m_vkInstance),
     m_vkSurface(other.m_vkSurface)
 {
-    other.m_vkSurface = nullptr;
+    other.m_vkSurface = VK_NULL_HANDLE;
 }
 } // gfx
 } // hr

@@ -58,7 +58,7 @@ enum class memory_type
 class buffer : public non_copyable
 {
     VmaAllocator_T* m_vmaAllocator = nullptr;
-    VkBuffer m_vkBuffer = nullptr;
+    VkBuffer m_vkBuffer = VK_NULL_HANDLE;
     VmaAllocation_T* m_vmaAlloc = nullptr;
     std::size_t m_size = 0;
 
@@ -127,7 +127,7 @@ public:
 class image : public non_copyable
 {
     VmaAllocator_T* m_vmaAllocator = nullptr;
-    VkImage m_vkImage = nullptr;
+    VkImage m_vkImage = VK_NULL_HANDLE;
     VmaAllocation_T* m_vmaAlloc = nullptr;
     std::size_t m_size = 0;
     VkImageType m_vkImageType = VK_IMAGE_TYPE_1D;
@@ -203,8 +203,8 @@ public:
 
 class image_view : public non_copyable
 {
-    VkDevice m_vkDevice = nullptr;
-    VkImageView m_vkImageView = nullptr;
+    VkDevice m_vkDevice = VK_NULL_HANDLE;
+    VkImageView m_vkImageView = VK_NULL_HANDLE;
 
 public:
     inline VkImageView handle() const noexcept
@@ -253,8 +253,8 @@ public:
 
 class sampler : public non_copyable
 {
-    VkDevice m_vkDevice = nullptr;
-    VkSampler m_vkSampler = nullptr;
+    VkDevice m_vkDevice = VK_NULL_HANDLE;
+    VkSampler m_vkSampler = VK_NULL_HANDLE;
 
 public:
     inline VkSampler handle() const noexcept
