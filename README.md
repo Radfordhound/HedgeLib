@@ -13,7 +13,7 @@ As such, you don't have to manually build any of the tools/libraries in this rep
 - [Latest (development) builds](https://ci.appveyor.com/project/Radfordhound/hedgelib)
 
 ## HedgeLib
-HedgeLib is C++11 library [under the MIT license](License.txt) that aims to make modding games in the Sonic the Hedgehog franchise easier, similar to [Dario's excellent "LibGens"](https://github.com/DarioSamo/libgens-sonicglvl).
+HedgeLib is C++11 library [under the MIT license](LICENSE.txt) that aims to make modding games in the Sonic the Hedgehog franchise easier, similar to [Dario's excellent "LibGens"](https://github.com/DarioSamo/libgens-sonicglvl).
 
 Right now, HedgeLib supports the following:
 
