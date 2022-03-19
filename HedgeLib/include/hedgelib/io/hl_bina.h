@@ -3,15 +3,6 @@
 #include "hl_hh_mirage.h"
 #include "../hl_blob.h"
 
-/* GNU-specific compilation fix */
-#ifdef major
-#undef major
-#endif
-
-#ifdef minor
-#undef minor
-#endif
-
 namespace hl
 {
 namespace bina
@@ -20,12 +11,15 @@ constexpr u32 sig = make_sig("BINA");
 
 struct ver
 {
-    u8 major;
-    u8 minor;
+    /* NOTE: major and minor begin with underscores to avoid a GNU-specific compilation error. */
+    u8 _major;
+    u8 _minor;
     u8 rev;
 
-    constexpr ver(char major, char minor, char rev) noexcept :
-        major(major), minor(minor), rev(rev) {}
+    constexpr ver(char _major, char _minor, char rev) noexcept :
+        _major(_major),
+        _minor(_minor),
+        rev(rev) {}
 };
 
 HL_STATIC_ASSERT_SIZE(ver, 3);
@@ -138,87 +132,13 @@ inline pac_pack_meta* get_pac_pack_meta(blob& rawData)
     return get_pac_pack_meta(rawData.data(), rawData.size());
 }
 
-template<template<typename> class off_t>
-void strings_write(std::size_t dataPos,
+HL_API void strings_write32(std::size_t dataPos,
     endian_flag endianFlag, const str_table& strTable,
-    off_table& offTable, stream& stream)
-{
-    std::unique_ptr<bool[]> isDuplicateEntry(new bool[strTable.size()]());
+    off_table& offTable, stream& stream);
 
-    // Write strings and fix offsets in string entries.
-    for (std::size_t i = 0; i < strTable.size(); ++i)
-    {
-        // Skip the current string entry if it's a duplicate.
-        if (isDuplicateEntry[i]) continue;
-
-        // Add offset position to offset table.
-        const str_table_entry& curEntry = strTable[i];
-        offTable.push_back(curEntry.offPos);
-
-        // Jump to offset position.
-        const std::size_t curStrPos = stream.tell();
-        stream.jump_to(curEntry.offPos);
-
-        // Compute offset.
-        off_t<void> off(static_cast<typename off_t<void>::val_t>(
-            curStrPos - dataPos));
-
-        // Swap offset if necessary.
-        if (needs_swap(endianFlag))
-        {
-            hl::endian_swap(off);
-        }
-
-        // Write fixed offset.
-        stream.write_obj(off);
-
-        // Mark duplicate string entries and fix duplicate offsets.
-        for (std::size_t i2 = (i + 1); i2 < strTable.size(); ++i2)
-        {
-            // If we've found a duplicate string entry...
-            const str_table_entry& dupEntry = strTable[i2];
-            if (curEntry.str == dupEntry.str)
-            {
-                // Add offset value to offset table.
-                offTable.push_back(dupEntry.offPos);
-
-                // Jump to offset position.
-                stream.jump_to(dupEntry.offPos);
-
-                // Write fixed offset.
-                stream.write_obj(off);
-                
-                // Mark this string entry as a duplicate.
-                isDuplicateEntry[i2] = true;
-            }
-        }
-
-        // Jump to string position.
-        stream.jump_to(curStrPos);
-
-        // Write string.
-        stream.write_str(curEntry.str);
-    }
-
-    // Write padding.
-    stream.pad(sizeof(off_t<void>));
-}
-
-inline void strings_write32(std::size_t dataPos,
+HL_API void strings_write64(std::size_t dataPos,
     endian_flag endianFlag, const str_table& strTable,
-    off_table& offTable, stream& stream)
-{
-    strings_write<off32>(dataPos, endianFlag,
-        strTable, offTable, stream);
-}
-
-inline void strings_write64(std::size_t dataPos,
-    endian_flag endianFlag, const str_table& strTable,
-    off_table& offTable, stream& stream)
-{
-    strings_write<off64>(dataPos, endianFlag,
-        strTable, offTable, stream);
-}
+    off_table& offTable, stream& stream);
 
 enum class offset_flags : u8
 {
@@ -305,90 +225,30 @@ public:
         offTable, offTableSize)) {}
 };
 
-template<template<typename> class off_t>
-void offsets_fix(off_table_handle offTable,
-    const endian_flag endianFlag, void* base)
-{
-    for (u32 relOffPos : offTable)
-    {
-        // Get pointer to current offset.
-        off_t<void>* curOff = ptradd<off_t<void>>(base, relOffPos);
+HL_API void offsets_fix32(off_table_handle offTable,
+    const endian_flag endianFlag, void* base);
 
-        // Endian-swap offset if necessary.
-        if (needs_swap(endianFlag))
-        {
-            hl::endian_swap(*curOff);
-        }
-
-        // Fix offset.
-        curOff->fix(base);
-    }
-}
-
-inline void offsets_fix32(off_table_handle offTable,
-    const endian_flag endianFlag, void* base)
-{
-    offsets_fix<off32>(offTable, endianFlag, base);
-}
-
-inline void offsets_fix64(off_table_handle offTable,
-    const endian_flag endianFlag, void* base)
-{
-    offsets_fix<off64>(offTable, endianFlag, base);
-}
+HL_API void offsets_fix64(off_table_handle offTable,
+    const endian_flag endianFlag, void* base);
 
 HL_API void offsets_write_no_sort_no_pad(std::size_t dataPos,
     const off_table& offTable, stream& stream);
 
-template<template<typename> class off_t>
-inline void offsets_write_no_sort(std::size_t dataPos,
-    const off_table& offTable, stream& stream)
-{
-    // Write offsets.
-    offsets_write_no_sort_no_pad(dataPos, offTable, stream);
+HL_API void offsets_write_no_sort32(std::size_t dataPos,
+    const off_table& offTable, stream& stream);
 
-    // Write padding.
-    stream.pad(sizeof(off_t<void>));
-}
+HL_API void offsets_write_no_sort64(std::size_t dataPos,
+    const off_table& offTable, stream& stream);
 
-inline void offsets_write_no_sort32(std::size_t dataPos,
-    const off_table& offTable, stream& stream)
-{
-    offsets_write_no_sort<off32>(dataPos, offTable, stream);
-}
+HL_API void offsets_write32(std::size_t dataPos,
+    off_table& offTable, stream& stream);
 
-inline void offsets_write_no_sort64(std::size_t dataPos,
-    const off_table& offTable, stream& stream)
-{
-    offsets_write_no_sort<off64>(dataPos, offTable, stream);
-}
-
-template<template<typename> class off_t>
-inline void offsets_write(std::size_t dataPos,
-    off_table& offTable, stream& stream)
-{
-    // Sort offset table.
-    std::sort(offTable.begin(), offTable.end());
-
-    // Write sorted offsets.
-    offsets_write_no_sort<off_t>(dataPos, offTable, stream);
-}
-
-inline void offsets_write32(std::size_t dataPos,
-    off_table& offTable, stream& stream)
-{
-    offsets_write<off32>(dataPos, offTable, stream);
-}
-
-inline void offsets_write64(std::size_t dataPos,
-    off_table& offTable, stream& stream)
-{
-    offsets_write<off64>(dataPos, offTable, stream);
-}
+HL_API void offsets_write64(std::size_t dataPos,
+    off_table& offTable, stream& stream);
 
 namespace v1
 {
-struct header
+struct raw_header
 {
     /** @brief The size of the entire file, including this header. */
     u32 fileSize;
@@ -440,37 +300,32 @@ struct header
         return reinterpret_cast<T*>(this + 1);
     }
 
-    inline off_table_handle offsets() const noexcept
-    {
-        return off_table_handle(offTable.get(), offTableSize);
-    }
+    HL_API off_table_handle offsets() const noexcept;
 
     HL_API void fix();
 };
 
-HL_STATIC_ASSERT_SIZE(header, 0x20);
+HL_STATIC_ASSERT_SIZE(raw_header, 0x20);
 
 inline void fix(void* rawData)
 {
-    header* headerPtr = static_cast<header*>(rawData);
+    raw_header* headerPtr = static_cast<raw_header*>(rawData);
     headerPtr->fix();
 }
 
 template<typename T = void>
 inline const T* get_data(const void* rawData)
 {
-    const header* headerPtr = static_cast<const header*>(rawData);
+    const raw_header* headerPtr = static_cast<const raw_header*>(rawData);
     return headerPtr->data<T>();
 }
 
 template<typename T = void>
 inline T* get_data(void* rawData)
 {
-    header* headerPtr = static_cast<header*>(rawData);
+    raw_header* headerPtr = static_cast<raw_header*>(rawData);
     return headerPtr->data<T>();
 }
-
-// TODO
 } // v1
 
 namespace v2
@@ -478,7 +333,7 @@ namespace v2
 constexpr ver ver_200 = ver('2', '0', '0');
 constexpr ver ver_210 = ver('2', '1', '0');
 
-enum class block_type : u32
+enum class raw_block_type : u32
 {
     /** @brief This block contains data. See block_data_header. */
     data = make_sig("DATA"),
@@ -490,7 +345,7 @@ enum class block_type : u32
     imag = make_sig("IMAG")
 };
 
-struct block_header
+struct raw_block_header
 {
     /** @brief Used to determine what type of block this is. See hl::bina::v2::block_type. */
     u32 signature;
@@ -503,20 +358,20 @@ struct block_header
         hl::endian_swap(size);
     }
 
-    inline const block_header* next_block() const noexcept
+    inline const raw_block_header* next_block() const noexcept
     {
-        return ptradd<block_header>(this, size);
+        return ptradd<raw_block_header>(this, size);
     }
 
-    inline block_header* next_block() noexcept
+    inline raw_block_header* next_block() noexcept
     {
-        return ptradd<block_header>(this, size);
+        return ptradd<raw_block_header>(this, size);
     }
 };
 
-HL_STATIC_ASSERT_SIZE(block_header, 8);
+HL_STATIC_ASSERT_SIZE(raw_block_header, 8);
 
-struct block_data_header
+struct raw_block_data_header
 {
     /** @brief Used to determine what type of block this is. See hl::bina::v2::block_type. */
     u32 signature;
@@ -543,14 +398,14 @@ struct block_data_header
         hl::endian_swap(relativeDataOffset);
     }
 
-    inline const block_header* next_block() const noexcept
+    inline const raw_block_header* next_block() const noexcept
     {
-        return ptradd<block_header>(this, size);
+        return ptradd<raw_block_header>(this, size);
     }
 
-    inline block_header* next_block() noexcept
+    inline raw_block_header* next_block() noexcept
     {
-        return ptradd<block_header>(this, size);
+        return ptradd<raw_block_header>(this, size);
     }
 
     template<typename T = void>
@@ -582,32 +437,9 @@ struct block_data_header
         return off_table_handle(off_table(), offTableSize);
     }
 
-    template<template<typename> class off_t>
-    inline void fix(endian_flag endianFlag)
-    {
-        // Swap header if necessary.
-        if (needs_swap(endianFlag))
-        {
-            endian_swap();
-        }
-
-        // Fix string table offset.
-        void* dataPtr = data();
-        strTable.fix(dataPtr);
-
-        // Fix data offsets.
-        offsets_fix<off_t>(offsets(), endianFlag, dataPtr);
-    }
-
-    inline void fix32(endian_flag endianFlag)
-    {
-        fix<off32>(endianFlag);
-    }
-
-    inline void fix64(endian_flag endianFlag)
-    {
-        fix<off64>(endianFlag);
-    }
+    HL_API void fix32(endian_flag endianFlag);
+    
+    HL_API void fix64(endian_flag endianFlag);
 
     HL_API static void start_write(endian_flag endianFlag,
         stream& stream);
@@ -616,47 +448,20 @@ struct block_data_header
         std::size_t strTablePos, std::size_t offTablePos,
         endian_flag endianFlag, stream& stream);
 
-    template<template<typename> class off_t>
-    inline static void finish_write(std::size_t dataBlockPos,
+    HL_API static void finish_write32(std::size_t dataBlockPos,
         endian_flag endianFlag, const hl::str_table& strTable,
-        hl::off_table& offTable, stream& stream)
-    {
-        const std::size_t dataPos = (dataBlockPos + (sizeof(block_data_header) * 2));
+        hl::off_table& offTable, stream& stream);
 
-        // Write string table.
-        const std::size_t strTablePos = stream.tell();
-        strings_write<off_t>(dataPos, endianFlag, strTable, offTable, stream);
-
-        // Write offset table.
-        const std::size_t offTablePos = stream.tell();
-        offsets_write<off_t>(dataPos, offTable, stream);
-
-        // Fill-in data block header values.
-        finish_write(dataBlockPos, strTablePos, offTablePos, endianFlag, stream);
-    }
-
-    inline static void finish_write32(std::size_t dataBlockPos,
+    HL_API static void finish_write64(std::size_t dataBlockPos,
         endian_flag endianFlag, const hl::str_table& strTable,
-        hl::off_table& offTable, stream& stream)
-    {
-        finish_write<off32>(dataBlockPos, endianFlag,
-            strTable, offTable, stream);
-    }
-
-    inline static void finish_write64(std::size_t dataBlockPos,
-        endian_flag endianFlag, const hl::str_table& strTable,
-        hl::off_table& offTable, stream& stream)
-    {
-        finish_write<off64>(dataBlockPos, endianFlag,
-            strTable, offTable, stream);
-    }
+        hl::off_table& offTable, stream& stream);
 };
 
-HL_STATIC_ASSERT_SIZE(block_data_header, 0x18);
+HL_STATIC_ASSERT_SIZE(raw_block_data_header, 0x18);
 
 class const_block_iterator
 {
-    const block_header* m_curBlock = nullptr;
+    const raw_block_header* m_curBlock = nullptr;
     u16 m_curBlockIndex = 0, m_blockCount = 0;
 
 public:
@@ -670,49 +475,27 @@ public:
         return const_block_iterator();
     }
 
-    inline const block_header* operator*() const noexcept
+    inline const raw_block_header* operator*() const noexcept
     {
         return m_curBlock;
     }
 
-    inline const_block_iterator& operator++() noexcept
-    {
-        if (++m_curBlockIndex > m_blockCount)
-        {
-            m_curBlock = nullptr;
-            m_curBlockIndex = m_blockCount = 0;
-        }
-        else
-        {
-            m_curBlock = m_curBlock->next_block();
-        }
+    HL_API const_block_iterator& operator++() noexcept;
 
-        return *this;
-    }
+    HL_API bool operator==(const const_block_iterator& other) const noexcept;
 
-    inline bool operator==(const const_block_iterator& other) const noexcept
-    {
-        return (m_curBlock == other.m_curBlock &&
-            m_curBlockIndex == other.m_curBlockIndex &&
-            m_blockCount == other.m_blockCount);
-    }
-
-    inline bool operator!=(const const_block_iterator& other) const noexcept
-    {
-        return (m_curBlock != other.m_curBlock ||
-            m_curBlockIndex != other.m_curBlockIndex ||
-            m_blockCount != other.m_blockCount);
-    }
+    HL_API bool operator!=(const const_block_iterator& other) const noexcept;
 
     inline const_block_iterator() noexcept = default;
-    inline const_block_iterator(const block_header* firstBlock,
-        u16 blockCount) noexcept : m_curBlock(firstBlock),
+
+    inline const_block_iterator(const raw_block_header* firstBlock, u16 blockCount) noexcept :
+        m_curBlock((blockCount) ? firstBlock : nullptr),
         m_blockCount(blockCount) {}
 };
 
 class block_iterator
 {
-    block_header* m_curBlock = nullptr;
+    raw_block_header* m_curBlock = nullptr;
     u16 m_curBlockIndex = 0, m_blockCount = 0;
 
 public:
@@ -726,52 +509,29 @@ public:
         return block_iterator();
     }
 
-    inline const block_header* operator*() const noexcept
+    inline const raw_block_header* operator*() const noexcept
     {
         return m_curBlock;
     }
 
-    inline block_header* operator*() noexcept
+    inline raw_block_header* operator*() noexcept
     {
         return m_curBlock;
     }
 
-    inline block_iterator& operator++() noexcept
-    {
-        if (++m_curBlockIndex >= m_blockCount)
-        {
-            m_curBlock = nullptr;
-            m_curBlockIndex = m_blockCount = 0;
-        }
-        else
-        {
-            m_curBlock = m_curBlock->next_block();
-        }
+    HL_API block_iterator& operator++() noexcept;
 
-        return *this;
-    }
+    HL_API bool operator==(const block_iterator& other) const noexcept;
 
-    inline bool operator==(const block_iterator& other) const noexcept
-    {
-        return (m_curBlock == other.m_curBlock &&
-            m_curBlockIndex == other.m_curBlockIndex &&
-            m_blockCount == other.m_blockCount);
-    }
-
-    inline bool operator!=(const block_iterator& other) const noexcept
-    {
-        return (m_curBlock != other.m_curBlock ||
-            m_curBlockIndex != other.m_curBlockIndex ||
-            m_blockCount != other.m_blockCount);
-    }
+    HL_API bool operator!=(const block_iterator& other) const noexcept;
 
     inline block_iterator() noexcept = default;
-    inline block_iterator(block_header* firstBlock, u16 blockCount) noexcept :
+    inline block_iterator(raw_block_header* firstBlock, u16 blockCount) noexcept :
         m_curBlock((blockCount) ? firstBlock : nullptr),
         m_blockCount(blockCount) {}
 };
 
-struct header
+struct raw_header
 {
     /** @brief "BINA" signature. */
     u32 signature;
@@ -798,14 +558,14 @@ struct header
         return static_cast<bina::endian_flag>(endianFlag);
     }
 
-    inline const block_header* first_block() const noexcept
+    inline const raw_block_header* first_block() const noexcept
     {
-        return reinterpret_cast<const block_header*>(this + 1);
+        return reinterpret_cast<const raw_block_header*>(this + 1);
     }
 
-    inline block_header* first_block() noexcept
+    inline raw_block_header* first_block() noexcept
     {
-        return reinterpret_cast<block_header*>(this + 1);
+        return reinterpret_cast<raw_block_header*>(this + 1);
     }
 
     inline const_block_iterator blocks() const noexcept
@@ -818,31 +578,31 @@ struct header
         return block_iterator(first_block(), blockCount);
     }
 
-    HL_API const block_header* get_block(block_type type) const noexcept;
+    HL_API const raw_block_header* get_block(raw_block_type type) const noexcept;
 
-    inline block_header* get_block(block_type type) noexcept
+    inline raw_block_header* get_block(raw_block_type type) noexcept
     {
-        return const_cast<block_header*>(const_cast<
-            const header*>(this)->get_block(type));
+        return const_cast<raw_block_header*>(const_cast<
+            const raw_header*>(this)->get_block(type));
     }
 
-    inline const block_data_header* get_data_block() const noexcept
+    inline const raw_block_data_header* get_data_block() const noexcept
     {
-        return reinterpret_cast<const block_data_header*>(
-            get_block(block_type::data));
+        return reinterpret_cast<const raw_block_data_header*>(
+            get_block(raw_block_type::data));
     }
 
-    inline block_data_header* get_data_block() noexcept
+    inline raw_block_data_header* get_data_block() noexcept
     {
-        return reinterpret_cast<block_data_header*>(
-            get_block(block_type::data));
+        return reinterpret_cast<raw_block_data_header*>(
+            get_block(raw_block_type::data));
     }
 
     template<typename T = void>
     inline const T* get_data() const noexcept
     {
         // Get data block, if any.
-        const block_data_header* dataBlock = get_data_block();
+        const raw_block_data_header* dataBlock = get_data_block();
         if (!dataBlock) return nullptr;
 
         // Get data.
@@ -853,50 +613,16 @@ struct header
     inline T* get_data() noexcept
     {
         // Get data block, if any.
-        block_data_header* dataBlock = get_data_block();
+        raw_block_data_header* dataBlock = get_data_block();
         if (!dataBlock) return nullptr;
 
         // Get data.
         return dataBlock->data<T>();
     }
 
-    template<template<typename> class off_t>
-    inline void fix()
-    {
-        // Swap header if necessary.
-        if (needs_swap(endian_flag()))
-        {
-            endian_swap();
-        }
+    HL_API void fix32();
 
-        // Fix blocks.
-        for (auto block : blocks())
-        {
-            switch (block->signature)
-            {
-            case static_cast<u32>(block_type::data):
-            {
-                block_data_header* dataBlock = reinterpret_cast<block_data_header*>(block);
-                dataBlock->fix<off_t>(endian_flag());
-                break;
-            }
-
-            default:
-                HL_ERROR(error_type::unsupported);
-                return;
-            }
-        }
-    }
-
-    inline void fix32()
-    {
-        fix<off32>();
-    }
-
-    inline void fix64()
-    {
-        fix<off64>();
-    }
+    HL_API void fix64();
 
     HL_API static void start_write(ver version,
         bina::endian_flag endianFlag, stream& stream);
@@ -905,63 +631,28 @@ struct header
         bina::endian_flag endianFlag, stream& stream);
 };
 
-HL_STATIC_ASSERT_SIZE(header, 16);
+HL_STATIC_ASSERT_SIZE(raw_header, 16);
 
-template<template<typename> class off_t>
-inline void fix(void* rawData, std::size_t dataSize)
-{
-    // BINA V2
-    if (has_v2_header(rawData))
-    {
-        header* headerPtr = static_cast<header*>(rawData);
-        headerPtr->fix<off_t>();
-    }
-
-    // PACPACK_METADATA
-    else
-    {
-        // Compatibility with files extracted using PacPack.
-        pac_pack_meta* pacPackMetadata = get_pac_pack_meta(rawData, dataSize);
-        if (!pacPackMetadata) return;
-
-        const endian_flag endianFlag = pacPackMetadata->guess_endianness(rawData, dataSize);
-
-        pacPackMetadata->fix(rawData, endianFlag);
-    }
-}
-
-template<template<typename> class off_t>
-inline void fix(blob& rawData)
-{
-    fix<off_t>(rawData.data(), rawData.size());
-}
-
-inline void fix32(void* rawData, std::size_t dataSize)
-{
-    fix<off32>(rawData, dataSize);
-}
+HL_API void fix32(void* rawData, std::size_t dataSize);
 
 inline void fix32(blob& rawData)
 {
-    fix<off32>(rawData);
+    fix32(rawData.data(), rawData.size());
 }
 
-inline void fix64(void* rawData, std::size_t dataSize)
-{
-    fix<off64>(rawData, dataSize);
-}
+HL_API void fix64(void* rawData, std::size_t dataSize);
 
 inline void fix64(blob& rawData)
 {
-    fix<off64>(rawData);
+    fix64(rawData.data(), rawData.size());
 }
 
-HL_API const block_data_header* get_data_block(const void* rawData);
+HL_API const raw_block_data_header* get_data_block(const void* rawData);
 
-inline block_data_header* get_data_block(void* rawData)
+inline raw_block_data_header* get_data_block(void* rawData)
 {
-    return const_cast<block_data_header*>(get_data_block(
-        const_cast<const void*>(rawData)));
+    return const_cast<raw_block_data_header*>(
+        get_data_block(const_cast<const void*>(rawData)));
 }
 
 template<typename T = void>
@@ -969,7 +660,7 @@ inline const T* get_data(const void* rawData)
 {
     if (has_v2_header(rawData))
     {
-        const header* headerPtr = static_cast<const header*>(rawData);
+        const auto headerPtr = static_cast<const raw_header*>(rawData);
         return headerPtr->get_data<T>();
     }
     else
@@ -984,7 +675,7 @@ inline T* get_data(void* rawData)
     // BINA V2
     if (has_v2_header(rawData))
     {
-        header* headerPtr = static_cast<header*>(rawData);
+        const auto headerPtr = static_cast<raw_header*>(rawData);
         return headerPtr->get_data<T>();
     }
 
@@ -998,13 +689,13 @@ inline T* get_data(void* rawData)
 
 inline bool has_v1_header(const void* rawData)
 {
-    const v1::header* header = static_cast<const v1::header*>(rawData);
+    const auto header = static_cast<const v1::raw_header*>(rawData);
     return (header->signature == sig);
 }
 
 inline bool has_v1_header(const void* rawData, std::size_t dataSize)
 {
-    return (dataSize >= sizeof(v1::header) && has_v1_header(rawData));
+    return (dataSize >= sizeof(v1::raw_header) && has_v1_header(rawData));
 }
 
 inline bool has_v1_header(const blob& rawData)
@@ -1014,13 +705,13 @@ inline bool has_v1_header(const blob& rawData)
 
 inline bool has_v2_header(const void* rawData)
 {
-    const v2::header* header = static_cast<const v2::header*>(rawData);
+    const auto header = static_cast<const v2::raw_header*>(rawData);
     return (header->signature == sig);
 }
 
 inline bool has_v2_header(const void* rawData, std::size_t dataSize)
 {
-    return (dataSize >= sizeof(v2::header) && has_v2_header(rawData));
+    return (dataSize >= sizeof(v2::raw_header) && has_v2_header(rawData));
 }
 
 inline bool has_v2_header(const blob& rawData)
@@ -1028,44 +719,18 @@ inline bool has_v2_header(const blob& rawData)
     return has_v2_header(rawData.data(), rawData.size());
 }
 
-template<template<typename> class off_t>
-inline void fix(void* rawData, std::size_t dataSize)
-{
-    if (has_v1_header(rawData, dataSize))
-    {
-        v1::fix(rawData);
-    }
-    else
-    {
-        // NOTE: v2::fix also handles PACPACK_METADATA.
-        v2::fix<off_t>(rawData, dataSize);
-    }
-}
-
-template<template<typename> class off_t>
-inline void fix(blob& rawData)
-{
-    fix<off_t>(rawData.data(), rawData.size());
-}
-
-inline void fix32(void* rawData, std::size_t dataSize)
-{
-    fix<off32>(rawData, dataSize);
-}
+HL_API void fix32(void* rawData, std::size_t dataSize);
 
 inline void fix32(blob& rawData)
 {
-    fix<off32>(rawData);
+    fix32(rawData.data(), rawData.size());
 }
 
-inline void fix64(void* rawData, std::size_t dataSize)
-{
-    fix<off64>(rawData, dataSize);
-}
+HL_API void fix64(void* rawData, std::size_t dataSize);
 
 inline void fix64(blob& rawData)
 {
-    fix<off64>(rawData);
+    fix64(rawData.data(), rawData.size());
 }
 
 template<typename T = void>

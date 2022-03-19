@@ -329,17 +329,17 @@ static void in_add_file_entry(const data_entry& dataEntry,
     {
         // Account for BINA header, DATA block, and padding.
         std::size_t dataSize = (static_cast<std::size_t>(dataEntry.dataSize) +
-            sizeof(bina::v2::header) + (sizeof(bina::v2::block_data_header) * 2));
+            sizeof(bina::v2::raw_header) + (sizeof(bina::v2::raw_block_data_header) * 2));
 
         // Create a memory stream to contain unmerged data.
         mem_stream unmergedData(dataSize);
 
         // Start writing BINA header to unmerged memory stream.
-        bina::v2::header::start_write(bina::v2::ver_200,
+        bina::v2::raw_header::start_write(bina::v2::ver_200,
             endianFlag, unmergedData);
 
         // Start writing DATA block to unmerged memory stream.
-        bina::v2::block_data_header::start_write(endianFlag, unmergedData);
+        bina::v2::raw_block_data_header::start_write(endianFlag, unmergedData);
 
         // Write data to unmerged memory stream.
         const u32* dataStart = dataEntry.data<u32>();
@@ -350,7 +350,7 @@ static void in_add_file_entry(const data_entry& dataEntry,
         off_table offTable;
         const u32* dataEnd = ptradd<u32>(dataStart, dataEntry.dataSize);
         u32* dstDataStart = ptradd<u32>(unmergedData.get_data_ptr(), 
-            sizeof(bina::v2::header) + (sizeof(bina::v2::block_data_header) * 2));
+            sizeof(bina::v2::raw_header) + (sizeof(bina::v2::raw_block_data_header) * 2));
 
         while (offIt != offEnd)
         {
@@ -368,7 +368,7 @@ static void in_add_file_entry(const data_entry& dataEntry,
             const std::size_t dstOffPos = (static_cast<std::size_t>(
                 reinterpret_cast<const u8*>(curOff) -
                 reinterpret_cast<const u8*>(dataStart)) +
-                (sizeof(bina::v2::header) + (sizeof(bina::v2::block_data_header) * 2)));
+                (sizeof(bina::v2::raw_header) + (sizeof(bina::v2::raw_block_data_header) * 2)));
 
             // Unmerge string offsets.
             if (curOffVal > strings)
@@ -397,11 +397,11 @@ static void in_add_file_entry(const data_entry& dataEntry,
         }
 
         // Finish writing DATA block to unmerged memory stream.
-        bina::v2::block_data_header::finish_write32(sizeof(bina::v2::header),
+        bina::v2::raw_block_data_header::finish_write32(sizeof(bina::v2::raw_header),
             endianFlag, strTable, offTable, unmergedData);
 
         // Finish writing BINA header to unmerged memory stream.
-        bina::v2::header::finish_write(0, 1, endianFlag, unmergedData);
+        bina::v2::raw_header::finish_write(0, 1, endianFlag, unmergedData);
 
         // Add file entry to archive.
         dataSize = unmergedData.get_size();
@@ -489,18 +489,18 @@ void block_data_header::parse(const void* header,
 void block_data_header::start_write(stream& stream)
 {
     // Generate data block header.
-    block_data_header dataBlock =
+    const block_data_header dataBlock =
     {
-        static_cast<u32>(bina::v2::block_type::data),   // signature
-        0,                                              // size
-        0,                                              // dataEntriesSize
-        0,                                              // dicsSize
-        0,                                              // proxyTableSize
-        0,                                              // strTableSize
-        0,                                              // offTableSize
-        1,                                              // unknown1
-        0,                                              // padding1
-        0                                               // padding2
+        static_cast<u32>(bina::v2::raw_block_type::data),               // signature
+        0,                                                              // size
+        0,                                                              // dataEntriesSize
+        0,                                                              // dicsSize
+        0,                                                              // proxyTableSize
+        0,                                                              // strTableSize
+        0,                                                              // offTableSize
+        1,                                                              // unknown1
+        0,                                                              // padding1
+        0                                                               // padding2
     };
 
     // NOTE: We don't need to swap the header yet since the only values
@@ -576,8 +576,8 @@ void block_data_header::finish_write(std::size_t headerPos,
         proxyTablePos, strTablePos, offTablePos, endianFlag, stream);
 }
 
-const bina::v2::block_header* header::get_block(
-    bina::v2::block_type type) const noexcept
+const bina::v2::raw_block_header* header::get_block(
+    bina::v2::raw_block_type type) const noexcept
 {
     for (auto block : blocks())
     {
@@ -604,7 +604,7 @@ void header::fix()
     {
         switch (block->signature)
         {
-        case static_cast<u32>(bina::v2::block_type::data):
+        case static_cast<u32>(bina::v2::raw_block_type::data):
         {
             block_data_header* dataBlock = reinterpret_cast<block_data_header*>(block);
             dataBlock->fix(endian_flag(), this);
@@ -652,7 +652,7 @@ void header::start_write(bina::ver version,
 void header::finish_write(std::size_t headerPos, u16 blockCount,
     bina::endian_flag endianFlag, stream& stream)
 {
-    bina::v2::header::finish_write(headerPos, blockCount,
+    bina::v2::raw_header::finish_write(headerPos, blockCount,
         endianFlag, stream);
 }
 
@@ -1350,7 +1350,7 @@ static const void* in_file_data_merge(void* data, std::size_t dataSize,
     str_table& strTable, off_table& offTable, u32& dstDataSize)
 {
     // Merge BINAV2 data.
-    if (dataSize >= sizeof(bina::v2::header) && bina::has_v2_header(data))
+    if (dataSize >= sizeof(bina::v2::raw_header) && bina::has_v2_header(data))
     {
         /*
            Fix BINA header, data block, and offsets.
@@ -1363,7 +1363,7 @@ static const void* in_file_data_merge(void* data, std::size_t dataSize,
         bina::v2::fix32(data, dataSize);
 
         // If file has a BINAV2 data block, merge its offsets/strings.
-        bina::v2::block_data_header* dataBlock = bina::v2::get_data_block(data);
+        bina::v2::raw_block_data_header* dataBlock = bina::v2::get_data_block(data);
         
         if (dataBlock)
         {
@@ -3233,15 +3233,15 @@ static void in_data_entries_write(
 
         data_entry dataEntry =
         {
-            (version.major >= '4') ? ((isHere) ?            // uid
+            (version._major >= '4') ? ((isHere) ?                       // uid
                 generate_uid() : 0U) : uid,
 
-            static_cast<u32>(curNode.data->entry->size()),  // dataSize
-            0,                                              // unknown2
-            nullptr,                                        // data
-            0,                                              // unknown3
-            nullptr,                                        // ext
-            flags                                           // flags
+            static_cast<u32>(curNode.data->entry->size()),              // dataSize
+            0,                                                          // unknown2
+            nullptr,                                                    // data
+            0,                                                          // unknown3
+            nullptr,                                                    // ext
+            flags                                                       // flags
         };
 
         // Endian-swap data entry if necessary.
@@ -5080,9 +5080,9 @@ void fix(void* pac)
 {
     // Attempt to fix header based on version number.
     header* headerPtr = static_cast<header*>(pac);
-    if (headerPtr->version.major == '4')
+    if (headerPtr->version._major == '4')
     {
-        if (headerPtr->version.minor == '0')
+        if (headerPtr->version._minor == '0')
         {
             if (headerPtr->version.rev == '2')
             {
@@ -5283,9 +5283,9 @@ blob decompress_root(const void* pac)
 {
     // Attempt to decompress root based on version number.
     const header* headerPtr = static_cast<const header*>(pac);
-    if (headerPtr->version.major == '4')
+    if (headerPtr->version._major == '4')
     {
-        if (headerPtr->version.minor == '0')
+        if (headerPtr->version._minor == '0')
         {
             if (headerPtr->version.rev == '2')
             {
@@ -5313,9 +5313,9 @@ void read(void* pac, archive_entry_list* hlArc,
 {
     // Attempt to decompress root based on version number.
     const header* headerPtr = static_cast<const header*>(pac);
-    if (headerPtr->version.major == '4')
+    if (headerPtr->version._major == '4')
     {
-        if (headerPtr->version.minor == '0')
+        if (headerPtr->version._minor == '0')
         {
             if (headerPtr->version.rev == '2')
             {
@@ -5397,7 +5397,7 @@ void load(const nchar* filePath, archive_entry_list* hlArc,
     blob pac(filePath);
 
     // Load data and parse as necessary.
-    switch (pac.data<bina::v2::header>()->version.major)
+    switch (pac.data<bina::v2::raw_header>()->version._major)
     {
     case '2':
         v2::in_load(pac, filePath, hlArc, pacs);

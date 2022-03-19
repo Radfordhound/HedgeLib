@@ -54,6 +54,88 @@ const pac_pack_meta* get_pac_pack_meta(const void* rawData, std::size_t dataSize
     return nullptr;
 }
 
+template<template<typename> class off_t>
+static void in_strings_write(std::size_t dataPos,
+    endian_flag endianFlag, const str_table& strTable,
+    off_table& offTable, stream& stream)
+{
+    std::unique_ptr<bool[]> isDuplicateEntry(new bool[strTable.size()]());
+
+    // Write strings and fix offsets in string entries.
+    for (std::size_t i = 0; i < strTable.size(); ++i)
+    {
+        // Skip the current string entry if it's a duplicate.
+        if (isDuplicateEntry[i]) continue;
+
+        // Add offset position to offset table.
+        const str_table_entry& curEntry = strTable[i];
+        offTable.push_back(curEntry.offPos);
+
+        // Jump to offset position.
+        const std::size_t curStrPos = stream.tell();
+        stream.jump_to(curEntry.offPos);
+
+        // Compute offset.
+        off_t<void> off(static_cast<typename off_t<void>::val_t>(
+            curStrPos - dataPos));
+
+        // Swap offset if necessary.
+        if (needs_swap(endianFlag))
+        {
+            hl::endian_swap(off);
+        }
+
+        // Write fixed offset.
+        stream.write_obj(off);
+
+        // Mark duplicate string entries and fix duplicate offsets.
+        for (std::size_t i2 = (i + 1); i2 < strTable.size(); ++i2)
+        {
+            // If we've found a duplicate string entry...
+            const str_table_entry& dupEntry = strTable[i2];
+            if (curEntry.str == dupEntry.str)
+            {
+                // Add offset value to offset table.
+                offTable.push_back(dupEntry.offPos);
+
+                // Jump to offset position.
+                stream.jump_to(dupEntry.offPos);
+
+                // Write fixed offset.
+                stream.write_obj(off);
+
+                // Mark this string entry as a duplicate.
+                isDuplicateEntry[i2] = true;
+            }
+        }
+
+        // Jump to string position.
+        stream.jump_to(curStrPos);
+
+        // Write string.
+        stream.write_str(curEntry.str);
+    }
+
+    // Write padding.
+    stream.pad(sizeof(off_t<void>));
+}
+
+void strings_write32(std::size_t dataPos,
+    endian_flag endianFlag, const str_table& strTable,
+    off_table& offTable, stream& stream)
+{
+    in_strings_write<off32>(dataPos, endianFlag,
+        strTable, offTable, stream);
+}
+
+void strings_write64(std::size_t dataPos,
+    endian_flag endianFlag, const str_table& strTable,
+    off_table& offTable, stream& stream)
+{
+    in_strings_write<off64>(dataPos, endianFlag,
+        strTable, offTable, stream);
+}
+
 const u8* off_table_handle::in_get_real_off_table_end(
     const u8* offTable, u32 offTableSize) noexcept
 {
@@ -159,6 +241,38 @@ bool off_table_handle::iterator::next() noexcept
     }
 }
 
+template<template<typename> class off_t>
+static void in_offsets_fix(off_table_handle offTable,
+    const endian_flag endianFlag, void* base)
+{
+    for (u32 relOffPos : offTable)
+    {
+        // Get pointer to current offset.
+        off_t<void>* curOff = ptradd<off_t<void>>(base, relOffPos);
+
+        // Endian-swap offset if necessary.
+        if (needs_swap(endianFlag))
+        {
+            hl::endian_swap(*curOff);
+        }
+
+        // Fix offset.
+        curOff->fix(base);
+    }
+}
+
+void offsets_fix32(off_table_handle offTable,
+    const endian_flag endianFlag, void* base)
+{
+    in_offsets_fix<off32>(offTable, endianFlag, base);
+}
+
+void offsets_fix64(off_table_handle offTable,
+    const endian_flag endianFlag, void* base)
+{
+    in_offsets_fix<off64>(offTable, endianFlag, base);
+}
+
 void offsets_write_no_sort_no_pad(std::size_t dataPos,
     const off_table& offTable, stream& stream)
 {
@@ -227,9 +341,60 @@ void offsets_write_no_sort_no_pad(std::size_t dataPos,
     }
 }
 
+template<template<typename> class off_t>
+static void in_offsets_write_no_sort(std::size_t dataPos,
+    const off_table& offTable, stream& stream)
+{
+    // Write offsets.
+    offsets_write_no_sort_no_pad(dataPos, offTable, stream);
+
+    // Write padding.
+    stream.pad(sizeof(off_t<void>));
+}
+
+void offsets_write_no_sort32(std::size_t dataPos,
+    const off_table& offTable, stream& stream)
+{
+    in_offsets_write_no_sort<off32>(dataPos, offTable, stream);
+}
+
+void offsets_write_no_sort64(std::size_t dataPos,
+    const off_table& offTable, stream& stream)
+{
+    in_offsets_write_no_sort<off64>(dataPos, offTable, stream);
+}
+
+template<template<typename> class off_t>
+static void in_offsets_write(std::size_t dataPos,
+    off_table& offTable, stream& stream)
+{
+    // Sort offset table.
+    std::sort(offTable.begin(), offTable.end());
+
+    // Write sorted offsets.
+    in_offsets_write_no_sort<off_t>(dataPos, offTable, stream);
+}
+
+void offsets_write32(std::size_t dataPos,
+    off_table& offTable, stream& stream)
+{
+    in_offsets_write<off32>(dataPos, offTable, stream);
+}
+
+void offsets_write64(std::size_t dataPos,
+    off_table& offTable, stream& stream)
+{
+    in_offsets_write<off64>(dataPos, offTable, stream);
+}
+
 namespace v1
 {
-void header::fix()
+off_table_handle raw_header::offsets() const noexcept
+{
+    return off_table_handle(offTable.get(), offTableSize);
+}
+
+void raw_header::fix()
 {
     // Endian-swap header if necessary.
     if (needs_swap(endian_flag()))
@@ -248,19 +413,46 @@ void header::fix()
 
 namespace v2
 {
-void block_data_header::start_write(endian_flag endianFlag,
+template<template<typename> class off_t>
+static void in_fix(raw_block_data_header& dataBlock, endian_flag endianFlag)
+{
+    // Swap header if necessary.
+    if (needs_swap(endianFlag))
+    {
+        dataBlock.endian_swap();
+    }
+
+    // Fix string table offset.
+    void* dataPtr = dataBlock.data();
+    dataBlock.strTable.fix(dataPtr);
+
+    // Fix data offsets.
+    in_offsets_fix<off_t>(dataBlock.offsets(), endianFlag, dataPtr);
+}
+
+void raw_block_data_header::fix32(endian_flag endianFlag)
+{
+    in_fix<off32>(*this, endianFlag);
+}
+
+void raw_block_data_header::fix64(endian_flag endianFlag)
+{
+    in_fix<off64>(*this, endianFlag);
+}
+
+void raw_block_data_header::start_write(endian_flag endianFlag,
     stream& stream)
 {
     // Generate data block header.
-    block_data_header dataBlock =
+    raw_block_data_header dataBlock =
     {
-        static_cast<u32>(block_type::data), // signature
-        0U,                                 // size
-        0U,                                 // strTable
-        0U,                                 // strTableSize
-        0U,                                 // offTableSize
-        sizeof(block_data_header),          // relativeDataOffset
-        0U                                  // padding
+        static_cast<u32>(raw_block_type::data),                         // signature
+        0U,                                                             // size
+        0U,                                                             // strTable
+        0U,                                                             // strTableSize
+        0U,                                                             // offTableSize
+        sizeof(raw_block_data_header),                                  // relativeDataOffset
+        0U                                                              // padding
     };
 
     // Endian swap if necessary.
@@ -280,7 +472,7 @@ void block_data_header::start_write(endian_flag endianFlag,
     stream.write_obj(dataBlock);
 }
 
-void block_data_header::finish_write(std::size_t dataBlockPos,
+void raw_block_data_header::finish_write(std::size_t dataBlockPos,
     std::size_t strTablePos, std::size_t offTablePos,
     endian_flag endianFlag, stream& stream)
 {
@@ -288,10 +480,10 @@ void block_data_header::finish_write(std::size_t dataBlockPos,
     const std::size_t endPos = stream.tell();
 
     // Jump to data block size position.
-    stream.jump_to(dataBlockPos + offsetof(block_data_header, size));
+    stream.jump_to(dataBlockPos + offsetof(raw_block_data_header, size));
 
     // Compute data block header values.
-    const std::size_t dataPos = (dataBlockPos + (sizeof(block_data_header) * 2));
+    const std::size_t dataPos = (dataBlockPos + (sizeof(raw_block_data_header) * 2));
     struct
     {
         u32 size;
@@ -322,7 +514,101 @@ void block_data_header::finish_write(std::size_t dataBlockPos,
     stream.jump_to(endPos);
 }
 
-const block_header* header::get_block(block_type type) const noexcept
+template<template<typename> class off_t>
+static void in_finish_write(std::size_t dataBlockPos,
+    endian_flag endianFlag, const hl::str_table& strTable,
+    hl::off_table& offTable, stream& stream)
+{
+    const std::size_t dataPos = (dataBlockPos + (sizeof(raw_block_data_header) * 2));
+
+    // Write string table.
+    const std::size_t strTablePos = stream.tell();
+    in_strings_write<off_t>(dataPos, endianFlag, strTable, offTable, stream);
+
+    // Write offset table.
+    const std::size_t offTablePos = stream.tell();
+    in_offsets_write<off_t>(dataPos, offTable, stream);
+
+    // Fill-in data block header values.
+    raw_block_data_header::finish_write(dataBlockPos,
+        strTablePos, offTablePos, endianFlag, stream);
+}
+
+void raw_block_data_header::finish_write32(std::size_t dataBlockPos,
+    endian_flag endianFlag, const hl::str_table& strTable,
+    hl::off_table& offTable, stream& stream)
+{
+    in_finish_write<off32>(dataBlockPos, endianFlag,
+        strTable, offTable, stream);
+}
+
+void raw_block_data_header::finish_write64(std::size_t dataBlockPos,
+    endian_flag endianFlag, const hl::str_table& strTable,
+    hl::off_table& offTable, stream& stream)
+{
+    in_finish_write<off64>(dataBlockPos, endianFlag,
+        strTable, offTable, stream);
+}
+
+const_block_iterator& const_block_iterator::operator++() noexcept
+{
+    if (++m_curBlockIndex > m_blockCount)
+    {
+        m_curBlock = nullptr;
+        m_curBlockIndex = m_blockCount = 0;
+    }
+    else
+    {
+        m_curBlock = m_curBlock->next_block();
+    }
+
+    return *this;
+}
+
+bool const_block_iterator::operator==(const const_block_iterator& other) const noexcept
+{
+    return (m_curBlock == other.m_curBlock &&
+        m_curBlockIndex == other.m_curBlockIndex &&
+        m_blockCount == other.m_blockCount);
+}
+
+bool const_block_iterator::operator!=(const const_block_iterator& other) const noexcept
+{
+    return (m_curBlock != other.m_curBlock ||
+        m_curBlockIndex != other.m_curBlockIndex ||
+        m_blockCount != other.m_blockCount);
+}
+
+block_iterator& block_iterator::operator++() noexcept
+{
+    if (++m_curBlockIndex >= m_blockCount)
+    {
+        m_curBlock = nullptr;
+        m_curBlockIndex = m_blockCount = 0;
+    }
+    else
+    {
+        m_curBlock = m_curBlock->next_block();
+    }
+
+    return *this;
+}
+
+bool block_iterator::operator==(const block_iterator& other) const noexcept
+{
+    return (m_curBlock == other.m_curBlock &&
+        m_curBlockIndex == other.m_curBlockIndex &&
+        m_blockCount == other.m_blockCount);
+}
+
+bool block_iterator::operator!=(const block_iterator& other) const noexcept
+{
+    return (m_curBlock != other.m_curBlock ||
+        m_curBlockIndex != other.m_curBlockIndex ||
+        m_blockCount != other.m_blockCount);
+}
+
+const raw_block_header* raw_header::get_block(raw_block_type type) const noexcept
 {
     for (auto block : blocks())
     {
@@ -336,18 +622,56 @@ const block_header* header::get_block(block_type type) const noexcept
     return nullptr;
 }
 
-void header::start_write(ver version,
+template<template<typename> class off_t>
+static void in_fix(raw_header& header)
+{
+    // Swap header if necessary.
+    if (needs_swap(header.endian_flag()))
+    {
+        header.endian_swap();
+    }
+
+    // Fix blocks.
+    for (auto block : header.blocks())
+    {
+        switch (block->signature)
+        {
+        case static_cast<u32>(raw_block_type::data):
+        {
+            const auto dataBlock = reinterpret_cast<raw_block_data_header*>(block);
+            in_fix<off_t>(*dataBlock, header.endian_flag());
+            break;
+        }
+
+        default:
+            HL_ERROR(error_type::unsupported);
+            return;
+        }
+    }
+}
+
+void raw_header::fix32()
+{
+    in_fix<off32>(*this);
+}
+
+void raw_header::fix64()
+{
+    in_fix<off64>(*this);
+}
+
+void raw_header::start_write(ver version,
     bina::endian_flag endianFlag, stream& stream)
 {
     // Generate BINAV2 header.
-    const header binaHeader =
+    const raw_header binaHeader =
     {
-        sig,                            // signature
-        version,                        // version
-        static_cast<u8>(endianFlag),    // endianFlag
-        0,                              // fileSize
-        0,                              // blockCount
-        0                               // padding
+        sig,                                                            // signature
+        version,                                                        // version
+        static_cast<u8>(endianFlag),                                    // endianFlag
+        0,                                                              // fileSize
+        0,                                                              // blockCount
+        0                                                               // padding
     };
 
     // NOTE: We don't need to swap the header yet since the only values
@@ -357,14 +681,14 @@ void header::start_write(ver version,
     stream.write_obj(binaHeader);
 }
 
-void header::finish_write(std::size_t headerPos, u16 blockCount,
+void raw_header::finish_write(std::size_t headerPos, u16 blockCount,
     bina::endian_flag endianFlag, stream& stream)
 {
     // Get current stream position.
     const std::size_t curPos = stream.tell();
 
     // Jump to header fileSize position.
-    stream.jump_to(headerPos + offsetof(header, fileSize));
+    stream.jump_to(headerPos + offsetof(raw_header, fileSize));
 
     // Compute file size.
     u32 fileSize = static_cast<u32>(curPos - headerPos);
@@ -384,12 +708,46 @@ void header::finish_write(std::size_t headerPos, u16 blockCount,
     stream.jump_to(curPos);
 }
 
-const block_data_header* get_data_block(const void* rawData)
+template<template<typename> class off_t>
+static void in_fix(void* rawData, std::size_t dataSize)
 {
     // BINA V2
     if (has_v2_header(rawData))
     {
-        const header* headerPtr = static_cast<const header*>(rawData);
+        const auto headerPtr = static_cast<raw_header*>(rawData);
+        in_fix<off_t>(*headerPtr);
+    }
+
+    // PACPACK_METADATA
+    else
+    {
+        // Compatibility with files extracted using PacPack.
+        const auto pacPackMetadata = get_pac_pack_meta(rawData, dataSize);
+        if (!pacPackMetadata) return;
+
+        const auto endianFlag = pacPackMetadata->guess_endianness(
+            rawData, dataSize);
+
+        pacPackMetadata->fix(rawData, endianFlag);
+    }
+}
+
+void fix32(void* rawData, std::size_t dataSize)
+{
+    in_fix<off32>(rawData, dataSize);
+}
+
+void fix64(void* rawData, std::size_t dataSize)
+{
+    in_fix<off64>(rawData, dataSize);
+}
+
+const raw_block_data_header* get_data_block(const void* rawData)
+{
+    // BINA V2
+    if (has_v2_header(rawData))
+    {
+        const raw_header* headerPtr = static_cast<const raw_header*>(rawData);
         return headerPtr->get_data_block();
     }
 
@@ -400,5 +758,29 @@ const block_data_header* get_data_block(const void* rawData)
     }
 }
 } // v2
+
+template<template<typename> class off_t>
+static void in_fix(void* rawData, std::size_t dataSize)
+{
+    if (has_v1_header(rawData, dataSize))
+    {
+        v1::fix(rawData);
+    }
+    else
+    {
+        // NOTE: v2::in_fix also handles PACPACK_METADATA.
+        v2::in_fix<off_t>(rawData, dataSize);
+    }
+}
+
+void fix32(void* rawData, std::size_t dataSize)
+{
+    in_fix<off32>(rawData, dataSize);
+}
+
+void fix64(void* rawData, std::size_t dataSize)
+{
+    in_fix<off64>(rawData, dataSize);
+}
 } // bina
 } // hl
