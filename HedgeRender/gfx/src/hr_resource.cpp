@@ -227,6 +227,7 @@ buffer& buffer::operator=(buffer&& other) noexcept
         m_vmaAllocator = other.m_vmaAllocator;
         m_vkBuffer = other.m_vkBuffer;
         m_vmaAlloc = other.m_vmaAlloc;
+        m_size = other.m_size;
 
         other.m_vmaAllocator = nullptr;
     }
@@ -292,7 +293,8 @@ buffer::buffer(render_device& device, memory_type memType,
 buffer::buffer(buffer&& other) noexcept :
     m_vmaAllocator(other.m_vmaAllocator),
     m_vkBuffer(other.m_vkBuffer),
-    m_vmaAlloc(other.m_vmaAlloc)
+    m_vmaAlloc(other.m_vmaAlloc),
+    m_size(other.m_size)
 {
     other.m_vmaAllocator = nullptr;
 }
@@ -376,10 +378,15 @@ static VkImageCreateFlags in_vulkan_get_image_create_flags(
     return vkImageCreateFlags;
 }
 
+// NOTE: Defined in hr_render_device.cpp
+void in_vulkan_set_debug_name(VkDevice vkDevice,
+    VkObjectType vkObjectType, uint64_t vkObjectHandle,
+    const char* name);
+
 image::image(res_allocator& allocator, memory_type memType, VkImageType vkImageType,
     VkImageUsageFlags vkImageUsage, VkFormat vkFormat, unsigned int width,
     unsigned int height, unsigned int depth, unsigned int mipLevels,
-    unsigned int layerCount) :
+    unsigned int layerCount, const char* debugName) :
 
     m_vmaAllocator(allocator.handle()),
     m_size(in_vulkan_compute_image_size(vkFormat, width,
@@ -443,14 +450,33 @@ image::image(res_allocator& allocator, memory_type memType, VkImageType vkImageT
     {
         throw std::runtime_error("Could not create Vulkan image");
     }
+
+    // Set debug name if one was provided.
+    if (debugName)
+    {
+        try
+        {
+            VmaAllocatorInfo vmaAllocatorInfo;
+            vmaGetAllocatorInfo(allocator.handle(), &vmaAllocatorInfo);
+
+            in_vulkan_set_debug_name(vmaAllocatorInfo.device,
+                VK_OBJECT_TYPE_IMAGE, reinterpret_cast<uint64_t>(m_vkImage),
+                debugName);
+        }
+        catch (...)
+        {
+            vmaDestroyImage(allocator.handle(), m_vkImage, nullptr);
+            throw;
+        }
+    }
 }
 
 image::image(render_device& device, memory_type memType, VkImageType vkImageType,
     VkImageUsageFlags vkImageUsage, VkFormat vkFormat, unsigned int width,
     unsigned int height, unsigned int depth, unsigned int mipLevels,
-    unsigned int layerCount) :
-    image(device.allocator(), memType, vkImageType, vkImageUsage,
-        vkFormat, width, height, depth, mipLevels, layerCount) {}
+    unsigned int layerCount, const char* debugName) :
+    image(device.allocator(), memType, vkImageType, vkImageUsage, vkFormat,
+        width, height, depth, mipLevels, layerCount, debugName) {}
 
 image::image(image&& other) noexcept :
     m_vmaAllocator(other.m_vmaAllocator),
@@ -487,6 +513,23 @@ image_view& image_view::operator=(image_view&& other) noexcept
     return *this;
 }
 
+static VkImageAspectFlags in_vulkan_get_image_aspect(VkFormat vkFormat) noexcept
+{
+    switch (vkFormat)
+    {
+    case VK_FORMAT_D16_UNORM:
+    case VK_FORMAT_X8_D24_UNORM_PACK32:
+    case VK_FORMAT_D32_SFLOAT:
+    case VK_FORMAT_D16_UNORM_S8_UINT:
+    case VK_FORMAT_D24_UNORM_S8_UINT:
+    case VK_FORMAT_D32_SFLOAT_S8_UINT:
+        return VK_IMAGE_ASPECT_DEPTH_BIT;
+
+    default:
+        return VK_IMAGE_ASPECT_COLOR_BIT;
+    }
+}
+
 static VkImageView in_vulkan_create_image_view(VkDevice vkDevice,
     image& image, VkImageViewType viewType)
 {
@@ -507,7 +550,7 @@ static VkImageView in_vulkan_create_image_view(VkDevice vkDevice,
         },
 
         {                                                               // subresourceRange
-            VK_IMAGE_ASPECT_COLOR_BIT,                                  //  aspectMask
+            in_vulkan_get_image_aspect(image.format()),                 //  aspectMask
             0,                                                          //  baseMipLevel
             image.mip_levels(),                                         //  levelCount
             0,                                                          //  baseArrayLayer

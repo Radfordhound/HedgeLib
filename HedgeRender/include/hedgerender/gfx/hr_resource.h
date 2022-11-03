@@ -186,12 +186,26 @@ public:
     HR_GFX_API image(res_allocator& allocator, memory_type memType, VkImageType vkImageType,
         VkImageUsageFlags vkImageUsage, VkFormat vkFormat, unsigned int width,
         unsigned int height, unsigned int depth, unsigned int mipLevels,
-        unsigned int layerCount);
+        unsigned int layerCount, const char* debugName = nullptr);
+
+    image(res_allocator& allocator, memory_type memType, VkImageType vkImageType,
+        VkImageUsageFlags vkImageUsage, VkFormat vkFormat, unsigned int width,
+        unsigned int height, unsigned int depth, unsigned int mipLevels,
+        unsigned int layerCount, const std::string& debugName) :
+        image(allocator, memType, vkImageType, vkImageUsage, vkFormat,
+            width, height, depth, mipLevels, layerCount, debugName.c_str()) {}
 
     HR_GFX_API image(render_device& device, memory_type memType, VkImageType vkImageType,
         VkImageUsageFlags vkImageUsage, VkFormat vkFormat, unsigned int width,
         unsigned int height, unsigned int depth, unsigned int mipLevels,
-        unsigned int layerCount);
+        unsigned int layerCount, const char* debugName = nullptr);
+
+    image(render_device& device, memory_type memType, VkImageType vkImageType,
+        VkImageUsageFlags vkImageUsage, VkFormat vkFormat, unsigned int width,
+        unsigned int height, unsigned int depth, unsigned int mipLevels,
+        unsigned int layerCount, const std::string& debugName) :
+        image(device, memType, vkImageType, vkImageUsage, vkFormat,
+            width, height, depth, mipLevels, layerCount, debugName.c_str()) {}
 
     HR_GFX_API image(image&& other) noexcept;
 

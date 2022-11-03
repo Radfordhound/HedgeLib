@@ -12,6 +12,8 @@ namespace hh
 {
 namespace mirage
 {
+struct shader_list;
+
 template<typename T>
 struct raw_material_param
 {
@@ -115,9 +117,8 @@ struct material_param
     std::string name;
     std::vector<T> values;
 
-    material_param(const char* name) : name(name) {}
-    material_param(const std::string& name) : name(name) {}
-    material_param(std::string&& name) noexcept : name(std::move(name)) {}
+    material_param(std::string name) noexcept :
+        name(std::move(name)) {}
 
     material_param(const raw_material_param<T>& rawParam) :
         flag1(rawParam.flag1),
@@ -127,15 +128,26 @@ struct material_param
         values(rawParam.values.get(), rawParam.values.get() + rawParam.valueCount) {}
 };
 
-class material
+class material : public res_base
 {
-    HL_API void in_add_to_material(std::string& utf8TexFilePath,
+    HL_API void in_parse(const raw_material_v1& rawMat, const nchar* texsetDir);
+
+    HL_API void in_parse(const raw_material_v3& rawMat);
+
+    HL_API void in_parse_sample_chunk_nodes(const void* rawData);
+
+    HL_API void in_parse(const void* rawData, const nchar* texsetDir);
+
+    HL_API void in_load(const nchar* filePath);
+
+    HL_API void in_clear() noexcept;
+
+    HL_API void in_add_to_hl_material(std::string& utf8TexFilePath,
         hl::material& mat, bool includeLibGensTags = true) const;
 
 public:
-    std::string name;
-    std::string shaderName = "Common_d";
-    std::string subShaderName = "Common_d";
+    res_ref<shader_list> shader = "Common_d";
+    res_ref<shader_list> subShader = "Common_d";
     float alphaThreshold = 0.5f;
     bool noBackfaceCulling = false;
     bool useAdditiveBlending = false;
@@ -149,27 +161,11 @@ public:
 
     HL_API static void fix(void* rawData);
 
-    HL_API void add_to_scene(const nchar* texDir, scene& scene,
-        bool merge = true, bool includeLibGensTags = true) const;
+    HL_API void parse(const void* rawData, std::string name, const nchar* texsetDir = nullptr);
 
-    void add_to_scene(const nstring& texDir, scene& scene,
-        bool merge = true, bool includeLibGensTags = true) const
+    inline void parse(const void* rawData, std::string name, const nstring& texsetDir)
     {
-        add_to_scene(texDir.c_str(), scene, merge, includeLibGensTags);
-    }
-
-    HL_API void parse(const raw_material_v1& rawMat);
-
-    HL_API void parse(const raw_material_v1& rawMat, const nchar* texsetDir);
-    HL_API void parse(const raw_material_v1& rawMat, const nstring& texsetDir);
-
-    HL_API void parse(const raw_material_v3& rawMat);
-
-    HL_API void parse(const void* rawData, const nchar* texsetDir = nullptr);
-
-    inline void parse(const void* rawData, const nstring& texsetDir)
-    {
-        parse(rawData, texsetDir.c_str());
+        parse(rawData, std::move(name), texsetDir.c_str());
     }
 
     HL_API void load(const nchar* filePath);
@@ -179,11 +175,21 @@ public:
         load(filePath.c_str());
     }
 
-    material() = default;
+    HL_API void add_to_hl_scene(const nchar* texDir, scene& scene,
+        bool merge = true, bool includeLibGensTags = true) const;
 
-    HL_API material(const void* rawData, const char* name);
-    HL_API material(const void* rawData, const std::string& name);
-    HL_API material(const void* rawData, std::string&& name);
+    void add_to_hl_scene(const nstring& texDir, scene& scene,
+        bool merge = true, bool includeLibGensTags = true) const
+    {
+        add_to_hl_scene(texDir.c_str(), scene, merge, includeLibGensTags);
+    }
+
+    material() noexcept :
+        res_base("default_material") {}
+
+    HL_API material(const void* rawData, std::string name, const nchar* texsetDir = nullptr);
+
+    HL_API material(const void* rawData, std::string name, const nstring& texsetDir);
 
     HL_API material(const nchar* filePath);
 

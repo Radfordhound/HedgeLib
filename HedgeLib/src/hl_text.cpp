@@ -26,15 +26,14 @@ std::size_t utf8_to_utf16::conv(
     // Raise an error if necessary.
     if (len == 0)
     {
-        HL_IN_WIN32_ERROR();
+        throw in_win32_get_last_exception();
     }
 
     // Return length, not counting null terminator.
     return (srcLen) ? len : (len - 1);
 #else
     // TODO
-    HL_ERROR(error_type::unsupported);
-    return 0;
+    throw unsupported_exception();
 #endif
 }
 
@@ -43,8 +42,7 @@ std::size_t utf8_to_utf32::conv(
     dst_char_t* dst, std::size_t dstBufLen)
 {
     // TODO
-    HL_ERROR(error_type::unsupported);
-    return 0;
+    throw unsupported_exception();
 }
 
 std::size_t utf16_to_utf8::conv(
@@ -66,15 +64,14 @@ std::size_t utf16_to_utf8::conv(
     // Raise an error if necessary.
     if (len == 0)
     {
-        HL_IN_WIN32_ERROR();
+        throw in_win32_get_last_exception();
     }
 
     // Return length, not counting null terminator.
     return (srcLen) ? len : (len - 1);
 #else
     // TODO
-    HL_ERROR(error_type::unsupported);
-    return 0;
+    throw unsupported_exception();
 #endif
 }
 
@@ -83,8 +80,7 @@ std::size_t utf16_to_utf32::conv(
     dst_char_t* dst, std::size_t dstBufLen)
 {
     // TODO
-    HL_ERROR(error_type::unsupported);
-    return 0;
+    throw unsupported_exception();
 }
 
 std::size_t utf32_to_utf8::conv(
@@ -92,8 +88,7 @@ std::size_t utf32_to_utf8::conv(
     dst_char_t* dst, std::size_t dstBufLen)
 {
     // TODO
-    HL_ERROR(error_type::unsupported);
-    return 0;
+    throw unsupported_exception();
 }
 
 std::size_t utf32_to_utf16::conv(
@@ -101,8 +96,7 @@ std::size_t utf32_to_utf16::conv(
     dst_char_t* dst, std::size_t dstBufLen)
 {
     // TODO
-    HL_ERROR(error_type::unsupported);
-    return 0;
+    throw unsupported_exception();
 }
 } // text
 

@@ -1,7 +1,6 @@
 #ifndef HL_TABLES_H_INCLUDED
 #define HL_TABLES_H_INCLUDED
 #include "hl_text.h"
-#include <vector>
 #include <utility>
 
 namespace hl
@@ -15,29 +14,27 @@ struct str_table_entry
     /** @brief The (absolute) position of the string offset within the file. */
     std::size_t offPos;
 
-    inline str_table_entry() = default;
-
-    inline str_table_entry(const char* str, std::size_t offPos) :
-        str(str), offPos(offPos) {}
-
-    inline str_table_entry(const std::string& str, std::size_t offPos) :
-        str(str), offPos(offPos) {}
+    str_table_entry() = default;
     
-    inline str_table_entry(std::string&& str, std::size_t offPos) :
-        str(std::move(str)), offPos(offPos) {}
+    str_table_entry(std::string str, std::size_t offPos) noexcept :
+        str(std::move(str)),
+        offPos(offPos) {}
 
-    inline str_table_entry(const char* str, std::size_t offPos,
-        std::size_t strLen) : str(str, strLen), offPos(offPos) {}
+    str_table_entry(const char* str, std::size_t offPos, std::size_t strLen) :
+        str(str, strLen),
+        offPos(offPos) {}
 
 #ifdef HL_IN_WIN32_UNICODE
-    inline str_table_entry(const nchar* str, std::size_t offPos) :
-        str(text::conv<text::native_to_utf8>(str)), offPos(offPos) {}
+    str_table_entry(const nchar* str, std::size_t offPos) :
+        str(std::move(text::conv<text::native_to_utf8>(str))),
+        offPos(offPos) {}
 
-    inline str_table_entry(const nstring& str, std::size_t offPos) :
-        str(text::conv<text::native_to_utf8>(str)), offPos(offPos) {}
+    str_table_entry(const nstring& str, std::size_t offPos) :
+        str(std::move(text::conv<text::native_to_utf8>(str))),
+        offPos(offPos) {}
 
-    inline str_table_entry(const nchar* str, std::size_t offPos,
-        std::size_t strLen) : str(text::conv<text::native_to_utf8>(str, strLen)),
+    str_table_entry(const nchar* str, std::size_t offPos, std::size_t strLen) :
+        str(std::move(text::conv<text::native_to_utf8>(str, strLen))),
         offPos(offPos) {}
 #endif
 };

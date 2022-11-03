@@ -126,7 +126,7 @@ struct in_per_frame_data
 
 struct in_per_upload_batch_data
 {
-    uint64_t curBatchID = 0;
+    std::uint64_t curBatchID = 0;
     std::vector<buffer> uploadBuffers;
 };
 
@@ -134,19 +134,16 @@ constexpr unsigned int in_max_upload_batches_per_thread = 4;
 
 struct in_per_thread_data
 {
-    /** @brief The value the next upload batch is going to signal when complete. */
-    uint64_t nextBatchID = 0;
+    /** @brief The current total number of batches used on this thread. */
+    std::size_t curTotalBatchIndex = 0;
 
     /** @brief Data for every upload batch we might possibly use. */
     std::array<in_per_upload_batch_data, in_max_upload_batches_per_thread> batchData;
 
-    /**
-        @brief Vulkan timeline semaphore set to the ID
-        of the latest batch that has finished uploading.
-    */
-    VkSemaphore vkUploadCompleteSemaphore;
-
-    HR_GFX_API unsigned int get_next_upload_batch_index() const;
+    inline std::size_t get_next_upload_batch_index() noexcept
+    {
+        return ((curTotalBatchIndex++) % in_max_upload_batches_per_thread);
+    }
 
     HR_GFX_API void destroy(render_device& device) noexcept;
 
@@ -198,15 +195,17 @@ public:
 
 class render_device : public non_copyable, public non_moveable
 {
+    friend upload_batch;
     friend shader_data_allocator;
     friend render_graph_builder;
     friend buffer;
     friend image;
 
     gfx::adapter m_adapter;
-    VkDevice m_vkDevice;
-    std::array<VkQueue, internal::HR_IN_QUEUE_TYPE_COUNT> m_vkQueues;
+    vk::Device m_vkDevice;
+    std::array<VkQueue, internal::in_queue_type::count> m_vkQueues;
     res_allocator m_allocator;
+    VkPipelineCache m_vkPipelineCache;
     internal::in_desc_pool_allocator m_globalDescPoolAllocator;
     internal::in_desc_pools m_globalDescPools;
     internal::in_swap_chain m_swapChain;
@@ -216,6 +215,13 @@ class render_device : public non_copyable, public non_moveable
     internal::in_per_frame_thread_data* m_frameThreadData;
     unsigned int m_frameCount;
     unsigned int m_threadCount;
+    /**
+        @brief Vulkan timeline semaphore set to the value of
+        the latest upload batch that has finished uploading.
+    */
+    VkSemaphore m_vkUploadCompleteSemaphore;
+    /** @brief The value the current upload batch is going to signal when complete. */
+    std::atomic_uint64_t m_curUploadBatchID = { 0 };
     std::atomic_uint64_t m_curTotalFrameIndex = {0};
     std::mutex m_gfxQueueMutex;
 
@@ -230,7 +236,7 @@ public:
         return m_adapter;
     }
 
-    inline VkDevice handle() const noexcept
+    inline vk::Device handle() const noexcept
     {
         return m_vkDevice;
     }
@@ -248,6 +254,11 @@ public:
     inline res_allocator& allocator() noexcept
     {
         return m_allocator;
+    }
+
+    inline VkPipelineCache pipeline_cache() const noexcept
+    {
+        return m_vkPipelineCache;
     }
 
     inline const internal::in_swap_chain& swap_chain() const noexcept
@@ -350,15 +361,17 @@ public:
 
     HR_GFX_API std::unique_lock<std::mutex> get_gfx_queue_lock();
 
-    HR_GFX_API void wait_for_upload_batch(unsigned int threadIndex,
-        uint64_t batchID, uint64_t timeout = UINT64_MAX) const;
+    HR_GFX_API bool is_frame_render_done(unsigned int frameIndex) const;
 
-    inline void wait_for_upload_batch(upload_batch_uid batchUID,
-        uint64_t timeout = UINT64_MAX) const
-    {
-        wait_for_upload_batch(batchUID.threadIndex,
-            batchUID.batchID, timeout);
-    }
+    HR_GFX_API void wait_for_frame_render(unsigned int frameIndex,
+        std::uint64_t timeout = UINT64_MAX) const;
+
+    HR_GFX_API bool is_upload_batch_done(std::uint64_t batchID) const;
+    
+    HR_GFX_API void wait_for_upload_batch(std::uint64_t batchID,
+        std::uint64_t timeout = UINT64_MAX) const;
+
+    HR_GFX_API void wait_for_idle() const;
 
     HR_GFX_API upload_batch start_upload_batch(unsigned int threadIndex);
 
@@ -375,9 +388,26 @@ public:
 
     HR_GFX_API void destroy() noexcept;
 
+    HR_GFX_API void set_debug_name(VkObjectType vkObjectType,
+        void* vkObjectHandle, const char* name);
+
+    inline void set_debug_name(VkObjectType vkObjectType,
+        void* vkObjectHandle, const std::string& name)
+    {
+        set_debug_name(vkObjectType, vkObjectHandle, name.c_str());
+    }
+
     HR_GFX_API render_device(const gfx::adapter& adapter,
         surface& surface, unsigned int width, unsigned int height,
-        unsigned int prefFrameBufCount = 3, bool vsync = true);
+        unsigned int prefFrameBufCount = 3, bool vsync = true,
+        const char* debugName = nullptr);
+
+    render_device(const gfx::adapter& adapter,
+        surface& surface, unsigned int width, unsigned int height,
+        unsigned int prefFrameBufCount, bool vsync,
+        const std::string& debugName) :
+        render_device(adapter, surface, width, height,
+            prefFrameBufCount, vsync, debugName.c_str()) {}
     
     inline ~render_device()
     {

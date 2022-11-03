@@ -116,10 +116,10 @@ archive_entry archive_entry::make_file(const nchar* filePath, bool loadData)
     {
         // Load the file's data.
         std::size_t fileSize;
-        std::unique_ptr<u8[]> fileData = file::load(filePath, fileSize);
+        std::unique_ptr<u8[]> fileData = file::load(filePath, &fileSize);
 
         // Construct a regular archive entry.
-        archive_entry entry = archive_entry(0, path::get_name(filePath),
+        archive_entry entry(0, path::get_name(filePath),
             fileSize, fileData.get());
 
         // The fileData is managed by the archive entry now, so we don't want to free it here.

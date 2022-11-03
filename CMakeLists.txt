@@ -63,9 +63,12 @@ if(WIN32)
     )
 endif()
 
-# Disable annoying MSVC unsafe string warnings
 if(MSVC)
+    # Disable annoying unsafe string warnings
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+
+    # Enable strict conformance mode and UTF-8 charset
+    add_compile_options(/permissive- /utf-8)
 endif()
 
 # Make CMake check for packages in "Dependencies" subdirectory

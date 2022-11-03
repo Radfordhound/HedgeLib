@@ -11,7 +11,7 @@ void stream::read_all(std::size_t size, void* buf)
     if (readByteCount != size)
     {
         // TODO: Throw a better error?
-        HL_ERROR(error_type::unknown);
+        throw unknown_exception();
     }
 }
 
@@ -21,7 +21,7 @@ void stream::write_all(std::size_t size, const void* buf)
     if (writtenByteCount != size)
     {
         // TODO: Throw a better error?
-        HL_ERROR(error_type::unknown);
+        throw unknown_exception();
     }
 }
 
@@ -138,7 +138,7 @@ bool stream::read_str(std::size_t bufSize, char* buf)
             // Jump to end of string and return success if we read a null terminator.
             if (tmpBuf[i] == '\0')
             {
-                jump_behind(static_cast<long>(readByteCount - (i + 1)));
+                jump_behind(static_cast<long long>(readByteCount - (i + 1)));
                 return true;
             }
         }
@@ -149,7 +149,7 @@ bool stream::read_str(std::size_t bufSize, char* buf)
         // Raise an error if we've exceeded the buffer size.
         if (!bufSize)
         {
-            HL_ERROR(error_type::out_of_range);
+            throw out_of_range_exception();
         }
     }
 }
@@ -173,7 +173,7 @@ std::string stream::read_str()
             // Jump to end of string and return if we read a null terminator.
             if (tmpBuf[i] == '\0')
             {
-                jump_behind(static_cast<long>(readByteCount - (i + 1)));
+                jump_behind(static_cast<long long>(readByteCount - (i + 1)));
                 return str;
             }
 

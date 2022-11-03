@@ -110,7 +110,7 @@ void effect::fix(bina::endian_flag endianFlag)
                 break;
 
             default:
-                HL_ERROR(error_type::unsupported);
+                throw unsupported_exception();
             }
         }
     }

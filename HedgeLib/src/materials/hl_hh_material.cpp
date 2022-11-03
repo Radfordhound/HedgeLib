@@ -2,7 +2,6 @@
 #include "hedgelib/io/hl_path.h"
 #include "hedgelib/hl_scene.h"
 #include "hedgelib/hl_blob.h"
-#include <new>
 
 namespace hl
 {
@@ -14,12 +13,12 @@ template<typename T>
 void in_material_fix_param(raw_material_param<T>& rawParam)
 {
     // Swap parameter entry.
-    rawParam.template endian_swap<false>();
+    endian_swap<false>(rawParam);
 
     // Swap parameter values.
     for (u8 i = 0; i < rawParam.valueCount; ++i)
     {
-        rawParam.values[i].template endian_swap<false>();
+        endian_swap<false>(rawParam.values[i]);
     }
 }
 
@@ -64,7 +63,149 @@ void raw_material_v3::fix()
 #endif
 }
 
-void material::in_add_to_material(std::string& utf8TexFilePath,
+template<typename T>
+static void in_material_parse_params(const off32<raw_material_param<T>>* rawParams,
+    u8 rawParamCount, std::vector<material_param<T>>& params)
+{
+    params.reserve(rawParamCount);
+    for (u8 i = 0; i < rawParamCount; ++i)
+    {
+        params.emplace_back(*rawParams[i]);
+    }
+}
+
+void material::in_parse(const raw_material_v1& rawMat, const nchar* texsetDir)
+{
+    // Parse shader names.
+    shader = rawMat.shaderName.get();
+    subShader = rawMat.subShaderName.get();
+
+    // Parse flags.
+    alphaThreshold = math::unorm_to_float<u8>(rawMat.alphaThreshold);
+    noBackfaceCulling = rawMat.noBackfaceCulling;
+    useAdditiveBlending = rawMat.useAdditiveBlending;
+    unknownFlag1 = rawMat.unknownFlag1;
+
+    // Parse parameters.
+    in_material_parse_params(rawMat.float4Params.get(), rawMat.float4ParamCount, float4Params);
+    in_material_parse_params(rawMat.int4Params.get(), rawMat.int4ParamCount, int4Params);
+    in_material_parse_params(rawMat.bool4Params.get(), rawMat.bool4ParamCount, bool4Params);
+
+    // Attempt to load and parse texset if possible.
+    const auto texsetName = rawMat.texsetName.get();
+    if (texsetDir && texsetName)
+    {
+        // Get texset path.
+        auto texsetPath = path::combine(texsetDir,
+#ifdef HL_IN_WIN32_UNICODE
+            text::conv<text::utf8_to_native>(texsetName).c_str());
+#else
+            texsetName);
+#endif
+
+        texsetPath += mirage::texset::ext;
+
+        // Load the texset if it actually exists.
+        if (path::exists(texsetPath))
+        {
+            texset.load(texsetPath);
+        }
+    }
+
+    // Or just store texset name if we can't load the texset.
+    else
+    {
+        texset = mirage::texset();
+        texset.name = texsetName;
+    }
+}
+
+void material::in_parse(const raw_material_v3& rawMat)
+{
+    // Parse shader names.
+    shader = rawMat.shaderName.get();
+    subShader = rawMat.subShaderName.get();
+
+    // Parse texset data.
+    texset = mirage::texset();
+    texset.name = name;
+    texset.reserve(rawMat.textureEntryCount);
+
+    for (u8 i = 0; i < rawMat.textureEntryCount; ++i)
+    {
+        texset.emplace_back(*rawMat.textureEntries[i],
+            rawMat.textureEntryNames[i].get());
+    }
+
+    // Parse flags.
+    alphaThreshold = math::unorm_to_float<u8>(rawMat.alphaThreshold);
+    noBackfaceCulling = rawMat.noBackfaceCulling;
+    useAdditiveBlending = rawMat.useAdditiveBlending;
+    unknownFlag1 = rawMat.unknownFlag1;
+
+    // Parse parameters.
+    in_material_parse_params(rawMat.float4Params.get(), rawMat.float4ParamCount, float4Params);
+    in_material_parse_params(rawMat.int4Params.get(), rawMat.int4ParamCount, int4Params);
+    in_material_parse_params(rawMat.bool4Params.get(), rawMat.bool4ParamCount, bool4Params);
+}
+
+void material::in_parse_sample_chunk_nodes(const void* rawData)
+{
+    // Ensure that we have Material node.
+    const auto& rawHeader = *static_cast<const sample_chunk::raw_header*>(rawData);
+    const auto rawMaterialNode = rawHeader.get_node("Material", false);
+
+    if (!rawMaterialNode) return;
+
+    // TODO: Parse sample chunk nodes.
+}
+
+void material::in_parse(const void* rawData, const nchar* texsetDir)
+{
+    // Get material data and version number.
+    u32 version;
+    const auto matData = get_data(rawData, &version);
+    if (!matData) return; // TODO: Should this be an error?
+
+    // Parse material data based on version number.
+    switch (version)
+    {
+    case 1:
+        in_parse(*static_cast<const raw_material_v1*>(matData), texsetDir);
+        break;
+
+    case 3:
+        in_parse(*static_cast<const raw_material_v3*>(matData));
+        break;
+
+    default:
+        throw std::runtime_error("Unsupported HH mirage material version");
+    }
+
+    // Parse sample chunk nodes if necessary.
+    if (has_sample_chunk_header_fixed(rawData))
+    {
+        in_parse_sample_chunk_nodes(rawData);
+    }
+}
+
+void material::in_load(const nchar* filePath)
+{
+    // Load and parse material.
+    const auto texsetDir = path::get_parent(filePath);
+    blob rawMat(filePath);
+    fix(rawMat);
+    in_parse(rawMat, texsetDir.c_str());
+}
+
+void material::in_clear() noexcept
+{
+    float4Params.clear();
+    int4Params.clear();
+    bool4Params.clear();
+}
+
+void material::in_add_to_hl_material(std::string& utf8TexFilePath,
     hl::material& mat, bool includeLibGensTags) const
 {
     if (includeLibGensTags)
@@ -105,35 +246,26 @@ void material::in_add_to_material(std::string& utf8TexFilePath,
     // TODO
 
     // Parse texset.
-    const std::size_t utf8TexFileNamePos = utf8TexFilePath.size();
+    auto& scene = mat.scene();
+    const auto utf8TexFileNamePos = utf8TexFilePath.size();
+    
     for (auto& texEntry : texset)
     {
-        hl::texture* tex = mat.scene().find_texture(texEntry.name);
+        auto tex = scene.find_texture(texEntry.name);
         if (!tex)
         {
             utf8TexFilePath += texEntry.texName;
             utf8TexFilePath += ".dds";
 
-            tex = &mat.scene().add_texture(texEntry.name, utf8TexFilePath);
+            tex = &scene.add_texture(texEntry.name, utf8TexFilePath);
 
             utf8TexFilePath.erase(utf8TexFileNamePos);
         }
 
-        mat.textures.emplace_back(texEntry.get_map_slot_type(), *tex);
+        mat.textures.emplace_back(texEntry.get_hl_map_slot_type(), *tex);
     }
 
     // TODO
-}
-
-template<typename T>
-void in_material_parse_params(const off32<raw_material_param<T>>* rawParams,
-    u8 rawParamCount, std::vector<material_param<T>>& params)
-{
-    params.reserve(rawParamCount);
-    for (u8 i = 0; i < rawParamCount; ++i)
-    {
-        params.emplace_back(*rawParams[i]);
-    }
 }
 
 void material::fix(void* rawData)
@@ -143,7 +275,7 @@ void material::fix(void* rawData)
 
     // Get material data and version number.
     u32 version;
-    void* matData = get_data(rawData, &version);
+    const auto matData = get_data(rawData, &version);
     if (!matData) return;
 
     // Fix material data based on version number.
@@ -158,16 +290,40 @@ void material::fix(void* rawData)
         break;
 
     default:
-        throw std::runtime_error("Unsupported HH material version");
+        throw std::runtime_error("Unsupported HH mirage material version");
     }
 }
 
-void material::add_to_scene(const nchar* texDir, scene& scene,
+void material::parse(const void* rawData, std::string name, const nchar* texsetDir)
+{
+    // Clear any existing data.
+    in_clear();
+
+    // Set new name.
+    this->name = std::move(name);
+
+    // Parse raw material data.
+    in_parse(rawData, texsetDir);
+}
+
+void material::load(const nchar* filePath)
+{
+    // Clear any existing data.
+    in_clear();
+
+    // Set new name.
+    name = std::move(get_res_name(filePath));
+
+    // Load material.
+    in_load(filePath);
+}
+
+void material::add_to_hl_scene(const nchar* texDir, scene& scene,
     bool merge, bool includeLibGensTags) const
 {
     // Get absolute texture UTF-8 directory.
-    // TODO: Make texDir absolute first.
-    std::string utf8TexFilePath =
+    // TODO: Actually make texDir absolute.
+    auto utf8TexFilePath =
 #ifdef HL_IN_WIN32_UNICODE
         text::conv<text::native_to_utf8>(texDir);
 #else
@@ -187,7 +343,7 @@ void material::add_to_scene(const nchar* texDir, scene& scene,
         {
             if (materialPtr->name.name_equals(name))
             {
-                in_add_to_material(utf8TexFilePath, *materialPtr, includeLibGensTags);
+                in_add_to_hl_material(utf8TexFilePath, *materialPtr, includeLibGensTags);
                 didMerge = true;
 
                 // NOTE: We purposely don't break here as we want to merge with *ALL*
@@ -200,195 +356,32 @@ void material::add_to_scene(const nchar* texDir, scene& scene,
     }
     
     // Add new material to scene.
-    hl::material& mat = scene.add_material(name);
-    in_add_to_material(utf8TexFilePath, mat, includeLibGensTags);
+    auto& mat = scene.add_material(name);
+    in_add_to_hl_material(utf8TexFilePath, mat, includeLibGensTags);
 }
 
-void material::parse(const raw_material_v1& rawMat)
+material::material(const void* rawData, std::string name, const nchar* texsetDir) :
+    res_base(std::move(name)),
+    shader(),
+    subShader()
 {
-    // Parse shader names.
-    shaderName = rawMat.shaderName.get();
-    subShaderName = rawMat.subShaderName.get();
-
-    // Parse texset name.
-    texset.name = rawMat.texsetName.get();
-
-    // Parse flags.
-    alphaThreshold = math::unorm_to_float<u8>(rawMat.alphaThreshold);
-    noBackfaceCulling = rawMat.noBackfaceCulling;
-    useAdditiveBlending = rawMat.useAdditiveBlending;
-    unknownFlag1 = rawMat.unknownFlag1;
-
-    // Parse parameters.
-    in_material_parse_params(rawMat.float4Params.get(), rawMat.float4ParamCount, float4Params);
-    in_material_parse_params(rawMat.int4Params.get(), rawMat.int4ParamCount, int4Params);
-    in_material_parse_params(rawMat.bool4Params.get(), rawMat.bool4ParamCount, bool4Params);
+    in_parse(rawData, texsetDir);
 }
 
-void material::parse(const raw_material_v1& rawMat, const nchar* texsetDir)
+material::material(const void* rawData, std::string name, const nstring& texsetDir) :
+    res_base(std::move(name)),
+    shader(),
+    subShader()
 {
-    // Parse material.
-    parse(rawMat);
-
-    // Attempt to load and parse texset.
-    if (!texset.name.empty() && texsetDir)
-    {
-        // Get texset path.
-        nstring texsetPath = path::combine(texsetDir,
-#ifdef HL_IN_WIN32_UNICODE
-            text::conv<text::utf8_to_native>(texset.name).c_str());
-#else
-            texset.name.c_str());
-#endif
-
-        texsetPath += texset::ext;
-
-        // Load the texset if it actually exists.
-        if (path::exists(texsetPath))
-        {
-            texset.load(texsetPath);
-        }
-    }
-}
-
-void material::parse(const raw_material_v1& rawMat, const nstring& texsetDir)
-{
-    // Parse material.
-    parse(rawMat);
-
-    // Attempt to load and parse texset.
-    if (!texset.name.empty())
-    {
-        // Get texset path.
-        nstring texsetPath = path::combine(texsetDir,
-#ifdef HL_IN_WIN32_UNICODE
-            text::conv<text::utf8_to_native>(texset.name));
-#else
-            texset.name);
-#endif
-
-        texsetPath += texset::ext;
-
-        // Load the texset if it actually exists.
-        if (path::exists(texsetPath))
-        {
-            texset.load(texsetPath);
-        }
-    }
-}
-
-void material::parse(const raw_material_v3& rawMat)
-{
-    // Parse shader names.
-    shaderName = rawMat.shaderName.get();
-    subShaderName = rawMat.subShaderName.get();
-
-    // Parse texset data.
-    texset.name = name;
-    texset.reserve(rawMat.textureEntryCount);
-
-    for (u8 i = 0; i < rawMat.textureEntryCount; ++i)
-    {
-        texset.emplace_back(
-            rawMat.textureEntryNames[i].get(),
-            *rawMat.textureEntries[i]);
-    }
-
-    // Parse flags.
-    alphaThreshold = math::unorm_to_float<u8>(rawMat.alphaThreshold);
-    noBackfaceCulling = rawMat.noBackfaceCulling;
-    useAdditiveBlending = rawMat.useAdditiveBlending;
-    unknownFlag1 = rawMat.unknownFlag1;
-
-    // Parse parameters.
-    in_material_parse_params(rawMat.float4Params.get(), rawMat.float4ParamCount, float4Params);
-    in_material_parse_params(rawMat.int4Params.get(), rawMat.int4ParamCount, int4Params);
-    in_material_parse_params(rawMat.bool4Params.get(), rawMat.bool4ParamCount, bool4Params);
-}
-
-void material::parse(const void* rawData, const nchar* texsetDir)
-{
-    // Get material data and version number.
-    u32 version;
-    const void* matData = get_data(rawData, &version);
-    if (!matData) return; // TODO: Should this be an error?
-
-    // Parse material data based on version number.
-    switch (version)
-    {
-    case 1:
-        parse(*static_cast<const raw_material_v1*>(matData), texsetDir);
-        break;
-
-    case 3:
-        parse(*static_cast<const raw_material_v3*>(matData));
-        break;
-
-    default:
-        throw std::runtime_error("Unsupported HH material version");
-    }
-
-    // Parse sample chunk nodes if necessary.
-    if (has_sample_chunk_header_fixed(rawData))
-    {
-        // Ensure that we have Material node.
-        const sample_chunk::raw_header* rawHeader = static_cast<
-            const sample_chunk::raw_header*>(rawData);
-
-        const sample_chunk::raw_node* rawMaterialNode =
-            rawHeader->get_node("Material", false);
-
-        if (!rawMaterialNode) return;
-
-        // TODO: Parse sample chunk nodes.
-    }
-}
-
-void material::load(const nchar* filePath)
-{
-    // Get material name from file path.
-#ifdef HL_IN_WIN32_UNICODE
-    name = text::conv<text::native_to_utf8>(
-        path::remove_ext(path::get_name(filePath)));
-#else
-    name = path::remove_ext(path::get_name(filePath));
-#endif
-
-    // Load and parse material.
-    blob rawMat(filePath);
-    fix(rawMat);
-    parse(rawMat, path::get_parent(filePath));
-}
-
-material::material(const void* rawData, const char* name) :
-    name(name),
-    shaderName(),
-    subShaderName()
-{
-    parse(rawData);
-}
-
-material::material(const void* rawData, const std::string& name) :
-    name(name),
-    shaderName(),
-    subShaderName()
-{
-    parse(rawData);
-}
-
-material::material(const void* rawData, std::string&& name) :
-    name(std::move(name)),
-    shaderName(),
-    subShaderName()
-{
-    parse(rawData);
+    in_parse(rawData, texsetDir.c_str());
 }
 
 material::material(const nchar* filePath) :
-    shaderName(),
-    subShaderName()
+    res_base(std::move(get_res_name(filePath))),
+    shader(),
+    subShader()
 {
-    load(filePath);
+    in_load(filePath);
 }
 } // mirage
 } // hh

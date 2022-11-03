@@ -19,6 +19,8 @@ namespace gfx
 {
 class render_device;
 class cmd_list;
+class shader_data_allocator;
+class image_view;
 } // gfx
 
 namespace ext
@@ -47,10 +49,13 @@ public:
     }
 };
 
+gfx::shader_data imgui_create_texture(gfx::shader_data_allocator& allocator,
+    gfx::image_view& imageView);
+
 void imgui_create_resources();
 
 gfx::pipeline imgui_create_pipeline(const gfx::render_graph& graph,
-    unsigned int passIndex, unsigned int subpassIndex);
+    std::uint32_t passID, std::uint32_t subpassID);
 
 void imgui_new_frame();
 
@@ -191,15 +196,15 @@ static gfx::shader_parameter_group in_imgui_create_shader_param_group(
     };
 
     return gfx::shader_parameter_group(device,
-        shaderParams, HL_COUNT_OF(shaderParams),
-        pushConstRanges, HL_COUNT_OF(pushConstRanges));
+        shaderParams, hl::count_of(shaderParams),
+        pushConstRanges, hl::count_of(pushConstRanges));
 }
 
 struct in_imgui_renderer_data
 {
     gfx::render_device* device;
-    gfx::shader vertexShader;
-    gfx::shader pixelShader;
+    vk::ShaderModule vertexShader;
+    vk::ShaderModule pixelShader;
     gfx::sampler fontsSampler;
     gfx::shader_parameter_group shaderParamGroup;
     gfx::pipeline_layout pipelineLayout;
@@ -210,19 +215,35 @@ struct in_imgui_renderer_data
     gfx::buffer idxBuffer;
     ImDrawVert* mappedVtxBufData = nullptr;
     ImDrawIdx* mappedIdxBufData = nullptr;
-    gfx::shader_data shaderData = nullptr;
+    gfx::shader_data fontsShaderData = nullptr;
+
+    void destroy() noexcept
+    {
+        if (device)
+        {
+            device->handle().destroy(vertexShader);
+            device->handle().destroy(pixelShader);
+        }
+    }
 
     in_imgui_renderer_data(gfx::render_device& device) :
         device(&device),
-        vertexShader(device, "main", in_imgui_vertex_shader_code,
-            sizeof(in_imgui_vertex_shader_code)),
+        vertexShader(device.handle().createShaderModule(vk::ShaderModuleCreateInfo(
+            vk::ShaderModuleCreateFlags(), sizeof(in_imgui_vertex_shader_code),
+            in_imgui_vertex_shader_code))),
 
-        pixelShader(device, "main", in_imgui_pixel_shader_code,
-            sizeof(in_imgui_pixel_shader_code)),
+        pixelShader(device.handle().createShaderModule(vk::ShaderModuleCreateInfo(
+            vk::ShaderModuleCreateFlags(), sizeof(in_imgui_pixel_shader_code),
+            in_imgui_pixel_shader_code))),
 
         fontsSampler(in_imgui_create_fonts_sampler(device)),
         shaderParamGroup(in_imgui_create_shader_param_group(device, fontsSampler)),
         pipelineLayout(device, &shaderParamGroup, 1) {}
+
+    ~in_imgui_renderer_data()
+    {
+        destroy();
+    }
 };
 
 static in_imgui_renderer_data& in_imgui_get_renderer_data()
@@ -359,6 +380,38 @@ imgui_instance::imgui_instance(gfx::render_device& device,
     }
 }
 
+gfx::shader_data imgui_create_texture(gfx::shader_data_allocator& allocator,
+    gfx::image_view& imageView)
+{
+    auto& io = ImGui::GetIO();
+    auto& backData = internal::in_imgui_get_renderer_data();
+
+    // Allocate shader data.
+    auto shaderData = allocator.allocate(backData.shaderParamGroup);
+
+    // Update shader data.
+    const gfx::image_write_desc imageWrite =
+    {
+        nullptr,                                                        // vkSampler
+        imageView.handle(),                                             // vkImageView
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL                        // imageLayout
+    };
+
+    const gfx::shader_data_write_desc shaderDataWrite =
+    {
+        shaderData,                                                     // shaderData
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,                      // type
+        0,                                                              // firstRegisterIndex
+        0,                                                              // arrayElementIndex
+        1,                                                              // registerCount
+        &imageWrite,                                                    // imageWrites
+        nullptr                                                         // bufferWrites
+    };
+
+    backData.device->update_shader_data(&shaderDataWrite, 1);
+    return shaderData;
+}
+
 void imgui_create_resources()
 {
     using namespace internal;
@@ -401,41 +454,19 @@ void imgui_create_resources()
         in_imgui_max_indices_count * sizeof(ImDrawIdx),
         &backData.mappedIdxBufData);
 
-    // Allocate shader data.
+    // Allocate fonts shader data.
     auto allocator = backData.device->get_shader_data_allocator(false);
-    backData.shaderData = allocator.allocate(backData.shaderParamGroup);
-
-    // Update shader data.
-    const gfx::image_write_desc imageWrites[] =
-    {
-        {
-            nullptr,                                                    // vkSampler
-            backData.fontsImageView.handle(),                           // vkImageView
-            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL                    // imageLayout
-        }
-    };
-
-    const gfx::shader_data_write_desc shaderDataWrites[] =
-    {
-        {
-            backData.shaderData,                                        // shaderData
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,                  // type
-            0,                                                          // firstRegisterIndex
-            0,                                                          // arrayElementIndex
-            1,                                                          // registerCount
-            imageWrites,                                                // imageWrites
-            nullptr                                                     // bufferWrites
-        }
-    };
-
-    backData.device->update_shader_data(shaderDataWrites, HL_COUNT_OF(shaderDataWrites));
+    backData.fontsShaderData = imgui_create_texture(allocator, backData.fontsImageView);
 
     // Wait for fonts image data to finish uploading, and cleanup the upload batch resources.
     backData.device->wait_for_upload_batch(0, backData.fontsImageUploadBatchID);
+
+    // Set ImGui fonts texture ID.
+    io.Fonts->SetTexID(reinterpret_cast<ImTextureID>(backData.fontsShaderData));
 }
 
 gfx::pipeline imgui_create_pipeline(const gfx::render_graph& graph,
-    unsigned int passIndex, unsigned int subpassIndex)
+    std::uint32_t passID, std::uint32_t subpassID)
 {
     using namespace internal;
 
@@ -463,7 +494,7 @@ gfx::pipeline imgui_create_pipeline(const gfx::render_graph& graph,
     {
         {
             inputElements,                                              // elements
-            HL_COUNT_OF(inputElements),                                 // elementCount
+            hl::count_of(inputElements),                                // elementCount
             sizeof(ImDrawVert),                                         // stride
             0,                                                          // inputSlot
             VK_VERTEX_INPUT_RATE_VERTEX                                 // inputRate
@@ -473,10 +504,14 @@ gfx::pipeline imgui_create_pipeline(const gfx::render_graph& graph,
     const gfx::pipeline_desc pipelineDesc =
     {
         backData.pipelineLayout.handle(),                               // layout
-        &backData.vertexShader,                                         // vertexShader
-        &backData.pixelShader,                                          // pixelShader
+        backData.vertexShader,                                          // vertexShader
+        gfx::default_shader_entry_point,                                // vertexShaderEntryPoint
+        nullptr,                                                        // vsSpecializationInfo
+        backData.pixelShader,                                           // pixelShader
+        gfx::default_shader_entry_point,                                // pixelShaderEntryPoint
+        nullptr,                                                        // psSpecializationInfo
         inputLayouts,                                                   // inputLayouts
-        HL_COUNT_OF(inputLayouts),                                      // inputLayoutCount
+        hl::count_of(inputLayouts),                                     // inputLayoutCount
         VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,                            // topologyType
         1,                                                              // viewportCount
         1,                                                              // scissorCount
@@ -507,11 +542,11 @@ gfx::pipeline imgui_create_pipeline(const gfx::render_graph& graph,
             VK_LOGIC_OP_NO_OP                                           //  logicOp
         },
 
-        passIndex,                                                      // passIndex
-        subpassIndex                                                    // subpassIndex
+        passID,                                                         // passID
+        subpassID                                                       // subpassID
     };
 
-    return gfx::pipeline(*backData.device, graph, pipelineDesc);
+    return gfx::pipeline(graph, pipelineDesc);
 }
 
 void imgui_new_frame()
@@ -585,7 +620,7 @@ void imgui_draw(ImDrawData& drawData, const gfx::pipeline& pipeline, gfx::cmd_li
             backData.idxBuffer.allocation()
         };
 
-        backData.device->allocator().flush(HL_COUNT_OF(vmaAllocs), vmaAllocs);
+        backData.device->allocator().flush(hl::count_of(vmaAllocs), vmaAllocs);
     }
 
     // Setup render state.
@@ -644,7 +679,10 @@ void imgui_draw(ImDrawData& drawData, const gfx::pipeline& pipeline, gfx::cmd_li
                     static_cast<unsigned int>(clipMax.y - clipMin.y));
 
                 // Bind shader data.
-                cmdList.bind_shader_data(backData.pipelineLayout, backData.shaderData);
+                static_assert(sizeof(ImTextureID) >= sizeof(gfx::shader_data));
+
+                cmdList.bind_shader_data(backData.pipelineLayout,
+                    reinterpret_cast<gfx::shader_data>(draw.TextureId));
 
                 // Draw vertices.
                 cmdList.draw_indexed(draw.IdxOffset + globalIdxOffset,

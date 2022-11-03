@@ -11,34 +11,39 @@ class instance;
 
 namespace internal
 {
+namespace _in_queue_type
+{
 enum in_queue_type
 {
     // HACK: In in_swap_chain::create, we rely on the first
     // type being graphics and the second being present.
-    HR_IN_QUEUE_TYPE_GRAPHICS,
-    HR_IN_QUEUE_TYPE_PRESENT,
-    HR_IN_QUEUE_TYPE_TRANSFER,
-    HR_IN_QUEUE_TYPE_COUNT
+    graphics,
+    present,
+    transfer,
+    count
 };
+} // _in_queue_type
+
+using in_queue_type = _in_queue_type::in_queue_type;
 
 struct in_queue_families
 {
-    std::array<uint32_t, HR_IN_QUEUE_TYPE_COUNT> familyIndices;
+    std::array<uint32_t, in_queue_type::count> familyIndices;
     unsigned int uniqueFamilies = 0;
 
     inline uint32_t graphics_family() const noexcept
     {
-        return familyIndices[HR_IN_QUEUE_TYPE_GRAPHICS];
+        return familyIndices[in_queue_type::graphics];
     }
 
     inline uint32_t present_family() const noexcept
     {
-        return familyIndices[HR_IN_QUEUE_TYPE_PRESENT];
+        return familyIndices[in_queue_type::present];
     }
 
     inline uint32_t transfer_family() const noexcept
     {
-        return familyIndices[HR_IN_QUEUE_TYPE_TRANSFER];
+        return familyIndices[in_queue_type::transfer];
     }
 
     inline bool has_unique_family(in_queue_type type) const noexcept

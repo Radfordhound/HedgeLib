@@ -45,8 +45,12 @@ static void in_vulkan_tmp_render_test(render_device& device,
 
     for (auto& pass : graph.passes)
     {
+        // Run before_pass function.
         auto subpasses = (graph.subpasses.data() + pass.firstSubpassIndex);
         pass.passData->before_pass(curFrameThreadData.graphicsCmdList);
+
+        // Transition pass resources as necessary.
+        pass.transition_resources(curFrameThreadData.graphicsCmdList);
 
         // Begin Vulkan render pass.
         const VkRenderPassBeginInfo vkPassBeginInfo =
@@ -187,7 +191,7 @@ static void in_vulkan_tmp_render_test(render_device& device,
     std::unique_lock<std::mutex> m_gfxQueueLock = device.get_gfx_queue_lock();
 
     // Submit command buffers to Vulkan graphics queue.
-    if (vkQueueSubmit(device.queue(HR_IN_QUEUE_TYPE_GRAPHICS),
+    if (vkQueueSubmit(device.queue(in_queue_type::graphics),
         1, &vkSubmitInfo, curFrameData.vkFence) != VK_SUCCESS)
     {
         throw std::runtime_error("Could not submit command buffers to Vulkan graphics queue");

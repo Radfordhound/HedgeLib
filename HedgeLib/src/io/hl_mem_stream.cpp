@@ -23,7 +23,7 @@ std::size_t readonly_mem_stream::read(std::size_t size, void* buf)
 
 std::size_t readonly_mem_stream::write(std::size_t size, const void* buf)
 {
-    HL_ERROR(error_type::unsupported);
+    throw unsupported_exception();
 }
 
 void readonly_mem_stream::seek(seek_mode mode, long long offset)
@@ -53,7 +53,7 @@ void readonly_mem_stream::seek(seek_mode mode, long long offset)
         const std::size_t dif = static_cast<std::size_t>(std::abs(offset));
         if (dif > pos)
         {
-            HL_ERROR(error_type::out_of_range);
+            throw out_of_range_exception();
         }
 
         // Subtract dif from pos.
@@ -69,7 +69,7 @@ void readonly_mem_stream::seek(seek_mode mode, long long offset)
         // Ensure we can add offset to m_curPos safely.
         if (pos > m_dataSize)
         {
-            HL_ERROR(error_type::out_of_range);
+            throw out_of_range_exception();
         }
     }
 
@@ -82,7 +82,7 @@ void readonly_mem_stream::jump_to(std::size_t pos)
     // Ensure this position is contained within the data buffer.
     if (pos > m_dataSize)
     {
-        HL_ERROR(error_type::out_of_range);
+        throw out_of_range_exception();
     }
 
     // Set stream current position.

@@ -16,6 +16,8 @@ struct ver
     u8 _minor;
     u8 rev;
 
+    inline ver() noexcept = default;
+
     constexpr ver(char _major, char _minor, char rev) noexcept :
         _major(_major),
         _minor(_minor),
@@ -221,8 +223,8 @@ public:
     }
 
     inline off_table_handle(const u8* offTable, u32 offTableSize) noexcept :
-        m_offTableBeg(offTable), m_offTableEnd(in_get_real_off_table_end(
-        offTable, offTableSize)) {}
+        m_offTableBeg(offTable),
+        m_offTableEnd(in_get_real_off_table_end(offTable, offTableSize)) {}
 };
 
 HL_API void offsets_fix32(off_table_handle offTable,
@@ -230,6 +232,12 @@ HL_API void offsets_fix32(off_table_handle offTable,
 
 HL_API void offsets_fix64(off_table_handle offTable,
     const endian_flag endianFlag, void* base);
+
+HL_API void offsets_copy32(off_table_handle srcOffTable,
+    const void* srcBase, void* dstBase);
+
+HL_API void offsets_copy64(off_table_handle srcOffTable,
+    const void* srcBase, void* dstBase);
 
 HL_API void offsets_write_no_sort_no_pad(std::size_t dataPos,
     const off_table& offTable, stream& stream);
@@ -333,6 +341,7 @@ namespace v2
 constexpr ver ver_200 = ver('2', '0', '0');
 constexpr ver ver_210 = ver('2', '1', '0');
 
+// TODO: Remove this?
 enum class raw_block_type : u32
 {
     /** @brief This block contains data. See block_data_header. */
@@ -543,8 +552,10 @@ struct raw_header
     u32 fileSize;
     /** @brief How many blocks are in the file. */
     u16 blockCount;
+    /** @brief Set internally by the game; always 0 in actual files. */
+    u8 status;
     /** @brief Included so garbage data doesn't get writtten. */
-    u16 padding;
+    u8 padding;
 
     template<bool swapOffsets = true>
     inline void endian_swap() noexcept

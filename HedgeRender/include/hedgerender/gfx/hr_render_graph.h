@@ -4,9 +4,14 @@
 #include "hr_color.h"
 #include <hedgelib/hl_internal.h>
 #include <robin_hood.h>
+#include <string>
+#include <utility>
 #include <vector>
 #include <functional>
 #include <memory>
+
+struct VmaAllocation_T;
+struct VmaAllocator_T;
 
 namespace hr
 {
@@ -15,57 +20,37 @@ namespace gfx
 class render_graph_builder;
 class render_device;
 class cmd_list;
+class image_view;
 
 namespace internal
 {
-class in_render_graph;
+struct in_render_graph;
 } // internal
-
-class render_graph : public non_copyable
-{
-    friend render_graph_builder;
-
-    internal::in_render_graph* m_renderGraph;
-
-public:
-    inline internal::in_render_graph* handle() const noexcept
-    {
-        return m_renderGraph;
-    }
-
-    HR_GFX_API void recreate_framebuffers(render_device& device);
-
-    HR_GFX_API void destroy() noexcept;
-
-    HR_GFX_API render_graph& operator=(render_graph&& other) noexcept;
-
-    inline render_graph(internal::in_render_graph* renderGraph) noexcept :
-        m_renderGraph(renderGraph) {}
-
-    HR_GFX_API render_graph(render_graph&& other) noexcept;
-
-    inline ~render_graph()
-    {
-        destroy();
-    }
-};
 
 namespace internal
 {
 struct in_render_resource_info
 {
-    color clearColor = colors::black;
+    std::string debugName;
+    color clearColor;
+    bool isDepthStencil;
 
-    in_render_resource_info(const color& clearColor) noexcept :
-        clearColor(clearColor) {}
+    in_render_resource_info(const color& clearColor,
+        std::string debugName = "", bool isDepthStencil = false) noexcept :
+        debugName(std::move(debugName)),
+        clearColor(clearColor),
+        isDepthStencil(isDepthStencil) {}
 };
 
 enum class in_attachment_type
 {
     none = 0,
     vertex_shader_input = 1,
-    pixel_shader_input = 2,
-    color_output = 4
+    vertex_shader_input_sampled = 2,
+    pixel_shader_input = 4,
+    pixel_shader_input_sampled = 8,
+    color_output = 16,
+    depth_stencil_output = 32
 };
 
 HL_ENUM_CLASS_DEF_BITWISE_OPS(in_attachment_type)
@@ -81,6 +66,14 @@ constexpr bool in_is_input_attachment(in_attachment_type types) noexcept
     return in_has_attachment_type(types,
         in_attachment_type::vertex_shader_input |
         in_attachment_type::pixel_shader_input
+    );
+}
+
+constexpr bool in_is_input_attachment_sampled(in_attachment_type types) noexcept
+{
+    return in_has_attachment_type(types,
+        in_attachment_type::vertex_shader_input_sampled |
+        in_attachment_type::pixel_shader_input_sampled
     );
 }
 
@@ -143,11 +136,51 @@ using render_resource_id = std::vector<internal::in_render_resource_info>::size_
 using render_attachment_info_map = robin_hood::unordered_map<
     render_resource_id, render_attachment_info>;
 
+class render_graph : public non_copyable
+{
+    friend render_graph_builder;
+
+    internal::in_render_graph* m_renderGraph = nullptr;
+
+public:
+    inline internal::in_render_graph* handle() const noexcept
+    {
+        return m_renderGraph;
+    }
+
+    HR_GFX_API const image_view& get_image_view(render_resource_id resID) const;
+
+    inline image_view& get_image_view(render_resource_id resID)
+    {
+        return const_cast<image_view&>(const_cast<const render_graph*>(
+            this)->get_image_view(resID));
+    }
+
+    HR_GFX_API void recreate_framebuffers(render_device& device);
+
+    HR_GFX_API void destroy() noexcept;
+
+    HR_GFX_API render_graph& operator=(render_graph&& other) noexcept;
+
+    inline render_graph() noexcept = default;
+
+    inline render_graph(internal::in_render_graph* renderGraph) noexcept :
+        m_renderGraph(renderGraph) {}
+
+    HR_GFX_API render_graph(render_graph&& other) noexcept;
+
+    inline ~render_graph()
+    {
+        destroy();
+    }
+};
+
 class render_subpass_builder
 {
     std::unique_ptr<render_subpass> m_dataBuf;
     render_subpass* m_data;
     render_attachment_info_map m_attachments;
+    std::uint32_t m_id;
 
 public:
     template<typename T = render_subpass>
@@ -167,20 +200,29 @@ public:
         return m_attachments;
     }
 
+    inline std::uint32_t id() const noexcept
+    {
+        return m_id;
+    }
+
     template<typename T = render_subpass>
     inline T* release_data() noexcept
     {
         return reinterpret_cast<T*>(m_dataBuf.release());
     }
 
-    inline void add_vertex_shader_input(render_resource_id resID)
+    inline void add_vertex_shader_input(render_resource_id resID, bool asInputAttachment)
     {
-        m_attachments[resID].type |= internal::in_attachment_type::vertex_shader_input;
+        m_attachments[resID].type |= (asInputAttachment) ?
+            internal::in_attachment_type::vertex_shader_input :
+            internal::in_attachment_type::vertex_shader_input_sampled;
     }
 
-    inline void add_pixel_shader_input(render_resource_id resID)
+    inline void add_pixel_shader_input(render_resource_id resID, bool asInputAttachment)
     {
-        m_attachments[resID].type |= internal::in_attachment_type::pixel_shader_input;
+        m_attachments[resID].type |= (asInputAttachment) ?
+            internal::in_attachment_type::pixel_shader_input :
+            internal::in_attachment_type::pixel_shader_input_sampled;
     }
 
     inline void add_color_output(render_resource_id resID)
@@ -196,10 +238,16 @@ public:
         attachment.vkColorBlendState = vkBlendState;
     }
 
+    inline void set_depth_stencil_output(render_resource_id resID)
+    {
+        m_attachments[resID].type |= internal::in_attachment_type::depth_stencil_output;
+    }
+
     template<typename T>
-    render_subpass_builder(std::unique_ptr<T>&& subpassData) :
+    render_subpass_builder(std::unique_ptr<T>&& subpassData, std::uint32_t id) :
         m_dataBuf(std::move(subpassData)),
-        m_data(m_dataBuf.get()) {}
+        m_data(m_dataBuf.get()),
+        m_id(id) {}
 };
 
 class render_pass_builder
@@ -207,6 +255,7 @@ class render_pass_builder
     std::unique_ptr<render_pass> m_dataBuf;
     render_pass* m_data;
     std::vector<render_subpass_builder> m_subpasses;
+    std::uint32_t m_id;
 
 public:
     bool doUpdateViewport = true;
@@ -234,6 +283,11 @@ public:
         return m_subpasses;
     }
 
+    inline std::uint32_t id() const noexcept
+    {
+        return m_id;
+    }
+
     template<typename T = render_subpass>
     inline T* release_data() noexcept
     {
@@ -244,26 +298,27 @@ public:
     render_subpass_builder& add_subpass(args_t&&... args)
     {
         std::unique_ptr<T> subpassData(new T(std::forward<args_t>(args)...));
-        m_subpasses.emplace_back(std::move(subpassData));
+        m_subpasses.emplace_back(std::move(subpassData),
+            static_cast<std::uint32_t>(m_subpasses.size()));
+
         return m_subpasses.back();
     }
 
     template<typename T>
-    render_pass_builder(std::unique_ptr<T>&& passData) :
+    render_pass_builder(std::unique_ptr<T>&& passData, std::uint32_t id) :
         m_dataBuf(std::move(passData)),
-        m_data(m_dataBuf.get()) {}
+        m_data(m_dataBuf.get()),
+        m_id(id) {}
 };
 
 class render_graph_builder
 {
     std::vector<internal::in_render_resource_info> m_resources;
     std::vector<render_pass_builder> m_passes;
+    internal::in_render_resource_info m_screenOutputResInfo;
 
 public:
-    constexpr static render_resource_id screen_output() noexcept
-    {
-        return 0;
-    }
+    inline constexpr static render_resource_id screen_output_id = SIZE_MAX;
 
     inline const std::vector<render_pass_builder>& passes() const noexcept
     {
@@ -275,11 +330,21 @@ public:
         return m_passes;
     }
 
-    template <typename... args_t>
-    render_resource_id add_resource(args_t&&... args)
+    render_resource_id add_color_resource(
+        const color& clearColor = hr::gfx::colors::black,
+        std::string debugName = "")
     {
         const render_resource_id curResID = m_resources.size();
-        m_resources.emplace_back(std::forward<args_t>(args)...);
+        m_resources.emplace_back(clearColor, std::move(debugName), false);
+        return curResID;
+    }
+
+    render_resource_id add_depth_stencil_resource(
+        const color& clearColor = hr::gfx::colors::white,
+        std::string debugName = "")
+    {
+        const render_resource_id curResID = m_resources.size();
+        m_resources.emplace_back(clearColor, std::move(debugName), true);
         return curResID;
     }
 
@@ -287,16 +352,16 @@ public:
     render_pass_builder& add_pass(args_t&&... args)
     {
         std::unique_ptr<T> passData(new T(std::forward<args_t>(args)...));
-        m_passes.emplace_back(std::move(passData));
+        m_passes.emplace_back(std::move(passData),
+            static_cast<std::uint32_t>(m_passes.size()));
+
         return m_passes.back();
     }
 
     HR_GFX_API render_graph build(render_device& device);
 
-    render_graph_builder(const color& screenClearColor)
-    {
-        m_resources.emplace_back(screenClearColor);
-    }
+    render_graph_builder(const color& screenClearColor = hr::gfx::colors::black) noexcept :
+        m_screenOutputResInfo(screenClearColor, "screen output") {}
 };
 } // gfx
 } // hr

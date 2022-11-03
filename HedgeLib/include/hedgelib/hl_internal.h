@@ -3,8 +3,8 @@
 #include <cstdint>
 #include <cstddef>
 #include <climits>
+#include <iterator>
 #include <type_traits>
-#include <exception>
 #include <stdexcept>
 
 #ifdef _MSC_VER
@@ -91,10 +91,8 @@ using u64 = std::uint64_t;
 
 /* Static assert macros */
 #ifdef __cpp_static_assert
-/* C++11 static assert */
 #define HL_STATIC_ASSERT(expression, msg) static_assert(expression, msg)
 #else
-/* No static assert */
 #define HL_STATIC_ASSERT(expression, msg)
 #endif
 
@@ -152,6 +150,7 @@ inline unsigned int bit_ctz(unsigned int v) noexcept
 #endif
 }
 
+/* Enum helpers */
 #define HL_ENUM_CLASS_DEF_BITWISE_OPS(enumClass)\
     constexpr enumClass operator&(enumClass a, enumClass b) noexcept\
     {\
@@ -232,32 +231,59 @@ inline unsigned int bit_ctz(unsigned int v) noexcept
 #endif
 
 /* Error handling */
-enum class error_type
+inline std::runtime_error unknown_exception()
 {
-    unknown,
-    unsupported,
-    out_of_memory,
-    invalid_args,
-    out_of_range,
-    already_exists,
-    not_found,
-    invalid_data,
-    no_more_entries,
-    sharing_violation
-};
+    return std::runtime_error("An unknown error has occurred");
+}
 
-HL_API std::exception make_exception(error_type err);
+inline std::runtime_error unsupported_exception()
+{
+    return std::runtime_error(
+        "Attempted to perform an action which is not possible, or which "
+        "is not currently supported");
+}
 
-HL_API std::exception make_exception(error_type err,
-    const char* what_arg);
+HL_API std::invalid_argument invalid_arg_exception(const char* argName);
 
-#ifndef HL_ERROR
-#define HL_ERROR(...) throw make_exception(__VA_ARGS__)
-#endif
+inline std::out_of_range out_of_range_exception()
+{
+    return std::out_of_range(
+        "A number went out of the expected or supported range");
+}
 
-/* Memory helpers */
-HL_API void* aligned_malloc(std::size_t size, std::size_t alignment);
-HL_API void aligned_free(void* ptr);
+HL_API std::out_of_range out_of_range_exception(const char* argName);
+
+inline std::runtime_error io_already_exists_exception()
+{
+    return std::runtime_error(
+        "The given file or directory already exists");
+}
+
+inline std::runtime_error not_found_exception()
+{
+    return std::runtime_error(
+        "The requested item could not be found");
+}
+
+inline std::runtime_error invalid_data_exception()
+{
+    return std::runtime_error(
+        "The given data was corrupt, or was not valid for use in the "
+        "requested operation");
+}
+
+inline std::runtime_error no_more_entries_exception()
+{
+    return std::runtime_error(
+        "There were no more entries in the given directory");
+}
+
+inline std::runtime_error sharing_violation_exception()
+{
+    return std::runtime_error(
+        "The requested file could not be accessed as it is in-use by "
+        "another application");
+}
 
 /* Endian swap intrinsic macros */
 #if defined(_MSC_VER) && _MSC_VER >= 1310
@@ -321,45 +347,56 @@ HL_API void aligned_free(void* ptr);
     (((v) & 0xFF00000000000000U) >> 56))
 #endif
 
+template<bool swapOffsets = true>
 inline void endian_swap(u8& v) noexcept {}
+
+template<bool swapOffsets = true>
 inline void endian_swap(s8& v) noexcept {}
 
+template<bool swapOffsets = true>
 inline void endian_swap(u16& v) noexcept
 {
     v = HL_SWAP_U16(v);
 }
 
+template<bool swapOffsets = true>
 inline void endian_swap(s16& v) noexcept
 {
     endian_swap(reinterpret_cast<u16&>(v));
 }
 
+template<bool swapOffsets = true>
 inline void endian_swap(u32& v) noexcept
 {
     v = HL_SWAP_U32(v);
 }
 
+template<bool swapOffsets = true>
 inline void endian_swap(s32& v) noexcept
 {
     endian_swap(reinterpret_cast<u32&>(v));
 }
 
+template<bool swapOffsets = true>
 inline void endian_swap(u64& v) noexcept
 {
     v = HL_SWAP_U64(v);
 }
 
+template<bool swapOffsets = true>
 inline void endian_swap(s64& v) noexcept
 {
     endian_swap(reinterpret_cast<u64&>(v));
 }
 
+template<bool swapOffsets = true>
 inline void endian_swap(float& v) noexcept
 {
     HL_STATIC_ASSERT_SIZE(float, sizeof(u32));
     endian_swap(reinterpret_cast<u32&>(v));
 }
 
+template<bool swapOffsets = true>
 inline void endian_swap(double& v) noexcept
 {
     HL_STATIC_ASSERT_SIZE(double, sizeof(u64));
@@ -367,13 +404,29 @@ inline void endian_swap(double& v) noexcept
 }
 
 template<typename T>
-inline void endian_swap(T& v) noexcept
+inline std::enable_if_t<std::is_enum_v<T>>
+    endian_swap(T& v) noexcept
+{
+    endian_swap(reinterpret_cast<std::underlying_type_t<T>&>(v));
+}
+
+template<bool swapOffsets, typename T>
+inline std::enable_if_t<std::is_enum_v<T>>
+    endian_swap(T& v) noexcept
+{
+    endian_swap(reinterpret_cast<std::underlying_type_t<T>&>(v));
+}
+
+template<typename T>
+inline std::enable_if_t<!std::is_enum_v<T>>
+    endian_swap(T& v) noexcept(noexcept(v.endian_swap()))
 {
     v.endian_swap();
 }
 
 template<bool swapOffsets, typename T>
-inline void endian_swap(T& v) noexcept
+inline std::enable_if_t<!std::is_enum_v<T>>
+    endian_swap(T& v) noexcept(noexcept(v.template endian_swap<swapOffsets>()))
 {
     v.template endian_swap<swapOffsets>();
 }
@@ -384,53 +437,55 @@ class off32
 {
 public:
 #if UINTPTR_MAX > UINT32_MAX
-    using val_t = s32;
+    using value_type = s32;
 #else
-    using val_t = u32;
+    using value_type = u32;
 #endif
 
-    using this_t = off32<T>;
-    using cthis_t = const this_t;
-    using ptr_t = T*;
-    using cptr_t = const T*;
-    using ref_t = typename std::add_lvalue_reference<T>::type;
-    using cref_t = typename std::add_lvalue_reference<const T>::type;
+    using pointer = T*;
+    using const_pointer = const T*;
+    using reference = std::add_lvalue_reference_t<T>;
+    using const_reference = std::add_lvalue_reference_t<const T>;
 
 private:
-    val_t m_val;
+    value_type m_val;
 
 public:
     template<bool swapOffsets = true>
-    typename std::enable_if<swapOffsets, void>::type
-    	endian_swap() noexcept
+    inline void endian_swap() noexcept
     {
-        hl::endian_swap(m_val);
+        if constexpr (swapOffsets)
+        {
+            hl::endian_swap(m_val);
+        }
     }
 
-    template<bool swapOffsets = true>
-    typename std::enable_if<!swapOffsets, void>::type
-    	endian_swap() noexcept {}
+    inline u32 get_raw() const noexcept
+    {
+        return m_val;
+    }
 
-    cptr_t get() const noexcept
+    const_pointer get() const noexcept
     {
 #if UINTPTR_MAX > UINT32_MAX
         // Convert from relative pointer to absolute pointer and return result.
-        return (m_val != 0) ? reinterpret_cast<cptr_t>(
+        return (m_val != 0) ? reinterpret_cast<const_pointer>(
             reinterpret_cast<std::intptr_t>(this) + m_val) :
             nullptr;
 #else
-        // Cast from number to pointer.
-        return reinterpret_cast<cptr_t>(
+        // Cast from address to pointer.
+        return reinterpret_cast<const_pointer>(
             static_cast<std::uintptr_t>(m_val));
 #endif
     }
 
-    inline ptr_t get() noexcept
+    inline pointer get() noexcept
     {
-        return const_cast<ptr_t>(const_cast<cthis_t*>(this)->get());
+        return const_cast<pointer>(
+            const_cast<const off32*>(this)->get());
     }
 
-    val_t set(ptr_t ptr)
+    value_type set(pointer ptr)
     {
 #if UINTPTR_MAX > UINT32_MAX
         // Just set m_val to 0 if ptr is null.
@@ -440,17 +495,18 @@ public:
             return m_val;
         }
 
-        // Pointers are > 32 bits, so ptr will not fit within a 32-bit offset.
-        // We have to convert ptr to a relative pointer instead, and
-        // store that within the given offset.
-        const std::intptr_t ptrAddr = reinterpret_cast<std::intptr_t>(ptr);
-        std::intptr_t offAddr = reinterpret_cast<std::intptr_t>(this);
+        // Pointers are > 32 bits, so ptr will not fit within a 32-bit address.
+        // We have to convert ptr to a relative pointer instead, and then
+        // store that value into the 32-bit address.
+        const auto ptrAddr = reinterpret_cast<std::intptr_t>(ptr);
+        auto offAddr = reinterpret_cast<std::intptr_t>(this);
 
         // Ensure offset does not point to itself; we can't do that
         // with our relative offsets, since we still use 0 for null.
         if (ptrAddr == offAddr)
         {
-            HL_ERROR(error_type::unsupported);
+            throw std::runtime_error(
+                "32-bit offsets cannot point to themselves on this architecture");
         }
 
         // Compute a relative offset which points to ptr.
@@ -460,118 +516,96 @@ public:
         // 32-bit integer, since we're about to cast to that.
         if (offAddr > INT32_MAX || offAddr < INT32_MIN)
         {
-            HL_ERROR(error_type::out_of_range, "off32::offAddr");
+            throw std::out_of_range(
+                "The given pointer falls outside the supported address range");
         }
 
         // Set the offset to the relative offset we just computed.
-        m_val = static_cast<val_t>(offAddr);
+        m_val = static_cast<value_type>(offAddr);
 #else
-        m_val = static_cast<val_t>(
+        // Pointers fit into 32 bits, so just set the address to ptr.
+        m_val = static_cast<value_type>(
             reinterpret_cast<std::uintptr_t>(ptr));
 #endif
 
         return m_val;
     }
 
-    inline val_t fix(void* base)
+    inline value_type fix(void* base)
     {
         return set((m_val) ? ptradd<T>(base, m_val) : nullptr);
     }
 
-    inline this_t& operator=(ptr_t ptr)
+    inline off32& operator=(pointer ptr)
     {
         set(ptr);
         return *this;
     }
 
-    inline cptr_t operator->() const noexcept
+    inline off32& operator=(std::nullptr_t) noexcept
+    {
+        m_val = 0;
+        return *this;
+    }
+
+    inline const_pointer operator->() const noexcept
     {
         return get();
     }
 
-    inline ptr_t operator->() noexcept
+    inline pointer operator->() noexcept
     {
         return get();
     }
 
-    inline cref_t operator*() const noexcept
+    inline const_reference operator*() const noexcept
     {
         return *get();
     }
 
-    inline ref_t operator*() noexcept
+    inline reference operator*() noexcept
     {
         return *get();
     }
 
-    inline cref_t operator[](std::size_t i) const noexcept
+    inline const_reference operator[](u32 i) const
     {
         return *(get() + i);
     }
 
-    inline ref_t operator[](std::size_t i) noexcept
+    inline reference operator[](u32 i)
     {
         return *(get() + i);
     }
 
-    inline bool operator<(cthis_t& other) const noexcept
+    inline bool operator<(const off32& other) const noexcept
     {
         return (get() < other.get());
     }
 
-    inline bool operator>(cthis_t& other) const noexcept
+    inline bool operator>(const off32& other) const noexcept
     {
         return (get() > other.get());
     }
 
-    inline bool operator<=(cthis_t& other) const noexcept
+    inline bool operator<=(const off32& other) const noexcept
     {
         return (get() <= other.get());
     }
 
-    inline bool operator>=(cthis_t& other) const noexcept
+    inline bool operator>=(const off32& other) const noexcept
     {
         return (get() >= other.get());
     }
 
-    inline bool operator==(cthis_t& other) const noexcept
+    inline bool operator==(const off32& other) const noexcept
     {
         return (get() == other.get());
     }
 
-    inline bool operator!=(cthis_t& other) const noexcept
+    inline bool operator!=(const off32& other) const noexcept
     {
         return (get() != other.get());
-    }
-
-    inline bool operator<(cptr_t ptr) const noexcept
-    {
-        return (get() < ptr);
-    }
-
-    inline bool operator>(cptr_t ptr) const noexcept
-    {
-        return (get() > ptr);
-    }
-
-    inline bool operator<=(cptr_t ptr) const noexcept
-    {
-        return (get() <= ptr);
-    }
-
-    inline bool operator>=(cptr_t ptr) const noexcept
-    {
-        return (get() >= ptr);
-    }
-
-    inline bool operator==(cptr_t ptr) const noexcept
-    {
-        return (get() == ptr);
-    }
-
-    inline bool operator!=(cptr_t ptr) const noexcept
-    {
-        return (get() != ptr);
     }
 
     inline explicit operator bool() const noexcept
@@ -580,63 +614,95 @@ public:
     }
 
     inline off32() noexcept = default;
-    inline off32(std::nullptr_t) noexcept : m_val(0) {}
-    inline off32(u32 v) noexcept : m_val(static_cast<val_t>(v)) {}
-    inline off32(ptr_t ptr) : m_val(set(ptr)) {}
+
+    inline off32(std::nullptr_t) noexcept :
+        m_val(0) {}
+
+    inline off32(u32 addr) noexcept :
+        m_val(static_cast<value_type>(addr)) {}
+
+    inline off32(pointer ptr) :
+        m_val(set(ptr)) {}
 };
+
+template<typename T>
+inline bool operator==(const off32<T>& a, std::nullptr_t) noexcept
+{
+    return (a.get_raw() == 0);
+}
+
+template<typename T>
+inline bool operator==(std::nullptr_t, const off32<T>& b) noexcept
+{
+    return (b.get_raw() == 0);
+}
+
+template<typename T>
+inline bool operator!=(const off32<T>& a, std::nullptr_t) noexcept
+{
+    return (a.get_raw() != 0);
+}
+
+template<typename T>
+inline bool operator!=(std::nullptr_t, const off32<T>& b) noexcept
+{
+    return (b.get_raw() != 0);
+}
 
 template<typename T>
 class off64
 {
 public:
 #if UINTPTR_MAX > UINT64_MAX
-    using val_t = s64;
+    using value_type = s64;
 #else
-    using val_t = u64;
+    using value_type = u64;
 #endif
 
-    using this_t = off64<T>;
-    using cthis_t = const this_t;
-    using ptr_t = T*;
-    using cptr_t = const T*;
-    using ref_t = typename std::add_lvalue_reference<T>::type;
-    using cref_t = typename std::add_lvalue_reference<const T>::type;
+    using pointer = T*;
+    using const_pointer = const T*;
+    using reference = std::add_lvalue_reference_t<T>;
+    using const_reference = std::add_lvalue_reference_t<const T>;
 
 private:
-    val_t m_val;
+    value_type m_val;
 
 public:
     template<bool swapOffsets = true>
-    typename std::enable_if<swapOffsets, void>::type
-    	endian_swap() noexcept
+    inline void endian_swap() noexcept
     {
-        hl::endian_swap(m_val);
+        if constexpr (swapOffsets)
+        {
+            hl::endian_swap(m_val);
+        }
     }
 
-    template<bool swapOffsets = true>
-    typename std::enable_if<!swapOffsets, void>::type
-    	endian_swap() noexcept {}
+    inline u64 get_raw() const noexcept
+    {
+        return m_val;
+    }
 
-    cptr_t get() const noexcept
+    const_pointer get() const noexcept
     {
 #if UINTPTR_MAX > UINT64_MAX
         // Convert from relative pointer to absolute pointer and return result.
-        return (m_val != 0) ? reinterpret_cast<cptr_t>(
+        return (m_val != 0) ? reinterpret_cast<const_pointer>(
             reinterpret_cast<std::intptr_t>(this) + m_val) :
             nullptr;
 #else
-        // Cast from number to pointer.
-        return reinterpret_cast<cptr_t>(
+        // Cast from address to pointer.
+        return reinterpret_cast<const_pointer>(
             static_cast<std::uintptr_t>(m_val));
 #endif
     }
 
-    inline ptr_t get() noexcept
+    inline pointer get() noexcept
     {
-        return const_cast<ptr_t>(const_cast<cthis_t*>(this)->get());
+        return const_cast<pointer>(
+            const_cast<const off64*>(this)->get());
     }
 
-    val_t set(ptr_t ptr)
+    value_type set(pointer ptr)
     {
 #if UINTPTR_MAX > UINT64_MAX
         // Just set m_val to 0 if ptr is null.
@@ -646,138 +712,117 @@ public:
             return m_val;
         }
 
-        // Pointers are > 64 bits, so ptr will not fit within a 64-bit offset.
-        // We have to convert ptr to a relative pointer instead, and
-        // store that within the given offset.
-        const std::intptr_t ptrAddr = reinterpret_cast<std::intptr_t>(ptr);
-        std::intptr_t offAddr = reinterpret_cast<std::intptr_t>(this);
+        // Pointers are > 64 bits, so ptr will not fit within a 64-bit address.
+        // We have to convert ptr to a relative pointer instead, and then
+        // store that value into the 64-bit address.
+        const auto ptrAddr = reinterpret_cast<std::intptr_t>(ptr);
+        auto offAddr = reinterpret_cast<std::intptr_t>(this);
 
         // Ensure offset does not point to itself; we can't do that
         // with our relative offsets, since we still use 0 for null.
         if (ptrAddr == offAddr)
         {
-            HL_ERROR(error_type::unsupported);
+            throw std::runtime_error(
+                "64-bit offsets cannot point to themselves on this architecture");
         }
 
         // Compute a relative offset which points to ptr.
         offAddr = (ptrAddr - offAddr);
 
         // Ensure relative offset can fit within a signed
-        // 32-bit integer, since we're about to cast to that.
+        // 64-bit integer, since we're about to cast to that.
         if (offAddr > INT64_MAX || offAddr < INT64_MIN)
         {
-            HL_ERROR(error_type::out_of_range, "off64::offAddr");
+            throw std::out_of_range(
+                "The given pointer falls outside the supported address range");
         }
 
         // Set the offset to the relative offset we just computed.
-        m_val = static_cast<val_t>(offAddr);
+        m_val = static_cast<value_type>(offAddr);
 #else
-        m_val = static_cast<val_t>(
+        // Pointers fit into 64 bits, so just set the address to ptr.
+        m_val = static_cast<value_type>(
             reinterpret_cast<std::uintptr_t>(ptr));
 #endif
 
         return m_val;
     }
 
-    inline val_t fix(void* base)
+    inline value_type fix(void* base)
     {
         return set((m_val) ? ptradd<T>(base, m_val) : nullptr);
     }
 
-    inline this_t& operator=(ptr_t ptr)
+    inline off64& operator=(pointer ptr)
     {
         set(ptr);
         return *this;
     }
 
-    inline cptr_t operator->() const noexcept
+    inline off64& operator=(std::nullptr_t) noexcept
+    {
+        m_val = 0;
+        return *this;
+    }
+
+    inline const_pointer operator->() const noexcept
     {
         return get();
     }
 
-    inline ptr_t operator->() noexcept
+    inline pointer operator->() noexcept
     {
         return get();
     }
 
-    inline cref_t operator*() const noexcept
+    inline const_reference operator*() const noexcept
     {
         return *get();
     }
 
-    inline ref_t operator*() noexcept
+    inline reference operator*() noexcept
     {
         return *get();
     }
 
-    inline cref_t operator[](std::size_t i) const noexcept
+    inline const_reference operator[](u64 i) const
     {
         return *(get() + i);
     }
 
-    inline ref_t operator[](std::size_t i) noexcept
+    inline reference operator[](u64 i)
     {
         return *(get() + i);
     }
 
-    inline bool operator<(cthis_t& other) const noexcept
+    inline bool operator<(const off64& other) const noexcept
     {
         return (get() < other.get());
     }
 
-    inline bool operator>(cthis_t& other) const noexcept
+    inline bool operator>(const off64& other) const noexcept
     {
         return (get() > other.get());
     }
 
-    inline bool operator<=(cthis_t& other) const noexcept
+    inline bool operator<=(const off64& other) const noexcept
     {
         return (get() <= other.get());
     }
 
-    inline bool operator>=(cthis_t& other) const noexcept
+    inline bool operator>=(const off64& other) const noexcept
     {
         return (get() >= other.get());
     }
 
-    inline bool operator==(cthis_t& other) const noexcept
+    inline bool operator==(const off64& other) const noexcept
     {
         return (get() == other.get());
     }
 
-    inline bool operator!=(cthis_t& other) const noexcept
+    inline bool operator!=(const off64& other) const noexcept
     {
         return (get() != other.get());
-    }
-
-    inline bool operator<(cptr_t ptr) const noexcept
-    {
-        return (get() < ptr);
-    }
-
-    inline bool operator>(cptr_t ptr) const noexcept
-    {
-        return (get() > ptr);
-    }
-
-    inline bool operator<=(cptr_t ptr) const noexcept
-    {
-        return (get() <= ptr);
-    }
-
-    inline bool operator>=(cptr_t ptr) const noexcept
-    {
-        return (get() >= ptr);
-    }
-
-    inline bool operator==(cptr_t ptr) const noexcept
-    {
-        return (get() == ptr);
-    }
-
-    inline bool operator!=(cptr_t ptr) const noexcept
-    {
-        return (get() != ptr);
     }
 
     inline explicit operator bool() const noexcept
@@ -786,169 +831,302 @@ public:
     }
 
     inline off64() noexcept = default;
-    inline off64(std::nullptr_t) noexcept : m_val(0) {}
-    inline off64(u64 v) noexcept : m_val(static_cast<val_t>(v)) {}
-    inline off64(ptr_t ptr) : m_val(set(ptr)) {}
+
+    inline off64(std::nullptr_t) noexcept :
+        m_val(0) {}
+
+    inline off64(u64 addr) noexcept :
+        m_val(static_cast<value_type>(addr)) {}
+
+    inline off64(pointer ptr) :
+        m_val(set(ptr)) {}
 };
 
 template<typename T>
-class arr32
+inline bool operator==(const off64<T>& a, std::nullptr_t) noexcept
 {
-    using this_t = arr32<T>;
-    using cthis_t = const this_t;
-    using ptr_t = T*;
-    using cptr_t = const T*;
-    using ref_t = typename std::add_lvalue_reference<T>::type;
-    using cref_t = typename std::add_lvalue_reference<const T>::type;
+    return (a.get_raw() == 0);
+}
 
-public:
+template<typename T>
+inline bool operator==(std::nullptr_t, const off64<T>& b) noexcept
+{
+    return (b.get_raw() == 0);
+}
+
+template<typename T>
+inline bool operator!=(const off64<T>& a, std::nullptr_t) noexcept
+{
+    return (a.get_raw() != 0);
+}
+
+template<typename T>
+inline bool operator!=(std::nullptr_t, const off64<T>& b) noexcept
+{
+    return (b.get_raw() != 0);
+}
+
+template<typename T>
+struct arr32
+{
+    using value_type = T;
+    using size_type = u32;
+    using pointer = T*;
+    using const_pointer = const T*;
+    using reference = typename off32<T>::reference;
+    using const_reference = typename off32<T>::const_reference;
+    using iterator = pointer;
+    using const_iterator = const_pointer;
+    using reverse_iterator = std::reverse_iterator<iterator>;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
     u32 count;
-    off32<T> data;
+    off32<T> dataPtr;
 
     template<bool swapOffsets = true>
     void endian_swap() noexcept
     {
-        hl::endian_swap(count);
-        hl::endian_swap<swapOffsets>(data);
+        hl::endian_swap<swapOffsets>(count);
+        hl::endian_swap<swapOffsets>(dataPtr);
     }
 
-    inline cptr_t get() const noexcept
+    inline bool empty() const noexcept
     {
-        return data.get();
+        return (count != 0);
     }
 
-    inline ptr_t get() noexcept
+    inline const_pointer data() const noexcept
     {
-        return data.get();
+        return dataPtr.get();
     }
 
-    inline cptr_t begin() const noexcept
+    inline pointer data() noexcept
     {
-        return get();
+        return dataPtr.get();
     }
 
-    inline ptr_t begin() noexcept
+    inline const_iterator begin() const noexcept
     {
-        return get();
+        return dataPtr.get();
     }
 
-    inline cptr_t end() const noexcept
+    inline iterator begin() noexcept
     {
-        return &data[count];
+        return dataPtr.get();
     }
 
-    inline ptr_t end() noexcept
+    inline const_iterator end() const noexcept
     {
-        return &data[count];
+        return (dataPtr.get() + count);
     }
 
-    inline cref_t operator[](u32 i) const noexcept
+    inline iterator end() noexcept
     {
-        return data[i];
+        return (dataPtr.get() + count);
     }
 
-    inline ref_t operator[](u32 i) noexcept
+    inline const_reference front() const
     {
-        return data[i];
+        return *dataPtr;
     }
 
-    inline bool operator==(cthis_t& other) const noexcept
+    inline reference front()
     {
-        return (data == other.data &&
-            data == other.count);
+        return *dataPtr;
     }
 
-    inline bool operator!=(cthis_t& other) const noexcept
+    inline const_reference back() const
     {
-        return (data != other.data ||
-            count != other.count);
+        return dataPtr[count - 1];
+    }
+
+    inline reference back()
+    {
+        return dataPtr[count - 1];
+    }
+
+    inline const_reference operator[](size_type pos) const
+    {
+        return (dataPtr.get() + pos);
+    }
+
+    inline reference operator[](size_type pos)
+    {
+        return (dataPtr.get() + pos);
+    }
+
+    inline bool operator==(const arr32& other) const noexcept
+    {
+        return (dataPtr == other.dataPtr && count == other.count);
+    }
+
+    inline bool operator!=(const arr32& other) const noexcept
+    {
+        return (dataPtr != other.dataPtr || count != other.count);
     }
 
     inline arr32() noexcept = default;
-    inline arr32(u32 count, off32<T> data) noexcept :
-        count(count), data(data) {}
+
+    inline arr32(u32 count, off32<T> dataPtr) noexcept :
+        count(count),
+        dataPtr(dataPtr) {}
 };
 
 template<typename T>
-class arr64
+struct arr64
 {
-    using this_t = arr64<T>;
-    using cthis_t = const this_t;
-    using ptr_t = T*;
-    using cptr_t = const T*;
-    using ref_t = typename std::add_lvalue_reference<T>::type;
-    using cref_t = typename std::add_lvalue_reference<const T>::type;
+    using value_type = T;
+    using size_type = u64;
+    using pointer = T*;
+    using const_pointer = const T*;
+    using reference = typename off64<T>::reference;
+    using const_reference = typename off64<T>::const_reference;
+    using iterator = pointer;
+    using const_iterator = const_pointer;
+    using reverse_iterator = std::reverse_iterator<iterator>;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-public:
     u64 count;
-    off64<T> data;
+    off64<T> dataPtr;
 
     template<bool swapOffsets = true>
     void endian_swap() noexcept
     {
-        hl::endian_swap(count);
-        hl::endian_swap<swapOffsets>(data);
+        hl::endian_swap<swapOffsets>(count);
+        hl::endian_swap<swapOffsets>(dataPtr);
     }
 
-    inline cptr_t get() const noexcept
+    inline bool empty() const noexcept
     {
-        return data.get();
+        return (count != 0);
     }
 
-    inline ptr_t get() noexcept
+    inline const_pointer data() const noexcept
     {
-        return data.get();
+        return dataPtr.get();
     }
 
-    inline cptr_t begin() const noexcept
+    inline pointer data() noexcept
     {
-        return get();
+        return dataPtr.get();
     }
 
-    inline ptr_t begin() noexcept
+    inline const_iterator begin() const noexcept
     {
-        return get();
+        return dataPtr.get();
     }
 
-    inline cptr_t end() const noexcept
+    inline iterator begin() noexcept
     {
-        return &data[static_cast<std::size_t>(count)];
+        return dataPtr.get();
     }
 
-    inline ptr_t end() noexcept
+    inline const_iterator end() const noexcept
     {
-        return &data[static_cast<std::size_t>(count)];
+        return (dataPtr.get() + count);
     }
 
-    inline cref_t operator[](u64 i) const noexcept
+    inline iterator end() noexcept
     {
-        return data[static_cast<std::size_t>(i)];
+        return (dataPtr.get() + count);
     }
 
-    inline ref_t operator[](u64 i) noexcept
+    inline const_reference front() const
     {
-        return data[static_cast<std::size_t>(i)];
+        return *dataPtr;
     }
 
-    inline bool operator==(cthis_t& other) const noexcept
+    inline reference front()
     {
-        return (data == other.data &&
-            count == other.count);
+        return *dataPtr;
     }
 
-    inline bool operator!=(cthis_t& other) const noexcept
+    inline const_reference back() const
     {
-        return (data != other.data ||
-            count != other.mount);
+        return dataPtr[count - 1];
+    }
+
+    inline reference back()
+    {
+        return dataPtr[count - 1];
+    }
+
+    inline const_reference operator[](size_type pos) const
+    {
+        return (dataPtr.get() + pos);
+    }
+
+    inline reference operator[](size_type pos)
+    {
+        return (dataPtr.get() + pos);
+    }
+
+    inline bool operator==(const arr64& other) const noexcept
+    {
+        return (dataPtr == other.dataPtr && count == other.count);
+    }
+
+    inline bool operator!=(const arr64& other) const noexcept
+    {
+        return (dataPtr != other.dataPtr || count != other.count);
     }
 
     inline arr64() noexcept = default;
-    inline arr64(u64 count, off64<T> data) noexcept :
-        count(count), data(data) {}
+
+    inline arr64(u64 count, off64<T> dataPtr) noexcept :
+        count(count),
+        dataPtr(dataPtr) {}
 };
 
+/* Pointer proxies */
+template<typename T>
+class ptr_proxy
+{
+    T m_data;
+
+public:
+    inline const T* operator->() const noexcept
+    {
+        return &m_data;
+    }
+
+    inline T* operator->() noexcept
+    {
+        return &m_data;
+    }
+
+    template<typename... args_t>
+    inline ptr_proxy(args_t&&... args) :
+        m_data(std::forward<args_t>(args)...) {}
+};
+
+/* No_X types */
+struct no_value_init_t final
+{
+    constexpr explicit no_value_init_t() noexcept = default;
+};
+
+constexpr const no_value_init_t no_value_init;
+
+struct no_copy_t final
+{
+    constexpr explicit no_copy_t() noexcept = default;
+};
+
+constexpr const no_copy_t no_copy;
+
 /* Miscellaneous helpers */
-#define HL_COUNT_OF(arr) (sizeof(arr) / sizeof(*(arr)))
+template<typename T, std::size_t count>
+constexpr std::size_t count_of(const T(&arr)[count]) noexcept
+{
+    return count;
+}
+
+template<typename T>
+inline std::size_t count_of(const T& obj)
+{
+    return obj.size();
+}
 
 /**
     @brief Creates a signature in the form of a 32-bit unsigned integer at compile-time.

@@ -162,7 +162,7 @@ void in_load(T& filePath, archive_entry_list* hlArc,
                 else
                 {
                     // The first split didn't even exist; raise an error.
-                    HL_ERROR(error_type::not_found);
+                    throw not_found_exception();
                 }
             }
 
@@ -288,8 +288,7 @@ void save(const archive_entry_list& arc,
         // Get entry data pointer.
         if (entry.is_reference_file())
         {
-            std::size_t tmpDataSize;
-            fileData = file::load(entry.path(), tmpDataSize);
+            fileData = file::load(entry.path());
             fileDataPtr = fileData.get();
         }
         else
@@ -300,7 +299,7 @@ void save(const archive_entry_list& arc,
         // Ensure file size can fit within a 32-bit unsigned integer.
         if (entry.size() > UINT32_MAX)
         {
-            HL_ERROR(error_type::out_of_range);
+            throw out_of_range_exception();
         }
 
         hhFileEntry.dataSize = static_cast<u32>(entry.size());
@@ -314,7 +313,7 @@ void save(const archive_entry_list& arc,
         // name can be within an ARL file (which probably applies to ARs / PFDs too).
         if (fileNameUTF8Len > 255)
         {
-            HL_ERROR(error_type::out_of_range);
+            throw out_of_range_exception();
         }
 
         // Account for entry and file name (including null terminator).
@@ -355,7 +354,7 @@ void save(const archive_entry_list& arc,
             if (++splitIt == splitIt.end())
             {
                 // Raise an error if we exceeded 99 splits.
-                HL_ERROR(error_type::out_of_range);
+                throw out_of_range_exception();
             }
 
             // Open the next split for writing.

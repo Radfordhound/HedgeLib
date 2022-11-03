@@ -7,13 +7,28 @@ namespace hr
 {
 namespace gfx
 {
+void cmd_list::copy_buffer(const buffer& src, buffer& dst)
+{
+    assert(src.size() <= dst.size() &&
+        "Destination buffer is too small to hold source buffer!");
+
+    const VkBufferCopy vkCopyRegion =
+    {
+        0,                                                              // srcOffset
+        0,                                                              // dstOffset
+        src.size()                                                      // size
+    };
+
+    vkCmdCopyBuffer(m_vkCmdBuf, src.handle(), dst.handle(),
+        1, &vkCopyRegion);
+}
+
 void cmd_list::copy_buffer_to_image(const buffer& src,
     image& dst, VkImageLayout layout)
 {
     // Generate Vulkan buffer image copy regions.
-    stack_or_heap_buffer<VkBufferImageCopy, 16> vkCopyRegions(
-        dst.layer_count() * dst.mip_levels());
-
+    const auto vkCopyRegionCount = (dst.layer_count() * dst.mip_levels());
+    hl::stack_or_heap_buffer<VkBufferImageCopy, 16> vkCopyRegions(vkCopyRegionCount);
     const in_vulkan_format_info fmtInfo(dst.format());
     VkBufferImageCopy* vkCurCopyRegion = vkCopyRegions;
     VkDeviceSize vkCurBufOffset = 0;
@@ -46,7 +61,7 @@ void cmd_list::copy_buffer_to_image(const buffer& src,
 
     // Schedule a copy from the given buffer to the given image.
     vkCmdCopyBufferToImage(m_vkCmdBuf, src.handle(), dst.handle(), 
-        layout, dst.mip_levels(), vkCopyRegions);
+        layout, vkCopyRegionCount, vkCopyRegions);
 }
 
 void cmd_list::transition_image_layout(image& img,
@@ -131,7 +146,7 @@ void cmd_list::bind_vertex_buffers(const buffer* buffers,
     unsigned int bufCount)
 {
     // Generate Vulkan vertex buffer array.
-    stack_or_heap_buffer<VkBuffer, 16> vkBuffers(bufCount);
+    hl::stack_or_heap_buffer<VkBuffer, 16> vkBuffers(bufCount);
     for (unsigned int i = 0; i < bufCount; ++i)
     {
         vkBuffers[i] = buffers[i].handle();
@@ -157,18 +172,13 @@ void cmd_list::bind_index_buffer(const buffer& buffer,
 }
 
 void cmd_list::bind_shader_data(const pipeline_layout& layout,
-    const shader_data* shaderData, unsigned int shaderDataCount)
+    const shader_data* shaderData, std::uint32_t shaderDataCount,
+    std::uint32_t firstBindIndex, const std::uint32_t* dynamicOffsets,
+    std::uint32_t dynamicOffsetCount)
 {
     vkCmdBindDescriptorSets(m_vkCmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS,
-        layout.handle(), 0, shaderDataCount,
-        shaderData, 0, nullptr);
-}
-
-void cmd_list::bind_shader_data(const pipeline_layout& layout,
-    const shader_data& shaderData)
-{
-    vkCmdBindDescriptorSets(m_vkCmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS,
-        layout.handle(), 0, 1, &shaderData, 0, nullptr);
+        layout.handle(), firstBindIndex, shaderDataCount, shaderData,
+        dynamicOffsetCount, dynamicOffsets);
 }
 
 void cmd_list::draw_indexed(unsigned int firstIndex, unsigned int indexCount,

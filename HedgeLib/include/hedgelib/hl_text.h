@@ -4,6 +4,7 @@
 #include <string>
 #include <memory>
 #include <algorithm>
+#include <vector>
 
 namespace hl
 {
@@ -29,15 +30,7 @@ using nstring = std::basic_string<nchar>;
 
 namespace text
 {
-enum class encoding
-{
-    utf8 = 0,
-    utf16_be,
-    utf16_le,
-    utf32_be,
-    utf32_le
-};
-
+/* Helper functions */
 template<typename char_t>
 inline std::size_t len(const char_t* str)
 {
@@ -53,8 +46,7 @@ inline std::size_t size(const char_t* str)
 template<typename char_t>
 constexpr bool is_digit(char_t c) noexcept
 {
-    return (c <= static_cast<char_t>('9') &&
-        c >= static_cast<char_t>('0'));
+    return (c <= '9' && c >= '0');
 }
 
 template<typename char_t>
@@ -69,213 +61,134 @@ constexpr char_t to_lower(char_t c) noexcept
     return ((c >= 'A' && c <= 'Z') ? (c + 32) : c);
 }
 
-template<typename char_t, typename traits_t = std::char_traits<char_t>>
-inline int compare(const char_t* str1, const char_t* str2, std::size_t count)
+template<typename char_t>
+constexpr std::enable_if_t<sizeof(char_t) < sizeof(int), int>
+    compare(char_t ch1, char_t ch2) noexcept
 {
-    return traits_t::compare(str1, str2, count);
+    return (static_cast<int>(ch1) - static_cast<int>(ch2));
 }
 
-template<typename char_t, typename traits_t = std::char_traits<char_t>>
-inline int compare(const char_t* str1, const char_t* str2)
+template<typename char_t>
+constexpr std::enable_if_t<sizeof(char_t) >= sizeof(int), int>
+    compare(char_t ch1, char_t ch2) noexcept
 {
-    while (*str1 && traits_t::eq(*str1, *str2))
+    return ((ch1 == ch2) ? 0 : ((ch1 < ch2) ? -1 : 1));
+}
+
+template<typename char_t>
+constexpr int compare(const char_t* str1, const char_t* str2)
+{
+    while (*str1 && std::char_traits<char_t>::eq(*str1, *str2))
     {
         ++str1;
         ++str2;
     }
 
-    return (static_cast<int>(traits_t::to_int_type(*str1)) -
-        static_cast<int>(traits_t::to_int_type(*str2)));
+    return compare(*str1, *str2);
 }
 
-template<typename char_t, typename traits_t = std::char_traits<char_t>>
-inline int icompare_as_upper(const char_t* str1, const char_t* str2, std::size_t count)
+template<typename char_t>
+constexpr int compare(const char_t* str1, const char_t* str2, std::size_t count)
 {
-    typename traits_t::int_type c1 = 0, c2 = 0;
-    while (count && (c2 = traits_t::to_int_type(*str2),
-        c1 = traits_t::to_int_type(*str1)))
+    return std::char_traits<char_t>::compare(str1, str2, count);
+}
+
+template<typename char_t>
+constexpr int compare_as_upper(char_t ch1, char_t ch2)
+{
+    return compare(to_upper(ch1), to_upper(ch2));
+}
+
+template<typename char_t>
+int compare_as_upper(const char_t* str1, const char_t* str2)
+{
+    char_t a = 0, b = 0;
+    while ((b = to_upper(*str2), a = to_upper(*str1)) &&
+        std::char_traits<char_t>::eq(a, b))
     {
-        if (c1 != c2)
-        {
-            if (c1 >= static_cast<typename traits_t::int_type>('A') &&
-                c2 >= static_cast<typename traits_t::int_type>('A'))
-            {
-                // If c1 is lower-cased, upper-case it.
-                if (c1 >= static_cast<typename traits_t::int_type>('a') &&
-                    c1 <= static_cast<typename traits_t::int_type>('z'))
-                {
-                    c1 -= 32;
-                }
+        ++str1;
+        ++str2;
+    }
 
-                // If c2 is lower-cased, upper-case it.
-                if (c2 >= static_cast<typename traits_t::int_type>('a') &&
-                    c2 <= static_cast<typename traits_t::int_type>('z'))
-                {
-                    c2 -= 32;
-                }
+    return compare(a, b);
+}
 
-                if (c1 != c2) goto end;
-            }
-            else goto end;
-        }
-
+template<typename char_t>
+int compare_as_upper(const char_t* str1, const char_t* str2, std::size_t count)
+{
+    char_t a = 0, b = 0;
+    while (count && (b = to_upper(*str2), a = to_upper(*str1)) &&
+        std::char_traits<char_t>::eq(a, b))
+    {
         ++str1;
         ++str2;
         --count;
     }
 
-end:
-    if (count == 0) return 0;
-
-    return (static_cast<int>(c1) - static_cast<int>(c2));
+    return compare(a, b);
 }
 
-template<typename char_t, typename traits_t = std::char_traits<char_t>>
-inline int icompare_as_upper(const char_t* str1, const char_t* str2)
+template<typename char_t>
+constexpr int compare_as_lower(char_t ch1, char_t ch2)
 {
-    typename traits_t::int_type c1 = 0, c2 = 0;
-    while ((c2 = traits_t::to_int_type(*str2),
-        c1 = traits_t::to_int_type(*str1)))
+    return compare(to_lower(ch1), to_lower(ch2));
+}
+
+template<typename char_t>
+int compare_as_lower(const char_t* str1, const char_t* str2)
+{
+    char_t a = 0, b = 0;
+    while ((b = to_lower(*str2), a = to_lower(*str1)) &&
+        std::char_traits<char_t>::eq(a, b))
     {
-        if (c1 != c2)
-        {
-            if (c1 >= static_cast<typename traits_t::int_type>('A') &&
-                c2 >= static_cast<typename traits_t::int_type>('A'))
-            {
-                // If c1 is lower-cased, upper-case it.
-                if (c1 >= static_cast<typename traits_t::int_type>('a') &&
-                    c1 <= static_cast<typename traits_t::int_type>('z'))
-                {
-                    c1 -= 32;
-                }
-
-                // If c2 is lower-cased, upper-case it.
-                if (c2 >= static_cast<typename traits_t::int_type>('a') &&
-                    c2 <= static_cast<typename traits_t::int_type>('z'))
-                {
-                    c2 -= 32;
-                }
-
-                if (c1 != c2) goto end;
-            }
-            else goto end;
-        }
-
         ++str1;
         ++str2;
     }
 
-end:
-    return (static_cast<int>(c1) - static_cast<int>(c2));
+    return compare(a, b);
 }
 
-template<typename char_t, typename traits_t = std::char_traits<char_t>>
-inline int icompare_as_lower(const char_t* str1, const char_t* str2, std::size_t count)
+template<typename char_t>
+int compare_as_lower(const char_t* str1, const char_t* str2, std::size_t count)
 {
-    typename traits_t::int_type c1 = 0, c2 = 0;
-    while (count && (c2 = traits_t::to_int_type(*str2),
-        c1 = traits_t::to_int_type(*str1)))
+    char_t a = 0, b = 0;
+    while (count && (b = to_lower(*str2), a = to_lower(*str1)) &&
+        std::char_traits<char_t>::eq(a, b))
     {
-        if (c1 != c2)
-        {
-            if (c1 <= static_cast<typename traits_t::int_type>('z') &&
-                c2 <= static_cast<typename traits_t::int_type>('z'))
-            {
-                // If c1 is upper-cased, lower-case it.
-                if (c1 >= static_cast<typename traits_t::int_type>('A') &&
-                    c1 <= static_cast<typename traits_t::int_type>('Z'))
-                {
-                    c1 += 32;
-                }
-
-                // If c2 is upper-cased, lower-case it.
-                if (c2 >= static_cast<typename traits_t::int_type>('A') &&
-                    c2 <= static_cast<typename traits_t::int_type>('Z'))
-                {
-                    c2 += 32;
-                }
-
-                if (c1 != c2) goto end;
-            }
-            else goto end;
-        }
-
         ++str1;
         ++str2;
         --count;
     }
 
-end:
-    if (count == 0) return 0;
-
-    return (static_cast<int>(c1) - static_cast<int>(c2));
-}
-
-template<typename char_t, typename traits_t = std::char_traits<char_t>>
-inline int icompare_as_lower(const char_t* str1, const char_t* str2)
-{
-    typename traits_t::int_type c1 = 0, c2 = 0;
-    while ((c2 = traits_t::to_int_type(*str2),
-        c1 = traits_t::to_int_type(*str1)))
-    {
-        if (c1 != c2)
-        {
-            if (c1 <= static_cast<typename traits_t::int_type>('z') &&
-                c2 <= static_cast<typename traits_t::int_type>('z'))
-            {
-                // If c1 is upper-cased, lower-case it.
-                if (c1 >= static_cast<typename traits_t::int_type>('A') &&
-                    c1 <= static_cast<typename traits_t::int_type>('Z'))
-                {
-                    c1 += 32;
-                }
-
-                // If c2 is upper-cased, lower-case it.
-                if (c2 >= static_cast<typename traits_t::int_type>('A') &&
-                    c2 <= static_cast<typename traits_t::int_type>('Z'))
-                {
-                    c2 += 32;
-                }
-
-                if (c1 != c2) goto end;
-            }
-            else goto end;
-        }
-
-        ++str1;
-        ++str2;
-    }
-
-end:
-    return (static_cast<int>(c1) - static_cast<int>(c2));
+    return compare(a, b);
 }
 
 template<typename char_t>
-inline bool equal(const char_t* str1, const char_t* str2, std::size_t count)
-{
-    return (compare(str1, str2, count) == 0);
-}
-
-template<typename char_t>
-inline bool equal(const char_t* str1, const char_t* str2)
+constexpr bool equal(const char_t* str1, const char_t* str2)
 {
     return (compare(str1, str2) == 0);
 }
 
 template<typename char_t>
-inline bool iequal(const char_t* str1, const char_t* str2, std::size_t count)
+constexpr bool equal(const char_t* str1, const char_t* str2, std::size_t count)
 {
-    return (icompare_as_lower(str1, str2, count) == 0);
+    return (compare(str1, str2, count) == 0);
 }
 
 template<typename char_t>
-inline bool iequal(const char_t* str1, const char_t* str2)
+constexpr bool iequal(const char_t* str1, const char_t* str2)
 {
-    return (icompare_as_lower(str1, str2) == 0);
+    return (compare_as_lower(str1, str2) == 0);
 }
 
 template<typename char_t>
-inline std::size_t copy(const char_t* src, char_t* dst)
+constexpr bool iequal(const char_t* str1, const char_t* str2, std::size_t count)
+{
+    return (compare_as_lower(str1, str2, count) == 0);
+}
+
+template<typename char_t>
+std::size_t copy(const char_t* src, char_t* dst)
 {
     // Copy the string from src into dst.
     // (While condition is wrapped in double parenthesis so
@@ -289,7 +202,7 @@ inline std::size_t copy(const char_t* src, char_t* dst)
 }
 
 template<typename char_t>
-inline bool copy_s(const char_t* src, char_t* dst,
+bool copy_s(const char_t* src, char_t* dst,
     std::size_t dstBufLen, std::size_t& copiedCount)
 {
     // Copy up to dstBufLen characters from src into dst.
@@ -309,7 +222,7 @@ inline bool copy_s(const char_t* src, char_t* dst,
 }
 
 template<typename char_t>
-inline bool copy_s(const char_t* src, char_t* dst, std::size_t dstBufLen)
+bool copy_s(const char_t* src, char_t* dst, std::size_t dstBufLen)
 {
     // Copy up to dstBufLen characters from src into dst.
     std::size_t copied = 0;
@@ -326,7 +239,7 @@ inline bool copy_s(const char_t* src, char_t* dst, std::size_t dstBufLen)
 }
 
 template<typename char_t>
-inline std::unique_ptr<char_t[]> make_copy(const char_t* str, std::size_t strLen)
+std::unique_ptr<char_t[]> make_copy(const char_t* str, std::size_t strLen)
 {
     // Create copy of string.
     std::unique_ptr<char_t[]> strCopy(new char_t[strLen + 1]);
@@ -349,9 +262,9 @@ struct native_to_native
     using src_char_t = nchar;
     using dst_char_t = nchar;
 
-    inline static std::size_t conv(
-        const src_char_t* src, std::size_t srcLen,
-        dst_char_t* dst, std::size_t dstBufLen)
+    static std::size_t conv(const src_char_t* src,
+        std::size_t srcLen, dst_char_t* dst,
+        std::size_t dstBufLen)
     {
         if (!dstBufLen)
         {
@@ -359,13 +272,13 @@ struct native_to_native
         }
         else if (!srcLen)
         {
-            std::size_t copiedCount;
-
             // Copy until the null terminator, or until dstBufLen is exceeded.
+            std::size_t copiedCount;
             if (!copy_s(src, dst, dstBufLen, copiedCount))
             {
-                // dstBufLen was exceeded; raise an error.
-                HL_ERROR(error_type::out_of_range);
+                throw std::out_of_range(
+                    "The given source string cannot fit within "
+                    "the given destination buffer");
             }
 
             return (copiedCount - 1);
@@ -375,7 +288,7 @@ struct native_to_native
             // Ensure we have enough space in the dst buffer.
             if (srcLen > dstBufLen)
             {
-                HL_ERROR(error_type::out_of_range);
+                throw out_of_range_exception("srcLen");
             }
 
             // Copy characters.
@@ -562,6 +475,7 @@ struct native_to_utf32
     }
 };
 
+// TODO: Rename these "conv_no_alloc" functions to just "conv".
 template<typename converter_t>
 inline std::size_t conv_no_alloc(const typename converter_t::src_char_t* src,
     std::size_t srcLen, typename converter_t::dst_char_t* dst = nullptr,
@@ -586,7 +500,7 @@ inline std::size_t conv_no_alloc(
 }
 
 template<typename converter_t>
-inline std::unique_ptr<typename converter_t::dst_char_t[]> conv_unique_ptr(
+std::unique_ptr<typename converter_t::dst_char_t[]> conv_unique_ptr(
     const typename converter_t::src_char_t* src, std::size_t srcLen = 0)
 {
     // Compute required buffer length.
@@ -610,7 +524,7 @@ inline std::unique_ptr<typename converter_t::dst_char_t[]> conv_unique_ptr(
 }
 
 template<typename converter_t>
-inline std::basic_string<typename converter_t::dst_char_t> conv(
+std::basic_string<typename converter_t::dst_char_t> conv(
     const typename converter_t::src_char_t* src, std::size_t srcLen = 0)
 {
     // Compute required string length.

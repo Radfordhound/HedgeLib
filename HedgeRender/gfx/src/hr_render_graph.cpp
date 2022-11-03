@@ -8,16 +8,33 @@ namespace gfx
 {
 namespace internal
 {
+void in_render_pass::transition_resources(cmd_list& cmdList)
+{
+    for (auto& trans : initialResTransitions)
+    {
+        if (trans.vkInitialLayout == VK_IMAGE_LAYOUT_UNDEFINED)
+            continue;
+
+        cmdList.transition_image_layout(*trans.image,
+            VK_IMAGE_LAYOUT_UNDEFINED, trans.vkInitialLayout,
+            0, trans.vkInitialAccess,
+            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, trans.vkInitialStage);
+    }
+}
+
 void in_render_pass::destroy(VkDevice vkDevice) noexcept
 {
     vkDestroyRenderPass(vkDevice, vkRenderPass, nullptr);
 }
 
-in_render_pass::in_render_pass(render_pass* pass, std::size_t firstSubpassIndex,
+in_render_pass::in_render_pass(
+    std::vector<in_render_resource_transition>&& initialResTransitions,
+    render_pass* pass, std::size_t firstSubpassIndex,
     std::size_t subpassCount, std::size_t firstClearValueIndex,
     std::size_t screenOutputAttachIndex, uint32_t attachmentCount,
     bool doUpdateViewport, bool doUpdateScissor) noexcept :
 
+    initialResTransitions(std::move(initialResTransitions)),
     passData(pass),
     firstSubpassIndex(firstSubpassIndex),
     subpassCount(subpassCount),
@@ -29,105 +46,23 @@ in_render_pass::in_render_pass(render_pass* pass, std::size_t firstSubpassIndex,
 
 in_render_subpass::in_render_subpass(render_subpass* subpass, uint32_t attachmentCount) :
     subpassData(subpass),
-    vkColorAttachBlendStates(attachmentCount, no_default_construct) {}
+    vkColorAttachBlendStates(hl::no_value_init, attachmentCount) {}
 
-void in_render_resource::destroy(VkDevice vkDevice, VmaAllocator vmaAllocator) noexcept
-{
-    vkDestroyImageView(vkDevice, vkImageView, nullptr);
-    vmaDestroyImage(vmaAllocator, vkImage, vmaAlloc);
-}
+in_render_resource::in_render_resource(render_device& device,
+    VkImageUsageFlags vkImageUsage, VkFormat vkFormat,
+    unsigned int width, unsigned int height, const char* debugName) :
+    
+    image(device, in_get_memory_type(vkImageUsage), VK_IMAGE_TYPE_2D,
+        in_get_image_usage(vkImageUsage), vkFormat, width, height,
+        1, 1, 1, debugName),
+    
+    imageView(device, image, VK_IMAGE_VIEW_TYPE_2D),
+    isValid(true) {}
 
 VkFramebuffer in_render_graph::get_framebuffer(
     std::size_t renderPassIndex, std::size_t imageIndex) const
 {
     return vkFramebuffersPerImagePass[(passes.size() * imageIndex) + renderPassIndex];
-}
-
-in_render_resource& in_render_graph::add_new_resource(
-    VkFormat vkFormat, uint32_t width, uint32_t height)
-{
-    // Create resource.
-    resources.emplace_back();
-    auto& res = resources.back();
-
-    // Create Vulkan image for resource.
-    const VkImageCreateInfo vkImageCreateInfo =
-    {
-        VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,                            // sType
-        nullptr,                                                        // pNext
-        0,                                                              // flags
-        VK_IMAGE_TYPE_2D,                                               // imageType
-        vkFormat,                                                       // format
-        
-        {                                                               // extent
-            width,                                                      //  width
-            height,                                                     //  height
-            1                                                           //  depth
-        },
-        
-        1,                                                              // mipLevels
-        1,                                                              // arrayLayers
-        VK_SAMPLE_COUNT_1_BIT,                                          // samples
-        VK_IMAGE_TILING_OPTIMAL,                                        // tiling
-        
-        // TODO: Make sure us using transient attachments + lazily-allocated memory is always ok!
-        VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT |                       // usage
-            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-        
-        VK_SHARING_MODE_EXCLUSIVE,                                      // sharingMode
-        0,                                                              // queueFamilyIndexCount
-        nullptr,                                                        // pQueueFamilyIndices
-        VK_IMAGE_LAYOUT_UNDEFINED                                       // initialLayout
-    };
-    
-    const VmaAllocationCreateInfo vmaAllocCreateInfo =
-    {
-        0,                                                              // flags
-        VMA_MEMORY_USAGE_GPU_ONLY,                                      // usage
-        0,                                                              // requiredFlags
-        VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT,                        // preferredFlags
-        0,                                                              // memoryTypeBits
-        VK_NULL_HANDLE,                                                 // pool
-        nullptr,                                                        // pUserData
-        0                                                               // priority
-    };
-    
-    if (vmaCreateImage(m_vmaAllocator, &vkImageCreateInfo,
-        &vmaAllocCreateInfo, &res.vkImage, &res.vmaAlloc,
-        nullptr) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Could not create Vulkan image");
-    }
-
-    // Create Vulkan image view for resource.
-    const VkImageViewCreateInfo vkImageViewCreateInfo =
-    {
-        VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,                       // sType
-        nullptr,                                                        // pNext
-        0,                                                              // flags
-        res.vkImage,                                                    // image
-        VK_IMAGE_VIEW_TYPE_2D,                                          // viewType
-        vkImageCreateInfo.format,                                       // format
-        {},                                                             // components
-        {                                                               // subresourceRange
-            VK_IMAGE_ASPECT_COLOR_BIT,                                  //  aspectMask
-            0,                                                          //  baseMipLevel
-            1,                                                          //  levelCount
-            0,                                                          //  baseArrayLayer
-            1                                                           //  layerCount
-        }
-    };
-
-    if (vkCreateImageView(m_vkDevice, &vkImageViewCreateInfo,
-        nullptr, &res.vkImageView) != VK_SUCCESS)
-    {
-        vmaDestroyImage(m_vmaAllocator, res.vkImage, res.vmaAlloc);
-        res.vkImage = VK_NULL_HANDLE;
-        res.vmaAlloc = VK_NULL_HANDLE;
-        throw std::runtime_error("Could not create Vulkan image view");
-    }
-    
-    return res;
 }
 
 VkFramebuffer in_render_graph::add_new_framebuffer(
@@ -136,7 +71,7 @@ VkFramebuffer in_render_graph::add_new_framebuffer(
     vkFramebuffers.push_back(VK_NULL_HANDLE);
     auto& vkFramebuffer = vkFramebuffers.back();
 
-    if (vkCreateFramebuffer(m_vkDevice, &vkFramebufferCreateInfo,
+    if (vkCreateFramebuffer(device->handle(), &vkFramebufferCreateInfo,
         nullptr, &vkFramebuffer) != VK_SUCCESS)
     {
         throw std::runtime_error("Could not create Vulkan framebuffer");
@@ -179,8 +114,11 @@ void in_render_graph::create_framebuffers(const in_swap_chain& swapChain)
             // another one for every subsequent pass that uses the screen output.
             if (imageIndex == 0 || pass.uses_screen_output())
             {
-                vkPassAttachments[pass.screenOutputAttachIndex] =
-                    swapChain.vkSwapChainImageViews[imageIndex];
+                if (pass.uses_screen_output())
+                {
+                    vkAttachments[pass.screenOutputAttachIndex] =
+                        swapChain.vkSwapChainImageViews[imageIndex];
+                }
 
                 vkFramebuffersPerImagePass.push_back(
                     add_new_framebuffer(vkFramebufferCreateInfo));
@@ -204,27 +142,21 @@ void in_render_graph::destroy() noexcept
 {
     // Return early if this graph is just an empty shell
     // (i.e. one that's been moved from using std::move()).
-    if (!m_vkDevice) return;
+    if (!device) return;
 
     // Wait for Vulkan device to idle so we can safely clean everything up.
-    vkDeviceWaitIdle(m_vkDevice);
-
-    // Destroy resources.
-    for (auto& resource : resources)
-    {
-        resource.destroy(m_vkDevice, m_vmaAllocator);
-    }
+    device->wait_for_idle();
 
     // Destroy Vulkan framebuffers.
     for (auto vkFramebuffer : vkFramebuffers)
     {
-        vkDestroyFramebuffer(m_vkDevice, vkFramebuffer, nullptr);
+        vkDestroyFramebuffer(device->handle(), vkFramebuffer, nullptr);
     }
 
     // Destroy passes.
     for (auto& pass : passes)
     {
-        pass.destroy(m_vkDevice);
+        pass.destroy(device->handle());
     }
 }
 
@@ -234,8 +166,7 @@ in_render_graph& in_render_graph::operator=(in_render_graph&& other) noexcept
     {
         destroy();
 
-        m_vkDevice = other.m_vkDevice;
-        m_vmaAllocator = other.m_vmaAllocator;
+        device = other.device;
         passes = std::move(other.passes);
         subpasses = std::move(other.subpasses);
         vkClearValues = std::move(other.vkClearValues);
@@ -243,19 +174,18 @@ in_render_graph& in_render_graph::operator=(in_render_graph&& other) noexcept
         vkFramebuffers = std::move(other.vkFramebuffers);
         resources = std::move(other.resources);
 
-        other.m_vkDevice = VK_NULL_HANDLE;
+        other.device = nullptr;
     }
 
     return *this;
 }
 
-in_render_graph::in_render_graph(VkDevice vkDevice, VmaAllocator vmaAllocator) :
-    m_vkDevice(vkDevice),
-    m_vmaAllocator(vmaAllocator) {}
+in_render_graph::in_render_graph(render_device& device, std::size_t resCount) :
+    device(&device),
+    resources(resCount) {}
 
 in_render_graph::in_render_graph(in_render_graph&& other) noexcept :
-    m_vkDevice(other.m_vkDevice),
-    m_vmaAllocator(other.m_vmaAllocator),
+    device(other.device),
     passes(std::move(other.passes)),
     subpasses(std::move(other.subpasses)),
     vkClearValues(std::move(other.vkClearValues)),
@@ -263,9 +193,17 @@ in_render_graph::in_render_graph(in_render_graph&& other) noexcept :
     vkFramebuffers(std::move(other.vkFramebuffers)),
     resources(std::move(other.resources))
 {
-    other.m_vkDevice = VK_NULL_HANDLE;
+    other.device = nullptr;
 }
 } // internal
+
+const image_view& render_graph::get_image_view(render_resource_id resID) const
+{
+    assert(resID != render_graph_builder::screen_output_id &&
+        "The screen output is not a normal resource that is available for access.");
+
+    return m_renderGraph->resources[resID].imageView;
+}
 
 void render_graph::recreate_framebuffers(render_device& device)
 {
@@ -313,6 +251,8 @@ struct in_render_resource_state
     VkPipelineStageFlags mostRecentStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     VkAccessFlags mostRecentAccess = 0;
     uint32_t vkAttachmentIndex = 0;
+    VkImageUsageFlags vkImageUsageFlags = 0;
+    VkImageLayout vkCurLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     bool needsDependency = false;
 };
 
@@ -322,12 +262,16 @@ static VkPipelineStageFlags in_vulkan_get_stage_mask(
     using namespace internal;
 
     VkPipelineStageFlags vkFlags = 0;
-    if (in_has_attachment_type(types, in_attachment_type::vertex_shader_input))
+    if (in_has_attachment_type(types,
+        in_attachment_type::vertex_shader_input |
+        in_attachment_type::vertex_shader_input_sampled))
     {
         vkFlags |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
     }
 
-    if (in_has_attachment_type(types, in_attachment_type::pixel_shader_input))
+    if (in_has_attachment_type(types,
+        in_attachment_type::pixel_shader_input |
+        in_attachment_type::pixel_shader_input_sampled))
     {
         vkFlags |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
     }
@@ -335,6 +279,11 @@ static VkPipelineStageFlags in_vulkan_get_stage_mask(
     if (in_has_attachment_type(types, in_attachment_type::color_output))
     {
         vkFlags |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    }
+
+    if (in_has_attachment_type(types, in_attachment_type::depth_stencil_output))
+    {
+        vkFlags |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
     }
 
     return vkFlags;
@@ -348,7 +297,9 @@ static VkAccessFlags in_vulkan_get_access_mask(
     VkAccessFlags vkFlags = 0;
     if (in_has_attachment_type(types,
         in_attachment_type::vertex_shader_input |
-        in_attachment_type::pixel_shader_input))
+        in_attachment_type::vertex_shader_input_sampled |
+        in_attachment_type::pixel_shader_input |
+        in_attachment_type::pixel_shader_input_sampled))
     {
         vkFlags |= VK_ACCESS_SHADER_READ_BIT;
     }
@@ -356,6 +307,11 @@ static VkAccessFlags in_vulkan_get_access_mask(
     if (in_has_attachment_type(types, in_attachment_type::color_output))
     {
         vkFlags |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    }
+
+    if (in_has_attachment_type(types, in_attachment_type::depth_stencil_output))
+    {
+        vkFlags |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
     }
 
     return vkFlags;
@@ -369,11 +325,17 @@ static VkImageLayout in_vulkan_get_image_layout(
     switch (types)
     {
     case in_attachment_type::vertex_shader_input:
+    case in_attachment_type::vertex_shader_input_sampled:
     case in_attachment_type::pixel_shader_input:
+    case in_attachment_type::pixel_shader_input_sampled:
         return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
     case in_attachment_type::color_output:
         return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    case in_attachment_type::depth_stencil_output:
+        // TODO: Make it so you can just do depth?
+        return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
     default:
         return VK_IMAGE_LAYOUT_GENERAL;
@@ -477,7 +439,7 @@ static const render_pass_builder* in_vulkan_get_present_pass(
             subpass != pass->subpasses().rend();
             ++subpass)
         {
-            if (subpass->attachments().contains(render_graph_builder::screen_output()))
+            if (subpass->attachments().contains(render_graph_builder::screen_output_id))
             {
                 return &(*pass);
             }
@@ -487,13 +449,41 @@ static const render_pass_builder* in_vulkan_get_present_pass(
     return nullptr;
 }
 
+static constexpr VkImageUsageFlags in_get_image_usage(
+    internal::in_attachment_type attachTypes) noexcept
+{
+    VkImageUsageFlags vkImageUsage = 0;
+    if (in_is_input_attachment(attachTypes))
+    {
+        vkImageUsage |= VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+    }
+
+    if (in_is_input_attachment_sampled(attachTypes))
+    {
+        vkImageUsage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+    }
+
+    if (in_is_output_attachment(attachTypes))
+    {
+        vkImageUsage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    }
+
+    if (internal::in_has_attachment_type(attachTypes,
+        internal::in_attachment_type::depth_stencil_output))
+    {
+        vkImageUsage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    }
+
+    return vkImageUsage;
+}
+
 render_graph render_graph_builder::build(render_device& device)
 {
     using namespace internal;
 
     // Allocate render graph and graph creation resources.
     std::unique_ptr<in_render_graph> graph(new in_render_graph(
-        device.m_vkDevice, device.allocator().handle()));
+        device, m_resources.size()));
 
     std::vector<VkAttachmentDescription> vkAttachmentDescriptions;
     std::vector<VkAttachmentReference> vkAttachmentReferences;
@@ -506,18 +496,38 @@ render_graph render_graph_builder::build(render_device& device)
         device.m_swapChain.vkSwapChainImageCount);
 
     // Allocate temporary resource state array.
-    fixed_array<in_render_resource_state, render_resource_id> resState(
-        static_cast<render_resource_id>(m_resources.size()));
+
+    /*
+    * HACK: Since screen_output_id is defined as SIZE_MAX, and unsigned integer
+    * overflow is (surprisingly) well defined and valid per the C++ standard,
+    * we rely on (resID + 1) always being a valid way to index this array, even
+    * when resID is SIZE_MAX, in which case, it (SIZE_MAX + 1) will work out to 0.
+    */
+    hl::fixed_array<in_render_resource_state> resState(m_resources.size() + 1);
 
     // The default "screen output" resource always requires a subpass dependency.
-    resState[screen_output()].needsDependency = true;
+    resState[screen_output_id + 1].needsDependency = true;
 
     // Get the final render pass which uses the screen output resource.
-    auto presentPass = in_vulkan_get_present_pass(m_passes);
+    const auto presentPass = in_vulkan_get_present_pass(m_passes);
+
+    // Get all image usage flags for all resources.
+    for (auto& pass : m_passes)
+    {
+        for (auto& subpass : pass.subpasses())
+        {
+            for (auto attachInfo : subpass.attachments())
+            {
+                auto& res = resState[attachInfo.first + 1];
+                res.vkImageUsageFlags |= in_get_image_usage(attachInfo.second.type);
+            }
+        }
+    }
 
     // Generate render passes.
     for (auto pass = m_passes.begin(); pass != m_passes.end(); ++pass)
     {
+        std::vector<in_render_resource_transition> resTransitions;
         const std::size_t graphFirstSubpassIndex = graph->subpasses.size();
         const std::size_t graphFirstClearValueIndex = graph->vkClearValues.size();
         const std::size_t graphFirstAttachmentIndex = graph->vkAttachments.size();
@@ -534,46 +544,79 @@ render_graph render_graph_builder::build(render_device& device)
             // Generate Vulkan attachment descriptions and subpass dependencies.
             for (auto attachInfo : subpass.attachments())
             {
-                auto& res = resState[attachInfo.first];
-                auto& resInfo = m_resources[attachInfo.first];
+                auto& res = resState[attachInfo.first + 1];
+                auto& resInfo = (attachInfo.first == screen_output_id) ?
+                    m_screenOutputResInfo : m_resources[attachInfo.first];
 
                 // Generate Vulkan attachment descriptions as necessary.
                 if (res.mostRecentPass != &(*pass))
                 {
                     // Determine the final image layout for this attachment.
+                    VkImageLayout vkInitialLayout = res.vkCurLayout;
                     VkImageLayout vkFinalLayout = in_vulkan_get_next_pass_layout(
                         attachInfo.first, pass, m_passes.end());
 
+                    VkFormat vkFormat = (resInfo.isDepthStencil) ?
+                        VK_FORMAT_D32_SFLOAT : // TODO: Check hardware support and use the best format available.
+                        device.m_swapChain.vkSurfaceFormat.format;
+
                     if (vkFinalLayout == VK_IMAGE_LAYOUT_UNDEFINED)
                     {
-                        // Fallback to present layout if this is the present pass, or
-                        // the final image layout used amongst the subpasses within
-                        // this pass otherwise.
-                        vkFinalLayout = (&(*pass) == presentPass) ?
-                            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR :
+                        // Fallback to present layout if this is the screen output of the
+                        // present pass, or the final image layout used amongst the subpasses
+                        // within this pass otherwise.
+                        vkFinalLayout = (attachInfo.first == screen_output_id &&
+                            &(*pass) == presentPass) ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR :
                             in_vulkan_get_final_layout(attachInfo.first,
                                 *pass, curSubpassIndex);
                     }
 
-                    // Generate Vulkan attachment.
-                    // (NOTE: We don't need to create a resource for the screen output; just
-                    // set these to nullptr for now and fill the pointer in properly later.)
-                    graph->vkAttachments.push_back((attachInfo.first == screen_output()) ?
-                        VK_NULL_HANDLE : graph->add_new_resource(
-                            device.m_swapChain.vkSurfaceFormat.format,
-                            device.m_swapChain.vkSurfaceExtent.width,
-                            device.m_swapChain.vkSurfaceExtent.height).vkImageView);
+                    // Generate Vulkan resources and attachments as necessary.
+                    if (attachInfo.first != screen_output_id)
+                    {
+                        // Create new render resource if necessary.
+                        auto& renderRes = graph->resources[attachInfo.first];
+                        if (!renderRes.isValid)
+                        {
+                            renderRes = in_render_resource(device,
+                                res.vkImageUsageFlags, vkFormat,
+                                device.m_swapChain.vkSurfaceExtent.width,
+                                device.m_swapChain.vkSurfaceExtent.height,
+                                (resInfo.debugName.empty()) ? nullptr : resInfo.debugName.c_str());
+
+                            // TODO: Do we also need to do this with non-sampled input attachments?
+                            if (in_is_input_attachment_sampled(attachInfo.second.type))
+                            {
+                                vkInitialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                                resTransitions.emplace_back(renderRes.image,
+                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                    VK_ACCESS_SHADER_READ_BIT,
+                                    in_vulkan_get_stage_mask(attachInfo.second.type));
+                            }
+                        }
+
+                        // Generate Vulkan attachment.
+                        graph->vkAttachments.push_back(renderRes.imageView.handle());
+                    }
+                    else
+                    {
+                        // NOTE: This value will be filled in later by the call to create_framebuffers().
+                        graph->vkAttachments.push_back(nullptr);
+                    }
 
                     // Set Vulkan attachment index for this resource/pass.
                     res.vkAttachmentIndex = static_cast<uint32_t>(
                         vkAttachmentDescriptions.size());
+
+                    // Update current Vulkan image layout for this resource.
+                    res.vkCurLayout = vkFinalLayout;
 
                     // Generate Vulkan attachment description.
                     vkAttachmentDescriptions.emplace_back();
                     auto& vkAttachDesc = vkAttachmentDescriptions.back();
 
                     vkAttachDesc.flags = 0;
-                    vkAttachDesc.format = device.m_swapChain.vkSurfaceFormat.format;
+                    vkAttachDesc.format = vkFormat;
                     vkAttachDesc.samples = VK_SAMPLE_COUNT_1_BIT;
 
                     vkAttachDesc.loadOp = (res.mostRecentPass != nullptr) ?
@@ -584,7 +627,7 @@ render_graph render_graph_builder::build(render_device& device)
                     vkAttachDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
                     vkAttachDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
-                    vkAttachDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                    vkAttachDesc.initialLayout = vkInitialLayout;
                     vkAttachDesc.finalLayout = vkFinalLayout;
 
                     // Generate Vulkan clear value and set it as necessary.
@@ -594,10 +637,20 @@ render_graph render_graph_builder::build(render_device& device)
                     if (vkAttachDesc.loadOp == VK_ATTACHMENT_LOAD_OP_CLEAR)
                     {
                         // TODO: Handle non-float32 formats??
-                        vkClearValue.color.float32[0] = resInfo.clearColor.r;
-                        vkClearValue.color.float32[1] = resInfo.clearColor.g;
-                        vkClearValue.color.float32[2] = resInfo.clearColor.b;
-                        vkClearValue.color.float32[3] = resInfo.clearColor.a;
+                        if (resInfo.isDepthStencil)
+                        {
+                            vkClearValue.color.float32[0] = resInfo.clearColor.r;
+                            vkClearValue.color.float32[1] = resInfo.clearColor.g;
+                            vkClearValue.color.float32[2] = resInfo.clearColor.b;
+                            vkClearValue.color.float32[3] = resInfo.clearColor.a;
+                        }
+                        else
+                        {
+                            vkClearValue.color.float32[0] = resInfo.clearColor.r;
+                            vkClearValue.color.float32[1] = resInfo.clearColor.g;
+                            vkClearValue.color.float32[2] = resInfo.clearColor.b;
+                            vkClearValue.color.float32[3] = resInfo.clearColor.a;
+                        }
                     }
                 }
 
@@ -650,7 +703,7 @@ render_graph render_graph_builder::build(render_device& device)
             uint32_t vkCurAttachCount = 0;
             for (auto attachInfo : subpass.attachments())
             {
-                auto& res = resState[attachInfo.first];
+                auto& res = resState[attachInfo.first + 1];
                 if (in_is_input_attachment(attachInfo.second.type))
                 {
                     in_vulkan_add_attachment_ref(res,
@@ -666,7 +719,7 @@ render_graph render_graph_builder::build(render_device& device)
             vkCurAttachCount = 0;
             for (auto attachInfo : subpass.attachments())
             {
-                auto& res = resState[attachInfo.first];
+                auto& res = resState[attachInfo.first + 1];
                 if (in_has_attachment_type(attachInfo.second.type,
                     in_attachment_type::color_output))
                 {
@@ -679,6 +732,23 @@ render_graph render_graph_builder::build(render_device& device)
 
             vkSubpassDesc.colorAttachmentCount = vkCurAttachCount;
 
+            // Generate Vulkan depth stencil output attachment references.
+            for (auto attachInfo : subpass.attachments())
+            {
+                auto& res = resState[attachInfo.first + 1];
+                if (in_has_attachment_type(attachInfo.second.type,
+                    in_attachment_type::depth_stencil_output))
+                {
+                    in_vulkan_add_attachment_ref(res,
+                        attachInfo.second.type, vkAttachmentReferences);
+
+                    // HACK: Set the depth stencil pointer now even though that could likely
+                    // result in a dangling pointer and fix it later. We just need it to be
+                    // *something* non-null so we can do a check quickly/easily later.
+                    vkSubpassDesc.pDepthStencilAttachment = &vkAttachmentReferences.back();
+                }
+            }
+
             // Add subpass to graph.
             graph->subpasses.emplace_back(&subpass.data(),
                 vkSubpassDesc.colorAttachmentCount);
@@ -690,7 +760,7 @@ render_graph render_graph_builder::build(render_device& device)
             vkCurAttachCount = 0;
             for (auto attachInfo : subpass.attachments())
             {
-                auto& res = resState[attachInfo.first];
+                auto& res = resState[attachInfo.first + 1];
                 if (in_has_attachment_type(attachInfo.second.type,
                     in_attachment_type::color_output))
                 {
@@ -708,13 +778,13 @@ render_graph render_graph_builder::build(render_device& device)
             auto& subpass = pass->subpasses()[curSubpassIndex];
             uint32_t vkCurAttachCount = 0;
 
-            for (render_resource_id resID = 0; resID < resState.size(); ++resID)
+            for (std::size_t i = 0; i < resState.size(); ++i)
             {
-                auto& res = resState[resID];
-                if (!subpass.attachments().contains(resID) &&
+                auto& res = resState[i];
+                if (!subpass.attachments().contains(i - 1) &&
                    (res.mostRecentSubpassIndex > curSubpassIndex ||
                     in_vulkan_resource_used_in_later_passes(
-                        resID, pass, m_passes.end())))
+                        i - 1, pass, m_passes.end())))
                 {
                     vkPreserveAttachments.push_back(res.vkAttachmentIndex);
                     ++vkCurAttachCount;
@@ -744,21 +814,27 @@ render_graph render_graph_builder::build(render_device& device)
             vkSubpassDesc.pColorAttachments = vkCurAttachRef;
             vkCurAttachRef += vkSubpassDesc.colorAttachmentCount;
 
+            // HACK: Fix the (probably dangling) depth/stencil attachment pointer from earlier.
+            if (vkSubpassDesc.pDepthStencilAttachment)
+            {
+                vkSubpassDesc.pDepthStencilAttachment = vkCurAttachRef++;
+            }
+
             vkSubpassDesc.pPreserveAttachments = vkCurPreserveAttach;
             vkCurPreserveAttach += vkSubpassDesc.preserveAttachmentCount;
         }
 
         // Get screen output attachment index, or SIZE_MAX if
         // this pass doesn't use the screen output.
-        auto& screenOutputRes = resState[screen_output()];
+        auto& screenOutputRes = resState[screen_output_id + 1];
         const std::size_t screenOutputAttachIndex =
             (screenOutputRes.mostRecentPass != &(*pass)) ? SIZE_MAX :
             (graphFirstAttachmentIndex + screenOutputRes.vkAttachmentIndex);
 
         // Add pass object to graph.
-        graph->passes.emplace_back(&pass->data(), graphFirstSubpassIndex,
-            pass->subpasses().size(), graphFirstClearValueIndex, screenOutputAttachIndex,
-            static_cast<uint32_t>(vkAttachmentDescriptions.size()),
+        graph->passes.emplace_back(std::move(resTransitions), &pass->data(),
+            graphFirstSubpassIndex, pass->subpasses().size(), graphFirstClearValueIndex,
+            screenOutputAttachIndex, static_cast<uint32_t>(vkAttachmentDescriptions.size()),
             pass->doUpdateViewport, pass->doUpdateScissor);
 
         auto& graphPass = graph->passes.back();

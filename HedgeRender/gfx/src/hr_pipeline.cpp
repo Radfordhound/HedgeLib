@@ -1,11 +1,7 @@
-//#include "hr_in_shader.h"
-//#include "hr_in_device.h"
-//#include "hr_in_format.h"
 #include "hr_in_render_graph.h"
 #include "hedgerender/gfx/hr_pipeline.h"
 #include "hedgerender/gfx/hr_render_device.h"
 #include "hedgerender/gfx/hr_shader.h"
-//#include <hedgerender/base/hr_array.h>
 
 namespace hr
 {
@@ -37,22 +33,8 @@ static VkPipelineLayout in_vulkan_create_pipeline_layout(VkDevice vkDevice,
     const shader_parameter_group* paramGroups, std::size_t paramGroupCount)
 {
     // Generate Vulkan descriptor set layout array.
-    VkDescriptorSetLayout vkDescSetLayoutsStack[16];
-    std::unique_ptr<VkDescriptorSetLayout[]> vkDescSetLayoutsHeap;
-    VkDescriptorSetLayout* vkDescSetLayouts;
+    hl::stack_or_heap_buffer<VkDescriptorSetLayout, 16> vkDescSetLayouts(paramGroupCount);
     uint32_t vkPushConstRangesCount = 0;
-
-    if (paramGroupCount > 16)
-    {
-        vkDescSetLayoutsHeap = std::unique_ptr<VkDescriptorSetLayout[]>(
-            new VkDescriptorSetLayout[paramGroupCount]);
-
-        vkDescSetLayouts = vkDescSetLayoutsHeap.get();
-    }
-    else
-    {
-        vkDescSetLayouts = vkDescSetLayoutsStack;
-    }
 
     // Generate Vulkan descriptor set layout array.
     for (std::size_t i = 0; i < paramGroupCount; ++i)
@@ -63,7 +45,7 @@ static VkPipelineLayout in_vulkan_create_pipeline_layout(VkDevice vkDevice,
     }
 
     // Generate Vulkan push constant ranges array.
-    stack_or_heap_buffer<VkPushConstantRange, 16> vkPushConstRanges(vkPushConstRangesCount);
+    hl::stack_or_heap_buffer<VkPushConstantRange, 16> vkPushConstRanges(vkPushConstRangesCount);
     vkPushConstRangesCount = 0;
 
     for (std::size_t i = 0; i < paramGroupCount; ++i)
@@ -169,9 +151,9 @@ static VkStencilOpState in_vulkan_to_vulkan_stencil_op_state(
     return vkStencilOpState;
 }
 
-constexpr std::size_t in_vulkan_max_shader_stages = 2;
+constexpr static std::size_t in_vulkan_max_shader_stages = 2;
 
-static VkPipeline in_vulkan_create_pipeline(VkDevice vkDevice,
+static VkPipeline in_vulkan_create_pipeline(const hr::gfx::render_device& device,
     const render_graph& graph, const pipeline_desc& desc)
 {
     // Generate Vulkan shader stage create infos.
@@ -186,9 +168,9 @@ static VkPipeline in_vulkan_create_pipeline(VkDevice vkDevice,
         vkShaderStage.pNext = nullptr;
         vkShaderStage.flags = 0;
         vkShaderStage.stage = VK_SHADER_STAGE_VERTEX_BIT;
-        vkShaderStage.module = desc.vertexShader->handle();
-        vkShaderStage.pName = desc.vertexShader->entry_point().c_str();
-        vkShaderStage.pSpecializationInfo = nullptr;
+        vkShaderStage.module = desc.vertexShader;
+        vkShaderStage.pName = desc.vertexShaderEntryPoint;
+        vkShaderStage.pSpecializationInfo = desc.vsSpecializationInfo;
 
         ++vkShaderStageCount;
     }
@@ -201,15 +183,15 @@ static VkPipeline in_vulkan_create_pipeline(VkDevice vkDevice,
         vkShaderStage.pNext = nullptr;
         vkShaderStage.flags = 0;
         vkShaderStage.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-        vkShaderStage.module = desc.pixelShader->handle();
-        vkShaderStage.pName = desc.pixelShader->entry_point().c_str();
-        vkShaderStage.pSpecializationInfo = nullptr;
+        vkShaderStage.module = desc.pixelShader;
+        vkShaderStage.pName = desc.pixelShaderEntryPoint;
+        vkShaderStage.pSpecializationInfo = desc.psSpecializationInfo;
 
         ++vkShaderStageCount;
     }
 
     // Generate Vulkan vertex binding descriptions.
-    stack_or_heap_buffer<VkVertexInputBindingDescription, 8>
+    hl::stack_or_heap_buffer<VkVertexInputBindingDescription, 8>
         vkVtxBindingDescs(desc.inputLayoutCount);
 
     std::size_t curVkAttribDescIndex = 0;
@@ -227,7 +209,7 @@ static VkPipeline in_vulkan_create_pipeline(VkDevice vkDevice,
     }
 
     // Generate Vulkan vertex attribute descriptions.
-    stack_or_heap_buffer<VkVertexInputAttributeDescription, 64>
+    hl::stack_or_heap_buffer<VkVertexInputAttributeDescription, 64>
         vkVtxAttribDescs(curVkAttribDescIndex);
 
     curVkAttribDescIndex = 0;
@@ -340,8 +322,8 @@ static VkPipeline in_vulkan_create_pipeline(VkDevice vkDevice,
     };
 
     // Generate Vulkan color blend state create info.
-    auto& pass = graph.handle()->passes[desc.passIndex];
-    auto& subpass = graph.handle()->subpasses[pass.firstSubpassIndex + desc.subpassIndex];
+    auto& pass = graph.handle()->passes[desc.passID];
+    auto& subpass = graph.handle()->subpasses[pass.firstSubpassIndex + desc.subpassID];
 
     const VkPipelineColorBlendStateCreateInfo vkColorBlendStateCreateInfo =
     {
@@ -393,14 +375,14 @@ static VkPipeline in_vulkan_create_pipeline(VkDevice vkDevice,
         &vkDynamicStateCreateInfo,                                      // pDynamicState
         desc.layout,                                                    // layout
         pass.vkRenderPass,                                              // renderPass
-        desc.subpassIndex,                                              // subpass
+        desc.subpassID,                                                 // subpass
         VK_NULL_HANDLE,                                                 // basePipelineHandle
         -1                                                              // basePipelineIndex
     };
 
     // Create Vulkan graphics pipeline.
     VkPipeline vkPipeline;
-    if (vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1,
+    if (vkCreateGraphicsPipelines(device.handle(), device.pipeline_cache(), 1,
         &vkPipelineCreateInfo, nullptr, &vkPipeline) != VK_SUCCESS)
     {
         throw std::runtime_error("Could not create Vulkan graphics pipeline");
@@ -409,10 +391,9 @@ static VkPipeline in_vulkan_create_pipeline(VkDevice vkDevice,
     return vkPipeline;
 }
 
-pipeline::pipeline(render_device& device,
-    const render_graph& graph, const pipeline_desc& desc) :
-    m_vkDevice(device.handle()),
-    m_vkPipeline(in_vulkan_create_pipeline(m_vkDevice, graph, desc)) {}
+pipeline::pipeline(const render_graph& graph, const pipeline_desc& desc) :
+    m_vkDevice(graph.handle()->device->handle()),
+    m_vkPipeline(in_vulkan_create_pipeline(*graph.handle()->device, graph, desc)) {}
 
 pipeline::pipeline(pipeline&& other) noexcept :
     m_vkDevice(other.m_vkDevice),

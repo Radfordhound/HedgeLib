@@ -109,15 +109,9 @@ struct raw_header
         hl::endian_swap<swapOffsets>(fileName);
     }
 
-    const_off_table_handle offsets() const noexcept
-    {
-        return const_off_table_handle(offTable.get() + 1, *offTable);
-    }
+    HL_API const_off_table_handle offsets() const noexcept;
 
-    off_table_handle offsets() noexcept
-    {
-        return off_table_handle(offTable.get() + 1, *offTable);
-    }
+    HL_API off_table_handle offsets() noexcept;
 
     HL_API void fix();
 

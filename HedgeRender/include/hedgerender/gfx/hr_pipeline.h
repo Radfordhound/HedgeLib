@@ -99,12 +99,18 @@ public:
     VkLogicOp logicOp = VK_LOGIC_OP_NO_OP;
 };
 
+inline constexpr const char* const default_shader_entry_point = "main";
+
 class pipeline_desc
 {
 public:
     VkPipelineLayout layout = VK_NULL_HANDLE;
-    shader* vertexShader = nullptr;
-    shader* pixelShader = nullptr;
+    VkShaderModule vertexShader = VK_NULL_HANDLE;
+    const char* vertexShaderEntryPoint = default_shader_entry_point;
+    const VkSpecializationInfo* vsSpecializationInfo = nullptr;
+    VkShaderModule pixelShader = VK_NULL_HANDLE;
+    const char* pixelShaderEntryPoint = default_shader_entry_point;
+    const VkSpecializationInfo* psSpecializationInfo = nullptr;
     const input_layout* inputLayouts = nullptr;
     std::size_t inputLayoutCount = 0;
     VkPrimitiveTopology topologyType = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -113,8 +119,8 @@ public:
     rasterizer_desc raster;
     depth_stencil_desc depthStencil;
     blend_desc blend;
-    unsigned int passIndex = 0;
-    unsigned int subpassIndex = 0;
+    std::uint32_t passID = 0;
+    std::uint32_t subpassID = 0;
 };
 
 class pipeline : public non_copyable
@@ -134,8 +140,7 @@ public:
 
     pipeline() noexcept = default;
 
-    HR_GFX_API pipeline(render_device& device,
-        const render_graph& graph, const pipeline_desc& desc);
+    HR_GFX_API pipeline(const render_graph& graph, const pipeline_desc& desc);
 
     HR_GFX_API pipeline(pipeline&& other) noexcept;
 

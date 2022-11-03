@@ -21,6 +21,8 @@ public:
         return m_vkCmdBuf;
     }
 
+    HR_GFX_API void copy_buffer(const buffer& src, buffer& dst);
+
     HR_GFX_API void copy_buffer_to_image(const buffer& src,
         image& dst, VkImageLayout layout);
 
@@ -52,10 +54,18 @@ public:
         VkDeviceSize offset, VkIndexType indexType);
 
     HR_GFX_API void bind_shader_data(const pipeline_layout& layout,
-        const shader_data* shaderData, unsigned int shaderDataCount);
+        const shader_data* shaderData, std::uint32_t shaderDataCount,
+        std::uint32_t firstBindIndex = 0, const std::uint32_t* dynamicOffsets = nullptr,
+        std::uint32_t dynamicOffsetCount = 0);
 
-    HR_GFX_API void bind_shader_data(const pipeline_layout& layout,
-        const shader_data& shaderData);
+    inline void bind_shader_data(const pipeline_layout& layout,
+        const shader_data& shaderData, std::uint32_t bindIndex = 0,
+        const std::uint32_t* dynamicOffsets = nullptr,
+        std::uint32_t dynamicOffsetCount = 0)
+    {
+        bind_shader_data(layout, &shaderData, 1, bindIndex,
+            dynamicOffsets, dynamicOffsetCount);
+    }
 
     HR_GFX_API void draw_indexed(unsigned int firstIndex, unsigned int indexCount,
         unsigned int firstInstance, unsigned int instanceCount, int vertexOffset = 0);

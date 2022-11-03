@@ -19,7 +19,6 @@ Right now, HedgeLib supports the following:
 
 ### Hedgehog Engine 1/2
 - "PACx" Packfiles (.pac; v403/v402/v3/v2)
-- "BINA" binary container format (v1/v2)
 - Terrain instance infos (.terrain-instanceinfo; v0/v5)
 - Skeletal Models (.model; v2/v4/v5)
 - Terrain Models (.terrain-model; v5)
@@ -36,6 +35,7 @@ Right now, HedgeLib supports the following:
 - Material Motions [.xnv, .snv, .gnv, .cnv, .inv, .env, .ynv, .znv]
 
 ### Other
+- "BINA" binary container format (v1/v2)
 - "AR" Archives (.ar/.pfd)
 - Packed File Indexes (.pfi)
 
@@ -119,7 +119,7 @@ Install all pre-packaged dependencies:
 brew install cmake git glm lz4 zlib glfw
 ```
 
-Build/install Robin-hood-hashing:
+Build/install robin-hood-hashing:
 
 ```sh
 git clone https://github.com/martinus/robin-hood-hashing.git
@@ -199,7 +199,7 @@ Install all pre-packaged dependencies:
 sudo apt install git build-essential cmake libglm-dev liblz4-dev zlib1g-dev libglfw3-dev vulkan-sdk
 ```
 
-Build/install Robin-hood-hashing:
+Build/install robin-hood-hashing:
 
 ```sh
 git clone https://github.com/martinus/robin-hood-hashing.git

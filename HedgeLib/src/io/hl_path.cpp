@@ -79,7 +79,7 @@ struct in_win32_dir_handle
         // Raise an error if necessary.
         if (handle == INVALID_HANDLE_VALUE)
         {
-            HL_IN_WIN32_ERROR();
+            throw in_win32_get_last_exception();
         }
 
         // Skip first Win32 "dot" entry.
@@ -94,7 +94,7 @@ struct in_win32_dir_handle
 #endif
             {
                 FindClose(handle);
-                HL_IN_WIN32_ERROR();
+                throw in_win32_get_last_exception();
             }
         }
     }
@@ -118,7 +118,7 @@ static void* in_native_dir_handle_open(const nchar* dirPath)
     DIR* posixDir = opendir(dirPath);
     if (!posixDir)
     {
-        HL_IN_POSIX_ERROR();
+        throw in_posix_get_last_exception(dirPath);
     }
 
     return posixDir;
@@ -133,8 +133,7 @@ static void in_native_dir_handle_close(void* handle)
     DIR* posixDir = static_cast<DIR*>(handle);
     if (closedir(posixDir) != 0)
     {
-        // TODO: Would it be less evil to just call std::terminate() here?
-        HL_IN_POSIX_ERROR();
+        throw in_posix_get_last_exception();
     }
 #endif
 }
@@ -204,7 +203,7 @@ const dir_entry& dir::next()
         }
 
         // Otherwise, raise an error.
-        HL_IN_WIN32_ERROR();
+        throw in_win32_get_last_exception();
     }
 
     // Construct next directory entry.
@@ -229,7 +228,7 @@ const dir_entry& dir::next()
         }
 
         // Otherwise, raise an error.
-        HL_IN_POSIX_ERROR();
+        throw in_posix_get_last_exception();
     }
 
     // Skip POSIX "dot" directories.
@@ -298,7 +297,7 @@ std::size_t get_size(const nchar* filePath)
     // Get file attributes.
     if (!in_win32_get_file_attributes(filePath, GetFileExInfoStandard, fd))
     {
-        HL_IN_WIN32_ERROR();
+        throw in_win32_get_last_exception();
     }
 
     // Store high and low parts of file size in a LARGE_INTEGER, then
@@ -311,7 +310,7 @@ std::size_t get_size(const nchar* filePath)
     struct stat s;
     if (stat(filePath, &s) == -1)
     {
-        HL_IN_POSIX_ERROR();
+        throw in_posix_get_last_exception();
     }
 
     // Return file size.
@@ -340,7 +339,7 @@ void copy_file(const nchar* src, const nchar* dst)
         CopyFileA(src, dst, FALSE) == 0)
 #endif
     {
-        HL_IN_WIN32_ERROR();
+        throw in_win32_get_last_exception();
     }
 #else
     // "Manually" copy the data.
@@ -360,7 +359,7 @@ bool is_dir(const nchar* path)
     // Throw if we encountered an error.
     if (attrs == INVALID_FILE_ATTRIBUTES)
     {
-        HL_IN_WIN32_ERROR();
+        throw in_win32_get_last_exception();
     }
 
     // Return whether the entry at the given path is a directory.
@@ -370,7 +369,7 @@ bool is_dir(const nchar* path)
     struct stat s;
     if (stat(path, &s) == -1)
     {
-        HL_IN_POSIX_ERROR();
+        throw in_posix_get_last_exception();
     }
 
     // Return whether the entry at the given path is a directory.
@@ -394,7 +393,7 @@ void create_dir(const nchar* path, bool overwrite)
         // case, it's not actually an error, so do nothing.
         if (!overwrite || GetLastError() != ERROR_ALREADY_EXISTS)
         {
-            HL_IN_WIN32_ERROR();
+            throw in_win32_get_last_exception();
         }
     }
 #else
@@ -406,7 +405,7 @@ void create_dir(const nchar* path, bool overwrite)
         // case, it's not actually an error, so do nothing.
         if (!overwrite && errno != EEXIST)
         {
-            HL_IN_POSIX_ERROR();
+            throw in_posix_get_last_exception(path);
         }
     }
 #endif

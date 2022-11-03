@@ -16,27 +16,31 @@ struct PS_IN
     float2 uv1 : TEXCOORD1;
 };
 
-struct DefaultData
+struct PerFrameData
 {
-    row_major float4x4 viewProj;
+    float4x4 viewProjMtx;
 };
 
-ConstantBuffer<DefaultData> cbDefault : register(b0);
+struct PerInstanceData
+{
+    float4x4 worldMtx;
+};
+
+ConstantBuffer<PerFrameData> cbPerFrame : register(b0);
+ConstantBuffer<PerInstanceData> cbPerInstance : register(b1);
 
 PS_IN main(VS_IN input)
 {
     PS_IN output = (PS_IN)0;
 
     float4 pos = float4(input.pos, 1.0f);
-    output.pos = pos;
-    //output.pos = mul(pos, mul(input.instMatrix, viewProj)); // TODO
+    output.pos = mul(pos, mul(cbPerInstance.worldMtx, cbPerFrame.viewProjMtx));
 
     output.col = input.col;
-    output.uv0 = float2(0.0f, 0.0f);
-    output.uv1 = float2(0.0f, 0.0f);
 
-    //output.uv0 = input.uv0;
-    //output.uv1 = input.uv0; // TODO
+    output.uv0 = input.uv0;
+    output.uv1 = float2(0.0f, 0.0f);
+    //output.uv1 = input.uv1; // TODO
 
     return output;
 }

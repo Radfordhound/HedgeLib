@@ -18,7 +18,7 @@ namespace mirage
 {
 void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
 {
-    switch (static_cast<raw_vertex_format>(format))
+    switch (format)
     {
     case raw_vertex_format::float1:
     {
@@ -150,12 +150,11 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
 
     case raw_vertex_format::d3d_color:
     {
-        // TODO: Is this correct?
-        const u8* v = static_cast<const u8*>(vtx);
-        vec = vec4(math::unorm_to_float(v[0]),
-            math::unorm_to_float(v[1]),
-            math::unorm_to_float(v[2]),
-            math::unorm_to_float(v[3]));
+        const u32 v = *static_cast<const u32*>(vtx);
+        vec = vec4(math::unorm_to_float((v & 0xFF000000U) >> 24),
+            math::unorm_to_float((v & 0xFF0000U) >> 16),
+            math::unorm_to_float((v & 0xFF00U) >> 8),
+            math::unorm_to_float(v & 0xFFU));
         break;
     }
 
@@ -394,7 +393,7 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
 
 void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
 {
-    switch (static_cast<raw_vertex_format>(format))
+    switch (format)
     {
     case raw_vertex_format::float1:
     {
@@ -528,12 +527,11 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
 
     case raw_vertex_format::d3d_color:
     {
-        // TODO: Is this correct?
-        const u8* v = static_cast<const u8*>(vtx);
-        ivec = ivec4(static_cast<int>(math::unorm_to_float(v[0])),
-            static_cast<int>(math::unorm_to_float(v[1])),
-            static_cast<int>(math::unorm_to_float(v[2])),
-            static_cast<int>(math::unorm_to_float(v[3])));
+        const u32 v = *static_cast<const u32*>(vtx);
+        ivec = ivec4(static_cast<int>(math::unorm_to_float((v & 0xFF000000U) >> 24)),
+            static_cast<int>(math::unorm_to_float((v & 0xFF0000U) >> 16)),
+            static_cast<int>(math::unorm_to_float((v & 0xFF00U) >> 8)),
+            static_cast<int>(math::unorm_to_float(v & 0xFFU)));
         break;
     }
 
@@ -780,13 +778,13 @@ bool raw_terrain_model_v5::is_revision2() const
     // "clean" way to check which revision of the format this is. So, we check to
     // see if any of the pointers in the struct point *before* where the revision 2
     // struct is supposed to end. If so, it must be a revision 1 struct.
-    const std::uintptr_t rev2_endAddr = reinterpret_cast<
+    const auto rev2_endAddr = reinterpret_cast<
         std::uintptr_t>(ptradd(this, sizeof(*this)));
 
-    const std::uintptr_t meshGroupsAddr = reinterpret_cast<
-        std::uintptr_t>(meshGroups.get());
+    const auto meshGroupsAddr = reinterpret_cast<
+        std::uintptr_t>(meshGroups.data());
 
-    const std::uintptr_t nameAddr = reinterpret_cast<
+    const auto nameAddr = reinterpret_cast<
         std::uintptr_t>(name.get());
 
     return (meshGroupsAddr >= rev2_endAddr && nameAddr >= rev2_endAddr);
@@ -795,7 +793,7 @@ bool raw_terrain_model_v5::is_revision2() const
 static void in_swap_vertex(const raw_vertex_element& rawVtxElem, void* rawVtx)
 {
     // Swap vertex based on vertex element.
-    switch (static_cast<raw_vertex_format>(rawVtxElem.format))
+    switch (rawVtxElem.format)
     {
     case raw_vertex_format::float1:
         endian_swap(*static_cast<float*>(rawVtx));
@@ -817,7 +815,7 @@ static void in_swap_vertex(const raw_vertex_element& rawVtxElem, void* rawVtx)
     case raw_vertex_format::int1_norm:
     case raw_vertex_format::uint1:
     case raw_vertex_format::uint1_norm:
-    case raw_vertex_format::d3d_color: // TODO: Is this correct? Or do we not swap these?
+    case raw_vertex_format::d3d_color:
     case raw_vertex_format::udec3:
     case raw_vertex_format::dec3:
     case raw_vertex_format::udec3_norm:
@@ -904,11 +902,11 @@ static void in_swap_recursive(raw_mesh& mesh)
     {
         curVtxElem->endian_swap<false>();
     }
-    while ((curVtxElem++)->format != static_cast<u32>(raw_vertex_format::last_entry));
+    while ((curVtxElem++)->format != raw_vertex_format::last_entry);
 
     // Swap vertices based on vertex format.
     curVtxElem = mesh.vertexElements.get();
-    while (curVtxElem->format != static_cast<u32>(raw_vertex_format::last_entry))
+    while (curVtxElem->format != raw_vertex_format::last_entry)
     {
         // Swap vertices based on vertex element.
         void* curVtx = ptradd(mesh.vertices.get(), curVtxElem->offset);
@@ -1120,7 +1118,7 @@ static void in_mesh_add_faces_strips(const mesh& hhMesh, hl::mesh& hlMesh)
     }
 }
 
-hl::mesh& mesh::add_to_node(hl::node& node, raw_topology_type topType,
+hl::mesh& mesh::add_to_node(hl::node& node, topology_type topType,
     const std::vector<mirage::node>* hhNodes, bool includeLibGensTags,
     const char* libGensLayerName) const
 {
@@ -1378,11 +1376,11 @@ hl::mesh& mesh::add_to_node(hl::node& node, raw_topology_type topType,
     // Convert faces as necessary and store them in mesh.
     switch (topType)
     {
-    case raw_topology_type::triangle_list:
+    case topology_type::triangle_list:
         mesh->faces.assign(faces.begin(), faces.end());
         break;
 
-    case raw_topology_type::triangle_strip:
+    case topology_type::triangle_strip:
         in_mesh_add_faces_strips(*this, *mesh);
         break;
 
@@ -1391,7 +1389,7 @@ hl::mesh& mesh::add_to_node(hl::node& node, raw_topology_type topType,
     }
 
     // Find the referenced material within the scene and link it to the mesh.
-    std::string matName = materialName;
+    std::string matName = material.name();
     if (includeLibGensTags && libGensLayerName)
     {
         matName += "@LYR(";
@@ -1416,11 +1414,11 @@ void mesh::write(writer& writer) const
 {
     // Generate raw mesh.
     const auto matNameOff = writer.tell(offsetof(raw_mesh, materialName));
-    const auto facesOff = writer.tell(offsetof(raw_mesh, faces.data));
+    const auto facesOff = writer.tell(offsetof(raw_mesh, faces.dataPtr));
     const auto verticesOff = writer.tell(offsetof(raw_mesh, vertices));
     const auto vtxElemsOff = writer.tell(offsetof(raw_mesh, vertexElements));
-    const auto boneNodeIndicesOff = writer.tell(offsetof(raw_mesh, boneNodeIndices.data));
-    const auto textureUnitsOff = writer.tell(offsetof(raw_mesh, textureUnits.data));
+    const auto boneNodeIndicesOff = writer.tell(offsetof(raw_mesh, boneNodeIndices.dataPtr));
+    const auto textureUnitsOff = writer.tell(offsetof(raw_mesh, textureUnits.dataPtr));
 
     raw_mesh rawMesh =
     {
@@ -1505,7 +1503,7 @@ void mesh::write(writer& writer) const
     {
         255,                                                            // stream
         0,                                                              // offset
-        static_cast<u32>(raw_vertex_format::last_entry),                // format
+        raw_vertex_format::last_entry,                                  // format
         raw_vertex_method::normal,                                      // method
         raw_vertex_type::position,                                      // type
         0                                                               // padding
@@ -1542,13 +1540,13 @@ void mesh::write(writer& writer) const
 
     // Write material name.
     writer.fix_offset(matNameOff);
-    writer.write_str(materialName);
+    writer.write_str(material.name());
     writer.pad(4);
 }
 
 static const raw_vertex_element* in_get_last_vtx_elem(const raw_vertex_element* rawVtxElem)
 {
-    while (rawVtxElem->format != static_cast<u32>(raw_vertex_format::last_entry))
+    while (rawVtxElem->format != raw_vertex_format::last_entry)
     {
         ++rawVtxElem;
     }
@@ -1557,7 +1555,7 @@ static const raw_vertex_element* in_get_last_vtx_elem(const raw_vertex_element* 
 }
 
 mesh::mesh(const raw_mesh& rawMesh) :
-    materialName(rawMesh.materialName.get()),
+    material(rawMesh.materialName.get()),
     faces(rawMesh.faces.begin(), rawMesh.faces.end()),
 
     vertexElements(rawMesh.vertexElements.get(),
@@ -1588,11 +1586,11 @@ void mesh_slot::get_unique_material_names(std::unordered_set<std::string>& uniqu
 {
     for (auto& mesh : *this)
     {
-        uniqueMatNames.emplace(mesh.materialName);
+        uniqueMatNames.emplace(mesh.material.name());
     }
 }
 
-void mesh_slot::add_to_node(hl::node& node, raw_topology_type topType,
+void mesh_slot::add_to_node(hl::node& node, topology_type topType,
     const std::vector<mirage::node>* hhNodes, bool includeLibGensTags,
     const char* libGensLayerName) const
 {
@@ -1626,28 +1624,26 @@ void mesh_slot::write(writer& writer) const
 mesh_slot::mesh_slot(const raw_mesh_slot& rawSlot)
 {
     reserve(rawSlot.count);
-
     for (const auto& rawMeshOff : rawSlot)
     {
         emplace_back(*rawMeshOff);
     }
 }
 
-special_mesh_slot::special_mesh_slot(const raw_special_meshes::const_wrapper& rawSpecialSlot) :
+special_mesh_slot::special_mesh_slot(
+    const raw_special_meshes::const_slot_wrapper& rawSpecialSlot) :
     type(rawSpecialSlot.type)
 {
     reserve(rawSpecialSlot.meshCount);
-
-    for (const auto& rawMesh : rawSpecialSlot)
+    for (const auto& rawMeshOff : rawSpecialSlot)
     {
-        emplace_back(rawMesh);
+        emplace_back(*rawMeshOff);
     }
 }
 
 special_meshes::special_meshes(const raw_special_meshes& rawSpecial)
 {
     reserve(rawSpecial.count);
-
     for (const auto& rawSlot : rawSpecial)
     {
         emplace_back(rawSlot);
@@ -1666,7 +1662,7 @@ void mesh_group::get_unique_material_names(std::unordered_set<std::string>& uniq
     }
 }
 
-void mesh_group::add_to_node(hl::node& node, raw_topology_type topType,
+void mesh_group::add_to_node(hl::node& node, topology_type topType,
     const std::vector<mirage::node>* hhNodes, bool includeLibGensTags) const
 {
     // Add LibGens NAME tag to node if necessary.
@@ -1692,9 +1688,9 @@ void mesh_group::add_to_node(hl::node& node, raw_topology_type topType,
 void mesh_group::write(writer& writer, u32 revision) const
 {
     // Generate raw mesh group.
-    const auto opaqOff = writer.tell(offsetof(raw_mesh_group, opaq.data));
-    const auto transOff = writer.tell(offsetof(raw_mesh_group, trans.data));
-    const auto punchOff = writer.tell(offsetof(raw_mesh_group, punch.data));
+    const auto opaqOff = writer.tell(offsetof(raw_mesh_group, opaq.dataPtr));
+    const auto transOff = writer.tell(offsetof(raw_mesh_group, trans.dataPtr));
+    const auto punchOff = writer.tell(offsetof(raw_mesh_group, punch.dataPtr));
     const auto specialTypesOff = writer.tell(offsetof(raw_mesh_group, special.types));
     const auto specialCountsOff = writer.tell(offsetof(raw_mesh_group, special.meshCounts));
     const auto specialMeshesOff = writer.tell(offsetof(raw_mesh_group, special.meshes));
@@ -2081,14 +2077,14 @@ const sample_chunk::property* model::get_param(const char* name) const
     return nullptr;
 }
 
-raw_topology_type model::get_topology_type() const
+topology_type model::get_topology_type() const
 {
     // Get toplogy parameter, if any.
     const auto topologyProp = get_param("Topology");
 
     // Return value, defaulting to triangle strips if there was no topology property.
-    return (!topologyProp) ? raw_topology_type::triangle_strip :
-        static_cast<raw_topology_type>(topologyProp->value);
+    return (!topologyProp) ? topology_type::triangle_strip :
+        static_cast<topology_type>(topologyProp->value);
 }
 
 void model::get_unique_material_names(std::unordered_set<std::string>& uniqueMatNames) const
@@ -2107,7 +2103,7 @@ std::unordered_set<std::string> model::get_unique_material_names() const
 }
 
 void model::import_materials(const nchar* materialDir,
-    scene& scene, bool merge, bool includeLibGensTags)
+    scene& scene, bool merge, bool includeLibGensTags) const
 {
     nstring matPath = materialDir;
     if (path::combine_needs_sep1(matPath))
@@ -2132,7 +2128,7 @@ void model::import_materials(const nchar* materialDir,
         if (path::exists(matPath))
         {
             material mat(matPath);
-            mat.add_to_scene(materialDir, scene, merge, includeLibGensTags);
+            mat.add_to_hl_scene(materialDir, scene, merge, includeLibGensTags);
             matPath.erase(matNamePos);
         }
         else
@@ -2140,6 +2136,56 @@ void model::import_materials(const nchar* materialDir,
             // TODO: Log warning about missing material
         }
     }
+}
+
+void terrain_model::in_parse(const raw_terrain_model_v5& rawMdl)
+{
+    // Parse mesh groups.
+    in_parse_mesh_groups(rawMdl.meshGroups);
+
+    // Parse root node.
+    rootNode = node(rawMdl.name.get());
+
+    // Parse flags.
+    isInstanced = (rawMdl.is_revision2() && (rawMdl.rev2_flags &
+        static_cast<u32>(raw_terrain_model_flags::is_instanced)) != 0);
+}
+
+void terrain_model::in_parse(const void* rawData)
+{
+    // Get terrain model data and version number.
+    u32 version;
+    const auto mdlData = get_data(rawData, &version);
+    if (!mdlData) return; // TODO: Should this be an error?
+
+    // Parse terrain model data based on version number.
+    switch (version)
+    {
+    case 5:
+        in_parse(*static_cast<const raw_terrain_model_v5*>(mdlData));
+        break;
+
+    default:
+        throw std::runtime_error("Unsupported HH terrain model version");
+    }
+
+    // Parse sample chunk nodes.
+    in_parse_sample_chunk_nodes(rawData, 1, &rootNode);
+}
+
+void terrain_model::in_load(const nchar* filePath)
+{
+    // Load and parse terrain model.
+    blob rawMdl(filePath);
+    fix(rawMdl);
+    in_parse(rawMdl);
+}
+
+void terrain_model::in_clear() noexcept
+{
+    meshGroups.clear();
+    params.clear();
+    rootNode = node();
 }
 
 header_type terrain_model::in_get_default_header_type() const
@@ -2184,7 +2230,7 @@ void terrain_model::fix(void* rawData)
 void terrain_model::add_to_node(hl::node& parentNode, bool includeLibGensTags) const
 {
     // Get model topology type.
-    const raw_topology_type topType = get_topology_type();
+    const auto topType = get_topology_type();
 
     // Add node for model.
     hl::node& modelNode = parentNode.add_child(rootNode.name);
@@ -2208,42 +2254,28 @@ void terrain_model::add_to_node(hl::node& parentNode, bool includeLibGensTags) c
     }
 }
 
-void terrain_model::parse(const raw_terrain_model_v5& rawMdl)
+void terrain_model::parse(const void* rawData, std::string name)
 {
-    // Parse mesh groups.
-    in_parse_mesh_groups(rawMdl.meshGroups);
+    // Clear any existing data.
+    in_clear();
 
-    // Parse root node.
-    rootNode = node(rawMdl.name.get());
-}
+    // Set new name.
+    this->name = std::move(name);
 
-void terrain_model::parse(const void* rawData)
-{
-    // Get terrain model data and version number.
-    u32 version;
-    const void* mdlData = get_data(rawData, &version);
-    if (!mdlData) return; // TODO: Should this be an error?
-
-    // Parse terrain model data based on version number.
-    switch (version)
-    {
-    case 5:
-        parse(*static_cast<const raw_terrain_model_v5*>(mdlData));
-        break;
-
-    default:
-        throw std::runtime_error("Unsupported HH terrain model version");
-    }
-
-    // Parse sample chunk nodes.
-    in_parse_sample_chunk_nodes(rawData, 1, &rootNode);
+    // Parse raw terrain model data.
+    in_parse(rawData);
 }
 
 void terrain_model::load(const nchar* filePath)
 {
-    blob rawMdl(filePath);
-    fix(rawMdl);
-    parse(rawMdl);
+    // Clear any existing data.
+    in_clear();
+
+    // Set new name.
+    name = std::move(get_res_name(filePath));
+
+    // Load terrain model.
+    in_load(filePath);
 }
 
 void terrain_model::write(writer& writer, header_type headerType,
@@ -2270,7 +2302,7 @@ void terrain_model::write(writer& writer, header_type headerType,
             raw_terrain_model_flags::is_instanced :
             raw_terrain_model_flags::none);
 
-        meshGroupsOff = writer.tell(offsetof(raw_terrain_model_v5, meshGroups.data));
+        meshGroupsOff = writer.tell(offsetof(raw_terrain_model_v5, meshGroups.dataPtr));
         nameOff = writer.tell(offsetof(raw_terrain_model_v5, name));
 
         raw_terrain_model_v5 rawMdl =
@@ -2366,6 +2398,107 @@ void terrain_model::save(const nchar* filePath) const
     save(stream);
 }
 
+terrain_model::terrain_model(const void* rawData, std::string name) :
+    model(std::move(name))
+{
+    in_parse(rawData);
+}
+
+terrain_model::terrain_model(const nchar* filePath) :
+    model(std::move(get_res_name(filePath)))
+{
+    in_load(filePath);
+}
+
+void skeletal_model::in_parse(const raw_skeletal_model_v2& rawMdl)
+{
+    // Parse mesh groups.
+    meshGroups.emplace_back(rawMdl.meshes);
+
+    // TODO: Parse unknown1
+    // TODO: Parse unknown2
+
+    // Reserve space for nodes.
+    nodes.reserve(rawMdl.nodeCount);
+
+    // Parse nodes.
+    for (u32 i = 0; i < rawMdl.nodeCount; ++i)
+    {
+        nodes.emplace_back(*rawMdl.nodes[i].get(), rawMdl.nodeMatrices[i]);
+    }
+
+    // TODO: Parse bounds?
+
+    // TODO: Parse unknown3
+}
+
+void skeletal_model::in_parse(const raw_skeletal_model_v4& rawMdl)
+{
+    // TODO
+}
+
+void skeletal_model::in_parse(const raw_skeletal_model_v5& rawMdl)
+{
+    // Parse mesh groups.
+    in_parse_mesh_groups(rawMdl.meshGroups);
+
+    // TODO: Parse unknown1
+
+    // Reserve space for nodes.
+    nodes.reserve(rawMdl.nodeCount);
+
+    // Parse nodes.
+    for (u32 i = 0; i < rawMdl.nodeCount; ++i)
+    {
+        nodes.emplace_back(*rawMdl.nodes[i].get(), rawMdl.nodeMatrices[i]);
+    }
+
+    // TODO: Parse bounds?
+}
+
+void skeletal_model::in_parse(const void* rawData)
+{
+    // Get skeletal model data and version number.
+    u32 version;
+    const auto mdlData = get_data(rawData, &version);
+    if (!mdlData) return; // TODO: Should this be an error?
+
+    // Parse skeletal model data based on version number.
+    switch (version)
+    {
+    case 2:
+        in_parse(*static_cast<const raw_skeletal_model_v2*>(mdlData));
+        break;
+
+    // TODO: V4 support.
+
+    case 5:
+        in_parse(*static_cast<const raw_skeletal_model_v5*>(mdlData));
+        break;
+
+    default:
+        throw std::runtime_error("Unsupported HH skeletal model version");
+    }
+
+    // Parse sample chunk nodes.
+    in_parse_sample_chunk_nodes(rawData, nodes.size(), nodes.data());
+}
+
+void skeletal_model::in_load(const nchar* filePath)
+{
+    // Load and parse skeletal model.
+    blob rawMdl(filePath);
+    fix(rawMdl);
+    in_parse(rawMdl);
+}
+
+void skeletal_model::in_clear() noexcept
+{
+    meshGroups.clear();
+    params.clear();
+    nodes.clear();
+}
+
 header_type skeletal_model::in_get_default_header_type() const
 {
     if (has_params())
@@ -2390,7 +2523,7 @@ void skeletal_model::fix(void* rawData)
 
     // Get skeletal model data and version number.
     u32 version;
-    void* mdlData = get_data(rawData, &version);
+    const auto mdlData = get_data(rawData, &version);
     if (!mdlData) return;
 
     // Fix skeletal model data based on version number.
@@ -2419,7 +2552,7 @@ bool skeletal_model::has_per_node_params() const noexcept
 void skeletal_model::add_to_node(hl::node& parentNode, bool includeLibGensTags) const
 {
     // Get model topology type.
-    const raw_topology_type topType = get_topology_type();
+    const auto topType = get_topology_type();
 
     // Add nodes to the scene.
     std::unique_ptr<hl::node*[]> nodePtrs(new hl::node*[nodes.size()]);
@@ -2473,85 +2606,28 @@ void skeletal_model::add_to_node(hl::node& parentNode, bool includeLibGensTags) 
     }
 }
 
-void skeletal_model::parse(const raw_skeletal_model_v2& rawMdl)
+void skeletal_model::parse(const void* rawData, std::string name)
 {
-    // Parse mesh groups.
-    meshGroups.emplace_back(rawMdl.meshes);
+    // Clear any existing data.
+    in_clear();
 
-    // TODO: Parse unknown1
-    // TODO: Parse unknown2
+    // Set new name.
+    this->name = std::move(name);
 
-    // Reserve space for nodes.
-    nodes.reserve(rawMdl.nodeCount);
-
-    // Parse nodes.
-    for (u32 i = 0; i < rawMdl.nodeCount; ++i)
-    {
-        nodes.emplace_back(*rawMdl.nodes[i].get(), rawMdl.nodeMatrices[i]);
-    }
-
-    // TODO: Parse bounds?
-
-    // TODO: Parse unknown3
-}
-
-void skeletal_model::parse(const raw_skeletal_model_v4& rawMdl)
-{
-    // TODO
-}
-
-void skeletal_model::parse(const raw_skeletal_model_v5& rawMdl)
-{
-    // Parse mesh groups.
-    in_parse_mesh_groups(rawMdl.meshGroups);
-
-    // TODO: Parse unknown1
-
-    // Reserve space for nodes.
-    nodes.reserve(rawMdl.nodeCount);
-
-    // Parse nodes.
-    for (u32 i = 0; i < rawMdl.nodeCount; ++i)
-    {
-        nodes.emplace_back(*rawMdl.nodes[i].get(), rawMdl.nodeMatrices[i]);
-    }
-
-    // TODO: Parse bounds?
-}
-
-void skeletal_model::parse(const void* rawData)
-{
-    // Get skeletal model data and version number.
-    u32 version;
-    const void* mdlData = get_data(rawData, &version);
-    if (!mdlData) return; // TODO: Should this be an error?
-
-    // Parse skeletal model data based on version number.
-    switch (version)
-    {
-    case 2:
-        parse(*static_cast<const raw_skeletal_model_v2*>(mdlData));
-        break;
-
-    // TODO: V4 support.
-
-    case 5:
-        parse(*static_cast<const raw_skeletal_model_v5*>(mdlData));
-        break;
-
-    default:
-        throw std::runtime_error("Unsupported HH skeletal model version");
-    }
-
-    // Parse sample chunk nodes.
-    in_parse_sample_chunk_nodes(rawData, nodes.size(), nodes.data());
+    // Parse raw skeletal model data.
+    in_parse(rawData);
 }
 
 void skeletal_model::load(const nchar* filePath)
 {
-    blob rawMdl(filePath);
-    fix(rawMdl);
-    parse(rawMdl);
+    // Clear any existing data.
+    in_clear();
+
+    // Set new name.
+    name = std::move(get_res_name(filePath));
+
+    // Load skeletal model.
+    in_load(filePath);
 }
 
 void skeletal_model::write(writer& writer, header_type headerType,
@@ -2580,9 +2656,9 @@ void skeletal_model::write(writer& writer, header_type headerType,
         const std::size_t meshCount = (meshGroups.empty()) ?
             0 : meshGroups[0].opaq.size();
 
-        meshesOff = writer.tell(offsetof(raw_skeletal_model_v2, meshes.data));
-        unknown1Off = writer.tell(offsetof(raw_skeletal_model_v2, unknown1.data));
-        unknown2Off = writer.tell(offsetof(raw_skeletal_model_v2, unknown2.data));
+        meshesOff = writer.tell(offsetof(raw_skeletal_model_v2, meshes.dataPtr));
+        unknown1Off = writer.tell(offsetof(raw_skeletal_model_v2, unknown1.dataPtr));
+        unknown2Off = writer.tell(offsetof(raw_skeletal_model_v2, unknown2.dataPtr));
         nodesOff = writer.tell(offsetof(raw_skeletal_model_v2, nodes));
         nodeMatricesOff = writer.tell(offsetof(raw_skeletal_model_v2, nodeMatrices));
         boundsOff = writer.tell(offsetof(raw_skeletal_model_v2, bounds));
@@ -2612,11 +2688,11 @@ void skeletal_model::write(writer& writer, header_type headerType,
 
     case 4:
     {
-        // Generate raw V4 skeletal model header.
-        meshesOff = writer.tell(offsetof(raw_skeletal_model_v4, meshGroups.data));
-        unknown1Off = writer.tell(offsetof(raw_skeletal_model_v4, unknown1.data));
-        unknown2Off = writer.tell(offsetof(raw_skeletal_model_v4, unknown2.data));
-        unknown3Off = writer.tell(offsetof(raw_skeletal_model_v4, unknown3.data));
+        // Generate raw V4 skeletal model header.                                  
+        meshesOff = writer.tell(offsetof(raw_skeletal_model_v4, meshGroups.dataPtr));
+        unknown1Off = writer.tell(offsetof(raw_skeletal_model_v4, unknown1.dataPtr));
+        unknown2Off = writer.tell(offsetof(raw_skeletal_model_v4, unknown2.dataPtr));
+        unknown3Off = writer.tell(offsetof(raw_skeletal_model_v4, unknown3.dataPtr));
         nodesOff = writer.tell(offsetof(raw_skeletal_model_v4, nodes));
         nodeMatricesOff = writer.tell(offsetof(raw_skeletal_model_v4, nodeMatrices));
         boundsOff = writer.tell(offsetof(raw_skeletal_model_v4, bounds));
@@ -2646,8 +2722,8 @@ void skeletal_model::write(writer& writer, header_type headerType,
     case 5:
     {
         // Generate raw V5 skeletal model header.
-        meshesOff = writer.tell(offsetof(raw_skeletal_model_v5, meshGroups.data));
-        unknown1Off = writer.tell(offsetof(raw_skeletal_model_v5, unknown1.data));
+        meshesOff = writer.tell(offsetof(raw_skeletal_model_v5, meshGroups.dataPtr));
+        unknown1Off = writer.tell(offsetof(raw_skeletal_model_v5, unknown1.dataPtr));
         nodesOff = writer.tell(offsetof(raw_skeletal_model_v5, nodes));
         nodeMatricesOff = writer.tell(offsetof(raw_skeletal_model_v5, nodeMatrices));
         boundsOff = writer.tell(offsetof(raw_skeletal_model_v5, bounds));
@@ -2830,6 +2906,18 @@ void skeletal_model::save(const nchar* filePath) const
 {
     file_stream stream(filePath, file::mode::write);
     save(stream);
+}
+
+skeletal_model::skeletal_model(const void* rawData, std::string name) :
+    model(std::move(name))
+{
+    in_parse(rawData);
+}
+
+skeletal_model::skeletal_model(const nchar* filePath) :
+    model(std::move(get_res_name(filePath)))
+{
+    in_load(filePath);
 }
 } // mirage
 } // hh

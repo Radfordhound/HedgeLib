@@ -1,41 +1,43 @@
+#ifdef _WIN32
 #ifndef HL_IN_WIN32_H_INCLUDED
 #define HL_IN_WIN32_H_INCLUDED
-#ifdef _WIN32
-#include "hedgelib/hl_internal.h"
+#include <string>
+#include <system_error>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
 namespace hl
 {
-inline error_type in_win32_get_error(HRESULT hresult) noexcept
+inline std::system_error in_win32_get_exception(DWORD err)
 {
-    switch (hresult)
-    {
-    case E_INVALIDARG: return error_type::invalid_args;
-    case E_OUTOFMEMORY: return error_type::out_of_memory;
-
-    case __HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND):
-    case __HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND):
-        return error_type::not_found;
-
-    case __HRESULT_FROM_WIN32(ERROR_NO_MORE_FILES):
-        return error_type::no_more_entries;
-
-    case __HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION):
-        return error_type::sharing_violation;
-
-    default: return error_type::unknown;
-    }
+    return std::system_error(err, std::generic_category());
 }
 
-inline error_type in_win32_get_last_error()
+inline std::system_error in_win32_get_exception(DWORD err, const char* whatArg)
 {
-    return in_win32_get_error(HRESULT_FROM_WIN32(GetLastError()));
+    return std::system_error(err, std::generic_category(), whatArg);
 }
 
-#define HL_IN_WIN32_ERROR()\
-    HL_ERROR(in_win32_get_last_error())
+inline std::system_error in_win32_get_exception(DWORD err, const std::string& whatArg)
+{
+    return std::system_error(err, std::generic_category(), whatArg);
+}
+
+inline std::system_error in_win32_get_last_exception()
+{
+    return in_win32_get_exception(GetLastError());
+}
+
+inline std::system_error in_win32_get_last_exception(const char* whatArg)
+{
+    return in_win32_get_exception(GetLastError(), whatArg);
+}
+
+inline std::system_error in_win32_get_last_exception(const std::string& whatArg)
+{
+    return in_win32_get_exception(GetLastError(), whatArg);
+}
 } // hl
 #endif
 #endif

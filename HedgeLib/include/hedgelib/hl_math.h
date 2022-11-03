@@ -236,9 +236,14 @@ struct vec2_base
         return (x == other.x && y == other.y);
     }
 
-    inline T operator[](const std::size_t i) const noexcept
+    inline T operator[](std::size_t i) const noexcept
     {
         return reinterpret_cast<const T*>(this)[i];
+    }
+
+    inline T& operator[](std::size_t i) noexcept
+    {
+        return reinterpret_cast<T*>(this)[i];
     }
 
     inline vec2_base() noexcept = default;
@@ -281,9 +286,14 @@ struct vec3_base
             z == other.z);
     }
 
-    inline T operator[](const std::size_t i) const noexcept
+    inline T operator[](std::size_t i) const noexcept
     {
         return reinterpret_cast<const T*>(this)[i];
+    }
+
+    inline T& operator[](std::size_t i) noexcept
+    {
+        return reinterpret_cast<T*>(this)[i];
     }
 
     inline vec3_base() noexcept = default;
@@ -333,9 +343,14 @@ struct vec4_base
             z == other.z && w == other.w);
     }
 
-    inline T operator[](const std::size_t i) const noexcept
+    inline T operator[](std::size_t i) const noexcept
     {
         return reinterpret_cast<const T*>(this)[i];
+    }
+
+    inline T& operator[](std::size_t i) noexcept
+    {
+        return reinterpret_cast<T*>(this)[i];
     }
 
     inline vec4_base() noexcept = default;
@@ -437,6 +452,51 @@ struct bounding_sphere
 
 HL_STATIC_ASSERT_SIZE(bounding_sphere, 16);
 
+struct matrix3x4
+{
+    float m11, m12, m13, m14;
+    float m21, m22, m23, m24;
+    float m31, m32, m33, m34;
+
+    HL_API static const matrix3x4 identity;
+
+    template<bool swapOffsets = true>
+    void endian_swap() noexcept
+    {
+        hl::endian_swap(m11);
+        hl::endian_swap(m12);
+        hl::endian_swap(m13);
+        hl::endian_swap(m14);
+
+        hl::endian_swap(m21);
+        hl::endian_swap(m22);
+        hl::endian_swap(m23);
+        hl::endian_swap(m24);
+
+        hl::endian_swap(m31);
+        hl::endian_swap(m32);
+        hl::endian_swap(m33);
+        hl::endian_swap(m34);
+    }
+
+    matrix3x4() noexcept = default;
+
+    constexpr matrix3x4(vec4 m1, vec4 m2, vec4 m3) noexcept :
+        m11(m1.x), m12(m1.y), m13(m1.z), m14(m1.w),
+        m21(m2.x), m22(m2.y), m23(m2.z), m24(m2.w),
+        m31(m3.x), m32(m3.y), m33(m3.z), m34(m3.w) {}
+
+    constexpr matrix3x4(
+        float m11, float m12, float m13, float m14,
+        float m21, float m22, float m23, float m24,
+        float m31, float m32, float m33, float m34) noexcept :
+        m11(m11), m12(m12), m13(m13), m14(m14),
+        m21(m21), m22(m22), m23(m23), m24(m24),
+        m31(m31), m32(m32), m33(m33), m34(m34) {}
+};
+
+HL_STATIC_ASSERT_SIZE(matrix3x4, 48);
+
 struct matrix4x4
 {
     float m11, m12, m13, m14;
@@ -472,8 +532,7 @@ struct matrix4x4
 
     matrix4x4() noexcept = default;
 
-    constexpr matrix4x4(
-        vec4 m1, vec4 m2, vec4 m3, vec4 m4) noexcept :
+    constexpr matrix4x4(vec4 m1, vec4 m2, vec4 m3, vec4 m4) noexcept :
         m11(m1.x), m12(m1.y), m13(m1.z), m14(m1.w),
         m21(m2.x), m22(m2.y), m23(m2.z), m24(m2.w),
         m31(m3.x), m32(m3.y), m33(m3.z), m34(m3.w),

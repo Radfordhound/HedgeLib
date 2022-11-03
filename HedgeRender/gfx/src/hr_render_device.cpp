@@ -143,7 +143,7 @@ void in_swap_chain::create(VkPhysicalDevice vkPhyDev,
 
     // Share swap chain images between graphics queue family and
     // present queue family if we have a unique present family.
-    if (queueFamilies.has_unique_family(HR_IN_QUEUE_TYPE_PRESENT))
+    if (queueFamilies.has_unique_family(in_queue_type::present))
     {
         vkSwapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
         vkSwapChainCreateInfo.queueFamilyIndexCount = 2;
@@ -319,54 +319,9 @@ in_per_frame_data::in_per_frame_data(render_device& device)
     }
 }
 
-unsigned int in_per_thread_data::get_next_upload_batch_index() const
-{
-    // Get the upload batch with the smallest batch ID.
-    uint64_t nextBatchID = UINT64_MAX;
-    unsigned int nextBatchIndex = 0;
+void in_per_thread_data::destroy(render_device& device) noexcept {}
 
-    for (unsigned int i = 0; i < batchData.size(); ++i)
-    {
-        if (batchData[i].curBatchID < nextBatchID)
-        {
-            nextBatchID = batchData[i].curBatchID;
-            nextBatchIndex = i;
-        }
-    }
-
-    return nextBatchIndex;
-}
-
-void in_per_thread_data::destroy(render_device& device) noexcept
-{
-    // Destroy upload complete timeline semaphore.
-    vkDestroySemaphore(device.handle(), vkUploadCompleteSemaphore, nullptr);
-}
-
-in_per_thread_data::in_per_thread_data(render_device& device)
-{
-    // Create Vulkan timeline semaphore for keeping track of completed uploads.
-    const VkSemaphoreTypeCreateInfo vkSemaphoreTypeCreateInfo =
-    {
-        VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,                   // sType
-        nullptr,                                                        // pNext
-        VK_SEMAPHORE_TYPE_TIMELINE,                                     // semaphoreType
-        0                                                               // initialValue
-    };
-
-    const VkSemaphoreCreateInfo vkSemaphoreCreateInfo =
-    {
-        VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,                        // sType
-        &vkSemaphoreTypeCreateInfo,                                     // pNext
-        0                                                               // flags
-    };
-
-    if (vkCreateSemaphore(device.handle(), &vkSemaphoreCreateInfo,
-        nullptr, &vkUploadCompleteSemaphore) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Could not create Vulkan timeline semaphore");
-    }
-}
+in_per_thread_data::in_per_thread_data(render_device& device) {}
 
 void in_per_frame_thread_data::destroy(render_device& device) noexcept
 {
@@ -519,23 +474,65 @@ std::unique_lock<std::mutex> render_device::get_gfx_queue_lock()
     return std::unique_lock<std::mutex>(m_gfxQueueMutex);
 }
 
-void render_device::wait_for_upload_batch(unsigned int threadIndex,
-    uint64_t batchID, uint64_t timeout) const
+bool render_device::is_frame_render_done(unsigned int frameIndex) const
 {
-    const auto& threadData = m_threadData[threadIndex];
+    switch (vkGetFenceStatus(m_vkDevice, m_frameData[frameIndex].vkFence))
+    {
+    case VK_SUCCESS:
+        return true;
+
+    case VK_NOT_READY:
+        return false;
+        
+    default:
+        throw std::runtime_error("Could not check status of Vulkan fence");
+    }
+}
+
+void render_device::wait_for_frame_render(unsigned int frameIndex, std::uint64_t timeout) const
+{
+    if (vkWaitForFences(m_vkDevice, 1, &m_frameData[frameIndex].vkFence,
+        VK_TRUE, timeout) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Could not wait for Vulkan fence");
+    }
+}
+
+bool render_device::is_upload_batch_done(std::uint64_t batchID) const
+{
+    uint64_t vkSemaphoreVal;
+    if (vkGetSemaphoreCounterValue(m_vkDevice, m_vkUploadCompleteSemaphore,
+        &vkSemaphoreVal) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Could not query status of upload batch");
+    }
+
+    return (vkSemaphoreVal >= batchID);
+}
+
+void render_device::wait_for_upload_batch(std::uint64_t batchID, std::uint64_t timeout) const
+{
     const VkSemaphoreWaitInfo vkSemaphoreWaitInfo =
     {
         VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO,                          // sType
         nullptr,                                                        // pNext
         0,                                                              // flags
         1,                                                              // semaphoreCount
-        &threadData.vkUploadCompleteSemaphore,                          // pSemaphores
+        &m_vkUploadCompleteSemaphore,                                   // pSemaphores
         &batchID                                                        // pValues
     };
 
     if (vkWaitSemaphores(m_vkDevice, &vkSemaphoreWaitInfo, timeout) != VK_SUCCESS)
     {
-        throw std::runtime_error("Could not wait for Vulkan timeline semaphores");
+        throw std::runtime_error("Could not wait for upload batch");
+    }
+}
+
+void render_device::wait_for_idle() const
+{
+    if (vkDeviceWaitIdle(m_vkDevice) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Could not wait for Vulkan device to idle");
     }
 }
 
@@ -549,12 +546,12 @@ upload_batch render_device::start_upload_batch(unsigned int threadIndex)
 
     // Wait for the current upload batch to complete.
     // NOTE: If this upload batch hasn't started yet, this doesn't stall.
-    const unsigned int curBatchIndex = curThreadData.get_next_upload_batch_index();
+    const auto curBatchIndex = curThreadData.get_next_upload_batch_index();
     auto& curBatchData = curThreadData.batchData[curBatchIndex];
     
-    wait_for_upload_batch(threadIndex, curBatchData.curBatchID);
+    wait_for_upload_batch(curBatchData.curBatchID);
 
-    // Destroy all temporary upload buffers from previous upload batch, if any.
+    // Destroy all temporary upload buffers from the previous upload batch, if any.
     curBatchData.uploadBuffers.clear();
 
     // Reset Vulkan command buffer for this upload batch.
@@ -579,8 +576,8 @@ upload_batch render_device::start_upload_batch(unsigned int threadIndex)
     }
 
     // Set new upload batch ID and return new upload batch object.
-    curBatchData.curBatchID = ++curThreadData.nextBatchID;
-    return upload_batch(*this, curThreadData, curBatchData, vkCmdBuf);
+    curBatchData.curBatchID = ++m_curUploadBatchID;
+    return upload_batch(*this, curBatchData, vkCmdBuf);
 }
 
 static internal::in_desc_pool_types in_get_desc_pool_type(VkDescriptorType type)
@@ -702,7 +699,7 @@ void render_device::update_shader_data(const shader_data_write_desc* shaderDataW
     std::size_t shaderDataWriteCount)
 {
     // Generate Vulkan write descriptor sets.
-    stack_or_heap_buffer<VkWriteDescriptorSet, 4> vkWriteDescSets(shaderDataWriteCount);
+    hl::stack_or_heap_buffer<VkWriteDescriptorSet, 4> vkWriteDescSets(shaderDataWriteCount);
     std::size_t vkDescImageInfoCount = 0, vkDescBufferInfoCount = 0;
 
     for (std::size_t i = 0; i < shaderDataWriteCount; ++i)
@@ -741,8 +738,8 @@ void render_device::update_shader_data(const shader_data_write_desc* shaderDataW
     }
 
     // Generate Vulkan descriptor image/buffer infos.
-    stack_or_heap_buffer<VkDescriptorImageInfo, 8> vkDescImageInfos(vkDescImageInfoCount);
-    stack_or_heap_buffer<VkDescriptorBufferInfo, 8> vkDescBufferInfos(vkDescBufferInfoCount);
+    hl::stack_or_heap_buffer<VkDescriptorImageInfo, 8> vkDescImageInfos(vkDescImageInfoCount);
+    hl::stack_or_heap_buffer<VkDescriptorBufferInfo, 8> vkDescBufferInfos(vkDescBufferInfoCount);
     vkDescImageInfoCount = vkDescBufferInfoCount = 0;
 
     for (std::size_t i = 0; i < shaderDataWriteCount; ++i)
@@ -863,13 +860,13 @@ void render_device::end_frame()
     {
         // Lock graphics queue if our "present queue" is actually just the graphics queue.
         std::unique_lock<std::mutex> m_gfxQueueLock;
-        if (!m_adapter.queue_families().has_unique_family(HR_IN_QUEUE_TYPE_PRESENT))
+        if (!m_adapter.queue_families().has_unique_family(in_queue_type::present))
         {
             m_gfxQueueLock = get_gfx_queue_lock();
         }
 
         // Present Vulkan swap chain image.
-        switch (vkQueuePresentKHR(m_vkQueues[HR_IN_QUEUE_TYPE_PRESENT], &vkPresentInfo))
+        switch (vkQueuePresentKHR(m_vkQueues[in_queue_type::present], &vkPresentInfo))
         {
         case VK_SUCCESS:
             break;
@@ -945,6 +942,9 @@ void render_device::destroy() noexcept
     // Wait for Vulkan device to idle so we can safely clean everything up.
     vkDeviceWaitIdle(m_vkDevice);
 
+    // Destroy upload complete timeline semaphore.
+    vkDestroySemaphore(m_vkDevice, m_vkUploadCompleteSemaphore, nullptr);
+
     // Destroy per-frame-per-thread data.
     in_destroy_per_t_array(*this, m_frameThreadData,
         m_frameCount * m_threadCount);
@@ -967,6 +967,9 @@ void render_device::destroy() noexcept
     // Destroy global descriptor pool allocator.
     m_globalDescPoolAllocator.destroy(*this);
 
+    // Destroy pipeline cache.
+    vkDestroyPipelineCache(m_vkDevice, m_vkPipelineCache, nullptr);
+
     // Destroy allocator.
     m_allocator.destroy();
 
@@ -984,13 +987,41 @@ static VkResult VKAPI_PTR in_vulkan_fallback_set_debug_name_utils(
 }
 
 static PFN_vkSetDebugUtilsObjectNameEXT in_vulkan_set_debug_utils_name_ptr =
-&in_vulkan_fallback_set_debug_name_utils;
+    &in_vulkan_fallback_set_debug_name_utils;
 #endif
+
+void in_vulkan_set_debug_name(VkDevice vkDevice,
+    VkObjectType vkObjectType, uint64_t vkObjectHandle,
+    const char* name)
+{
+#ifdef VK_EXT_debug_utils
+    const VkDebugUtilsObjectNameInfoEXT vkDebugObjectNameInfo =
+    {
+        VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,             // sType
+        nullptr,                                                        // pNext
+        vkObjectType,                                                   // objectType
+        vkObjectHandle,                                                 // objectHandle
+        name                                                            // pObjectName
+    };
+
+    if (in_vulkan_set_debug_utils_name_ptr(vkDevice, &vkDebugObjectNameInfo) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Could not set debug name for Vulkan object");
+    }
+#endif
+}
+
+void render_device::set_debug_name(VkObjectType vkObjectType,
+    void* vkObjectHandle, const char* name)
+{
+    in_vulkan_set_debug_name(m_vkDevice, vkObjectType,
+        reinterpret_cast<uint64_t>(vkObjectHandle), name);
+}
 
 static bool in_vulkan_load_debug_utils_ext(VkInstance vkInstance)
 {
 #ifdef VK_EXT_debug_utils
-    auto setDebugUtilsObjectNamePtr = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>(
+    const auto setDebugUtilsObjectNamePtr = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>(
         vkGetInstanceProcAddr(vkInstance, "vkSetDebugUtilsObjectNameEXT"));
 
     if (setDebugUtilsObjectNamePtr)
@@ -1006,15 +1037,22 @@ static bool in_vulkan_load_debug_utils_ext(VkInstance vkInstance)
 
 constexpr float in_vulkan_queue_family_default_priority = 1.0f;
 
+constexpr VkPhysicalDeviceFeatures in_vulkan_get_phy_dev_features() noexcept
+{
+    VkPhysicalDeviceFeatures vkPhyDevFeatures = { VK_FALSE };
+    vkPhyDevFeatures.shaderClipDistance = VK_TRUE;
+    return vkPhyDevFeatures;
+}
+
 static VkDevice in_vulkan_create_device(
     VkInstance vkInstance, VkPhysicalDevice vkPhyDev,
     const internal::in_queue_families& queueFamilies,
-    bool isDebug)
+    bool isDebug, const char* debugName)
 {
     using namespace internal;
 
     // Setup queue create infos.
-    VkDeviceQueueCreateInfo vkQueueCreateInfos[HR_IN_QUEUE_TYPE_COUNT] =
+    VkDeviceQueueCreateInfo vkQueueCreateInfos[in_queue_type::count] =
     {
         {
             VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,                 // sType
@@ -1027,7 +1065,7 @@ static VkDevice in_vulkan_create_device(
     };
 
     uint32_t vkQueueCreateInfoCount = 1;
-    if (queueFamilies.has_unique_family(HR_IN_QUEUE_TYPE_TRANSFER))
+    if (queueFamilies.has_unique_family(in_queue_type::transfer))
     {
         vkQueueCreateInfos[vkQueueCreateInfoCount++] =
         {
@@ -1040,7 +1078,7 @@ static VkDevice in_vulkan_create_device(
         };
     }
 
-    if (queueFamilies.has_unique_family(HR_IN_QUEUE_TYPE_PRESENT))
+    if (queueFamilies.has_unique_family(in_queue_type::present))
     {
         vkQueueCreateInfos[vkQueueCreateInfoCount++] =
         {
@@ -1065,7 +1103,7 @@ static VkDevice in_vulkan_create_device(
     {
         VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,                   // sType
         &vkPhyDevTimelineSemaphoreFeatures,                             // pNext
-        { 0U }                                                          // features
+        in_vulkan_get_phy_dev_features()                                // features
     };
 
     VkDeviceCreateInfo vkDeviceCreateInfo =
@@ -1097,7 +1135,43 @@ static VkDevice in_vulkan_create_device(
         throw std::runtime_error("Could not create Vulkan device");
     }
 
+    // Set debug name if one was provided.
+    if (debugName)
+    {
+        try
+        {
+            in_vulkan_set_debug_name(vkDevice, VK_OBJECT_TYPE_DEVICE,
+                reinterpret_cast<uint64_t>(vkDevice), debugName);
+        }
+        catch (...)
+        {
+            vkDestroyDevice(vkDevice, nullptr);
+            throw;
+        }
+    }
+
     return vkDevice;
+}
+
+static VkPipelineCache in_vulkan_create_pipeline_cache(VkDevice vkDevice)
+{
+    const VkPipelineCacheCreateInfo vkPipelineCacheCreateInfo =
+    {
+        VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,                   // sType
+        nullptr,                                                        // pNext
+        0,                                                              // flags
+        0,                                                              // initialDataSize
+        nullptr                                                         // pInitialData
+    };
+
+    VkPipelineCache vkPipelineCache;
+    if (vkCreatePipelineCache(vkDevice, &vkPipelineCacheCreateInfo,
+        nullptr, &vkPipelineCache) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Could not create Vulkan pipeline cache");
+    }
+
+    return vkPipelineCache;
 }
 
 static internal::in_swap_chain in_create_swap_chain_with_device_cleanup(
@@ -1120,14 +1194,15 @@ static internal::in_swap_chain in_create_swap_chain_with_device_cleanup(
 
 render_device::render_device(const gfx::adapter& adapter,
     surface& surface, unsigned int width, unsigned int height,
-    unsigned int prefFrameBufCount, bool vsync) :
+    unsigned int prefFrameBufCount, bool vsync, const char* debugName) :
 
     m_vkDevice(in_vulkan_create_device(adapter.parent().handle(),
         adapter.handle(), adapter.queue_families(),
-        adapter.parent().m_isDebug)),
+        adapter.parent().m_isDebug, debugName)),
 
     m_adapter(adapter),
     m_allocator(*this),
+    m_vkPipelineCache(in_vulkan_create_pipeline_cache(m_vkDevice)),
 
     m_swapChain(in_create_swap_chain_with_device_cleanup(
         surface.m_vkSurface, adapter.handle(), m_vkDevice,
@@ -1138,28 +1213,26 @@ render_device::render_device(const gfx::adapter& adapter,
 
     // Get required queues.
     vkGetDeviceQueue(m_vkDevice, m_adapter.queue_families().graphics_family(),
-        0U, &m_vkQueues[HR_IN_QUEUE_TYPE_GRAPHICS]);
+        0U, &m_vkQueues[in_queue_type::graphics]);
 
-    if (m_adapter.queue_families().has_unique_family(HR_IN_QUEUE_TYPE_TRANSFER))
+    if (m_adapter.queue_families().has_unique_family(in_queue_type::transfer))
     {
         vkGetDeviceQueue(m_vkDevice, m_adapter.queue_families().transfer_family(),
-            0U, &m_vkQueues[HR_IN_QUEUE_TYPE_TRANSFER]);
+            0U, &m_vkQueues[in_queue_type::transfer]);
     }
     else
     {
-        m_vkQueues[HR_IN_QUEUE_TYPE_TRANSFER] =
-            m_vkQueues[HR_IN_QUEUE_TYPE_GRAPHICS];
+        m_vkQueues[in_queue_type::transfer] = m_vkQueues[in_queue_type::graphics];
     }
 
-    if (m_adapter.queue_families().has_unique_family(HR_IN_QUEUE_TYPE_PRESENT))
+    if (m_adapter.queue_families().has_unique_family(in_queue_type::present))
     {
         vkGetDeviceQueue(m_vkDevice, m_adapter.queue_families().present_family(),
-            0U, &m_vkQueues[HR_IN_QUEUE_TYPE_PRESENT]);
+            0U, &m_vkQueues[in_queue_type::present]);
     }
     else
     {
-        m_vkQueues[HR_IN_QUEUE_TYPE_PRESENT] =
-            m_vkQueues[HR_IN_QUEUE_TYPE_GRAPHICS];
+        m_vkQueues[in_queue_type::present] = m_vkQueues[in_queue_type::graphics];
     }
 
     // Create per-frame data.
@@ -1209,6 +1282,35 @@ render_device::render_device(const gfx::adapter& adapter,
         m_swapChain.destroy(m_vkDevice);
         vkDestroyDevice(m_vkDevice, nullptr);
         throw ex;
+    }
+
+    // Create Vulkan timeline semaphore for keeping track of completed upload batches.
+    const VkSemaphoreTypeCreateInfo vkSemaphoreTypeCreateInfo =
+    {
+        VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,                   // sType
+        nullptr,                                                        // pNext
+        VK_SEMAPHORE_TYPE_TIMELINE,                                     // semaphoreType
+        0                                                               // initialValue
+    };
+
+    const VkSemaphoreCreateInfo vkSemaphoreCreateInfo =
+    {
+        VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,                        // sType
+        &vkSemaphoreTypeCreateInfo,                                     // pNext
+        0                                                               // flags
+    };
+
+    if (vkCreateSemaphore(m_vkDevice, &vkSemaphoreCreateInfo,
+        nullptr, &m_vkUploadCompleteSemaphore) != VK_SUCCESS)
+    {
+        in_destroy_per_t_array(*this, m_frameThreadData, m_frameCount * m_threadCount);
+        in_destroy_per_t_array(*this, m_threadData, m_threadCount);
+        in_destroy_per_t_array(*this, m_frameData, m_frameCount);
+        m_allocator.destroy();
+        m_swapChain.destroy(m_vkDevice);
+        vkDestroyDevice(m_vkDevice, nullptr);
+
+        throw std::runtime_error("Could not create Vulkan timeline semaphore");
     }
 }
 } // gfx

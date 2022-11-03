@@ -1,5 +1,4 @@
 #include "hedgerender/base/hr_log.h"
-#include "hedgerender/base/hr_array.h"
 #include <hedgelib/hl_tool_helpers.h>
 
 namespace hr
@@ -19,9 +18,9 @@ static const hl::nchar* const in_default_log_prefixes[] =
 /** @brief Indexable via a hr::log_level enum value. */
 static const std::size_t in_default_log_prefix_lens[] =
 {
-    (HL_COUNT_OF(in_default_log_prefix_info) - 1),
-    (HL_COUNT_OF(in_default_log_prefix_warning) - 1),
-    (HL_COUNT_OF(in_default_log_prefix_error) - 1)
+    (hl::count_of(in_default_log_prefix_info) - 1),
+    (hl::count_of(in_default_log_prefix_warning) - 1),
+    (hl::count_of(in_default_log_prefix_error) - 1)
 };
 
 static const hl::nchar in_default_log_suffix[] = HL_NTEXT("\n");
@@ -37,9 +36,9 @@ static const hl::nchar* const in_default_log_suffixes[] =
 /** @brief Indexable via a hr::log_level enum value. */
 static const std::size_t in_default_log_suffix_lens[] =
 {
-    (HL_COUNT_OF(in_default_log_suffix) - 1),
-    (HL_COUNT_OF(in_default_log_suffix) - 1),
-    (HL_COUNT_OF(in_default_log_suffix) - 1)
+    (hl::count_of(in_default_log_suffix) - 1),
+    (hl::count_of(in_default_log_suffix) - 1),
+    (hl::count_of(in_default_log_suffix) - 1)
 };
 
 static std::size_t in_write_log_str(hl::nchar* buf, std::size_t bufCount,
@@ -67,7 +66,7 @@ static void in_default_log_callback(log_level level, const hl::nchar* fmt, ...)
     const std::size_t bufLen = (prefixLen + strLen + suffixLen + 1); // +1 for null terminator.
 
     // Utilize stack buffer of 512 nchars, or allocate heap buffer if 512 nchars is not sufficient.
-    stack_or_heap_buffer<hl::nchar, 512> buf(bufLen);
+    hl::stack_or_heap_buffer<hl::nchar, 512> buf(bufLen);
     hl::nchar* ptr = buf;
 
     // Append prefix.

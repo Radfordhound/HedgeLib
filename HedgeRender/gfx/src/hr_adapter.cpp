@@ -12,10 +12,10 @@ const char* const in_vulkan_device_required_extensions[] =
 };
 
 const uint32_t in_vulkan_device_required_extension_count =
-    HL_COUNT_OF(in_vulkan_device_required_extensions);
+    hl::count_of(in_vulkan_device_required_extensions);
 
 static bool in_vulkan_has_extension(
-    const fixed_array<VkExtensionProperties, uint32_t>& vkExts,
+    const hl::fixed_array<VkExtensionProperties, uint32_t>& vkExts,
     const char* name)
 {
     for (auto& vkExt : vkExts)
@@ -29,7 +29,7 @@ static bool in_vulkan_has_extension(
     return false;
 }
 
-static fixed_array<VkExtensionProperties, uint32_t>
+static hl::fixed_array<VkExtensionProperties, uint32_t>
     in_vulkan_get_extensions(VkPhysicalDevice vkPhyDev)
 {
     // Get extension count.
@@ -41,7 +41,9 @@ static fixed_array<VkExtensionProperties, uint32_t>
     }
 
     // Get extension properties.
-    fixed_array<VkExtensionProperties, uint32_t> vkExts(vkExtCount, no_default_construct);
+    hl::fixed_array<VkExtensionProperties, uint32_t> vkExts(
+        hl::no_value_init, vkExtCount);
+
     if (vkEnumerateDeviceExtensionProperties(vkPhyDev, nullptr,
         &vkExtCount, vkExts.data()) != VK_SUCCESS)
     {
@@ -69,7 +71,7 @@ static bool in_vulkan_has_required_extensions(VkPhysicalDevice vkPhyDev)
     return true;
 }
 
-static fixed_array<VkQueueFamilyProperties, uint32_t>
+static hl::fixed_array<VkQueueFamilyProperties, uint32_t>
     in_vulkan_get_queue_family_properties(VkPhysicalDevice vkPhyDev)
 {
     // Get supported queue family count.
@@ -78,8 +80,8 @@ static fixed_array<VkQueueFamilyProperties, uint32_t>
         &vkQueueFamilyCount, nullptr);
 
     // Get supported queue families.
-    fixed_array<VkQueueFamilyProperties, uint32_t> vkQueueFamilies(
-        vkQueueFamilyCount, no_default_construct);
+    hl::fixed_array<VkQueueFamilyProperties, uint32_t> vkQueueFamilies(
+        hl::no_value_init, vkQueueFamilyCount);
 
     vkGetPhysicalDeviceQueueFamilyProperties(vkPhyDev,
         &vkQueueFamilyCount, vkQueueFamilies.data());
@@ -116,20 +118,19 @@ static bool in_vulkan_get_required_queue_families(VkPhysicalDevice vkPhyDev,
         // Check this queue family for graphics support.
         if (!hasGraphicsFamily && vkQueueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
         {
-            vkQueueFamilyInfo.set_family(HR_IN_QUEUE_TYPE_GRAPHICS, i, true);
+            vkQueueFamilyInfo.set_family(in_queue_type::graphics, i, true);
 
             if (!hasPresentFamily && in_vulkan_supports_present(vkPhyDev, vkSurface, i))
             {
-                vkQueueFamilyInfo.set_family(HR_IN_QUEUE_TYPE_PRESENT, i, false);
-
                 // Prefer to NOT look for a unique present family.
+                vkQueueFamilyInfo.set_family(in_queue_type::present, i, false);
                 hasPresentFamily = true;
             }
 
             if (!hasTransferFamily)
             {
-                vkQueueFamilyInfo.set_family(HR_IN_QUEUE_TYPE_TRANSFER, i, false);
                 // Prefer to look for a unique transfer family.
+                vkQueueFamilyInfo.set_family(in_queue_type::transfer, i, false);
             }
 
             hasGraphicsFamily = true;
@@ -138,21 +139,21 @@ static bool in_vulkan_get_required_queue_families(VkPhysicalDevice vkPhyDev,
         // Check this queue family for present support.
         else if (!hasPresentFamily && in_vulkan_supports_present(vkPhyDev, vkSurface, i))
         {
-            vkQueueFamilyInfo.set_family(HR_IN_QUEUE_TYPE_PRESENT, i, true);
+            vkQueueFamilyInfo.set_family(in_queue_type::present, i, true);
 
             if (!hasTransferFamily && vkQueueFamilies[i].queueFlags & VK_QUEUE_TRANSFER_BIT)
             {
-                vkQueueFamilyInfo.set_family(HR_IN_QUEUE_TYPE_TRANSFER, i, false);
                 // Prefer to look for a unique transfer family.
+                vkQueueFamilyInfo.set_family(in_queue_type::transfer, i, false);
             }
 
             hasPresentFamily = true;
         }
 
-        // Check this queue family for copy support.
+        // Check this queue family for transfer support.
         else if (!hasTransferFamily && vkQueueFamilies[i].queueFlags & VK_QUEUE_TRANSFER_BIT)
         {
-            vkQueueFamilyInfo.set_family(HR_IN_QUEUE_TYPE_TRANSFER, i, true);
+            vkQueueFamilyInfo.set_family(in_queue_type::transfer, i, true);
             hasTransferFamily = true;
         }
 
@@ -168,7 +169,7 @@ static bool in_vulkan_get_required_queue_families(VkPhysicalDevice vkPhyDev,
     return hasGraphicsFamily && hasPresentFamily;
 }
 
-static fixed_array<VkPhysicalDevice, uint32_t>
+static hl::fixed_array<VkPhysicalDevice, uint32_t>
     in_vulkan_get_physical_devices(VkInstance vkInstance)
 {
     // Get physical device count.
@@ -180,7 +181,9 @@ static fixed_array<VkPhysicalDevice, uint32_t>
     }
 
     // Get physical devices.
-    fixed_array<VkPhysicalDevice, uint32_t> vkPhyDevs(vkPhyDevCount, no_default_construct);
+    hl::fixed_array<VkPhysicalDevice, uint32_t> vkPhyDevs(
+        hl::no_value_init, vkPhyDevCount);
+
     if (vkEnumeratePhysicalDevices(vkInstance,
         &vkPhyDevCount, vkPhyDevs.data()) != VK_SUCCESS)
     {
@@ -316,8 +319,8 @@ VkSurfaceFormatKHR in_vulkan_get_best_surface_format(
     // B8G8R8A8_SRGB, but fallback to whatever we can support).
     for (uint32_t i = 0; i < vkSurfaceFormatCount; ++i)
     {
-        if (vkSurfaceFormats[i].format == VK_FORMAT_B8G8R8A8_SRGB &&
-            vkSurfaceFormats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+        if (vkSurfaceFormats[i].format == VK_FORMAT_B8G8R8A8_SNORM/* &&
+            vkSurfaceFormats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR*/)
         {
             return vkSurfaceFormats[i];
         }

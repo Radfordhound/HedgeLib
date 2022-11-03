@@ -1,7 +1,7 @@
 #ifndef HR_SHADER_H_INCLUDED
 #define HR_SHADER_H_INCLUDED
 #include "hr_gfx_internal.h"
-#include <hedgerender/base/hr_array.h>
+#include <hedgelib/hl_array.h>
 #include <hedgelib/hl_blob.h>
 
 namespace hr
@@ -46,7 +46,7 @@ class shader_parameter_group : public non_copyable
 {
     VkDevice m_vkDevice = VK_NULL_HANDLE;
     VkDescriptorSetLayout m_vkDescSetLayout = VK_NULL_HANDLE;
-    fixed_array<VkPushConstantRange, uint32_t> m_vkPushConstantRanges;
+    hl::fixed_array<VkPushConstantRange, uint32_t> m_vkPushConstantRanges;
 
 public:
     inline VkDescriptorSetLayout handle() const noexcept
@@ -54,7 +54,8 @@ public:
         return m_vkDescSetLayout;
     }
 
-    inline const fixed_array<VkPushConstantRange, uint32_t>& push_const_ranges() const noexcept
+    inline const hl::fixed_array<VkPushConstantRange, uint32_t>&
+        push_const_ranges() const noexcept
     {
         return m_vkPushConstantRanges;
     }
@@ -111,10 +112,21 @@ public:
         m_vkShaderModule(vkShaderModule) {}
 
     HR_GFX_API shader(render_device& device, std::string entryPoint,
-        const void* code, std::size_t codeSize);
+        const void* code, std::size_t codeSize, const char* debugName = nullptr);
 
-    shader(render_device& device, std::string entryPoint, const hl::blob& code) :
-        shader(device, entryPoint, code.data(), code.size()) {}
+    inline shader(render_device& device, std::string entryPoint,
+        const void* code, std::size_t codeSize, const std::string& debugName) :
+        shader(device, std::move(entryPoint), code, codeSize, debugName.c_str()) {}
+
+    shader(render_device& device, std::string entryPoint,
+        const hl::blob& code, const char* debugName = nullptr) :
+        shader(device, std::move(entryPoint), code.data(),
+            code.size(), debugName) {}
+
+    shader(render_device& device, std::string entryPoint,
+        const hl::blob& code, const std::string& debugName) :
+        shader(device, std::move(entryPoint), code.data(),
+            code.size(), debugName.c_str()) {}
 
     HR_GFX_API shader(shader&& other) noexcept;
 
@@ -128,10 +140,10 @@ using shader_data = VkDescriptorSet;
 
 class shader_data_allocator : public non_copyable
 {
-    render_device* m_device;
-    internal::in_desc_pool_allocator* m_descPoolAllocator;
-    internal::in_desc_pools* m_descPools;
-    VkDescriptorPool m_vkDescPool;
+    render_device* m_device = nullptr;
+    internal::in_desc_pool_allocator* m_descPoolAllocator = nullptr;
+    internal::in_desc_pools* m_descPools = nullptr;
+    VkDescriptorPool m_vkDescPool = VK_NULL_HANDLE;
 
     HR_GFX_API void in_steal(shader_data_allocator&& other) noexcept;
 
@@ -149,7 +161,7 @@ public:
     HR_GFX_API void allocate(const shader_parameter_group* paramGroups,
         std::size_t paramGroupCount, shader_data* shaderDataHandles);
 
-    HR_GFX_API fixed_array<shader_data> allocate(
+    HR_GFX_API hl::fixed_array<shader_data> allocate(
         const shader_parameter_group* paramGroups,
         std::size_t paramGroupCount);
 
@@ -158,6 +170,8 @@ public:
     HR_GFX_API void destroy();
 
     HR_GFX_API shader_data_allocator& operator=(shader_data_allocator&& other) noexcept;
+
+    shader_data_allocator() noexcept = default;
 
     HR_GFX_API shader_data_allocator(render_device& device,
         internal::in_desc_pool_allocator& descPoolAllocator,

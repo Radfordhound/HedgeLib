@@ -547,7 +547,7 @@ class arguments
         }
         else
         {
-            HL_ERROR(hl::error_type::unknown);
+            throw hl::unknown_exception();
         }
     }
 
@@ -885,7 +885,7 @@ static void pack(const arguments& args)
         break;
 
     default:
-        HL_ERROR(hl::error_type::unsupported);
+        throw hl::unsupported_exception();
     }
 
     // Generate PFI if requested and possible for the given type.
@@ -907,7 +907,7 @@ static void pack(const arguments& args)
             // (E.G. If the user specified an output path with a .pfi extension)
             if (hl::text::equal(args.output, pfiPath.c_str()))
             {
-                HL_ERROR(hl::error_type::already_exists);
+                throw hl::io_already_exists_exception();
             }
 
             // Save PFI.
@@ -943,7 +943,7 @@ static hl::archive load_arc(const arguments& args)
         return hl::pacx::v4::load(args.input);
 
     default:
-        HL_ERROR(hl::error_type::unsupported);
+        throw hl::unsupported_exception();
     }
 }
 

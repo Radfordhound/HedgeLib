@@ -10,6 +10,16 @@ namespace mirage
 {
 namespace standard
 {
+const_off_table_handle raw_header::offsets() const noexcept
+{
+    return const_off_table_handle(offTable.get() + 1, *offTable);
+}
+
+off_table_handle raw_header::offsets() noexcept
+{
+    return off_table_handle(offTable.get() + 1, *offTable);
+}
+
 void raw_header::fix()
 {
     // Swap endianness if necessary.

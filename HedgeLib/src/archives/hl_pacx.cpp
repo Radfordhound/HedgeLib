@@ -27,7 +27,7 @@ const char* const data_types[] =
 #include "hl_in_pacx_type_autogen.h"
 };
 
-const std::size_t data_type_count = HL_COUNT_OF(data_types);
+const std::size_t data_type_count = count_of(data_types);
 
 static const char* const in_get_data_type(data_type type) noexcept
 {
@@ -44,7 +44,7 @@ const supported_ext lw_exts[] =
 #include "hl_in_pacx_type_autogen.h"
 };
 
-const std::size_t lw_ext_count = HL_COUNT_OF(lw_exts);
+const std::size_t lw_ext_count = count_of(lw_exts);
 
 // Auto-generate Rio 2016 supported extensions array.
 const supported_ext rio_exts[] =
@@ -56,7 +56,7 @@ const supported_ext rio_exts[] =
 #include "hl_in_pacx_type_autogen.h"
 };
 
-const std::size_t rio_ext_count = HL_COUNT_OF(rio_exts);
+const std::size_t rio_ext_count = count_of(rio_exts);
 
 // Auto-generate Forces supported extensions array.
 const supported_ext forces_exts[] =
@@ -68,7 +68,7 @@ const supported_ext forces_exts[] =
 #include "hl_in_pacx_type_autogen.h"
 };
 
-const std::size_t forces_ext_count = HL_COUNT_OF(forces_exts);
+const std::size_t forces_ext_count = count_of(forces_exts);
 
 // Auto-generate Tokyo Olympic Games supported extensions array.
 const supported_ext tokyo1_exts[] =
@@ -80,7 +80,7 @@ const supported_ext tokyo1_exts[] =
 #include "hl_in_pacx_type_autogen.h"
 };
 
-const std::size_t tokyo1_ext_count = HL_COUNT_OF(tokyo1_exts);
+const std::size_t tokyo1_ext_count = count_of(tokyo1_exts);
 
 // Auto-generate Tokyo 2020 supported extensions array.
 const supported_ext tokyo2_exts[] =
@@ -92,7 +92,7 @@ const supported_ext tokyo2_exts[] =
 #include "hl_in_pacx_type_autogen.h"
 };
 
-const std::size_t tokyo2_ext_count = HL_COUNT_OF(tokyo2_exts);
+const std::size_t tokyo2_ext_count = count_of(tokyo2_exts);
 
 // Auto-generate Sakura Wars supported extensions array.
 const supported_ext sakura_exts[] =
@@ -104,7 +104,7 @@ const supported_ext sakura_exts[] =
 #include "hl_in_pacx_type_autogen.h"
 };
 
-const std::size_t sakura_ext_count = HL_COUNT_OF(sakura_exts);
+const std::size_t sakura_ext_count = count_of(sakura_exts);
 
 // Auto-generate Puyo Puyo Tetris 2 supported extensions array.
 const supported_ext ppt2_exts[] =
@@ -116,7 +116,7 @@ const supported_ext ppt2_exts[] =
 #include "hl_in_pacx_type_autogen.h"
 };
 
-const std::size_t ppt2_ext_count = HL_COUNT_OF(ppt2_exts);
+const std::size_t ppt2_ext_count = count_of(ppt2_exts);
 
 static const supported_ext& in_get_supported_ext(const nchar* ext,
     const supported_ext* exts, const std::size_t extCount)
@@ -612,7 +612,7 @@ void header::fix()
         }
 
         default:
-            HL_ERROR(error_type::unsupported);
+            throw unsupported_exception();
         }
     }
 }
@@ -794,7 +794,7 @@ struct in_file_metadata
             blob data(entry->path());
             if (data.size() < entry->size())
             {
-                HL_ERROR(error_type::unknown);
+                throw unknown_exception();
             }
 
             return data;
@@ -832,7 +832,7 @@ struct in_file_metadata_list : public std::vector<in_file_metadata>
                 }
 
                 // Otherwise, sort by extensions if they are not the same.
-                const int extSortWeight = text::icompare_as_upper(a->ext, b->ext);
+                const int extSortWeight = text::compare_as_upper(a->ext, b->ext);
                 if (extSortWeight != 0)
                 {
                     return (extSortWeight < 0);
@@ -846,7 +846,7 @@ struct in_file_metadata_list : public std::vector<in_file_metadata>
 
                 // Otherwise, sort by names.
                 const int nameSortWeight = a->compare_name<
-                    text::icompare_as_upper>(*b);
+                    text::compare_as_upper>(*b);
 
                 return (nameSortWeight < 0);
             });
@@ -869,7 +869,7 @@ struct in_file_metadata_list : public std::vector<in_file_metadata>
                 // Increase split index and ensure we haven't exceeded 99 splits.
                 if (++curSplitIndex > 99)
                 {
-                    HL_ERROR(error_type::out_of_range);
+                    throw out_of_range_exception();
                 }
             }
             
@@ -1160,7 +1160,7 @@ void in_type_metadata::set_file_priorities<data_type::ResGrifEffect>(
         grif::effect* effect = bina::v2::get_data<grif::effect>(copyOfFileData);
         if (!effect)
         {
-            HL_ERROR(error_type::invalid_data);
+            throw invalid_data_exception();
         }
 
         // Mark texture references within effect data.
@@ -1287,7 +1287,7 @@ static void in_dic_write(u32 nodeCount,
     stream.write_obj(dict);
 
     // Add nodes offset to offset table.
-    offTable.push_back(endPos + offsetof(dic<void>, data));
+    offTable.push_back(endPos + offsetof(dic<void>, dataPtr));
 
     // Write placeholder type nodes.
     stream.write_nulls(sizeof(dic_node<void>) * nodeCount);
@@ -1442,8 +1442,7 @@ static void in_data_entry_write(const in_file_metadata& file,
         // If this is a file reference, load up the file's data.
         if (file.entry->is_reference_file())
         {
-            std::size_t fileSize;
-            tmpDataBuf = file::load(file.entry->path(), fileSize);
+            tmpDataBuf = file::load(file.entry->path());
             data = tmpDataBuf.get();
         }
         
@@ -1569,7 +1568,7 @@ static void in_proxy_table_write(
     stream.write_obj(proxyTable);
 
     // Increase current offset position to data offset.
-    curOffPos += offsetof(proxy_table, data);
+    curOffPos += offsetof(proxy_table, dataPtr);
 
     // Add proxy entries offset to offset table.
     offTable.push_back(curOffPos);
@@ -1755,7 +1754,7 @@ static void in_data_block_write(unsigned short splitIndex,
                 // Ensure we only write one dependency table per pac file.
                 if (depTablePos)
                 {
-                    HL_ERROR(error_type::unsupported);
+                    throw unsupported_exception();
                 }
 
                 // Store dependency table position for later.
@@ -1846,7 +1845,7 @@ static void in_save_splits(const nchar* filePath,
         if (++splitIt == splitIt.end())
         {
             // Raise an error if we exceeded 99 splits.
-            HL_ERROR(error_type::out_of_range);
+            throw out_of_range_exception();
         }
     }
 }
@@ -1859,7 +1858,7 @@ void save(const archive_entry_list& arc, bina::endian_flag endianFlag,
     // Verify that dataAlignment is a multiple of 4.
     if ((dataAlignment % 4) != 0)
     {
-        HL_ERROR(error_type::invalid_args, "dataAlignment");
+        throw invalid_arg_exception("dataAlignment");
     }
 
     // Generate file and type metadata.
@@ -2092,7 +2091,7 @@ static void in_parse(const file_node* fileNodes,
             // Ensure node name length is > 0.
             if (!curFileNode->bufStartIndex)
             {
-                HL_ERROR(error_type::invalid_data);
+                throw invalid_data_exception();
             }
 
             // Create file name.
@@ -2546,7 +2545,7 @@ struct in_radix_node
         // Ensure total radix node name length does not exceed 255 characters.
         if ((static_cast<std::size_t>(bufStartIndex) + nameLen) > 255)
         {
-            HL_ERROR(error_type::out_of_range);
+            throw out_of_range_exception();
         }
 
         // Increase child count to account for data node if necessary.
@@ -3000,7 +2999,7 @@ struct in_type_metadata_list : public std::vector<in_type_metadata>
                     // Increase split index and ensure we haven't exceeded 999 splits.
                     if (++curSplitIndex > 999)
                     {
-                        HL_ERROR(error_type::out_of_range);
+                        throw out_of_range_exception();
                     }
 
                     // Increase type last split index.
@@ -3057,7 +3056,7 @@ struct in_dep_metadata_list : public std::vector<in_dep_metadata>
         stream.write_obj(depTable);
 
         // Add dependency entries offset to offset table.
-        offTable.push_back(depTablePos + offsetof(dep_table, data));
+        offTable.push_back(depTablePos + offsetof(dep_table, dataPtr));
 
         // Write placeholder offsets for dependency entries.
         std::size_t curOffPos = stream.tell();
@@ -3347,8 +3346,7 @@ static void in_file_data_write(const in_file_metadata& file,
     // If this is a file reference, load up the file's data.
     if (file.entry->is_reference_file())
     {
-        std::size_t fileSize;
-        tmpDataBuf = file::load(file.entry->path(), fileSize);
+        tmpDataBuf = file::load(file.entry->path());
         data = tmpDataBuf.get();
     }
 
@@ -3555,7 +3553,7 @@ static void in_save_splits(const nchar* filePath, u32 uid,
         if (++splitIt == splitIt.end())
         {
             // Raise an error if we exceeded 999 splits.
-            HL_ERROR(error_type::out_of_range);
+            throw out_of_range_exception();
         }
     }
 }
@@ -3655,7 +3653,7 @@ static bool in_generate_metadata(const archive_entry_list& arc,
                 const char* dataType2 = b.pacx_ext()->data_type();
 
                 // Sort by PACx data types.
-                const int nameSortWeight = text::icompare_as_lower(
+                const int nameSortWeight = text::compare_as_lower(
                     dataType1, dataType2);
 
                 return (nameSortWeight < 0);
@@ -3673,7 +3671,7 @@ void save(const archive_entry_list& arc, bina::endian_flag endianFlag,
     // Verify that dataAlignment is a multiple of 4.
     if ((dataAlignment % 4) != 0)
     {
-        HL_ERROR(error_type::invalid_args, "dataAlignment");
+        throw invalid_arg_exception("dataAlignment");
     }
 
     // Generate file and type metadata.
@@ -3876,7 +3874,7 @@ struct in_dep_metadata_list : public std::vector<in_dep_metadata>
 
         // Add dependency entries offset to offset table.
         offTable.push_back(depTablePos + offsetof(
-            lz4_dep_table, data));
+            lz4_dep_table, dataPtr));
 
         // Write dependency entries.
         std::size_t curOffPos = stream.tell();
@@ -3947,7 +3945,7 @@ struct in_dep_metadata_list : public std::vector<in_dep_metadata>
 
         // Add dependency entries offset to offset table.
         offTable.push_back(depTablePos + offsetof(
-            deflate_dep_table, data));
+            deflate_dep_table, dataPtr));
 
         // Write dependency entries.
         std::size_t curOffPos = stream.tell();
@@ -4150,7 +4148,7 @@ static void in_generate_splits(const nchar* pacName,
         if (++splitIt == splitIt.end())
         {
             // Raise an error if we exceeded 999 splits.
-            HL_ERROR(error_type::out_of_range);
+            throw out_of_range_exception();
         }
     }
 }
@@ -4205,21 +4203,6 @@ blob deflate_dep_info::decompress_dep(const void* pac) const
         ptradd(pac, dataPos), uncompressedSize);
 }
 
-static u16 in_get_flags(bool hasParents, compress_type compressType)
-{
-    pac_flags flags = (compressType == compress_type::lz4) ?
-        (pac_flags::unknown1 | pac_flags::has_metadata) :
-        pac_flags::none;
-
-    if (hasParents)
-    {
-        flags |= pac_flags::has_metadata;
-        flags |= pac_flags::has_parents;
-    }
-
-    return static_cast<u16>(flags);
-}
-
 namespace v02
 {
 void header::fix()
@@ -4263,6 +4246,20 @@ blob header::decompress_root() const
         throw std::runtime_error("Unknown PACx compression type (maybe deflate?). "
             "Please report this along with the name of the .pac file!");
     }
+}
+
+static u16 in_get_flags(bool hasParents, compress_type compressType)
+{
+    pac_flags flags = (compressType == compress_type::lz4) ?
+        pac_flags::unknown1 : pac_flags::none;
+
+    if (hasParents)
+    {
+        flags |= pac_flags::has_metadata;
+        flags |= pac_flags::has_parents;
+    }
+
+    return static_cast<u16>(flags);
 }
 
 void header::start_write(u32 uid, compress_type compressType,
@@ -4368,7 +4365,7 @@ void write(const archive_entry_list& arc,
     // Verify that dataAlignment is a multiple of 4.
     if ((dataAlignment % 4) != 0)
     {
-        HL_ERROR(error_type::invalid_args, "dataAlignment");
+        throw invalid_arg_exception("dataAlignment");
     }
 
     // Generate file and type metadata.
@@ -4668,6 +4665,21 @@ blob header::decompress_root() const
     }
 }
 
+static u16 in_get_flags(bool hasParents, compress_type compressType)
+{
+    pac_flags flags = (compressType == compress_type::lz4) ?
+        (pac_flags::unknown1 | pac_flags::has_metadata) :
+        pac_flags::none;
+
+    if (hasParents)
+    {
+        flags |= pac_flags::has_metadata;
+        flags |= pac_flags::has_parents;
+    }
+
+    return static_cast<u16>(flags);
+}
+
 void header::start_write(u32 uid, bool hasParents,
     compress_type compressType, bina::endian_flag endianFlag,
     stream& stream)
@@ -4832,7 +4844,7 @@ void write(const archive_entry_list& arc,
     // Verify that dataAlignment is a multiple of 4.
     if ((dataAlignment % 4) != 0)
     {
-        HL_ERROR(error_type::invalid_args, "dataAlignment");
+        throw invalid_arg_exception("dataAlignment");
     }
 
     // Generate file and type metadata.
@@ -5412,7 +5424,7 @@ void load(const nchar* filePath, archive_entry_list* hlArc,
         break;
 
     default:
-        HL_ERROR(error_type::unsupported);
+        throw unsupported_exception();
     }
 }
 } // pacx

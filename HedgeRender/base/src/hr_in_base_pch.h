@@ -7,5 +7,5 @@
 #ifndef HR_IN_BASE_PCH_H_INCLUDED
 #define HR_IN_BASE_PCH_H_INCLUDED
 #include "hedgerender/base/hr_log.h"
-#include <stdexcept>
+#include <hedgelib/hl_array.h>
 #endif

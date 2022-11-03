@@ -1,4 +1,5 @@
 #include "hedgelib/terrain/hl_hh_terrain.h"
+#include "hedgelib/models/hl_hh_model.h"
 #include "hedgelib/io/hl_file.h"
 #include "hedgelib/hl_blob.h"
 
@@ -276,7 +277,7 @@ void terrain_instance_info::fix(void* rawData)
 void terrain_instance_info::parse(const raw_terrain_instance_info_v0& rawInstInfo)
 {
     // Parse terrain instance data.
-    modelName = rawInstInfo.modelName.get();
+    model = rawInstInfo.modelName.get();
     instanceName = rawInstInfo.instanceName.get();
     matrix = *rawInstInfo.matrix;
 }
@@ -284,7 +285,7 @@ void terrain_instance_info::parse(const raw_terrain_instance_info_v0& rawInstInf
 void terrain_instance_info::parse(const raw_terrain_instance_info_v5& rawInstInfo)
 {
     // Parse terrain instance data.
-    modelName = rawInstInfo.modelName.get();
+    model = rawInstInfo.modelName.get();
     instanceName = rawInstInfo.instanceName.get();
     matrix = *rawInstInfo.matrix;
 
@@ -380,7 +381,7 @@ void terrain_instance_info::write(stream& stream,
 
     // Write model name.
     offTable.push_back(basePos);
-    stream.write_str(modelName);
+    stream.write_str(model.name());
     stream.pad(4);
 
     // Write matrix.

@@ -7,7 +7,7 @@
 #ifndef HR_IN_GFX_PCH_H_INCLUDED
 #define HR_IN_GFX_PCH_H_INCLUDED
 #include <hedgerender/base/hr_log.h>
-#include <hedgerender/base/hr_array.h>
+#include <hedgelib/hl_array.h>
 #include <cstring>
 #include <cassert>
 

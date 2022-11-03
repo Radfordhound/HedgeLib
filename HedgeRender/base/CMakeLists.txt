@@ -4,7 +4,6 @@ set(HEDGERENDER_BASE_SOURCE_DIR "src")
 
 # Set includes
 set(HEDGERENDER_BASE_INCLUDES
-    "${HEDGERENDER_BASE_INCLUDE_DIR}/base/hr_array.h"
     "${HEDGERENDER_BASE_INCLUDE_DIR}/base/hr_base_internal.h"
     "${HEDGERENDER_BASE_INCLUDE_DIR}/base/hr_log.h"
 )

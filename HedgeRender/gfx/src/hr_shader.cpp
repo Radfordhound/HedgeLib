@@ -56,8 +56,8 @@ static VkDescriptorSetLayout in_vulkan_create_desc_set_layout(VkDevice vkDevice,
     }
 
     // Generate Vulkan descriptor set layout bindings.
-    stack_or_heap_buffer<VkDescriptorSetLayoutBinding, 32> vkDescSetLayoutBindings(paramCount);
-    stack_or_heap_buffer<VkSampler, 16> vkImmutableSamplers(totalImmutableSamplerCount);
+    hl::stack_or_heap_buffer<VkDescriptorSetLayoutBinding, 32> vkDescSetLayoutBindings(paramCount);
+    hl::stack_or_heap_buffer<VkSampler, 16> vkImmutableSamplers(totalImmutableSamplerCount);
     totalImmutableSamplerCount = 0;
 
     for (unsigned int i = 0; i < paramCount; ++i)
@@ -72,7 +72,8 @@ static VkDescriptorSetLayout in_vulkan_create_desc_set_layout(VkDevice vkDevice,
         vkDescSetLayoutBinding.stageFlags = param.shaderStages;
 
         VkSampler* vkCurImmutableSampler = (vkImmutableSamplers + totalImmutableSamplerCount);
-        vkDescSetLayoutBinding.pImmutableSamplers = vkCurImmutableSampler;
+        vkDescSetLayoutBinding.pImmutableSamplers = (param.immutableSamplerCount) ?
+            vkCurImmutableSampler : nullptr;
 
         for (unsigned int i2 = 0; i2 < param.immutableSamplerCount; ++i2)
         {
@@ -111,7 +112,7 @@ shader_parameter_group::shader_parameter_group(render_device& device,
     m_vkDescSetLayout(in_vulkan_create_desc_set_layout(
         m_vkDevice, params, paramCount)),
 
-    m_vkPushConstantRanges(constRangeCount, no_default_construct)
+    m_vkPushConstantRanges(hl::no_value_init, constRangeCount)
 {
     for (uint32_t i = 0; i < m_vkPushConstantRanges.size(); ++i)
     {
@@ -154,8 +155,8 @@ shader& shader::operator=(shader&& other) noexcept
     return *this;
 }
 
-static VkShaderModule in_vulkan_create_shader_module(VkDevice vkDevice,
-    const void* code, std::size_t codeSize)
+static VkShaderModule in_vulkan_create_shader_module(render_device& device,
+    const void* code, std::size_t codeSize, const char* debugName)
 {
     const VkShaderModuleCreateInfo vkShaderModuleCreateInfo =
     {
@@ -167,21 +168,29 @@ static VkShaderModule in_vulkan_create_shader_module(VkDevice vkDevice,
     };
 
     VkShaderModule vkShaderModule;
-    if (vkCreateShaderModule(vkDevice, &vkShaderModuleCreateInfo,
+    if (vkCreateShaderModule(device.handle(), &vkShaderModuleCreateInfo,
         nullptr, &vkShaderModule) != VK_SUCCESS)
     {
         throw std::runtime_error("Could not create Vulkan shader module");
+    }
+
+    // Set debug name if one was provided.
+    if (debugName)
+    {
+        // NOTE: The cast to void here is necessary on 32-bit architectures.
+        device.set_debug_name(VK_OBJECT_TYPE_SHADER_MODULE,
+            (void*)vkShaderModule, debugName);
     }
 
     return vkShaderModule;
 }
 
 shader::shader(render_device& device, std::string entryPoint,
-    const void* code, std::size_t codeSize) :
+    const void* code, std::size_t codeSize, const char* debugName) :
     m_vkDevice(device.handle()),
     m_entryPoint(entryPoint),
     m_vkShaderModule(in_vulkan_create_shader_module(
-        m_vkDevice, code, codeSize)) {}
+        device, code, codeSize, debugName)) {}
 
 shader::shader(shader&& other) noexcept :
     m_vkDevice(other.m_vkDevice),
@@ -207,7 +216,7 @@ void shader_data_allocator::allocate(const shader_parameter_group* paramGroups,
     assert(paramGroups && shaderDataHandles && "Invalid arguments");
 
     // Generate Vulkan descriptor set layouts array.
-    stack_or_heap_buffer<VkDescriptorSetLayout, 32>
+    hl::stack_or_heap_buffer<VkDescriptorSetLayout, 32>
         vkDescSetLayouts(paramGroupCount);
 
     for (std::size_t i = 0; i < paramGroupCount; ++i)
@@ -259,11 +268,11 @@ void shader_data_allocator::allocate(const shader_parameter_group* paramGroups,
     }
 }
 
-fixed_array<shader_data> shader_data_allocator::allocate(
+hl::fixed_array<shader_data> shader_data_allocator::allocate(
     const shader_parameter_group* paramGroups,
     std::size_t paramGroupCount)
 {
-    fixed_array<shader_data> shaderDataHandles(paramGroupCount, no_default_construct);
+    hl::fixed_array<shader_data> shaderDataHandles(hl::no_value_init, paramGroupCount);
     allocate(paramGroups, paramGroupCount, shaderDataHandles.data());
     return shaderDataHandles;
 }

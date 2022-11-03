@@ -16,7 +16,7 @@ const char* const in_vulkan_validation_layers[] =
 };
 
 const uint32_t in_vulkan_validation_layer_count =
-    HL_COUNT_OF(in_vulkan_validation_layers);
+hl::count_of(in_vulkan_validation_layers);
 
 namespace internal
 {
@@ -115,7 +115,7 @@ instance::instance(const char* appName,
     };
 
     // Get all normal required Vulkan instance extensions.
-    stack_or_heap_buffer<const char*, 8> requiredExts(
+    hl::stack_or_heap_buffer<const char*, 8> requiredExts(
         1 + in_vulkan_additional_instance_extensions.size());
 
     uint32_t requiredExtCount = 0;

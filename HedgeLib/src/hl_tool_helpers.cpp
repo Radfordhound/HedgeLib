@@ -54,7 +54,7 @@ void write(nchar ch, std::FILE* stream)
     const int r = nfputc(ch, stream);
     if (r == EOF)
     {
-        HL_ERROR(error_type::unknown);
+        throw unknown_exception();
     }
 }
 
@@ -63,7 +63,7 @@ void write(const nchar* str, std::FILE* stream)
     const int r = nfputs(str, stream);
     if (r == EOF)
     {
-        HL_ERROR(error_type::unknown);
+        throw unknown_exception();
     }
 }
 
@@ -78,7 +78,7 @@ void write_line(const nchar* str)
     const int r = nputs(str);
     if (r == EOF)
     {
-        HL_ERROR(error_type::unknown);
+        throw unknown_exception();
     }
 }
 

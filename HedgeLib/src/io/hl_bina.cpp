@@ -54,7 +54,7 @@ const pac_pack_meta* get_pac_pack_meta(const void* rawData, std::size_t dataSize
     return nullptr;
 }
 
-template<template<typename> class off_t>
+template<typename addr_t>
 static void in_strings_write(std::size_t dataPos,
     endian_flag endianFlag, const str_table& strTable,
     off_table& offTable, stream& stream)
@@ -76,8 +76,7 @@ static void in_strings_write(std::size_t dataPos,
         stream.jump_to(curEntry.offPos);
 
         // Compute offset.
-        off_t<void> off(static_cast<typename off_t<void>::val_t>(
-            curStrPos - dataPos));
+        auto off = static_cast<addr_t>(curStrPos - dataPos);
 
         // Swap offset if necessary.
         if (needs_swap(endianFlag))
@@ -117,14 +116,14 @@ static void in_strings_write(std::size_t dataPos,
     }
 
     // Write padding.
-    stream.pad(sizeof(off_t<void>));
+    stream.pad(sizeof(addr_t));
 }
 
 void strings_write32(std::size_t dataPos,
     endian_flag endianFlag, const str_table& strTable,
     off_table& offTable, stream& stream)
 {
-    in_strings_write<off32>(dataPos, endianFlag,
+    in_strings_write<u32>(dataPos, endianFlag,
         strTable, offTable, stream);
 }
 
@@ -132,7 +131,7 @@ void strings_write64(std::size_t dataPos,
     endian_flag endianFlag, const str_table& strTable,
     off_table& offTable, stream& stream)
 {
-    in_strings_write<off64>(dataPos, endianFlag,
+    in_strings_write<u64>(dataPos, endianFlag,
         strTable, offTable, stream);
 }
 
@@ -248,16 +247,16 @@ static void in_offsets_fix(off_table_handle offTable,
     for (u32 relOffPos : offTable)
     {
         // Get pointer to current offset.
-        off_t<void>* curOff = ptradd<off_t<void>>(base, relOffPos);
+        const auto curOffPtr = ptradd<off_t<void>>(base, relOffPos);
 
         // Endian-swap offset if necessary.
         if (needs_swap(endianFlag))
         {
-            hl::endian_swap(*curOff);
+            hl::endian_swap(*curOffPtr);
         }
 
         // Fix offset.
-        curOff->fix(base);
+        curOffPtr->fix(base);
     }
 }
 
@@ -271,6 +270,54 @@ void offsets_fix64(off_table_handle offTable,
     const endian_flag endianFlag, void* base)
 {
     in_offsets_fix<off64>(offTable, endianFlag, base);
+}
+
+template<template<typename> class off_t>
+void in_offsets_copy(off_table_handle srcOffTable,
+    const void* srcBase, void* dstBase)
+{
+    const auto srcBaseAddr = reinterpret_cast<std::uintptr_t>(srcBase);
+    const auto dstBaseAddr = reinterpret_cast<std::uintptr_t>(dstBase);
+
+    for (u32 relOffPos : srcOffTable)
+    {
+        // Get pointer to current source offset.
+        const auto srcOffPtr = ptradd<off_t<void>>(srcBase, relOffPos);
+
+        // Get the address of the value the offset points to.
+        const auto offVal = reinterpret_cast<std::uintptr_t>(srcOffPtr->get());
+
+        // Convert it to an address relative to the source base.
+        const auto offRelVal = (offVal - srcBaseAddr);
+
+        // Get pointer to current destination offset.
+        const auto dstOffPtr = ptradd<off_t<void>>(dstBase, relOffPos);
+
+        // Fix destination offset.
+        *dstOffPtr = reinterpret_cast<void*>(dstBaseAddr + offRelVal);
+    }
+}
+
+void offsets_copy32(off_table_handle srcOffTable,
+    const void* srcBase, void* dstBase)
+{
+    // NOTE: We only fix up the copied offsets if they are absolute.
+    // If the offsets are relative, nothing needs to be done.
+
+#if UINTPTR_MAX > UINT32_MAX
+    in_offsets_copy<off32>(srcOffTable, srcBase, dstBase);
+#endif
+}
+
+void offsets_copy64(off_table_handle srcOffTable,
+    const void* srcBase, void* dstBase)
+{
+    // NOTE: We only fix up the copied offsets if they are absolute.
+    // If the offsets are relative, nothing needs to be done.
+
+#if UINTPTR_MAX > UINT64_MAX
+    in_offsets_copy<off64>(srcOffTable, srcBase, dstBase);
+#endif
 }
 
 void offsets_write_no_sort_no_pad(std::size_t dataPos,
@@ -330,7 +377,7 @@ void offsets_write_no_sort_no_pad(std::size_t dataPos,
         else
         {
             // BINA relative offset positions *must* fit within 30 bits.
-            HL_ERROR(error_type::out_of_range);
+            throw out_of_range_exception();
         }
 
         // Write BINA relative offset position to file.
@@ -341,7 +388,7 @@ void offsets_write_no_sort_no_pad(std::size_t dataPos,
     }
 }
 
-template<template<typename> class off_t>
+template<typename addr_t>
 static void in_offsets_write_no_sort(std::size_t dataPos,
     const off_table& offTable, stream& stream)
 {
@@ -349,22 +396,22 @@ static void in_offsets_write_no_sort(std::size_t dataPos,
     offsets_write_no_sort_no_pad(dataPos, offTable, stream);
 
     // Write padding.
-    stream.pad(sizeof(off_t<void>));
+    stream.pad(sizeof(addr_t));
 }
 
 void offsets_write_no_sort32(std::size_t dataPos,
     const off_table& offTable, stream& stream)
 {
-    in_offsets_write_no_sort<off32>(dataPos, offTable, stream);
+    in_offsets_write_no_sort<u32>(dataPos, offTable, stream);
 }
 
 void offsets_write_no_sort64(std::size_t dataPos,
     const off_table& offTable, stream& stream)
 {
-    in_offsets_write_no_sort<off64>(dataPos, offTable, stream);
+    in_offsets_write_no_sort<u64>(dataPos, offTable, stream);
 }
 
-template<template<typename> class off_t>
+template<typename addr_t>
 static void in_offsets_write(std::size_t dataPos,
     off_table& offTable, stream& stream)
 {
@@ -372,19 +419,19 @@ static void in_offsets_write(std::size_t dataPos,
     std::sort(offTable.begin(), offTable.end());
 
     // Write sorted offsets.
-    in_offsets_write_no_sort<off_t>(dataPos, offTable, stream);
+    in_offsets_write_no_sort<addr_t>(dataPos, offTable, stream);
 }
 
 void offsets_write32(std::size_t dataPos,
     off_table& offTable, stream& stream)
 {
-    in_offsets_write<off32>(dataPos, offTable, stream);
+    in_offsets_write<u32>(dataPos, offTable, stream);
 }
 
 void offsets_write64(std::size_t dataPos,
     off_table& offTable, stream& stream)
 {
-    in_offsets_write<off64>(dataPos, offTable, stream);
+    in_offsets_write<u64>(dataPos, offTable, stream);
 }
 
 namespace v1
@@ -514,7 +561,7 @@ void raw_block_data_header::finish_write(std::size_t dataBlockPos,
     stream.jump_to(endPos);
 }
 
-template<template<typename> class off_t>
+template<typename addr_t>
 static void in_finish_write(std::size_t dataBlockPos,
     endian_flag endianFlag, const hl::str_table& strTable,
     hl::off_table& offTable, stream& stream)
@@ -523,11 +570,11 @@ static void in_finish_write(std::size_t dataBlockPos,
 
     // Write string table.
     const std::size_t strTablePos = stream.tell();
-    in_strings_write<off_t>(dataPos, endianFlag, strTable, offTable, stream);
+    in_strings_write<addr_t>(dataPos, endianFlag, strTable, offTable, stream);
 
     // Write offset table.
     const std::size_t offTablePos = stream.tell();
-    in_offsets_write<off_t>(dataPos, offTable, stream);
+    in_offsets_write<addr_t>(dataPos, offTable, stream);
 
     // Fill-in data block header values.
     raw_block_data_header::finish_write(dataBlockPos,
@@ -538,7 +585,7 @@ void raw_block_data_header::finish_write32(std::size_t dataBlockPos,
     endian_flag endianFlag, const hl::str_table& strTable,
     hl::off_table& offTable, stream& stream)
 {
-    in_finish_write<off32>(dataBlockPos, endianFlag,
+    in_finish_write<u32>(dataBlockPos, endianFlag,
         strTable, offTable, stream);
 }
 
@@ -546,7 +593,7 @@ void raw_block_data_header::finish_write64(std::size_t dataBlockPos,
     endian_flag endianFlag, const hl::str_table& strTable,
     hl::off_table& offTable, stream& stream)
 {
-    in_finish_write<off64>(dataBlockPos, endianFlag,
+    in_finish_write<u64>(dataBlockPos, endianFlag,
         strTable, offTable, stream);
 }
 
@@ -644,8 +691,7 @@ static void in_fix(raw_header& header)
         }
 
         default:
-            HL_ERROR(error_type::unsupported);
-            return;
+            throw unsupported_exception();
         }
     }
 }

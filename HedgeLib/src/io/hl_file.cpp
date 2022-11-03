@@ -16,24 +16,26 @@ namespace hl
 {
 namespace file
 {
-std::unique_ptr<u8[]> load(const nchar* filePath, std::size_t& dataSize)
+std::unique_ptr<u8[]> load(const nchar* filePath, std::size_t* dataSize)
 {
-    std::unique_ptr<u8[]> data;
-
     // Open a stream to the file at the given file path.
     file_stream file(filePath, mode::read);
 
     // Get the file's size.
-    const std::size_t fileSize = file.get_size();
+    const auto fileSize = file.get_size();
 
     // Allocate a buffer large enough to hold the entire contents of the file.
-    data = std::unique_ptr<u8[]>(new u8[fileSize]);
+    std::unique_ptr<u8[]> data(new u8[fileSize]);
 
     // Read all bytes from the file into the buffer.
-    file.read(fileSize, data.get());
+    file.read_all(fileSize, data.get());
 
-    // Set dataSize and return data.
-    dataSize = fileSize;
+    // Set dataSize if necessary and return data.
+    if (dataSize)
+    {
+        *dataSize = fileSize;
+    }
+
     return data;
 }
 
@@ -43,7 +45,7 @@ void save(const void* data, std::size_t dataSize, const nchar* filePath)
     file_stream file(filePath, mode::write);
 
     // Write all bytes in the buffer to the file.
-    file.write(dataSize, data);
+    file.write_all(dataSize, data);
 }
 
 void save(const blob& fileData, const nchar* filePath)
@@ -55,17 +57,15 @@ void save(const blob& fileData, const nchar* filePath)
 std::size_t file_stream::read(std::size_t size, void* buf)
 {
 #ifdef _WIN32
-    DWORD readBytes;
-    BOOL succeeded;
-
     // Ensure size can fit within a DWORD before casting to one.
     if (size > ULONG_MAX)
     {
-        HL_ERROR(error_type::out_of_range);
+        throw out_of_range_exception();
     }
 
     // Read the given number of bytes from the file.
-    succeeded = ReadFile(reinterpret_cast<HANDLE>(m_handle),
+    DWORD readBytes;
+    const auto succeeded = ReadFile(reinterpret_cast<HANDLE>(m_handle),
         buf, static_cast<DWORD>(size), &readBytes, NULL);
 
     // Increase stream curPos.
@@ -74,40 +74,31 @@ std::size_t file_stream::read(std::size_t size, void* buf)
     // Throw an exception if we encountered an error.
     if (!succeeded)
     {
-        HL_IN_WIN32_ERROR();
+        throw in_win32_get_last_exception();
     }
 
     // Return read byte count.
     return static_cast<std::size_t>(readBytes);
 #else
-    ssize_t readBytes;
-    bool succeeded;
-
     // Ensure size can fit within a ssize_t before casting to one.
     if (size > SSIZE_MAX)
     {
-        HL_ERROR(error_type::out_of_range);
+        throw out_of_range_exception();
     }
 
     // Read the given number of bytes from the file.
-    readBytes = ::read(static_cast<int>(m_handle), buf, size);
+    const auto readBytes = ::read(static_cast<int>(m_handle), buf, size);
 
-    // Set succeeded and act based on if the read succeeded or failed.
-    if ((succeeded = (readBytes != -1)))
+    // Increase stream curPos if the read succeeded.
+    if (readBytes != -1)
     {
-        // Increase stream curPos.
         m_curPos += readBytes;
     }
+
+    // Otherwise, throw an exception.
     else
     {
-        // Set readBytes count to 0.
-        readBytes = 0;
-    }
-
-    // Throw an exception if we encountered an error.
-    if (!succeeded)
-    {
-        HL_IN_POSIX_ERROR();
+        throw in_posix_get_last_exception();
     }
 
     // Return read byte count.
@@ -118,17 +109,15 @@ std::size_t file_stream::read(std::size_t size, void* buf)
 std::size_t file_stream::write(std::size_t size, const void* buf)
 {
 #ifdef _WIN32
-    DWORD writtenBytes;
-    BOOL succeeded;
-
     // Ensure size can fit within a DWORD before casting to one.
     if (size > ULONG_MAX)
     {
-        HL_ERROR(error_type::out_of_range);
+        throw out_of_range_exception();
     }
 
     // Write the given number of bytes to the file.
-    succeeded = WriteFile(reinterpret_cast<HANDLE>(m_handle),
+    DWORD writtenBytes;
+    const auto succeeded = WriteFile(reinterpret_cast<HANDLE>(m_handle),
         buf, static_cast<DWORD>(size), &writtenBytes, NULL);
 
     // Increase stream curPos.
@@ -137,40 +126,31 @@ std::size_t file_stream::write(std::size_t size, const void* buf)
     // Throw an exception if we encountered an error.
     if (!succeeded)
     {
-        HL_IN_WIN32_ERROR();
+        throw in_win32_get_last_exception();
     }
 
     // Return written byte count.
     return static_cast<std::size_t>(writtenBytes);
 #else
-    ssize_t writtenBytes;
-    bool succeeded;
-
     // Ensure size can fit within a ssize_t before casting to one.
     if (size > SSIZE_MAX)
     {
-        HL_ERROR(error_type::out_of_range);
+        throw out_of_range_exception();
     }
 
     // Write the given number of bytes to the file.
-    writtenBytes = ::write(static_cast<int>(m_handle), buf, size);
+    const auto writtenBytes = ::write(static_cast<int>(m_handle), buf, size);
 
-    // Set succeeded and act based on if the write succeeded or failed.
-    if ((succeeded = (writtenBytes != -1)))
+    // Increase stream curPos if the write succeeded.
+    if (writtenBytes != -1)
     {
-        // Increase stream curPos.
         m_curPos += writtenBytes;
     }
+
+    // Otherwise, throw an exception.
     else
     {
-        // Set writtenBytes count to 0.
-        writtenBytes = 0;
-    }
-
-    // Throw an exception if we encountered an error.
-    if (!succeeded)
-    {
-        HL_IN_POSIX_ERROR();
+        throw in_posix_get_last_exception();
     }
 
     // Return written byte count.
@@ -215,13 +195,11 @@ static int in_posix_file_get_seek_method(const seek_mode mode)
 void file_stream::seek(seek_mode mode, long long offset)
 {
 #ifdef _WIN32
-    LARGE_INTEGER loffset, lcurPos;
-    BOOL succeeded;
-
     // Seek using the given parameters.
+    LARGE_INTEGER loffset, lcurPos;
     loffset.QuadPart = static_cast<LONGLONG>(offset);
 
-    succeeded = SetFilePointerEx(reinterpret_cast<HANDLE>(m_handle),
+    const auto succeeded = SetFilePointerEx(reinterpret_cast<HANDLE>(m_handle),
         loffset, &lcurPos, in_win32_file_get_move_method(mode));
 
     // Set stream curPos.
@@ -230,18 +208,18 @@ void file_stream::seek(seek_mode mode, long long offset)
     // Throw an exception if we encountered an error.
     if (!succeeded)
     {
-        HL_IN_WIN32_ERROR();
+        throw in_win32_get_last_exception();
     }
 #else
     // Seek using the given parameters.
-    off_t curPos = lseek(static_cast<int>(m_handle),
+    const auto curPos = lseek(static_cast<int>(m_handle),
         static_cast<off_t>(offset),
         in_posix_file_get_seek_method(mode));
 
     // Throw an exception if we encountered an error.
     if (curPos == static_cast<off_t>(-1))
     {
-        HL_IN_POSIX_ERROR();
+        throw in_posix_get_last_exception();
     }
 
     // Set stream curPos.
@@ -252,13 +230,11 @@ void file_stream::seek(seek_mode mode, long long offset)
 void file_stream::jump_to(std::size_t pos)
 {
 #ifdef _WIN32
-    LARGE_INTEGER loffset, lcurPos;
-    BOOL succeeded;
-
     // Jump to the given position.
+    LARGE_INTEGER loffset, lcurPos;
     loffset.QuadPart = static_cast<LONGLONG>(pos);
 
-    succeeded = SetFilePointerEx(reinterpret_cast<HANDLE>(m_handle),
+    const auto succeeded = SetFilePointerEx(reinterpret_cast<HANDLE>(m_handle),
         loffset, &lcurPos, FILE_BEGIN);
 
     // Set stream curPos.
@@ -267,17 +243,17 @@ void file_stream::jump_to(std::size_t pos)
     // Throw an exception if we encountered an error.
     if (!succeeded)
     {
-        HL_IN_WIN32_ERROR();
+        throw in_win32_get_last_exception();
     }
 #else
     // Jump to the given position.
-    off_t curPos = lseek(static_cast<int>(m_handle),
+    const auto curPos = lseek(static_cast<int>(m_handle),
         static_cast<off_t>(pos), SEEK_SET);
 
     // Throw an exception if we encountered an error.
     if (curPos == static_cast<off_t>(-1))
     {
-        HL_IN_POSIX_ERROR();
+        throw in_posix_get_last_exception();
     }
 
     // Set stream curPos.
@@ -291,12 +267,12 @@ void file_stream::flush()
 #ifdef _WIN32
     if (!FlushFileBuffers(reinterpret_cast<HANDLE>(m_handle)))
     {
-        HL_IN_WIN32_ERROR();
+        throw in_win32_get_last_exception();
     }
 #else
     if (fsync(static_cast<int>(m_handle)) != 0)
     {
-        HL_IN_POSIX_ERROR();
+        throw in_posix_get_last_exception();
     }
 #endif
 }
@@ -304,17 +280,15 @@ void file_stream::flush()
 std::size_t file_stream::get_size()
 {
 #ifdef _WIN32
-    LARGE_INTEGER size;
-    BOOL succeeded;
-
     // Get the size of the given file.
-    succeeded = GetFileSizeEx(reinterpret_cast<HANDLE>(
+    LARGE_INTEGER size;
+    const auto succeeded = GetFileSizeEx(reinterpret_cast<HANDLE>(
         m_handle), &size);
 
     // Throw an exception if we encountered an error.
     if (!succeeded)
     {
-        HL_IN_WIN32_ERROR();
+        throw in_win32_get_last_exception();
     }
 
     // Return the file's size.
@@ -323,7 +297,7 @@ std::size_t file_stream::get_size()
     struct stat st;
     if (fstat(static_cast<int>(m_handle), &st))
     {
-        HL_IN_POSIX_ERROR();
+        throw in_posix_get_last_exception();
     }
     
     // Return the file's size.
@@ -415,23 +389,23 @@ static int in_posix_file_get_flags(const file::mode mode)
 void file_stream::in_open(const nchar* filePath, file::mode mode)
 {
 #ifdef _WIN32
-    SECURITY_ATTRIBUTES securityAttrs;
-    HANDLE fileHandle;
-
     // Get desired access, share mode, and create options from mode.
-    const DWORD desiredAccess = in_win32_file_get_desired_access(mode);
-    const DWORD shareMode = in_win32_file_get_share_mode(mode);
-    const DWORD createOptions = in_win32_file_get_create_options(mode);
+    const auto desiredAccess = in_win32_file_get_desired_access(mode);
+    const auto shareMode = in_win32_file_get_share_mode(mode);
+    const auto createOptions = in_win32_file_get_create_options(mode);
 
     // Setup securityAttrs.
-    securityAttrs.nLength = (DWORD)(sizeof(SECURITY_ATTRIBUTES));
-    securityAttrs.lpSecurityDescriptor = 0;
-    securityAttrs.bInheritHandle = 1;
+    SECURITY_ATTRIBUTES securityAttrs =
+    {
+        static_cast<DWORD>(sizeof(SECURITY_ATTRIBUTES)),                // nLength
+        0,                                                              // lpSecurityDescriptor
+        1                                                               // bInheritHandle
+    };
 
     // TODO: Support file paths longer than MAX_PATH characters.
 
     // Open the file at the given path.
-    fileHandle =
+    auto fileHandle =
 #ifdef HL_IN_WIN32_UNICODE
         CreateFileW(
 #else
@@ -444,17 +418,17 @@ void file_stream::in_open(const nchar* filePath, file::mode mode)
     // Throw an exception if we encountered an error.
     if (fileHandle == INVALID_HANDLE_VALUE)
     {
-        HL_IN_WIN32_ERROR();
+        throw in_win32_get_last_exception();
     }
 #else
     // Open file at the given path.
-    int fileHandle = ::open(filePath, in_posix_file_get_flags(mode),
+    const auto fileHandle = ::open(filePath, in_posix_file_get_flags(mode),
         S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 
     // Throw an exception if we encountered an error.
     if (fileHandle == -1)
     {
-        HL_IN_POSIX_ERROR();
+        throw in_posix_get_last_exception(filePath);
     }
 #endif
 
@@ -472,12 +446,12 @@ void file_stream::close()
 #ifdef _WIN32
     if (!CloseHandle(reinterpret_cast<HANDLE>(m_handle)))
     {
-        HL_IN_WIN32_ERROR();
+        throw in_win32_get_last_exception();
     }
 #else
     if (::close(static_cast<int>(m_handle)) != 0)
     {
-        HL_IN_POSIX_ERROR();
+        throw in_posix_get_last_exception();
     }
 #endif
 }

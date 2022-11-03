@@ -29,9 +29,11 @@ enum class mode
 
 HL_ENUM_CLASS_DEF_BITWISE_OPS(mode)
 
-HL_API std::unique_ptr<u8[]> load(const nchar* filePath, std::size_t& dataSize);
+HL_API std::unique_ptr<u8[]> load(const nchar* filePath,
+    std::size_t* dataSize = nullptr);
 
-inline std::unique_ptr<u8[]> load(const nstring& filePath, std::size_t& dataSize)
+inline std::unique_ptr<u8[]> load(const nstring& filePath,
+    std::size_t* dataSize = nullptr)
 {
     return load(filePath.c_str(), dataSize);
 }
