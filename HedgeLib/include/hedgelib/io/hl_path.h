@@ -403,7 +403,10 @@ inline const char_t* get_exts(const char_t* path)
     test..a$            ->      .a$
     */
 
-    // Find first extension within path, if any.
+    // Find file name within path.
+    path = get_name(path);
+
+    // Find first extension within name, if any.
     const char_t* curChar = path;
     while (*curChar)
     {
