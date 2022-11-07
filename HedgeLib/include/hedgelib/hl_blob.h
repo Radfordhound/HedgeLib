@@ -12,9 +12,10 @@ protected:
     /** @brief Pointer to the data this blob contains. */
     std::unique_ptr<u8[]> m_data;
     /** @brief Size of the data this blob contains, in bytes. */
-    std::size_t m_size = 0;
+    std::size_t m_size;
 
-    blob() noexcept = default;
+    inline blob() noexcept :
+        m_size(0) {}
 
 public:
     template<typename T = void>
