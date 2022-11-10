@@ -26,6 +26,7 @@ Right now, HedgeLib supports the following:
 - Texsets (.texset; v0)
 - Texture entries (.texture; v1)
 - "Mirage" headers (used in models/materials from Lost World and beyond)
+- "Needle" archives (used in models from Frontiers and beyond)
 
 ### Ninja Next ("Sega NN")
 - Node Motions (Skeletal Animations) [.xnm, .snm, .gnm, .cnm, .inm, .enm, .ynm, .znm]
