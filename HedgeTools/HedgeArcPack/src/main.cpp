@@ -43,6 +43,8 @@ enum class text_id
     arc_type_tokyo2,
     arc_type_sakura,
     arc_type_ppt2,
+    arc_type_origins,
+    arc_type_frontiers,
 
     extracting,
     packing,
@@ -153,7 +155,9 @@ enum class arc_type
     tokyo1,
     tokyo2,
     sakura,
-    ppt2
+    ppt2,
+    origins,
+    frontiers,
 };
 
 struct defaults
@@ -241,6 +245,20 @@ static const defaults arc_type_defaults[] =
         hl::pacx::v4::default_alignment,
         endian_flag::little,
         false
+    },
+
+    {                                           // origins
+        hl::pacx::v4::default_split_limit,
+        hl::pacx::v4::default_alignment,
+        endian_flag::little,
+        false
+    },
+
+    {                                           // frontiers
+        hl::pacx::v4::default_split_limit,
+        hl::pacx::v4::default_alignment,
+        endian_flag::little,
+        false
     }
 };
 
@@ -310,6 +328,20 @@ static arc_type get_arc_type(const hl::nchar* typeStr)
         return arc_type::ppt2;
     }
 
+    // Sonic Origins .pac files.
+    if (hl::text::iequal(typeStr, HL_NTEXT("origins")) ||
+        hl::text::iequal(typeStr, HL_NTEXT("hite")))
+    {
+        return arc_type::origins;
+    }
+
+    // Sonic Frontiers .pac files.
+    if (hl::text::iequal(typeStr, HL_NTEXT("frontiers")) ||
+        hl::text::iequal(typeStr, HL_NTEXT("rangers")))
+    {
+        return arc_type::frontiers;
+    }
+
     // Unknown type.
     return arc_type::unknown;
 }
@@ -332,6 +364,8 @@ static const hl::nchar* get_ext(arc_type type)
     case arc_type::tokyo2:
     case arc_type::sakura:
     case arc_type::ppt2:
+    case arc_type::origins:
+    case arc_type::frontiers:
         return hl::pacx::ext;
 
     default:
@@ -361,6 +395,8 @@ static void print_types(const hl::nchar* fmt, std::FILE* stream)
     hl::nfprintf(stream, fmt, get_text(text_id::arc_type_tokyo2));
     hl::nfprintf(stream, fmt, get_text(text_id::arc_type_sakura));
     hl::nfprintf(stream, fmt, get_text(text_id::arc_type_ppt2));
+    hl::nfprintf(stream, fmt, get_text(text_id::arc_type_origins));
+    hl::nfprintf(stream, fmt, get_text(text_id::arc_type_frontiers));
 }
 
 static void print_usage(std::FILE* stream)
@@ -884,6 +920,40 @@ static void pack(const arguments& args)
 
         break;
 
+    case arc_type::origins:
+        hl::pacx::v4::v03::save(arc,                        // arc
+            hl::pacx::v4::default_lz4_max_chunk_size,       // maxChunkSize
+            hl::compress_type::lz4,                         // compressType
+            (args.endianness == endian_flag::big) ?         // endianFlag
+                hl::bina::endian_flag::big :
+                hl::bina::endian_flag::little,
+
+            hl::pacx::hite_ext_count,                       // extCount
+            hl::pacx::hite_exts,                            // exts
+            args.output,                                    // filePath
+            args.splitLimit,                                // splitLimit
+            args.alignment,                                 // dataAlignment
+            false);                                         // noCompress
+
+        break;
+
+    case arc_type::frontiers:
+        hl::pacx::v4::v03::save(arc,                        // arc
+            hl::pacx::v4::default_lz4_max_chunk_size,       // maxChunkSize
+            hl::compress_type::lz4,                         // compressType
+            (args.endianness == endian_flag::big) ?         // endianFlag
+                hl::bina::endian_flag::big :
+                hl::bina::endian_flag::little,
+
+            hl::pacx::rangers_ext_count,                    // extCount
+            hl::pacx::rangers_exts,                         // exts
+            args.output,                                    // filePath
+            args.splitLimit,                                // splitLimit
+            args.alignment,                                 // dataAlignment
+            false);                                         // noCompress
+
+        break;
+
     default:
         throw hl::unsupported_exception();
     }
@@ -940,6 +1010,7 @@ static hl::archive load_arc(const arguments& args)
     case arc_type::tokyo2:
     case arc_type::sakura:
     case arc_type::ppt2:
+    case arc_type::frontiers:
         return hl::pacx::v4::load(args.input);
 
     default:

@@ -37,7 +37,7 @@ static const char* const in_get_data_type(data_type type) noexcept
 // Auto-generate Lost World supported extensions array.
 const supported_ext lw_exts[] =
 {
-#define HL_IN_PACX_LW_AUTOGEN(ext, type, kind, rootSortWeight, splitSortWeight)\
+#define HL_IN_PACX_SONIC2013_AUTOGEN(ext, type, kind, rootSortWeight, splitSortWeight)\
     { HL_NTEXT(ext), static_cast<unsigned short>(data_type::type),\
     supported_ext_kind::kind, rootSortWeight, splitSortWeight },
 
@@ -49,7 +49,7 @@ const std::size_t lw_ext_count = count_of(lw_exts);
 // Auto-generate Rio 2016 supported extensions array.
 const supported_ext rio_exts[] =
 {
-#define HL_IN_PACX_RIO_AUTOGEN(ext, type, kind, rootSortWeight, splitSortWeight)\
+#define HL_IN_PACX_UNISON_AUTOGEN(ext, type, kind, rootSortWeight, splitSortWeight)\
     { HL_NTEXT(ext), static_cast<unsigned short>(data_type::type),\
     supported_ext_kind::kind, rootSortWeight, splitSortWeight },
 
@@ -61,7 +61,7 @@ const std::size_t rio_ext_count = count_of(rio_exts);
 // Auto-generate Forces supported extensions array.
 const supported_ext forces_exts[] =
 {
-#define HL_IN_PACX_FORCES_AUTOGEN(ext, type, kind)\
+#define HL_IN_PACX_WARS_AUTOGEN(ext, type, kind)\
     { HL_NTEXT(ext), static_cast<unsigned short>(data_type::type),\
     supported_ext_kind::kind },
 
@@ -73,7 +73,7 @@ const std::size_t forces_ext_count = count_of(forces_exts);
 // Auto-generate Tokyo Olympic Games supported extensions array.
 const supported_ext tokyo1_exts[] =
 {
-#define HL_IN_PACX_TOKYO1_AUTOGEN(ext, type, kind)\
+#define HL_IN_PACX_MUSASHI_AUTOGEN(ext, type, kind)\
     { HL_NTEXT(ext), static_cast<unsigned short>(data_type::type),\
     supported_ext_kind::kind },
 
@@ -85,7 +85,7 @@ const std::size_t tokyo1_ext_count = count_of(tokyo1_exts);
 // Auto-generate Tokyo 2020 supported extensions array.
 const supported_ext tokyo2_exts[] =
 {
-#define HL_IN_PACX_TOKYO2_AUTOGEN(ext, type, kind)\
+#define HL_IN_PACX_RINGS_AUTOGEN(ext, type, kind)\
     { HL_NTEXT(ext), static_cast<unsigned short>(data_type::type),\
     supported_ext_kind::kind },
 
@@ -97,7 +97,7 @@ const std::size_t tokyo2_ext_count = count_of(tokyo2_exts);
 // Auto-generate Sakura Wars supported extensions array.
 const supported_ext sakura_exts[] =
 {
-#define HL_IN_PACX_SAKURA_AUTOGEN(ext, type, kind)\
+#define HL_IN_PACX_ARUKAS_AUTOGEN(ext, type, kind)\
     { HL_NTEXT(ext), static_cast<unsigned short>(data_type::type),\
     supported_ext_kind::kind },
 
@@ -109,7 +109,7 @@ const std::size_t sakura_ext_count = count_of(sakura_exts);
 // Auto-generate Puyo Puyo Tetris 2 supported extensions array.
 const supported_ext ppt2_exts[] =
 {
-#define HL_IN_PACX_PPT2_AUTOGEN(ext, type, kind)\
+#define HL_IN_PACX_TENPEX_AUTOGEN(ext, type, kind)\
     { HL_NTEXT(ext), static_cast<unsigned short>(data_type::type),\
     supported_ext_kind::kind },
 
@@ -117,6 +117,30 @@ const supported_ext ppt2_exts[] =
 };
 
 const std::size_t ppt2_ext_count = count_of(ppt2_exts);
+
+// Auto-generate Sonic Origins supported extensions array.
+const supported_ext hite_exts[] =
+{
+#define HL_IN_PACX_HITE_AUTOGEN(ext, type, kind)\
+    { HL_NTEXT(ext), static_cast<unsigned short>(data_type::type),\
+    supported_ext_kind::kind },
+
+#include "hl_in_pacx_type_autogen.h"
+};
+
+const std::size_t hite_ext_count = count_of(hite_exts);
+
+// Auto-generate Sonic Frontiers supported extensions array.
+const supported_ext rangers_exts[] =
+{
+#define HL_IN_PACX_RANGERS_AUTOGEN(ext, type, kind)\
+    { HL_NTEXT(ext), static_cast<unsigned short>(data_type::type),\
+    supported_ext_kind::kind },
+
+#include "hl_in_pacx_type_autogen.h"
+};
+
+const std::size_t rangers_ext_count = count_of(rangers_exts);
 
 static const supported_ext& in_get_supported_ext(const nchar* ext,
     const supported_ext* exts, const std::size_t extCount)

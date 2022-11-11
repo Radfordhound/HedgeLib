@@ -95,31 +95,37 @@
     HL_NTEXT("Archive type: "),
 
     /* arc_type_hh_ar */
-    HL_NTEXT("hh/su/gens/ar\t(Sonic Unleashed/Generations .ar files)\n"),
+    HL_NTEXT("hh/su/gens/ar\t\t(Sonic Unleashed/Generations .ar files)\n"),
 
     /* arc_type_hh_pfd */
-    HL_NTEXT("pfd\t\t(Sonic Unleashed/Generations .pfd files)\n"),
+    HL_NTEXT("pfd\t\t\t(Sonic Unleashed/Generations .pfd files)\n"),
 
     /* arc_type_lw */
-    HL_NTEXT("lw/slw\t\t(Sonic Lost World .pac files)\n"),
+    HL_NTEXT("lw/slw\t\t\t(Sonic Lost World .pac files)\n"),
 
     /* arc_type_rio */
-    HL_NTEXT("rio/unison\t(Mario & Sonic Rio 2016 .pac files)\n"),
+    HL_NTEXT("rio/unison\t\t(Mario & Sonic Rio 2016 .pac files)\n"),
     
     /* arc_type_forces */
-    HL_NTEXT("wars/forces\t(Sonic Forces .pac files)\n"),
+    HL_NTEXT("wars/forces\t\t(Sonic Forces .pac files)\n"),
 
     /* arc_type_tokyo1 */
-    HL_NTEXT("musashi/tokyo1\t(Tokyo 2020 - Official Video Game .pac files)\n"),
+    HL_NTEXT("musashi/tokyo1\t\t(Tokyo 2020 - Official Video Game .pac files)\n"),
 
     /* arc_type_tokyo2 */
-    HL_NTEXT("rings/tokyo2\t(Mario & Sonic Tokyo 2020 .pac files)\n"),
+    HL_NTEXT("rings/tokyo2\t\t(Mario & Sonic Tokyo 2020 .pac files)\n"),
 
     /* arc_type_sakura */
-    HL_NTEXT("arukas/sakura\t(Sakura Wars .pac files)\n"),
+    HL_NTEXT("arukas/sakura\t\t(Sakura Wars .pac files)\n"),
 
     /* arc_type_ppt2 */
-    HL_NTEXT("ppt2/tenpex\t(Puyo Puyo Tetris 2 .pac files)\n\n"),
+    HL_NTEXT("ppt2/tenpex\t\t(Puyo Puyo Tetris 2 .pac files)\n"),
+
+    /* arc_type_origins */
+    HL_NTEXT("origins/hite\t\t(Sonic Origins .pac files)\n"),
+
+    /* arc_type_frontiers */
+    HL_NTEXT("frontiers/rangers\t(Sonic Frontiers .pac files)\n\n"),
 
     /* extracting */
     HL_NTEXT("Extracting..."),

@@ -98,6 +98,12 @@ HL_API extern const std::size_t sakura_ext_count;
 HL_API extern const supported_ext ppt2_exts[];
 HL_API extern const std::size_t ppt2_ext_count;
 
+HL_API extern const supported_ext hite_exts[];
+HL_API extern const std::size_t hite_ext_count;
+
+HL_API extern const supported_ext rangers_exts[];
+HL_API extern const std::size_t rangers_ext_count;
+
 namespace v2
 {
 constexpr u32 default_split_limit = 0xA00000U;
@@ -1611,7 +1617,7 @@ inline void save(archive_entry_list& arc, u32 maxChunkSize,
     u32 dataAlignment = default_alignment, bool noCompress = false)
 {
     save(arc, maxChunkSize, compressType, endianFlag,
-        extCount, exts, filePath, splitLimit, dataAlignment,
+        extCount, exts, filePath.c_str(), splitLimit, dataAlignment,
         noCompress);
 }
 } // v03
