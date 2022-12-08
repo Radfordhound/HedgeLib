@@ -1459,7 +1459,7 @@ static void in_data_entry_write(const in_file_metadata& file,
 
     // Get/Load entry data if necessary.
     std::unique_ptr<u8[]> tmpDataBuf;
-    const void* data;
+    const void* data = nullptr;
 
     if (isHere)
     {
