@@ -1015,7 +1015,7 @@ void render_device::set_debug_name(VkObjectType vkObjectType,
     void* vkObjectHandle, const char* name)
 {
     in_vulkan_set_debug_name(m_vkDevice, vkObjectType,
-        reinterpret_cast<uint64_t>(vkObjectHandle), name);
+        (uint64_t)vkObjectHandle, name);
 }
 
 static bool in_vulkan_load_debug_utils_ext(VkInstance vkInstance)
@@ -1141,7 +1141,7 @@ static VkDevice in_vulkan_create_device(
         try
         {
             in_vulkan_set_debug_name(vkDevice, VK_OBJECT_TYPE_DEVICE,
-                reinterpret_cast<uint64_t>(vkDevice), debugName);
+                (uint64_t)vkDevice, debugName);
         }
         catch (...)
         {

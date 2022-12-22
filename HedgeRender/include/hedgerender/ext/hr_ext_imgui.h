@@ -3,6 +3,7 @@
 #include <hedgerender/gfx/hr_pipeline.h>
 
 #ifdef HR_EXT_IMGUI_IMPLEMENTATION
+#define ImTextureID ::hr::gfx::shader_data
 #include "backends/imgui_impl_glfw.h"
 #include <hedgerender/gfx/hr_render_device.h>
 #include <hedgerender/gfx/hr_resource.h>
@@ -215,7 +216,7 @@ struct in_imgui_renderer_data
     gfx::buffer idxBuffer;
     ImDrawVert* mappedVtxBufData = nullptr;
     ImDrawIdx* mappedIdxBufData = nullptr;
-    gfx::shader_data fontsShaderData = nullptr;
+    gfx::shader_data fontsShaderData = VK_NULL_HANDLE;
 
     void destroy() noexcept
     {
@@ -392,7 +393,7 @@ gfx::shader_data imgui_create_texture(gfx::shader_data_allocator& allocator,
     // Update shader data.
     const gfx::image_write_desc imageWrite =
     {
-        nullptr,                                                        // vkSampler
+        VK_NULL_HANDLE,                                                 // vkSampler
         imageView.handle(),                                             // vkImageView
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL                        // imageLayout
     };
@@ -462,7 +463,7 @@ void imgui_create_resources()
     backData.device->wait_for_upload_batch(0, backData.fontsImageUploadBatchID);
 
     // Set ImGui fonts texture ID.
-    io.Fonts->SetTexID(reinterpret_cast<ImTextureID>(backData.fontsShaderData));
+    io.Fonts->SetTexID(backData.fontsShaderData);
 }
 
 gfx::pipeline imgui_create_pipeline(const gfx::render_graph& graph,
@@ -679,10 +680,7 @@ void imgui_draw(ImDrawData& drawData, const gfx::pipeline& pipeline, gfx::cmd_li
                     static_cast<unsigned int>(clipMax.y - clipMin.y));
 
                 // Bind shader data.
-                static_assert(sizeof(ImTextureID) >= sizeof(gfx::shader_data));
-
-                cmdList.bind_shader_data(backData.pipelineLayout,
-                    reinterpret_cast<gfx::shader_data>(draw.TextureId));
+                cmdList.bind_shader_data(backData.pipelineLayout, draw.TextureId);
 
                 // Draw vertices.
                 cmdList.draw_indexed(draw.IdxOffset + globalIdxOffset,

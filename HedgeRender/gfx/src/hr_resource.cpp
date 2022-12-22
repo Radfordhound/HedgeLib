@@ -460,7 +460,7 @@ image::image(res_allocator& allocator, memory_type memType, VkImageType vkImageT
             vmaGetAllocatorInfo(allocator.handle(), &vmaAllocatorInfo);
 
             in_vulkan_set_debug_name(vmaAllocatorInfo.device,
-                VK_OBJECT_TYPE_IMAGE, reinterpret_cast<uint64_t>(m_vkImage),
+                VK_OBJECT_TYPE_IMAGE, (uint64_t)m_vkImage,
                 debugName);
         }
         catch (...)

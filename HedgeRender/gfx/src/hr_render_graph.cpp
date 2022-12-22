@@ -601,7 +601,7 @@ render_graph render_graph_builder::build(render_device& device)
                     else
                     {
                         // NOTE: This value will be filled in later by the call to create_framebuffers().
-                        graph->vkAttachments.push_back(nullptr);
+                        graph->vkAttachments.push_back(VK_NULL_HANDLE);
                     }
 
                     // Set Vulkan attachment index for this resource/pass.

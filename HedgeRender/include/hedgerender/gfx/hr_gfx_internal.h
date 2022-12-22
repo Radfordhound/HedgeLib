@@ -2,6 +2,8 @@
 #define HR_GFX_INTERNAL_H_INCLUDED
 
 #include <hedgerender/base/hr_base_internal.h>
+
+#define VULKAN_HPP_TYPESAFE_CONVERSION 1
 #include <vulkan/vulkan.hpp>
 
 /*
