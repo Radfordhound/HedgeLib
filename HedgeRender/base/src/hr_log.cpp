@@ -1,5 +1,6 @@
 #include "hedgerender/base/hr_log.h"
 #include <hedgelib/hl_tool_helpers.h>
+#include <cstring>
 
 namespace hr
 {
