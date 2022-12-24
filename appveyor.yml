@@ -61,7 +61,9 @@ for:
         mkdir Dependencies/VulkanSDK
         sudo ./InstallVulkan.app/Contents/MacOS/InstallVulkan --root "$APPVEYOR_BUILD_FOLDER/Dependencies/VulkanSDK" --accept-licenses --default-answer --confirm-command install
         ls Dependencies/VulkanSDK
-        sudo python "$APPVEYOR_BUILD_FOLDER/Dependencies/VulkanSDK/install_vulkan.py"
+        echo "Contents of /usr/bin:"
+        ls /usr/bin
+        sudo python3 "$APPVEYOR_BUILD_FOLDER/Dependencies/VulkanSDK/install_vulkan.py"
     - ps: |
         cd Dependencies
         git clone https://github.com/martinus/robin-hood-hashing.git
