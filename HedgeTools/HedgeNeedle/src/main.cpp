@@ -3,6 +3,7 @@
 #include <hedgelib/io/hl_path.h>
 #include <hedgelib/io/hl_file.h>
 #include <hedgelib/hl_tool_helpers.h>
+#include <cstring>
 
 static void extract(const hl::nchar* input, const hl::nchar* output, bool isTerrain)
 {
