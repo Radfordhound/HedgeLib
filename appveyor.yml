@@ -2,7 +2,7 @@ version: 0.1.{build}
 image:
 - Visual Studio 2022
 - Ubuntu2004
-- macOS
+- macos-monterey
 platform:
 - Win32
 - x86
@@ -13,11 +13,11 @@ matrix:
     - platform: Win32
       image: Ubuntu2004
     - platform: Win32
-      image: macOS
+      image: macos-monterey
     - platform: x86
       image: Visual Studio 2022
     - platform: x86
-      image: macOS
+      image: macos-monterey
 
 build: off
 build_script:
@@ -49,7 +49,7 @@ for:
 -
   matrix:
     only:
-      - image: macOS
+      - image: macos-monterey
 
   install:
     - sh: |
@@ -61,6 +61,7 @@ for:
         mkdir Dependencies/VulkanSDK
         sudo ./InstallVulkan.app/Contents/MacOS/InstallVulkan --root "$APPVEYOR_BUILD_FOLDER/Dependencies/VulkanSDK" --accept-licenses --default-answer --confirm-command install
         ls Dependencies/VulkanSDK
+        sudo ./Dependencies/VulkanSDK/install_vulkan.py
     - ps: |
         cd Dependencies
         git clone https://github.com/martinus/robin-hood-hashing.git
