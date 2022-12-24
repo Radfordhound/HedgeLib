@@ -323,7 +323,7 @@ void material::add_to_hl_scene(const nchar* texDir, scene& scene,
 {
     // Get absolute texture UTF-8 directory.
     // TODO: Actually make texDir absolute.
-    auto utf8TexFilePath =
+    std::string utf8TexFilePath =
 #ifdef HL_IN_WIN32_UNICODE
         text::conv<text::native_to_utf8>(texDir);
 #else
