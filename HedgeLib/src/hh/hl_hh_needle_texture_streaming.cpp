@@ -1,4 +1,5 @@
 #include "hedgelib/hh/hl_hh_needle_texture_streaming.h"
+#include <cstring>
 
 namespace hl
 {
@@ -67,7 +68,7 @@ bool readonly_package_wrapper::try_load(hl::stream* stream)
     {
         m_package = (raw_package*)operator new(header.headerSize);
 
-        memcpy(m_package, &header, sizeof(header));
+        std::memcpy(m_package, &header, sizeof(header));
 
         const size_t remainingSize = header.headerSize - sizeof(*m_package);
         m_stream->read(remainingSize, m_package + 1);
@@ -127,7 +128,7 @@ bool readonly_info_wrapper::try_load(hl::stream& stream)
             header.packageNameSize + header.mip4x4Size + dds_header_max_size;
 
         m_info = (raw_info*)operator new(sizeof(raw_info) + remainingSize);
-        memcpy(m_info, &header, sizeof(header));
+        std::memcpy(m_info, &header, sizeof(header));
         stream.read(remainingSize, m_info + 1);
 
         return true;
