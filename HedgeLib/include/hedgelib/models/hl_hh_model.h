@@ -569,7 +569,7 @@ struct texture_unit
 
 struct mesh
 {
-    res_ref<material> material;
+    res_ref<mirage::material> material;
     std::vector<u16> faces;
     std::vector<raw_vertex_element> vertexElements;
     std::unique_ptr<u8[]> vertices;
