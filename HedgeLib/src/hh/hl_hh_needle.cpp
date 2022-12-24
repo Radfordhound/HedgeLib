@@ -1,6 +1,7 @@
 #include "hedgelib/hh/hl_hh_needle.h"
 #include "hedgelib/io/hl_file.h"
 #include "hedgelib/io/hl_path.h"
+#include <cstring>
 
 namespace hl
 {
