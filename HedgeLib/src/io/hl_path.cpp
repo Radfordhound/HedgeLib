@@ -344,7 +344,7 @@ void copy_file(const nchar* src, const nchar* dst)
 #else
     // "Manually" copy the data.
     std::size_t dataSize;
-    std::unique_ptr<u8[]> data = file::load(src, dataSize);
+    std::unique_ptr<u8[]> data = file::load(src, &dataSize);
     
     file::save(data.get(), dataSize, dst);
 #endif
