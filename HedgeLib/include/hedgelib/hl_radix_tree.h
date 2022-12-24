@@ -4,6 +4,7 @@
 #ifndef HL_RADIX_TREE_H_INCLUDED
 #define HL_RADIX_TREE_H_INCLUDED
 #include "hl_internal.h"
+#include <string>
 #include <utility>
 #include <vector>
 #include <array>
@@ -210,20 +211,14 @@ template<typename T>
 class radix_tree : public internal::in_radix_tree
 {
 protected:
-    inline static constexpr std::size_t in_leaf_size =
-        internal::in_radix_leaf::compute_size(sizeof(T), alignof(T));
-
-    inline static constexpr std::size_t in_leaf_data_off =
-        internal::in_radix_leaf::compute_data_off(alignof(T));
-
     inline static const T* in_get_data_ptr(const internal::in_radix_leaf& leaf) noexcept
     {
-        return ptradd<T>(&leaf, in_leaf_data_off);
+        return ptradd<T>(&leaf, leaf_data_off());
     }
 
     inline static T* in_get_data_ptr(internal::in_radix_leaf& leaf) noexcept
     {
-        return ptradd<T>(&leaf, in_leaf_data_off);
+        return ptradd<T>(&leaf, leaf_data_off());
     }
 
     template<typename U = T>
@@ -256,13 +251,13 @@ public:
         const value_type operator*() const
         {
             const auto leaf = *m_it;
-            return { ptradd<char>(leaf, in_leaf_size), *in_get_data_ptr(*leaf) };
+            return { ptradd<char>(leaf, leaf_size()), *in_get_data_ptr(*leaf) };
         }
 
         ptr_proxy<const value_type> operator->() const
         {
             const auto leaf = *m_it;
-            return { ptradd<char>(leaf, in_leaf_size), *in_get_data_ptr(*leaf) };
+            return { ptradd<char>(leaf, leaf_size()), *in_get_data_ptr(*leaf) };
         }
 
         inline const_iterator& operator++()
@@ -300,13 +295,13 @@ public:
         value_type operator*() const
         {
             const auto leaf = *m_it;
-            return { ptradd<char>(leaf, in_leaf_size), *in_get_data_ptr(*leaf) };
+            return { ptradd<char>(leaf, leaf_size()), *in_get_data_ptr(*leaf) };
         }
 
         ptr_proxy<value_type> operator->() const
         {
             const auto leaf = *m_it;
-            return { ptradd<char>(leaf, in_leaf_size), *in_get_data_ptr(*leaf) };
+            return { ptradd<char>(leaf, leaf_size()), *in_get_data_ptr(*leaf) };
         }
 
         inline iterator& operator++()
@@ -333,12 +328,12 @@ public:
 
     inline static constexpr std::size_t leaf_size() noexcept
     {
-        return in_leaf_size;
+        return internal::in_radix_leaf::compute_size(sizeof(T), alignof(T));
     }
 
     inline static constexpr std::size_t leaf_data_off() noexcept
     {
-        return in_leaf_data_off;
+        return internal::in_radix_leaf::compute_data_off(alignof(T));
     }
 
     inline const void* root_node() const noexcept
@@ -354,6 +349,11 @@ public:
     inline std::size_t size() const noexcept
     {
         return m_leafNodes.size();
+    }
+
+    [[nodiscard]] inline bool empty() const noexcept
+    {
+        return m_leafNodes.empty();
     }
 
     inline const_iterator begin() const noexcept
@@ -384,8 +384,8 @@ public:
     template<typename... args_t>
     std::pair<iterator, bool> insert(const char* key, args_t&&... args)
     {
-        // Insert or replace a node with the given key.
-        const auto p = in_insert(key, in_leaf_size);
+        // Insert a node with the given key, or just return it if one already exists.
+        const auto p = in_insert(key, leaf_size());
 
         // If this is a new node, construct the data within the node.
         if (p.second)
@@ -407,7 +407,7 @@ public:
     std::pair<iterator, bool> replace(const char* key, args_t&&... args)
     {
         // Insert or replace a node with the given key.
-        const auto p = in_insert(key, in_leaf_size);
+        const auto p = in_insert(key, leaf_size());
 
         // If this is a new node, construct the data within the node.
         const auto dataPtr = in_get_data_ptr(*(*p.first));
@@ -434,7 +434,7 @@ public:
 
     const_iterator find(const char* key) const
     {
-        const auto leaf = in_find_leaf(key, in_leaf_size);
+        const auto leaf = in_find_leaf(key, leaf_size());
         return (!leaf) ? m_leafNodes.end() :
             (m_leafNodes.begin() + leaf->leafIndex);
     }
@@ -446,7 +446,7 @@ public:
 
     iterator find(const char* key)
     {
-        const auto leaf = in_find_leaf(key, in_leaf_size);
+        const auto leaf = in_find_leaf(key, leaf_size());
         return (!leaf) ? m_leafNodes.end() :
             (m_leafNodes.begin() + leaf->leafIndex);
     }
@@ -458,7 +458,7 @@ public:
 
     const T* get(const char* key) const
     {
-        const auto leaf = in_find_leaf(key, in_leaf_size);
+        const auto leaf = in_find_leaf(key, leaf_size());
         return (leaf) ? in_get_data_ptr(*leaf) : nullptr;
     }
 
@@ -477,9 +477,19 @@ public:
         return get(key.c_str());
     }
 
+    inline bool contains(const char* key) const
+    {
+        return (get(key) != nullptr);
+    }
+
+    inline bool contains(const std::string& key) const
+    {
+        return (get(key) != nullptr);
+    }
+
     const T& at(const char* key) const
     {
-        const auto leaf = in_find_leaf(key, in_leaf_size);
+        const auto leaf = in_find_leaf(key, leaf_size());
         if (!leaf) throw std::out_of_range("No element with the specified key was found");
         return *in_get_data_ptr(*leaf);
     }
@@ -491,7 +501,7 @@ public:
 
     T& at(const char* key)
     {
-        const auto leaf = in_find_leaf(key, in_leaf_size);
+        const auto leaf = in_find_leaf(key, leaf_size());
         if (!leaf) throw std::out_of_range("No element with the specified key was found");
         return *in_get_data_ptr(*leaf);
     }
@@ -522,7 +532,7 @@ public:
 
     const T& operator[](const char* key) const
     {
-        const auto leaf = in_find_leaf(key, in_leaf_size);
+        const auto leaf = in_find_leaf(key, leaf_size());
         return *in_get_data_ptr(*leaf);
     }
 
@@ -533,7 +543,7 @@ public:
 
     T& operator[](const char* key)
     {
-        const auto leaf = in_find_leaf(key, in_leaf_size);
+        const auto leaf = in_find_leaf(key, leaf_size());
         return *in_get_data_ptr(*leaf);
     }
 
