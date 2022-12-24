@@ -117,10 +117,15 @@ public:
     HL_API void pad(std::size_t stride);
 };
 
-class writer_base
+namespace internal
+{
+class in_writer_base
 {
 protected:
     hl::stream* m_stream;
+
+    inline in_writer_base(hl::stream& stream) noexcept :
+        m_stream(&stream) {}
 
 public:
     inline const hl::stream& stream() const noexcept
@@ -194,9 +199,7 @@ public:
     {
         m_stream->pad(stride);
     }
-
-    inline writer_base(hl::stream& stream) noexcept :
-        m_stream(&stream) {}
 };
+} // internal
 } // hl
 #endif

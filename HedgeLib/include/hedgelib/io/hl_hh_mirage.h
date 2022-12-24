@@ -495,7 +495,7 @@ HL_API void offsets_write_no_sort(std::size_t basePos,
 HL_API void offsets_write(std::size_t basePos,
     off_table& offTable, stream& stream);
 
-class writer : public writer_base
+class writer : public internal::in_writer_base
 {
     struct sample_chunk_node
     {

@@ -563,7 +563,7 @@ void writer::finish(const char* fileName)
 }
 
 writer::writer(hl::stream& stream) :
-    writer_base(stream),
+    in_writer_base(stream),
     m_headerPos(stream.tell()),
     m_basePos(m_headerPos) {}
 } // mirage
