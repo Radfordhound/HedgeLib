@@ -61,11 +61,9 @@ for:
         mkdir Dependencies/VulkanSDK
         sudo ./InstallVulkan.app/Contents/MacOS/InstallVulkan --root "$APPVEYOR_BUILD_FOLDER/Dependencies/VulkanSDK" --accept-licenses --default-answer --confirm-command install
         ls Dependencies/VulkanSDK
-        echo "Contents of /usr/bin:"
-        ls /usr/bin
+        cd Dependencies/VulkanSDK
         sudo python3 "$APPVEYOR_BUILD_FOLDER/Dependencies/VulkanSDK/install_vulkan.py"
-    - ps: |
-        cd Dependencies
+        cd ../
         git clone https://github.com/martinus/robin-hood-hashing.git
         cd robin-hood-hashing
         cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRH_STANDALONE_PROJECT=OFF
@@ -73,8 +71,8 @@ for:
         sudo cmake --install build --config Release
         cd ../../
         brew install glm lz4 zlib glfw
-        mkdir "$env:APPVEYOR_BUILD_FOLDER/bin"
-        cmake -S . -B build "-DCMAKE_INSTALL_PREFIX=$env:APPVEYOR_BUILD_FOLDER/bin" -DCMAKE_BUILD_TYPE=Release
+        mkdir "$APPVEYOR_BUILD_FOLDER/bin"
+        cmake -S . -B build "-DCMAKE_INSTALL_PREFIX=$APPVEYOR_BUILD_FOLDER/bin" -DCMAKE_BUILD_TYPE=Release
 -
   matrix:
     only:
@@ -84,8 +82,7 @@ for:
     - sh: |
         if [ "$PLATFORM" == "x86" ]; then sudo apt-get update; sudo apt-get install -yq gcc-9-multilib g++-9-multilib; fi
         wget -qO - https://gist.githubusercontent.com/Radfordhound/6e6ce00535d14ae87d606ece93f1e336/raw/9796f644bdedaa174ed580a8aa6874ab82853170/install-lunarg-ubuntu-repo.sh | sh
-    - ps: |
-        mkdir Dependencies; cd Dependencies
+        mkdir Dependencies && cd Dependencies
         git clone https://github.com/martinus/robin-hood-hashing.git
         cd robin-hood-hashing
         cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRH_STANDALONE_PROJECT=OFF
@@ -93,5 +90,5 @@ for:
         sudo cmake --install build --config Release
         cd ../../
         sudo apt install -yq libglm-dev liblz4-dev zlib1g-dev libglfw3-dev vulkan-sdk
-        mkdir "$env:APPVEYOR_BUILD_FOLDER/bin"
-        cmake -S . -B build "-DCMAKE_INSTALL_PREFIX=$env:APPVEYOR_BUILD_FOLDER/bin" -DCMAKE_BUILD_TYPE=Release
+        mkdir "$APPVEYOR_BUILD_FOLDER/bin"
+        cmake -S . -B build "-DCMAKE_INSTALL_PREFIX=$APPVEYOR_BUILD_FOLDER/bin" -DCMAKE_BUILD_TYPE=Release
