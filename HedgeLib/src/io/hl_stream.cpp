@@ -25,11 +25,15 @@ void stream::write_all(std::size_t size, const void* buf)
     }
 }
 
-static const u8 in_stream_nulls_static_buffer[1024] = { 0 };
+static const u8 in_stream_nulls_static_buffer[1024] = {};
 
 void stream::write_nulls(std::size_t amount)
 {
-    if (amount > sizeof(in_stream_nulls_static_buffer))
+    if (amount == 0)
+    {
+        return;
+    }
+    else if (amount > count_of(in_stream_nulls_static_buffer))
     {
         // Allocate a buffer large enough to hold all of the nulls we want to write.
         std::unique_ptr<u8[]> nulls(new u8[amount]());
@@ -185,31 +189,21 @@ std::string stream::read_str()
 
 void stream::align(std::size_t stride)
 {
-    std::size_t pos;
-
     // If stride is < 2, we don't need to align.
     if (stride-- < 2) return;
 
-    /* Get the current stream position. */
-    pos = tell();
-
     // Compute the closest position in the stream that's aligned
     // by the given stride, and jump to that position.
-    jump_to(((pos + stride) & ~stride));
+    jump_to(((m_curPos + stride) & ~stride));
 }
 
 void stream::pad(std::size_t stride)
 {
-    std::size_t pos;
-
     // If stride is < 2, we don't need to pad.
     if (stride-- < 2) return;
 
-    // Get the current stream position.
-    pos = tell();
-
     // Compute the amount of nulls we need to write to align the
     // stream with the given stride, and write that many nulls.
-    write_nulls(((pos + stride) & ~stride) - pos);
+    write_nulls(((m_curPos + stride) & ~stride) - m_curPos);
 }
 } // hl

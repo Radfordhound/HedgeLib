@@ -28,11 +28,17 @@ protected:
 
 public:
     virtual std::size_t read(std::size_t size, void* buf) = 0;
+
     virtual std::size_t write(std::size_t size, const void* buf) = 0;
+
     virtual void seek(seek_mode mode, long long offset) = 0;
+
     virtual void jump_to(std::size_t pos) = 0;
+
     virtual void flush() = 0;
+
     virtual std::size_t get_size() = 0;
+
     virtual ~stream() = 0;
 
     inline void jump_ahead(long long amount)
@@ -56,6 +62,7 @@ public:
     }
 
     HL_API void read_all(std::size_t size, void* buf);
+
     HL_API void write_all(std::size_t size, const void* buf);
 
     template<typename T>
@@ -65,9 +72,23 @@ public:
     }
 
     template<typename T>
+    void read_obj(T& obj, std::size_t alignment)
+    {
+        align((alignment) ? alignment : alignof(T));
+        read_obj(obj);
+    }
+
+    template<typename T>
     inline void write_obj(const T& obj)
     {
         write_all(sizeof(T), &obj);
+    }
+
+    template<typename T>
+    inline void write_obj(const T& obj, std::size_t alignment)
+    {
+        pad((alignment) ? alignment : alignof(T));
+        write_obj(obj);
     }
 
     template<typename T>
@@ -77,9 +98,23 @@ public:
     }
 
     template<typename T>
+    void read_arr(std::size_t count, T* arr, std::size_t alignment)
+    {
+        align((alignment) ? alignment : alignof(T));
+        read_arr(count, arr);
+    }
+
+    template<typename T>
     inline void write_arr(std::size_t count, const T* arr)
     {
         write_all(sizeof(T) * count, arr);
+    }
+
+    template<typename T>
+    void write_arr(std::size_t count, const T* arr, std::size_t alignment)
+    {
+        pad((alignment) ? alignment : alignof(T));
+        write_arr(count, arr);
     }
 
     HL_API void write_nulls(std::size_t amount);
@@ -97,6 +132,7 @@ public:
         bool doSwap, off_table& offTable);
 
     HL_API bool read_str(std::size_t bufSize, char* buf);
+
     HL_API std::string read_str();
 
     std::size_t write_str(const char* str)
@@ -114,6 +150,7 @@ public:
     }
 
     HL_API void align(std::size_t stride);
+
     HL_API void pad(std::size_t stride);
 };
 
@@ -175,9 +212,21 @@ public:
     }
 
     template<typename T>
+    inline void write_obj(const T& obj, std::size_t alignment)
+    {
+        m_stream->write_obj(obj, alignment);
+    }
+
+    template<typename T>
     inline void write_arr(std::size_t count, const T* arr)
     {
         m_stream->write_arr(count, arr);
+    }
+
+    template<typename T>
+    inline void write_arr(std::size_t count, const T* arr, std::size_t alignment)
+    {
+        m_stream->write_arr(count, arr, alignment);
     }
 
     inline void write_nulls(std::size_t amount)
