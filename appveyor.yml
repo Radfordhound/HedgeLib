@@ -1,7 +1,7 @@
 version: 0.1.{build}
 image:
 - Visual Studio 2022
-- Ubuntu
+- Ubuntu2004
 - macOS
 platform:
 - Win32
@@ -11,7 +11,7 @@ configuration: Release
 matrix:
   exclude:
     - platform: Win32
-      image: Ubuntu
+      image: Ubuntu2004
     - platform: Win32
       image: macOS
     - platform: x86
@@ -75,7 +75,7 @@ for:
 -
   matrix:
     only:
-      - image: Ubuntu
+      - image: Ubuntu2004
 
   install:
     - sh: |
