@@ -2278,11 +2278,10 @@ void terrain_model::load(const nchar* filePath)
     in_load(filePath);
 }
 
-void terrain_model::write(writer& writer, header_type headerType,
-    u32 version, u32 revision, const char* fileName) const
+void terrain_model::write(writer& writer,
+    header_type headerType, u32 version, u32 revision) const
 {
     // Start writing model.
-    writer.start(headerType);
     if (headerType != header_type::standard)
     {
         writer.start_node("Model");
@@ -2362,14 +2361,15 @@ void terrain_model::write(writer& writer, header_type headerType,
 
     // Finish writing.
     writer.finish_data();
-    writer.finish(fileName);
 }
 
 void terrain_model::save(stream& stream, header_type headerType,
     u32 version, u32 revision, const char* fileName) const
 {
     writer writer(stream);
-    write(writer, headerType, version, revision, fileName);
+    writer.start(headerType);
+    write(writer, headerType, version, revision);
+    writer.finish(fileName);
 }
 
 void terrain_model::save(const nchar* filePath,
@@ -2630,11 +2630,10 @@ void skeletal_model::load(const nchar* filePath)
     in_load(filePath);
 }
 
-void skeletal_model::write(writer& writer, header_type headerType,
-    u32 version, const char* fileName) const
+void skeletal_model::write(writer& writer,
+    header_type headerType, u32 version) const
 {
     // Start writing model.
-    writer.start(headerType);
     if (headerType != header_type::standard)
     {
         writer.start_node("Model");
@@ -2860,14 +2859,15 @@ void skeletal_model::write(writer& writer, header_type headerType,
 
     // Finish writing.
     writer.finish_data();
-    writer.finish(fileName);
 }
 
 void skeletal_model::save(stream& stream, header_type headerType,
     u32 version, const char* fileName) const
 {
     writer writer(stream);
-    write(writer, headerType, version, fileName);
+    writer.start(headerType);
+    write(writer, headerType, version);
+    writer.finish(fileName);
 }
 
 void skeletal_model::save(const nchar* filePath,

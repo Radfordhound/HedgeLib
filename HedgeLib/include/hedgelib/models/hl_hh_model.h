@@ -837,13 +837,7 @@ public:
     }
 
     HL_API void write(writer& writer, header_type headerType,
-        u32 version = 5, u32 revision = 2, const char* fileName = nullptr) const;
-
-    inline void write(writer& writer, header_type headerType,
-        u32 version, u32 revision, const std::string& fileName) const
-    {
-        write(writer, headerType, version, revision, fileName.c_str());
-    }
+        u32 version = 5, u32 revision = 2) const;
 
     HL_API void save(stream& stream, header_type headerType,
         u32 version = 5, u32 revision = 2, const char* fileName = nullptr) const;
@@ -942,13 +936,7 @@ public:
     }
 
     HL_API void write(writer& writer, header_type headerType,
-        u32 version = 5, const char* fileName = nullptr) const;
-
-    inline void write(writer& writer, header_type headerType,
-        u32 version, const std::string& fileName) const
-    {
-        write(writer, headerType, version, fileName.c_str());
-    }
+        u32 version = 5) const;
 
     HL_API void save(stream& stream, header_type headerType,
         u32 version = 5, const char* fileName = nullptr) const;
