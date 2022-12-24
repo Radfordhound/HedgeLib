@@ -97,11 +97,23 @@ public:
         read_all(sizeof(T) * count, arr);
     }
 
+    template<typename T, std::size_t count>
+    inline void read_arr(T(&arr)[count])
+    {
+        read_arr(count, arr);
+    }
+
     template<typename T>
     void read_arr(std::size_t count, T* arr, std::size_t alignment)
     {
         align((alignment) ? alignment : alignof(T));
         read_arr(count, arr);
+    }
+
+    template<typename T, std::size_t count>
+    inline void read_arr(T(&arr)[count], std::size_t alignment)
+    {
+        read_arr(count, arr, alignment);
     }
 
     template<typename T>
@@ -110,11 +122,23 @@ public:
         write_all(sizeof(T) * count, arr);
     }
 
+    template<typename T, std::size_t count>
+    inline void write_arr(const T(&arr)[count])
+    {
+        write_arr(count, arr);
+    }
+
     template<typename T>
     void write_arr(std::size_t count, const T* arr, std::size_t alignment)
     {
         pad((alignment) ? alignment : alignof(T));
         write_arr(count, arr);
+    }
+
+    template<typename T, std::size_t count>
+    inline void write_arr(const T(&arr)[count], std::size_t alignment)
+    {
+        write_arr(count, arr, alignment);
     }
 
     HL_API void write_nulls(std::size_t amount);
@@ -223,8 +247,20 @@ public:
         m_stream->write_arr(count, arr);
     }
 
+    template<typename T, std::size_t count>
+    inline void write_arr(const T(&arr)[count])
+    {
+        m_stream->write_arr(count, arr);
+    }
+
     template<typename T>
     inline void write_arr(std::size_t count, const T* arr, std::size_t alignment)
+    {
+        m_stream->write_arr(count, arr, alignment);
+    }
+
+    template<typename T, std::size_t count>
+    inline void write_arr(const T(&arr)[count], std::size_t alignment)
     {
         m_stream->write_arr(count, arr, alignment);
     }
