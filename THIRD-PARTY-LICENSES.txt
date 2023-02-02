@@ -18,6 +18,7 @@ This software contains Autodesk® FBX® code developed by Autodesk, Inc. Copyrig
 == (Used for hash maps and other hashing operations in HedgeLib,
 == HedgeRender, and the HedgeTools)
 ====================================================================================
+
 MIT License
 
 Copyright (c) 2018-2021 Martin Ankerl
@@ -165,7 +166,7 @@ freely, subject to the following restrictions:
 
 The MIT License (MIT)
 
-Copyright (c) 2014-2022 Omar Cornut
+Copyright (c) 2014-2023 Omar Cornut
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -193,7 +194,7 @@ SOFTWARE.
 
                                The MIT License (MIT)
 
-Copyright (c) 2011-2022 Microsoft Corp
+Copyright (c) 2011-2023 Microsoft Corp
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this
 software and associated documentation files (the "Software"), to deal in the Software
