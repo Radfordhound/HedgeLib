@@ -12,7 +12,8 @@ namespace HedgeLib.Textures
         // Variables/Constants
         public GensHeader Header = new GensHeader();
         public string Name, TextureName, Type;
-        public uint TexFlags = 0;
+        public byte TexCoordIndex;
+        public WrapMode AddressU, AddressV;
         public const string Extension = ".texture";
 
         // Constructors
@@ -45,12 +46,12 @@ namespace HedgeLib.Textures
         public void Read(ExtendedBinaryReader reader)
         {
             uint texNameOffset = reader.ReadUInt32();
-            TexFlags = reader.ReadUInt32();
+            TexCoordIndex = reader.ReadByte();
+            AddressU = (WrapMode)reader.ReadByte();
+            AddressV = (WrapMode)reader.ReadByte();
+            reader.JumpAhead();
+            
             uint texTypeOffset = reader.ReadUInt32();
-
-            // Unknown Value Check
-            if (TexFlags != 0)
-                Console.WriteLine($"WARNING: Texture Flags != 0 ({TexFlags})");
 
             // Texture Name
             reader.JumpTo(texNameOffset, false);
@@ -64,7 +65,10 @@ namespace HedgeLib.Textures
         public void Write(ExtendedBinaryWriter writer, string offsetSuffix = "")
         {
             writer.AddOffset($"texNameOffset{offsetSuffix}");
-            writer.Write(TexFlags);
+            writer.Write(TexCoordIndex);
+            writer.Write((byte)AddressU);
+            writer.Write((byte)AddressV);
+            writer.Write((byte)0);
             writer.AddOffset($"texTypeOffset{offsetSuffix}");
 
             // Texture Name
@@ -82,7 +86,22 @@ namespace HedgeLib.Textures
         {
             Name = elem.GetAttrValue("name");
             Type = elem.GetAttrValue("type");
-            TexFlags = elem.GetUIntAttr("flags");
+
+            // Backwards compatibility with old xmls
+            if (elem.Attribute("flags") != null)
+            {
+                var flags = elem.GetUIntAttr("flags");
+                TexCoordIndex = (byte)(flags & 0xFF);
+                AddressU = (WrapMode)((flags >> 8) & 0xFF);
+                AddressV = (WrapMode)((flags >> 16) & 0xFF);
+            }
+            else
+            {
+                TexCoordIndex = elem.GetByteAttr("texcoord");
+                AddressU = elem.GetEnumAttr<WrapMode>("address_u");
+                AddressV = elem.GetEnumAttr<WrapMode>("address_v");
+            }
+
             TextureName = elem.Value;
         }
 
@@ -91,10 +110,21 @@ namespace HedgeLib.Textures
             var elem = new XElement("Texture");
             elem.AddAttr("name", Name);
             elem.AddAttr("type", Type);
-            elem.AddAttr("flags", TexFlags);
+            elem.AddAttr("texcoord", TexCoordIndex);
+            elem.AddAttr("address_u", AddressU);
+            elem.AddAttr("address_v", AddressV);
             elem.Value = TextureName;
 
             return elem;
+        }
+
+        public enum WrapMode : byte
+        {
+            Repeat = 0,
+            Mirror = 1,
+            Clamp = 2,
+            MirrorOnce = 3,
+            Border = 4
         }
     }
 }

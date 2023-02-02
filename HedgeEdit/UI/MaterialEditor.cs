@@ -296,7 +296,9 @@ namespace HedgeEdit.UI
         public class SerializableTexture
         {
             // Variables/Constants
-            public uint Flags { get => tex.TexFlags; set => tex.TexFlags = value; }
+            public byte TexCoordIndex { get => tex.TexCoordIndex; set => tex.TexCoordIndex = value; }
+            public GensTexture.WrapMode AddressU { get => tex.AddressU; set => tex.AddressU = value; }
+            public GensTexture.WrapMode AddressV { get => tex.AddressV; set => tex.AddressV = value; }
             public string Name { get => tex.Name; set => tex.Name = value; }
             public string TextureName { get => tex.TextureName; set => tex.TextureName = value; }
             public string Type { get => tex.Type; set => tex.Type = value; }
