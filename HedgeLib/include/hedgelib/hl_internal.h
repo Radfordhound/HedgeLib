@@ -1106,14 +1106,14 @@ struct no_value_init_t final
     constexpr explicit no_value_init_t() noexcept = default;
 };
 
-constexpr const no_value_init_t no_value_init;
+[[maybe_unused]] constexpr no_value_init_t no_value_init;
 
 struct no_copy_t final
 {
     constexpr explicit no_copy_t() noexcept = default;
 };
 
-constexpr const no_copy_t no_copy;
+[[maybe_unused]] constexpr no_copy_t no_copy;
 
 /* Miscellaneous helpers */
 template<typename T, std::size_t count>
