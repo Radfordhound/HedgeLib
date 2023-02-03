@@ -1,6 +1,7 @@
 #ifndef HL_TABLES_H_INCLUDED
 #define HL_TABLES_H_INCLUDED
 #include "hl_text.h"
+#include <vector>
 #include <utility>
 
 namespace hl
