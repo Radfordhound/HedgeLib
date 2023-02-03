@@ -156,6 +156,7 @@ struct raw_vertex_element
     }
 
     HL_API void convert_to_vec4(const void* vtx, vec4& vec) const;
+
     HL_API void convert_to_ivec4(const void* vtx, ivec4& ivec) const;
 };
 
@@ -663,7 +664,7 @@ struct node
 {
     std::string name;
     std::vector<sample_chunk::property> scaParams;
-    matrix4x4 matrix = matrix4x4::identity;
+    matrix4x4 matrix = matrix4x4::identity();
     long parentIndex = -1;
 
     HL_API hl::node& add_to_node(hl::node& parentNode,
@@ -867,6 +868,7 @@ public:
     }
 
     HL_API void save(stream& stream) const;
+
     HL_API void save(const nchar* filePath) const;
 
     inline void save(const nstring& filePath) const
@@ -957,6 +959,7 @@ public:
     }
 
     HL_API void save(stream& stream) const;
+
     HL_API void save(const nchar* filePath) const;
 
     inline void save(const nstring& filePath) const
