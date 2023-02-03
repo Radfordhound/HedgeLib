@@ -224,19 +224,19 @@ void material::in_add_to_hl_material(std::string& utf8TexFilePath,
         {
             if (float4Param.name == "diffuse")
             {
-                mat.diffuseColor = float4Param.values[0].to_vec3();
+                mat.diffuseColor = float4Param.values[0].as_vec3();
             }
             else if (float4Param.name == "specular")
             {
-                mat.specularColor = float4Param.values[0].to_vec3();
+                mat.specularColor = float4Param.values[0].as_vec3();
             }
             else if (float4Param.name == "ambient")
             {
-                mat.ambientColor = float4Param.values[0].to_vec3();
+                mat.ambientColor = float4Param.values[0].as_vec3();
             }
             else if (float4Param.name == "emissive")
             {
-                mat.emissiveColor = float4Param.values[0].to_vec3();
+                mat.emissiveColor = float4Param.values[0].as_vec3();
             }
 
             // TODO

@@ -160,6 +160,26 @@ list(APPEND HEDGELIB_PRIVATE_DEPEND_LIBS glm::glm)
     #list(APPEND HEDGELIB_PRIVATE_DEPEND_LIBS glm)
 #endif()
 
+# Download DirectXMath
+message(STATUS "Downloading and/or configuring DirectXMath as necessary...")
+FetchContent_Declare(DirectXMath
+    GIT_REPOSITORY https://github.com/microsoft/DirectXMath.git
+    GIT_TAG origin/main
+    GIT_SHALLOW TRUE
+)
+
+# Setup DirectXMath and add it to HedgeLib private includes
+FetchContent_Populate(DirectXMath)
+list(APPEND HEDGELIB_PRIVATE_INCLUDE_DIRS ${directxmath_SOURCE_DIR}/Inc)
+
+# Download POSIX sal.h for usage with DirectXMath on non-Windows platforms
+if(NOT WIN32)
+    file(DOWNLOAD
+        https://raw.githubusercontent.com/dotnet/runtimelab/feature/NativeAOT/src/coreclr/pal/inc/rt/sal.h
+        ${directxmath_SOURCE_DIR}/Inc/sal.h
+    )
+endif()
+
 # Find LZ4 and add it to HedgeLib dependencies
 if(NOT TARGET LZ4::LZ4)
     message(STATUS "Searching for lz4...")

@@ -181,7 +181,7 @@ struct terrain_instance_info
 {
     res_ref<terrain_model> model;
     std::string instanceName;
-    matrix4x4 matrix = matrix4x4::identity;
+    matrix4x4 matrix = matrix4x4::identity();
     std::vector<lit_mesh_group> litMeshGroups;
 
     constexpr static const nchar ext[] = HL_NTEXT(".terrain-instanceinfo");
@@ -199,6 +199,7 @@ struct terrain_instance_info
         load(filePath);
     }
 
+    // TODO: Use mirage::writer instead of this!!!
     HL_API void write(stream& stream, off_table& offTable, u32 version) const;
     HL_API void save(stream& stream, u32 version, const char* fileName = "") const;
     HL_API void save(const nchar* filePath, u32 version) const;

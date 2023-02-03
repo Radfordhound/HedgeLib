@@ -76,10 +76,10 @@ class light : public res_base
 
 public:
     light_type type = light_type::directional;
-    vec3 pos = vec3::zero;
-    vec3 color = vec3::one;
+    vec3 pos = vec3::zero();
+    vec3 color = vec3::one();
     u32 attribute = 0;
-    vec4 range = vec4::one;
+    vec4 range = vec4::one();
 
     inline constexpr static nchar ext[] = HL_NTEXT(".light");
 

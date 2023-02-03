@@ -218,22 +218,31 @@ constexpr double snorm_to_double(packed_t v) noexcept
 template<typename T>
 struct vec2_base
 {
+    using value_type = T;
+
     T x;
     T y;
 
-    static const vec2_base<T> zero;
-    static const vec2_base<T> one;
+    static constexpr vec2_base<T> zero() noexcept
+    {
+        return vec2_base<T>(0, 0);   
+    }
+
+    static constexpr vec2_base<T> one() noexcept
+    {
+        return vec2_base<T>(1, 1);
+    }
+
+    static constexpr std::size_t size() noexcept
+    {
+        return 2;
+    }
 
     template<bool swapOffsets = true>
     void endian_swap() noexcept
     {
         hl::endian_swap(x);
         hl::endian_swap(y);
-    }
-
-    inline bool operator==(const vec2_base<T>& other) const noexcept
-    {
-        return (x == other.x && y == other.y);
     }
 
     inline T operator[](std::size_t i) const noexcept
@@ -247,25 +256,48 @@ struct vec2_base
     }
 
     inline vec2_base() noexcept = default;
+
     constexpr vec2_base(T x, T y) noexcept :
         x(x), y(y) {}
 };
 
-template <typename T>
-const vec2_base<T> vec2_base<T>::zero = vec2_base<T>(0, 0);
+template<typename T>
+inline bool operator==(const vec2_base<T>& a, const vec2_base<T>& b) noexcept
+{
+    return (a.x == b.x && a.y == b.y);
+}
 
-template <typename T>
-const vec2_base<T> vec2_base<T>::one = vec2_base<T>(1, 1);
+template<typename T>
+inline bool operator!=(const vec2_base<T>& a, const vec2_base<T>& b) noexcept
+{
+    return (a.x != b.x || a.y != b.y);
+}
+
+// TODO: Make SIMD-optimized specializations for vec2_base<float> and vec2_base<int>
 
 template<typename T>
 struct vec3_base
 {
+    using value_type = T;
+
     T x;
     T y;
     T z;
 
-    static const vec3_base<T> zero;
-    static const vec3_base<T> one;
+    static constexpr vec3_base<T> zero() noexcept
+    {
+        return vec3_base<T>(0, 0, 0);
+    }
+
+    static constexpr vec3_base<T> one() noexcept
+    {
+        return vec3_base<T>(1, 1, 1);
+    }
+
+    static constexpr std::size_t size() noexcept
+    {
+        return 3;
+    }
 
     template<bool swapOffsets = true>
     void endian_swap() noexcept
@@ -275,15 +307,9 @@ struct vec3_base
         hl::endian_swap(z);
     }
 
-    constexpr vec2_base<T> to_vec2() const noexcept
+    constexpr vec2_base<T> as_vec2() const noexcept
     {
         return vec2_base<T>(x, y);
-    }
-
-    inline bool operator==(const vec3_base<T>& other) const noexcept
-    {
-        return (x == other.x && y == other.y &&
-            z == other.z);
     }
 
     inline T operator[](std::size_t i) const noexcept
@@ -297,26 +323,49 @@ struct vec3_base
     }
 
     inline vec3_base() noexcept = default;
+
     constexpr vec3_base(T x, T y, T z) noexcept :
         x(x), y(y), z(z) {}
 };
 
-template <typename T>
-const vec3_base<T> vec3_base<T>::zero = vec3_base<T>(0, 0, 0);
+template<typename T>
+inline bool operator==(const vec3_base<T>& a, const vec3_base<T>& b) noexcept
+{
+    return (a.x == b.x && a.y == b.y && a.z == b.z);
+}
 
-template <typename T>
-const vec3_base<T> vec3_base<T>::one = vec3_base<T>(1, 1, 1);
+template<typename T>
+inline bool operator!=(const vec3_base<T>& a, const vec3_base<T>& b) noexcept
+{
+    return (a.x != b.x || a.y != b.y || a.z != b.z);
+}
+
+// TODO: Make SIMD-optimized specializations for vec3_base<float> and vec3_base<int>
 
 template<typename T>
 struct vec4_base
 {
+    using value_type = T;
+
     T x;
     T y;
     T z;
     T w;
 
-    static const vec4_base<T> zero;
-    static const vec4_base<T> one;
+    static constexpr vec4_base<T> zero() noexcept
+    {
+        return vec4_base<T>(0, 0, 0, 0);   
+    }
+
+    static constexpr vec4_base<T> one() noexcept
+    {
+        return vec4_base<T>(1, 1, 1, 1);
+    }
+
+    static constexpr std::size_t size() noexcept
+    {
+        return 4;
+    }
 
     template<bool swapOffsets = true>
     void endian_swap() noexcept
@@ -327,12 +376,12 @@ struct vec4_base
         hl::endian_swap(w);
     }
 
-    constexpr vec2_base<T> to_vec2() const noexcept
+    constexpr vec2_base<T> as_vec2() const noexcept
     {
         return vec2_base<T>(x, y);
     }
 
-    constexpr vec3_base<T> to_vec3() const noexcept
+    constexpr vec3_base<T> as_vec3() const noexcept
     {
         return vec3_base<T>(x, y, z);
     }
@@ -354,15 +403,24 @@ struct vec4_base
     }
 
     inline vec4_base() noexcept = default;
+
     constexpr vec4_base(T x, T y, T z, T w) noexcept :
         x(x), y(y), z(z), w(w) {}
 };
 
-template <typename T>
-const vec4_base<T> vec4_base<T>::zero = vec4_base<T>(0, 0, 0, 0);
+template<typename T>
+inline bool operator==(const vec4_base<T>& a, const vec4_base<T>& b) noexcept
+{
+    return (a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w);
+}
 
-template <typename T>
-const vec4_base<T> vec4_base<T>::one = vec4_base<T>(1, 1, 1, 1);
+template<typename T>
+inline bool operator!=(const vec4_base<T>& a, const vec4_base<T>& b) noexcept
+{
+    return (a.x != b.x || a.y != b.y || a.z != b.z || a.w != b.w);
+}
+
+// TODO: Make SIMD-optimized specializations for vec4_base<float> and vec4_base<int>
 
 using vec2 = vec2_base<float>;
 HL_STATIC_ASSERT_SIZE(vec2, 8);
@@ -394,12 +452,24 @@ HL_STATIC_ASSERT_SIZE(bvec3, 3);
 using bvec4 = vec4_base<u8>;
 HL_STATIC_ASSERT_SIZE(bvec4, 4);
 
-struct quat : vec4
+struct quat : public vec4
 {
-    HL_API static const quat identity;
+    static constexpr quat identity() noexcept
+    {
+        return quat(0, 0, 0, 1);
+    }
+
+    HL_API vec3 as_euler() const;
 
     inline quat() noexcept = default;
-    constexpr quat(vec4 v) noexcept : vec4(v) {}
+
+    constexpr quat(vec4 v) noexcept :
+        vec4(v) {}
+
+    HL_API quat(const vec3& axis, float angle);
+
+    HL_API quat(const vec3& eulerAngles);
+
     constexpr quat(float x, float y, float z, float w) noexcept :
         vec4(x, y, z, w) {}
 };
@@ -454,11 +524,19 @@ HL_STATIC_ASSERT_SIZE(bounding_sphere, 16);
 
 struct matrix3x4
 {
-    float m11, m12, m13, m14;
-    float m21, m22, m23, m24;
-    float m31, m32, m33, m34;
+    float m11, m12, m13;
+    float m21, m22, m23;
+    float m31, m32, m33;
+    float m41, m42, m43;
 
-    HL_API static const matrix3x4 identity;
+    static constexpr matrix3x4 identity() noexcept
+    {
+        return matrix3x4(
+            1.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 1.0f,
+            0.0f, 0.0f, 0.0f);
+    }
 
     template<bool swapOffsets = true>
     void endian_swap() noexcept
@@ -466,33 +544,37 @@ struct matrix3x4
         hl::endian_swap(m11);
         hl::endian_swap(m12);
         hl::endian_swap(m13);
-        hl::endian_swap(m14);
 
         hl::endian_swap(m21);
         hl::endian_swap(m22);
         hl::endian_swap(m23);
-        hl::endian_swap(m24);
 
         hl::endian_swap(m31);
         hl::endian_swap(m32);
         hl::endian_swap(m33);
-        hl::endian_swap(m34);
-    }
 
+        hl::endian_swap(m41);
+        hl::endian_swap(m42);
+        hl::endian_swap(m43);
+    }
+    
     matrix3x4() noexcept = default;
 
-    constexpr matrix3x4(vec4 m1, vec4 m2, vec4 m3) noexcept :
-        m11(m1.x), m12(m1.y), m13(m1.z), m14(m1.w),
-        m21(m2.x), m22(m2.y), m23(m2.z), m24(m2.w),
-        m31(m3.x), m32(m3.y), m33(m3.z), m34(m3.w) {}
+    constexpr matrix3x4(vec3 m1, vec3 m2, vec3 m3, vec3 m4) noexcept :
+        m11(m1.x), m12(m1.y), m13(m1.z),
+        m21(m2.x), m22(m2.y), m23(m2.z),
+        m31(m3.x), m32(m3.y), m33(m3.z),
+        m41(m4.x), m42(m4.y), m43(m4.z) {}
 
     constexpr matrix3x4(
-        float m11, float m12, float m13, float m14,
-        float m21, float m22, float m23, float m24,
-        float m31, float m32, float m33, float m34) noexcept :
-        m11(m11), m12(m12), m13(m13), m14(m14),
-        m21(m21), m22(m22), m23(m23), m24(m24),
-        m31(m31), m32(m32), m33(m33), m34(m34) {}
+        float m11, float m12, float m13,
+        float m21, float m22, float m23,
+        float m31, float m32, float m33,
+        float m41, float m42, float m43) noexcept :
+        m11(m11), m12(m12), m13(m13),
+        m21(m21), m22(m22), m23(m23),
+        m31(m31), m32(m32), m33(m33),
+        m41(m41), m42(m42), m43(m43) {}
 };
 
 HL_STATIC_ASSERT_SIZE(matrix3x4, 48);
@@ -504,7 +586,14 @@ struct matrix4x4
     float m31, m32, m33, m34;
     float m41, m42, m43, m44;
 
-    HL_API static const matrix4x4 identity;
+    static constexpr matrix4x4 identity() noexcept
+    {
+        return matrix4x4(
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+    }
 
     template<bool swapOffsets = true>
     void endian_swap() noexcept
@@ -530,6 +619,8 @@ struct matrix4x4
         hl::endian_swap(m44);
     }
 
+    HL_API vec3 get_rotation_euler() const;
+
     matrix4x4() noexcept = default;
 
     constexpr matrix4x4(vec4 m1, vec4 m2, vec4 m3, vec4 m4) noexcept :
@@ -547,6 +638,8 @@ struct matrix4x4
         m21(m21), m22(m22), m23(m23), m24(m24),
         m31(m31), m32(m32), m33(m33), m34(m34),
         m41(m41), m42(m42), m43(m43), m44(m44) {}
+
+    HL_API matrix4x4(const quat& rot);
 };
 
 HL_STATIC_ASSERT_SIZE(matrix4x4, 64);

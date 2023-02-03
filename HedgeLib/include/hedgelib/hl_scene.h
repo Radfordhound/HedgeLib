@@ -224,10 +224,10 @@ class material
 
 public:
     tagged_string name;
-    vec3 diffuseColor = vec3::one;
-    vec3 specularColor = vec3::one;
-    vec3 ambientColor = vec3::zero;
-    vec3 emissiveColor = vec3::zero;
+    vec3 diffuseColor = vec3::one();
+    vec3 specularColor = vec3::one();
+    vec3 ambientColor = vec3::zero();
+    vec3 emissiveColor = vec3::zero();
     std::vector<texture_map> textures;
 
     inline const hl::scene& scene() const noexcept
@@ -339,9 +339,9 @@ protected:
 
 public:
     std::string name;
-    hl::vec3 pos = hl::vec3::zero;
-    hl::quat rot = hl::quat::identity;
-    hl::vec3 scale = hl::vec3::one;
+    hl::vec3 pos = hl::vec3::zero();
+    hl::quat rot = hl::quat::identity();
+    hl::vec3 scale = hl::vec3::one();
     std::vector<std::unique_ptr<node_attribute>> attributes;
 
     virtual ~node() {}
