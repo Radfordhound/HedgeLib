@@ -127,7 +127,7 @@ public:
         m_hasRes(false),
         m_name(name) {}
 
-    res_ref(std::string&& name) noexcept :
+    res_ref(std::string name) noexcept :
         m_hasRes(false),
         m_name(std::move(name)) {}
 
