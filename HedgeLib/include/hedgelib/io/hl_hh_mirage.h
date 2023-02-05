@@ -525,7 +525,7 @@ class writer : public internal::in_writer_base
     };
 
     std::vector<sample_chunk_node> m_nodes;
-    hl::off_table m_offTable;
+    off_table m_offsets;
     std::size_t m_headerPos;
     std::size_t m_basePos;
     std::size_t m_curUnfinishedNodeIndex = SIZE_MAX;
@@ -533,14 +533,9 @@ class writer : public internal::in_writer_base
     u32 m_dataVersion = 0U;
 
 public:
-    inline const hl::off_table& off_table() const noexcept
+    inline const off_table& offsets() const noexcept
     {
-        return m_offTable;
-    }
-
-    inline hl::off_table& off_table() noexcept
-    {
-        return m_offTable;
+        return m_offsets;
     }
 
     inline std::size_t header_pos() const noexcept
@@ -552,8 +547,6 @@ public:
     {
         return m_basePos;
     }
-
-    HL_API void fix_offset(std::size_t pos);
 
     HL_API void start(header_type headerType = header_type::standard);
 
@@ -585,6 +578,8 @@ public:
     }
 
     HL_API void start_data(u32 version);
+
+    HL_API void fix_offset(std::size_t pos);
 
     HL_API void finish_data();
 

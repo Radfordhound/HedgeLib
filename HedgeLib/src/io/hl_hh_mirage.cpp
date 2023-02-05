@@ -414,16 +414,15 @@ void offsets_write(std::size_t basePos,
     offsets_write_no_sort(basePos, offTable, stream);
 }
 
-void writer::fix_offset(std::size_t pos)
-{
-    m_stream->fix_off32(m_basePos, pos, needs_endian_swap, m_offTable);
-}
-
 void writer::start(header_type headerType)
 {
-    // Store header type and position.
-    m_headerType = headerType;
+    // Clear nodes and offsets.
+    m_nodes.clear();
+    m_offsets.clear();
+
+    // Store header position and type.
     m_headerPos = m_stream->tell();
+    m_headerType = headerType;
 
     if (headerType == header_type::standard)
     {
@@ -519,6 +518,11 @@ void writer::start_data(u32 version)
     }
 }
 
+void writer::fix_offset(std::size_t pos)
+{
+    m_stream->fix_off32(m_basePos, pos, needs_endian_swap, m_offsets);
+}
+
 void writer::finish_data()
 {
     // Finish writing contexts node if necessary.
@@ -536,7 +540,7 @@ void writer::finish(const char* fileName)
     {
         // Finish writing standard header.
         standard::raw_header::finish_write(m_headerPos,
-            m_basePos, m_dataVersion, m_offTable,
+            m_basePos, m_dataVersion, m_offsets,
             *m_stream, fileName);
     }
     else
@@ -558,7 +562,7 @@ void writer::finish(const char* fileName)
 
         // Finish writing sample chunk header.
         sample_chunk::raw_header::finish_write(m_headerPos,
-            m_basePos, m_offTable, *m_stream);
+            m_basePos, m_offsets, *m_stream);
     }
 }
 
