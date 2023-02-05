@@ -1,5 +1,6 @@
 #include "hedgelib/models/hl_hh_model.h"
 #include "hedgelib/materials/hl_hh_material.h"
+#include "hedgelib/hh/hl_hh_needle.h"
 #include "hedgelib/io/hl_file.h"
 #include "hedgelib/io/hl_path.h"
 #include "hedgelib/hl_blob.h"
@@ -772,24 +773,6 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
     }
 }
 
-bool raw_terrain_model_v5::is_revision2() const
-{
-    // HACK: Since Sonic Team didn't bother upping the version number, there's no
-    // "clean" way to check which revision of the format this is. So, we check to
-    // see if any of the pointers in the struct point *before* where the revision 2
-    // struct is supposed to end. If so, it must be a revision 1 struct.
-    const auto rev2_endAddr = reinterpret_cast<
-        std::uintptr_t>(ptradd(this, sizeof(*this)));
-
-    const auto meshGroupsAddr = reinterpret_cast<
-        std::uintptr_t>(meshGroups.data());
-
-    const auto nameAddr = reinterpret_cast<
-        std::uintptr_t>(name.get());
-
-    return (meshGroupsAddr >= rev2_endAddr && nameAddr >= rev2_endAddr);
-}
-
 static void in_swap_vertex(const raw_vertex_element& rawVtxElem, void* rawVtx)
 {
     // Swap vertex based on vertex element.
@@ -885,19 +868,20 @@ static void in_swap_vertex(const raw_vertex_element& rawVtxElem, void* rawVtx)
     }
 }
 
-static void in_swap_recursive(raw_mesh& mesh)
+template<typename RawMeshType>
+static void in_swap_recursive(RawMeshType& rawMesh)
 {
     // Swap mesh.
-    mesh.endian_swap<false>();
+    rawMesh.endian_swap<false>();
 
     // Swap faces.
-    for (auto& face : mesh.faces)
+    for (auto& face : rawMesh.faces)
     {
         endian_swap(face);
     }
 
     // Swap vertex format (array of vertex elements).
-    raw_vertex_element* curVtxElem = mesh.vertexElements.get();
+    raw_vertex_element* curVtxElem = rawMesh.vertexElements.get();
     do
     {
         curVtxElem->endian_swap<false>();
@@ -905,62 +889,75 @@ static void in_swap_recursive(raw_mesh& mesh)
     while ((curVtxElem++)->format != raw_vertex_format::last_entry);
 
     // Swap vertices based on vertex format.
-    curVtxElem = mesh.vertexElements.get();
+    curVtxElem = rawMesh.vertexElements.get();
     while (curVtxElem->format != raw_vertex_format::last_entry)
     {
         // Swap vertices based on vertex element.
-        void* curVtx = ptradd(mesh.vertices.get(), curVtxElem->offset);
-        for (u32 i = 0; i < mesh.vertexCount; ++i)
+        void* curVtx = ptradd(rawMesh.vertices.get(), curVtxElem->offset);
+        for (u32 i = 0; i < rawMesh.vertexCount; ++i)
         {
             // Swap vertex.
             in_swap_vertex(*curVtxElem, curVtx);
 
             // Increase vertices pointer.
-            curVtx = ptradd(curVtx, mesh.vertexSize);
+            curVtx = ptradd(curVtx, rawMesh.vertexSize);
         }
 
         // Increase current vertex element pointer.
         ++curVtxElem;
     }
+
+    // Swap bone node indices if necessary.
+    if constexpr (std::is_same_v<RawMeshType, raw_mesh_r2>)
+    {
+        for (auto& boneNodeIndex : rawMesh.boneNodeIndices)
+        {
+            endian_swap(boneNodeIndex);
+        }
+    }
 }
 
-static void in_swap_recursive(raw_mesh_slot& slot)
+template<typename RawMeshType>
+static void in_swap_recursive(raw_mesh_slot<RawMeshType>& rawMeshSlot)
 {
-    for (auto& meshOff : slot)
+    for (auto& meshOff : rawMeshSlot)
     {
         in_swap_recursive(*meshOff);
     }
 }
 
-static void in_swap_recursive(raw_special_meshes& special)
+template<typename RawMeshType>
+static void in_swap_recursive(raw_special_meshes<RawMeshType>& rawSpecial)
 {
-    for (u32 i = 0; i < special.count; ++i)
+    for (u32 i = 0; i < rawSpecial.count; ++i)
     {
         // Swap mesh count.
-        endian_swap(*special.meshCounts[i]);
+        endian_swap(*rawSpecial.meshCounts[i]);
 
         // Swap meshes.
-        const u32 meshCount = *special.meshCounts[i];
+        const u32 meshCount = *rawSpecial.meshCounts[i];
         for (u32 i2 = 0; i2 < meshCount; ++i2)
         {
-            in_swap_recursive(*special.meshes[i][i2]);
+            in_swap_recursive(*rawSpecial.meshes[i][i2]);
         }
     }
 }
 
-static void in_swap_recursive(raw_mesh_group& group)
+template<typename RawMeshType>
+static void in_swap_recursive(raw_mesh_group<RawMeshType>& rawMeshGroup)
 {
     // Swap the mesh group.
-    group.endian_swap<false>();
+    rawMeshGroup.endian_swap<false>();
 
     // Recursively swap mesh slots.
-    in_swap_recursive(group.opaq);
-    in_swap_recursive(group.punch);
-    in_swap_recursive(group.trans);
-    in_swap_recursive(group.special);
+    in_swap_recursive(rawMeshGroup.opaq);
+    in_swap_recursive(rawMeshGroup.punch);
+    in_swap_recursive(rawMeshGroup.trans);
+    in_swap_recursive(rawMeshGroup.special);
 }
 
-static void in_swap_recursive(arr32<off32<raw_mesh_group>>& groups)
+template<typename RawMeshType>
+static void in_swap_recursive(arr32<off32<raw_mesh_group<RawMeshType>>>& groups)
 {
     for (auto& groupOff : groups)
     {
@@ -968,7 +965,7 @@ static void in_swap_recursive(arr32<off32<raw_mesh_group>>& groups)
     }
 }
 
-void raw_terrain_model_v5::fix()
+void raw_terrain_model_v5r1::fix()
 {
 #ifndef HL_IS_BIG_ENDIAN
     // Swap terrain model header.
@@ -977,6 +974,42 @@ void raw_terrain_model_v5::fix()
     // Swap mesh groups.
     in_swap_recursive(meshGroups);
 #endif
+}
+
+void raw_terrain_model_v5r2::fix()
+{
+#ifndef HL_IS_BIG_ENDIAN
+    // Swap terrain model header.
+    endian_swap<false>();
+
+    // Swap mesh groups.
+    in_swap_recursive(meshGroups);
+#endif
+}
+
+u32 get_terrain_model_v5_revision(const void* rawData)
+{
+    // HACK: Since Sonic Team didn't bother upping the version number, there's no
+    // "clean" way to check which revision of the format this is. So, we check to
+    // see if any of the pointers in the struct point *before* where the revision 2
+    // struct is supposed to end. If so, it must be a revision 1 struct.
+
+    // NOTE: This approach doesn't account for cases where the mesh group and name
+    // pointers are both null, although this never actually happens in any real
+    // revision 1 files to my knowledge.
+
+    const auto& rawMdl = *static_cast<const raw_terrain_model_v5r2*>(rawData);
+    const auto rev2_endAddr = reinterpret_cast<
+        std::uintptr_t>(&rawMdl + 1);
+
+    const auto meshGroupsAddr = reinterpret_cast<
+        std::uintptr_t>(rawMdl.meshGroups.data());
+
+    const auto nameAddr = reinterpret_cast<
+        std::uintptr_t>(rawMdl.name.get());
+
+    return (meshGroupsAddr < rev2_endAddr || nameAddr < rev2_endAddr) ?
+        1 : 2;
 }
 
 void raw_skeletal_model_v2::fix()
@@ -1011,6 +1044,34 @@ void raw_skeletal_model_v2::fix()
 }
 
 void raw_skeletal_model_v5::fix()
+{
+#ifndef HL_IS_BIG_ENDIAN
+    // Swap skeletal model header.
+    endian_swap<false>();
+
+    // Swap mesh groups.
+    in_swap_recursive(meshGroups);
+
+    // TODO: Swap unknown1?
+
+    // Swap nodes.
+    for (u32 i = 0; i < nodeCount; ++i)
+    {
+        nodes[i]->endian_swap<false>();
+    }
+
+    // Swap node matrices.
+    for (u32 i = 0; i < nodeCount; ++i)
+    {
+        nodeMatrices[i].endian_swap<false>();
+    }
+
+    // Swap bounds.
+    bounds->endian_swap<false>();
+#endif
+}
+
+void raw_skeletal_model_v6::fix()
 {
 #ifndef HL_IS_BIG_ENDIAN
     // Swap skeletal model header.
@@ -1410,17 +1471,13 @@ hl::mesh& mesh::add_to_node(hl::node& node, topology_type topType,
     return static_cast<hl::mesh&>(*node.attributes.back());
 }
 
-void mesh::write(writer& writer) const
+void mesh::write(writer& writer, u32 revision) const
 {
     // Generate raw mesh.
-    const auto matNameOff = writer.tell(offsetof(raw_mesh, materialName));
-    const auto facesOff = writer.tell(offsetof(raw_mesh, faces.dataPtr));
-    const auto verticesOff = writer.tell(offsetof(raw_mesh, vertices));
-    const auto vtxElemsOff = writer.tell(offsetof(raw_mesh, vertexElements));
-    const auto boneNodeIndicesOff = writer.tell(offsetof(raw_mesh, boneNodeIndices.dataPtr));
-    const auto textureUnitsOff = writer.tell(offsetof(raw_mesh, textureUnits.dataPtr));
-
-    raw_mesh rawMesh =
+    // HACK: Use revision 1 struct regardless of revision we're writing since
+    // the struct memory is actually the same for both revision 1 and revision 2.
+    const auto meshPos = writer.tell();
+    raw_mesh_r1 rawMesh =
     {
         nullptr,                                                        // materialName
         { static_cast<u32>(faces.size()), nullptr },                    // faces
@@ -1441,7 +1498,7 @@ void mesh::write(writer& writer) const
     writer.write_obj(rawMesh);
 
     // Write faces.
-    writer.fix_offset(facesOff);
+    writer.fix_offset(meshPos + offsetof(raw_mesh_r1, faces.dataPtr));
 
 #ifndef HL_IS_BIG_ENDIAN
     for (auto face : faces)
@@ -1456,7 +1513,7 @@ void mesh::write(writer& writer) const
     writer.pad(4);
 
     // Write vertices.
-    writer.fix_offset(verticesOff);
+    writer.fix_offset(meshPos + offsetof(raw_mesh_r1, vertices));
 
 #ifndef HL_IS_BIG_ENDIAN
     std::unique_ptr<u8[]> tmpVertexBuf(new u8[vertexSize]);
@@ -1485,7 +1542,7 @@ void mesh::write(writer& writer) const
 #endif
 
     // Write vertex elements.
-    writer.fix_offset(vtxElemsOff);
+    writer.fix_offset(meshPos + offsetof(raw_mesh_r1, vertexElements));
 
 #ifndef HL_IS_BIG_ENDIAN
     for (auto& vtxElem : vertexElements)
@@ -1516,12 +1573,32 @@ void mesh::write(writer& writer) const
     writer.write_obj(lastRawVtxElem);
 
     // Write node indices.
-    writer.fix_offset(boneNodeIndicesOff);
-    writer.write_arr(boneNodeIndices.size(), boneNodeIndices.data());
+    writer.fix_offset(meshPos + offsetof(raw_mesh_r1, boneNodeIndices.dataPtr));
+
+    if (revision == 1)
+    {
+        for (u8 boneNodeIndex : boneNodeIndices)
+        {
+            writer.write_obj(boneNodeIndex);
+        }
+    }
+    else
+    {
+#ifndef HL_IS_BIG_ENDIAN
+        for (u16 boneNodeIndex : boneNodeIndices)
+        {
+            hl::endian_swap(boneNodeIndex);
+            writer.write_obj(boneNodeIndex);
+        }
+#else
+        writer.write_arr(boneNodeIndices.size(), boneNodeIndices.data());
+#endif
+    }
+
     writer.pad(4);
 
     // Write placeholder texture unit offsets.
-    writer.fix_offset(textureUnitsOff);
+    writer.fix_offset(meshPos + offsetof(raw_mesh_r1, textureUnits.dataPtr));
     std::size_t curTexUnitOffPos = writer.tell();
     writer.write_nulls(sizeof(off32<raw_texture_unit>) * textureUnits.size());
 
@@ -1539,7 +1616,7 @@ void mesh::write(writer& writer) const
     }
 
     // Write material name.
-    writer.fix_offset(matNameOff);
+    writer.fix_offset(meshPos + offsetof(raw_mesh_r1, materialName));
     writer.write_str(material.name());
     writer.pad(4);
 }
@@ -1554,7 +1631,7 @@ static const raw_vertex_element* in_get_last_vtx_elem(const raw_vertex_element* 
     return rawVtxElem;
 }
 
-mesh::mesh(const raw_mesh& rawMesh) :
+mesh::mesh(const raw_mesh_r1& rawMesh) :
     material(rawMesh.materialName.get()),
     faces(rawMesh.faces.begin(), rawMesh.faces.end()),
 
@@ -1582,7 +1659,36 @@ mesh::mesh(const raw_mesh& rawMesh) :
     }
 }
 
-void mesh_slot::get_unique_material_names(std::unordered_set<std::string>& uniqueMatNames) const
+mesh::mesh(const raw_mesh_r2& rawMesh) :
+    material(rawMesh.materialName.get()),
+    faces(rawMesh.faces.begin(), rawMesh.faces.end()),
+
+    vertexElements(rawMesh.vertexElements.get(),
+        in_get_last_vtx_elem(rawMesh.vertexElements.get())),
+
+    vertices(new u8[static_cast<std::size_t>(
+        rawMesh.vertexSize) * rawMesh.vertexCount]),
+
+    vertexCount(rawMesh.vertexCount),
+    vertexSize(rawMesh.vertexSize),
+    boneNodeIndices(rawMesh.boneNodeIndices.begin(), rawMesh.boneNodeIndices.end())
+{
+    // Copy vertices.
+    std::size_t verticesSize = (static_cast<std::size_t>(
+        rawMesh.vertexSize) * rawMesh.vertexCount);
+
+    std::memcpy(vertices.get(), rawMesh.vertices.get(), verticesSize);
+
+    // Emplace texture units.
+    textureUnits.reserve(rawMesh.textureUnits.count);
+    for (auto& rawTexUnitOff : rawMesh.textureUnits)
+    {
+        textureUnits.emplace_back(*rawTexUnitOff.get());
+    }
+}
+
+void mesh_slot::get_unique_material_names(
+    std::unordered_set<std::string>& uniqueMatNames) const
 {
     for (auto& mesh : *this)
     {
@@ -1601,11 +1707,11 @@ void mesh_slot::add_to_node(hl::node& node, topology_type topType,
     }
 }
 
-void mesh_slot::write(writer& writer) const
+void mesh_slot::write(writer& writer, u32 revision) const
 {
     // Write placeholder mesh offsets.
     std::size_t curMeshOffPos = writer.tell();
-    writer.write_nulls(sizeof(off32<raw_mesh>) * size());
+    writer.write_nulls(sizeof(off32<raw_mesh_r1>) * size());
 
     // Write meshes and fill-in placeholder mesh offsets.
     for (auto& mesh : *this)
@@ -1614,14 +1720,23 @@ void mesh_slot::write(writer& writer) const
         writer.fix_offset(curMeshOffPos);
 
         // Write mesh.
-        mesh.write(writer);
+        mesh.write(writer, revision);
 
         // Increase current mesh offset position.
-        curMeshOffPos += sizeof(off32<raw_mesh>);
+        curMeshOffPos += sizeof(off32<raw_mesh_r1>);
     }
 }
 
-mesh_slot::mesh_slot(const raw_mesh_slot& rawSlot)
+mesh_slot::mesh_slot(const raw_mesh_slot_r1& rawSlot)
+{
+    reserve(rawSlot.count);
+    for (const auto& rawMeshOff : rawSlot)
+    {
+        emplace_back(*rawMeshOff);
+    }
+}
+
+mesh_slot::mesh_slot(const raw_mesh_slot_r2& rawSlot)
 {
     reserve(rawSlot.count);
     for (const auto& rawMeshOff : rawSlot)
@@ -1631,7 +1746,7 @@ mesh_slot::mesh_slot(const raw_mesh_slot& rawSlot)
 }
 
 special_mesh_slot::special_mesh_slot(
-    const raw_special_meshes::const_slot_wrapper& rawSpecialSlot) :
+    const raw_special_meshes_r1::const_slot_wrapper& rawSpecialSlot) :
     type(rawSpecialSlot.type)
 {
     reserve(rawSpecialSlot.meshCount);
@@ -1641,7 +1756,18 @@ special_mesh_slot::special_mesh_slot(
     }
 }
 
-special_meshes::special_meshes(const raw_special_meshes& rawSpecial)
+special_mesh_slot::special_mesh_slot(
+    const raw_special_meshes_r2::const_slot_wrapper& rawSpecialSlot) :
+    type(rawSpecialSlot.type)
+{
+    reserve(rawSpecialSlot.meshCount);
+    for (const auto& rawMeshOff : rawSpecialSlot)
+    {
+        emplace_back(*rawMeshOff);
+    }
+}
+
+special_meshes::special_meshes(const raw_special_meshes_r1& rawSpecial)
 {
     reserve(rawSpecial.count);
     for (const auto& rawSlot : rawSpecial)
@@ -1650,7 +1776,17 @@ special_meshes::special_meshes(const raw_special_meshes& rawSpecial)
     }
 }
 
-void mesh_group::get_unique_material_names(std::unordered_set<std::string>& uniqueMatNames) const
+special_meshes::special_meshes(const raw_special_meshes_r2& rawSpecial)
+{
+    reserve(rawSpecial.count);
+    for (const auto& rawSlot : rawSpecial)
+    {
+        emplace_back(rawSlot);
+    }
+}
+
+void mesh_group::get_unique_material_names(
+    std::unordered_set<std::string>& uniqueMatNames) const
 {
     opaq.get_unique_material_names(uniqueMatNames);
     trans.get_unique_material_names(uniqueMatNames);
@@ -1685,61 +1821,57 @@ void mesh_group::add_to_node(hl::node& node, topology_type topType,
     }
 }
 
-void mesh_group::write(writer& writer, u32 revision) const
+void mesh_group::write(writer& writer, u32 revision, bool allowNullOffsets) const
 {
-    // Generate raw mesh group.
-    const auto opaqOff = writer.tell(offsetof(raw_mesh_group, opaq.dataPtr));
-    const auto transOff = writer.tell(offsetof(raw_mesh_group, trans.dataPtr));
-    const auto punchOff = writer.tell(offsetof(raw_mesh_group, punch.dataPtr));
-    const auto specialTypesOff = writer.tell(offsetof(raw_mesh_group, special.types));
-    const auto specialCountsOff = writer.tell(offsetof(raw_mesh_group, special.meshCounts));
-    const auto specialMeshesOff = writer.tell(offsetof(raw_mesh_group, special.meshes));
-
-    raw_mesh_group rawMeshGroup =
+    // Write raw mesh group.
+    const auto rawMeshGroupPos = writer.tell();
     {
-        { static_cast<u32>(opaq.size()), nullptr },                     // opaq
-        { static_cast<u32>(trans.size()), nullptr },                    // trans
-        { static_cast<u32>(punch.size()), nullptr },                    // punch
-        {                                                               // special
-            static_cast<u32>(special.size()),                           //   count
-            UINT32_MAX,                                                 //   types
-            UINT32_MAX,                                                 //   meshCounts
-            UINT32_MAX                                                  //   meshes
-        }
-    };
+        // Generate raw mesh group.
+        raw_mesh_group_r1 rawMeshGroup = {};
+        rawMeshGroup.opaq.count = static_cast<u32>(opaq.size());
+        rawMeshGroup.trans.count = static_cast<u32>(trans.size());
+        rawMeshGroup.punch.count = static_cast<u32>(punch.size());
+        rawMeshGroup.special.count = static_cast<u32>(special.size());
+        rawMeshGroup.special.types = UINT32_MAX;
+        rawMeshGroup.special.meshCounts = UINT32_MAX;
+        rawMeshGroup.special.meshes = UINT32_MAX;
 
-    // Endian-swap raw mesh group if necessary.
+        // Endian-swap raw mesh group if necessary.
 #ifndef HL_IS_BIG_ENDIAN
-    rawMeshGroup.endian_swap();
+        rawMeshGroup.endian_swap();
 #endif
 
-    // Write raw mesh group to stream.
-    writer.write_obj(rawMeshGroup);
+        // Write raw mesh group to stream.
+        writer.write_obj(rawMeshGroup);
+    }
 
     // Write mesh group name.
     writer.write_str(name);
     writer.pad(4);
 
     // Write normal mesh slots.
-    writer.fix_offset(opaqOff);
-    opaq.write(writer);
+    writer.fix_offset(rawMeshGroupPos + offsetof(raw_mesh_group_r1, opaq.dataPtr));
+    opaq.write(writer, revision);
 
-    writer.fix_offset(transOff);
-    trans.write(writer);
+    writer.fix_offset(rawMeshGroupPos + offsetof(raw_mesh_group_r1, trans.dataPtr));
+    trans.write(writer, revision);
 
-    writer.fix_offset(punchOff);
-    punch.write(writer);
+    writer.fix_offset(rawMeshGroupPos + offsetof(raw_mesh_group_r1, punch.dataPtr));
+    punch.write(writer, revision);
 
     // Early out if there are no special meshes.
     if (special.empty())
     {
-        // Revision 1 fills in offsets anyway even if there
-        // are no special meshes; replicate that here.
-        if (revision < 2)
+        if (!allowNullOffsets)
         {
-            writer.fix_offset(specialTypesOff);
-            writer.fix_offset(specialCountsOff);
-            writer.fix_offset(specialMeshesOff);
+            writer.fix_offset(rawMeshGroupPos +
+                offsetof(raw_mesh_group_r1, special.types));
+
+            writer.fix_offset(rawMeshGroupPos +
+                offsetof(raw_mesh_group_r1, special.meshCounts));
+
+            writer.fix_offset(rawMeshGroupPos +
+                offsetof(raw_mesh_group_r1, special.meshes));
         }
 
         return;
@@ -1747,11 +1879,13 @@ void mesh_group::write(writer& writer, u32 revision) const
 
     // Write placeholder special mesh group type offsets.
     std::size_t curOffPos = writer.tell();
-    writer.fix_offset(specialTypesOff);
+    writer.fix_offset(rawMeshGroupPos +
+        offsetof(raw_mesh_group_r1, special.types));
+
     writer.write_nulls(sizeof(off32<char>) * special.size());
 
     // Write special mesh group types.
-    for (std::size_t i = 0; i < special.size(); i++)
+    for (std::size_t i = 0; i < special.size(); ++i)
     {
         // Fix special mesh group type offset.
         writer.fix_offset(curOffPos);
@@ -1766,11 +1900,13 @@ void mesh_group::write(writer& writer, u32 revision) const
 
     // Write placeholder special mesh count offsets.
     curOffPos = writer.tell();
-    writer.fix_offset(specialCountsOff);
+    writer.fix_offset(rawMeshGroupPos +
+        offsetof(raw_mesh_group_r1, special.meshCounts));
+
     writer.write_nulls(sizeof(off32<u32>) * special.size());
 
     // Write special mesh counts.
-    for (std::size_t i = 0; i < special.size(); i++)
+    for (std::size_t i = 0; i < special.size(); ++i)
     {
         // Fix special mesh count offset.
         writer.fix_offset(curOffPos);
@@ -1791,39 +1927,51 @@ void mesh_group::write(writer& writer, u32 revision) const
 
     // Write placeholder special mesh group offsets.
     curOffPos = writer.tell();
-    writer.fix_offset(specialMeshesOff);
-    writer.write_nulls(sizeof(off32<off32<raw_mesh>>) * special.size());
+    writer.fix_offset(rawMeshGroupPos +
+        offsetof(raw_mesh_group_r1, special.meshes));
+
+    writer.write_nulls(sizeof(off32<off32<raw_mesh_r1>>) * special.size());
 
     // Write special mesh groups.
-    for (std::size_t i = 0; i < special.size(); i++)
+    for (std::size_t i = 0; i < special.size(); ++i)
     {
         // Write placeholder special mesh offsets.
         std::size_t curMeshOffPos = writer.tell();
         writer.fix_offset(curOffPos);
-        writer.write_nulls(sizeof(off32<raw_mesh>) * special[i].size());
+        writer.write_nulls(sizeof(off32<raw_mesh_r1>) * special[i].size());
 
         // Write special meshes.
-        for (std::size_t i2 = 0; i2 < special[i].size(); i2++)
+        for (std::size_t i2 = 0; i2 < special[i].size(); ++i2)
         {
             writer.fix_offset(curMeshOffPos);
-            special[i][i2].write(writer);
+            special[i][i2].write(writer, revision);
 
-            curMeshOffPos += sizeof(off32<raw_mesh>);
+            curMeshOffPos += sizeof(off32<raw_mesh_r1>);
         }
 
         // Increase current offset position.
-        curOffPos += sizeof(off32<off32<raw_mesh>>);
+        curOffPos += sizeof(off32<off32<raw_mesh_r1>>);
     }
 }
 
-mesh_group::mesh_group(const raw_mesh_group& rawGroup) :
+mesh_group::mesh_group(const raw_mesh_group_r1& rawGroup) :
     name(rawGroup.name()),
     opaq(rawGroup.opaq),
     trans(rawGroup.trans),
     punch(rawGroup.punch),
     special(rawGroup.special) {}
 
-mesh_group::mesh_group(const raw_mesh_slot& rawSlot) :
+mesh_group::mesh_group(const raw_mesh_group_r2& rawGroup) :
+    name(rawGroup.name()),
+    opaq(rawGroup.opaq),
+    trans(rawGroup.trans),
+    punch(rawGroup.punch),
+    special(rawGroup.special) {}
+
+mesh_group::mesh_group(const raw_mesh_slot_r1& rawSlot) :
+    opaq(rawSlot) {}
+
+mesh_group::mesh_group(const raw_mesh_slot_r2& rawSlot) :
     opaq(rawSlot) {}
 
 hl::node& node::add_to_node(hl::node& parentNode,
@@ -1961,7 +2109,19 @@ bool model::in_has_per_node_params(std::size_t nodeCount,
     return false;
 }
 
-void model::in_parse_mesh_groups(const arr32<off32<raw_mesh_group>>& rawMeshGroups)
+void model::in_parse_mesh_groups(const arr32<off32<raw_mesh_group_r1>>& rawMeshGroups)
+{
+    // Reserve space for mesh groups.
+    meshGroups.reserve(rawMeshGroups.count);
+
+    // Parse mesh groups.
+    for (const auto& rawMeshGroupOff : rawMeshGroups)
+    {
+        meshGroups.emplace_back(*rawMeshGroupOff);
+    }
+}
+
+void model::in_parse_mesh_groups(const arr32<off32<raw_mesh_group_r2>>& rawMeshGroups)
 {
     // Reserve space for mesh groups.
     meshGroups.reserve(rawMeshGroups.count);
@@ -2138,7 +2298,7 @@ void model::import_materials(const nchar* materialDir,
     }
 }
 
-void terrain_model::in_parse(const raw_terrain_model_v5& rawMdl)
+void terrain_model::in_parse(const raw_terrain_model_v5r1& rawMdl)
 {
     // Parse mesh groups.
     in_parse_mesh_groups(rawMdl.meshGroups);
@@ -2147,8 +2307,19 @@ void terrain_model::in_parse(const raw_terrain_model_v5& rawMdl)
     rootNode = node(rawMdl.name.get());
 
     // Parse flags.
-    isInstanced = (rawMdl.is_revision2() && (rawMdl.rev2_flags &
-        static_cast<u32>(raw_terrain_model_flags::is_instanced)) != 0);
+    isInstanced = false;
+}
+
+void terrain_model::in_parse(const raw_terrain_model_v5r2& rawMdl)
+{
+    // Parse mesh groups.
+    in_parse_mesh_groups(rawMdl.meshGroups);
+
+    // Parse root node.
+    rootNode = node(rawMdl.name.get());
+
+    // Parse flags.
+    isInstanced = rawMdl.is_instanced();
 }
 
 void terrain_model::in_parse(const void* rawData)
@@ -2162,7 +2333,14 @@ void terrain_model::in_parse(const void* rawData)
     switch (version)
     {
     case 5:
-        in_parse(*static_cast<const raw_terrain_model_v5*>(mdlData));
+        if (get_terrain_model_v5_revision(mdlData) == 1)
+        {
+            in_parse(*static_cast<const raw_terrain_model_v5r1*>(mdlData));
+        }
+        else
+        {
+            in_parse(*static_cast<const raw_terrain_model_v5r2*>(mdlData));
+        }
         break;
 
     default:
@@ -2188,23 +2366,6 @@ void terrain_model::in_clear() noexcept
     rootNode = node();
 }
 
-header_type terrain_model::in_get_default_header_type() const
-{
-    if (has_params())
-    {
-        // Default to sample chunk V2 if we have a Topology parameter, or V1 otherwise.
-        const auto topologyProp = get_param("Topology");
-        return (topologyProp) ?
-            header_type::sample_chunk_v2 :
-            header_type::sample_chunk_v1;
-    }
-    else
-    {
-        // Default to standard if we have no parameters.
-        return header_type::standard;
-    }
-}
-
 void terrain_model::fix(void* rawData)
 {
     // Fix mirage data.
@@ -2219,11 +2380,35 @@ void terrain_model::fix(void* rawData)
     switch (version)
     {
     case 5:
-        static_cast<raw_terrain_model_v5*>(mdlData)->fix();
+        if (get_terrain_model_v5_revision(rawData) == 1)
+        {
+            static_cast<raw_terrain_model_v5r1*>(mdlData)->fix();
+        }
+        else
+        {
+            static_cast<raw_terrain_model_v5r2*>(mdlData)->fix();
+        }
         break;
 
     default:
         throw std::runtime_error("Unsupported HH terrain model version");
+    }
+}
+
+header_type terrain_model::get_default_header_type() const
+{
+    if (has_params())
+    {
+        // Default to sample chunk V2 if we have a Topology parameter, or V1 otherwise.
+        const auto topologyProp = get_param("Topology");
+        return (topologyProp) ?
+            header_type::sample_chunk_v2 :
+            header_type::sample_chunk_v1;
+    }
+    else
+    {
+        // Default to standard if we have no parameters.
+        return header_type::standard;
     }
 }
 
@@ -2296,28 +2481,42 @@ void terrain_model::write(writer& writer,
     {
     case 5:
     {
-        // Generate raw V5 terrain model header.
-        const u32 flags = static_cast<u32>((isInstanced) ?
-            raw_terrain_model_flags::is_instanced :
-            raw_terrain_model_flags::none);
+        // HACK: These offsets are the same regardless of model revision.
+        const auto mdlPos = writer.tell();
+        meshGroupsOff = (mdlPos + offsetof(raw_terrain_model_v5r1, meshGroups.dataPtr));
+        nameOff = (mdlPos + offsetof(raw_terrain_model_v5r1, name));
 
-        meshGroupsOff = writer.tell(offsetof(raw_terrain_model_v5, meshGroups.dataPtr));
-        nameOff = writer.tell(offsetof(raw_terrain_model_v5, name));
-
-        raw_terrain_model_v5 rawMdl =
+        if (revision == 1)
         {
-            { static_cast<u32>(meshGroups.size()), nullptr },           // meshGroups
-            nullptr,                                                    // name
-            flags                                                       // flags
-        };
+            // Generate raw V5 revision 1 terrain model header.
+            raw_terrain_model_v5r1 rawMdl = {};
+            rawMdl.meshGroups.count = meshGroups.size();
 
-        // Endian-swap header if necessary.
+            // Endian-swap header if necessary.
 #ifndef HL_IS_BIG_ENDIAN
-        rawMdl.endian_swap(revision >= 2);
+            rawMdl.endian_swap();
 #endif
 
-        // Write header to stream.
-        writer.write_all((revision >= 2) ? 16 : 12, &rawMdl);
+            // Write header to stream.
+            writer.write_obj(rawMdl);
+        }
+        else
+        {
+            // Generate raw V5 revision 2 terrain model header.
+            raw_terrain_model_v5r2 rawMdl = {};
+            rawMdl.meshGroups.count = meshGroups.size();
+            rawMdl.flags = ((isInstanced) ?
+                raw_terrain_model_flags::is_instanced :
+                raw_terrain_model_flags::none);
+
+            // Endian-swap header if necessary.
+#ifndef HL_IS_BIG_ENDIAN
+            rawMdl.endian_swap();
+#endif
+
+            // Write header to stream.
+            writer.write_obj(rawMdl);
+        }
         break;
     }
 
@@ -2332,7 +2531,7 @@ void terrain_model::write(writer& writer,
     case 5:
         // Write placeholder offsets for mesh groups.
         std::size_t curMeshGroupOffPos = writer.tell();
-        writer.write_nulls(sizeof(off32<raw_mesh_group>) * meshGroups.size());
+        writer.write_nulls(sizeof(off32<raw_mesh_group_r1>) * meshGroups.size());
 
         // Write mesh groups and fill-in placeholder offsets.
         for (auto& meshGroup : meshGroups)
@@ -2341,10 +2540,10 @@ void terrain_model::write(writer& writer,
             writer.fix_offset(curMeshGroupOffPos);
 
             // Write mesh group.
-            meshGroup.write(writer, revision);
+            meshGroup.write(writer, 1, revision >= 2);
 
             // Increase current mesh group offset position.
-            curMeshGroupOffPos += sizeof(off32<raw_mesh_group>);
+            curMeshGroupOffPos += sizeof(off32<raw_mesh_group_r1>);
         }
         break;
     }
@@ -2389,7 +2588,7 @@ void terrain_model::save(const nchar* filePath,
 
 void terrain_model::save(stream& stream) const
 {
-    save(stream, in_get_default_header_type());
+    save(stream, get_default_header_type());
 }
 
 void terrain_model::save(const nchar* filePath) const
@@ -2456,6 +2655,25 @@ void skeletal_model::in_parse(const raw_skeletal_model_v5& rawMdl)
     // TODO: Parse bounds?
 }
 
+void skeletal_model::in_parse(const raw_skeletal_model_v6& rawMdl)
+{
+    // Parse mesh groups.
+    in_parse_mesh_groups(rawMdl.meshGroups);
+
+    // TODO: Parse unknown1
+
+    // Reserve space for nodes.
+    nodes.reserve(rawMdl.nodeCount);
+
+    // Parse nodes.
+    for (u32 i = 0; i < rawMdl.nodeCount; ++i)
+    {
+        nodes.emplace_back(*rawMdl.nodes[i].get(), rawMdl.nodeMatrices[i]);
+    }
+
+    // TODO: Parse bounds?
+}
+
 void skeletal_model::in_parse(const void* rawData)
 {
     // Get skeletal model data and version number.
@@ -2474,6 +2692,10 @@ void skeletal_model::in_parse(const void* rawData)
 
     case 5:
         in_parse(*static_cast<const raw_skeletal_model_v5*>(mdlData));
+        break;
+
+    case 6:
+        in_parse(*static_cast<const raw_skeletal_model_v6*>(mdlData));
         break;
 
     default:
@@ -2499,23 +2721,6 @@ void skeletal_model::in_clear() noexcept
     nodes.clear();
 }
 
-header_type skeletal_model::in_get_default_header_type() const
-{
-    if (has_params())
-    {
-        // Default to sample chunk V2 if we have a Topology parameter, or V1 otherwise.
-        const auto topologyProp = get_param("Topology");
-        return (topologyProp) ?
-            header_type::sample_chunk_v2 :
-            header_type::sample_chunk_v1;
-    }
-    else
-    {
-        // Default to standard if we have no parameters.
-        return header_type::standard;
-    }
-}
-
 void skeletal_model::fix(void* rawData)
 {
     // Fix mirage data.
@@ -2539,6 +2744,10 @@ void skeletal_model::fix(void* rawData)
         static_cast<raw_skeletal_model_v5*>(mdlData)->fix();
         break;
 
+    case 6:
+        static_cast<raw_skeletal_model_v6*>(mdlData)->fix();
+        break;
+
     default:
         throw std::runtime_error("Unsupported HH skeletal model version");
     }
@@ -2547,6 +2756,23 @@ void skeletal_model::fix(void* rawData)
 bool skeletal_model::has_per_node_params() const noexcept
 {
     return in_has_per_node_params(nodes.size(), nodes.data());
+}
+
+header_type skeletal_model::get_default_header_type() const
+{
+    if (has_params())
+    {
+        // Default to sample chunk V2 if we have a Topology parameter, or V1 otherwise.
+        const auto topologyProp = get_param("Topology");
+        return (topologyProp) ?
+            header_type::sample_chunk_v2 :
+            header_type::sample_chunk_v1;
+    }
+    else
+    {
+        // Default to standard if we have no parameters.
+        return header_type::standard;
+    }
 }
 
 void skeletal_model::add_to_node(hl::node& parentNode, bool includeLibGensTags) const
@@ -2719,6 +2945,7 @@ void skeletal_model::write(writer& writer,
     }
 
     case 5:
+    case 6: // HACK: V6 header has the same memory layout as V5.
     {
         // Generate raw V5 skeletal model header.
         meshesOff = writer.tell(offsetof(raw_skeletal_model_v5, meshGroups.dataPtr));
@@ -2764,9 +2991,10 @@ void skeletal_model::write(writer& writer,
 
     case 4:
     case 5:
+    case 6:
         // Write placeholder offsets for mesh groups.
         std::size_t curMeshGroupOffPos = writer.tell();
-        writer.write_nulls(sizeof(off32<raw_mesh_group>) * meshGroups.size());
+        writer.write_nulls(sizeof(off32<raw_mesh_group_r1>) * meshGroups.size());
 
         // Write mesh groups and fill-in placeholder offsets.
         for (auto& meshGroup : meshGroups)
@@ -2775,10 +3003,10 @@ void skeletal_model::write(writer& writer,
             writer.fix_offset(curMeshGroupOffPos);
 
             // Write mesh group.
-            meshGroup.write(writer);
+            meshGroup.write(writer, (version >= 6) ? 2 : 1);
 
             // Increase current mesh group offset position.
-            curMeshGroupOffPos += sizeof(off32<raw_mesh_group>);
+            curMeshGroupOffPos += sizeof(off32<raw_mesh_group_r1>);
         }
         break;
     }
@@ -2789,6 +3017,7 @@ void skeletal_model::write(writer& writer,
     case 2:
     case 4:
     case 5:
+    case 6:
         writer.fix_offset(unknown1Off);
         // TODO: Write unknown1s if necessary.
         break;
@@ -2898,8 +3127,8 @@ void skeletal_model::save(const nchar* filePath,
 
 void skeletal_model::save(stream& stream) const
 {
-    // TODO: Use version 2 or 4 instead if necessary.
-    save(stream, in_get_default_header_type());
+    // TODO: Use version 2, 4, or 6 instead if necessary.
+    save(stream, get_default_header_type());
 }
 
 void skeletal_model::save(const nchar* filePath) const
