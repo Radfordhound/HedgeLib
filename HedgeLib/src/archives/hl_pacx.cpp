@@ -593,7 +593,8 @@ void block_data_header::finish_write(std::size_t headerPos,
 
     // Write offset table.
     const std::size_t offTablePos = stream.tell();
-    bina::offsets_write32(headerPos, offTable, stream);
+    bina::offsets_write(headerPos, offTable, stream);
+    stream.pad(4);
 
     // Fill-in data block header values.
     finish_write(dataBlockPos, typesPos, dataEntriesPos,
@@ -2303,7 +2304,8 @@ void header::finish_write(std::size_t headerPos,
 
     // Write offset table.
     const std::size_t offTablePos = stream.tell();
-    bina::offsets_write64(headerPos, offTable, stream);
+    bina::offsets_write(headerPos, offTable, stream);
+    stream.pad(8);
 
     // Fill-in header values.
     finish_write(headerPos, treesPos, depTablePos, dataEntriesPos,
@@ -4639,7 +4641,8 @@ void metadata_header::finish_write(std::size_t headerPos,
 
     // Write offset table.
     const std::size_t offTablePos = stream.tell();
-    bina::offsets_write64(headerPos, offTable, stream);
+    bina::offsets_write(headerPos, offTable, stream);
+    stream.pad(8);
 
     // Fill-in metadata header values.
     finish_write(metadataHeaderPos, chunkTablePos, strTablePos,

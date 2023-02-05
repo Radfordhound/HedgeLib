@@ -1,10 +1,26 @@
 #include "hedgelib/io/hl_bina.h"
 #include <cstring>
+#include <cassert>
 
 namespace hl
 {
 namespace bina
 {
+endian_flag pac_pack_meta::guess_endianness(
+    const void* rawData, std::size_t dataSize) const noexcept
+{
+    // If offCount is greater than the largest possible amount of
+    // offsets in the file, the endianness needs to be swapped.
+    const u32* eof = ptradd<u32>(rawData, dataSize);
+
+    return (offCount > static_cast<u32>(eof - off_table())) ?
+#ifdef HL_IS_BIG_ENDIAN
+        endian_flag::little : endian_flag::big;
+#else
+        endian_flag::big : endian_flag::little;
+#endif
+}
+
 void pac_pack_meta::fix(void* rawData, endian_flag endianFlag)
 {
     // Swap metadata header if necessary.
@@ -116,7 +132,8 @@ static void in_strings_write(std::size_t dataPos,
     }
 
     // Write padding.
-    stream.pad(sizeof(addr_t));
+    // NOTE: We pad to 4 even when writing 64-bit data, like Sonic Team.
+    stream.pad(4);
 }
 
 void strings_write32(std::size_t dataPos,
@@ -320,7 +337,7 @@ void offsets_copy64(off_table_handle srcOffTable,
 #endif
 }
 
-void offsets_write_no_sort_no_pad(std::size_t dataPos,
+void offsets_write_no_sort(std::size_t dataPos,
     const off_table& offTable, stream& stream)
 {
     std::size_t lastOffPos = dataPos;
@@ -388,50 +405,14 @@ void offsets_write_no_sort_no_pad(std::size_t dataPos,
     }
 }
 
-template<typename addr_t>
-static void in_offsets_write_no_sort(std::size_t dataPos,
-    const off_table& offTable, stream& stream)
-{
-    // Write offsets.
-    offsets_write_no_sort_no_pad(dataPos, offTable, stream);
-
-    // Write padding.
-    stream.pad(sizeof(addr_t));
-}
-
-void offsets_write_no_sort32(std::size_t dataPos,
-    const off_table& offTable, stream& stream)
-{
-    in_offsets_write_no_sort<u32>(dataPos, offTable, stream);
-}
-
-void offsets_write_no_sort64(std::size_t dataPos,
-    const off_table& offTable, stream& stream)
-{
-    in_offsets_write_no_sort<u64>(dataPos, offTable, stream);
-}
-
-template<typename addr_t>
-static void in_offsets_write(std::size_t dataPos,
+void offsets_write(std::size_t dataPos,
     off_table& offTable, stream& stream)
 {
     // Sort offset table.
     std::sort(offTable.begin(), offTable.end());
 
     // Write sorted offsets.
-    in_offsets_write_no_sort<addr_t>(dataPos, offTable, stream);
-}
-
-void offsets_write32(std::size_t dataPos,
-    off_table& offTable, stream& stream)
-{
-    in_offsets_write<u32>(dataPos, offTable, stream);
-}
-
-void offsets_write64(std::size_t dataPos,
-    off_table& offTable, stream& stream)
-{
-    in_offsets_write<u64>(dataPos, offTable, stream);
+    offsets_write_no_sort(dataPos, offTable, stream);
 }
 
 namespace v1
@@ -574,7 +555,10 @@ static void in_finish_write(std::size_t dataBlockPos,
 
     // Write offset table.
     const std::size_t offTablePos = stream.tell();
-    in_offsets_write<addr_t>(dataPos, offTable, stream);
+    offsets_write(dataPos, offTable, stream);
+
+    // NOTE: We pad to 4 even when writing 64-bit data, like Sonic Team.
+    stream.pad(4);
 
     // Fill-in data block header values.
     raw_block_data_header::finish_write(dataBlockPos,
@@ -802,6 +786,139 @@ const raw_block_data_header* get_data_block(const void* rawData)
     {
         return nullptr;
     }
+}
+
+void writer32::start(bina::endian_flag endianFlag, ver version)
+{
+    // Store header position and endian flag.
+    m_headerPos = m_stream->tell();
+    m_basePos = m_headerPos;
+    m_endianFlag = endianFlag;
+    m_blockCount = 0;
+
+    // Start writing header.
+    raw_header::start_write(version, endianFlag, *m_stream);
+}
+
+void writer32::start_data_block()
+{
+    assert(!m_isWritingDataBlock &&
+        "You must call finish_data_block exactly once per start_data_block call");
+
+    m_strings.clear();
+    m_offsets.clear();
+
+    raw_block_data_header::start_write(m_endianFlag, *m_stream);
+
+    m_basePos = m_stream->tell();
+    ++m_blockCount;
+    m_isWritingDataBlock = true;
+}
+
+void writer32::add_string(std::string str, std::size_t offPos)
+{
+    m_strings.emplace_back(std::move(str), offPos);
+}
+
+std::size_t writer32::write_str(const char* str)
+{
+    const auto strOffPos = m_stream->tell();
+    m_stream->write_nulls(sizeof(off32<char>));
+
+    std::string tmpStr(str);
+    const auto strSize = (tmpStr.size() + 1);
+    add_string(std::move(tmpStr), strOffPos);
+
+    return strSize;
+}
+
+std::size_t writer32::write_str(const std::string& str)
+{
+    const auto strOffPos = m_stream->tell();
+    m_stream->write_nulls(sizeof(off32<char>));
+    add_string(str, strOffPos);
+    return (str.size() + 1);
+}
+
+void writer32::fix_offset(std::size_t pos)
+{
+    m_stream->fix_off32(m_basePos, pos, needs_swap(m_endianFlag), m_offsets);
+}
+
+void writer32::finish_data_block()
+{
+    assert(m_isWritingDataBlock &&
+        "You must call finish_data_block exactly once per start_data_block call");
+
+    raw_block_data_header::finish_write32(
+        m_basePos - (sizeof(raw_block_data_header) * 2),
+        m_endianFlag, m_strings, m_offsets, *m_stream);
+
+    m_isWritingDataBlock = false;
+}
+
+void writer32::finish()
+{
+    if (m_isWritingDataBlock)
+    {
+        finish_data_block();
+    }
+
+    raw_header::finish_write(m_headerPos,
+        m_blockCount, m_endianFlag, *m_stream);
+}
+
+writer32::writer32(hl::stream& stream) :
+    in_writer_base(stream),
+    m_headerPos(stream.tell()),
+    m_basePos(m_headerPos) {}
+
+std::size_t writer64::write_str(const char* str)
+{
+    const auto strOffPos = m_stream->tell();
+    m_stream->write_nulls(sizeof(off64<char>));
+
+    std::string tmpStr(str);
+    const auto strSize = (tmpStr.size() + 1);
+    add_string(std::move(tmpStr), strOffPos);
+
+    return strSize;
+}
+
+std::size_t writer64::write_str(const std::string& str)
+{
+    const auto strOffPos = m_stream->tell();
+    m_stream->write_nulls(sizeof(off64<char>));
+    add_string(str, strOffPos);
+    return (str.size() + 1);
+}
+
+void writer64::fix_offset(std::size_t pos)
+{
+    m_stream->fix_off64(m_basePos, pos, needs_swap(m_endianFlag), m_offsets);
+}
+
+void writer64::finish_data_block()
+{
+    assert(m_isWritingDataBlock &&
+        "You must call finish_data_block exactly once per start_data_block call");
+
+    raw_block_data_header::finish_write64(
+        m_basePos - (sizeof(raw_block_data_header) * 2),
+        m_endianFlag, m_strings, m_offsets, *m_stream);
+
+    m_isWritingDataBlock = false;
+}
+
+void writer64::finish()
+{
+    if (m_isWritingDataBlock)
+    {
+        finish_data_block();
+    }
+
+    raw_header::finish_write(m_headerPos,
+        m_blockCount, m_endianFlag, *m_stream);
 }
 } // v2
 
