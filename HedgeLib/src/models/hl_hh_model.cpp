@@ -872,7 +872,7 @@ template<typename RawMeshType>
 static void in_swap_recursive(RawMeshType& rawMesh)
 {
     // Swap mesh.
-    rawMesh.endian_swap<false>();
+    endian_swap<false>(rawMesh);
 
     // Swap faces.
     for (auto& face : rawMesh.faces)
@@ -947,7 +947,7 @@ template<typename RawMeshType>
 static void in_swap_recursive(raw_mesh_group<RawMeshType>& rawMeshGroup)
 {
     // Swap the mesh group.
-    rawMeshGroup.endian_swap<false>();
+    endian_swap<false>(rawMeshGroup);
 
     // Recursively swap mesh slots.
     in_swap_recursive(rawMeshGroup.opaq);
