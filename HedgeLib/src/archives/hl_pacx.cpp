@@ -1634,7 +1634,7 @@ static void in_proxy_table_write(
             curOffPos += 4;
 
             // Add name string to string table.
-            strTable.emplace_back(file.name, curOffPos, file.nameLen);
+            strTable.emplace_back(file.name, curOffPos);
 
             // Increase current offset position past proxy entry.
             curOffPos += 8;
@@ -1728,7 +1728,7 @@ static void in_data_block_write(unsigned short splitIndex,
             }
 
             // Queue file name string for writing.
-            strTable.emplace_back(file.name, curOffPos, file.nameLen);
+            strTable.emplace_back(file.name, curOffPos);
 
             // Increase current offset position past name offset.
             curOffPos += 4;
@@ -2590,7 +2590,7 @@ struct in_radix_node
         // Add node name to string table if necessary.
         if (nameLen)
         {
-            strTable.emplace_back(name, nodePos, nameLen);
+            strTable.emplace_back(std::string(name, nameLen), nodePos);
         }
 
         // Increase indices.

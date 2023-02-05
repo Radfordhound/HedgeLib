@@ -21,10 +21,6 @@ struct str_table_entry
         str(std::move(str)),
         offPos(offPos) {}
 
-    str_table_entry(const char* str, std::size_t offPos, std::size_t strLen) :
-        str(str, strLen),
-        offPos(offPos) {}
-
 #ifdef HL_IN_WIN32_UNICODE
     str_table_entry(const nchar* str, std::size_t offPos) :
         str(std::move(text::conv<text::native_to_utf8>(str))),
@@ -32,10 +28,6 @@ struct str_table_entry
 
     str_table_entry(const nstring& str, std::size_t offPos) :
         str(std::move(text::conv<text::native_to_utf8>(str))),
-        offPos(offPos) {}
-
-    str_table_entry(const nchar* str, std::size_t offPos, std::size_t strLen) :
-        str(std::move(text::conv<text::native_to_utf8>(str, strLen))),
         offPos(offPos) {}
 #endif
 };
