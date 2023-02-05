@@ -3357,55 +3357,106 @@ static void in_data_entry_fill_in(const in_file_metadata& file,
     stream.jump_to(endPos);
 }
 
-static void in_file_data_write(const in_file_metadata& file,
-    std::size_t dataEntryPos, bina::endian_flag endianFlag,
-    u32 dataAlignment, packed_file_info* pfi, off_table& offTable,
-    stream& stream)
+static void in_file_data_write(const in_radix_node<const in_file_metadata>& fileNode,
+    std::size_t& dataEntryPos, unsigned short splitIndex,
+    bina::endian_flag endianFlag, u32 dataAlignment,
+    packed_file_info* pfi, off_table& offTable, stream& stream)
 {
-    // Pad data to requested data alignment.
-    stream.pad(dataAlignment);
-
-    // Get/Load entry data as necessary.
-    std::unique_ptr<u8[]> tmpDataBuf;
-    const void* data;
-
-    // If this is a file reference, load up the file's data.
-    if (file.entry->is_reference_file())
+    if (fileNode.data && fileNode.data->splitIndex == splitIndex)
     {
-        tmpDataBuf = file::load(file.entry->path());
-        data = tmpDataBuf.get();
+        // Pad data to requested data alignment.
+        stream.pad(dataAlignment);
+
+        // Get/Load entry data as necessary.
+        std::unique_ptr<u8[]> tmpDataBuf;
+        const void* data;
+
+        // If this is a file reference, load up the file's data.
+        const auto& file = *fileNode.data.get();
+        if (file.entry->is_reference_file())
+        {
+            tmpDataBuf = file::load(file.entry->path());
+            data = tmpDataBuf.get();
+        }
+
+        // If this is a regular file, get a pointer to its data.
+        else
+        {
+            data = file.entry->file_data();
+        }
+
+        // Mark whether this data is BINA data or not.
+        // TODO: Do these games actually support BINAV1?
+        data_flags flags = data_flags::regular_file;
+        if (bina::has_v2_header(data, file.entry->size()) ||
+            bina::has_v1_header(data, file.entry->size()))
+        {
+            flags |= data_flags::bina_file;
+        }
+
+        // Write data, then free it as necessary.
+        const std::size_t fileDataPos = stream.tell();
+        stream.write_all(file.entry->size(), data);
+        tmpDataBuf.reset();
+
+        // Add packed file entry to packed file info if necessary.
+        if (pfi)
+        {
+            pfi->emplace_back(file.utf8_name(),
+                fileDataPos, file.entry->size());
+        }
+
+        // Fill-in data entry.
+        in_data_entry_fill_in(file, dataEntryPos, fileDataPos,
+            static_cast<u64>(flags), endianFlag, offTable, stream);
+
+        // Increase current offset position to account for data entry.
+        dataEntryPos += sizeof(data_entry);
     }
 
-    // If this is a regular file, get a pointer to its data.
-    else
+    // Recurse through child nodes.
+    for (const auto& child : fileNode.children)
     {
-        data = file.entry->file_data();
+        in_file_data_write(*child.get(), dataEntryPos, splitIndex,
+            endianFlag, dataAlignment, pfi, offTable, stream);
+    }
+}
+
+static void in_file_data_write(const in_radix_tree<const in_file_metadata>& fileTree,
+    std::size_t& dataEntryPos, unsigned short splitIndex,
+    bina::endian_flag endianFlag, u32 dataAlignment,
+    packed_file_info* pfi, off_table& offTable, stream& stream)
+{
+    in_file_data_write(fileTree.rootNode, dataEntryPos, splitIndex,
+        endianFlag, dataAlignment, pfi, offTable, stream);
+}
+
+static void in_file_data_write(const in_radix_node<in_type_tree_metadata>& typeNode,
+    std::size_t& dataEntryPos, unsigned short splitIndex,
+    bina::endian_flag endianFlag, u32 dataAlignment,
+    packed_file_info* pfi, off_table& offTable, stream& stream)
+{
+    if (typeNode.data)
+    {
+        in_file_data_write(typeNode.data->fileTree, dataEntryPos, splitIndex,
+            endianFlag, dataAlignment, pfi, offTable, stream);
     }
 
-    // Mark whether this data is BINA data or not.
-    // TODO: Do these games actually support BINAV1?
-    data_flags flags = data_flags::regular_file;
-    if (bina::has_v2_header(data, file.entry->size()) ||
-        bina::has_v1_header(data, file.entry->size()))
+    // Recurse through child nodes.
+    for (const auto& child : typeNode.children)
     {
-        flags |= data_flags::bina_file;
+        in_file_data_write(*child.get(), dataEntryPos, splitIndex,
+            endianFlag, dataAlignment, pfi, offTable, stream);
     }
+}
 
-    // Write data, then free it as necessary.
-    const std::size_t fileDataPos = stream.tell();
-    stream.write_all(file.entry->size(), data);
-    tmpDataBuf.reset();
-
-    // Add packed file entry to packed file info if necessary.
-    if (pfi)
-    {
-        pfi->emplace_back(file.utf8_name(),
-            fileDataPos, file.entry->size());
-    }
-
-    // Fill-in data entry.
-    in_data_entry_fill_in(file, dataEntryPos, fileDataPos,
-        static_cast<u64>(flags), endianFlag, offTable, stream);
+static void in_file_data_write(const in_radix_tree<in_type_tree_metadata>& typeTree,
+    std::size_t& dataEntryPos, unsigned short splitIndex,
+    bina::endian_flag endianFlag, u32 dataAlignment,
+    packed_file_info* pfi, off_table& offTable, stream& stream)
+{
+    in_file_data_write(typeTree.rootNode, dataEntryPos, splitIndex,
+        endianFlag, dataAlignment, pfi, offTable, stream);
 }
 
 template<typename dep_list_t>
@@ -3508,35 +3559,8 @@ std::size_t in_write(const bina::ver version, unsigned short splitIndex,
     const std::size_t fileDataPos = stream.tell();
     curOffPos = dataEntriesPos;
 
-    for (const auto& type : typeMetadata)
-    {
-        // Skip this type if we're writing a split this type is not present in.
-        if (!isRoot && (splitIndex < type.firstSplitIndex ||
-            splitIndex > type.lastSplitIndex))
-        {
-            continue;
-        }
-
-        // Write file data and fill-in data entries.
-        for (const auto& file : type)
-        {
-            // Write file data and fill-in data entry if this file is in this pac.
-            if (file.splitIndex == splitIndex)
-            {
-                in_file_data_write(file, curOffPos, endianFlag,
-                    dataAlignment, pfi, offTable, stream);
-            }
-
-            // Skip files that don't have a data entry in this pac.
-            else if (!isRoot)
-            {
-                continue;
-            }
-
-            // Increase current offset position to account for data entry.
-            curOffPos += sizeof(data_entry);
-        }
-    }
+    in_file_data_write(typeTree, curOffPos, splitIndex,
+        endianFlag, dataAlignment, pfi, offTable, stream);
 
     // Finish writing PACx data.
     header::finish_write(0, treesPos, depTablePos, dataEntriesPos,
@@ -4994,7 +5018,7 @@ void write(const archive_entry_list& arc,
         endianFlag, rootInternalFile, stream);
 
     // Compress root data if necessary.
-    if (!noCompress && totalSize > maxChunkSize)
+    if (!noCompress/* && totalSize > maxChunkSize*/)
     {
         rootDepInfo.set_data_compress(compressType,
             maxChunkSize, rootUncompressedSize,
