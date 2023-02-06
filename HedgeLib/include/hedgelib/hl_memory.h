@@ -1304,7 +1304,7 @@ public:
 
     template<std::size_t OtherMaxStackCount>
     inline stack_or_heap_memory(stack_or_heap_memory<T, OtherMaxStackCount>&& other)
-        noexcept(in_take_ownership(std::move(other)))
+        noexcept(in_take_ownership(std::declval<stack_or_heap_memory<T, OtherMaxStackCount>>()))
     {
         in_take_ownership(std::move(other));
     }
