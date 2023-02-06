@@ -160,12 +160,12 @@ protected:
     using in_const_iterator = std::vector<in_radix_leaf*>::const_iterator;
     using in_iterator = std::vector<in_radix_leaf*>::iterator;
 
-    inline in_const_iterator in_get_leaf(std::size_t index) const noexcept
+    inline in_const_iterator in_get_leaf_it(std::size_t index) const noexcept
     {
         return (m_leafNodes.begin() + index);
     }
 
-    inline in_iterator in_get_leaf(std::size_t index) noexcept
+    inline in_iterator in_get_leaf_it(std::size_t index) noexcept
     {
         return (m_leafNodes.begin() + index);
     }
@@ -211,6 +211,11 @@ template<typename T>
 class radix_tree : public internal::in_radix_tree
 {
 protected:
+    inline static const char* in_get_key_ptr(const internal::in_radix_leaf& leaf) noexcept
+    {
+        return ptradd<char>(&leaf, leaf_size());
+    }
+
     inline static const T* in_get_data_ptr(const internal::in_radix_leaf& leaf) noexcept
     {
         return ptradd<T>(&leaf, leaf_data_off());
@@ -219,6 +224,18 @@ protected:
     inline static T* in_get_data_ptr(internal::in_radix_leaf& leaf) noexcept
     {
         return ptradd<T>(&leaf, leaf_data_off());
+    }
+
+    inline static const internal::in_radix_leaf* in_get_leaf_ptr(const T* dataPtr) noexcept
+    {
+        return reinterpret_cast<const internal::in_radix_leaf*>(
+            reinterpret_cast<const u8*>(dataPtr) - leaf_data_off());
+    }
+
+    inline static internal::in_radix_leaf* in_get_leaf_ptr(T* dataPtr) noexcept
+    {
+        return reinterpret_cast<internal::in_radix_leaf*>(
+            reinterpret_cast<u8*>(dataPtr) - leaf_data_off());
     }
 
     template<typename U = T>
@@ -251,13 +268,13 @@ public:
         const value_type operator*() const
         {
             const auto leaf = *m_it;
-            return { ptradd<char>(leaf, leaf_size()), *in_get_data_ptr(*leaf) };
+            return { in_get_key_ptr(*leaf), *in_get_data_ptr(*leaf) };
         }
 
         ptr_proxy<const value_type> operator->() const
         {
             const auto leaf = *m_it;
-            return { ptradd<char>(leaf, leaf_size()), *in_get_data_ptr(*leaf) };
+            return { in_get_key_ptr(*leaf), *in_get_data_ptr(*leaf) };
         }
 
         inline const_iterator& operator++()
@@ -295,13 +312,13 @@ public:
         value_type operator*() const
         {
             const auto leaf = *m_it;
-            return { ptradd<char>(leaf, leaf_size()), *in_get_data_ptr(*leaf) };
+            return { in_get_key_ptr(*leaf), *in_get_data_ptr(*leaf) };
         }
 
         ptr_proxy<value_type> operator->() const
         {
             const auto leaf = *m_it;
-            return { ptradd<char>(leaf, leaf_size()), *in_get_data_ptr(*leaf) };
+            return { in_get_key_ptr(*leaf), *in_get_data_ptr(*leaf) };
         }
 
         inline iterator& operator++()

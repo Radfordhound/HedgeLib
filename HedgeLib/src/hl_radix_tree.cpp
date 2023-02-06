@@ -3,6 +3,14 @@
 #include <cstring>
 #include <cassert>
 
+#ifndef HL_DISABLE_INTRINSICS
+/* SSE2 */
+#if defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP == 2)
+#include <emmintrin.h>
+#define HL_IN_HAS_SSE2
+#endif
+#endif
+
 namespace hl
 {
 namespace internal
@@ -20,8 +28,8 @@ using in_radix_leaf_unique_ptr = std::unique_ptr<
 
 u8 in_radix_node::get_prefix_match_len(const char* key) const
 {
-    hl::u8 i = 0;
-    for (;
+    u8 i;
+    for (i = 0;
         i < prefixLen && prefix[i] == key[i];
         ++i) {}
 
@@ -49,7 +57,14 @@ void** in_radix_node::get_ptr_to_child_ptr(u8 key)
     case in_radix_node_type::node16:
     {
         auto& node16 = *static_cast<in_radix_node16*>(this);
-        // TODO: Do an SSE2 comparison instead if possible.
+#ifdef HL_IN_HAS_SSE2
+        // Compare all 16 keys in one go using SSE2 intrinsics.
+        const auto bitmask = (_mm_movemask_epi8(_mm_cmpeq_epi8(_mm_set1_epi8(key),
+            _mm_load_si128(reinterpret_cast<const __m128i*>(node16.keys.data())))) &
+            (1 << node16.small_node_child_count()) - 1);
+
+        return (bitmask) ? &node16.children[bit_ctz(bitmask)] : nullptr;
+#else
         for (u8 i = 0; i < node16.small_node_child_count(); ++i)
         {
             if (node16.keys[i] == key)
@@ -59,6 +74,7 @@ void** in_radix_node::get_ptr_to_child_ptr(u8 key)
         }
 
         break;
+#endif
     }
 
     case in_radix_node_type::node48:
@@ -259,7 +275,7 @@ in_radix_tree::in_iterator in_radix_tree::in_add_leaf(in_radix_leaf& leaf)
 {
     const auto leafNodeIndex = m_leafNodes.size();
     m_leafNodes.push_back(&leaf);
-    return in_get_leaf(leafNodeIndex);
+    return in_get_leaf_it(leafNodeIndex);
 }
 
 static void in_add_child_node(void** nodePtrPtr,
@@ -457,9 +473,8 @@ static std::unique_ptr<in_radix_node4> in_create_expanded_node(
 std::pair<in_radix_tree::in_iterator, bool> in_radix_tree::in_insert(
     const char* key, std::size_t leafSize)
 {
-    const auto origKey = key;
+    auto keySlice = key;
     void** nodePtrPtr = &m_rootNode;
-    u32 depth = 0;
 
     while (*nodePtrPtr)
     {
@@ -469,21 +484,23 @@ std::pair<in_radix_tree::in_iterator, bool> in_radix_tree::in_insert(
         {
             // Get leaf and leaf key pointers.
             auto& leaf = *static_cast<in_radix_leaf*>(*nodePtrPtr);
-            const char* leafKey = (ptradd<char>(&leaf, leafSize) + depth);
+            const auto leafKeySlice = (
+                ptradd<char>(&leaf, leafSize) +
+                (keySlice - key));
 
             // If key and leaf key are equal, just return the existing leaf.
-            if (text::equal(key, leafKey))
+            if (std::strcmp(keySlice, leafKeySlice) == 0)
             {
-                return { in_get_leaf(leaf.leafIndex), false };
+                return { in_get_leaf_it(leaf.leafIndex), false };
             }
 
             // Create a new leaf node.
             in_radix_leaf_unique_ptr newLeaf(in_radix_leaf::create(
-                leafSize, m_leafNodes.size(), origKey));
+                leafSize, m_leafNodes.size(), key));
 
             // Create a new expanded node.
             auto newNodePtr = in_create_expanded_node(m_sortFuncPtr,
-                key, leafKey, leaf, *newLeaf);
+                keySlice, leafKeySlice, leaf, *newLeaf);
 
             // Add new leaf to tree, update existing node pointer, and return new leaf iterator.
             const auto newLeafIt = in_add_leaf(*newLeaf);
@@ -493,16 +510,16 @@ std::pair<in_radix_tree::in_iterator, bool> in_radix_tree::in_insert(
         }
 
         // Otherwise, if the node's prefix is only a partial match, split the node.
-        const auto prefixMatchLen = node.get_prefix_match_len(key);
+        const auto prefixMatchLen = node.get_prefix_match_len(keySlice);
         if (prefixMatchLen != node.prefixLen)
         {
             // Create a new node4.
-            auto newNodePtr = std::unique_ptr<in_radix_node4>(new in_radix_node4());
+            std::unique_ptr<in_radix_node4> newNodePtr(new in_radix_node4());
 
             // Setup new node prefix.
             char* oldPrefix = node.prefix.data();
             char* newPrefix = newNodePtr->prefix.data();
-            const char oldKey = oldPrefix[prefixMatchLen];
+            const char oldFirstCh = oldPrefix[prefixMatchLen];
 
             std::memcpy(newPrefix, oldPrefix, prefixMatchLen);
             newNodePtr->prefixLen = prefixMatchLen;
@@ -511,24 +528,24 @@ std::pair<in_radix_tree::in_iterator, bool> in_radix_tree::in_insert(
             node.prefixLen -= (prefixMatchLen + 1);
             std::memmove(oldPrefix, oldPrefix + prefixMatchLen + 1, node.prefixLen);
 
-            // Trim matching part from beginning of old prefix and key pointers.
-            oldPrefix += prefixMatchLen;
-            key += prefixMatchLen;
+            // Trim matching part from beginning of key pointer.
+            keySlice += prefixMatchLen;
 
             // Create a new leaf node.
             in_radix_leaf_unique_ptr newLeaf(in_radix_leaf::create(
-                leafSize, m_leafNodes.size(), origKey));
+                leafSize, m_leafNodes.size(), key));
 
             // Add children to new node in the correct sorting order.
-            if (m_sortFuncPtr(*key, oldKey) >= 0)
+            const char newFirstCh = keySlice[0];
+            if (m_sortFuncPtr(newFirstCh, oldFirstCh) >= 0)
             {
-                newNodePtr->set_child_unchecked(0, oldKey, &node);
-                newNodePtr->set_child_unchecked(1, *key, newLeaf.get());
+                newNodePtr->set_child_unchecked(0, oldFirstCh, &node);
+                newNodePtr->set_child_unchecked(1, newFirstCh, newLeaf.get());
             }
             else
             {
-                newNodePtr->set_child_unchecked(0, *key, newLeaf.get());
-                newNodePtr->set_child_unchecked(1, oldKey, &node);
+                newNodePtr->set_child_unchecked(0, newFirstCh, newLeaf.get());
+                newNodePtr->set_child_unchecked(1, oldFirstCh, &node);
             }
 
             // Increase the new node's child count.
@@ -541,18 +558,17 @@ std::pair<in_radix_tree::in_iterator, bool> in_radix_tree::in_insert(
             return { newLeafIt, true };
         }
 
-        // Increase depth.
-        depth += node.prefixLen;
-        key += node.prefixLen;
+        // Increase key slice pointer.
+        keySlice += node.prefixLen;
 
         // If there is no matching child node, add the leaf.
-        const auto nextNodePtrPtr = node.get_ptr_to_child_ptr(*key);
+        const auto nextNodePtrPtr = node.get_ptr_to_child_ptr(*keySlice);
         if (!nextNodePtrPtr)
         {
             in_radix_leaf_unique_ptr newLeaf(in_radix_leaf::create(
-                leafSize, m_leafNodes.size(), origKey));
+                leafSize, m_leafNodes.size(), key));
 
-            in_add_child_node(nodePtrPtr, m_sortFuncPtr, *key, newLeaf.get());
+            in_add_child_node(nodePtrPtr, m_sortFuncPtr, *keySlice, newLeaf.get());
             const auto newLeafIt = in_add_leaf(*newLeaf);
             newLeaf.release();
 
@@ -563,17 +579,16 @@ std::pair<in_radix_tree::in_iterator, bool> in_radix_tree::in_insert(
         else
         {
             nodePtrPtr = nextNodePtrPtr;
-            if (*key)
+            if (*keySlice)
             {
-                ++depth;
-                ++key;
+                ++keySlice;
             }
         }
     }
 
     // Add new leaf to tree, update existing node pointer, and return new leaf iterator.
     in_radix_leaf_unique_ptr newLeaf(in_radix_leaf::create(
-        leafSize, m_leafNodes.size(), origKey));
+        leafSize, m_leafNodes.size(), key));
 
     const auto newLeafIt = in_add_leaf(*newLeaf);
     *nodePtrPtr = newLeaf.release();
@@ -583,8 +598,8 @@ std::pair<in_radix_tree::in_iterator, bool> in_radix_tree::in_insert(
 const in_radix_leaf* in_radix_tree::in_find_leaf(
     const char* key, std::size_t leafSize) const
 {
+    auto keySlice = key;
     void* nodePtr = m_rootNode;
-    u32 depth = 0;
 
     while (nodePtr)
     {
@@ -592,23 +607,23 @@ const in_radix_leaf* in_radix_tree::in_find_leaf(
         if (node.is_leaf())
         {
             const auto leaf = static_cast<in_radix_leaf*>(nodePtr);
-            const char* leafKey = (ptradd<char>(leaf, leafSize) + depth);
+            const auto leafKeySlice = (
+                ptradd<char>(leaf, leafSize) +
+                (keySlice - key));
 
-            return (text::equal(key, leafKey)) ? leaf : nullptr;
+            return (std::strcmp(keySlice, leafKeySlice) == 0) ? leaf : nullptr;
         }
-        else if (node.get_prefix_match_len(key) != node.prefixLen)
+        else if (node.get_prefix_match_len(keySlice) != node.prefixLen)
         {
             return nullptr;
         }
 
-        depth += node.prefixLen;
-        key += node.prefixLen;
+        keySlice += node.prefixLen;
 
-        nodePtr = node.get_child_ptr(*key);
-        if (*key)
+        nodePtr = node.get_child_ptr(*keySlice);
+        if (*keySlice)
         {
-            ++depth;
-            ++key;
+            ++keySlice;
         }
     }
 
