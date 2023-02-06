@@ -115,7 +115,7 @@ instance::instance(const char* appName,
     };
 
     // Get all normal required Vulkan instance extensions.
-    hl::stack_or_heap_buffer<const char*, 8> requiredExts(
+    hl::stack_or_heap_memory<const char*, 8> requiredExts(hl::no_value_init,
         1 + in_vulkan_additional_instance_extensions.size());
 
     uint32_t requiredExtCount = 0;
@@ -141,7 +141,7 @@ instance::instance(const char* appName,
         0,                                                              // enabledLayerCount
         nullptr,                                                        // ppEnabledLayerNames
         requiredExtCount,                                               // enabledExtensionCount
-        requiredExts                                                    // ppEnabledExtensionNames
+        requiredExts.data()                                             // ppEnabledExtensionNames
     };
 
     // Enable validation layers if requested and supported by the system.

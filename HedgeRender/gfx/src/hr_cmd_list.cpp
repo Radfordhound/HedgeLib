@@ -28,9 +28,9 @@ void cmd_list::copy_buffer_to_image(const buffer& src,
 {
     // Generate Vulkan buffer image copy regions.
     const auto vkCopyRegionCount = (dst.layer_count() * dst.mip_levels());
-    hl::stack_or_heap_buffer<VkBufferImageCopy, 16> vkCopyRegions(vkCopyRegionCount);
+    hl::stack_or_heap_memory<VkBufferImageCopy, 16> vkCopyRegions(hl::no_value_init, vkCopyRegionCount);
     const in_vulkan_format_info fmtInfo(dst.format());
-    VkBufferImageCopy* vkCurCopyRegion = vkCopyRegions;
+    VkBufferImageCopy* vkCurCopyRegion = vkCopyRegions.data();
     VkDeviceSize vkCurBufOffset = 0;
 
     for (unsigned int i = 0; i < dst.layer_count(); ++i)
@@ -61,7 +61,7 @@ void cmd_list::copy_buffer_to_image(const buffer& src,
 
     // Schedule a copy from the given buffer to the given image.
     vkCmdCopyBufferToImage(m_vkCmdBuf, src.handle(), dst.handle(), 
-        layout, vkCopyRegionCount, vkCopyRegions);
+        layout, vkCopyRegionCount, vkCopyRegions.data());
 }
 
 void cmd_list::transition_image_layout(image& img,
@@ -146,7 +146,7 @@ void cmd_list::bind_vertex_buffers(const buffer* buffers,
     unsigned int bufCount)
 {
     // Generate Vulkan vertex buffer array.
-    hl::stack_or_heap_buffer<VkBuffer, 16> vkBuffers(bufCount);
+    hl::stack_or_heap_memory<VkBuffer, 16> vkBuffers(hl::no_value_init, bufCount);
     for (unsigned int i = 0; i < bufCount; ++i)
     {
         vkBuffers[i] = buffers[i].handle();
@@ -154,7 +154,7 @@ void cmd_list::bind_vertex_buffers(const buffer* buffers,
 
     // Bind Vulkan vertex buffers.
     vkCmdBindVertexBuffers(m_vkCmdBuf, startSlot,
-        bufCount, vkBuffers, offsets);
+        bufCount, vkBuffers.data(), offsets);
 }
 
 void cmd_list::bind_vertex_buffer(const buffer& buffer,

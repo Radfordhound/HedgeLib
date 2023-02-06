@@ -699,7 +699,9 @@ void render_device::update_shader_data(const shader_data_write_desc* shaderDataW
     std::size_t shaderDataWriteCount)
 {
     // Generate Vulkan write descriptor sets.
-    hl::stack_or_heap_buffer<VkWriteDescriptorSet, 4> vkWriteDescSets(shaderDataWriteCount);
+    hl::stack_or_heap_memory<VkWriteDescriptorSet, 4> vkWriteDescSets(
+        hl::no_value_init, shaderDataWriteCount);
+
     std::size_t vkDescImageInfoCount = 0, vkDescBufferInfoCount = 0;
 
     for (std::size_t i = 0; i < shaderDataWriteCount; ++i)
@@ -738,8 +740,11 @@ void render_device::update_shader_data(const shader_data_write_desc* shaderDataW
     }
 
     // Generate Vulkan descriptor image/buffer infos.
-    hl::stack_or_heap_buffer<VkDescriptorImageInfo, 8> vkDescImageInfos(vkDescImageInfoCount);
-    hl::stack_or_heap_buffer<VkDescriptorBufferInfo, 8> vkDescBufferInfos(vkDescBufferInfoCount);
+    hl::stack_or_heap_memory<VkDescriptorImageInfo, 8> vkDescImageInfos(
+        hl::no_value_init, vkDescImageInfoCount);
+    hl::stack_or_heap_memory<VkDescriptorBufferInfo, 8> vkDescBufferInfos(
+        hl::no_value_init, vkDescBufferInfoCount);
+
     vkDescImageInfoCount = vkDescBufferInfoCount = 0;
 
     for (std::size_t i = 0; i < shaderDataWriteCount; ++i)
@@ -795,7 +800,7 @@ void render_device::update_shader_data(const shader_data_write_desc* shaderDataW
 
     // Update Vulkan descriptor sets.
     vkUpdateDescriptorSets(m_vkDevice, static_cast<uint32_t>(shaderDataWriteCount),
-        vkWriteDescSets, 0, nullptr);
+        vkWriteDescSets.data(), 0, nullptr);
 }
 
 void render_device::begin_frame()

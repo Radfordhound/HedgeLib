@@ -33,7 +33,9 @@ static VkPipelineLayout in_vulkan_create_pipeline_layout(VkDevice vkDevice,
     const shader_parameter_group* paramGroups, std::size_t paramGroupCount)
 {
     // Generate Vulkan descriptor set layout array.
-    hl::stack_or_heap_buffer<VkDescriptorSetLayout, 16> vkDescSetLayouts(paramGroupCount);
+    hl::stack_or_heap_memory<VkDescriptorSetLayout, 16> vkDescSetLayouts(
+        hl::no_value_init, paramGroupCount);
+
     uint32_t vkPushConstRangesCount = 0;
 
     // Generate Vulkan descriptor set layout array.
@@ -45,13 +47,15 @@ static VkPipelineLayout in_vulkan_create_pipeline_layout(VkDevice vkDevice,
     }
 
     // Generate Vulkan push constant ranges array.
-    hl::stack_or_heap_buffer<VkPushConstantRange, 16> vkPushConstRanges(vkPushConstRangesCount);
+    hl::stack_or_heap_memory<VkPushConstantRange, 16> vkPushConstRanges(
+        hl::no_value_init, vkPushConstRangesCount);
+
     vkPushConstRangesCount = 0;
 
     for (std::size_t i = 0; i < paramGroupCount; ++i)
     {
         auto& paramGroup = paramGroups[i];
-        std::memcpy(vkPushConstRanges + vkPushConstRangesCount,
+        std::memcpy(vkPushConstRanges.data() + vkPushConstRangesCount,
             paramGroup.push_const_ranges().data(),
             paramGroup.push_const_ranges().size() * sizeof(VkPushConstantRange));
 
@@ -65,9 +69,9 @@ static VkPipelineLayout in_vulkan_create_pipeline_layout(VkDevice vkDevice,
         nullptr,                                                        // pNext
         0,                                                              // flags
         static_cast<uint32_t>(paramGroupCount),                         // setLayoutCount
-        vkDescSetLayouts,                                               // pSetLayouts
+        vkDescSetLayouts.data(),                                        // pSetLayouts
         vkPushConstRangesCount,                                         // pushConstantRangeCount
-        vkPushConstRanges                                               // pPushConstantRanges
+        vkPushConstRanges.data()                                        // pPushConstantRanges
     };
 
     // Create Vulkan pipeline layout.
@@ -191,8 +195,8 @@ static VkPipeline in_vulkan_create_pipeline(const hr::gfx::render_device& device
     }
 
     // Generate Vulkan vertex binding descriptions.
-    hl::stack_or_heap_buffer<VkVertexInputBindingDescription, 8>
-        vkVtxBindingDescs(desc.inputLayoutCount);
+    hl::stack_or_heap_memory<VkVertexInputBindingDescription, 8>
+        vkVtxBindingDescs(hl::no_value_init, desc.inputLayoutCount);
 
     std::size_t curVkAttribDescIndex = 0;
 
@@ -209,8 +213,8 @@ static VkPipeline in_vulkan_create_pipeline(const hr::gfx::render_device& device
     }
 
     // Generate Vulkan vertex attribute descriptions.
-    hl::stack_or_heap_buffer<VkVertexInputAttributeDescription, 64>
-        vkVtxAttribDescs(curVkAttribDescIndex);
+    hl::stack_or_heap_memory<VkVertexInputAttributeDescription, 64>
+        vkVtxAttribDescs(hl::no_value_init, curVkAttribDescIndex);
 
     curVkAttribDescIndex = 0;
 
@@ -236,9 +240,9 @@ static VkPipeline in_vulkan_create_pipeline(const hr::gfx::render_device& device
         nullptr,                                                        // pNext
         0,                                                              // flags
         static_cast<uint32_t>(desc.inputLayoutCount),                   // vertexBindingDescriptionCount
-        vkVtxBindingDescs,                                              // pVertexBindingDescriptions
+        vkVtxBindingDescs.data(),                                       // pVertexBindingDescriptions
         static_cast<uint32_t>(curVkAttribDescIndex),                    // vertexAttributeDescriptionCount
-        vkVtxAttribDescs                                                // pVertexAttributeDescriptions
+        vkVtxAttribDescs.data()                                         // pVertexAttributeDescriptions
     };
 
     // Generate Vulkan input assembly state create info.

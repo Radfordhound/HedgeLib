@@ -56,8 +56,11 @@ static VkDescriptorSetLayout in_vulkan_create_desc_set_layout(VkDevice vkDevice,
     }
 
     // Generate Vulkan descriptor set layout bindings.
-    hl::stack_or_heap_buffer<VkDescriptorSetLayoutBinding, 32> vkDescSetLayoutBindings(paramCount);
-    hl::stack_or_heap_buffer<VkSampler, 16> vkImmutableSamplers(totalImmutableSamplerCount);
+    hl::stack_or_heap_memory<VkDescriptorSetLayoutBinding, 32> vkDescSetLayoutBindings(
+        hl::no_value_init, paramCount);
+    hl::stack_or_heap_memory<VkSampler, 16> vkImmutableSamplers(
+        hl::no_value_init, totalImmutableSamplerCount);
+
     totalImmutableSamplerCount = 0;
 
     for (unsigned int i = 0; i < paramCount; ++i)
@@ -71,7 +74,9 @@ static VkDescriptorSetLayout in_vulkan_create_desc_set_layout(VkDevice vkDevice,
         vkDescSetLayoutBinding.descriptorCount = param.registerCount;
         vkDescSetLayoutBinding.stageFlags = param.shaderStages;
 
-        VkSampler* vkCurImmutableSampler = (vkImmutableSamplers + totalImmutableSamplerCount);
+        VkSampler* vkCurImmutableSampler = (vkImmutableSamplers.data() +
+            totalImmutableSamplerCount);
+
         vkDescSetLayoutBinding.pImmutableSamplers = (param.immutableSamplerCount) ?
             vkCurImmutableSampler : nullptr;
 
@@ -90,7 +95,7 @@ static VkDescriptorSetLayout in_vulkan_create_desc_set_layout(VkDevice vkDevice,
         nullptr,                                                        // pNext
         0,                                                              // flags
         paramCount,                                                     // bindingCount
-        vkDescSetLayoutBindings                                         // pBindings
+        vkDescSetLayoutBindings.data()                                  // pBindings
     };
 
     // Create Vulkan descriptor set layout.
@@ -216,8 +221,8 @@ void shader_data_allocator::allocate(const shader_parameter_group* paramGroups,
     assert(paramGroups && shaderDataHandles && "Invalid arguments");
 
     // Generate Vulkan descriptor set layouts array.
-    hl::stack_or_heap_buffer<VkDescriptorSetLayout, 32>
-        vkDescSetLayouts(paramGroupCount);
+    hl::stack_or_heap_memory<VkDescriptorSetLayout, 32>
+        vkDescSetLayouts(hl::no_value_init, paramGroupCount);
 
     for (std::size_t i = 0; i < paramGroupCount; ++i)
     {
@@ -231,7 +236,7 @@ void shader_data_allocator::allocate(const shader_parameter_group* paramGroups,
         nullptr,                                                        // pNext
         m_vkDescPool,                                                   // descriptorPool
         static_cast<uint32_t>(paramGroupCount),                         // descriptorSetCount
-        vkDescSetLayouts                                                // pSetLayouts
+        vkDescSetLayouts.data()                                         // pSetLayouts
     };
 
     // Allocate Vulkan descriptor sets.

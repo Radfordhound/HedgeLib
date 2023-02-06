@@ -67,8 +67,8 @@ static void in_default_log_callback(log_level level, const hl::nchar* fmt, ...)
     const std::size_t bufLen = (prefixLen + strLen + suffixLen + 1); // +1 for null terminator.
 
     // Utilize stack buffer of 512 nchars, or allocate heap buffer if 512 nchars is not sufficient.
-    hl::stack_or_heap_buffer<hl::nchar, 512> buf(bufLen);
-    hl::nchar* ptr = buf;
+    hl::stack_or_heap_memory<hl::nchar, 512> buf(hl::no_value_init, bufLen);
+    hl::nchar* ptr = buf.data();
 
     // Append prefix.
     std::memcpy(ptr, in_default_log_prefixes[static_cast<int>(level)],
@@ -89,7 +89,7 @@ static void in_default_log_callback(log_level level, const hl::nchar* fmt, ...)
     *ptr = HL_NTEXT('\0');
 
     // Print string.
-    if (hl::nputs(buf) < 0)
+    if (hl::nputs(buf.data()) < 0)
     {
         throw std::runtime_error("Failed to print log string to output");
     }
