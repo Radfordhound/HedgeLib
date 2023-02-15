@@ -14,7 +14,7 @@ void header::fix(std::size_t hhArcSize)
 {
 #ifdef HL_IS_BIG_ENDIAN
     // Get start and end pointers.
-    u8* curPtr = ptradd(this, sizeof(ar_header));
+    u8* curPtr = ptradd(this, sizeof(header));
     u8* endPtr = ptradd(this, hhArcSize);
 
     // Swap header.
@@ -24,7 +24,7 @@ void header::fix(std::size_t hhArcSize)
     while (curPtr < endPtr)
     {
         // Get file entry pointer.
-        ar_file_entry* hhFileEntry = reinterpret_cast<ar_file_entry*>(curPtr);
+        file_entry* hhFileEntry = reinterpret_cast<file_entry*>(curPtr);
 
         // Swap entry.
         hhFileEntry->endian_swap();

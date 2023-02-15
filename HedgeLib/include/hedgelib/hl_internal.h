@@ -1195,14 +1195,14 @@ constexpr u64 make_sig(char c1, char c2, char c3, char c4,
     char c5, char c6, char c7, char c8) noexcept
 {
 #ifdef HL_IS_BIG_ENDIAN
-    return ((static_cast<u32>(c1) << 56U) |
-        (static_cast<u32>(c2) << 48U) |
-        (static_cast<u32>(c3) << 40U) |
-        (static_cast<u32>(c4) << 32U) |
-        (static_cast<u32>(c5) << 24U) |
-        (static_cast<u32>(c6) << 16U) |
-        (static_cast<u32>(c7) << 8U) |
-        static_cast<u32>(c8));
+    return ((static_cast<u64>(c1) << 56U) |
+        (static_cast<u64>(c2) << 48U) |
+        (static_cast<u64>(c3) << 40U) |
+        (static_cast<u64>(c4) << 32U) |
+        (static_cast<u64>(c5) << 24U) |
+        (static_cast<u64>(c6) << 16U) |
+        (static_cast<u64>(c7) << 8U) |
+        static_cast<u64>(c8));
 #else
     return ((static_cast<u64>(c8) << 56U) |
         (static_cast<u64>(c7) << 48U) |
