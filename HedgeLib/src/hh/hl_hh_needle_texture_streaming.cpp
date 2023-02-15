@@ -17,7 +17,7 @@ void raw_package_entry::fix(void* base) noexcept
 
 static void in_fix_raw_package(raw_package& package, bool headerAlreadySwapped)
 {
-#if HL_IS_BIG_ENDIAN
+#ifdef HL_IS_BIG_ENDIAN
     if (!headerAlreadySwapped)
     {
         package.endian_swap<true>();
