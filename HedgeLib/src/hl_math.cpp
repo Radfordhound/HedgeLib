@@ -1,12 +1,4 @@
 #include "hedgelib/hl_math.h"
-
-// Work-around for GCC sal.h issues.
-#ifndef _WIN32
-#include <algorithm>
-#include <utility>
-#endif
-
-// TODO: Disable intrinsics if requested
 #include <DirectXMath.h>
 
 namespace hl

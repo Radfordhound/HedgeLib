@@ -3,14 +3,6 @@
 #include <cstring>
 #include <cassert>
 
-#ifndef HL_DISABLE_INTRINSICS
-/* SSE2 */
-#if defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP == 2)
-#include <emmintrin.h>
-#define HL_IN_HAS_SSE2
-#endif
-#endif
-
 namespace hl
 {
 namespace internal

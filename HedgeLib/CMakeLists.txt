@@ -63,6 +63,7 @@ set(HEDGELIB_SOURCES
     "${HEDGELIB_SOURCE_DIR}/hl_blob.cpp"
     "${HEDGELIB_SOURCE_DIR}/hl_compression.cpp"
     "${HEDGELIB_SOURCE_DIR}/hl_in_blob.h"
+    "${HEDGELIB_SOURCE_DIR}/hl_in_pch.h"
     "${HEDGELIB_SOURCE_DIR}/hl_in_posix.h"
     "${HEDGELIB_SOURCE_DIR}/hl_in_tool_common_text.h"
     "${HEDGELIB_SOURCE_DIR}/hl_in_win32.h"
@@ -84,6 +85,10 @@ set_target_properties(HedgeLib PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
     ${HEDGELIB_USE_DEBUG_POSTFIX}
+)
+
+target_precompile_headers(HedgeLib
+    PRIVATE "${HEDGELIB_SOURCE_DIR}/hl_in_pch.h"
 )
 
 # Setup DLL preprocessor definitions
