@@ -119,7 +119,7 @@ Done!
 Install all pre-packaged dependencies:
 
 ```sh
-brew install cmake git glm lz4 zlib glfw
+brew install cmake git rapidjson glm lz4 zlib glfw
 ```
 
 Build/install robin-hood-hashing:
@@ -199,7 +199,7 @@ wget -qO - https://gist.githubusercontent.com/Radfordhound/6e6ce00535d14ae87d606
 Install all pre-packaged dependencies:
 
 ```sh
-sudo apt install git build-essential cmake libglm-dev liblz4-dev zlib1g-dev libglfw3-dev vulkan-sdk
+sudo apt install git build-essential cmake rapidjson-dev libglm-dev liblz4-dev zlib1g-dev libglfw3-dev vulkan-sdk
 ```
 
 Build/install robin-hood-hashing:
@@ -215,27 +215,13 @@ cd ../
 
 #### Arch
 ```sh
-sudo pacman -S git gcc make cmake glm lz4 zlib glfw-wayland vulkan-headers vulkan-validation-layers shaderc
+sudo pacman -S git gcc make cmake rapidjson glm lz4 zlib glfw-wayland vulkan-headers vulkan-validation-layers shaderc
 yay -S robin-hood-hashing
 ```
 
 #### Void
-
-Install all pre-packaged dependencies:
-
 ```sh
-sudo xbps-install -S git gcc make cmake glm liblz4-devel zlib-devel glfw-devel Vulkan-Headers Vulkan-ValidationLayers shaderc
-```
-
-Build/install Robin-hood-hashing:
-
-```sh
-git clone https://github.com/martinus/robin-hood-hashing.git
-cd robin-hood-hashing
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRH_STANDALONE_PROJECT=OFF
-cmake --build build --config Release
-sudo cmake --install build --config Release
-cd ../
+sudo xbps-install -S git gcc make cmake rapidjson robin-hood-hashing glm liblz4-devel zlib-devel glfw-devel Vulkan-Headers Vulkan-ValidationLayers shaderc
 ```
 
 ### 2: Clone the HedgeLib repository

@@ -58,6 +58,7 @@ set(HEDGELIB_SOURCES
     "${HEDGELIB_SOURCE_DIR}/io/hl_mem_stream.cpp"
     "${HEDGELIB_SOURCE_DIR}/io/hl_path.cpp"
     "${HEDGELIB_SOURCE_DIR}/io/hl_stream.cpp"
+    "${HEDGELIB_SOURCE_DIR}/io/hl_in_rapidjson.h"
     "${HEDGELIB_SOURCE_DIR}/materials/hl_hh_material.cpp"
     "${HEDGELIB_SOURCE_DIR}/models/hl_hh_model.cpp"
     "${HEDGELIB_SOURCE_DIR}/shader/hl_hh_shader.cpp"
@@ -206,6 +207,18 @@ if(NOT TARGET ZLIB::ZLIB)
 endif()
 
 list(APPEND HEDGELIB_PRIVATE_DEPEND_LIBS ZLIB::ZLIB)
+
+# Find RapidJSON and add it to HedgeLib dependencies
+if(NOT TARGET rapidjson)
+    message(STATUS "Searching for RapidJSON...")
+    find_path(RAPIDJSON_INCLUDE_DIR
+        NAMES rapidjson.h
+        PATH_SUFFIXES rapidjson
+        REQUIRED
+    )
+endif()
+
+list(APPEND HEDGELIB_PRIVATE_INCLUDE_DIRS RAPIDJSON_INCLUDE_DIR)
 
 # Setup dependencies
 target_include_directories(HedgeLib

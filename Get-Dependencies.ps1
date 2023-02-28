@@ -135,6 +135,13 @@ $Dependencies += { Install-CMakeProject -Name "glfw3" `
     -Arguments "-DGLFW_BUILD_EXAMPLES=OFF", "-DGLFW_BUILD_TESTS=OFF"
 }
 
+$Dependencies += { Install-CMakeProject -Name "RapidJSON" `
+    -Url https://github.com/Tencent/rapidjson/archive/refs/heads/master.zip `
+    -SourcePath "rapidjson-master" `
+    -Arguments "-DRAPIDJSON_BUILD_DOC=OFF", "-DRAPIDJSON_BUILD_EXAMPLES=OFF", `
+        "-DRAPIDJSON_BUILD_TESTS=OFF", "-DRAPIDJSON_HAS_STDSTRING=ON"
+}
+
 for ($i = 0; $i -lt $Dependencies.Length; $i++) {
     Invoke-Command $Dependencies[$i]
 }
