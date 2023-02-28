@@ -30,6 +30,7 @@ set(HEDGELIB_INCLUDES
     "${HEDGELIB_INCLUDE_DIR}/hedgelib/hl_languages_autogen.h"
     "${HEDGELIB_INCLUDE_DIR}/hedgelib/hl_math.h"
     "${HEDGELIB_INCLUDE_DIR}/hedgelib/hl_memory.h"
+    "${HEDGELIB_INCLUDE_DIR}/hedgelib/hl_ordered_map.h"
     "${HEDGELIB_INCLUDE_DIR}/hedgelib/hl_radix_tree.h"
     "${HEDGELIB_INCLUDE_DIR}/hedgelib/hl_resource.h"
     "${HEDGELIB_INCLUDE_DIR}/hedgelib/hl_scene.h"
