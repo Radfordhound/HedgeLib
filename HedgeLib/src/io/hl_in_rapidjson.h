@@ -279,19 +279,10 @@ public:
         }
     }
 
-    in_rapidjson_writer& operator=(in_rapidjson_writer&& other) noexcept = default;
-
     in_rapidjson_writer(in_rapidjson_output_stream_wrapper& stream) :
         PrettyWriter(stream)
     {
         indentCharCount_ = 2;
-    }
-
-    in_rapidjson_writer(in_rapidjson_writer&& other) noexcept = default;
-    
-    inline ~in_rapidjson_writer()
-    {
-        Flush();
     }
 };
 
