@@ -70,7 +70,7 @@ for:
         sudo cmake --build build --config Release
         sudo cmake --install build --config Release
         cd ../../
-        brew install glm lz4 zlib glfw
+        brew install rapidjson glm lz4 zlib glfw
         mkdir "$APPVEYOR_BUILD_FOLDER/bin"
         cmake -S . -B build "-DCMAKE_INSTALL_PREFIX=$APPVEYOR_BUILD_FOLDER/bin" -DCMAKE_BUILD_TYPE=Release
 -
@@ -89,6 +89,6 @@ for:
         cmake --build build --config Release
         sudo cmake --install build --config Release
         cd ../../
-        sudo apt install -yq libglm-dev liblz4-dev zlib1g-dev libglfw3-dev vulkan-sdk
+        sudo apt install -yq rapidjson-dev libglm-dev liblz4-dev zlib1g-dev libglfw3-dev vulkan-sdk
         mkdir "$APPVEYOR_BUILD_FOLDER/bin"
         cmake -S . -B build "-DCMAKE_INSTALL_PREFIX=$APPVEYOR_BUILD_FOLDER/bin" -DCMAKE_BUILD_TYPE=Release
