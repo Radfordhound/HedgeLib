@@ -196,8 +196,6 @@ protected:
     in_radix_tree(in_radix_sort_func sortFuncPtr) noexcept :
         m_sortFuncPtr(sortFuncPtr) {}
 
-    in_radix_tree(const in_radix_tree& other) = delete;
-
     HL_API in_radix_tree(in_radix_tree&& other) noexcept;
 
     inline ~in_radix_tree()
@@ -236,6 +234,16 @@ protected:
     {
         return reinterpret_cast<internal::in_radix_leaf*>(
             reinterpret_cast<u8*>(dataPtr) - leaf_data_off());
+    }
+
+    void in_assign_nodes(const radix_tree& other)
+    {
+        reserve(other.size());
+
+        for (const auto it : other)
+        {
+            insert(it.first, it.second);
+        }
     }
 
     template<typename U = T>
@@ -535,6 +543,19 @@ public:
         m_leafNodes.clear();
     }
 
+    radix_tree& operator=(const radix_tree& other)
+    {
+        if (&other != this)
+        {
+            clear();
+
+            m_sortFuncPtr = other.m_sortFuncPtr;
+            in_assign_nodes(other);
+        }
+
+        return *this;
+    }
+
     radix_tree& operator=(radix_tree&& other) noexcept
     {
         if (&other != this)
@@ -573,6 +594,12 @@ public:
 
     radix_tree(internal::in_radix_sort_func sortFunc) noexcept :
         in_radix_tree(sortFunc) {}
+
+    radix_tree(const radix_tree& other) :
+        in_radix_tree(other.m_sortFuncPtr)
+    {
+        in_assign_nodes(other);
+    }
 
     radix_tree(radix_tree&& other) noexcept = default;
 
