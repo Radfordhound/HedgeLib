@@ -1,11 +1,11 @@
 param(
     # The directory to install the dependencies into
-    $DependenciesDirectory = 'Dependencies',
-    $Architecture = ('Win32', 'x64')[[Environment]::Is64BitOperatingSystem]
+    $Architecture = ('Win32', 'x64')[[Environment]::Is64BitOperatingSystem],
+    $DependenciesDirectory = "Dependencies/$Architecture"
 )
 
 # Create dependencies directory
-New-Item -Path $DependenciesDirectory -ItemType Directory -Force > $null
+New-Item $DependenciesDirectory -ItemType Directory -Force > $null
 
 # Define functions for later use
 function Install-CMakeProject {

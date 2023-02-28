@@ -41,7 +41,7 @@ option(HEDGELIB_BUILD_HEDGETOOLS
 )
 
 option(BUILD_SHARED_LIBS
-    "Build HedgeLib and HedgeRender as shared libraries instead of static"
+    "Build HedgeLib as shared libraries instead of static"
     OFF
 )
 
@@ -53,6 +53,12 @@ option(HEDGERENDER_USE_IMGUI
 option(HEDGELIB_DISABLE_INTRINSICS
     "Disable all usage of intrinsics throughout HedgeLib and the HedgeTools (not recommended)"
     OFF
+)
+
+set(HEDGELIB_LOCAL_DEPENDENCIES_DIR
+    "${PROJECT_SOURCE_DIR}/Dependencies/${CMAKE_GENERATOR_PLATFORM}"
+    CACHE PATH
+    "The path that CMake will first check when searching for dependencies required to build HedgeLib"
 )
 
 # Platform-specific options
@@ -73,7 +79,7 @@ endif()
 
 # Make CMake check for packages in "Dependencies" subdirectory
 list(APPEND CMAKE_PREFIX_PATH
-    "${PROJECT_SOURCE_DIR}/Dependencies"
+    ${HEDGELIB_LOCAL_DEPENDENCIES_DIR}
 )
 
 # Make CMake output all libraries and runtimes to top-level binary directory
