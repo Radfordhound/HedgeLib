@@ -245,6 +245,26 @@ struct vec2_base
         hl::endian_swap(y);
     }
 
+    inline const T* begin() const noexcept
+    {
+        return &x;
+    }
+
+    inline T* begin() noexcept
+    {
+        return &x;
+    }
+
+    inline const T* end() const noexcept
+    {
+        return (begin() + size());
+    }
+
+    inline T* end() noexcept
+    {
+        return (begin() + size());
+    }
+
     inline T operator[](std::size_t i) const noexcept
     {
         return reinterpret_cast<const T*>(this)[i];
@@ -312,6 +332,26 @@ struct vec3_base
         return vec2_base<T>(x, y);
     }
 
+    inline const T* begin() const noexcept
+    {
+        return &x;
+    }
+
+    inline T* begin() noexcept
+    {
+        return &x;
+    }
+
+    inline const T* end() const noexcept
+    {
+        return (begin() + size());
+    }
+
+    inline T* end() noexcept
+    {
+        return (begin() + size());
+    }
+
     inline T operator[](std::size_t i) const noexcept
     {
         return reinterpret_cast<const T*>(this)[i];
@@ -339,6 +379,52 @@ inline bool operator!=(const vec3_base<T>& a, const vec3_base<T>& b) noexcept
 {
     return (a.x != b.x || a.y != b.y || a.z != b.z);
 }
+
+template<typename T>
+constexpr vec3_base<T> operator+(const vec3_base<T>& a, const vec3_base<T>& b) noexcept
+{
+    return vec3_base<T>(a.x + b.x, a.y + b.y, a.z + b.z);
+}
+
+template<>
+HL_API vec3_base<float> operator+<float>(
+    const vec3_base<float>& a, const vec3_base<float>& b) noexcept;
+
+template<typename T>
+constexpr vec3_base<T>& operator+=(vec3_base<T>& a, const vec3_base<T>& b) noexcept
+{
+    a.x += b.x;
+    a.y += b.y;
+    a.z += b.z;
+    return a;
+}
+
+template<>
+HL_API vec3_base<float>& operator+=<float>(
+    vec3_base<float>& a, const vec3_base<float>& b) noexcept;
+
+template<typename T>
+constexpr vec3_base<T> operator-(const vec3_base<T>& a, const vec3_base<T>& b) noexcept
+{
+    return vec3_base<T>(a.x - b.x, a.y - b.y, a.z - b.z);
+}
+
+template<>
+HL_API vec3_base<float> operator-<float>(
+    const vec3_base<float>& a, const vec3_base<float>& b) noexcept;
+
+template<typename T>
+constexpr vec3_base<T>& operator-=(vec3_base<T>& a, const vec3_base<T>& b) noexcept
+{
+    a.x -= b.x;
+    a.y -= b.y;
+    a.z -= b.z;
+    return a;
+}
+
+template<>
+HL_API vec3_base<float>& operator-=<float>(
+    vec3_base<float>& a, const vec3_base<float>& b) noexcept;
 
 // TODO: Make SIMD-optimized specializations for vec3_base<float> and vec3_base<int>
 
@@ -386,10 +472,24 @@ struct vec4_base
         return vec3_base<T>(x, y, z);
     }
 
-    constexpr bool operator==(const vec4_base<T>& other) const noexcept
+    inline const T* begin() const noexcept
     {
-        return (x == other.x && y == other.y &&
-            z == other.z && w == other.w);
+        return &x;
+    }
+
+    inline T* begin() noexcept
+    {
+        return &x;
+    }
+
+    inline const T* end() const noexcept
+    {
+        return (begin() + size());
+    }
+
+    inline T* end() noexcept
+    {
+        return (begin() + size());
     }
 
     inline T operator[](std::size_t i) const noexcept
@@ -468,13 +568,17 @@ struct quat : public vec4
 
     HL_API quat(const vec3& axis, float angle);
 
-    HL_API quat(const vec3& eulerAngles);
+    HL_API explicit quat(const vec3& eulerAngles);
 
     constexpr quat(float x, float y, float z, float w) noexcept :
         vec4(x, y, z, w) {}
 };
 
 HL_STATIC_ASSERT_SIZE(quat, 16);
+
+HL_API quat operator*(const quat& a, const quat& b) noexcept;
+
+HL_API quat& operator*=(quat& a, const quat& b) noexcept;
 
 struct aabb
 {
@@ -497,6 +601,7 @@ struct aabb
     }
 
     inline aabb() noexcept = default;
+
     constexpr aabb(vec3 minv, vec3 maxv) noexcept :
         minv(minv), maxv(maxv) {}
 };
@@ -619,6 +724,9 @@ struct matrix4x4
         hl::endian_swap(m44);
     }
 
+    HL_API void decompose(vec3* pos, quat* rot = nullptr,
+        vec3* scale = nullptr) const noexcept;
+
     HL_API vec3 get_rotation_euler() const;
 
     matrix4x4() noexcept = default;
@@ -639,9 +747,31 @@ struct matrix4x4
         m31(m31), m32(m32), m33(m33), m34(m34),
         m41(m41), m42(m42), m43(m43), m44(m44) {}
 
+    HL_API matrix4x4(const vec3& pos);
+
+    HL_API matrix4x4(const vec3& pos, const quat& rot);
+
+    HL_API matrix4x4(const vec3& pos, const vec3& eulerAngles);
+
     HL_API matrix4x4(const quat& rot);
 };
 
 HL_STATIC_ASSERT_SIZE(matrix4x4, 64);
+
+struct alignas(16) matrix4x4A : matrix4x4
+{
+    HL_API void decompose(vec3* pos, quat* rot = nullptr,
+        vec3* scale = nullptr) const noexcept;
+
+    using matrix4x4::matrix4x4;
+
+    HL_API matrix4x4A(const vec3& pos);
+
+    HL_API matrix4x4A(const vec3& pos, const quat& rot);
+
+    HL_API matrix4x4A(const vec3& pos, const vec3& eulerAngles);
+
+    HL_API matrix4x4A(const quat& rot);
+};
 } // hl
 #endif
