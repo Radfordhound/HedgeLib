@@ -124,16 +124,6 @@ endforeach()
 
 list(APPEND HEDGERENDER_GFX_PRIVATE_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR})
 
-# Find robin_hood and add it to HedgeRender_GFX dependencies
-if(NOT TARGET robin_hood::robin_hood)
-    message(STATUS "Searching for robin_hood...")
-    set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
-    find_package(robin_hood QUIET REQUIRED)
-    unset(CMAKE_FIND_PACKAGE_PREFER_CONFIG)
-endif()
-
-list(APPEND HEDGERENDER_GFX_PUBLIC_DEPEND_LIBS robin_hood::robin_hood)
-
 # Find Vulkan and add it to HedgeRender_GFX dependencies
 find_package(Vulkan REQUIRED)
 list(APPEND HEDGERENDER_GFX_PUBLIC_DEPEND_LIBS Vulkan::Vulkan)
@@ -208,12 +198,6 @@ set(HEDGERENDER_GFX_INSTALL_CONFIG_FILES
     ${CMAKE_CURRENT_BINARY_DIR}/HedgeRender_GFXConfig.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/HedgeRender_GFXConfigVersion.cmake
 )
-
-if(NOT BUILD_SHARED_LIBS)
-    list(APPEND HEDGERENDER_GFX_INSTALL_CONFIG_FILES
-        ${PROJECT_SOURCE_DIR}/cmake/modules/Findrobin_hood.cmake
-    )
-endif()
 
 install(FILES
     ${HEDGERENDER_GFX_INSTALL_CONFIG_FILES}

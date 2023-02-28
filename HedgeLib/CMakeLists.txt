@@ -137,7 +137,7 @@ if(NOT TARGET robin_hood::robin_hood)
     unset(CMAKE_FIND_PACKAGE_PREFER_CONFIG)
 endif()
 
-list(APPEND HEDGELIB_PRIVATE_DEPEND_LIBS robin_hood::robin_hood)
+list(APPEND HEDGELIB_PUBLIC_DEPEND_LIBS robin_hood::robin_hood)
 
 # Find glm and add it to HedgeLib dependencies
 if(NOT TARGET glm::glm)
@@ -206,6 +206,7 @@ target_include_directories(HedgeLib
 )
 
 target_link_libraries(HedgeLib
+    PUBLIC ${HEDGELIB_PUBLIC_DEPEND_LIBS}
     PRIVATE ${HEDGELIB_PRIVATE_DEPEND_LIBS}
 )
 
