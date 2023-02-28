@@ -481,12 +481,12 @@ public:
         return true;
     }
 
-    int Write(const void* pData, int pSize) override
+    size_t Write(const void* pData, FbxUInt64 pSize) override
     {
         return (!isOpen) ? 0 : static_cast<int>(m_stream->write(pSize, pData));
     }
 
-    int Read(void* pData, int pSize) const override
+    size_t Read(void* pData, FbxUInt64 pSize) const override
     {
         return (!isOpen) ? 0 : static_cast<int>(m_stream->read(pSize, pData));
     }
@@ -508,16 +508,17 @@ public:
         m_stream->seek(in_fbx_get_seek_mode(pSeekPos), pOffset);
     }
 
-    long GetPosition() const override
+    FbxInt64 GetPosition() const override
     {
-        return (!isOpen) ? 0 : static_cast<long>(m_stream->tell());
+        return (isOpen) ? m_stream->tell() : 0;
     }
 
-    void SetPosition(long pPosition) override
+    void SetPosition(FbxInt64 pPosition) override
     {
-        if (!isOpen) return;
-        
-        m_stream->jump_to(pPosition);
+        if (isOpen)
+        {
+            m_stream->jump_to(static_cast<std::size_t>(pPosition));
+        }
     }
 
     int GetError() const override
