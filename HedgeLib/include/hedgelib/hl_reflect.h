@@ -357,7 +357,7 @@ class field_definition
     {
         std::intmax_t m_defaultValSignedInt;
         std::uintmax_t m_defaultValUnsignedInt;
-        double m_defaultValFloating = 0.0;
+        double m_defaultValFloating;
 
         char m_defaultValChar;
         std::string m_defaultValString;
@@ -825,7 +825,8 @@ public:
 
     HL_API field_definition& operator=(field_definition&& other) noexcept;
 
-    field_definition() noexcept = default;
+    inline field_definition() noexcept :
+        m_defaultValFloating(0.0) {}
 
     HL_API field_definition(std::string name) noexcept;
 

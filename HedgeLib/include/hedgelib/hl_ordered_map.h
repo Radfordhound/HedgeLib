@@ -29,7 +29,7 @@ class ordered_map
 
     public:
         using difference_type   = std::ptrdiff_t;
-        using value_type        = typename in_this_type::value_type;
+        using value_type        = typename in_map_type::value_type;
 
         using reference         = std::conditional_t<
             IsConst, const value_type&, value_type&>;
@@ -390,8 +390,8 @@ public:
     ordered_map& operator=(ordered_map&& other) noexcept = default;
 
     ordered_map() noexcept(
-        noexcept(in_map_type::Table()) &&
-        noexcept(in_vec_type::vector())) = default;
+        noexcept(typename in_map_type::Table()) &&
+        noexcept(typename in_vec_type::vector())) = default;
 
     template<typename InputIt>
     ordered_map(InputIt first, InputIt last)

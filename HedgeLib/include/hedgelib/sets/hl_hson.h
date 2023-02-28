@@ -47,7 +47,7 @@ class parameter
     union
     {
         bool m_valBool;
-        std::intmax_t m_valSignedInt = 0;
+        std::intmax_t m_valSignedInt;
         std::uintmax_t m_valUnsignedInt;
         double m_valFloating;
         std::string m_valString;
@@ -156,7 +156,8 @@ public:
 
     HL_API parameter& operator=(parameter&& other) noexcept;
 
-    parameter() noexcept = default;
+    inline parameter() noexcept :
+        m_valSignedInt(0) {}
 
     HL_API parameter(parameter_type type);
 
@@ -433,7 +434,8 @@ public:
         save(filePath.c_str());
     }
 
-    project() noexcept(noexcept(ordered_map<guid, object>::ordered_map())) = default;
+    project() noexcept(noexcept(
+        typename ordered_map<guid, object>::ordered_map())) = default;
 
     HL_API project(const void* rawData, std::size_t rawDataSize);
 
