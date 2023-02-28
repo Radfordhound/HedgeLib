@@ -1015,8 +1015,9 @@ parameter& parameter::operator=(const parameter& other)
 {
     if (&other != this)
     {
-        m_type = other.m_type;
         in_destruct_value();
+
+        m_type = other.m_type;
         in_copy_construct_value(other);
     }
 
@@ -1027,8 +1028,9 @@ parameter& parameter::operator=(parameter&& other) noexcept
 {
     if (&other != this)
     {
-        m_type = other.m_type;
         in_destruct_value();
+
+        m_type = other.m_type;
         in_move_construct_value(std::move(other));
     }
 

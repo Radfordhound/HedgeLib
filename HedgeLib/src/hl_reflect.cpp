@@ -66,7 +66,7 @@ void field_definition::in_destruct_default_val() noexcept
     }
 }
 
-void field_definition::in_set_default_val_for_type(const std::string& type) noexcept
+void field_definition::in_default_construct_default_val(const std::string& type) noexcept
 {
     if (type == builtin_type_id_float32 || type == builtin_type_id_float64)
     {
@@ -78,7 +78,7 @@ void field_definition::in_set_default_val_for_type(const std::string& type) noex
     }
     else if (type == builtin_type_id_string)
     {
-        m_defaultValString = "";
+        new (&m_defaultValString) std::string();
     }
     else if (type == builtin_type_id_bool)
     {
@@ -86,19 +86,19 @@ void field_definition::in_set_default_val_for_type(const std::string& type) noex
     }
     else if (type == builtin_type_id_vector2)
     {
-        m_defaultValVec2 = vec2::zero();
+        new (&m_defaultValVec2) vec2(vec2::zero());
     }
     else if (type == builtin_type_id_vector3)
     {
-        m_defaultValVec3 = vec3::zero();
+        new (&m_defaultValVec3) vec3(vec3::zero());
     }
     else if (type == builtin_type_id_vector4)
     {
-        m_defaultValVec4 = vec4::zero();
+        new (&m_defaultValVec4) vec4(vec4::zero());
     }
     else if (type == builtin_type_id_quaternion)
     {
-        m_defaultValQuat = quat::identity();
+        new (&m_defaultValQuat) quat(quat::identity());
     }
     else
     {
@@ -392,11 +392,12 @@ void field_definition::set_default_val_quat(quat val) noexcept
 
 void field_definition::set_type(std::string type) noexcept
 {
+    in_destruct_default_val();
+
     m_type = std::move(type);
     m_subtype.clear();
     m_arrayCount = 0;
-    in_destruct_default_val();
-    in_set_default_val_for_type(m_type);
+    in_default_construct_default_val(m_type);
 }
 
 void field_definition::set_subtype(std::string subtype) noexcept
@@ -408,11 +409,11 @@ field_definition& field_definition::operator=(const field_definition& other)
 {
     if (&other != this)
     {
+        in_destruct_default_val();
+
         m_type = other.m_type;
         m_subtype = other.m_subtype;
         m_arrayCount = other.m_arrayCount;
-
-        in_destruct_default_val();
         in_copy_construct_default_val(other);
 
         name = other.name;
@@ -428,11 +429,11 @@ field_definition& field_definition::operator=(field_definition&& other) noexcept
 {
     if (&other != this)
     {
+        in_destruct_default_val();
+
         m_type = std::move(other.m_type);
         m_subtype = std::move(other.m_subtype);
         m_arrayCount = other.m_arrayCount;
-
-        in_destruct_default_val();
         in_move_construct_default_val(std::move(other));
 
         name = std::move(other.name);

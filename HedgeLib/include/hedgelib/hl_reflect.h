@@ -371,7 +371,7 @@ class field_definition
 
     HL_API void in_destruct_default_val() noexcept;
 
-    HL_API void in_set_default_val_for_type(const std::string& type) noexcept;
+    HL_API void in_default_construct_default_val(const std::string& type) noexcept;
 
     void in_copy_construct_default_val(const field_definition& other);
 
@@ -539,10 +539,10 @@ public:
 
     //HL_API void set_type(std::string enumType, std::uintmax_t defaultVal) noexcept
     //{
+    //    in_destruct_default_val();
     //    m_type = std::move(enumType);
     //    m_subtype.clear();
     //    m_arrayCount = 0;
-    //    in_destruct_default_val();
     //    m_defaultValIntegral = defaultVal;
     //}
 
@@ -551,10 +551,10 @@ public:
         Type == builtin_type::int32 || Type == builtin_type::int64>
         set_type(std::intmax_t defaultVal = 0) noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype.clear();
         m_arrayCount = 0;
-        in_destruct_default_val();
         m_defaultValSignedInt = defaultVal;
     }
 
@@ -563,10 +563,10 @@ public:
         Type == builtin_type::uint32 || Type == builtin_type::uint64>
         set_type(std::uintmax_t defaultVal = 0) noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype.clear();
         m_arrayCount = 0;
-        in_destruct_default_val();
         m_defaultValUnsignedInt = defaultVal;
     }
 
@@ -574,10 +574,10 @@ public:
     std::enable_if_t<Type == builtin_type::float32 || Type == builtin_type::float64>
         set_type(double defaultVal = 0.0) noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype.clear();
         m_arrayCount = 0;
-        in_destruct_default_val();
         m_defaultValFloating = defaultVal;
     }
 
@@ -585,10 +585,10 @@ public:
     std::enable_if_t<Type == builtin_type::_char>
         set_type(char defaultVal = '\0') noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype.clear();
         m_arrayCount = 0;
-        in_destruct_default_val();
         m_defaultValChar = defaultVal;
     }
 
@@ -596,10 +596,10 @@ public:
     std::enable_if_t<Type == builtin_type::string>
         set_type(std::string defaultVal = "") noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype.clear();
         m_arrayCount = 0;
-        in_destruct_default_val();
         m_defaultValString = std::move(defaultVal);
     }
 
@@ -607,10 +607,10 @@ public:
     std::enable_if_t<Type == builtin_type::_bool>
         set_type(bool defaultVal = false) noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype.clear();
         m_arrayCount = 0;
-        in_destruct_default_val();
         m_defaultValBool = defaultVal;
     }
 
@@ -618,20 +618,20 @@ public:
     std::enable_if_t<Type == builtin_type::object_reference>
         set_type() noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype.clear();
         m_arrayCount = 0;
-        in_destruct_default_val();
     }
 
     template<builtin_type Type>
     std::enable_if_t<Type == builtin_type::vector2>
         set_type(vec2 defaultVal = vec2::zero()) noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype.clear();
         m_arrayCount = 0;
-        in_destruct_default_val();
         m_defaultValVec2 = std::move(defaultVal);
     }
 
@@ -639,10 +639,10 @@ public:
     std::enable_if_t<Type == builtin_type::vector3>
         set_type(vec3 defaultVal = vec3::zero()) noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype.clear();
         m_arrayCount = 0;
-        in_destruct_default_val();
         m_defaultValVec3 = std::move(defaultVal);
     }
 
@@ -650,10 +650,10 @@ public:
     std::enable_if_t<Type == builtin_type::vector4>
         set_type(vec4 defaultVal = vec4::zero()) noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype.clear();
         m_arrayCount = 0;
-        in_destruct_default_val();
         m_defaultValVec4 = std::move(defaultVal);
     }
 
@@ -661,10 +661,10 @@ public:
     std::enable_if_t<Type == builtin_type::quaternion>
         set_type(quat defaultVal = quat::identity()) noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype.clear();
         m_arrayCount = 0;
-        in_destruct_default_val();
         m_defaultValQuat = std::move(defaultVal);
     }
 
@@ -672,11 +672,11 @@ public:
     std::enable_if_t<Type == builtin_type::array>
         set_type(std::string subtype, std::size_t count = 0) noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype = std::move(subtype);
         m_arrayCount = count;
-        in_destruct_default_val();
-        in_set_default_val_for_type(m_subtype);
+        in_default_construct_default_val(m_subtype);
     }
 
     // TODO: set_type array with enum subtype and custom default value.
@@ -687,10 +687,10 @@ public:
         SubType == builtin_type::int32 || SubType == builtin_type::int64)>
         set_type(std::intmax_t defaultVal = 0, std::size_t count = 0) noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype = builtin_type_ids[SubType];
         m_arrayCount = count;
-        in_destruct_default_val();
         m_defaultValSignedInt = defaultVal;
     }
 
@@ -700,10 +700,10 @@ public:
         SubType == builtin_type::uint32 || SubType == builtin_type::uint64)>
         set_type(std::uintmax_t defaultVal = 0, std::size_t count = 0) noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype = builtin_type_ids[SubType];
         m_arrayCount = count;
-        in_destruct_default_val();
         m_defaultValUnsignedInt = defaultVal;
     }
 
@@ -712,10 +712,10 @@ public:
         (SubType == builtin_type::float32 || SubType == builtin_type::float64)>
         set_type(double defaultVal = 0.0, std::size_t count = 0) noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype = builtin_type_ids[SubType];
         m_arrayCount = count;
-        in_destruct_default_val();
         m_defaultValFloating = defaultVal;
     }
 
@@ -724,10 +724,10 @@ public:
         SubType == builtin_type::_char>
         set_type(char defaultVal = '\0', std::size_t count = 0) noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype = builtin_type_ids[SubType];
         m_arrayCount = count;
-        in_destruct_default_val();
         m_defaultValChar = defaultVal;
     }
 
@@ -736,10 +736,10 @@ public:
         SubType == builtin_type::string>
         set_type(std::string defaultVal = "", std::size_t count = 0) noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype = builtin_type_ids[SubType];
         m_arrayCount = count;
-        in_destruct_default_val();
         m_defaultValString = std::move(defaultVal);
     }
 
@@ -748,10 +748,10 @@ public:
         SubType == builtin_type::_bool>
         set_type(bool defaultVal = false, std::size_t count = 0) noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype = builtin_type_ids[SubType];
         m_arrayCount = count;
-        in_destruct_default_val();
         m_defaultValBool = defaultVal;
     }
 
@@ -760,10 +760,10 @@ public:
         SubType == builtin_type::object_reference>
         set_type(std::size_t count = 0) noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype = builtin_type_ids[SubType];
         m_arrayCount = count;
-        in_destruct_default_val();
     }
 
     template<builtin_type Type, builtin_type SubType>
@@ -771,10 +771,10 @@ public:
         SubType == builtin_type::vector2>
         set_type(vec2 defaultVal = vec2::zero(), std::size_t count = 0) noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype = builtin_type_ids[SubType];
         m_arrayCount = count;
-        in_destruct_default_val();
         m_defaultValVec2 = std::move(defaultVal);
     }
 
@@ -783,10 +783,10 @@ public:
         SubType == builtin_type::vector3>
         set_type(vec3 defaultVal = vec3::zero(), std::size_t count = 0) noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype = builtin_type_ids[SubType];
         m_arrayCount = count;
-        in_destruct_default_val();
         m_defaultValVec3 = std::move(defaultVal);
     }
 
@@ -795,10 +795,10 @@ public:
         SubType == builtin_type::vector4>
         set_type(vec4 defaultVal = vec4::zero(), std::size_t count = 0) noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype = builtin_type_ids[SubType];
         m_arrayCount = count;
-        in_destruct_default_val();
         m_defaultValVec4 = std::move(defaultVal);
     }
 
@@ -807,10 +807,10 @@ public:
         SubType == builtin_type::quaternion>
         set_type(quat defaultVal = quat::identity(), std::size_t count = 0) noexcept
     {
+        in_destruct_default_val();
         m_type = builtin_type_ids[Type];
         m_subtype = builtin_type_ids[SubType];
         m_arrayCount = count;
-        in_destruct_default_val();
         m_defaultValQuat = std::move(defaultVal);
     }
 
