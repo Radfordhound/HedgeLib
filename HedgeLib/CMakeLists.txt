@@ -7,6 +7,7 @@ set(HEDGELIB_INCLUDES
     "${HEDGELIB_INCLUDE_DIR}/hedgelib/archives/hl_archive.h"
     "${HEDGELIB_INCLUDE_DIR}/hedgelib/archives/hl_hh_archive.h"
     "${HEDGELIB_INCLUDE_DIR}/hedgelib/archives/hl_pacx.h"
+    "${HEDGELIB_INCLUDE_DIR}/hedgelib/csl/hl_csl_move_array.h"
     "${HEDGELIB_INCLUDE_DIR}/hedgelib/effects/hl_fxcol.h"
     "${HEDGELIB_INCLUDE_DIR}/hedgelib/effects/hl_grif.h"
     "${HEDGELIB_INCLUDE_DIR}/hedgelib/hh/hl_hh_light.h"
