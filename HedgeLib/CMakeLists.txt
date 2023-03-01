@@ -139,12 +139,12 @@ elseif(UNIX)
     # Link to cflib on macOS
     if(APPLE)
         find_library(CFLIB_LIBRARY CoreFoundation REQUIRED)
-        list(APPEND HEDGELIB_PRIVATE_DEPEND_LIBS CFLIB_LIBRARY)
+        list(APPEND HEDGELIB_PRIVATE_DEPEND_LIBS ${CFLIB_LIBRARY})
 
     # Link to libuuid on non-macOS
     else()
-        find_library(LIBUUID_LIBRARY libuuid REQUIRED)
-        list(APPEND HEDGELIB_PRIVATE_DEPEND_LIBS LIBUUID_LIBRARY)
+        find_library(LIBUUID_LIBRARY uuid REQUIRED)
+        list(APPEND HEDGELIB_PRIVATE_DEPEND_LIBS ${LIBUUID_LIBRARY})
     endif()
 
     set_target_properties(HedgeLib PROPERTIES OUTPUT_NAME "hedge")
