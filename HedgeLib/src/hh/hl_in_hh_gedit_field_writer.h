@@ -899,7 +899,7 @@ public:
 
                 // Generate dynamic array.
                 RawArrayType<void> rawDynArray = {};
-                rawDynArray.count = static_cast<RawArrayType<void>::size_type>(
+                rawDynArray.count = static_cast<typename RawArrayType<void>::size_type>(
                     (hsonParam) ? hsonParam->value_array().size() : 0);
 
                 rawDynArray.capacity = rawDynArray.count;
