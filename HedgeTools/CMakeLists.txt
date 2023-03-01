@@ -1,5 +1,6 @@
 add_subdirectory(HedgeArcPack)
 add_subdirectory(HedgeNeedle)
+add_subdirectory(HedgeSet)
 
 # Install templates
 if(WIN32) # TODO: Non-windows HedgeEdit support
