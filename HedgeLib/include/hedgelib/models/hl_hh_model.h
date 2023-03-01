@@ -12,8 +12,8 @@ namespace hh
 namespace mirage
 {
 class material;
-struct skeletal_model;
-struct terrain_model;
+class skeletal_model;
+class terrain_model;
 struct node;
 
 /**
