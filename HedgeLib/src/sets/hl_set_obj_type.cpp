@@ -14,6 +14,7 @@ class in_set_object_type_database_json_handler
         top_level_object,
 
         file_version_number,
+        format,
 
         enums_section,
         enums,
@@ -716,6 +717,22 @@ bool in_set_object_type_database_json_handler::String(
 {
     switch (m_curState)
     {
+    case in_state::format:
+    {
+        const std::string_view key(str, length);
+        if (key == "gedit_v3")
+        {
+            m_database->format = set_object_format::gedit_v3;
+        }
+        else
+        {
+            return false;
+        }
+
+        m_curState = in_state::top_level_object;
+        return true;
+    }
+
     case in_state::enum_type:
         m_curEnum->type = reflect::get_integral_type(std::string_view(str, length));
         m_curState = in_state::_enum;
@@ -863,6 +880,11 @@ bool in_set_object_type_database_json_handler::Key(
         if (key == "version")
         {
             m_curState = in_state::file_version_number;
+            return true;
+        }
+        else if (key == "format")
+        {
+            m_curState = in_state::format;
             return true;
         }
         else if (key == "enums")
@@ -1164,6 +1186,14 @@ void set_object_type_database::in_load(const nchar* filePath)
 {
     internal::in_set_object_type_database_json_handler handler(*this);
     internal::in_load_json(handler, filePath);
+}
+
+void set_object_type_database::clear() noexcept
+{
+    format = set_object_format::unknown;
+    enums.clear();
+    structs.clear();
+    radix_tree::clear();
 }
 
 void set_object_type_database::parse(

@@ -17,6 +17,12 @@ public:
         category(std::move(category)) {}
 };
 
+enum class set_object_format
+{
+    unknown = 0,
+    gedit_v3,
+};
+
 class set_object_type_database : public radix_tree<set_object_type>
 {
     void in_parse(const void* rawData, std::size_t rawDataSize);
@@ -26,8 +32,11 @@ class set_object_type_database : public radix_tree<set_object_type>
     void in_load(const nchar* filePath);
 
 public:
+    set_object_format                       format = set_object_format::unknown;
     reflect::enum_definition_database       enums;
     reflect::struct_definition_database     structs;
+
+    HL_API void clear() noexcept;
 
     HL_API void parse(const void* rawData, std::size_t rawDataSize);
 
