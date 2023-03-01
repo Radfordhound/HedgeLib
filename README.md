@@ -199,7 +199,7 @@ wget -qO - https://gist.githubusercontent.com/Radfordhound/6e6ce00535d14ae87d606
 Install all pre-packaged dependencies:
 
 ```sh
-sudo apt install git build-essential cmake rapidjson-dev libglm-dev liblz4-dev zlib1g-dev libglfw3-dev vulkan-sdk
+sudo apt install git build-essential cmake libuuid1 rapidjson-dev libglm-dev liblz4-dev zlib1g-dev libglfw3-dev vulkan-sdk
 ```
 
 Build/install robin-hood-hashing:
@@ -215,13 +215,13 @@ cd ../
 
 #### Arch
 ```sh
-sudo pacman -S git gcc make cmake rapidjson glm lz4 zlib glfw-wayland vulkan-headers vulkan-validation-layers shaderc
+sudo pacman -S git gcc make cmake util-linux-libs rapidjson glm lz4 zlib glfw-wayland vulkan-headers vulkan-validation-layers shaderc
 yay -S robin-hood-hashing
 ```
 
 #### Void
 ```sh
-sudo xbps-install -S git gcc make cmake rapidjson robin-hood-hashing glm liblz4-devel zlib-devel glfw-devel Vulkan-Headers Vulkan-ValidationLayers shaderc
+sudo xbps-install -S git gcc make cmake libuuid-devel rapidjson robin-hood-hashing glm liblz4-devel zlib-devel glfw-devel Vulkan-Headers Vulkan-ValidationLayers shaderc
 ```
 
 ### 2: Clone the HedgeLib repository
