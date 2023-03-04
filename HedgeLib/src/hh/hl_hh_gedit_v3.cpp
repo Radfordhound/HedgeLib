@@ -162,11 +162,6 @@ void raw_object::add_to_hson(
     hsonObj.position = localTransform.pos;
     hsonObj.rotation = quat(localTransform.rot);
 
-    // Invert X, since HSON uses X-right and gedit V3 uses X-left
-    hsonObj.position->x = -hsonObj.position->x;
-    hsonObj.rotation->y = -hsonObj.rotation->y;
-    hsonObj.rotation->z = -hsonObj.rotation->z;
-
     // Convert tag data to HSON.
     hson::parameter hsonTags(hson::parameter_type::object);
     for (const auto& rawTagOff : tags)
@@ -410,14 +405,6 @@ void write(const hson::project& project,
         rawObject.transformBase = obj.get_global_transform(project);
         rawObject.transformOffset.pos = obj.get_local_position(project);
         rawObject.transformOffset.rot = obj.get_local_rotation(project).as_euler();
-
-        // Invert X, since HSON uses X-right and gedit V3 uses X-left
-        rawObject.transformBase.pos.x = -rawObject.transformBase.pos.x;
-        rawObject.transformOffset.pos.x = -rawObject.transformOffset.pos.x;
-        rawObject.transformBase.rot.y = -rawObject.transformBase.rot.y;
-        rawObject.transformBase.rot.z = -rawObject.transformBase.rot.z;
-        rawObject.transformOffset.rot.y = -rawObject.transformOffset.rot.y;
-        rawObject.transformOffset.rot.z = -rawObject.transformOffset.rot.z;
 
         const auto tagCount = (!curObjTags) ? 0 :
             in_get_supported_tag_count(*curObjTags);
