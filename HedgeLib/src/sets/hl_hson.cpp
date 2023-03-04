@@ -1370,15 +1370,15 @@ static DirectX::XMMATRIX in_get_matrix(const object& obj,
     const ordered_map<guid, object>& objects) noexcept
 {
     // Compute matrix with the given translation and rotation.
-    alignas(16) const auto pos = obj.get_local_position(objects);
-    alignas(16) const auto rot = obj.get_local_rotation(objects);
-    alignas(16) const auto scale = obj.get_local_scale(objects);
+    const auto& pos = obj.get_local_position(objects);
+    const auto& rot = obj.get_local_rotation(objects);
+    const auto& scale = obj.get_local_scale(objects);
 
     return DirectX::XMMatrixAffineTransformation(
-        DirectX::XMLoadFloat3A(reinterpret_cast<const DirectX::XMFLOAT3A*>(&scale.x)),
+        DirectX::XMLoadFloat3(reinterpret_cast<const DirectX::XMFLOAT3*>(&scale.x)),
         DirectX::g_XMZero,
-        DirectX::XMLoadFloat4A(reinterpret_cast<const DirectX::XMFLOAT4A*>(&rot.x)),
-        DirectX::XMLoadFloat3A(reinterpret_cast<const DirectX::XMFLOAT3A*>(&pos.x))
+        DirectX::XMLoadFloat4(reinterpret_cast<const DirectX::XMFLOAT4*>(&rot.x)),
+        DirectX::XMLoadFloat3(reinterpret_cast<const DirectX::XMFLOAT3*>(&pos.x))
     );
 }
 
