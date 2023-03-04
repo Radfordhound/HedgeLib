@@ -93,14 +93,16 @@ quat::quat(const vec3& axis, float angle)
             axis.x, axis.y, axis.z, 0.0f), angle));
 }
 
-quat::quat(const vec3& eulerAngles)
+quat::quat(float pitch, float yaw, float roll)
 {
     HL_STATIC_ASSERT_SIZE(DirectX::XMFLOAT4, sizeof(quat));
 
     // Compute quaternion from given euler angles.
+    // NOTE: Despite the function's name, the arguments are passed
+    // in the following order: pitch, then yaw, then roll.
     DirectX::XMStoreFloat4(reinterpret_cast<DirectX::XMFLOAT4*>(&x),
         DirectX::XMQuaternionRotationRollPitchYaw(
-            eulerAngles.x, eulerAngles.y, eulerAngles.z));
+            pitch, yaw, roll));
 }
 
 quat operator*(const quat& a, const quat& b) noexcept

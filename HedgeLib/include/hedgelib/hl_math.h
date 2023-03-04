@@ -568,7 +568,10 @@ struct quat : public vec4
 
     HL_API quat(const vec3& axis, float angle);
 
-    HL_API explicit quat(const vec3& eulerAngles);
+    HL_API quat(float pitch, float yaw, float roll);
+
+    inline quat(const vec3& pitchYawRoll) :
+        quat(pitchYawRoll.x, pitchYawRoll.y, pitchYawRoll.z) {}
 
     constexpr quat(float x, float y, float z, float w) noexcept :
         vec4(x, y, z, w) {}
