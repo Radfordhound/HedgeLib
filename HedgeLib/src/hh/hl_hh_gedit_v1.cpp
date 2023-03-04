@@ -40,7 +40,10 @@ matrix4x4A raw_transform::as_matrix() const noexcept
 raw_transform::raw_transform(const matrix4x4& mtx)
 {
     quat rotQuat;
-    mtx.decompose(&pos, &rotQuat);
+    if (!mtx.decompose(&pos, &rotQuat))
+    {
+        throw std::runtime_error("non-SRT matrix encountered!");
+    }
 
     rot = rotQuat.as_euler();
 }
@@ -48,7 +51,10 @@ raw_transform::raw_transform(const matrix4x4& mtx)
 raw_transform::raw_transform(const matrix4x4A& mtx)
 {
     quat rotQuat;
-    mtx.decompose(&pos, &rotQuat);
+    if (!mtx.decompose(&pos, &rotQuat))
+    {
+        throw std::runtime_error("non-SRT matrix encountered!");
+    }
 
     rot = rotQuat.as_euler();
 }

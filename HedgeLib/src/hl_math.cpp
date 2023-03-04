@@ -138,7 +138,7 @@ quat& operator*=(quat& a, const quat& b) noexcept
     return a;
 }
 
-void matrix4x4::decompose(vec3* pos, quat* rot, vec3* scale) const noexcept
+bool matrix4x4::decompose(vec3* pos, quat* rot, vec3* scale) const noexcept
 {
     HL_STATIC_ASSERT_SIZE(DirectX::XMFLOAT3, sizeof(vec3));
     HL_STATIC_ASSERT_SIZE(DirectX::XMFLOAT4, sizeof(quat));
@@ -155,13 +155,16 @@ void matrix4x4::decompose(vec3* pos, quat* rot, vec3* scale) const noexcept
 
     if (rot)
     {
-        DirectX::XMStoreFloat4(reinterpret_cast<DirectX::XMFLOAT4*>(&rot->x), xmRot);
+        DirectX::XMStoreFloat4(reinterpret_cast<DirectX::XMFLOAT4*>(&rot->x),
+            (!r) ? DirectX::g_XMIdentityR3 : xmRot);
     }
 
     if (scale)
     {
         DirectX::XMStoreFloat3(reinterpret_cast<DirectX::XMFLOAT3*>(&scale->x), xmScale);
     }
+
+    return r;
 }
 
 vec3 matrix4x4::get_rotation_euler() const
@@ -236,7 +239,7 @@ matrix4x4::matrix4x4(const quat& rot)
             reinterpret_cast<const DirectX::XMFLOAT4*>(&rot))));
 }
 
-void matrix4x4A::decompose(vec3* pos, quat* rot, vec3* scale) const noexcept
+bool matrix4x4A::decompose(vec3* pos, quat* rot, vec3* scale) const noexcept
 {
     HL_STATIC_ASSERT_SIZE(DirectX::XMFLOAT3, sizeof(vec3));
     HL_STATIC_ASSERT_SIZE(DirectX::XMFLOAT4, sizeof(quat));
@@ -253,13 +256,16 @@ void matrix4x4A::decompose(vec3* pos, quat* rot, vec3* scale) const noexcept
 
     if (rot)
     {
-        DirectX::XMStoreFloat4(reinterpret_cast<DirectX::XMFLOAT4*>(&rot->x), xmRot);
+        DirectX::XMStoreFloat4(reinterpret_cast<DirectX::XMFLOAT4*>(&rot->x),
+            (!r) ? DirectX::g_XMIdentityR3 : xmRot);
     }
 
     if (scale)
     {
         DirectX::XMStoreFloat3(reinterpret_cast<DirectX::XMFLOAT3*>(&scale->x), xmScale);
     }
+
+    return r;
 }
 
 matrix4x4A::matrix4x4A(const vec3& pos)

@@ -727,7 +727,7 @@ struct matrix4x4
         hl::endian_swap(m44);
     }
 
-    HL_API void decompose(vec3* pos, quat* rot = nullptr,
+    HL_API bool decompose(vec3* pos, quat* rot = nullptr,
         vec3* scale = nullptr) const noexcept;
 
     HL_API vec3 get_rotation_euler() const;
@@ -763,7 +763,7 @@ HL_STATIC_ASSERT_SIZE(matrix4x4, 64);
 
 struct alignas(16) matrix4x4A : matrix4x4
 {
-    HL_API void decompose(vec3* pos, quat* rot = nullptr,
+    HL_API bool decompose(vec3* pos, quat* rot = nullptr,
         vec3* scale = nullptr) const noexcept;
 
     using matrix4x4::matrix4x4;
