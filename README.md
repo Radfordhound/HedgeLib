@@ -57,7 +57,7 @@ A collection of miscellaneous tools that utilize HedgeLib.
 - [HedgeOffsets](HedgeTools/HedgeOffsets)
   * A C++17 Command-Line tool that reads the offset table in BINA/Hedgehog Engine formats and prints each offset. Useful for debugging and reverse-engineering of undocumented formats which contain an offset table.
 - [HedgeSet](HedgeTools/HedgeSet)
-  * Simple utility for converting between game-specific-formats and HSON. Currently only supports gedit v3 (used in Frontiers). More games and formats will be added later.
+  * A C++17 Command-Line tool for converting set data between game-specific-formats and HSON. Currently only supports gedit v3 (used in Frontiers). More games and formats will be added later.
 
 # Manually Building
 Building HedgeLib is supposed to be easy.
