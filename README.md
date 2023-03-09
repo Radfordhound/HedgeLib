@@ -50,14 +50,14 @@ Some of the features include:
 ## HedgeTools
 A collection of miscellaneous tools that utilize HedgeLib.
 
-- [HedgeEdit](HedgeTools/HedgeEdit)
-  * A C++17 all-in-one ("AIO") editor built on top of HedgeLib and HedgeRender that aims to support quick and powerful editing of levels/resources from all games HedgeLib supports.
 - [HedgeArcPack](HedgeTools/HedgeArcPack)
   * A C++17 Command-Line tool that allows quick and powerful extraction and generation of archiving formats from all games HedgeLib supports.
 - [HedgeNeedle](HedgeTools/HedgeNeedle)
   * A C++17 Command-Line tool that allows extraction and generation of Hedgehog Engine 2 Needle "archives".
 - [HedgeOffsets](HedgeTools/HedgeOffsets)
   * A C++17 Command-Line tool that reads the offset table in BINA/Hedgehog Engine formats and prints each offset. Useful for debugging and reverse-engineering of undocumented formats which contain an offset table.
+- [HedgeSet](HedgeTools/HedgeSet)
+  * A C++17 Command-Line tool for converting set data between game-specific-formats and HSON. Currently only supports gedit v3 (used in Frontiers). More games and formats will be added later.
 
 # Manually Building
 Building HedgeLib is supposed to be easy.
