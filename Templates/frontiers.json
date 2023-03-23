@@ -6760,6 +6760,11 @@
         { "name": "dummy", "type": "int32", "descriptions": { "ja": "ダミー" } }
       ]
     },
+    "ObjMusicMemorySpawner": {
+      "fields": [
+        { "name": "no", "type": "int32", "descriptions": { "ja": "MusicNo" } }
+      ]
+    },
     "ObjTailsSpawner": {
       "fields": [
         { "name": "no", "type": "int32" },
@@ -9988,6 +9993,10 @@
     },
     "Moon": {
       "struct": "ObjMoonSpawner",
+      "category": "Island/Gimmick"
+    },
+    "MusicMemory": {
+      "struct": "ObjMusicMemorySpawner",
       "category": "Island/Gimmick"
     },
     "Tails": {
