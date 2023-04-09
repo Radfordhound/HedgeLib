@@ -3,6 +3,7 @@
 #include "hedgelib/hh/hl_hh_gedit.h"
 #include "hedgelib/io/hl_file.h"
 #include <DirectXMath.h>
+#include <unordered_set>
 
 namespace hl
 {
@@ -155,7 +156,12 @@ void raw_object::add_to_hson(
         id, hson::object()).first->second;
 
     hsonObj.type = type.get();
-    hsonObj.name = name.get();
+
+    if (name)
+    {
+        hsonObj.name = name.get();
+    }
+
     hsonObj.parentID = parentID;
 
     const auto& localTransform = get_local_transform();
@@ -339,7 +345,11 @@ void write(const hson::project& project,
     writer.start_data_block();
 
     // Determine the number of objects we have sufficient type info for.
+    std::unordered_set<std::string> usedObjNames;
     u64 objCount = 0;
+
+    usedObjNames.reserve(project.objects.size());
+
     for (auto it = project.objects.begin(); it != project.objects.end(); ++it)
     {
         const auto& obj = it->second;
@@ -347,6 +357,11 @@ void write(const hson::project& project,
 
         if (hsonObjInheritedType && objTypeDB.contains(*hsonObjInheritedType))
         {
+            if (obj.name.has_value())
+            {
+                usedObjNames.insert(obj.name.value());
+            }
+
             ++objCount;
         }
     }
@@ -376,6 +391,7 @@ void write(const hson::project& project,
 
     // Write objects.
     radix_tree<hson::parameter> tagsBuf;
+    radix_tree<std::size_t> numObjsOfTypes;
     const auto objsPos = writer.tell();
 
     for (auto it = project.objects.begin(); it != project.objects.end(); ++it)
@@ -420,9 +436,44 @@ void write(const hson::project& project,
 
         // Add name string, if any.
         const auto* hsonObjInheritedName = obj.get_inherited_name(project);
-        if (hsonObjInheritedName && !hsonObjInheritedName->empty()) // TODO: Are nullptr names allowed in gedits?
+        if (hsonObjInheritedName) // TODO: Should we disallow empty names?
         {
             writer.add_string(*hsonObjInheritedName, objPos + offsetof(raw_object, name));
+        }
+
+        // Otherwise, fallback to default name.
+        else
+        {
+            // Get the number of objects of this type.
+            auto& numObjsOfType = numObjsOfTypes.insert(
+                *hsonObjInheritedType, 0).first->second;
+
+            // Create a default name based on the object's type, e.g. "Ring".
+            std::string defaultName(*hsonObjInheritedType);
+            const auto defaultNameNumPos = defaultName.size();
+
+            while (true)
+            {
+                // Append the number of objects of this type to the name, e.g. "Ring0"
+                defaultName.append(std::to_string(numObjsOfType));
+
+                // Increment the number of objects of this type.
+                ++numObjsOfType;
+
+                // Break if the name we just generated is not already in-use.
+                const auto usedObjNameIt = usedObjNames.find(defaultName);
+                if (usedObjNameIt == usedObjNames.end())
+                {
+                    break;
+                }
+
+                // Otherwise, we need to generate another name!
+                // Remove the number we appended to the end of the name, and try again.
+                defaultName.erase(defaultNameNumPos);
+            }
+
+            // Add the generated default name to the object.
+            writer.add_string(std::move(defaultName), objPos + offsetof(raw_object, name));
         }
 
         // Write tags if necessary.
