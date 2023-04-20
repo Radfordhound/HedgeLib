@@ -3362,53 +3362,56 @@ static void in_file_data_write(const in_radix_node<const in_file_metadata>& file
     bina::endian_flag endianFlag, u32 dataAlignment,
     packed_file_info* pfi, off_table& offTable, stream& stream)
 {
-    if (fileNode.data && fileNode.data->splitIndex == splitIndex)
+    if (fileNode.data)
     {
-        // Pad data to requested data alignment.
-        stream.pad(dataAlignment);
-
-        // Get/Load entry data as necessary.
-        std::unique_ptr<u8[]> tmpDataBuf;
-        const void* data;
-
-        // If this is a file reference, load up the file's data.
-        const auto& file = *fileNode.data.get();
-        if (file.entry->is_reference_file())
+        if (fileNode.data->splitIndex == splitIndex)
         {
-            tmpDataBuf = file::load(file.entry->path());
-            data = tmpDataBuf.get();
+            // Pad data to requested data alignment.
+            stream.pad(dataAlignment);
+
+            // Get/Load entry data as necessary.
+            std::unique_ptr<u8[]> tmpDataBuf;
+            const void* data;
+
+            // If this is a file reference, load up the file's data.
+            const auto& file = *fileNode.data.get();
+            if (file.entry->is_reference_file())
+            {
+                tmpDataBuf = file::load(file.entry->path());
+                data = tmpDataBuf.get();
+            }
+
+            // If this is a regular file, get a pointer to its data.
+            else
+            {
+                data = file.entry->file_data();
+            }
+
+            // Mark whether this data is BINA data or not.
+            // TODO: Do these games actually support BINAV1?
+            data_flags flags = data_flags::regular_file;
+            if (bina::has_v2_header(data, file.entry->size()) ||
+                bina::has_v1_header(data, file.entry->size()))
+            {
+                flags |= data_flags::bina_file;
+            }
+
+            // Write data, then free it as necessary.
+            const std::size_t fileDataPos = stream.tell();
+            stream.write_all(file.entry->size(), data);
+            tmpDataBuf.reset();
+
+            // Add packed file entry to packed file info if necessary.
+            if (pfi)
+            {
+                pfi->emplace_back(file.utf8_name(),
+                    fileDataPos, file.entry->size());
+            }
+
+            // Fill-in data entry.
+            in_data_entry_fill_in(file, dataEntryPos, fileDataPos,
+                static_cast<u64>(flags), endianFlag, offTable, stream);
         }
-
-        // If this is a regular file, get a pointer to its data.
-        else
-        {
-            data = file.entry->file_data();
-        }
-
-        // Mark whether this data is BINA data or not.
-        // TODO: Do these games actually support BINAV1?
-        data_flags flags = data_flags::regular_file;
-        if (bina::has_v2_header(data, file.entry->size()) ||
-            bina::has_v1_header(data, file.entry->size()))
-        {
-            flags |= data_flags::bina_file;
-        }
-
-        // Write data, then free it as necessary.
-        const std::size_t fileDataPos = stream.tell();
-        stream.write_all(file.entry->size(), data);
-        tmpDataBuf.reset();
-
-        // Add packed file entry to packed file info if necessary.
-        if (pfi)
-        {
-            pfi->emplace_back(file.utf8_name(),
-                fileDataPos, file.entry->size());
-        }
-
-        // Fill-in data entry.
-        in_data_entry_fill_in(file, dataEntryPos, fileDataPos,
-            static_cast<u64>(flags), endianFlag, offTable, stream);
 
         // Increase current offset position to account for data entry.
         dataEntryPos += sizeof(data_entry);
