@@ -947,12 +947,12 @@ struct arr32
 
     inline const_reference operator[](size_type pos) const
     {
-        return (dataPtr.get() + pos);
+        return *(dataPtr.get() + pos);
     }
 
     inline reference operator[](size_type pos)
     {
-        return (dataPtr.get() + pos);
+        return *(dataPtr.get() + pos);
     }
 
     inline bool operator==(const arr32& other) const noexcept
@@ -1053,12 +1053,12 @@ struct arr64
 
     inline const_reference operator[](size_type pos) const
     {
-        return (dataPtr.get() + pos);
+        return *(dataPtr.get() + pos);
     }
 
     inline reference operator[](size_type pos)
     {
-        return (dataPtr.get() + pos);
+        return *(dataPtr.get() + pos);
     }
 
     inline bool operator==(const arr64& other) const noexcept
