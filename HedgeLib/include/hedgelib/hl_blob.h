@@ -60,30 +60,5 @@ public:
 
     HL_API blob(blob&& other) noexcept;
 };
-
-struct nullable_blob : public blob
-{
-    inline bool empty() const noexcept
-    {
-        return (m_size == 0U);
-    }
-
-    inline explicit operator bool() const noexcept
-    {
-        return (m_size != 0U);
-    }
-
-    nullable_blob() noexcept = default;
-
-    nullable_blob(std::size_t size, const void* initialData = nullptr) :
-        blob(size, initialData) {}
-
-    nullable_blob(const nchar* filePath) :
-        blob(filePath) {}
-
-    inline nullable_blob(const nstring& filePath) :
-        nullable_blob(filePath.c_str()) {}
-
-};
 } // hl
 #endif
