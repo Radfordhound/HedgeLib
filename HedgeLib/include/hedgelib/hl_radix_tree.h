@@ -5,6 +5,7 @@
 #define HL_RADIX_TREE_H_INCLUDED
 #include "hl_internal.h"
 #include <string>
+#include <algorithm>
 #include <utility>
 #include <vector>
 #include <array>
@@ -534,6 +535,18 @@ public:
     inline T& at(const std::string& key)
     {
         return at(key.c_str());
+    }
+
+    template<typename Predicate>
+    void sort(iterator begin, iterator end, Predicate pred)
+    {
+        using namespace internal;
+
+        std::sort(begin.m_it, end.m_it,
+            [pred](const in_radix_leaf* a, const in_radix_leaf* b)
+            {
+                return pred(*in_get_data_ptr(*a), *in_get_data_ptr(*b));
+            });
     }
 
     void clear() noexcept
