@@ -35,6 +35,11 @@ public:
         return m_size;
     }
 
+    [[nodiscard]] inline u8* release() noexcept
+    {
+        return m_data.release();
+    }
+
     inline operator const void*() const noexcept
     {
         return m_data.get();
