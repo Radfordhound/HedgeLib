@@ -432,6 +432,34 @@ inline const char_t* get_exts(const std::basic_string<char_t>& path)
 }
 
 template<typename char_t>
+inline const char_t* get_dotless_ext(const char_t* path)
+{
+    const auto ext = get_ext(path);
+    return (ext[0] == static_cast<char_t>('.')) ?
+        (ext + 1) : ext;
+}
+
+template<typename char_t>
+inline const char_t* get_dotless_ext(const std::basic_string<char_t>& path)
+{
+    return get_dotless_ext(path.c_str());
+}
+
+template<typename char_t>
+inline const char_t* get_dotless_exts(const char_t* path)
+{
+    const auto exts = get_exts(path);
+    return (exts[0] == static_cast<char_t>('.')) ?
+        (exts + 1) : exts;
+}
+
+template<typename char_t>
+inline const char_t* get_dotless_exts(const std::basic_string<char_t>& path)
+{
+    return get_dotless_exts(path.c_str());
+}
+
+template<typename char_t>
 inline std::size_t remove_ext_no_alloc(const char_t* path, char_t* result = nullptr)
 {
     /*
