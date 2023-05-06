@@ -760,12 +760,12 @@ static void in_fix(void* rawData, std::size_t dataSize)
     }
 }
 
-void fix32(void* rawData, std::size_t dataSize)
+void fix_container32(void* rawData, std::size_t dataSize)
 {
     in_fix<off32>(rawData, dataSize);
 }
 
-void fix64(void* rawData, std::size_t dataSize)
+void fix_container64(void* rawData, std::size_t dataSize)
 {
     in_fix<off64>(rawData, dataSize);
 }
@@ -942,12 +942,12 @@ static void in_fix(void* rawData, std::size_t dataSize)
     }
 }
 
-void fix32(void* rawData, std::size_t dataSize)
+void fix_container32(void* rawData, std::size_t dataSize)
 {
     in_fix<off32>(rawData, dataSize);
 }
 
-void fix64(void* rawData, std::size_t dataSize)
+void fix_container64(void* rawData, std::size_t dataSize)
 {
     in_fix<off64>(rawData, dataSize);
 }

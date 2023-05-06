@@ -1118,11 +1118,8 @@ void in_mark_texture_refs(T* effect,
 }
 
 static void in_mark_texture_refs(grif::effect& effect,
-    bina::endian_flag endianFlag, in_type_metadata_list& typeMetadata)
+    in_type_metadata_list& typeMetadata)
 {
-    // Fix effect.
-    effect.fix(endianFlag);
-
     // Mark texture references.
     if (effect.major_version() == 1)
     {
@@ -1178,18 +1175,15 @@ void in_type_metadata::set_file_priorities<data_type::ResGrifEffect>(
         const bina::endian_flag effectEndianFlag = (bina::has_v2_header(copyOfFileData.data())) ?
             copyOfFileData.data<v2::header>()->endian_flag() : endianFlag;
 
-        // Fix BINA general data.
-        bina::v2::fix32(copyOfFileData);
+        // Fix effect data, if present.
+        const auto effect = bina::v2::fix32<grif::effect>(
+            copyOfFileData, effectEndianFlag);
 
-        // Get effect pointer.
-        grif::effect* effect = bina::v2::get_data<grif::effect>(copyOfFileData);
-        if (!effect)
+        // Mark texture references within effect data, if present.
+        if (effect)
         {
-            throw invalid_data_exception();
+            in_mark_texture_refs(*effect, typeMetadata);
         }
-
-        // Mark texture references within effect data.
-        in_mark_texture_refs(*effect, endianFlag, typeMetadata);
     }
 }
 
@@ -1385,7 +1379,7 @@ static const void* in_file_data_merge(void* data, std::size_t dataSize,
            data with the values they will need once written to the pac, so this is
            alright.
         */
-        bina::v2::fix32(data, dataSize);
+        bina::v2::fix_container32(data, dataSize);
 
         // If file has a BINAV2 data block, merge its offsets/strings.
         bina::v2::raw_data_block_header* dataBlock = bina::v2::get_data_block(data);

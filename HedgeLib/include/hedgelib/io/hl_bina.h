@@ -291,9 +291,9 @@ struct raw_header
 
 HL_STATIC_ASSERT_SIZE(raw_header, 0x20);
 
-inline void fix(void* rawData)
+inline void fix_container(void* rawData)
 {
-    raw_header* headerPtr = static_cast<raw_header*>(rawData);
+    const auto headerPtr = static_cast<raw_header*>(rawData);
     headerPtr->fix();
 }
 
@@ -309,6 +309,26 @@ inline T* get_data(void* rawData)
 {
     raw_header* headerPtr = static_cast<raw_header*>(rawData);
     return headerPtr->data<T>();
+}
+
+template<typename DataType, typename... Args>
+DataType* fix(void* rawData, std::size_t dataSize, Args&&... args)
+{
+    // Fix BINA container.
+    fix_container(rawData, dataSize);
+
+    // Fix data in BINA container.
+    const auto data = get_data<DataType>(rawData);
+    data->fix(std::forward<Args>(args)...);
+
+    return data;
+}
+
+template<typename DataType, typename... Args>
+inline DataType* fix(blob& rawData, Args&&... args)
+{
+    return fix<DataType>(rawData.data(), rawData.size(),
+        std::forward<Args>(args)...);
 }
 } // v1
 
@@ -363,7 +383,7 @@ struct raw_data_block_header
     /** @brief The complete size of the block, including this header. */
     u32 size;
     /** @brief Offset to the beginning of the string table. */
-    off32<char> strTable;
+    off32<char> strTable; // TODO: I think this is actually the dataSize; change it to that?
     /** @brief The size of the string table in bytes, including padding. */
     u32 strTableSize;
     /** @brief The size of the offset table in bytes, including padding. */
@@ -528,7 +548,7 @@ struct raw_header
     u32 fileSize;
     /** @brief How many blocks are in the file. */
     u16 blockCount;
-    /** @brief Set internally by the game; always 0 in actual files. */
+    /** @brief Set internally by the game and by HedgeLib; always 0 in actual files. */
     u8 status;
     /** @brief Included so garbage data doesn't get writtten. */
     u8 padding;
@@ -615,18 +635,18 @@ struct raw_header
 
 HL_STATIC_ASSERT_SIZE(raw_header, 16);
 
-HL_API void fix32(void* rawData, std::size_t dataSize);
+HL_API void fix_container32(void* rawData, std::size_t dataSize);
 
-inline void fix32(blob& rawData)
+inline void fix_container32(blob& rawData)
 {
-    fix32(rawData.data(), rawData.size());
+    fix_container32(rawData.data(), rawData.size());
 }
 
-HL_API void fix64(void* rawData, std::size_t dataSize);
+HL_API void fix_container64(void* rawData, std::size_t dataSize);
 
-inline void fix64(blob& rawData)
+inline void fix_container64(blob& rawData)
 {
-    fix64(rawData.data(), rawData.size());
+    fix_container64(rawData.data(), rawData.size());
 }
 
 HL_API const raw_data_block_header* get_data_block(const void* rawData);
@@ -666,6 +686,54 @@ inline T* get_data(void* rawData)
     {
         return static_cast<T*>(rawData);
     }
+}
+
+template<typename DataType, typename... Args>
+DataType* fix32(void* rawData, std::size_t dataSize, Args&&... args)
+{
+    // Fix BINA container.
+    fix_container32(rawData, dataSize);
+
+    // Fix data in BINA container, if any.
+    const auto data = get_data<DataType>(rawData);
+
+    if (data)
+    {
+        data->fix(std::forward<Args>(args)...);
+    }
+
+    return data;
+}
+
+template<typename DataType, typename... Args>
+inline DataType* fix32(blob& rawData, Args&&... args)
+{
+    return fix32<DataType>(rawData.data(), rawData.size(),
+        std::forward<Args>(args)...);
+}
+
+template<typename DataType, typename... Args>
+DataType* fix64(void* rawData, std::size_t dataSize, Args&&... args)
+{
+    // Fix BINA container.
+    fix_container64(rawData, dataSize);
+
+    // Fix data in BINA container, if any.
+    const auto data = get_data<DataType>(rawData);
+
+    if (data)
+    {
+        data->fix(std::forward<Args>(args)...);
+    }
+
+    return data;
+}
+
+template<typename DataType, typename... Args>
+inline DataType* fix64(blob& rawData, Args&&... args)
+{
+    return fix64<DataType>(rawData.data(), rawData.size(),
+        std::forward<Args>(args)...);
 }
 
 class writer32 : public internal::in_writer_base
@@ -928,18 +996,18 @@ inline bool has_v2_header(const blob& rawData)
     return has_v2_header(rawData.data(), rawData.size());
 }
 
-HL_API void fix32(void* rawData, std::size_t dataSize);
+HL_API void fix_container32(void* rawData, std::size_t dataSize);
 
-inline void fix32(blob& rawData)
+inline void fix_container32(blob& rawData)
 {
-    fix32(rawData.data(), rawData.size());
+    fix_container32(rawData.data(), rawData.size());
 }
 
-HL_API void fix64(void* rawData, std::size_t dataSize);
+HL_API void fix_container64(void* rawData, std::size_t dataSize);
 
-inline void fix64(blob& rawData)
+inline void fix_container64(blob& rawData)
 {
-    fix64(rawData.data(), rawData.size());
+    fix_container64(rawData.data(), rawData.size());
 }
 
 template<typename T = void>
@@ -964,6 +1032,54 @@ inline T* get_data(void* rawData)
 {
     return const_cast<T*>(get_data<T>(
         const_cast<const void*>(rawData)));
+}
+
+template<typename DataType, typename... Args>
+DataType* fix32(void* rawData, std::size_t dataSize, Args&&... args)
+{
+    // Fix BINA container.
+    fix_container32(rawData, dataSize);
+
+    // Fix data if BINA container, if any.
+    const auto data = get_data<DataType>(rawData);
+
+    if (data)
+    {
+        data->fix(std::forward<Args>(args)...);
+    }
+
+    return data;
+}
+
+template<typename DataType, typename... Args>
+inline DataType* fix32(blob& rawData, Args&&... args)
+{
+    return fix32<DataType>(rawData.data(), rawData.size(),
+        std::forward<Args>(args)...);
+}
+
+template<typename DataType, typename... Args>
+DataType* fix64(void* rawData, std::size_t dataSize, Args&&... args)
+{
+    // Fix BINA container.
+    fix_container64(rawData, dataSize);
+
+    // Fix data in BINA container, if any.
+    const auto data = get_data<DataType>(rawData);
+
+    if (data)
+    {
+        data->fix(std::forward<Args>(args)...);
+    }
+
+    return data;
+}
+
+template<typename DataType, typename... Args>
+inline DataType* fix64(blob& rawData, Args&&... args)
+{
+    return fix64<DataType>(rawData.data(), rawData.size(),
+        std::forward<Args>(args)...);
 }
 } // bina
 } // hl
