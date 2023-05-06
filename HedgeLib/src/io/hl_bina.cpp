@@ -442,7 +442,7 @@ void raw_header::fix()
 namespace v2
 {
 template<template<typename> class off_t>
-static void in_fix(raw_block_data_header& dataBlock, endian_flag endianFlag)
+static void in_fix(raw_data_block_header& dataBlock, endian_flag endianFlag)
 {
     // Swap header if necessary.
     if (needs_swap(endianFlag))
@@ -458,28 +458,28 @@ static void in_fix(raw_block_data_header& dataBlock, endian_flag endianFlag)
     in_offsets_fix<off_t>(dataBlock.offsets(), endianFlag, dataPtr);
 }
 
-void raw_block_data_header::fix32(endian_flag endianFlag)
+void raw_data_block_header::fix32(endian_flag endianFlag)
 {
     in_fix<off32>(*this, endianFlag);
 }
 
-void raw_block_data_header::fix64(endian_flag endianFlag)
+void raw_data_block_header::fix64(endian_flag endianFlag)
 {
     in_fix<off64>(*this, endianFlag);
 }
 
-void raw_block_data_header::start_write(endian_flag endianFlag,
+void raw_data_block_header::start_write(endian_flag endianFlag,
     stream& stream)
 {
     // Generate data block header.
-    raw_block_data_header dataBlock =
+    raw_data_block_header dataBlock =
     {
         static_cast<u32>(raw_block_type::data),                         // signature
         0U,                                                             // size
         0U,                                                             // strTable
         0U,                                                             // strTableSize
         0U,                                                             // offTableSize
-        sizeof(raw_block_data_header)                                   // relativeDataOffset
+        sizeof(raw_data_block_header)                                   // relativeDataOffset
     };
 
     // Endian swap if necessary.
@@ -499,7 +499,7 @@ void raw_block_data_header::start_write(endian_flag endianFlag,
     stream.write_obj(dataBlock);
 }
 
-void raw_block_data_header::finish_write(std::size_t dataBlockPos,
+void raw_data_block_header::finish_write(std::size_t dataBlockPos,
     std::size_t strTablePos, std::size_t offTablePos,
     endian_flag endianFlag, stream& stream)
 {
@@ -507,10 +507,10 @@ void raw_block_data_header::finish_write(std::size_t dataBlockPos,
     const std::size_t endPos = stream.tell();
 
     // Jump to data block size position.
-    stream.jump_to(dataBlockPos + offsetof(raw_block_data_header, size));
+    stream.jump_to(dataBlockPos + offsetof(raw_data_block_header, size));
 
     // Compute data block header values.
-    const std::size_t dataPos = (dataBlockPos + (sizeof(raw_block_data_header) * 2));
+    const std::size_t dataPos = (dataBlockPos + (sizeof(raw_data_block_header) * 2));
     struct
     {
         u32 size;
@@ -546,7 +546,7 @@ static void in_finish_write(std::size_t dataBlockPos,
     endian_flag endianFlag, const hl::str_table& strTable,
     hl::off_table& offTable, stream& stream)
 {
-    const std::size_t dataPos = (dataBlockPos + (sizeof(raw_block_data_header) * 2));
+    const std::size_t dataPos = (dataBlockPos + (sizeof(raw_data_block_header) * 2));
 
     // Write string table.
     const std::size_t strTablePos = stream.tell();
@@ -560,11 +560,11 @@ static void in_finish_write(std::size_t dataBlockPos,
     stream.pad(4);
 
     // Fill-in data block header values.
-    raw_block_data_header::finish_write(dataBlockPos,
+    raw_data_block_header::finish_write(dataBlockPos,
         strTablePos, offTablePos, endianFlag, stream);
 }
 
-void raw_block_data_header::finish_write32(std::size_t dataBlockPos,
+void raw_data_block_header::finish_write32(std::size_t dataBlockPos,
     endian_flag endianFlag, const hl::str_table& strTable,
     hl::off_table& offTable, stream& stream)
 {
@@ -572,7 +572,7 @@ void raw_block_data_header::finish_write32(std::size_t dataBlockPos,
         strTable, offTable, stream);
 }
 
-void raw_block_data_header::finish_write64(std::size_t dataBlockPos,
+void raw_data_block_header::finish_write64(std::size_t dataBlockPos,
     endian_flag endianFlag, const hl::str_table& strTable,
     hl::off_table& offTable, stream& stream)
 {
@@ -668,7 +668,7 @@ static void in_fix(raw_header& header)
         {
         case static_cast<u32>(raw_block_type::data):
         {
-            const auto dataBlock = reinterpret_cast<raw_block_data_header*>(block);
+            const auto dataBlock = reinterpret_cast<raw_data_block_header*>(block);
             in_fix<off_t>(*dataBlock, header.endianFlag);
             break;
         }
@@ -770,7 +770,7 @@ void fix64(void* rawData, std::size_t dataSize)
     in_fix<off64>(rawData, dataSize);
 }
 
-const raw_block_data_header* get_data_block(const void* rawData)
+const raw_data_block_header* get_data_block(const void* rawData)
 {
     // BINA V2
     if (has_v2_header(rawData))
@@ -806,7 +806,7 @@ void writer32::start_data_block()
     m_strings.clear();
     m_offsets.clear();
 
-    raw_block_data_header::start_write(m_endianFlag, *m_stream);
+    raw_data_block_header::start_write(m_endianFlag, *m_stream);
 
     m_basePos = m_stream->tell();
     ++m_blockCount;
@@ -856,8 +856,8 @@ void writer32::finish_data_block()
     assert(m_isWritingDataBlock &&
         "You must call finish_data_block exactly once per start_data_block call");
 
-    raw_block_data_header::finish_write32(
-        m_basePos - (sizeof(raw_block_data_header) * 2),
+    raw_data_block_header::finish_write32(
+        m_basePos - (sizeof(raw_data_block_header) * 2),
         m_endianFlag, m_strings, m_offsets, *m_stream);
 
     m_isWritingDataBlock = false;
@@ -909,8 +909,8 @@ void writer64::finish_data_block()
     assert(m_isWritingDataBlock &&
         "You must call finish_data_block exactly once per start_data_block call");
 
-    raw_block_data_header::finish_write64(
-        m_basePos - (sizeof(raw_block_data_header) * 2),
+    raw_data_block_header::finish_write64(
+        m_basePos - (sizeof(raw_data_block_header) * 2),
         m_endianFlag, m_strings, m_offsets, *m_stream);
 
     m_isWritingDataBlock = false;

@@ -356,7 +356,7 @@ struct raw_block_header
 
 HL_STATIC_ASSERT_SIZE(raw_block_header, 8);
 
-struct raw_block_data_header
+struct raw_data_block_header
 {
     /** @brief Used to determine what type of block this is. See hl::bina::v2::raw_block_type. */
     u32 signature;
@@ -442,7 +442,7 @@ struct raw_block_data_header
         hl::off_table& offTable, stream& stream);
 };
 
-HL_STATIC_ASSERT_SIZE(raw_block_data_header, 0x18);
+HL_STATIC_ASSERT_SIZE(raw_data_block_header, 0x18);
 
 class const_block_iterator
 {
@@ -568,15 +568,15 @@ struct raw_header
             const raw_header*>(this)->get_block(type));
     }
 
-    inline const raw_block_data_header* get_data_block() const noexcept
+    inline const raw_data_block_header* get_data_block() const noexcept
     {
-        return reinterpret_cast<const raw_block_data_header*>(
+        return reinterpret_cast<const raw_data_block_header*>(
             get_block(raw_block_type::data));
     }
 
-    inline raw_block_data_header* get_data_block() noexcept
+    inline raw_data_block_header* get_data_block() noexcept
     {
-        return reinterpret_cast<raw_block_data_header*>(
+        return reinterpret_cast<raw_data_block_header*>(
             get_block(raw_block_type::data));
     }
 
@@ -584,7 +584,7 @@ struct raw_header
     inline const T* get_data() const noexcept
     {
         // Get data block, if any.
-        const raw_block_data_header* dataBlock = get_data_block();
+        const raw_data_block_header* dataBlock = get_data_block();
         if (!dataBlock) return nullptr;
 
         // Get data.
@@ -595,7 +595,7 @@ struct raw_header
     inline T* get_data() noexcept
     {
         // Get data block, if any.
-        raw_block_data_header* dataBlock = get_data_block();
+        raw_data_block_header* dataBlock = get_data_block();
         if (!dataBlock) return nullptr;
 
         // Get data.
@@ -629,11 +629,11 @@ inline void fix64(blob& rawData)
     fix64(rawData.data(), rawData.size());
 }
 
-HL_API const raw_block_data_header* get_data_block(const void* rawData);
+HL_API const raw_data_block_header* get_data_block(const void* rawData);
 
-inline raw_block_data_header* get_data_block(void* rawData)
+inline raw_data_block_header* get_data_block(void* rawData)
 {
-    return const_cast<raw_block_data_header*>(
+    return const_cast<raw_data_block_header*>(
         get_data_block(const_cast<const void*>(rawData)));
 }
 

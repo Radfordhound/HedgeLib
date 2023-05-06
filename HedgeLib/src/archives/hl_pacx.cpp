@@ -353,7 +353,7 @@ static void in_add_file_entry(const data_entry& dataEntry,
     {
         // Account for BINA header, DATA block, and padding.
         std::size_t dataSize = (static_cast<std::size_t>(dataEntry.dataSize) +
-            sizeof(bina::v2::raw_header) + (sizeof(bina::v2::raw_block_data_header) * 2));
+            sizeof(bina::v2::raw_header) + (sizeof(bina::v2::raw_data_block_header) * 2));
 
         // Create a memory stream to contain unmerged data.
         mem_stream unmergedData(dataSize);
@@ -363,7 +363,7 @@ static void in_add_file_entry(const data_entry& dataEntry,
             endianFlag, unmergedData);
 
         // Start writing DATA block to unmerged memory stream.
-        bina::v2::raw_block_data_header::start_write(endianFlag, unmergedData);
+        bina::v2::raw_data_block_header::start_write(endianFlag, unmergedData);
 
         // Write data to unmerged memory stream.
         const u32* dataStart = dataEntry.data<u32>();
@@ -374,7 +374,7 @@ static void in_add_file_entry(const data_entry& dataEntry,
         off_table offTable;
         const u32* dataEnd = ptradd<u32>(dataStart, dataEntry.dataSize);
         u32* dstDataStart = ptradd<u32>(unmergedData.get_data_ptr(), 
-            sizeof(bina::v2::raw_header) + (sizeof(bina::v2::raw_block_data_header) * 2));
+            sizeof(bina::v2::raw_header) + (sizeof(bina::v2::raw_data_block_header) * 2));
 
         while (offIt != offEnd)
         {
@@ -392,7 +392,7 @@ static void in_add_file_entry(const data_entry& dataEntry,
             const std::size_t dstOffPos = (static_cast<std::size_t>(
                 reinterpret_cast<const u8*>(curOff) -
                 reinterpret_cast<const u8*>(dataStart)) +
-                (sizeof(bina::v2::raw_header) + (sizeof(bina::v2::raw_block_data_header) * 2)));
+                (sizeof(bina::v2::raw_header) + (sizeof(bina::v2::raw_data_block_header) * 2)));
 
             // Unmerge string offsets.
             if (curOffVal > strings)
@@ -421,7 +421,7 @@ static void in_add_file_entry(const data_entry& dataEntry,
         }
 
         // Finish writing DATA block to unmerged memory stream.
-        bina::v2::raw_block_data_header::finish_write32(sizeof(bina::v2::raw_header),
+        bina::v2::raw_data_block_header::finish_write32(sizeof(bina::v2::raw_header),
             endianFlag, strTable, offTable, unmergedData);
 
         // Finish writing BINA header to unmerged memory stream.
@@ -1388,7 +1388,7 @@ static const void* in_file_data_merge(void* data, std::size_t dataSize,
         bina::v2::fix32(data, dataSize);
 
         // If file has a BINAV2 data block, merge its offsets/strings.
-        bina::v2::raw_block_data_header* dataBlock = bina::v2::get_data_block(data);
+        bina::v2::raw_data_block_header* dataBlock = bina::v2::get_data_block(data);
         
         if (dataBlock)
         {
