@@ -803,6 +803,11 @@ public:
 
     HL_API void add_string(std::string str, std::size_t offPos);
 
+    inline void add_offset(std::size_t offPos)
+    {
+        m_offsets.push_back(offPos);
+    }
+
     template<typename T>
     inline void swap_and_write_obj(T& obj)
     {
