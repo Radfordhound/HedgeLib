@@ -161,6 +161,7 @@ public:
         u32 m_curRelOffPos = 0;
 
         HL_API u32 in_get_cur_rel_off_pos() const noexcept;
+
         HL_API const u8* in_get_next_off_table_ptr() const noexcept;
 
     public:
@@ -252,8 +253,8 @@ struct raw_header
     u16 unknown2;
     /** @brief Major version number. */
     u8 version;
-    /** @brief 'B' for Big Endian, 'L' for Little Endian. See hl::bina::endian_flag. */
-    u8 endianFlag;
+    /** @brief 'B' for Big Endian, 'L' for Little Endian. */
+    endian_flag endianFlag;
     /** @brief "BINA" signature. */
     u32 signature;
     /** @brief Included so garbage data doesn't get writtten. */
@@ -269,11 +270,6 @@ struct raw_header
         hl::endian_swap(unknownFlag1);
         hl::endian_swap(unknownFlag2);
         hl::endian_swap(unknown2);
-    }
-
-    inline bina::endian_flag endian_flag() const noexcept
-    {
-        return static_cast<bina::endian_flag>(endianFlag);
     }
 
     template<typename T = void>
@@ -324,19 +320,19 @@ constexpr ver ver_210 = ver('2', '1', '0');
 // TODO: Remove this?
 enum class raw_block_type : u32
 {
-    /** @brief This block contains data. See block_data_header. */
+    /** @brief This block contains data. See raw_block_header. */
     data = make_sig("DATA"),
 
     /**
-       @brief Unknown block type. It's never used to our knowledge;
-       we only know about it because Lost World Wii U checks for it.
+     * @brief Unknown block type. It's never used to our knowledge;
+     * we only know about it because Lost World Wii U checks for it.
     */
-    imag = make_sig("IMAG")
+    imag = make_sig("IMAG"),
 };
 
 struct raw_block_header
 {
-    /** @brief Used to determine what type of block this is. See hl::bina::v2::block_type. */
+    /** @brief Used to determine what type of block this is. See hl::bina::v2::raw_block_type. */
     u32 signature;
     /** @brief The complete size of the block, including this header. */
     u32 size;
@@ -362,7 +358,7 @@ HL_STATIC_ASSERT_SIZE(raw_block_header, 8);
 
 struct raw_block_data_header
 {
-    /** @brief Used to determine what type of block this is. See hl::bina::v2::block_type. */
+    /** @brief Used to determine what type of block this is. See hl::bina::v2::raw_block_type. */
     u32 signature;
     /** @brief The complete size of the block, including this header. */
     u32 size;
@@ -526,8 +522,8 @@ struct raw_header
     u32 signature;
     /** @brief Version number. */
     ver version;
-    /** @brief 'B' for Big Endian, 'L' for Little Endian. See hl::bina::endian_flag. */
-    u8 endianFlag;
+    /** @brief 'B' for Big Endian, 'L' for Little Endian. */
+    endian_flag endianFlag;
     /** @brief The size of the entire file, including this header. */
     u32 fileSize;
     /** @brief How many blocks are in the file. */
@@ -542,11 +538,6 @@ struct raw_header
     {
         hl::endian_swap(fileSize);
         hl::endian_swap(blockCount);
-    }
-
-    inline bina::endian_flag endian_flag() const noexcept
-    {
-        return static_cast<bina::endian_flag>(endianFlag);
     }
 
     inline const raw_block_header* first_block() const noexcept

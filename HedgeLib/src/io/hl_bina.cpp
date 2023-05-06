@@ -425,7 +425,7 @@ off_table_handle raw_header::offsets() const noexcept
 void raw_header::fix()
 {
     // Endian-swap header if necessary.
-    if (needs_swap(endian_flag()))
+    if (needs_swap(endianFlag))
     {
         endian_swap();
     }
@@ -435,7 +435,7 @@ void raw_header::fix()
     offTable.fix(dataPtr);
 
     // Fix offsets.
-    offsets_fix32(offsets(), endian_flag(), dataPtr);
+    offsets_fix32(offsets(), endianFlag, dataPtr);
 }
 } // v1
 
@@ -479,8 +479,7 @@ void raw_block_data_header::start_write(endian_flag endianFlag,
         0U,                                                             // strTable
         0U,                                                             // strTableSize
         0U,                                                             // offTableSize
-        sizeof(raw_block_data_header),                                  // relativeDataOffset
-        0U                                                              // padding
+        sizeof(raw_block_data_header)                                   // relativeDataOffset
     };
 
     // Endian swap if necessary.
@@ -657,7 +656,7 @@ template<template<typename> class off_t>
 static void in_fix(raw_header& header)
 {
     // Swap header if necessary.
-    if (needs_swap(header.endian_flag()))
+    if (needs_swap(header.endianFlag))
     {
         header.endian_swap();
     }
@@ -670,7 +669,7 @@ static void in_fix(raw_header& header)
         case static_cast<u32>(raw_block_type::data):
         {
             const auto dataBlock = reinterpret_cast<raw_block_data_header*>(block);
-            in_fix<off_t>(*dataBlock, header.endian_flag());
+            in_fix<off_t>(*dataBlock, header.endianFlag);
             break;
         }
 
@@ -696,12 +695,11 @@ void raw_header::start_write(ver version,
     // Generate BINAV2 header.
     const raw_header binaHeader =
     {
-        sig,                                                            // signature
-        version,                                                        // version
-        static_cast<u8>(endianFlag),                                    // endianFlag
-        0,                                                              // fileSize
-        0,                                                              // blockCount
-        0                                                               // padding
+        sig,            // signature
+        version,        // version
+        endianFlag,     // endianFlag
+        0,              // fileSize
+        0               // blockCount
     };
 
     // NOTE: We don't need to swap the header yet since the only values
@@ -822,21 +820,29 @@ void writer32::add_string(std::string str, std::size_t offPos)
 
 std::size_t writer32::write_str(const char* str)
 {
+    // Write placeholder string offset.
     const auto strOffPos = m_stream->tell();
     m_stream->write_nulls(sizeof(off32<char>));
 
+    // Add string to strings table, so it will be written later.
     std::string tmpStr(str);
     const auto strSize = (tmpStr.size() + 1);
     add_string(std::move(tmpStr), strOffPos);
 
+    // Return the size of the string + the null terminator.
     return strSize;
 }
 
 std::size_t writer32::write_str(const std::string& str)
 {
+    // Write placeholder string offset.
     const auto strOffPos = m_stream->tell();
+
+    // Add string to strings table, so it will be written later.
     m_stream->write_nulls(sizeof(off32<char>));
     add_string(str, strOffPos);
+
+    // Return the size of the string + the null terminator.
     return (str.size() + 1);
 }
 

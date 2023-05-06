@@ -4682,7 +4682,7 @@ void header::fix()
     root.fix(this);
 
     // Swap header if necessary.
-    if (bina::needs_swap(endian_flag()))
+    if (bina::needs_swap(endianFlag))
     {
         endian_swap<false>();
     }
