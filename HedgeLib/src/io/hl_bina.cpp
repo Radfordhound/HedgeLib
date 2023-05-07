@@ -437,6 +437,16 @@ void raw_header::fix()
     // Fix offsets.
     offsets_fix32(offsets(), endianFlag, dataPtr);
 }
+
+endian_flag fix_container(void* rawData)
+{
+    const auto headerPtr = static_cast<raw_header*>(rawData);
+    const auto oldEndianFlag = headerPtr->endianFlag;
+
+    headerPtr->fix();
+
+    return oldEndianFlag;
+}
 } // v1
 
 namespace v2
@@ -736,16 +746,24 @@ void raw_header::finish_write(std::size_t headerPos, u16 blockCount,
     stream.jump_to(curPos);
 }
 
-void fix_container32(void* rawData, std::size_t dataSize)
+endian_flag fix_container32(void* rawData, std::size_t dataSize)
 {
     const auto headerPtr = static_cast<raw_header*>(rawData);
+    const auto oldEndianFlag = headerPtr->endianFlag;
+
     in_fix<off32>(*headerPtr);
+
+    return oldEndianFlag;
 }
 
-void fix_container64(void* rawData, std::size_t dataSize)
+endian_flag fix_container64(void* rawData, std::size_t dataSize)
 {
     const auto headerPtr = static_cast<raw_header*>(rawData);
+    const auto oldEndianFlag = headerPtr->endianFlag;
+
     in_fix<off64>(*headerPtr);
+
+    return oldEndianFlag;
 }
 
 void writer32::start(bina::endian_flag endianFlag, ver version)
@@ -891,16 +909,20 @@ void writer64::finish()
 } // v2
 
 template<template<typename> class off_t>
-static void in_fix_container(void* rawData, std::size_t dataSize)
+static endian_flag in_fix_container(void* rawData, std::size_t dataSize)
 {
     if (has_v2_header(rawData, dataSize))
     {
         const auto headerPtr = static_cast<v2::raw_header*>(rawData);
+        const auto oldEndianFlag = headerPtr->endianFlag;
+
         v2::in_fix<off_t>(*headerPtr);
+
+        return oldEndianFlag;
     }
     else if (has_v1_header(rawData, dataSize))
     {
-        v1::fix_container(rawData);
+        return v1::fix_container(rawData);
     }
     else
     {
@@ -908,14 +930,14 @@ static void in_fix_container(void* rawData, std::size_t dataSize)
     }
 }
 
-void fix_container32(void* rawData, std::size_t dataSize)
+endian_flag fix_container32(void* rawData, std::size_t dataSize)
 {
-    in_fix_container<off32>(rawData, dataSize);
+    return in_fix_container<off32>(rawData, dataSize);
 }
 
-void fix_container64(void* rawData, std::size_t dataSize)
+endian_flag fix_container64(void* rawData, std::size_t dataSize)
 {
-    in_fix_container<off64>(rawData, dataSize);
+    return in_fix_container<off64>(rawData, dataSize);
 }
 } // bina
 } // hl

@@ -1174,8 +1174,7 @@ void in_type_metadata::set_file_priorities<data_type::ResGrifEffect>(
         grif::effect* effect = nullptr;
         if (bina::has_v2_header(copyOfFileData.data()))
         {
-            effect = bina::v2::fix32<grif::effect>(copyOfFileData,
-                copyOfFileData.data<bina::v2::raw_header>()->endianFlag);
+            effect = bina::v2::fix32<grif::effect>(copyOfFileData);
         }
         else
         {

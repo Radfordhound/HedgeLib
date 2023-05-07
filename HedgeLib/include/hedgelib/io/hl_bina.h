@@ -33,19 +33,35 @@ enum class endian_flag : u8
 };
 
 /**
-    @brief  Returns whether data in a BINA file with the given endian flag
-            needs to be endian-swapped or not.
-
-    @param flag     The endian flag to check.
-    @return         Whether data in a BINA file with the given flag needs to be swapped.
+ * @brief Returns whether data in a BINA file with the given
+ * endian flag needs to be endian-swapped or not.
+ *
+ * @param flag The endian flag to check.
+ * @return Whether data in a BINA file with the given flag needs to be swapped.
 */
-constexpr bool needs_swap(const endian_flag flag) noexcept
+constexpr bool needs_swap(endian_flag flag) noexcept
 {
 #ifdef HL_IS_BIG_ENDIAN
     return (flag == endian_flag::little);
 #else
     return (flag == endian_flag::big);
 #endif
+}
+
+/**
+ * @brief Get the "opposite" of the given endian flag.
+ * 
+ * If flag is endian_flag::little, returns endian_flag::big.
+ * If flag is endian_flag::big, returns endian_flag::little.
+ *
+ * @param flag The endian flag to swap.
+ * @return The "opposite" of the given endian flag.
+ */
+constexpr endian_flag get_swapped_endian_flag(endian_flag flag) noexcept
+{
+    return (flag == endian_flag::big) ?
+        endian_flag::little :
+        endian_flag::big;
 }
 
 bool has_v1_header(const void* rawData);
@@ -271,6 +287,8 @@ struct raw_header
         hl::endian_swap(unknownFlag1);
         hl::endian_swap(unknownFlag2);
         hl::endian_swap(unknown2);
+
+        endianFlag = get_swapped_endian_flag(endianFlag);
     }
 
     template<typename T = void>
@@ -292,11 +310,7 @@ struct raw_header
 
 HL_STATIC_ASSERT_SIZE(raw_header, 0x20);
 
-inline void fix_container(void* rawData)
-{
-    const auto headerPtr = static_cast<raw_header*>(rawData);
-    headerPtr->fix();
-}
+HL_API endian_flag fix_container(void* rawData);
 
 template<typename T = void>
 inline const T* get_data(const void* rawData)
@@ -316,11 +330,11 @@ template<typename DataType, typename... Args>
 DataType* fix(void* rawData, std::size_t dataSize, Args&&... args)
 {
     // Fix BINA container.
-    fix_container(rawData, dataSize);
+    const auto oldEndianFlag = fix_container(rawData, dataSize);
 
     // Fix data in BINA container.
     const auto data = get_data<DataType>(rawData);
-    data->fix(std::forward<Args>(args)...);
+    data->fix(oldEndianFlag, std::forward<Args>(args)...);
 
     return data;
 }
@@ -559,6 +573,8 @@ struct raw_header
     {
         hl::endian_swap(fileSize);
         hl::endian_swap(blockCount);
+        
+        endianFlag = get_swapped_endian_flag(endianFlag);
     }
 
     inline const raw_block_header* first_block() const noexcept
@@ -636,16 +652,16 @@ struct raw_header
 
 HL_STATIC_ASSERT_SIZE(raw_header, 16);
 
-HL_API void fix_container32(void* rawData, std::size_t dataSize);
+HL_API endian_flag fix_container32(void* rawData, std::size_t dataSize);
 
-inline void fix_container32(blob& rawData)
+inline endian_flag fix_container32(blob& rawData)
 {
     fix_container32(rawData.data(), rawData.size());
 }
 
-HL_API void fix_container64(void* rawData, std::size_t dataSize);
+HL_API endian_flag fix_container64(void* rawData, std::size_t dataSize);
 
-inline void fix_container64(blob& rawData)
+inline endian_flag fix_container64(blob& rawData)
 {
     fix_container64(rawData.data(), rawData.size());
 }
@@ -680,14 +696,14 @@ template<typename DataType, typename... Args>
 DataType* fix32(void* rawData, std::size_t dataSize, Args&&... args)
 {
     // Fix BINA container.
-    fix_container32(rawData, dataSize);
+    const auto oldEndianFlag = fix_container32(rawData, dataSize);
 
     // Fix data in BINA container, if any.
     const auto data = get_data<DataType>(rawData);
 
     if (data)
     {
-        data->fix(std::forward<Args>(args)...);
+        data->fix(oldEndianFlag, std::forward<Args>(args)...);
     }
 
     return data;
@@ -704,14 +720,14 @@ template<typename DataType, typename... Args>
 DataType* fix64(void* rawData, std::size_t dataSize, Args&&... args)
 {
     // Fix BINA container.
-    fix_container64(rawData, dataSize);
+    const auto oldEndianFlag = fix_container64(rawData, dataSize);
 
     // Fix data in BINA container, if any.
     const auto data = get_data<DataType>(rawData);
 
     if (data)
     {
-        data->fix(std::forward<Args>(args)...);
+        data->fix(oldEndianFlag, std::forward<Args>(args)...);
     }
 
     return data;
@@ -989,16 +1005,16 @@ inline bool has_v2_header(const blob& rawData)
     return has_v2_header(rawData.data(), rawData.size());
 }
 
-HL_API void fix_container32(void* rawData, std::size_t dataSize);
+HL_API endian_flag fix_container32(void* rawData, std::size_t dataSize);
 
-inline void fix_container32(blob& rawData)
+inline endian_flag fix_container32(blob& rawData)
 {
     fix_container32(rawData.data(), rawData.size());
 }
 
-HL_API void fix_container64(void* rawData, std::size_t dataSize);
+HL_API endian_flag fix_container64(void* rawData, std::size_t dataSize);
 
-inline void fix_container64(blob& rawData)
+inline endian_flag fix_container64(blob& rawData)
 {
     fix_container64(rawData.data(), rawData.size());
 }
@@ -1031,14 +1047,14 @@ template<typename DataType, typename... Args>
 DataType* fix32(void* rawData, std::size_t dataSize, Args&&... args)
 {
     // Fix BINA container.
-    fix_container32(rawData, dataSize);
+    const auto oldEndianFlag = fix_container32(rawData, dataSize);
 
     // Fix data if BINA container, if any.
     const auto data = get_data<DataType>(rawData);
 
     if (data)
     {
-        data->fix(std::forward<Args>(args)...);
+        data->fix(oldEndianFlag, std::forward<Args>(args)...);
     }
 
     return data;
@@ -1055,14 +1071,14 @@ template<typename DataType, typename... Args>
 DataType* fix64(void* rawData, std::size_t dataSize, Args&&... args)
 {
     // Fix BINA container.
-    fix_container64(rawData, dataSize);
+    const auto oldEndianFlag = fix_container64(rawData, dataSize);
 
     // Fix data in BINA container, if any.
     const auto data = get_data<DataType>(rawData);
 
     if (data)
     {
-        data->fix(std::forward<Args>(args)...);
+        data->fix(oldEndianFlag, std::forward<Args>(args)...);
     }
 
     return data;

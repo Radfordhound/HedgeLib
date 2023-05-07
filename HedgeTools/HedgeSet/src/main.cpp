@@ -150,8 +150,7 @@ static void convert_gedit_v3_to_hson(const hl::set_object_type_database& objType
 
     // Fix BINA data.
     hl::nputs(HL_NTEXT("Fixing BINA data..."));
-    const auto rawWorld = hl::bina::fix64<hl::hh::gedit::v3::raw_world>(
-        blob, blob.data<hl::bina::v2::raw_header>()->endianFlag);
+    const auto rawWorld = hl::bina::fix64<hl::hh::gedit::v3::raw_world>(blob);
 
     // Add gedit objects to new HSON project.
     hl::nputs(HL_NTEXT("Converting gedit data to HSON..."));
