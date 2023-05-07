@@ -736,54 +736,16 @@ void raw_header::finish_write(std::size_t headerPos, u16 blockCount,
     stream.jump_to(curPos);
 }
 
-template<template<typename> class off_t>
-static void in_fix(void* rawData, std::size_t dataSize)
-{
-    // BINA V2
-    if (has_v2_header(rawData))
-    {
-        const auto headerPtr = static_cast<raw_header*>(rawData);
-        in_fix<off_t>(*headerPtr);
-    }
-
-    // PACPACK_METADATA
-    else
-    {
-        // Compatibility with files extracted using PacPack.
-        const auto pacPackMetadata = get_pac_pack_meta(rawData, dataSize);
-        if (!pacPackMetadata) return;
-
-        const auto endianFlag = pacPackMetadata->guess_endianness(
-            rawData, dataSize);
-
-        pacPackMetadata->fix(rawData, endianFlag);
-    }
-}
-
 void fix_container32(void* rawData, std::size_t dataSize)
 {
-    in_fix<off32>(rawData, dataSize);
+    const auto headerPtr = static_cast<raw_header*>(rawData);
+    in_fix<off32>(*headerPtr);
 }
 
 void fix_container64(void* rawData, std::size_t dataSize)
 {
-    in_fix<off64>(rawData, dataSize);
-}
-
-const raw_data_block_header* get_data_block(const void* rawData)
-{
-    // BINA V2
-    if (has_v2_header(rawData))
-    {
-        const raw_header* headerPtr = static_cast<const raw_header*>(rawData);
-        return headerPtr->get_data_block();
-    }
-
-    // PACPACK_METADATA
-    else
-    {
-        return nullptr;
-    }
+    const auto headerPtr = static_cast<raw_header*>(rawData);
+    in_fix<off64>(*headerPtr);
 }
 
 void writer32::start(bina::endian_flag endianFlag, ver version)
@@ -929,27 +891,31 @@ void writer64::finish()
 } // v2
 
 template<template<typename> class off_t>
-static void in_fix(void* rawData, std::size_t dataSize)
+static void in_fix_container(void* rawData, std::size_t dataSize)
 {
-    if (has_v1_header(rawData, dataSize))
+    if (has_v2_header(rawData, dataSize))
     {
-        v1::fix(rawData);
+        const auto headerPtr = static_cast<v2::raw_header*>(rawData);
+        v2::in_fix<off_t>(*headerPtr);
+    }
+    else if (has_v1_header(rawData, dataSize))
+    {
+        v1::fix_container(rawData);
     }
     else
     {
-        // NOTE: v2::in_fix also handles PACPACK_METADATA.
-        v2::in_fix<off_t>(rawData, dataSize);
+        throw invalid_data_exception();
     }
 }
 
 void fix_container32(void* rawData, std::size_t dataSize)
 {
-    in_fix<off32>(rawData, dataSize);
+    in_fix_container<off32>(rawData, dataSize);
 }
 
 void fix_container64(void* rawData, std::size_t dataSize)
 {
-    in_fix<off64>(rawData, dataSize);
+    in_fix_container<off64>(rawData, dataSize);
 }
 } // bina
 } // hl

@@ -49,6 +49,7 @@ constexpr bool needs_swap(const endian_flag flag) noexcept
 }
 
 bool has_v1_header(const void* rawData);
+
 bool has_v2_header(const void* rawData);
 
 struct pac_pack_meta
@@ -649,43 +650,30 @@ inline void fix_container64(blob& rawData)
     fix_container64(rawData.data(), rawData.size());
 }
 
-HL_API const raw_data_block_header* get_data_block(const void* rawData);
+inline const raw_data_block_header* get_data_block(const void* rawData)
+{
+    const auto headerPtr = static_cast<const raw_header*>(rawData);
+    return headerPtr->get_data_block();
+}
 
 inline raw_data_block_header* get_data_block(void* rawData)
 {
-    return const_cast<raw_data_block_header*>(
-        get_data_block(const_cast<const void*>(rawData)));
+    const auto headerPtr = static_cast<raw_header*>(rawData);
+    return headerPtr->get_data_block();
 }
 
 template<typename T = void>
 inline const T* get_data(const void* rawData)
 {
-    if (has_v2_header(rawData))
-    {
-        const auto headerPtr = static_cast<const raw_header*>(rawData);
-        return headerPtr->get_data<T>();
-    }
-    else
-    {
-        return static_cast<const T*>(rawData);
-    }
+    const auto headerPtr = static_cast<const raw_header*>(rawData);
+    return headerPtr->get_data<T>();
 }
 
 template<typename T = void>
 inline T* get_data(void* rawData)
 {
-    // BINA V2
-    if (has_v2_header(rawData))
-    {
-        const auto headerPtr = static_cast<raw_header*>(rawData);
-        return headerPtr->get_data<T>();
-    }
-
-    // PACPACK_METADATA
-    else
-    {
-        return static_cast<T*>(rawData);
-    }
+    const auto headerPtr = static_cast<raw_header*>(rawData);
+    return headerPtr->get_data<T>();
 }
 
 template<typename DataType, typename... Args>
@@ -1028,7 +1016,7 @@ inline const T* get_data(const void* rawData)
     }
     else
     {
-        return static_cast<const T*>(rawData);
+        throw invalid_data_exception();
     }
 }
 

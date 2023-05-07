@@ -937,7 +937,7 @@ struct in_type_metadata_list : public std::vector<in_type_metadata>
             pacxDataType, fileName));
     }
 
-    void set_file_priorities(bina::endian_flag endianFlag);
+    void set_file_priorities();
 
     std::size_t get_type_node_count(unsigned short splitIndex) const;
 };
@@ -1000,8 +1000,7 @@ struct in_type_metadata
     }
 
     template<data_type data_t>
-    void set_file_priorities(in_type_metadata_list& typeMetadata,
-        bina::endian_flag endianFlag) {}
+    void set_file_priorities(in_type_metadata_list& typeMetadata) {}
 
     std::size_t get_file_node_count(unsigned short splitIndex) const
     {
@@ -1030,7 +1029,7 @@ struct in_type_metadata
 
 template<>
 void in_type_metadata::set_file_priorities<data_type::ResTexture>(
-    in_type_metadata_list& typeMetadata, bina::endian_flag endianFlag)
+    in_type_metadata_list& typeMetadata)
 {
     for (auto& file : *this)
     {
@@ -1164,20 +1163,34 @@ static void in_mark_texture_refs(grif::effect& effect,
 
 template<>
 void in_type_metadata::set_file_priorities<data_type::ResGrifEffect>(
-    in_type_metadata_list& typeMetadata, bina::endian_flag endianFlag)
+    in_type_metadata_list& typeMetadata)
 {
     for (const auto& file : *this)
     {
         // Make a copy of the file's data that we can safely operate on.
         blob copyOfFileData = file.make_copy_of_data();
 
-        // Get effect file endianness
-        const bina::endian_flag effectEndianFlag = (bina::has_v2_header(copyOfFileData.data())) ?
-            copyOfFileData.data<v2::header>()->endian_flag() : endianFlag;
-
         // Fix effect data, if present.
-        const auto effect = bina::v2::fix32<grif::effect>(
-            copyOfFileData, effectEndianFlag);
+        grif::effect* effect = nullptr;
+        if (bina::has_v2_header(copyOfFileData.data()))
+        {
+            effect = bina::v2::fix32<grif::effect>(copyOfFileData,
+                copyOfFileData.data<bina::v2::raw_header>()->endianFlag);
+        }
+        else
+        {
+            // Compatibility with files extracted using PacPack.
+            const auto pacPackMetadata = bina::get_pac_pack_meta(copyOfFileData);
+            if (pacPackMetadata)
+            {
+                const auto effectEndianFlag = pacPackMetadata->
+                    guess_endianness(copyOfFileData);
+
+                pacPackMetadata->fix(copyOfFileData, effectEndianFlag);
+
+                effect = copyOfFileData.data<grif::effect*>();
+            }
+        }
 
         // Mark texture references within effect data, if present.
         if (effect)
@@ -1223,20 +1236,18 @@ const in_file_metadata* in_type_metadata_list::find_file_of_type_utf8(
         nativeFileNameLen);
 }
 
-void in_type_metadata_list::set_file_priorities(bina::endian_flag endianFlag)
+void in_type_metadata_list::set_file_priorities()
 {
     for (auto& type : *this)
     {
         switch (static_cast<data_type>(type.pacx_ext()->dataTypeIndex))
         {
         case data_type::ResTexture:
-            type.set_file_priorities<data_type::ResTexture>(
-                *this, endianFlag);
+            type.set_file_priorities<data_type::ResTexture>(*this);
             break;
 
         case data_type::ResGrifEffect:
-            type.set_file_priorities<data_type::ResGrifEffect>(
-                *this, endianFlag);
+            type.set_file_priorities<data_type::ResGrifEffect>(*this);
             break;
         }
     }
@@ -1988,7 +1999,7 @@ void save(const archive_entry_list& arc, bina::endian_flag endianFlag,
             }
 
             // Set file priorities.
-            typeMetadata.set_file_priorities(endianFlag);
+            typeMetadata.set_file_priorities();
         }
 
         // Split data up if necessary.
