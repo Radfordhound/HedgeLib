@@ -165,25 +165,59 @@ const u8* off_table_handle::in_get_real_off_table_end(
     return offTableEnd;
 }
 
-static u32 in_grab_six_bits(const u8*& curOffTablePtr) noexcept
+bool off_table_handle::iterator::next()
+{
+    // Increase the current offset table pointer as necessary.
+    switch (*m_ptr & static_cast<u8>(offset_flags::size_mask))
+    {
+    case static_cast<u8>(offset_flags::size_six_bit) :
+        ++m_ptr;
+        break;
+
+    case static_cast<u8>(offset_flags::size_fourteen_bit) :
+        m_ptr += 2;
+        break;
+
+    case static_cast<u8>(offset_flags::size_thirty_bit) :
+        m_ptr += 4;
+        break;
+
+    default:
+        // A size of 0 indicates that we've reached the end of the offset table.
+        // NOTE: This won't happen with iterators returned by off_table_handle,
+        // as we already skip offset table padding in there.
+        break;
+    }
+
+    // Return whether we're at the end of the offset table yet or not.
+    return (*m_ptr != 0);
+}
+
+off_table_handle::iterator& off_table_handle::iterator::operator++()
+{
+    next();
+    return *this;
+}
+
+static u32 in_grab_six_bits(const u8*& curOffTablePtr)
 {
     return static_cast<u32>(*(curOffTablePtr++) &
         static_cast<u8>(offset_flags::data_mask));
 }
 
-static u32 in_grab_eight_bits(const u8*& curOffTablePtr) noexcept
+static u32 in_grab_eight_bits(const u8*& curOffTablePtr)
 {
     return static_cast<u32>(*(curOffTablePtr++));
 }
 
-static u32 in_grab_fourteen_bits(const u8*& curOffTablePtr) noexcept
+static u32 in_grab_fourteen_bits(const u8*& curOffTablePtr)
 {
     u32 val = (in_grab_six_bits(curOffTablePtr) << 8);
     val |= in_grab_eight_bits(curOffTablePtr);
     return val;
 }
 
-static u32 in_grab_thirty_bits(const u8*& curOffTablePtr) noexcept
+static u32 in_grab_thirty_bits(const u8*& curOffTablePtr)
 {
     u32 val = (in_grab_six_bits(curOffTablePtr) << 24);
     val |= (in_grab_eight_bits(curOffTablePtr) << 16);
@@ -192,10 +226,10 @@ static u32 in_grab_thirty_bits(const u8*& curOffTablePtr) noexcept
     return val;
 }
 
-u32 off_table_handle::iterator::in_get_cur_rel_off_pos() const noexcept
+u32 off_table_handle::iterator::operator*() const
 {
     // Return the relative offset position at this position.
-    const u8* curOffTablePtr = m_curOffTablePtr;
+    auto curOffTablePtr = m_ptr;
     switch (*curOffTablePtr & static_cast<u8>(offset_flags::size_mask))
     {
     case static_cast<u8>(offset_flags::size_six_bit) :
@@ -209,62 +243,25 @@ u32 off_table_handle::iterator::in_get_cur_rel_off_pos() const noexcept
 
     default:
         // A size of 0 indicates that we've reached the end of the offset table.
-        // (NOTE: This shouldn't happen under normal circumstances as we
-        // skip padding already when constructing these in off_table_handle.)
+        // NOTE: This won't happen with iterators returned by off_table_handle,
+        // as we already skip offset table padding in there.
         return 0;
     }
 }
 
-const u8* off_table_handle::iterator::in_get_next_off_table_ptr() const noexcept
-{
-    // Return the "next" offset table pointer.
-    switch (*m_curOffTablePtr & static_cast<u8>(offset_flags::size_mask))
-    {
-    case static_cast<u8>(offset_flags::size_six_bit) :
-        return (m_curOffTablePtr + 1);
-
-    case static_cast<u8>(offset_flags::size_fourteen_bit) :
-        return (m_curOffTablePtr + 2);
-
-    case static_cast<u8>(offset_flags::size_thirty_bit) :
-        return (m_curOffTablePtr + 4);
-
-    default:
-        // A size of 0 indicates that we've reached the end of the offset table.
-        // (NOTE: This shouldn't happen under normal circumstances as we
-        // skip padding already when constructing these in off_table_handle.)
-        return m_curOffTablePtr;
-    }
-}
-
-bool off_table_handle::iterator::next() noexcept
-{
-    // Increase the current offset table pointer.
-    m_curOffTablePtr = in_get_next_off_table_ptr();
-
-    // If we're not at the end of the offset table yet...
-    if (*m_curOffTablePtr)
-    {
-        // Increase the current relative offset table position and return true.
-        m_curRelOffPos += in_get_cur_rel_off_pos();
-        return true;
-    }
-
-    // We're at the end of the offset table; return false.
-    else
-    {
-        return false;
-    }
-}
+off_table_handle::off_table_handle(const u8* offTable, u32 offTableSize) noexcept :
+    m_offTableBeg(offTable),
+    m_offTableEnd(in_get_real_off_table_end(offTable, offTableSize)) {}
 
 template<template<typename> class off_t>
 static void in_offsets_fix(off_table_handle offTable,
     const endian_flag endianFlag, void* base)
 {
-    for (u32 relOffPos : offTable)
+    auto curOffPtr = static_cast<off_t<void>*>(base);
+    for (const auto relOffPos : offTable)
     {
         // Get pointer to current offset.
-        const auto curOffPtr = ptradd<off_t<void>>(base, relOffPos);
+        curOffPtr = ptradd<off_t<void>>(curOffPtr, relOffPos);
 
         // Endian-swap offset if necessary.
         if (needs_swap(endianFlag))

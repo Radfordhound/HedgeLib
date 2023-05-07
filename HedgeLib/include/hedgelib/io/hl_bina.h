@@ -174,49 +174,36 @@ protected:
 public:
     class iterator
     {
-        const u8* m_curOffTablePtr = nullptr;
-        u32 m_curRelOffPos = 0;
-
-        HL_API u32 in_get_cur_rel_off_pos() const noexcept;
-
-        HL_API const u8* in_get_next_off_table_ptr() const noexcept;
+        const u8* m_ptr;
 
     public:
-        HL_API bool next() noexcept;
+        HL_API bool next();
 
-        inline iterator& operator++() noexcept
-        {
-            next();
-            return *this;
-        }
+        HL_API iterator& operator++();
 
-        inline iterator operator++(int) noexcept
+        inline iterator operator++(int)
         {
             iterator tmpCopy(*this);
             operator++();
             return tmpCopy;
         }
 
-        inline u32 operator*() const noexcept
-        {
-            return m_curRelOffPos;
-        }
+        HL_API u32 operator*() const;
 
         inline bool operator==(const iterator& other) const noexcept
         {
-            return (m_curOffTablePtr == other.m_curOffTablePtr);
+            return (m_ptr == other.m_ptr);
         }
 
         inline bool operator!=(const iterator& other) const noexcept
         {
-            return (m_curOffTablePtr != other.m_curOffTablePtr);
+            return (m_ptr != other.m_ptr);
         }
 
         inline iterator() noexcept = default;
 
-        inline iterator(const u8* offTable) noexcept :
-            m_curOffTablePtr(offTable),
-            m_curRelOffPos(in_get_cur_rel_off_pos()) {}
+        inline iterator(const u8* ptr) noexcept :
+            m_ptr(ptr) {}
     };
 
     inline iterator begin() const noexcept
@@ -229,9 +216,7 @@ public:
         return iterator(m_offTableEnd);
     }
 
-    inline off_table_handle(const u8* offTable, u32 offTableSize) noexcept :
-        m_offTableBeg(offTable),
-        m_offTableEnd(in_get_real_off_table_end(offTable, offTableSize)) {}
+    HL_API off_table_handle(const u8* offTable, u32 offTableSize) noexcept;
 };
 
 HL_API void offsets_fix32(off_table_handle offTable,

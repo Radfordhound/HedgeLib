@@ -195,13 +195,14 @@ namespace v2
 bool data_entry::has_merged_bina_data(bina::off_table_handle::iterator& beg,
     const bina::off_table_handle::iterator& end, const void* base) const noexcept
 {
-    const u32* dataStart = data<u32>();
-    const u32* dataEnd = ptradd<u32>(dataStart, dataSize);
+    const auto dataStart = data<u8>();
+    const auto dataEnd = ptradd<u8>(dataStart, dataSize);
+    auto off = static_cast<const u8*>(base);
 
     // Check for offsets within this data entry.
     while (beg != end)
     {
-        const u32* off = ptradd<u32>(base, *beg);
+        off += *beg;
         if (off >= dataStart)
         {
             if (off < dataEnd)
@@ -376,10 +377,12 @@ static void in_add_file_entry(const data_entry& dataEntry,
         u32* dstDataStart = ptradd<u32>(unmergedData.get_data_ptr(), 
             sizeof(bina::v2::raw_header) + (sizeof(bina::v2::raw_data_block_header) * 2));
 
+        const u32* curOff = static_cast<const u32*>(header);
+
         while (offIt != offEnd)
         {
             // Break if this offset is not part of this entry's data.
-            const u32* curOff = ptradd<u32>(header, *(offIt++));
+            curOff = ptradd<u32>(curOff, *(offIt++));
             if (curOff >= dataEnd) break;
 
             // Get the address the current offset points to.
