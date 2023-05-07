@@ -419,7 +419,7 @@ namespace v1
 {
 off_table_handle raw_header::offsets() const noexcept
 {
-    return off_table_handle(offTable.get(), offTableSize);
+    return off_table_handle(off_table(), offTableSize);
 }
 
 void raw_header::fix()
@@ -430,12 +430,8 @@ void raw_header::fix()
         endian_swap();
     }
 
-    // Fix offset table offset.
-    void* dataPtr = data();
-    offTable.fix(dataPtr);
-
     // Fix offsets.
-    offsets_fix32(offsets(), endianFlag, dataPtr);
+    offsets_fix32(offsets(), endianFlag, data());
 }
 
 endian_flag fix_container(void* rawData)
@@ -460,12 +456,8 @@ static void in_fix(raw_data_block_header& dataBlock, endian_flag endianFlag)
         dataBlock.endian_swap();
     }
 
-    // Fix string table offset.
-    void* dataPtr = dataBlock.data();
-    dataBlock.strTable.fix(dataPtr);
-
     // Fix data offsets.
-    in_offsets_fix<off_t>(dataBlock.offsets(), endianFlag, dataPtr);
+    in_offsets_fix<off_t>(dataBlock.offsets(), endianFlag, dataBlock.data());
 }
 
 void raw_data_block_header::fix32(endian_flag endianFlag)
@@ -484,12 +476,12 @@ void raw_data_block_header::start_write(endian_flag endianFlag,
     // Generate data block header.
     raw_data_block_header dataBlock =
     {
-        static_cast<u32>(raw_block_type::data),                         // signature
-        0U,                                                             // size
-        0U,                                                             // strTable
-        0U,                                                             // strTableSize
-        0U,                                                             // offTableSize
-        sizeof(raw_data_block_header)                                   // relativeDataOffset
+        static_cast<u32>(raw_block_type::data), // signature
+        0U,                                     // size
+        0U,                                     // dataSize
+        0U,                                     // strTableSize
+        0U,                                     // offTableSize
+        sizeof(raw_data_block_header)           // relativeDataOffset
     };
 
     // Endian swap if necessary.
@@ -524,14 +516,14 @@ void raw_data_block_header::finish_write(std::size_t dataBlockPos,
     struct
     {
         u32 size;
-        off32<char> strTable;
+        u32 dataSize;
         u32 strTableSize;
         u32 offTableSize;
     }
     values;
 
     values.size = static_cast<u32>(endPos - dataBlockPos);
-    values.strTable = off32<char>(static_cast<u32>(strTablePos - dataPos));
+    values.dataSize = static_cast<u32>(strTablePos - dataPos);
     values.strTableSize = static_cast<u32>(offTablePos - strTablePos);
     values.offTableSize = static_cast<u32>(endPos - offTablePos);
     
@@ -539,7 +531,7 @@ void raw_data_block_header::finish_write(std::size_t dataBlockPos,
     if (needs_swap(endianFlag))
     {
         hl::endian_swap(values.size);
-        hl::endian_swap(values.strTable);
+        hl::endian_swap(values.dataSize);
         hl::endian_swap(values.strTableSize);
         hl::endian_swap(values.offTableSize);
     }
@@ -746,7 +738,7 @@ void raw_header::finish_write(std::size_t headerPos, u16 blockCount,
     stream.jump_to(curPos);
 }
 
-endian_flag fix_container32(void* rawData, std::size_t dataSize)
+endian_flag fix_container32(void* rawData)
 {
     const auto headerPtr = static_cast<raw_header*>(rawData);
     const auto oldEndianFlag = headerPtr->endianFlag;
@@ -756,7 +748,7 @@ endian_flag fix_container32(void* rawData, std::size_t dataSize)
     return oldEndianFlag;
 }
 
-endian_flag fix_container64(void* rawData, std::size_t dataSize)
+endian_flag fix_container64(void* rawData)
 {
     const auto headerPtr = static_cast<raw_header*>(rawData);
     const auto oldEndianFlag = headerPtr->endianFlag;
