@@ -239,6 +239,14 @@ HL_API void offsets_write(std::size_t dataPos,
 
 namespace v1
 {
+enum class raw_header_status : u8
+{
+    none = 0,
+    is_fixed = 1,
+};
+
+HL_ENUM_CLASS_DEF_BITWISE_OPS(raw_header_status)
+
 struct raw_header
 {
     /** @brief The size of the entire file, including this header. */
@@ -259,8 +267,10 @@ struct raw_header
     endian_flag endianFlag;
     /** @brief "BINA" signature. */
     u32 signature;
+    /** @brief Set internally by the game; always 0 in actual files. */
+    raw_header_status status;
     /** @brief Included so garbage data doesn't get writtten. */
-    u32 padding;
+    u8 padding[3];
 
     template<bool swapOffsets = true>
     inline void endian_swap() noexcept
@@ -274,6 +284,11 @@ struct raw_header
         hl::endian_swap(unknown2);
 
         endianFlag = get_swapped_endian_flag(endianFlag);
+    }
+
+    inline bool is_fixed() const noexcept
+    {
+        return ((status & raw_header_status::is_fixed) != raw_header_status::none);
     }
 
     template<typename T = void>
@@ -549,6 +564,14 @@ public:
         m_blockCount(blockCount) {}
 };
 
+enum class raw_header_status : u8
+{
+    none = 0,
+    is_fixed = 1,
+};
+
+HL_ENUM_CLASS_DEF_BITWISE_OPS(raw_header_status)
+
 struct raw_header
 {
     /** @brief "BINA" signature. */
@@ -562,7 +585,7 @@ struct raw_header
     /** @brief How many blocks are in the file. */
     u16 blockCount;
     /** @brief Set internally by the game; always 0 in actual files. */
-    u8 status;
+    raw_header_status status;
     /** @brief Included so garbage data doesn't get writtten. */
     u8 padding;
 
@@ -573,6 +596,11 @@ struct raw_header
         hl::endian_swap(blockCount);
         
         endianFlag = get_swapped_endian_flag(endianFlag);
+    }
+
+    inline bool is_fixed() const noexcept
+    {
+        return ((status & raw_header_status::is_fixed) != raw_header_status::none);
     }
 
     inline const raw_block_header* first_block() const noexcept

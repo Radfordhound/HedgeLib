@@ -429,6 +429,9 @@ void raw_header::fix()
 
     // Fix offsets.
     offsets_fix32(offsets(), endianFlag, data());
+
+    // Mark file as fixed.
+    status |= raw_header_status::is_fixed;
 }
 
 endian_flag fix_container(void* rawData)
@@ -676,6 +679,9 @@ static void in_fix(raw_header& header)
             throw unsupported_exception();
         }
     }
+
+    // Mark file as fixed.
+    header.status |= raw_header_status::is_fixed;
 }
 
 void raw_header::fix32()
