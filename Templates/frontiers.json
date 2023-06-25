@@ -855,39 +855,39 @@
     "EggRoboAppearParam::EasingType": {
       "type": "uint8",
       "values": {
-        "LINEAR_EASEIN": { "value": 0 },
-        "LINEAR_EASEOUT": { "value": 1 },
-        "LINEAR_EASEINOUT": { "value": 2 },
-        "QUADRATIC_EASEIN": { "value": 3 },
-        "QUADRATIC_EASEOUT": { "value": 4 },
-        "QUADRATIC_EASEINOUT": { "value": 5 },
-        "CUBIC_EASEIN": { "value": 6 },
-        "CUBIC_EASEOUT": { "value": 7 },
-        "CUBIC_EASEINOUT": { "value": 8 },
-        "QUARTIC_EASEIN": { "value": 9 },
-        "QUARTIC_EASEOUT": { "value": 10 },
-        "QUARTIC_EASEINOUT": { "value": 11 },
-        "QUINTIC_EASEIN": { "value": 12 },
-        "QUINTIC_EASEOUT": { "value": 13 },
-        "QUINTIC_EASEINOUT": { "value": 14 },
-        "SINE_EASEIN": { "value": 15 },
-        "SINE_EASEOUT": { "value": 16 },
-        "SINE_EASEINOUT": { "value": 17 },
-        "EXPONENTAL_EASEIN": { "value": 18 },
-        "EXPONENTAL_EASEOUT": { "value": 19 },
-        "EXPONENTAL_EASEINOUT": { "value": 20 },
-        "CIRCULAR_EASEIN": { "value": 21 },
-        "CIRCULAR_EASEOUT": { "value": 22 },
-        "CIRCULAR_EASEINOUT": { "value": 23 },
-        "BACK_EASEIN": { "value": 24 },
-        "BACK_EASEOUT": { "value": 25 },
-        "BACK_EASEINOUT": { "value": 26 },
-        "BOUNCE_EASEIN": { "value": 27 },
-        "BOUNCE_EASEOUT": { "value": 28 },
-        "BOUNCE_EASEINOUT": { "value": 29 },
-        "ELASITC_EASEIN": { "value": 30 },
-        "ELASITC_EASEOUT": { "value": 31 },
-        "ELASITC_EASEINOUT": { "value": 32 },
+        "LINEAR_EASEIN": { "value": 0, "descriptions": { "ja": "1次補完-EaseIn" } },
+        "LINEAR_EASEOUT": { "value": 1, "descriptions": { "ja": "1次補完-EaseOut" } },
+        "LINEAR_EASEINOUT": { "value": 2, "descriptions": { "ja": "1次補完-EaseInOut" } },
+        "QUADRATIC_EASEIN": { "value": 3, "descriptions": { "ja": "2次補完-EaseIn" } },
+        "QUADRATIC_EASEOUT": { "value": 4, "descriptions": { "ja": "2次補完-EaseOut" } },
+        "QUADRATIC_EASEINOUT": { "value": 5, "descriptions": { "ja": "2次補完-EaseInOut" } },
+        "CUBIC_EASEIN": { "value": 6, "descriptions": { "ja": "3次補完-EaseIn" } },
+        "CUBIC_EASEOUT": { "value": 7, "descriptions": { "ja": "3次補完-EaseOut" } },
+        "CUBIC_EASEINOUT": { "value": 8, "descriptions": { "ja": "3次補完-EaseInOut" } },
+        "QUARTIC_EASEIN": { "value": 9, "descriptions": { "ja": "4次補完-EaseIn" } },
+        "QUARTIC_EASEOUT": { "value": 10, "descriptions": { "ja": "4次補完-EaseOut" } },
+        "QUARTIC_EASEINOUT": { "value": 11, "descriptions": { "ja": "4次補完-EaseInOut" } },
+        "QUINTIC_EASEIN": { "value": 12, "descriptions": { "ja": "5次補完-EaseIn" } },
+        "QUINTIC_EASEOUT": { "value": 13, "descriptions": { "ja": "5次補完-EaseOut" } },
+        "QUINTIC_EASEINOUT": { "value": 14, "descriptions": { "ja": "5次補完-EaseInOut" } },
+        "SINE_EASEIN": { "value": 15, "descriptions": { "ja": "sin補完-EaseIn" } },
+        "SINE_EASEOUT": { "value": 16, "descriptions": { "ja": "sin補完-EaseOut" } },
+        "SINE_EASEINOUT": { "value": 17, "descriptions": { "ja": "sin補完-EaseInOut" } },
+        "EXPONENTAL_EASEIN": { "value": 18, "descriptions": { "ja": "指数補完-EaseIn" } },
+        "EXPONENTAL_EASEOUT": { "value": 19, "descriptions": { "ja": "指数補完-EaseOut" } },
+        "EXPONENTAL_EASEINOUT": { "value": 20, "descriptions": { "ja": "指数補完-EaseInOut" } },
+        "CIRCULAR_EASEIN": { "value": 21, "descriptions": { "ja": "円補完-EaseIn" } },
+        "CIRCULAR_EASEOUT": { "value": 22, "descriptions": { "ja": "円補完-EaseOut" } },
+        "CIRCULAR_EASEINOUT": { "value": 23, "descriptions": { "ja": "円補完-EaseInOut" } },
+        "BACK_EASEIN": { "value": 24, "descriptions": { "ja": "逆運動補完-EaseIn" } },
+        "BACK_EASEOUT": { "value": 25, "descriptions": { "ja": "逆運動補完-EaseOut" } },
+        "BACK_EASEINOUT": { "value": 26, "descriptions": { "ja": "逆運動補完-EaseInOut" } },
+        "BOUNCE_EASEIN": { "value": 27, "descriptions": { "ja": "バウンス補完-EaseIn" } },
+        "BOUNCE_EASEOUT": { "value": 28, "descriptions": { "ja": "バウンス補完-EaseOut" } },
+        "BOUNCE_EASEINOUT": { "value": 29, "descriptions": { "ja": "バウンス補完-EaseInOut" } },
+        "ELASITC_EASEIN": { "value": 30, "descriptions": { "ja": "バネ補完-EaseIn" } },
+        "ELASITC_EASEOUT": { "value": 31, "descriptions": { "ja": "バネ補完-EaseOut" } },
+        "ELASITC_EASEINOUT": { "value": 32, "descriptions": { "ja": "バネ補完-EaseInOut" } },
         "NUM_EASINGTYPES": { "value": 33 }
       }
     },
@@ -901,39 +901,39 @@
     "EggRoboSearchParam::EasingType": {
       "type": "uint8",
       "values": {
-        "LINEAR_EASEIN": { "value": 0 },
-        "LINEAR_EASEOUT": { "value": 1 },
-        "LINEAR_EASEINOUT": { "value": 2 },
-        "QUADRATIC_EASEIN": { "value": 3 },
-        "QUADRATIC_EASEOUT": { "value": 4 },
-        "QUADRATIC_EASEINOUT": { "value": 5 },
-        "CUBIC_EASEIN": { "value": 6 },
-        "CUBIC_EASEOUT": { "value": 7 },
-        "CUBIC_EASEINOUT": { "value": 8 },
-        "QUARTIC_EASEIN": { "value": 9 },
-        "QUARTIC_EASEOUT": { "value": 10 },
-        "QUARTIC_EASEINOUT": { "value": 11 },
-        "QUINTIC_EASEIN": { "value": 12 },
-        "QUINTIC_EASEOUT": { "value": 13 },
-        "QUINTIC_EASEINOUT": { "value": 14 },
-        "SINE_EASEIN": { "value": 15 },
-        "SINE_EASEOUT": { "value": 16 },
-        "SINE_EASEINOUT": { "value": 17 },
-        "EXPONENTAL_EASEIN": { "value": 18 },
-        "EXPONENTAL_EASEOUT": { "value": 19 },
-        "EXPONENTAL_EASEINOUT": { "value": 20 },
-        "CIRCULAR_EASEIN": { "value": 21 },
-        "CIRCULAR_EASEOUT": { "value": 22 },
-        "CIRCULAR_EASEINOUT": { "value": 23 },
-        "BACK_EASEIN": { "value": 24 },
-        "BACK_EASEOUT": { "value": 25 },
-        "BACK_EASEINOUT": { "value": 26 },
-        "BOUNCE_EASEIN": { "value": 27 },
-        "BOUNCE_EASEOUT": { "value": 28 },
-        "BOUNCE_EASEINOUT": { "value": 29 },
-        "ELASITC_EASEIN": { "value": 30 },
-        "ELASITC_EASEOUT": { "value": 31 },
-        "ELASITC_EASEINOUT": { "value": 32 },
+        "LINEAR_EASEIN": { "value": 0, "descriptions": { "ja": "1次補完-EaseIn" } },
+        "LINEAR_EASEOUT": { "value": 1, "descriptions": { "ja": "1次補完-EaseOut" } },
+        "LINEAR_EASEINOUT": { "value": 2, "descriptions": { "ja": "1次補完-EaseInOut" } },
+        "QUADRATIC_EASEIN": { "value": 3, "descriptions": { "ja": "2次補完-EaseIn" } },
+        "QUADRATIC_EASEOUT": { "value": 4, "descriptions": { "ja": "2次補完-EaseOut" } },
+        "QUADRATIC_EASEINOUT": { "value": 5, "descriptions": { "ja": "2次補完-EaseInOut" } },
+        "CUBIC_EASEIN": { "value": 6, "descriptions": { "ja": "3次補完-EaseIn" } },
+        "CUBIC_EASEOUT": { "value": 7, "descriptions": { "ja": "3次補完-EaseOut" } },
+        "CUBIC_EASEINOUT": { "value": 8, "descriptions": { "ja": "3次補完-EaseInOut" } },
+        "QUARTIC_EASEIN": { "value": 9, "descriptions": { "ja": "4次補完-EaseIn" } },
+        "QUARTIC_EASEOUT": { "value": 10, "descriptions": { "ja": "4次補完-EaseOut" } },
+        "QUARTIC_EASEINOUT": { "value": 11, "descriptions": { "ja": "4次補完-EaseInOut" } },
+        "QUINTIC_EASEIN": { "value": 12, "descriptions": { "ja": "5次補完-EaseIn" } },
+        "QUINTIC_EASEOUT": { "value": 13, "descriptions": { "ja": "5次補完-EaseOut" } },
+        "QUINTIC_EASEINOUT": { "value": 14, "descriptions": { "ja": "5次補完-EaseInOut" } },
+        "SINE_EASEIN": { "value": 15, "descriptions": { "ja": "sin補完-EaseIn" } },
+        "SINE_EASEOUT": { "value": 16, "descriptions": { "ja": "sin補完-EaseOut" } },
+        "SINE_EASEINOUT": { "value": 17, "descriptions": { "ja": "sin補完-EaseInOut" } },
+        "EXPONENTAL_EASEIN": { "value": 18, "descriptions": { "ja": "指数補完-EaseIn" } },
+        "EXPONENTAL_EASEOUT": { "value": 19, "descriptions": { "ja": "指数補完-EaseOut" } },
+        "EXPONENTAL_EASEINOUT": { "value": 20, "descriptions": { "ja": "指数補完-EaseInOut" } },
+        "CIRCULAR_EASEIN": { "value": 21, "descriptions": { "ja": "円補完-EaseIn" } },
+        "CIRCULAR_EASEOUT": { "value": 22, "descriptions": { "ja": "円補完-EaseOut" } },
+        "CIRCULAR_EASEINOUT": { "value": 23, "descriptions": { "ja": "円補完-EaseInOut" } },
+        "BACK_EASEIN": { "value": 24, "descriptions": { "ja": "逆運動補完-EaseIn" } },
+        "BACK_EASEOUT": { "value": 25, "descriptions": { "ja": "逆運動補完-EaseOut" } },
+        "BACK_EASEINOUT": { "value": 26, "descriptions": { "ja": "逆運動補完-EaseInOut" } },
+        "BOUNCE_EASEIN": { "value": 27, "descriptions": { "ja": "バウンス補完-EaseIn" } },
+        "BOUNCE_EASEOUT": { "value": 28, "descriptions": { "ja": "バウンス補完-EaseOut" } },
+        "BOUNCE_EASEINOUT": { "value": 29, "descriptions": { "ja": "バウンス補完-EaseInOut" } },
+        "ELASITC_EASEIN": { "value": 30, "descriptions": { "ja": "バネ補完-EaseIn" } },
+        "ELASITC_EASEOUT": { "value": 31, "descriptions": { "ja": "バネ補完-EaseOut" } },
+        "ELASITC_EASEINOUT": { "value": 32, "descriptions": { "ja": "バネ補完-EaseInOut" } },
         "NUM_EASINGTYPES": { "value": 33 }
       }
     },
@@ -1944,12 +1944,125 @@
         "Num": { "value": 7 }
       }
     },
+    "ObjDragonActionVolumeSpawner::ActionType": {
+      "type": "int8",
+      "values": {
+        "MISSILE": { "value": 0 }
+      }
+    },
     "ObjFireworkCactusManagerSpawner::CameraType": {
       "type": "uint8",
       "values": {
         "CHARA": { "value": 0, "descriptions": { "ja": "キャラ位置" } },
         "FIX": { "value": 1, "descriptions": { "ja": "固定位置" } },
         "OBJECT": { "value": 2, "descriptions": { "ja": "オブジェクト位置" } }
+      }
+    },
+    "ObjHoleCommonSpawner::InitialState": {
+      "type": "uint8",
+      "values": {
+        "Close": { "value": 0, "descriptions": { "ja": "なし" } },
+        "OpenSmall": { "value": 1, "descriptions": { "ja": "小さい穴" } },
+        "Open": { "value": 2, "descriptions": { "ja": "大きい穴" } }
+      }
+    },
+    "ObjHolePopupItemSpawner::ItemKind": {
+      "type": "uint32",
+      "values": {
+        "Ring": { "value": 0, "descriptions": { "ja": "リング" } },
+        "SuperRing": { "value": 1, "descriptions": { "ja": "スーパーリング" } },
+        "SkillPiece": { "value": 2, "descriptions": { "ja": "スキルピース" } }
+      }
+    },
+    "ObjHoleWarpSpawner::Interpolate": {
+      "type": "int8",
+      "values": {
+        "Linear": { "value": 0, "descriptions": { "ja": "球面座標の線形補間" } },
+        "LinearAbsolute": { "value": 1, "descriptions": { "ja": "絶対座標の線形補間" } },
+        "LinearAbsoluteStable": { "value": 2, "descriptions": { "ja": "絶対座標の線形補間" } },
+        "TargetBase": { "value": 3, "descriptions": { "ja": "注視点位置基準補間" } },
+        "TargetBaseStable": { "value": 4, "descriptions": { "ja": "注視点位置基準補間" } },
+        "FixTarget": { "value": 5, "descriptions": { "ja": "注視点を補間先に固定" } }
+      }
+    },
+    "ObjKnucklesPillarSpawner::SizeType": {
+      "type": "int8",
+      "values": {
+        "SMALL": { "value": 0, "descriptions": { "ja": "小" } },
+        "MIDDLE": { "value": 1, "descriptions": { "ja": "中" } },
+        "LARGE": { "value": 2, "descriptions": { "ja": "大" } },
+        "SIZETYPE_NUM": { "value": 3 }
+      }
+    },
+    "ObjKnucklesPillarSpawner::MoveType": {
+      "type": "int8",
+      "values": {
+        "MOVE_NONE": { "value": 0, "descriptions": { "ja": "不動" } },
+        "MOVE_POINT": { "value": 1, "descriptions": { "ja": "二点間移動" } },
+        "MOVE_PATH": { "value": 2, "descriptions": { "ja": "パス移動" } }
+      }
+    },
+    "ObjKnucklesPillarSpawner::PatrolType": {
+      "type": "int8",
+      "values": {
+        "PATROL_RETURN": { "value": 0, "descriptions": { "ja": "往復" } },
+        "PATROL_LOOP": { "value": 1, "descriptions": { "ja": "ループ" } },
+        "PATROL_ONEWAY": { "value": 2, "descriptions": { "ja": "片道" } }
+      }
+    },
+    "ObjKnucklesPillarSpawner::TimeType": {
+      "type": "int8",
+      "values": {
+        "TIME_LOCAL": { "value": 0, "descriptions": { "ja": "ローカル時間" } },
+        "TIME_GLOBAL": { "value": 1, "descriptions": { "ja": "グローバル時間" } }
+      }
+    },
+    "ObjKnucklesPillarSpawner::EventType": {
+      "type": "int8",
+      "values": {
+        "EVENT_NONE": { "value": 0, "descriptions": { "ja": "イベント起動なし" } },
+        "EVENT_HIDE": { "value": 1, "descriptions": { "ja": "イベント起動:非表示" } },
+        "EVENT_NO_MOVE": { "value": 2, "descriptions": { "ja": "イベント起動:停止" } }
+      }
+    },
+    "ObjKnucklesWallSpawner::SizeType": {
+      "type": "int8",
+      "values": {
+        "SMALL": { "value": 0, "descriptions": { "ja": "小" } },
+        "MIDDLE": { "value": 1, "descriptions": { "ja": "中" } },
+        "LARGE": { "value": 2, "descriptions": { "ja": "大" } },
+        "SIZETYPE_NUM": { "value": 3 }
+      }
+    },
+    "ObjKnucklesWallSpawner::MoveType": {
+      "type": "int8",
+      "values": {
+        "MOVE_NONE": { "value": 0, "descriptions": { "ja": "不動" } },
+        "MOVE_POINT": { "value": 1, "descriptions": { "ja": "二点間移動" } },
+        "MOVE_PATH": { "value": 2, "descriptions": { "ja": "パス移動" } }
+      }
+    },
+    "ObjKnucklesWallSpawner::PatrolType": {
+      "type": "int8",
+      "values": {
+        "PATROL_RETURN": { "value": 0, "descriptions": { "ja": "往復" } },
+        "PATROL_LOOP": { "value": 1, "descriptions": { "ja": "ループ" } },
+        "PATROL_ONEWAY": { "value": 2, "descriptions": { "ja": "片道" } }
+      }
+    },
+    "ObjKnucklesWallSpawner::TimeType": {
+      "type": "int8",
+      "values": {
+        "TIME_LOCAL": { "value": 0, "descriptions": { "ja": "ローカル時間" } },
+        "TIME_GLOBAL": { "value": 1, "descriptions": { "ja": "グローバル時間" } }
+      }
+    },
+    "ObjKnucklesWallSpawner::EventType": {
+      "type": "int8",
+      "values": {
+        "EVENT_NONE": { "value": 0, "descriptions": { "ja": "イベント起動なし" } },
+        "EVENT_HIDE": { "value": 1, "descriptions": { "ja": "イベント起動:非表示" } },
+        "EVENT_NO_MOVE": { "value": 2, "descriptions": { "ja": "イベント起動:停止" } }
       }
     },
     "PortalBitParameter::PortalBitType": {
@@ -1980,12 +2093,6 @@
       "values": {
         "Circle": { "value": 0, "descriptions": { "ja": "円形" } },
         "Square": { "value": 1, "descriptions": { "ja": "四角形" } }
-      }
-    },
-    "ObjDragonActionVolumeSpawner::ActionType": {
-      "type": "int8",
-      "values": {
-        "MISSILE": { "value": 0 }
       }
     },
     "ObjSlotStarSpawner::VisualType": {
@@ -2084,6 +2191,25 @@
         "NumShapes": { "value": 4 }
       }
     },
+    "ObjKodamaMapSpawner::CharacterType": {
+      "type": "int8",
+      "values": {
+        "Amy": { "value": 0, "descriptions": { "ja": "エミー" } },
+        "Knuckles": { "value": 1, "descriptions": { "ja": "ナックルズ" } },
+        "Tails": { "value": 2, "descriptions": { "ja": "テイルス" } },
+        "Num": { "value": 3 }
+      }
+    },
+    "ObjKodamaMasterSpawner::TrialType": {
+      "type": "int8",
+      "values": {
+        "Dragon": { "value": 0, "descriptions": { "ja": "龍" } },
+        "Snake": { "value": 1, "descriptions": { "ja": "蛇" } },
+        "Tiger": { "value": 2, "descriptions": { "ja": "虎" } },
+        "Crane": { "value": 3, "descriptions": { "ja": "鶴" } },
+        "Num": { "value": 4 }
+      }
+    },
     "ObjKodamaMotherSpawner::PurposeOfUse": {
       "type": "uint8",
       "values": {
@@ -2105,6 +2231,20 @@
       "values": {
         "KodamaEscortDesert": { "value": 0, "descriptions": { "ja": "コダマ護衛（砂漠島）" } },
         "NumQuestTypes": { "value": 1 }
+      }
+    },
+    "ObjKodamaNewFormSpawner::Value": {
+      "type": "int8",
+      "values": {
+        "RareA": { "value": 0, "descriptions": { "ja": "レアA" } },
+        "RareB": { "value": 1, "descriptions": { "ja": "レアB" } },
+        "RareC": { "value": 2, "descriptions": { "ja": "レアC" } },
+        "RareD": { "value": 3, "descriptions": { "ja": "レアD" } },
+        "RareE": { "value": 4, "descriptions": { "ja": "レアE" } },
+        "Bronze": { "value": 5, "descriptions": { "ja": "銅冠" } },
+        "Silver": { "value": 6, "descriptions": { "ja": "銀冠" } },
+        "Goald": { "value": 7, "descriptions": { "ja": "金冠" } },
+        "Num": { "value": 8 }
       }
     },
     "ObjSageSpawner::PurposeOfUse": {
@@ -2481,6 +2621,24 @@
         "EVENT_NO_MOVE": { "value": 2, "descriptions": { "ja": "イベント起動:停止" } }
       }
     },
+    "ObjBreakBoxSpawner::BoxSize": {
+      "type": "int8",
+      "values": {
+        "SIZE_S": { "value": 0, "descriptions": { "ja": "小" } },
+        "SIZE_M": { "value": 1, "descriptions": { "ja": "中" } },
+        "SIZE_L": { "value": 2, "descriptions": { "ja": "大" } },
+        "SIZE_NUM": { "value": 3 }
+      }
+    },
+    "ObjBreakWallSpawner::WallSize": {
+      "type": "int8",
+      "values": {
+        "SIZE_S": { "value": 0, "descriptions": { "ja": "小" } },
+        "SIZE_M": { "value": 1, "descriptions": { "ja": "中" } },
+        "SIZE_L": { "value": 2, "descriptions": { "ja": "大" } },
+        "SIZE_NUM": { "value": 3 }
+      }
+    },
     "ObjDroppedItemSpawner::ItemType": {
       "type": "int8",
       "values": {
@@ -2490,6 +2648,15 @@
         "POWER_SEED": { "value": 3 },
         "GUARD_SEED": { "value": 4 },
         "SEQUENCE_ITEM": { "value": 5 }
+      }
+    },
+    "ObjFloatIslandSpawner::SizeType": {
+      "type": "int8",
+      "values": {
+        "SMALL": { "value": 0, "descriptions": { "ja": "小" } },
+        "MIDDLE": { "value": 1, "descriptions": { "ja": "中" } },
+        "LARGE": { "value": 2, "descriptions": { "ja": "大" } },
+        "SIZETYPE_NUM": { "value": 3 }
       }
     },
     "ObjFloorPuzzleSwitchSpawner::Condition": {
@@ -2588,7 +2755,9 @@
         "isl_obj_3DpuzzleC": { "value": 2 },
         "isl_obj_3DpuzzleD": { "value": 3 },
         "isl_obj_3DpuzzleE": { "value": 4 },
-        "NumCorrectModelTypes": { "value": 5 }
+        "isl_obj_3DpuzzleF": { "value": 5 },
+        "isl_obj_3DpuzzleG": { "value": 6 },
+        "NumCorrectModelTypes": { "value": 7 }
       }
     },
     "Obj3DPuzzleSpawner::ModelType": {
@@ -2614,7 +2783,17 @@
         "isl_obj_3DpuzzleE_piece3": { "value": 16 },
         "isl_obj_3DpuzzleE_piece4": { "value": 17 },
         "isl_obj_3DpuzzleE_piece5": { "value": 18 },
-        "NumModelTypes": { "value": 19 }
+        "isl_obj_3DpuzzleF_piece1": { "value": 19 },
+        "isl_obj_3DpuzzleF_piece2": { "value": 20 },
+        "isl_obj_3DpuzzleF_piece3": { "value": 21 },
+        "isl_obj_3DpuzzleF_piece4": { "value": 22 },
+        "isl_obj_3DpuzzleF_piece5": { "value": 23 },
+        "isl_obj_3DpuzzleG_piece1": { "value": 24 },
+        "isl_obj_3DpuzzleG_piece2": { "value": 25 },
+        "isl_obj_3DpuzzleG_piece3": { "value": 26 },
+        "isl_obj_3DpuzzleG_piece4": { "value": 27 },
+        "isl_obj_3DpuzzleG_piece5": { "value": 28 },
+        "NumModelTypes": { "value": 29 }
       }
     },
     "CSRow::Color": {
@@ -2654,7 +2833,17 @@
         "isl_obj_3DpuzzleE_piece3": { "value": 16 },
         "isl_obj_3DpuzzleE_piece4": { "value": 17 },
         "isl_obj_3DpuzzleE_piece5": { "value": 18 },
-        "NumModelTypes": { "value": 19 }
+        "isl_obj_3DpuzzleF_piece1": { "value": 19 },
+        "isl_obj_3DpuzzleF_piece2": { "value": 20 },
+        "isl_obj_3DpuzzleF_piece3": { "value": 21 },
+        "isl_obj_3DpuzzleF_piece4": { "value": 22 },
+        "isl_obj_3DpuzzleF_piece5": { "value": 23 },
+        "isl_obj_3DpuzzleG_piece1": { "value": 24 },
+        "isl_obj_3DpuzzleG_piece2": { "value": 25 },
+        "isl_obj_3DpuzzleG_piece3": { "value": 26 },
+        "isl_obj_3DpuzzleG_piece4": { "value": 27 },
+        "isl_obj_3DpuzzleG_piece5": { "value": 28 },
+        "NumModelTypes": { "value": 29 }
       }
     },
     "Obj3DPuzzleBlockSpawner::Color": {
@@ -2783,6 +2972,38 @@
         "EVENT_NONE": { "value": 0, "descriptions": { "ja": "イベント起動なし" } },
         "EVENT_HIDE": { "value": 1, "descriptions": { "ja": "イベント起動:非表示" } },
         "EVENT_NO_REACTION": { "value": 2, "descriptions": { "ja": "イベント起動:無反応" } }
+      }
+    },
+    "ObjWaveCannonWallSpawner::WallSize": {
+      "type": "int8",
+      "values": {
+        "SIZE_S": { "value": 0, "descriptions": { "ja": "小" } },
+        "SIZE_M": { "value": 1, "descriptions": { "ja": "中" } },
+        "SIZE_L": { "value": 2, "descriptions": { "ja": "大" } },
+        "SIZE_NUM": { "value": 3 }
+      }
+    },
+    "ObjWaveCannonBoxSpawner::BoxSize": {
+      "type": "int8",
+      "values": {
+        "SIZE_S": { "value": 0, "descriptions": { "ja": "小" } },
+        "SIZE_M": { "value": 1, "descriptions": { "ja": "中" } },
+        "SIZE_L": { "value": 2, "descriptions": { "ja": "大" } },
+        "SIZE_NUM": { "value": 3 }
+      }
+    },
+    "ObjWeightSwitchSpawner::TurnOnType": {
+      "type": "int8",
+      "values": {
+        "TYPE_WEIGHT": { "value": 0, "descriptions": { "ja": "重り起動のみ" } },
+        "TYPE_STOMPING": { "value": 1, "descriptions": { "ja": "ストンピング起動可" } }
+      }
+    },
+    "ObjWeightSwitchSpawner::Condition": {
+      "type": "int8",
+      "values": {
+        "COND_TIMER": { "value": 0, "descriptions": { "ja": "一定時間ON" } },
+        "COND_ENTER": { "value": 1, "descriptions": { "ja": "1回のみON" } }
       }
     },
     "ObjGuideLightSpawner::SetType": {
@@ -3689,6 +3910,7 @@
         { "name": "isCyloopOn", "type": "bool", "descriptions": { "ja": "サイループ起動型か" } },
         { "name": "cyloopSignDistance", "type": "float32", "step": 0.001000, "descriptions": { "ja": "サイループ起動ビルボード表示距離" } },
         { "name": "cyloopSignTolerance", "type": "float32", "min_range": 0.000000, "step": 0.001000, "descriptions": { "ja": "サイループ起動ビルボード表示非表示距離差" } },
+        { "name": "isCyKnuckleOn", "type": "bool", "descriptions": { "ja": "サイナックル起動型か" } },
         { "name": "changeType", "type": "ObjDashPanelSpawner::ChangeType", "descriptions": { "ja": "ボーディングへの変更挙動" } }
       ]
     },
@@ -3749,6 +3971,17 @@
         { "name": "root", "type": "ObjDivingAuraTrainRoot", "descriptions": { "ja": "ルート" } },
         { "name": "speed", "type": "float32", "step": 0.001000, "descriptions": { "ja": "移動速度" } },
         { "name": "collisionScale", "type": "vector3", "alignment": 16, "min_range": [ 0.010000, 0.010000, 0.010000 ], "max_range": [ 1000.000000, 1000.000000, 1000.000000 ], "step": [ 1.000000, 1.000000, 1.000000 ], "descriptions": { "ja": "コリジョンスケール" } }
+      ]
+    },
+    "ObjExDashRingSpawner": {
+      "fields": [
+        { "name": "OutOfControl", "type": "float32", "min_range": 0.000000, "max_range": 1000000.000000, "step": 0.010000, "descriptions": { "ja": "操作不可時間" } },
+        { "name": "KeepVelocity", "type": "float32", "min_range": 0.000000, "max_range": 1000000.000000, "step": 0.010000, "descriptions": { "ja": "速度維持時間" } },
+        { "name": "Speed", "type": "float32", "min_range": 1.000000, "max_range": 10000.000000, "step": 1.000000, "descriptions": { "ja": "速度" } },
+        { "name": "VeloConst", "type": "bool", "descriptions": { "ja": "初期速度固定" } },
+        { "name": "collisionScale", "type": "vector3", "alignment": 16, "min_range": [ 0.010000, 0.010000, 0.010000 ], "max_range": [ 1000.000000, 1000.000000, 1000.000000 ], "step": [ 1.000000, 1.000000, 1.000000 ], "descriptions": { "ja": "コリジョンスケール" } },
+        { "name": "eventDriven", "type": "bool", "descriptions": { "ja": "イベント起動" } },
+        { "name": "actions", "type": "array", "subtype": "ActionNotification", "array_size": 3, "descriptions": { "ja": "アクション" } }
       ]
     },
     "ObjFanSpawner": {
@@ -3821,7 +4054,8 @@
         { "name": "actions", "type": "array", "subtype": "ActionNotification", "array_size": 3, "descriptions": { "ja": "アクション" } },
         { "name": "isCyloopOn", "type": "bool", "descriptions": { "ja": "サイループ起動型か" } },
         { "name": "cyloopSignDistance", "type": "float32", "step": 0.001000, "descriptions": { "ja": "サイループ起動ビルボード表示距離" } },
-        { "name": "cyloopSignTolerance", "type": "float32", "min_range": 0.000000, "step": 0.001000, "descriptions": { "ja": "サイループ起動ビルボード表示非表示距離差" } }
+        { "name": "cyloopSignTolerance", "type": "float32", "min_range": 0.000000, "step": 0.001000, "descriptions": { "ja": "サイループ起動ビルボード表示非表示距離差" } },
+        { "name": "isCyKnuckleOn", "type": "bool", "descriptions": { "ja": "サイナックル起動型か" } }
       ]
     },
     "ObjPulleySpawner": {
@@ -3880,6 +4114,7 @@
         { "name": "isCyloopOn", "type": "bool", "descriptions": { "ja": "サイループ起動型か" } },
         { "name": "cyloopSignDistance", "type": "float32", "step": 0.001000, "descriptions": { "ja": "サイループ起動ビルボード表示距離" } },
         { "name": "cyloopSignTolerance", "type": "float32", "min_range": 0.000000, "step": 0.001000, "descriptions": { "ja": "サイループ起動ビルボード表示非表示距離差" } },
+        { "name": "isCyKnuckleOn", "type": "bool", "descriptions": { "ja": "サイナックル起動型か" } },
         { "name": "isHorizon", "type": "bool", "descriptions": { "ja": "横置きか" } },
         { "name": "airtrick", "type": "bool", "descriptions": { "ja": "エアトリック可能か" } },
         { "name": "isVisible", "type": "bool", "descriptions": { "ja": "モデルの有無" } },
@@ -5446,6 +5681,12 @@
         { "name": "actions", "type": "array", "subtype": "ActionNotification", "array_size": 3, "descriptions": { "ja": "action" } }
       ]
     },
+    "ObjStopWatchSpawner": {
+      "fields": [
+        { "name": "extendTime", "type": "float32", "min_range": 0.000000, "step": 0.100000, "descriptions": { "ja": "追加時間" } },
+        { "name": "collisionRadius", "type": "float32", "min_range": 0.000000, "step": 0.001000, "descriptions": { "ja": "取得範囲コリジョン半径" } }
+      ]
+    },
     "SwingReelImpulse": {
       "fields": [
         { "name": "addSpeed", "type": "float32", "min_range": -1000.000000, "max_range": 1000.000000, "step": 1.000000, "descriptions": { "ja": "加速量(m/s)" } },
@@ -5538,7 +5779,9 @@
         { "name": "moveParam", "type": "ObjThornBallMoveParam", "descriptions": { "ja": "移動パラメータ" } },
         { "name": "rollingParam", "type": "ObjThornBallRollingParam", "descriptions": { "ja": "回転パラメータ" } },
         { "name": "eventDriven", "type": "bool", "descriptions": { "ja": "イベント起動" } },
-        { "name": "collisionRate", "type": "float32", "step": 0.001000, "descriptions": { "ja": "コリジョン倍率" } }
+        { "name": "collisionRate", "type": "float32", "step": 0.001000, "descriptions": { "ja": "コリジョン倍率" } },
+        { "name": "isEnableTimeStop", "type": "bool", "descriptions": { "ja": "時間停止対応" } },
+        { "name": "stopTime", "type": "float32", "step": 0.001000, "descriptions": { "ja": "停止時間" } }
       ]
     },
     "ObjThornCylinderSpawner": {
@@ -5790,6 +6033,23 @@
         { "name": "barbecueCamera", "type": "object_reference", "descriptions": { "ja": "肉焼きカメラ" } }
       ]
     },
+    "ObjActionChainSpawner": {
+      "fields": [
+        { "name": "no", "type": "int32" },
+        { "name": "cameraUUID", "type": "object_reference", "descriptions": { "ja": "クリア演出中カメラ" } },
+        { "name": "cameraEaseIn", "type": "float32", "step": 0.001000, "descriptions": { "ja": "カメラ補間開始時間" } },
+        { "name": "cameraEaseOut", "type": "float32", "step": 0.001000, "descriptions": { "ja": "カメラ補間終了時間" } },
+        { "name": "clearWaitTime", "type": "float32", "step": 0.001000, "descriptions": { "ja": "クリア演出開始時間" } },
+        { "name": "cameraTime", "type": "float32", "step": 0.001000, "descriptions": { "ja": "カメラ切り替え時間" } },
+        { "name": "objectNumber", "type": "uint16", "descriptions": { "ja": "通し番号" } },
+        { "name": "viewNo", "type": "int32", "min_range": -1, "max_range": 999, "descriptions": { "ja": "表示番号" } }
+      ]
+    },
+    "ObjChainBoosterSpawner": {
+      "fields": [
+        { "name": "dummy", "type": "int32", "descriptions": { "ja": "ダミー" } }
+      ]
+    },
     "BossDragonChasePathInfo": {
       "fields": [
         { "name": "bossPathName", "type": "string", "descriptions": { "ja": "ボスのパス名" } },
@@ -5842,6 +6102,18 @@
       ]
     },
     "BossRifleSpawner": {
+      "fields": [
+        { "name": "guidePathName", "type": "string", "descriptions": { "ja": "パス名" } },
+        { "name": "objectIds", "type": "array", "subtype": "object_reference", "descriptions": { "ja": "ボス関連オブジェクト" } },
+        { "name": "ringSupplyPos", "type": "array", "subtype": "object_reference", "descriptions": { "ja": "リング供給オブジェクト生成位置" } },
+        { "name": "releaseMapPos", "type": "array", "subtype": "object_reference", "descriptions": { "ja": "撃破時マップ解放位置" } },
+        { "name": "normalModeBitWaveIds", "type": "array", "subtype": "object_reference", "descriptions": { "ja": "子機オブジェクトWaveリスト[小型]" } },
+        { "name": "alwaysBitWaveIds", "type": "array", "subtype": "object_reference", "descriptions": { "ja": "子機オブジェクトWaveリスト[大型]" } },
+        { "name": "isEvent", "type": "bool", "descriptions": { "ja": "イベント起動フラグ" } },
+        { "name": "isDebugMotionTest", "type": "bool", "descriptions": { "ja": "モーションテストフラグ[デバック時専用]" } }
+      ]
+    },
+    "BossRifleBeastSpawner": {
       "fields": [
         { "name": "guidePathName", "type": "string", "descriptions": { "ja": "パス名" } },
         { "name": "objectIds", "type": "array", "subtype": "object_reference", "descriptions": { "ja": "ボス関連オブジェクト" } },
@@ -6481,6 +6753,13 @@
         { "name": "practiceNotifierConfig", "type": "EnemyPracticeNotifierConfig", "descriptions": { "ja": "練習通知設定" } }
       ]
     },
+    "ObjAirFireBarSpawner": {
+      "fields": [
+        { "name": "barCount", "type": "int16", "descriptions": { "ja": "バーの数" } },
+        { "name": "rotSpeed", "type": "float32", "step": 0.001000, "descriptions": { "ja": "回転速度" } },
+        { "name": "bouncePower", "type": "float32", "step": 0.001000, "descriptions": { "ja": "バウンド力" } }
+      ]
+    },
     "ObjAlbatrossChaseSpawner": {
       "fields": [
         { "name": "relative", "type": "vector3", "alignment": 16, "step": [ 0.001000, 0.001000, 0.001000 ], "descriptions": { "ja": "相対位置" } },
@@ -6504,16 +6783,16 @@
         { "name": "randomParam", "type": "int32", "min_range": 0, "max_range": 10000, "descriptions": { "ja": "配置パターン" } }
       ]
     },
+    "ObjBossLargeBitSpawner": {
+      "fields": [
+        { "name": "offsetHeight", "type": "float32", "min_range": -10000.000000, "max_range": 10000.000000, "step": 1.000000, "descriptions": { "ja": "高さ調整" } }
+      ]
+    },
     "ObjBossSmallBitSpawner": {
       "fields": [
         { "name": "patternIndexs", "type": "array", "subtype": "int32", "array_size": 64, "descriptions": { "ja": "パターン[-1以下は未設定扱い]" } },
         { "name": "offsetHeight", "type": "float32", "min_range": -10000.000000, "max_range": 10000.000000, "step": 1.000000, "descriptions": { "ja": "高さ調整" } },
         { "name": "isOutsideDirFix", "type": "bool", "descriptions": { "ja": "初期姿勢を中心から外向きに固定" } }
-      ]
-    },
-    "ObjBossLargeBitSpawner": {
-      "fields": [
-        { "name": "offsetHeight", "type": "float32", "min_range": -10000.000000, "max_range": 10000.000000, "step": 1.000000, "descriptions": { "ja": "高さ調整" } }
       ]
     },
     "ObjChaosEmeraldPillarSpawner": {
@@ -6534,6 +6813,49 @@
       "fields": [
         { "name": "radius", "type": "float32", "step": 0.001000, "descriptions": { "ja": "半径" } },
         { "name": "terminal", "type": "bool", "descriptions": { "ja": "終点かどうか" } }
+      ]
+    },
+    "ObjDragonActionVolumeSpawner": {
+      "fields": [
+        { "name": "volume", "type": "VolumeTriggerSpawner", "descriptions": { "ja": "ボリューム" } },
+        { "name": "actionType", "type": "ObjDragonActionVolumeSpawner::ActionType", "descriptions": { "ja": "アクション種別" } }
+      ]
+    },
+    "ObjDragonAreaSubVolumeSpawner": {
+      "fields": [
+        { "name": "volume", "type": "VolumeTriggerSpawner", "descriptions": { "ja": "ボリューム" } },
+        { "name": "target", "type": "object_reference", "descriptions": { "ja": "親ボリューム" } }
+      ]
+    },
+    "ObjDragonAreaVolumeSpawner": {
+      "fields": [
+        { "name": "volume", "type": "VolumeTriggerSpawner", "descriptions": { "ja": "ボリューム" } },
+        { "name": "closeRadius", "type": "float32", "step": 0.001000, "descriptions": { "ja": "接近半径" } },
+        { "name": "dragon", "type": "object_reference", "descriptions": { "ja": "ドラゴン" } }
+      ]
+    },
+    "ObjDragonCameraChangeVolumeSpawner": {
+      "fields": [
+        { "name": "volume", "type": "VolumeTriggerSpawner", "descriptions": { "ja": "ボリューム" } },
+        { "name": "priority", "type": "int32", "descriptions": { "ja": "優先度" } },
+        { "name": "easeTimeEnter", "type": "float32", "min_range": 0.000000, "step": 0.001000, "descriptions": { "ja": "開始移行時間" } },
+        { "name": "easeTimeLeave", "type": "float32", "min_range": 0.000000, "step": 0.001000, "descriptions": { "ja": "終了移行時間" } },
+        { "name": "upOffset", "type": "float32", "step": 0.001000, "descriptions": { "ja": "Y-オフセット" } },
+        { "name": "distance", "type": "float32", "step": 0.001000, "descriptions": { "ja": "カメラ距離" } },
+        { "name": "azimuthOffset", "type": "float32", "min_range": -180.000000, "max_range": 180.000000, "step": 1.000000, "descriptions": { "ja": "方位角オフセット" } },
+        { "name": "elevationOffset", "type": "float32", "min_range": -89.000000, "max_range": 89.000000, "step": 1.000000, "descriptions": { "ja": "仰角オフセット" } },
+        { "name": "roll", "type": "float32", "min_range": -180.000000, "max_range": 180.000000, "step": 1.000000, "descriptions": { "ja": "ロール角" } },
+        { "name": "isChangeFocus", "type": "bool", "descriptions": { "ja": "フォーカス設定" } },
+        { "name": "focusRatio", "type": "float32", "min_range": 0.000000, "max_range": 1.000000, "step": 0.001000, "descriptions": { "ja": "フォーカス比率" } },
+        { "name": "focusLimitAngle", "type": "float32", "min_range": 0.000000, "max_range": 180.000000, "step": 1.000000, "descriptions": { "ja": "フォーカス制限角度" } }
+      ]
+    },
+    "ObjDragonStatusVolumeSpawner": {
+      "fields": [
+        { "name": "volume", "type": "VolumeTriggerSpawner", "descriptions": { "ja": "ボリューム" } },
+        { "name": "disableMissile", "type": "bool", "descriptions": { "ja": "ミサイル発射禁止" } },
+        { "name": "keepChase", "type": "bool", "descriptions": { "ja": "チェイス強制継続" } },
+        { "name": "changeMotion", "type": "bool", "descriptions": { "ja": "モーション切り替え" } }
       ]
     },
     "ObjDropChaosEmeraldSpawner": {
@@ -6584,6 +6906,26 @@
         { "name": "spawnByGrowFlower", "type": "bool", "descriptions": { "ja": "花の芽から出現" } }
       ]
     },
+    "ObjFlashSwitchSpawner": {
+      "fields": [
+        { "name": "no", "type": "int32" },
+        { "name": "eventDriven", "type": "bool", "descriptions": { "ja": "イベント起動" } },
+        { "name": "onTime", "type": "float32", "min_range": 0.000000, "step": 0.001000, "descriptions": { "ja": "点灯時間" } },
+        { "name": "offTime", "type": "float32", "min_range": 0.000000, "step": 0.001000, "descriptions": { "ja": "消灯時間" } },
+        { "name": "phase", "type": "float32", "min_range": 0.000000, "max_range": 1000.000000, "step": 1.000000, "descriptions": { "ja": "位相" } },
+        { "name": "stopTime", "type": "float32", "step": 0.001000, "descriptions": { "ja": "停止時間" } }
+      ]
+    },
+    "ObjFloatTopSpawner": {
+      "fields": [
+        { "name": "moveSpeed", "type": "float32", "step": 0.001000, "descriptions": { "ja": "移動速度" } },
+        { "name": "driveTime", "type": "float32", "step": 0.001000, "descriptions": { "ja": "駆動時間" } },
+        { "name": "widthLimit", "type": "float32", "step": 0.001000, "descriptions": { "ja": "横移動限界値" } },
+        { "name": "depthLimit", "type": "float32", "step": 0.001000, "descriptions": { "ja": "縦移動限界値" } },
+        { "name": "cameraActivator", "type": "object_reference", "descriptions": { "ja": "CameraActivator" } },
+        { "name": "actions", "type": "array", "subtype": "ActionNotification", "array_size": 3, "descriptions": { "ja": "action" } }
+      ]
+    },
     "GateDefaultCamera": {
       "fields": [
         { "name": "camEyeOffset", "type": "vector3", "alignment": 16, "step": [ 0.001000, 0.001000, 0.001000 ], "descriptions": { "ja": "カメラ位置" } },
@@ -6606,9 +6948,122 @@
         { "name": "offsetRot", "type": "vector3", "alignment": 16, "step": [ 0.001000, 0.001000, 0.001000 ], "descriptions": { "ja": "向き調整" } }
       ]
     },
+    "ObjHoleCommonSpawner": {
+      "fields": [
+        { "name": "no", "type": "int32" },
+        { "name": "initialState", "type": "ObjHoleCommonSpawner::InitialState", "descriptions": { "ja": "初期状態" } },
+        { "name": "afterState", "type": "ObjHoleCommonSpawner::InitialState", "descriptions": { "ja": "実行後状態" } },
+        { "name": "wall", "type": "bool", "descriptions": { "ja": "壁に配置" } }
+      ]
+    },
+    "ObjHoleAuraTrainSpawner": {
+      "parent": "ObjHoleCommonSpawner",
+      "fields": [
+        { "name": "pathName", "type": "string", "descriptions": { "ja": "パス名" } },
+        { "name": "reverse", "type": "bool", "descriptions": { "ja": "逆方向か" } },
+        { "name": "cameraUuid", "type": "object_reference", "descriptions": { "ja": "カメラ" } },
+        { "name": "cameraEaseInTime", "type": "float32", "step": 0.001000, "descriptions": { "ja": "カメラ補間開始時間" } },
+        { "name": "cameraEaseOutTime", "type": "float32", "step": 0.001000, "descriptions": { "ja": "カメラ補間終了時間" } },
+        { "name": "speed", "type": "float32", "step": 0.001000, "descriptions": { "ja": "移動速度" } },
+        { "name": "exitHole", "type": "object_reference", "descriptions": { "ja": "出口穴オブジェクト" } }
+      ]
+    },
+    "ObjHoleHideSpawner": {
+      "parent": "ObjHoleCommonSpawner",
+      "fields": [
+        { "name": "dummy", "type": "int32", "descriptions": { "ja": "ダミー" } }
+      ]
+    },
+    "ObjHolePopupItemSpawner": {
+      "parent": "ObjHoleCommonSpawner",
+      "fields": [
+        { "name": "item", "type": "ObjHolePopupItemSpawner::ItemKind", "descriptions": { "ja": "アイテム" } },
+        { "name": "num", "type": "uint32", "min_range": 1, "descriptions": { "ja": "数" } },
+        { "name": "exp", "type": "uint32", "min_range": 1, "descriptions": { "ja": "1ピースあたりの経験値" } }
+      ]
+    },
+    "ObjHoleWarpSpawner": {
+      "parent": "ObjHoleCommonSpawner",
+      "fields": [
+        { "name": "exitHole", "type": "object_reference", "descriptions": { "ja": "出口穴オブジェクト" } },
+        { "name": "camera", "type": "object_reference", "descriptions": { "ja": "出口カメラ" } },
+        { "name": "easeInTime", "type": "float32", "step": 0.001000, "descriptions": { "ja": "カメラ開始補間時間" } },
+        { "name": "interpolateIn", "type": "ObjHoleWarpSpawner::Interpolate", "descriptions": { "ja": "カメラ開始補間アルゴリズム" } },
+        { "name": "easeOutTime", "type": "float32", "step": 0.001000, "descriptions": { "ja": "カメラ終了補間時間" } },
+        { "name": "interpolateOut", "type": "ObjHoleWarpSpawner::Interpolate", "descriptions": { "ja": "カメラ終了補間アルゴリズム" } }
+      ]
+    },
+    "ObjKnucklesPillarSpawner": {
+      "fields": [
+        { "name": "no", "type": "int32" },
+        { "name": "size", "type": "ObjKnucklesPillarSpawner::SizeType", "descriptions": { "ja": "大きさ" } },
+        { "name": "moveType", "type": "ObjKnucklesPillarSpawner::MoveType", "descriptions": { "ja": "移動" } },
+        { "name": "patrolType", "type": "ObjKnucklesPillarSpawner::PatrolType", "descriptions": { "ja": "巡回" } },
+        { "name": "timeType", "type": "ObjKnucklesPillarSpawner::TimeType", "descriptions": { "ja": "更新時間" } },
+        { "name": "eventDriven", "type": "ObjKnucklesPillarSpawner::EventType", "descriptions": { "ja": "イベント起動" } },
+        { "name": "isSyncRot", "type": "bool", "descriptions": { "ja": "パスとY回転を合わせる" } },
+        { "name": "isSmoothMove", "type": "bool", "descriptions": { "ja": "動きの加減速" } },
+        { "name": "isReverse", "type": "bool", "descriptions": { "ja": "パスの逆を辿る" } },
+        { "name": "isPressDead", "type": "bool", "descriptions": { "ja": "圧死するか" } },
+        { "name": "moveVector", "type": "vector3", "alignment": 16, "step": [ 0.001000, 0.001000, 0.001000 ], "descriptions": { "ja": "[二点間移動]移動先" } },
+        { "name": "pathName", "type": "string", "descriptions": { "ja": "[パス移動]パス名" } },
+        { "name": "locaterList", "type": "array", "subtype": "object_reference", "descriptions": { "ja": "[パス移動]停止点リスト" } },
+        { "name": "waitTime", "type": "float32", "min_range": 0.000000, "max_range": 100.000000, "step": 0.100000, "descriptions": { "ja": "移動後待機時間" } },
+        { "name": "phase", "type": "float32", "min_range": 0.000000, "max_range": 1000.000000, "step": 1.000000, "descriptions": { "ja": "位相" } },
+        { "name": "speed", "type": "float32", "min_range": 0.100000, "max_range": 1000.000000, "step": 1.000000, "descriptions": { "ja": "移動速度" } }
+      ]
+    },
+    "ObjKnucklesWallSpawner": {
+      "fields": [
+        { "name": "no", "type": "int32" },
+        { "name": "size", "type": "ObjKnucklesWallSpawner::SizeType", "descriptions": { "ja": "大きさ" } },
+        { "name": "moveType", "type": "ObjKnucklesWallSpawner::MoveType", "descriptions": { "ja": "移動" } },
+        { "name": "patrolType", "type": "ObjKnucklesWallSpawner::PatrolType", "descriptions": { "ja": "巡回" } },
+        { "name": "timeType", "type": "ObjKnucklesWallSpawner::TimeType", "descriptions": { "ja": "更新時間" } },
+        { "name": "eventDriven", "type": "ObjKnucklesWallSpawner::EventType", "descriptions": { "ja": "イベント起動" } },
+        { "name": "isSyncRot", "type": "bool", "descriptions": { "ja": "パスとY回転を合わせる" } },
+        { "name": "isSmoothMove", "type": "bool", "descriptions": { "ja": "動きの加減速" } },
+        { "name": "isReverse", "type": "bool", "descriptions": { "ja": "パスの逆を辿る" } },
+        { "name": "isPressDead", "type": "bool", "descriptions": { "ja": "圧死するか" } },
+        { "name": "moveVector", "type": "vector3", "alignment": 16, "step": [ 0.001000, 0.001000, 0.001000 ], "descriptions": { "ja": "[二点間移動]移動先" } },
+        { "name": "pathName", "type": "string", "descriptions": { "ja": "[パス移動]パス名" } },
+        { "name": "locaterList", "type": "array", "subtype": "object_reference", "descriptions": { "ja": "[パス移動]停止点リスト" } },
+        { "name": "waitTime", "type": "float32", "min_range": 0.000000, "max_range": 100.000000, "step": 0.100000, "descriptions": { "ja": "移動後待機時間" } },
+        { "name": "phase", "type": "float32", "min_range": 0.000000, "max_range": 1000.000000, "step": 1.000000, "descriptions": { "ja": "位相" } },
+        { "name": "speed", "type": "float32", "min_range": 0.100000, "max_range": 1000.000000, "step": 1.000000, "descriptions": { "ja": "移動速度" } },
+        { "name": "useConvex", "type": "bool", "descriptions": { "ja": "Convexコリジョンを使う" } }
+      ]
+    },
     "ObjKodamaBombSpawner": {
       "fields": [
         { "name": "dummy", "type": "int8" }
+      ]
+    },
+    "ObjMoonSpawner": {
+      "fields": [
+        { "name": "dummy", "type": "int32", "descriptions": { "ja": "ダミー" } }
+      ]
+    },
+    "ObjMusicMemorySpawner": {
+      "fields": [
+        { "name": "no", "type": "int32", "descriptions": { "ja": "MusicNo" } }
+      ]
+    },
+    "PathMoveCameraParam": {
+      "fields": [
+        { "name": "azimuth", "type": "float32", "step": 0.001000, "descriptions": { "ja": "方位角" } },
+        { "name": "elevation", "type": "float32", "max_range": 89.900002, "step": 0.001000, "descriptions": { "ja": "仰角" } },
+        { "name": "distance", "type": "float32", "step": 0.001000, "descriptions": { "ja": "距離" } },
+        { "name": "zRoll", "type": "float32", "step": 0.001000, "descriptions": { "ja": "ロール" } },
+        { "name": "fovy", "type": "float32", "step": 0.001000, "descriptions": { "ja": "画角" } },
+        { "name": "frameOffset", "type": "vector3", "alignment": 16, "step": [ 0.001000, 0.001000, 0.001000 ], "descriptions": { "ja": "注視点オフセット" } }
+      ]
+    },
+    "ObjPathMoveFieldSpawner": {
+      "fields": [
+        { "name": "cameraParam", "type": "PathMoveCameraParam", "descriptions": { "ja": "カメラ設定" } },
+        { "name": "pathName", "type": "string", "descriptions": { "ja": "パス名" } },
+        { "name": "speed", "type": "float32", "step": 0.001000, "descriptions": { "ja": "移動速度" } }
       ]
     },
     "PortalBitParameter": {
@@ -6673,96 +7128,9 @@
         { "name": "cyloopSignTolerance", "type": "float32", "min_range": 0.000000, "step": 0.001000, "descriptions": { "ja": "サイループ起動ビルボード表示非表示距離差" } }
       ]
     },
-    "ObjAirFireBarSpawner": {
-      "fields": [
-        { "name": "barCount", "type": "int16", "descriptions": { "ja": "バーの数" } },
-        { "name": "rotSpeed", "type": "float32", "step": 0.001000, "descriptions": { "ja": "回転速度" } },
-        { "name": "bouncePower", "type": "float32", "step": 0.001000, "descriptions": { "ja": "バウンド力" } }
-      ]
-    },
-    "ObjDragonActionVolumeSpawner": {
-      "fields": [
-        { "name": "volume", "type": "VolumeTriggerSpawner", "descriptions": { "ja": "ボリューム" } },
-        { "name": "actionType", "type": "ObjDragonActionVolumeSpawner::ActionType", "descriptions": { "ja": "アクション種別" } }
-      ]
-    },
-    "ObjDragonAreaVolumeSpawner": {
-      "fields": [
-        { "name": "volume", "type": "VolumeTriggerSpawner", "descriptions": { "ja": "ボリューム" } },
-        { "name": "closeRadius", "type": "float32", "step": 0.001000, "descriptions": { "ja": "接近半径" } },
-        { "name": "dragon", "type": "object_reference", "descriptions": { "ja": "ドラゴン" } }
-      ]
-    },
-    "ObjDragonAreaSubVolumeSpawner": {
-      "fields": [
-        { "name": "volume", "type": "VolumeTriggerSpawner", "descriptions": { "ja": "ボリューム" } },
-        { "name": "target", "type": "object_reference", "descriptions": { "ja": "親ボリューム" } }
-      ]
-    },
-    "ObjDragonCameraChangeVolumeSpawner": {
-      "fields": [
-        { "name": "volume", "type": "VolumeTriggerSpawner", "descriptions": { "ja": "ボリューム" } },
-        { "name": "priority", "type": "int32", "descriptions": { "ja": "優先度" } },
-        { "name": "easeTimeEnter", "type": "float32", "min_range": 0.000000, "step": 0.001000, "descriptions": { "ja": "開始移行時間" } },
-        { "name": "easeTimeLeave", "type": "float32", "min_range": 0.000000, "step": 0.001000, "descriptions": { "ja": "終了移行時間" } },
-        { "name": "upOffset", "type": "float32", "step": 0.001000, "descriptions": { "ja": "Y-オフセット" } },
-        { "name": "distance", "type": "float32", "step": 0.001000, "descriptions": { "ja": "カメラ距離" } },
-        { "name": "azimuthOffset", "type": "float32", "min_range": -180.000000, "max_range": 180.000000, "step": 1.000000, "descriptions": { "ja": "方位角オフセット" } },
-        { "name": "elevationOffset", "type": "float32", "min_range": -89.000000, "max_range": 89.000000, "step": 1.000000, "descriptions": { "ja": "仰角オフセット" } },
-        { "name": "roll", "type": "float32", "min_range": -180.000000, "max_range": 180.000000, "step": 1.000000, "descriptions": { "ja": "ロール角" } },
-        { "name": "isChangeFocus", "type": "bool", "descriptions": { "ja": "フォーカス設定" } },
-        { "name": "focusRatio", "type": "float32", "min_range": 0.000000, "max_range": 1.000000, "step": 0.001000, "descriptions": { "ja": "フォーカス比率" } },
-        { "name": "focusLimitAngle", "type": "float32", "min_range": 0.000000, "max_range": 180.000000, "step": 1.000000, "descriptions": { "ja": "フォーカス制限角度" } }
-      ]
-    },
-    "ObjDragonStatusVolumeSpawner": {
-      "fields": [
-        { "name": "volume", "type": "VolumeTriggerSpawner", "descriptions": { "ja": "ボリューム" } },
-        { "name": "disableMissile", "type": "bool", "descriptions": { "ja": "ミサイル発射禁止" } },
-        { "name": "keepChase", "type": "bool", "descriptions": { "ja": "チェイス強制継続" } },
-        { "name": "changeMotion", "type": "bool", "descriptions": { "ja": "モーション切り替え" } }
-      ]
-    },
-    "ObjFloatTopSpawner": {
-      "fields": [
-        { "name": "moveSpeed", "type": "float32", "step": 0.001000, "descriptions": { "ja": "移動速度" } },
-        { "name": "driveTime", "type": "float32", "step": 0.001000, "descriptions": { "ja": "駆動時間" } },
-        { "name": "widthLimit", "type": "float32", "step": 0.001000, "descriptions": { "ja": "横移動限界値" } },
-        { "name": "depthLimit", "type": "float32", "step": 0.001000, "descriptions": { "ja": "縦移動限界値" } },
-        { "name": "cameraActivator", "type": "object_reference", "descriptions": { "ja": "CameraActivator" } },
-        { "name": "actions", "type": "array", "subtype": "ActionNotification", "array_size": 3, "descriptions": { "ja": "action" } }
-      ]
-    },
-    "PathMoveCameraParam": {
-      "fields": [
-        { "name": "azimuth", "type": "float32", "step": 0.001000, "descriptions": { "ja": "方位角" } },
-        { "name": "elevation", "type": "float32", "max_range": 89.900002, "step": 0.001000, "descriptions": { "ja": "仰角" } },
-        { "name": "distance", "type": "float32", "step": 0.001000, "descriptions": { "ja": "距離" } },
-        { "name": "zRoll", "type": "float32", "step": 0.001000, "descriptions": { "ja": "ロール" } },
-        { "name": "fovy", "type": "float32", "step": 0.001000, "descriptions": { "ja": "画角" } },
-        { "name": "frameOffset", "type": "vector3", "alignment": 16, "step": [ 0.001000, 0.001000, 0.001000 ], "descriptions": { "ja": "注視点オフセット" } }
-      ]
-    },
-    "ObjPathMoveFieldSpawner": {
-      "fields": [
-        { "name": "cameraParam", "type": "PathMoveCameraParam", "descriptions": { "ja": "カメラ設定" } },
-        { "name": "pathName", "type": "string", "descriptions": { "ja": "パス名" } },
-        { "name": "speed", "type": "float32", "step": 0.001000, "descriptions": { "ja": "移動速度" } }
-      ]
-    },
     "ObjSlotStarSpawner": {
       "fields": [
         { "name": "visual", "type": "ObjSlotStarSpawner::VisualType", "descriptions": { "ja": "種類" } }
-      ]
-    },
-    "ObjMoonSpawner": {
-      "fields": [
-        { "name": "dummy", "type": "int32", "descriptions": { "ja": "ダミー" } }
-      ]
-    },
-    "ObjMusicMemorySpawner": {
-      "fields": [
-        { "name": "no", "type": "int32", "descriptions": { "ja": "MusicNo" } }
       ]
     },
     "ObjTailsSpawner": {
@@ -6862,6 +7230,20 @@
         { "name": "eventDriven", "type": "bool", "descriptions": { "ja": "イベント起動" } }
       ]
     },
+    "ObjKodamaMapSpawner": {
+      "fields": [
+        { "name": "type", "type": "ObjKodamaMapSpawner::CharacterType", "descriptions": { "ja": "キャラクター" } }
+      ]
+    },
+    "ObjKodamaMasterSpawner": {
+      "fields": [
+        { "name": "no", "type": "int32" },
+        { "name": "trialType", "type": "ObjKodamaMasterSpawner::TrialType", "descriptions": { "ja": "試練タイプ" } },
+        { "name": "eventName", "type": "string", "descriptions": { "ja": "DiEvent名" } },
+        { "name": "useDefaultPath", "type": "bool", "descriptions": { "ja": "DiEvent再生時デフォルトパスを使う" } },
+        { "name": "hiddenList", "type": "array", "subtype": "object_reference", "descriptions": { "ja": "イベント再生時に非表示にするオブジェクト" } }
+      ]
+    },
     "ObjKodamaMotherSpawner": {
       "fields": [
         { "name": "no", "type": "int32" },
@@ -6898,6 +7280,14 @@
       "fields": [
         { "name": "no", "type": "int32" },
         { "name": "eventDriven", "type": "bool", "descriptions": { "ja": "イベント起動" } }
+      ]
+    },
+    "ObjKodamaNewFormSpawner": {
+      "fields": [
+        { "name": "no", "type": "int32" },
+        { "name": "eventDriven", "type": "bool", "descriptions": { "ja": "イベント起動" } },
+        { "name": "restrictMotion", "type": "bool", "descriptions": { "ja": "待機モーションを制限" } },
+        { "name": "type", "type": "ObjKodamaNewFormSpawner::Value", "descriptions": { "ja": "タイプ" } }
       ]
     },
     "ObjSageSpawner": {
@@ -7556,7 +7946,9 @@
         { "name": "waitTime", "type": "float32", "min_range": 0.000000, "max_range": 100.000000, "step": 0.100000, "descriptions": { "ja": "移動後待機時間" } },
         { "name": "phase", "type": "float32", "min_range": 0.000000, "max_range": 1000.000000, "step": 1.000000, "descriptions": { "ja": "位相" } },
         { "name": "speed", "type": "float32", "min_range": 0.100000, "max_range": 1000.000000, "step": 1.000000, "descriptions": { "ja": "移動速度" } },
-        { "name": "isPlayMovingSE", "type": "bool", "descriptions": { "ja": "移動中にSEを再生する" } }
+        { "name": "isPlayMovingSE", "type": "bool", "descriptions": { "ja": "移動中にSEを再生する" } },
+        { "name": "isEnableTimeStop", "type": "bool", "descriptions": { "ja": "時間停止対応" } },
+        { "name": "stopTime", "type": "float32", "step": 0.001000, "descriptions": { "ja": "停止時間" } }
       ]
     },
     "AirOneWayPanelStart": {
@@ -7615,7 +8007,8 @@
         { "name": "locaterList", "type": "array", "subtype": "object_reference", "descriptions": { "ja": "[パス移動]停止点リスト" } },
         { "name": "waitTime", "type": "float32", "min_range": 0.000000, "max_range": 100.000000, "step": 0.100000, "descriptions": { "ja": "移動後待機時間" } },
         { "name": "phase", "type": "float32", "min_range": 0.000000, "max_range": 1000.000000, "step": 1.000000, "descriptions": { "ja": "位相" } },
-        { "name": "speed", "type": "float32", "min_range": 0.100000, "max_range": 1000.000000, "step": 1.000000, "descriptions": { "ja": "移動速度" } }
+        { "name": "speed", "type": "float32", "min_range": 0.100000, "max_range": 1000.000000, "step": 1.000000, "descriptions": { "ja": "移動速度" } },
+        { "name": "useConvex", "type": "bool", "descriptions": { "ja": "Convexコリジョンを使う" } }
       ]
     },
     "ObjApproachStatueSpawner": {
@@ -7642,6 +8035,20 @@
         { "name": "alreadyBroken", "type": "bool", "descriptions": { "ja": "壊れ状態で開始" } },
         { "name": "breakTimeLimit", "type": "float32", "min_range": 0.000000, "step": 0.001000, "descriptions": { "ja": "崩れるまでの時間" } },
         { "name": "breakExtendTime", "type": "float32", "min_range": 0.000000, "step": 0.001000, "descriptions": { "ja": "サイループ延長時間" } }
+      ]
+    },
+    "ObjBreakBoxSpawner": {
+      "fields": [
+        { "name": "size", "type": "ObjBreakBoxSpawner::BoxSize", "descriptions": { "ja": "サイズ" } },
+        { "name": "isHATarget", "type": "bool", "descriptions": { "ja": "ホーミング判定" } },
+        { "name": "maxHits", "type": "int32", "min_range": 1, "descriptions": { "ja": "壊れるまでの攻撃回数" } }
+      ]
+    },
+    "ObjBreakWallSpawner": {
+      "fields": [
+        { "name": "size", "type": "ObjBreakWallSpawner::WallSize", "descriptions": { "ja": "サイズ" } },
+        { "name": "isHATarget", "type": "bool", "descriptions": { "ja": "ホーミング判定" } },
+        { "name": "maxHits", "type": "int32", "min_range": 1, "descriptions": { "ja": "壊れるまでの攻撃回数" } }
       ]
     },
     "ObjCreditBoxSpawner": {
@@ -7684,6 +8091,11 @@
         { "name": "no", "type": "int32" },
         { "name": "spotId", "type": "int32", "min_range": 0, "max_range": 3, "descriptions": { "ja": "釣り場ID" } },
         { "name": "fastTravelLocator", "type": "object_reference", "descriptions": { "ja": "ファストトラベル用ロケーター" } }
+      ]
+    },
+    "ObjFloatIslandSpawner": {
+      "fields": [
+        { "name": "size", "type": "ObjFloatIslandSpawner::SizeType", "descriptions": { "ja": "大きさ" } }
       ]
     },
     "ObjFloorPuzzleSwitchSpawner": {
@@ -8278,6 +8690,35 @@
         { "name": "no", "type": "int32" },
         { "name": "targetList", "type": "array", "subtype": "object_reference", "descriptions": { "ja": "レーザー照射ターゲット" } },
         { "name": "tombStatue", "type": "object_reference", "descriptions": { "ja": "ゴールの滝の小石像オブジェクト" } }
+      ]
+    },
+    "ObjWaveCannonWallSpawner": {
+      "fields": [
+        { "name": "size", "type": "ObjWaveCannonWallSpawner::WallSize", "descriptions": { "ja": "サイズ" } },
+        { "name": "isHATarget", "type": "bool", "descriptions": { "ja": "ホーミング判定" } },
+        { "name": "maxHits", "type": "int32", "min_range": 1, "descriptions": { "ja": "壊れるまでの攻撃回数" } }
+      ]
+    },
+    "ObjWaveCannonBoxSpawner": {
+      "fields": [
+        { "name": "size", "type": "ObjWaveCannonBoxSpawner::BoxSize", "descriptions": { "ja": "サイズ" } }
+      ]
+    },
+    "ObjWeightSpawner": {
+      "fields": [
+        { "name": "scale", "type": "float32", "min_range": 0.000000, "step": 0.001000, "descriptions": { "ja": "スケール" } },
+        { "name": "releaseAngle", "type": "float32", "min_range": -90.000000, "max_range": 90.000000, "step": 1.000000, "descriptions": { "ja": "投射角度" } },
+        { "name": "releaseSpeed", "type": "float32", "min_range": 0.000000, "step": 0.001000, "descriptions": { "ja": "投射速さ" } },
+        { "name": "gravity", "type": "float32", "min_range": 0.000000, "step": 0.001000, "descriptions": { "ja": "重力加速度" } }
+      ]
+    },
+    "ObjWeightSwitchSpawner": {
+      "fields": [
+        { "name": "turnOnType", "type": "ObjWeightSwitchSpawner::TurnOnType", "descriptions": { "ja": "起動タイプ" } },
+        { "name": "condition", "type": "ObjWeightSwitchSpawner::Condition", "descriptions": { "ja": "起動時間タイプ" } },
+        { "name": "activateTime", "type": "float32", "min_range": 0.000000, "max_range": 100000.000000, "step": 1.000000, "descriptions": { "ja": "タイマー時間" } },
+        { "name": "cyHammerTime", "type": "float32", "min_range": 0.000000, "max_range": 100000.000000, "step": 1.000000, "descriptions": { "ja": "サイハンマー効果時間" } },
+        { "name": "actions", "type": "array", "subtype": "ActionNotification", "array_size": 5, "descriptions": { "ja": "action" } }
       ]
     },
     "ObjExtendPillarSpawner": {
@@ -9140,6 +9581,10 @@
       "struct": "ObjDivingAuraTrainSpawner",
       "category": "Island/Gimmick"
     },
+    "ExDashRing": {
+      "struct": "ObjExDashRingSpawner",
+      "category": "Common/Gimmick"
+    },
     "Fan": {
       "struct": "ObjFanSpawner",
       "category": "Common/Gimmick"
@@ -9588,6 +10033,10 @@
       "struct": "ObjSpringClassicSpawner",
       "category": "Common/Gimmick"
     },
+    "StopWatch": {
+      "struct": "ObjStopWatchSpawner",
+      "category": "Cyber/Gimmick"
+    },
     "SwingReel": {
       "struct": "ObjSwingReelSpawner",
       "category": "Cyber/Gimmick"
@@ -9715,6 +10164,14 @@
       "struct": "ObjFishingSequenceSpawner",
       "category": "MiniGame"
     },
+    "ActionChain": {
+      "struct": "ObjActionChainSpawner",
+      "category": "Island/ActionChain"
+    },
+    "ChainBooster": {
+      "struct": "ObjChainBoosterSpawner",
+      "category": "Island/ActionChain"
+    },
     "Dragon": {
       "struct": "BossDragonSpawner",
       "category": "Island/Boss"
@@ -9729,6 +10186,10 @@
     },
     "Rifle": {
       "struct": "BossRifleSpawner",
+      "category": "Island/Boss"
+    },
+    "RifleBeast": {
+      "struct": "BossRifleBeastSpawner",
       "category": "Island/Boss"
     },
     "TheEnd": {
@@ -9875,6 +10336,10 @@
       "struct": "EnemyBirdSpawner",
       "category": "Island/Enemy"
     },
+    "AirFireBar": {
+      "struct": "ObjAirFireBarSpawner",
+      "category": "Island/Gimmick"
+    },
     "AlbatrossChase": {
       "struct": "ObjAlbatrossChaseSpawner",
       "category": "Island/Gimmick"
@@ -9883,16 +10348,16 @@
       "struct": "ObjAlbatrossGroupSpawner",
       "category": "Island/Gimmick"
     },
-    "BossSmallBit": {
-      "struct": "ObjBossSmallBitSpawner",
+    "BossBitManager": {
+      "struct": "ObjBossBitManagerSpawner",
       "category": "Island/Gimmick"
     },
     "BossLargeBit": {
       "struct": "ObjBossLargeBitSpawner",
       "category": "Island/Gimmick"
     },
-    "BossBitManager": {
-      "struct": "ObjBossBitManagerSpawner",
+    "BossSmallBit": {
+      "struct": "ObjBossSmallBitSpawner",
       "category": "Island/Gimmick"
     },
     "ChaosEmeraldPillar": {
@@ -9905,6 +10370,26 @@
     },
     "ClimbingPoint": {
       "struct": "ObjClimbingPointSpawner",
+      "category": "Island/Gimmick"
+    },
+    "DragonActionVolume": {
+      "struct": "ObjDragonActionVolumeSpawner",
+      "category": "Island/Gimmick"
+    },
+    "DragonAreaSubVolume": {
+      "struct": "ObjDragonAreaSubVolumeSpawner",
+      "category": "Island/Gimmick"
+    },
+    "DragonAreaVolume": {
+      "struct": "ObjDragonAreaVolumeSpawner",
+      "category": "Island/Gimmick"
+    },
+    "DragonCameraChangeVolume": {
+      "struct": "ObjDragonCameraChangeVolumeSpawner",
+      "category": "Island/Gimmick"
+    },
+    "DragonStatusVolume": {
+      "struct": "ObjDragonStatusVolumeSpawner",
       "category": "Island/Gimmick"
     },
     "DropChaosEmerald": {
@@ -9923,6 +10408,14 @@
       "struct": "ObjFishCoinSpawner",
       "category": "Island/Gimmick"
     },
+    "FlashSwitch": {
+      "struct": "ObjFlashSwitchSpawner",
+      "category": "Island/Gimmick"
+    },
+    "FloatTop": {
+      "struct": "ObjFloatTopSpawner",
+      "category": "Island/Gimmick"
+    },
     "Gate": {
       "struct": "ObjGateSpawner",
       "category": "Island/Gimmick"
@@ -9931,9 +10424,53 @@
       "struct": "ObjHeroSagePointSpawner",
       "category": "Island/Gimmick"
     },
+    "HoleAuraTrain": {
+      "struct": "ObjHoleAuraTrainSpawner",
+      "category": "Island/Gimmick"
+    },
+    "HoleHide": {
+      "struct": "ObjHoleHideSpawner",
+      "category": "Island/Gimmick"
+    },
+    "HolePopupItem": {
+      "struct": "ObjHolePopupItemSpawner",
+      "category": "Island/Gimmick"
+    },
+    "HoleWarp": {
+      "struct": "ObjHoleWarpSpawner",
+      "category": "Island/Gimmick"
+    },
+    "KnucklesPillar": {
+      "struct": "ObjKnucklesPillarSpawner",
+      "category": "Island/Gimmick"
+    },
+    "KnucklesPillarNoID": {
+      "struct": "ObjKnucklesPillarSpawner",
+      "category": "Island/Gimmick"
+    },
+    "KnucklesWall": {
+      "struct": "ObjKnucklesWallSpawner",
+      "category": "Island/Gimmick"
+    },
+    "KnucklesWallNoID": {
+      "struct": "ObjKnucklesWallSpawner",
+      "category": "Island/Gimmick"
+    },
     "KodamaBomb": {
       "struct": "ObjKodamaBombSpawner",
       "category": "Common/Gimmick"
+    },
+    "Moon": {
+      "struct": "ObjMoonSpawner",
+      "category": "Island/Gimmick"
+    },
+    "MusicMemory": {
+      "struct": "ObjMusicMemorySpawner",
+      "category": "Island/Gimmick"
+    },
+    "PathMoveField": {
+      "struct": "ObjPathMoveFieldSpawner",
+      "category": "Island/Gimmick"
     },
     "PortalBit": {
       "struct": "ObjPortalBitSpawner",
@@ -9955,48 +10492,8 @@
       "struct": "ObjSequenceItemSpawner",
       "category": "Island/Gimmick"
     },
-    "AirFireBar": {
-      "struct": "ObjAirFireBarSpawner",
-      "category": "Island/Gimmick"
-    },
-    "DragonActionVolume": {
-      "struct": "ObjDragonActionVolumeSpawner",
-      "category": "Island/Gimmick"
-    },
-    "DragonAreaVolume": {
-      "struct": "ObjDragonAreaVolumeSpawner",
-      "category": "Island/Gimmick"
-    },
-    "DragonAreaSubVolume": {
-      "struct": "ObjDragonAreaSubVolumeSpawner",
-      "category": "Island/Gimmick"
-    },
-    "DragonCameraChangeVolume": {
-      "struct": "ObjDragonCameraChangeVolumeSpawner",
-      "category": "Island/Gimmick"
-    },
-    "DragonStatusVolume": {
-      "struct": "ObjDragonStatusVolumeSpawner",
-      "category": "Island/Gimmick"
-    },
-    "FloatTop": {
-      "struct": "ObjFloatTopSpawner",
-      "category": "Island/Gimmick"
-    },
-    "PathMoveField": {
-      "struct": "ObjPathMoveFieldSpawner",
-      "category": "Island/Gimmick"
-    },
     "SlotStar": {
       "struct": "ObjSlotStarSpawner",
-      "category": "Island/Gimmick"
-    },
-    "Moon": {
-      "struct": "ObjMoonSpawner",
-      "category": "Island/Gimmick"
-    },
-    "MusicMemory": {
-      "struct": "ObjMusicMemorySpawner",
       "category": "Island/Gimmick"
     },
     "Tails": {
@@ -10031,6 +10528,14 @@
       "struct": "ObjKodamaLoverSpawner",
       "category": "Island/NPC"
     },
+    "KodamaMap": {
+      "struct": "ObjKodamaMapSpawner",
+      "category": "Island/NPC"
+    },
+    "KodamaMaster": {
+      "struct": "ObjKodamaMasterSpawner",
+      "category": "Island/NPC"
+    },
     "KodamaMother": {
       "struct": "ObjKodamaMotherSpawner",
       "category": "Island/NPC"
@@ -10053,6 +10558,10 @@
     },
     "KodamaDisciple": {
       "struct": "ObjKodamaDiscipleSpawner",
+      "category": "Island/NPC"
+    },
+    "KodamaNewForm": {
+      "struct": "ObjKodamaNewFormSpawner",
       "category": "Island/NPC"
     },
     "Sage": {
@@ -10243,6 +10752,10 @@
       "struct": "ObjAirFloorSpawner",
       "category": "Island/Puzzle/Common"
     },
+    "AirFloorNoID": {
+      "struct": "ObjAirFloorSpawner",
+      "category": "Island/Puzzle/Common"
+    },
     "AirOneWayPanel": {
       "struct": "ObjAirOneWayPanelSpawner",
       "category": "Island/Puzzle/Common"
@@ -10252,6 +10765,10 @@
       "category": "Island/Puzzle/Common"
     },
     "AirWall": {
+      "struct": "ObjAirWallSpawner",
+      "category": "Island/Puzzle/Common"
+    },
+    "AirWallNoID": {
       "struct": "ObjAirWallSpawner",
       "category": "Island/Puzzle/Common"
     },
@@ -10265,6 +10782,14 @@
     },
     "BreakableColumn": {
       "struct": "ObjBreakableColumnSpawner",
+      "category": "Island/Puzzle/Common"
+    },
+    "BreakBox": {
+      "struct": "ObjBreakBoxSpawner",
+      "category": "Island/Puzzle/Common"
+    },
+    "BreakWall": {
+      "struct": "ObjBreakWallSpawner",
       "category": "Island/Puzzle/Common"
     },
     "CreditBox": {
@@ -10285,6 +10810,10 @@
     },
     "FishingPortal": {
       "struct": "ObjFishingPortalSpawner",
+      "category": "Island/Puzzle/Common"
+    },
+    "FloatIsland": {
+      "struct": "ObjFloatIslandSpawner",
       "category": "Island/Puzzle/Common"
     },
     "FloorPuzzleSwitch": {
@@ -10486,6 +11015,22 @@
     "UnmovedTombStone": {
       "struct": "ObjUnmovedTombStoneSpawner",
       "category": "Island/Puzzle/World1"
+    },
+    "WaveCannonWall": {
+      "struct": "ObjWaveCannonWallSpawner",
+      "category": "Island/Puzzle/Common"
+    },
+    "WaveCannonBox": {
+      "struct": "ObjWaveCannonBoxSpawner",
+      "category": "Island/Puzzle/Common"
+    },
+    "Weight": {
+      "struct": "ObjWeightSpawner",
+      "category": "Island/Puzzle/Common"
+    },
+    "WeightSwitch": {
+      "struct": "ObjWeightSwitchSpawner",
+      "category": "Island/Puzzle/Common"
     },
     "ExtendPillar": {
       "struct": "ObjExtendPillarSpawner",
