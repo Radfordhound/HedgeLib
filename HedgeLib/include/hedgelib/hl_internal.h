@@ -568,12 +568,12 @@ public:
         return *get();
     }
 
-    inline const_reference operator[](u32 i) const
+    inline const_reference operator[](std::size_t i) const
     {
         return *(get() + i);
     }
 
-    inline reference operator[](u32 i)
+    inline reference operator[](std::size_t i)
     {
         return *(get() + i);
     }
