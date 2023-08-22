@@ -422,13 +422,14 @@ off_table_handle raw_header::offsets() const noexcept
 void raw_header::fix()
 {
     // Endian-swap header if necessary.
-    if (needs_swap(endianFlag))
+    const auto oldEndianFlag = endianFlag;
+    if (needs_swap(oldEndianFlag))
     {
         endian_swap();
     }
 
     // Fix offsets.
-    offsets_fix32(offsets(), endianFlag, data());
+    offsets_fix32(offsets(), oldEndianFlag, data());
 
     // Mark file as fixed.
     status |= raw_header_status::is_fixed;
@@ -658,6 +659,7 @@ template<template<typename> class off_t>
 static void in_fix(raw_header& header)
 {
     // Swap header if necessary.
+    const auto oldEndianFlag = header.endianFlag;
     if (needs_swap(header.endianFlag))
     {
         header.endian_swap();
@@ -671,7 +673,7 @@ static void in_fix(raw_header& header)
         case static_cast<u32>(raw_block_type::data):
         {
             const auto dataBlock = reinterpret_cast<raw_data_block_header*>(block);
-            in_fix<off_t>(*dataBlock, header.endianFlag);
+            in_fix<off_t>(*dataBlock, oldEndianFlag);
             break;
         }
 
