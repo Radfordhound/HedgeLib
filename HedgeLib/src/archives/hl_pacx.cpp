@@ -1190,7 +1190,7 @@ void in_type_metadata::set_file_priorities<data_type::ResGrifEffect>(
 
                 pacPackMetadata->fix(copyOfFileData, effectEndianFlag);
 
-                effect = copyOfFileData.data<grif::effect*>();
+                effect = copyOfFileData.data<grif::effect>();
             }
         }
 
@@ -1392,7 +1392,7 @@ static const void* in_file_data_merge(void* data, std::size_t dataSize,
            data with the values they will need once written to the pac, so this is
            alright.
         */
-        bina::v2::fix_container32(data, dataSize);
+        bina::v2::fix_container32(data);
 
         // If file has a BINAV2 data block, merge its offsets/strings.
         bina::v2::raw_data_block_header* dataBlock = bina::v2::get_data_block(data);
@@ -1401,7 +1401,7 @@ static const void* in_file_data_merge(void* data, std::size_t dataSize,
         {
             // Get pointers.
             u8* dataPtr = dataBlock->data<u8>();
-            u8* strs = reinterpret_cast<u8*>(dataBlock->strTable.get());
+            u8* strs = reinterpret_cast<u8*>(dataBlock->str_table());
 
             // Compute new data size.
             dstDataSize = static_cast<u32>(strs - dataPtr);
@@ -4689,7 +4689,7 @@ void header::fix()
     root.fix(this);
 
     // Swap header if necessary.
-    if (bina::needs_swap(endianFlag))
+    if (bina::needs_swap(static_cast<bina::endian_flag>(endianFlag)))
     {
         endian_swap<false>();
     }
