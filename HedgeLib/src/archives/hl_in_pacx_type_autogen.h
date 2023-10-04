@@ -140,6 +140,7 @@ HL_IN_PACX_TYPE_AUTOGEN(ResVertexAnimationTexture)
 HL_IN_PACX_TYPE_AUTOGEN(ResVertexLinkInfo)
 
 /* PACx V403+ */
+HL_IN_PACX_TYPE_AUTOGEN(ResMasterLevel)
 HL_IN_PACX_TYPE_AUTOGEN(ResAIStateMachine)
 HL_IN_PACX_TYPE_AUTOGEN(ResDensitySetting)
 HL_IN_PACX_TYPE_AUTOGEN(ResDensityPointCloud)
@@ -590,6 +591,7 @@ HL_IN_PACX_HITE_AUTOGEN("cnvrs-meta",       ResTextMeta,                root)
    ============================================================================================
 */
 
+HL_IN_PACX_RANGERS_AUTOGEN("mlevel",            ResMasterLevel,             root)
 HL_IN_PACX_RANGERS_AUTOGEN("level",             ResLevel,                   root)
 HL_IN_PACX_RANGERS_AUTOGEN("anm.pxd",           ResAnimationPxd,            root)
 HL_IN_PACX_RANGERS_AUTOGEN("skl.pxd",           ResSkeletonPxd,             root)
