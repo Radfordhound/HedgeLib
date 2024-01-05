@@ -42,9 +42,10 @@ void pac_pack_meta::fix(void* rawData, endian_flag endianFlag)
         off32<void>* curOff = ptradd<off32<void>>(rawData, relOffPos);
 
         // Endian swap offset if necessary.
-#ifndef HL_IS_BIG_ENDIAN
-        hl::endian_swap(*curOff);
-#endif
+        if (needs_swap(endianFlag))
+        {
+            hl::endian_swap(*curOff);
+        }
 
         // Fix offset.
         curOff->fix(rawData);

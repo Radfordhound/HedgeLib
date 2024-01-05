@@ -192,7 +192,7 @@ static int in_compare_file_names(const nchar* fileName1, const nchar* fileName2,
 
 namespace v2
 {
-bool data_entry::has_merged_bina_data(bina::off_table_handle::iterator& beg,
+bool data_entry::has_merged_bina_data(bina::off_table_handle::iterator beg,
     const bina::off_table_handle::iterator& end, const void* base) const noexcept
 {
     const auto dataStart = data<u8>();
@@ -381,8 +381,13 @@ static void in_add_file_entry(const data_entry& dataEntry,
 
         while (offIt != offEnd)
         {
-            // Break if this offset is not part of this entry's data.
-            curOff = ptradd<u32>(curOff, *(offIt++));
+            curOff = ptradd<u32>(curOff, *offIt);
+            ++offIt;
+
+            // Continue if this offset comes before the entry's data.
+            if (curOff < dataStart) continue;
+
+            // Break if this offset comes after this entry's data.
             if (curOff >= dataEnd) break;
 
             // Get the address the current offset points to.
@@ -448,18 +453,9 @@ void block_data_header::parse(const void* header,
 {
     // Get strings and offsets pointers.
     const char* strTable = str_table();
-    bina::off_table_handle offTable = offsets();
-    auto offIt = offTable.begin();
-    auto offEnd = offTable.end();
-
-    // OPTIMIZATION: Skip through all offsets that aren't part of the data.
-    const u32* dataEntries = reinterpret_cast<const u32*>(data_entries());
-    while (offIt != offEnd)
-    {
-        // Break if we've reached an offset within the data entries.
-        const u32* curOff = ptradd<u32>(header, *(offIt++));
-        if (curOff >= dataEntries) break;
-    }
+    const bina::off_table_handle offTable = offsets();
+    const auto offIt = offTable.begin();
+    const auto offEnd = offTable.end();
 
     // Setup file entries in this pac.
     for (const auto& typeNode : types())
@@ -1325,9 +1321,64 @@ static void in_dic_write(u32 nodeCount,
     stream.write_nulls(sizeof(dic_node<void>) * nodeCount);
 }
 
-template<typename off_table_t>
 void in_file_data_merge_in(u8* dataPtr, u8* strs,
-    off_table_t srcOffTableHandle, std::size_t dstDataPos,
+    bina::off_table_handle srcOffTableHandle, std::size_t dstDataPos,
+    bina::endian_flag endianFlag, str_table& strTable,
+    off_table& offTable)
+{
+    const u32 strsRelPos = static_cast<u32>(strs - dataPtr);
+    u8* curOff = dataPtr;
+
+    for (const u32 relOffPos : srcOffTableHandle)
+    {
+        // Get pointer to current offset.
+        curOff += relOffPos;
+
+        // Cast offset pointer to offset value.
+        off32<u8>* curOffVal = reinterpret_cast<off32<u8>*>(curOff);
+
+        // Compute destination offset absolute position
+        // (where the offset will be in the destination pac data).
+        const std::size_t dstOffPos = (dstDataPos + (curOff - dataPtr));
+
+        // Compute source offset value
+        // (what the offset points to in the source data,
+        // relative to the beginning of the source data).
+        const u32 srcOffVal = static_cast<u32>(
+            curOffVal->get() - dataPtr);
+
+        // If this offset is a string, add it to the string table.
+        if (srcOffVal >= strsRelPos)
+        {
+            // Get source string pointer.
+            const char* srcStr = reinterpret_cast<const char*>(
+                dataPtr + srcOffVal);
+
+            // Add string to string table.
+            strTable.emplace_back(srcStr, dstOffPos);
+        }
+
+        // Otherwise, add this offset to the offset table.
+        else
+        {
+            // Compute destination offset value (what the offset
+            // will point to in the final data) and fix offset.
+            *curOffVal = static_cast<u32>(dstDataPos + srcOffVal);
+
+            // Swap offset data if necessary.
+            if (bina::needs_swap(endianFlag))
+            {
+                endian_swap(*curOffVal);
+            }
+
+            // Add offset to offset table.
+            offTable.push_back(dstOffPos);
+        }
+    }
+}
+
+void in_file_data_merge_in(u8* dataPtr, u8* strs,
+    hh::mirage::off_table_handle srcOffTableHandle, std::size_t dstDataPos,
     bina::endian_flag endianFlag, str_table& strTable,
     off_table& offTable)
 {
@@ -1641,8 +1692,8 @@ static void in_proxy_table_write(
             curOffPos += 4;
 
             // Add name string to string table.
-            strTable.emplace_back(file.name, curOffPos);
-
+            strTable.emplace_back(text::conv<text::native_to_utf8>(file.name, file.nameLen), curOffPos);
+            
             // Increase current offset position past proxy entry.
             curOffPos += 8;
         }
@@ -1735,7 +1786,7 @@ static void in_data_block_write(unsigned short splitIndex,
             }
 
             // Queue file name string for writing.
-            strTable.emplace_back(file.name, curOffPos);
+            strTable.emplace_back(text::conv<text::native_to_utf8>(file.name, file.nameLen), curOffPos);
 
             // Increase current offset position past name offset.
             curOffPos += 4;

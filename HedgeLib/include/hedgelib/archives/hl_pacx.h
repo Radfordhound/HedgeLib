@@ -194,7 +194,7 @@ struct data_entry
         return reinterpret_cast<T*>(this + 1);
     }
 
-    HL_API bool has_merged_bina_data(bina::off_table_handle::iterator& beg,
+    HL_API bool has_merged_bina_data(bina::off_table_handle::iterator beg,
         const bina::off_table_handle::iterator& end, const void* base) const noexcept;
 };
 
