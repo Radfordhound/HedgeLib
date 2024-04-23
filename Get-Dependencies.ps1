@@ -107,8 +107,7 @@ $Dependencies += { Install-CMakeProject -Name "robin_hood" `
 
 $Dependencies += { Install-CMakeProject -Name "glm" `
     -Url https://github.com/g-truc/glm/archive/refs/heads/master.zip `
-    -SourcePath "glm-master" `
-    -Arguments "-DBUILD_TESTING=OFF"
+    -SourcePath "glm-master"
 }
 
 $Dependencies += { Install-CMakeProject -Name "lz4" `
