@@ -4656,31 +4656,31 @@
     "EnvSound": {
       "struct": "ObjEnvSoundSpawner",
       "categories": [
-        "サウンド"
+        "Sound"
       ]
     },
     "PathSoundSource": {
       "struct": "ObjPathSoundSourceSpawner",
       "categories": [
-        "サウンド"
+        "Sound"
       ]
     },
     "SoundBoard": {
       "struct": "ObjSoundBoardSpawner",
       "categories": [
-        "サウンド"
+        "Sound"
       ]
     },
     "TimerSound": {
       "struct": "ObjTimerSoundSpawner",
       "categories": [
-        "サウンド"
+        "Sound"
       ]
     },
     "WindNoiseCollision": {
       "struct": "ObjWindNoiseCollisionSpawner",
       "categories": [
-        "サウンド"
+        "Sound"
       ]
     }
   }

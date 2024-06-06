@@ -3342,7 +3342,7 @@
         { "name": "CollisionWidth", "type": "float32" },
         { "name": "CollisionHeight", "type": "float32" },
         { "name": "CollisionLength", "type": "float32" },
-        { "name": "NextID", "type": "object_reference", "reftype": "float32", "subtype": "float32" }
+        { "name": "NextID", "type": "object_reference", "reftype": "float32" }
       ]
     },
     "TestObjSpawner": {
@@ -4727,37 +4727,37 @@
     "EnvSound": {
       "struct": "ObjEnvSoundSpawner",
       "categories": [
-        "サウンド"
+        "Sound"
       ]
     },
     "PathSoundSource": {
       "struct": "ObjPathSoundSourceSpawner",
       "categories": [
-        "サウンド"
+        "Sound"
       ]
     },
     "SoundBoard": {
       "struct": "ObjSoundBoardSpawner",
       "categories": [
-        "サウンド"
+        "Sound"
       ]
     },
     "TimerSound": {
       "struct": "ObjTimerSoundSpawner",
       "categories": [
-        "サウンド"
+        "Sound"
       ]
     },
     "VOTriggerVolume": {
       "struct": "ObjVOTriggerVolumeSpawner",
       "categories": [
-        "サウンド"
+        "Sound"
       ]
     },
     "WindNoiseCollision": {
       "struct": "ObjWindNoiseCollisionSpawner",
       "categories": [
-        "サウンド"
+        "Sound"
       ]
     }
   }
