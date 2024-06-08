@@ -3342,7 +3342,7 @@
         { "name": "CollisionWidth", "type": "float32" },
         { "name": "CollisionHeight", "type": "float32" },
         { "name": "CollisionLength", "type": "float32" },
-        { "name": "NextID", "type": "object_reference", "reftype": "float32" }
+        { "name": "NextID", "type": "float32" }
       ]
     },
     "TestObjSpawner": {
