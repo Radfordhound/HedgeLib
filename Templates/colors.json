@@ -1,0 +1,4620 @@
+{
+  "version": 2,
+  "format": "sobj_v1",
+  "enums": {
+    "CameraCollisionBoardSpawner::SideTypeA": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "CameraCollisionBoardSpawner::SideTypeB": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EventVolumeCameraChangeSpawner::PriorityCategory": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EventVolumeCameraChangeSpawner::ShapeType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EventVolumeCameraChangeSpawner::IsStop": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EventVolumeCameraChangeSpawner::InterpolateType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EventVolumeCameraChangeSpawner::PhantomType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjCameraObjectLookSpawner::TargetType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjCameraPanSpawner::PositionMode": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjCameraPanSpawner::TargetType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjCameraParallelSpawner::TargetType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjCameraPathLookSpawner::EyePathType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjCameraPathLookSpawner::TargetType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjCameraPathPathSpawner::TargetType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjCameraPathPathSpawner::EyePathType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjCameraPathPathSpawner::LookPathType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjCameraPathPathSpawner::MoveType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjCameraPathTargetSpawner::EyePathType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjCameraPathTargetSpawner::TargetType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjCameraPointSpawner::TargetType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjCameraStopSpawner::CameraType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjAutorunCollisionStartSpawner::SendType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EventDimChange3DtoDashSpawner::Template": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EventDimChange3DtoForwardSpawner::Template": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EventDimChange2DtoForwardSpawner::Template": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EventFallDeadSpawner::ActionType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjEventNavigationCollisionSpawner::NavigationType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjEventNavigationCollisionSpawner::CollisionType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjEventNavigationCollisionSpawner::QSType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjEventNavigationCollisionSpawner::DirectionType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjEventNavigationCollisionSpawner::DisAppearType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjEventNavigationCollisionSpawner::AreaType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjEventNavigationCollisionPlaneSpawner::NaviType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjEventNavigationCollisionPlaneSpawner::CollisionType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjEventNavigationCollisionPlaneSpawner::QSType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjEventNavigationCollisionPlaneSpawner::DirectionType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjEventNavigationCollisionPlaneSpawner::DisAppearType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjEventSpiralPipeSpawner::EventType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjEventSpiralPipeSpawner::ExitType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjEventStumbleCollisionSpawner::ShapeType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjEventStumbleCollisionSpawner::ConditionType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjOutOfControlCollisionSpawner::EndType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjPhantomCancelCollisionSpawner::CancelType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjSetRigidBodySpawner::PhysicsType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjSwitchCollisionSpawner::EventType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjSwitchCollisionSpawner::EventType2": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjSwitchCollisionSpawner::EventType3": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjSwitchCollisionSpawner::SwitchType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjSetParticleSpawner::Trigger": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyEggPawnBaseSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyEggPawnBaseSpawner::FirstState": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyEggPawnBaseSpawner::AlarmMotion": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyBatabataSpawner::ModelType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyBatabataSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyBatabataSpawner::MoveType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyBatabataSpawner::TriggerType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyJawsSpawner::MoveType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyJawsSpawner::TriggerType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyJawsSpawner::AttackType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "BossEggMobileSpawner::Datum": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjCoffeeCupSpawner::PixieType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjGondolaSpawner::PixieType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjPirateCannonSpawner::ItemType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjSubmarineCannonSpawner::ItemType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyBeetonSpawner::FirstState": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyBeetonSpawner::MessageType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyBeetonSpawner::IsVisibleInMessageType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyEggPawnGunSpawner::ShotType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyEggPawnKnightSpawner::ShieldType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyEventCollisionBaseSpawner::ShapeType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyEventCollisionBaseSpawner::ShapeDatum": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyEventCollisionBaseSpawner::EventType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyGaniganiSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyGaniganiSpawner::AttackType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyMoleSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyMoleSpawner::MoveType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyNalSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyNalSpawner::FirstState": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemySpinnerBaseSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjBigChaserEventCollisionSpawner::Mode": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjBigChaserEventCollisionSpawner::AttackType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyBigChaserSpawner::InitialState": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyChaserBaseSpawner::Datum": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyLanderSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemyLanderSpawner::ThrowType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemySprinklerSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "EnemySprinklerSpawner::EscapeThrow": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjBalloonSpawner::BalloonColor": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjChainFloorSpawner::FloorSize": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjChainFloorSpawner::RotateType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjChainFloorSpawner::EventActType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjCommonFloorSpawner::MoveType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjCommonFloorSpawner::FloorSize": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjCommonWallSpawner::MoveType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjCommonWallSpawner::WallSize": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjFanSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjJumpBoardSpawner::SizeType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjJumpSelectorSpawner::FirstDirection": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjPushBoxSpawner::MoveType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjSpringSpawner::SpecialFunc": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjSwitchSpawner::EventType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjSwitchSpawner::EventType2": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjSwitchSpawner::EventType3": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjSwitchSpawner::SwitchType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjFlyReleaseBoxSmallSpawner::MoveType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjRedRingSpawner::EventType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjRedRingSpawner::PlaceType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjReleaseBoxSmallBaseSpawner::PixieType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjRingSpawner::SetPlaceType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjRingSpawner::EventType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjRingSpawner::RotType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjSuperRingSpawner::SetPlaceType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjSuperRingSpawner::EventType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjPlasmaCannonSpawner::BarrageType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjPlasmaCannonSpawner::ActionType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjReproductionSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjShootingSpawner::MoveType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjShootingSpawner::ActionType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjVaultSpawner::ActionType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjVaultSpawner::OffsetType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjBigCatapultSpawner::Size": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjBigCatapultSpawner::Mode": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjBilliardSpawner::ModelType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjMapPartsBoxSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjMapPartsPlaneSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjMapPartsMeshSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjMultiPhantomBoxSpawner::PixieType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjMultiPhantomBoxSpawner::PixieType2": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjPrismSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjFiberSpawner::EventType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjFiberSpawner::ExitType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjRotationGlobeSpawner::SizeType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjPuzzleRingSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjSpinLaserBaseSpawner::LaserNum": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjSpinLaserSpawner::TurnType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjSpinLaserPathMoveSpawner::TurnType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjSpinLaserStraightMoveSpawner::TurnType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjGeneratorSpawner::KillerType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjBattleShipShutterSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjLightRoadSpawner::PathType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjLightRoadSpawner::InOutType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjLightRoadSpawner::LengthType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjLightRoadSpawner::UsageType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjPartitionSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjShortWarpSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjGlassFloorSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjGlassFloorSpawner::Size": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjGlassBarrierSpawner::ItemType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjMoraySpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjGravityCollisionSpawner::EventState": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjHatchSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjLightTimeFloorSpawner::FloorSize": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjLightTimeFloorSpawner::ActionType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjLightTimeFloorSpawner::EventType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjMeteorSpawner::SizeType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjPushBlockSpawner::BlockType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjRollerCoasterSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjFloatingFloorSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjCleanKillSpawner::TargetId": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjEventSetterSpawner::Trigger": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjEventSetterSpawner::Condition": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjEventSetterSpawner::TimesType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjEventSetterSpawner::EventNotifier": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjEventSetterSpawner::EventNotifier2": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjEventSetterSpawner::EventNotifier3": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjPointMarkerSpawner::StageType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjChainSpikeBallSpawner::RotateType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjDirectionalThornSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjFlameSpawner::LengthType": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjFlameSpawner::Type": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjMovingThornBallSpawner::Direction": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjRollingBallSpawner::Option": {
+      "type": "uint8",
+      "values": {
+      }
+    }
+  },
+  "structs": {
+    "ObjCameraSpawner": {
+      "fields": [
+        { "name": "IsCameraView", "type": "bool" },
+        { "name": "IsCollision", "type": "bool" },
+        { "name": "EaseTimeEnter", "type": "float32" },
+        { "name": "EaseTimeLeave", "type": "float32" }
+      ]
+    },
+    "ObjCamera2DSpawner": {
+      "parent": "ObjCameraSpawner",
+      "fields": [
+        { "name": "FovY", "type": "float32" },
+        { "name": "BaseSpacePathPosition", "type": "float32" },
+        { "name": "SphericalPosition", "type": "vector3" },
+        { "name": "TargetUpOffset", "type": "float32" },
+        { "name": "TargetFrontOffset", "type": "float32" },
+        { "name": "TargetFrontOffsetMax", "type": "float32" },
+        { "name": "TargetFrontOffsetSpeedScale", "type": "float32" },
+        { "name": "IsBaseSpacePlayer", "type": "bool" },
+        { "name": "IsPositionBasePlayer", "type": "bool" },
+        { "name": "TargetRightOffset", "type": "float32" }
+      ]
+    },
+    "ObjCamera3DSpawner": {
+      "parent": "ObjCameraSpawner",
+      "fields": [
+        { "name": "Fovy", "type": "float32" },
+        { "name": "Distance", "type": "float32" },
+        { "name": "VerticalOffset", "type": "float32" },
+        { "name": "TargetPitch", "type": "float32" },
+        { "name": "TargetYaw", "type": "float32" }
+      ]
+    },
+    "CameraCollisionBoardSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "CameraA", "type": "object_reference" },
+        { "name": "CollisionA", "type": "object_reference" },
+        { "name": "SideTypeA", "type": "CameraCollisionBoardSpawner::SideTypeA" },
+        { "name": "IsPhantomCameraA", "type": "bool" },
+        { "name": "EaseTimeA", "type": "float32" },
+        { "name": "PriorityA", "type": "uint32" },
+        { "name": "NoneEffectiveBoostA", "type": "bool" },
+        { "name": "CameraB", "type": "object_reference" },
+        { "name": "CollisionB", "type": "object_reference" },
+        { "name": "SideTypeB", "type": "CameraCollisionBoardSpawner::SideTypeB" },
+        { "name": "IsPhantomCameraB", "type": "bool" },
+        { "name": "PriorityB", "type": "uint32" },
+        { "name": "EaseTimeB", "type": "float32" },
+        { "name": "NoneEffectiveBoostB", "type": "bool" }
+      ]
+    },
+    "EventVolumeCameraChangeSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "CollisionLength", "type": "float32" },
+        { "name": "Target", "type": "object_reference" },
+        { "name": "IsPhantomCamera", "type": "bool" },
+        { "name": "PriorityCategory", "type": "EventVolumeCameraChangeSpawner::PriorityCategory" },
+        { "name": "Priority", "type": "uint32" },
+        { "name": "EaseTimeEnter", "type": "float32" },
+        { "name": "EaseTimeLeave", "type": "float32" },
+        { "name": "ShapeType", "type": "EventVolumeCameraChangeSpawner::ShapeType" },
+        { "name": "IsStop", "type": "EventVolumeCameraChangeSpawner::IsStop" },
+        { "name": "IsEnableCollision", "type": "bool" },
+        { "name": "InterpolateType", "type": "EventVolumeCameraChangeSpawner::InterpolateType" },
+        { "name": "PhantomType", "type": "EventVolumeCameraChangeSpawner::PhantomType" },
+        { "name": "NoneEffectiveBoost", "type": "bool" }
+      ]
+    },
+    "ObjCameraFixSpawner": {
+      "parent": "ObjCameraSpawner",
+      "fields": [
+        { "name": "Fovy", "type": "float32" },
+        { "name": "ZRot", "type": "float32" },
+        { "name": "TargetPosition", "type": "vector3" }
+      ]
+    },
+    "ObjCameraObjectLookSpawner": {
+      "parent": "ObjCameraSpawner",
+      "fields": [
+        { "name": "Fovy", "type": "float32" },
+        { "name": "ZRot", "type": "float32" },
+        { "name": "TargetType", "type": "ObjCameraObjectLookSpawner::TargetType" },
+        { "name": "Target", "type": "object_reference" },
+        { "name": "TargetPositionFix", "type": "vector3" },
+        { "name": "TargetObject", "type": "object_reference" },
+        { "name": "Distance", "type": "float32" },
+        { "name": "TargetOffsetWorld", "type": "vector3" },
+        { "name": "TargetOffsetRight", "type": "float32" },
+        { "name": "TargetOffsetUp", "type": "float32" },
+        { "name": "TargetOffsetFront", "type": "float32" }
+      ]
+    },
+    "ObjCameraPanSpawner": {
+      "parent": "ObjCameraSpawner",
+      "fields": [
+        { "name": "Fovy", "type": "float32" },
+        { "name": "ZRot", "type": "float32" },
+        { "name": "PositionMode", "type": "ObjCameraPanSpawner::PositionMode" },
+        { "name": "Distance", "type": "float32" },
+        { "name": "TargetType", "type": "ObjCameraPanSpawner::TargetType" },
+        { "name": "Target", "type": "object_reference" },
+        { "name": "TargetPositionFix", "type": "vector3" },
+        { "name": "TargetOffsetRight", "type": "float32" },
+        { "name": "TargetOffsetUp", "type": "float32" },
+        { "name": "TargetOffsetFront", "type": "float32" },
+        { "name": "OffsetYaw", "type": "float32" },
+        { "name": "OffsetPitch", "type": "float32" }
+      ]
+    },
+    "ObjCameraPanVerticalSpawner": {
+      "parent": "ObjCameraPanSpawner",
+      "fields": [
+      ]
+    },
+    "ObjCameraParallelSpawner": {
+      "parent": "ObjCameraSpawner",
+      "fields": [
+        { "name": "Fovy", "type": "float32" },
+        { "name": "ZRot", "type": "float32" },
+        { "name": "TargetType", "type": "ObjCameraParallelSpawner::TargetType" },
+        { "name": "Target", "type": "object_reference" },
+        { "name": "TargetPositionFix", "type": "vector3" },
+        { "name": "Distance", "type": "float32" },
+        { "name": "Yaw", "type": "float32" },
+        { "name": "Pitch", "type": "float32" },
+        { "name": "TargetOffsetRight", "type": "float32" },
+        { "name": "TargetOffsetUp", "type": "float32" },
+        { "name": "TargetOffsetFront", "type": "float32" },
+        { "name": "OffsetYaw", "type": "float32" },
+        { "name": "OffsetPitch", "type": "float32" }
+      ]
+    },
+    "ObjCameraPathLookSpawner": {
+      "parent": "ObjCameraSpawner",
+      "fields": [
+        { "name": "Fovy", "type": "float32" },
+        { "name": "ZRot", "type": "float32" },
+        { "name": "PathID", "type": "uint32" },
+        { "name": "EyePathType", "type": "ObjCameraPathLookSpawner::EyePathType" },
+        { "name": "EyeSpeed", "type": "float32" },
+        { "name": "TargetType", "type": "ObjCameraPathLookSpawner::TargetType" },
+        { "name": "Target", "type": "object_reference" },
+        { "name": "TargetPositionFix", "type": "vector3" },
+        { "name": "Distance", "type": "float32" },
+        { "name": "OffsetOnEyePath", "type": "float32" },
+        { "name": "TargetOffsetRight", "type": "float32" },
+        { "name": "TargetOffsetUp", "type": "float32" },
+        { "name": "TargetOffsetFront", "type": "float32" }
+      ]
+    },
+    "ObjCameraPathPathSpawner": {
+      "parent": "ObjCameraSpawner",
+      "fields": [
+        { "name": "Fovy", "type": "float32" },
+        { "name": "ZRot", "type": "float32" },
+        { "name": "TargetType", "type": "ObjCameraPathPathSpawner::TargetType" },
+        { "name": "Target", "type": "object_reference" },
+        { "name": "TargetPositionFix", "type": "vector3" },
+        { "name": "TargetOffsetRight", "type": "float32" },
+        { "name": "TargetOffsetUp", "type": "float32" },
+        { "name": "TargetOffsetFront", "type": "float32" },
+        { "name": "EyePathID", "type": "uint32" },
+        { "name": "LookPathID", "type": "uint32" },
+        { "name": "EyeSpeed", "type": "float32" },
+        { "name": "LookSpeed", "type": "float32" },
+        { "name": "OffsetOnEyePath", "type": "float32" },
+        { "name": "OffsetOnLookPath", "type": "float32" },
+        { "name": "EyePathType", "type": "ObjCameraPathPathSpawner::EyePathType" },
+        { "name": "LookPathType", "type": "ObjCameraPathPathSpawner::LookPathType" },
+        { "name": "MoveType", "type": "ObjCameraPathPathSpawner::MoveType" }
+      ]
+    },
+    "ObjCameraPathTargetSpawner": {
+      "parent": "ObjCameraSpawner",
+      "fields": [
+        { "name": "Fovy", "type": "float32" },
+        { "name": "ZRot", "type": "float32" },
+        { "name": "PathID", "type": "uint32" },
+        { "name": "EyePathType", "type": "ObjCameraPathTargetSpawner::EyePathType" },
+        { "name": "IsDistance", "type": "bool" },
+        { "name": "Distance", "type": "float32" },
+        { "name": "EyeSpeed", "type": "float32" },
+        { "name": "TargetType", "type": "ObjCameraPathTargetSpawner::TargetType" },
+        { "name": "Target", "type": "object_reference" },
+        { "name": "TargetPositionFix", "type": "vector3" },
+        { "name": "PanAndTangentBlend", "type": "float32" },
+        { "name": "OffsetOnEyePath", "type": "float32" },
+        { "name": "TargetOffsetRight", "type": "float32" },
+        { "name": "TargetOffsetUp", "type": "float32" },
+        { "name": "TargetOffsetFront", "type": "float32" }
+      ]
+    },
+    "ObjCameraPointSpawner": {
+      "parent": "ObjCameraSpawner",
+      "fields": [
+        { "name": "Fovy", "type": "float32" },
+        { "name": "ZRot", "type": "float32" },
+        { "name": "TargetType", "type": "ObjCameraPointSpawner::TargetType" },
+        { "name": "Target", "type": "object_reference" },
+        { "name": "TargetPositionFix", "type": "vector3" },
+        { "name": "Distance", "type": "float32" },
+        { "name": "TargetOffsetRight", "type": "float32" },
+        { "name": "TargetOffsetUp", "type": "float32" },
+        { "name": "TargetOffsetFront", "type": "float32" }
+      ]
+    },
+    "ObjCameraPointVerticalSpawner": {
+      "parent": "ObjCameraPointSpawner",
+      "fields": [
+      ]
+    },
+    "ObjCameraStopSpawner": {
+      "parent": "ObjCameraSpawner",
+      "fields": [
+        { "name": "CameraType", "type": "ObjCameraStopSpawner::CameraType" }
+      ]
+    },
+    "ObjCameraSubjectiveSpawner": {
+      "parent": "ObjCameraSpawner",
+      "fields": [
+        { "name": "Fovy", "type": "float32" },
+        { "name": "ShakeSizeHorizontal", "type": "float32" },
+        { "name": "ShakeSizeVertical", "type": "float32" },
+        { "name": "TargetOffsetRight", "type": "float32" },
+        { "name": "TargetOffsetUp", "type": "float32" },
+        { "name": "TargetOffsetFront", "type": "float32" }
+      ]
+    },
+    "ObjAutorunCollisionBaseSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" }
+      ]
+    },
+    "ObjAutorunCollisionEndSpawner": {
+      "parent": "ObjAutorunCollisionBaseSpawner",
+      "fields": [
+      ]
+    },
+    "ObjAutorunCollisionStartSpawner": {
+      "parent": "ObjAutorunCollisionBaseSpawner",
+      "fields": [
+        { "name": "SearchPosition", "type": "vector3" },
+        { "name": "Speed", "type": "float32" },
+        { "name": "KeepTime", "type": "float32" },
+        { "name": "EaseTime", "type": "float32" },
+        { "name": "ToPathEaseTime", "type": "float32" },
+        { "name": "ForceToGround", "type": "float32" },
+        { "name": "SendType", "type": "ObjAutorunCollisionStartSpawner::SendType" },
+        { "name": "ForcedRun", "type": "bool" }
+      ]
+    },
+    "ObjChangeDiveModeBaseSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" }
+      ]
+    },
+    "ObjChangeDiveModeEndSpawner": {
+      "parent": "ObjChangeDiveModeBaseSpawner",
+      "fields": [
+      ]
+    },
+    "ObjChangeDiveModeStartSpawner": {
+      "parent": "ObjChangeDiveModeBaseSpawner",
+      "fields": [
+        { "name": "Range", "type": "float32" }
+      ]
+    },
+    "EventDimChange3Dto2DSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "m_PathEaseTime", "type": "float32" },
+        { "name": "TargetDirection", "type": "vector3" },
+        { "name": "m_IsChangeCamera", "type": "bool" },
+        { "name": "m_IsPadCorrect", "type": "bool" },
+        { "name": "m_IsAutoChange2DPath", "type": "bool" },
+        { "name": "m_IsEnableFromFront", "type": "bool" },
+        { "name": "m_IsEnableFromBack", "type": "bool" }
+      ]
+    },
+    "EventDimChange3DtoDashSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "TargetDirection", "type": "vector3" },
+        { "name": "IsChangeCamera", "type": "bool" },
+        { "name": "IsReverseCameraEnable", "type": "bool" },
+        { "name": "Template", "type": "EventDimChange3DtoDashSpawner::Template" },
+        { "name": "IsLimitEdge", "type": "bool" },
+        { "name": "CurveCorrectionForce", "type": "float32" },
+        { "name": "PathCorrectionForce", "type": "float32" },
+        { "name": "IsEnableFromFront", "type": "bool" },
+        { "name": "IsEnableFromBack", "type": "bool" }
+      ]
+    },
+    "EventDimChange3DtoForwardSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "DashPathSideMoveRate", "type": "float32" },
+        { "name": "TargetDirection", "type": "vector3" },
+        { "name": "IsChangeCamera", "type": "bool" },
+        { "name": "IsReverseCameraEnable", "type": "bool" },
+        { "name": "Template", "type": "EventDimChange3DtoForwardSpawner::Template" },
+        { "name": "IsLimitEdge", "type": "bool" },
+        { "name": "CurveCorrectionForce", "type": "float32" },
+        { "name": "PathCorrectionForce", "type": "float32" },
+        { "name": "IsWallRun", "type": "bool" },
+        { "name": "IsKeepLine", "type": "bool" },
+        { "name": "IsAirKeepLine", "type": "bool" },
+        { "name": "IsEnableFromFront", "type": "bool" },
+        { "name": "IsEnableFromBack", "type": "bool" }
+      ]
+    },
+    "EventDimChange2DtoForwardSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "PathEaseTime", "type": "float32" },
+        { "name": "DashPathSideMoveRate", "type": "float32" },
+        { "name": "TargetDirection", "type": "vector3" },
+        { "name": "IsChangeCamera", "type": "bool" },
+        { "name": "IsReverseCameraEnable", "type": "bool" },
+        { "name": "Template", "type": "EventDimChange2DtoForwardSpawner::Template" },
+        { "name": "IsLimitEdge", "type": "bool" },
+        { "name": "CurveCorrectionForce", "type": "float32" },
+        { "name": "PathCorrectionForce", "type": "float32" },
+        { "name": "IsWallRun", "type": "bool" },
+        { "name": "IsAutoChange2DPath", "type": "bool" },
+        { "name": "IsKeepLine", "type": "bool" },
+        { "name": "IsEnableFromFront", "type": "bool" },
+        { "name": "IsEnableFromBack", "type": "bool" }
+      ]
+    },
+    "ObjDriftCollisionSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "ShapeCurve", "type": "bool" },
+        { "name": "ChangeCurve", "type": "bool" }
+      ]
+    },
+    "EventFallDeadSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "CollisionDepth", "type": "float32" },
+        { "name": "ActionType", "type": "EventFallDeadSpawner::ActionType" }
+      ]
+    },
+    "ObjEventJumpCollisionSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "ImpulseSpeed", "type": "float32" },
+        { "name": "ImpulseSpeedBoost", "type": "float32" },
+        { "name": "OutOfControl", "type": "float32" },
+        { "name": "Pitch", "type": "float32" },
+        { "name": "ThresholdSpeed", "type": "float32" },
+        { "name": "IsGroundOnly", "type": "bool" },
+        { "name": "HitEnemy", "type": "bool" }
+      ]
+    },
+    "ObjEventNavigationCollisionSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "CollisionLength", "type": "float32" },
+        { "name": "NavigationType", "type": "ObjEventNavigationCollisionSpawner::NavigationType" },
+        { "name": "CollisionType", "type": "ObjEventNavigationCollisionSpawner::CollisionType" },
+        { "name": "QSType", "type": "ObjEventNavigationCollisionSpawner::QSType" },
+        { "name": "DirectionType", "type": "ObjEventNavigationCollisionSpawner::DirectionType" },
+        { "name": "OnSpeed", "type": "float32" },
+        { "name": "OffSpeed", "type": "float32" },
+        { "name": "SlidingPosition", "type": "vector3" },
+        { "name": "DisAppearType", "type": "ObjEventNavigationCollisionSpawner::DisAppearType" },
+        { "name": "OutputTime", "type": "float32" },
+        { "name": "InputAngle", "type": "float32" },
+        { "name": "CancelAngle", "type": "float32" },
+        { "name": "OnlyOneBoot", "type": "bool" },
+        { "name": "AreaType", "type": "ObjEventNavigationCollisionSpawner::AreaType" }
+      ]
+    },
+    "ObjEventNavigationCollisionPlaneSpawner": {
+      "fields": [
+        { "name": "Width", "type": "float32" },
+        { "name": "Height", "type": "float32" },
+        { "name": "NaviType", "type": "ObjEventNavigationCollisionPlaneSpawner::NaviType" },
+        { "name": "CollisionType", "type": "ObjEventNavigationCollisionPlaneSpawner::CollisionType" },
+        { "name": "QSType", "type": "ObjEventNavigationCollisionPlaneSpawner::QSType" },
+        { "name": "DirectionType", "type": "ObjEventNavigationCollisionPlaneSpawner::DirectionType" },
+        { "name": "OnSpeed", "type": "float32" },
+        { "name": "DisAppearType", "type": "ObjEventNavigationCollisionPlaneSpawner::DisAppearType" },
+        { "name": "OutputTime", "type": "float32" },
+        { "name": "EnterAngle", "type": "float32" },
+        { "name": "OnlyOneBoot", "type": "bool" }
+      ]
+    },
+    "ObjEventPathHoldingSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" }
+      ]
+    },
+    "ObjEventSpiralPipeSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "CollisionDepth", "type": "float32" },
+        { "name": "PathID", "type": "uint32" },
+        { "name": "TargetCamera", "type": "object_reference" },
+        { "name": "EventType", "type": "ObjEventSpiralPipeSpawner::EventType" },
+        { "name": "IsExitOutside", "type": "bool" },
+        { "name": "IsExit2D", "type": "bool" },
+        { "name": "ExitType", "type": "ObjEventSpiralPipeSpawner::ExitType" }
+      ]
+    },
+    "ObjEventStumbleCollisionSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "CollisionLength", "type": "float32" },
+        { "name": "ShapeType", "type": "ObjEventStumbleCollisionSpawner::ShapeType" },
+        { "name": "ConditionType", "type": "ObjEventStumbleCollisionSpawner::ConditionType" }
+      ]
+    },
+    "ObjKeepRunningCollisionSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "MinSpeed", "type": "float32" },
+        { "name": "MaxSpeed", "type": "float32" },
+        { "name": "UseMaxSpeed", "type": "bool" },
+        { "name": "SearchPathID", "type": "uint32" },
+        { "name": "IsPathReverse", "type": "bool" },
+        { "name": "UseTimeOut", "type": "bool" },
+        { "name": "TimeOut", "type": "float32" },
+        { "name": "Target", "type": "vector3" },
+        { "name": "BaseSpeed", "type": "float32" },
+        { "name": "UseBaseSpeed", "type": "bool" },
+        { "name": "ChangeRevistivity", "type": "bool" },
+        { "name": "AccelOnlyBoost", "type": "bool" }
+      ]
+    },
+    "ObjOutOfControlCollisionSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "EndType", "type": "ObjOutOfControlCollisionSpawner::EndType" },
+        { "name": "EndTime", "type": "float32" }
+      ]
+    },
+    "ObjPhantomCancelCollisionSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "CollisionLength", "type": "float32" },
+        { "name": "CancelType", "type": "ObjPhantomCancelCollisionSpawner::CancelType" }
+      ]
+    },
+    "ObjSetRigidBodySpawner": {
+      "fields": [
+        { "name": "Height", "type": "float32" },
+        { "name": "Width", "type": "float32" },
+        { "name": "Length", "type": "float32" },
+        { "name": "DefaultON", "type": "bool" },
+        { "name": "IsEffect", "type": "bool" },
+        { "name": "IsPlayerTerrain", "type": "bool" },
+        { "name": "m_IsSearchInsulateOnly", "type": "bool" },
+        { "name": "PhysicsType", "type": "ObjSetRigidBodySpawner::PhysicsType" }
+      ]
+    },
+    "ObjSwitchCollisionSpawner": {
+      "fields": [
+        { "name": "TargetList", "type": "array", "subtype": "object_reference" },
+        { "name": "EventTimer", "type": "float32" },
+        { "name": "EventType", "type": "ObjSwitchCollisionSpawner::EventType" },
+        { "name": "TargetList2", "type": "array", "subtype": "object_reference" },
+        { "name": "EventTimer2", "type": "float32" },
+        { "name": "EventType2", "type": "ObjSwitchCollisionSpawner::EventType2" },
+        { "name": "TargetList3", "type": "array", "subtype": "object_reference" },
+        { "name": "EventTimer3", "type": "float32" },
+        { "name": "EventType3", "type": "ObjSwitchCollisionSpawner::EventType3" },
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "CollisionDepth", "type": "float32" },
+        { "name": "EventArisingTimer", "type": "float32" },
+        { "name": "SwitchType", "type": "ObjSwitchCollisionSpawner::SwitchType" }
+      ]
+    },
+    "ObjFlowExSpawner": {
+      "fields": [
+        { "name": "EffectID", "type": "uint32" },
+        { "name": "EmitterCount", "type": "uint32" },
+        { "name": "GenerateRatio", "type": "uint32" },
+        { "name": "Speed", "type": "float32" },
+        { "name": "AngleX", "type": "float32" },
+        { "name": "AngleY", "type": "float32" },
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "CollisionLength", "type": "float32" }
+      ]
+    },
+    "ObjGismoSpawner": {
+      "fields": [
+        { "name": "ObjCategoryID", "type": "uint32" },
+        { "name": "ObjTypeID", "type": "uint32" }
+      ]
+    },
+    "ObjSetParticleSpawner": {
+      "fields": [
+        { "name": "EffectID", "type": "uint32" },
+        { "name": "OnTime", "type": "float32" },
+        { "name": "OffTime", "type": "float32" },
+        { "name": "Scale", "type": "vector3" },
+        { "name": "Trigger", "type": "ObjSetParticleSpawner::Trigger" }
+      ]
+    },
+    "EnemyBaseSpawner": {
+      "fields": [
+        { "name": "NumPixies", "type": "int8" },
+        { "name": "CleanKillId", "type": "uint8" }
+      ]
+    },
+    "EnemyEggPawnBaseSpawner": {
+      "parent": "EnemyBaseSpawner",
+      "fields": [
+        { "name": "Type", "type": "EnemyEggPawnBaseSpawner::Type" },
+        { "name": "FirstState", "type": "EnemyEggPawnBaseSpawner::FirstState" },
+        { "name": "IsExcite", "type": "bool" },
+        { "name": "AlarmMotion", "type": "EnemyEggPawnBaseSpawner::AlarmMotion" },
+        { "name": "MoveTypeSideView", "type": "bool" },
+        { "name": "IsAttachMoveGround", "type": "bool" },
+        { "name": "IsReceiveEnemyAttack", "type": "bool" },
+        { "name": "RadiusAttack", "type": "float32" },
+        { "name": "RadiusActive", "type": "float32" },
+        { "name": "AdvanceDistance", "type": "float32" },
+        { "name": "IsMessageBoot", "type": "bool" }
+      ]
+    },
+    "EnemyEggPawn_rsoSpawner": {
+      "parent": "EnemyEggPawnBaseSpawner",
+      "fields": [
+      ]
+    },
+    "EnemyEggPawn_fctSpawner": {
+      "parent": "EnemyEggPawnBaseSpawner",
+      "fields": [
+      ]
+    },
+    "EnemyEggPawn_shpSpawner": {
+      "parent": "EnemyEggPawnBaseSpawner",
+      "fields": [
+      ]
+    },
+    "EnemyEggPawn_plaSpawner": {
+      "parent": "EnemyEggPawnBaseSpawner",
+      "fields": [
+      ]
+    },
+    "EnemyEggPawn_quaSpawner": {
+      "parent": "EnemyEggPawnBaseSpawner",
+      "fields": [
+      ]
+    },
+    "EnemyBatabataSpawner": {
+      "parent": "EnemyBaseSpawner",
+      "fields": [
+        { "name": "ModelType", "type": "EnemyBatabataSpawner::ModelType" },
+        { "name": "Type", "type": "EnemyBatabataSpawner::Type" },
+        { "name": "MoveType", "type": "EnemyBatabataSpawner::MoveType" },
+        { "name": "MoveDistance", "type": "float32" },
+        { "name": "RoundTime", "type": "float32" },
+        { "name": "RoundPhase", "type": "float32" },
+        { "name": "IsUsePath", "type": "bool" },
+        { "name": "JumpSpeed", "type": "float32" },
+        { "name": "TriggerType", "type": "EnemyBatabataSpawner::TriggerType" },
+        { "name": "SearchRadius", "type": "float32" },
+        { "name": "ReturnWaitTime", "type": "float32" },
+        { "name": "IsRecover", "type": "bool" }
+      ]
+    },
+    "EnemyJawsSpawner": {
+      "parent": "EnemyBaseSpawner",
+      "fields": [
+        { "name": "MoveType", "type": "EnemyJawsSpawner::MoveType" },
+        { "name": "TriggerType", "type": "EnemyJawsSpawner::TriggerType" },
+        { "name": "AttackType", "type": "EnemyJawsSpawner::AttackType" },
+        { "name": "IsAttackFront", "type": "bool" },
+        { "name": "MoveDistance", "type": "float32" },
+        { "name": "RoundTime", "type": "float32" },
+        { "name": "RoundPhase", "type": "float32" },
+        { "name": "RadiusActive", "type": "float32" },
+        { "name": "IsUsePath", "type": "bool" }
+      ]
+    },
+    "EnemyEggPawn_astSpawner": {
+      "parent": "EnemyEggPawnBaseSpawner",
+      "fields": [
+      ]
+    },
+    "EnemyEggPawnNormal_elvSpawner": {
+      "parent": "EnemyEggPawnBaseSpawner",
+      "fields": [
+      ]
+    },
+    "EnemyEggPawn_elvSpawner": {
+      "parent": "EnemyEggPawnBaseSpawner",
+      "fields": [
+      ]
+    },
+    "BossBattleShipSpawner": {
+      "fields": [
+        { "name": "Unknown1", "type": "float32" },
+        { "name": "Unknown2", "type": "float32" },
+        { "name": "Unknown3", "type": "float32" },
+        { "name": "Unknown4", "type": "float32" },
+        { "name": "Unknown5", "type": "float32" },
+        { "name": "Unknown6", "type": "float32" },
+        { "name": "Unknown7", "type": "float32" },
+        { "name": "Unknown8", "type": "float32" },
+        { "name": "Unknown9", "type": "float32" },
+        { "name": "Unknown10", "type": "float32" },
+        { "name": "Unknown11", "type": "float32" },
+        { "name": "Unknown12", "type": "float32" },
+        { "name": "Unknown13", "type": "float32" },
+        { "name": "Unknown14", "type": "float32" },
+        { "name": "Unknown15", "type": "float32" },
+        { "name": "Unknown16", "type": "float32" },
+        { "name": "Unknown17", "type": "uint32" },
+        { "name": "Unknown18", "type": "uint32" },
+        { "name": "Unknown19", "type": "uint32" },
+        { "name": "Unknown20", "type": "uint32" },
+        { "name": "Unknown21", "type": "float32" },
+        { "name": "Unknown22", "type": "uint32" },
+        { "name": "Unknown23", "type": "float32" },
+        { "name": "Unknown24", "type": "uint32" },
+        { "name": "Unknown25", "type": "float32" },
+        { "name": "Unknown26", "type": "float32" },
+        { "name": "Unknown27", "type": "float32" },
+        { "name": "Unknown28", "type": "float32" },
+        { "name": "Unknown29", "type": "float32" },
+        { "name": "Unknown30", "type": "float32" },
+        { "name": "Unknown31", "type": "float32" },
+        { "name": "Unknown32", "type": "uint32" },
+        { "name": "Unknown33", "type": "uint32" },
+        { "name": "Unknown34", "type": "uint32" },
+        { "name": "Unknown35", "type": "float32" },
+        { "name": "Unknown36", "type": "float32" },
+        { "name": "Unknown37", "type": "float32" },
+        { "name": "Unknown38", "type": "float32" },
+        { "name": "Unknown39", "type": "float32" },
+        { "name": "Unknown40", "type": "float32" },
+        { "name": "Unknown41", "type": "uint32" },
+        { "name": "Unknown42", "type": "float32" },
+        { "name": "Unknown43", "type": "uint32" },
+        { "name": "Unknown44", "type": "float32" },
+        { "name": "Unknown45", "type": "float32" },
+        { "name": "Unknown46", "type": "float32" },
+        { "name": "Unknown47", "type": "float32" },
+        { "name": "Unknown48", "type": "uint32" },
+        { "name": "Unknown49", "type": "float32" },
+        { "name": "Unknown50", "type": "uint32" },
+        { "name": "Unknown51", "type": "float32" },
+        { "name": "Unknown52", "type": "float32" },
+        { "name": "Unknown53", "type": "float32" },
+        { "name": "Unknown54", "type": "float32" },
+        { "name": "Unknown55", "type": "uint32" },
+        { "name": "Unknown56", "type": "float32" },
+        { "name": "Unknown57", "type": "uint32" },
+        { "name": "Unknown58", "type": "float32" },
+        { "name": "Unknown59", "type": "float32" },
+        { "name": "Unknown60", "type": "float32" },
+        { "name": "Unknown61", "type": "float32" },
+        { "name": "Unknown62", "type": "uint32" },
+        { "name": "Unknown63", "type": "float32" },
+        { "name": "Unknown64", "type": "uint32" },
+        { "name": "Unknown65", "type": "float32" },
+        { "name": "Unknown66", "type": "float32" },
+        { "name": "Unknown67", "type": "float32" },
+        { "name": "Unknown68", "type": "float32" },
+        { "name": "Unknown69", "type": "uint32" },
+        { "name": "Unknown70", "type": "float32" },
+        { "name": "Unknown71", "type": "uint32" },
+        { "name": "Unknown72", "type": "float32" },
+        { "name": "Unknown73", "type": "float32" },
+        { "name": "Unknown74", "type": "float32" },
+        { "name": "Unknown75", "type": "float32" },
+        { "name": "Unknown76", "type": "float32" },
+        { "name": "Unknown77", "type": "uint32" },
+        { "name": "Unknown78", "type": "uint32" },
+        { "name": "Unknown79", "type": "float32" },
+        { "name": "Unknown80", "type": "uint32" },
+        { "name": "Unknown81", "type": "uint32" },
+        { "name": "Unknown82", "type": "float32" },
+        { "name": "Unknown83", "type": "float32" },
+        { "name": "Unknown84", "type": "float32" },
+        { "name": "Unknown85", "type": "float32" },
+        { "name": "Unknown86", "type": "float32" },
+        { "name": "Unknown87", "type": "float32" },
+        { "name": "Unknown88", "type": "float32" },
+        { "name": "Unknown89", "type": "float32" },
+        { "name": "Unknown90", "type": "float32" },
+        { "name": "Unknown91", "type": "float32" },
+        { "name": "Unknown92", "type": "float32" },
+        { "name": "Unknown93", "type": "float32" },
+        { "name": "Unknown94", "type": "float32" },
+        { "name": "Unknown95", "type": "float32" },
+        { "name": "Unknown96", "type": "float32" },
+        { "name": "Unknown97", "type": "float32" },
+        { "name": "Unknown98", "type": "float32" },
+        { "name": "Unknown99", "type": "float32" },
+        { "name": "Unknown100", "type": "float32" },
+        { "name": "Unknown101", "type": "float32" },
+        { "name": "Unknown102", "type": "float32" },
+        { "name": "Unknown103", "type": "uint32" },
+        { "name": "Unknown104", "type": "uint32" },
+        { "name": "Unknown105", "type": "uint32" },
+        { "name": "Unknown106", "type": "uint32" },
+        { "name": "Unknown107", "type": "uint32" },
+        { "name": "Unknown108", "type": "float32" },
+        { "name": "Unknown109", "type": "uint32" },
+        { "name": "Unknown110", "type": "uint32" },
+        { "name": "Unknown111", "type": "uint32" },
+        { "name": "Unknown112", "type": "uint32" },
+        { "name": "Unknown113", "type": "uint32" },
+        { "name": "Unknown114", "type": "uint32" },
+        { "name": "Unknown115", "type": "uint32" },
+        { "name": "Unknown116", "type": "uint32" },
+        { "name": "Unknown117", "type": "uint32" },
+        { "name": "Unknown118", "type": "uint32" },
+        { "name": "Unknown119", "type": "uint32" },
+        { "name": "Unknown120", "type": "uint32" },
+        { "name": "Unknown121", "type": "uint32" },
+        { "name": "Unknown122", "type": "uint32" },
+        { "name": "Unknown123", "type": "uint32" },
+        { "name": "Unknown124", "type": "uint32" },
+        { "name": "Unknown125", "type": "uint32" },
+        { "name": "Unknown126", "type": "uint32" },
+        { "name": "Unknown127", "type": "uint32" },
+        { "name": "Unknown128", "type": "uint32" },
+        { "name": "Unknown129", "type": "uint32" },
+        { "name": "Unknown130", "type": "uint32" },
+        { "name": "Unknown131", "type": "uint32" },
+        { "name": "Unknown132", "type": "uint32" },
+        { "name": "Unknown133", "type": "uint32" },
+        { "name": "Unknown134", "type": "uint32" },
+        { "name": "Unknown135", "type": "uint32" },
+        { "name": "Unknown136", "type": "uint32" },
+        { "name": "Unknown137", "type": "uint32" },
+        { "name": "Unknown138", "type": "uint32" },
+        { "name": "Unknown139", "type": "uint32" },
+        { "name": "Unknown140", "type": "uint32" },
+        { "name": "Unknown141", "type": "uint32" },
+        { "name": "Unknown142", "type": "uint32" },
+        { "name": "Unknown143", "type": "uint32" },
+        { "name": "Unknown144", "type": "uint32" },
+        { "name": "Unknown145", "type": "uint32" },
+        { "name": "Unknown146", "type": "uint32" },
+        { "name": "Unknown147", "type": "uint32" },
+        { "name": "Unknown148", "type": "uint32" },
+        { "name": "Unknown149", "type": "uint32" },
+        { "name": "Unknown150", "type": "uint32" },
+        { "name": "Unknown151", "type": "uint32" },
+        { "name": "Unknown152", "type": "uint32" },
+        { "name": "Unknown153", "type": "uint32" },
+        { "name": "Unknown154", "type": "uint32" },
+        { "name": "Unknown155", "type": "uint32" },
+        { "name": "Unknown156", "type": "uint32" },
+        { "name": "Unknown157", "type": "uint32" },
+        { "name": "Unknown158", "type": "uint32" },
+        { "name": "Unknown159", "type": "uint32" },
+        { "name": "Unknown160", "type": "uint32" },
+        { "name": "Unknown161", "type": "uint32" },
+        { "name": "Unknown162", "type": "uint32" },
+        { "name": "Unknown163", "type": "uint32" },
+        { "name": "Unknown164", "type": "uint32" },
+        { "name": "Unknown165", "type": "uint32" },
+        { "name": "Unknown166", "type": "uint32" },
+        { "name": "Unknown167", "type": "uint32" },
+        { "name": "Unknown168", "type": "uint32" },
+        { "name": "Unknown169", "type": "uint32" },
+        { "name": "Unknown170", "type": "uint32" },
+        { "name": "Unknown171", "type": "uint32" },
+        { "name": "Unknown172", "type": "uint32" },
+        { "name": "Unknown173", "type": "uint32" },
+        { "name": "Unknown174", "type": "uint32" },
+        { "name": "Unknown175", "type": "uint32" },
+        { "name": "Unknown176", "type": "uint32" },
+        { "name": "Unknown177", "type": "uint32" },
+        { "name": "Unknown178", "type": "uint32" },
+        { "name": "Unknown179", "type": "uint32" },
+        { "name": "Unknown180", "type": "uint32" },
+        { "name": "Unknown181", "type": "uint32" },
+        { "name": "Unknown182", "type": "uint32" },
+        { "name": "Unknown183", "type": "uint32" },
+        { "name": "Unknown184", "type": "uint32" },
+        { "name": "Unknown185", "type": "uint32" },
+        { "name": "Unknown186", "type": "uint32" },
+        { "name": "Unknown187", "type": "uint32" },
+        { "name": "Unknown188", "type": "uint32" },
+        { "name": "Unknown189", "type": "uint32" },
+        { "name": "Unknown190", "type": "uint32" },
+        { "name": "Unknown191", "type": "uint32" },
+        { "name": "Unknown192", "type": "uint32" },
+        { "name": "Unknown193", "type": "uint32" },
+        { "name": "Unknown194", "type": "uint32" },
+        { "name": "Unknown195", "type": "uint32" },
+        { "name": "Unknown196", "type": "float32" }
+      ]
+    },
+    "BossAsteroidSpawner": {
+      "fields": [
+        { "name": "Unknown1", "type": "float32" },
+        { "name": "Unknown2", "type": "float32" },
+        { "name": "Unknown3", "type": "float32" },
+        { "name": "Unknown4", "type": "float32" },
+        { "name": "Unknown5", "type": "float32" },
+        { "name": "Unknown6", "type": "float32" },
+        { "name": "Unknown7", "type": "float32" },
+        { "name": "Unknown8", "type": "float32" },
+        { "name": "Unknown9", "type": "float32" },
+        { "name": "Unknown10", "type": "float32" },
+        { "name": "Unknown11", "type": "float32" },
+        { "name": "Unknown12", "type": "float32" },
+        { "name": "Unknown13", "type": "float32" },
+        { "name": "Unknown14", "type": "float32" },
+        { "name": "Unknown15", "type": "float32" },
+        { "name": "Unknown16", "type": "float32" },
+        { "name": "Unknown17", "type": "uint32" },
+        { "name": "Unknown18", "type": "uint32" },
+        { "name": "Unknown19", "type": "uint32" },
+        { "name": "Unknown20", "type": "uint32" },
+        { "name": "Unknown21", "type": "float32" },
+        { "name": "Unknown22", "type": "uint32" },
+        { "name": "Unknown23", "type": "float32" },
+        { "name": "Unknown24", "type": "uint32" },
+        { "name": "Unknown25", "type": "float32" },
+        { "name": "Unknown26", "type": "float32" },
+        { "name": "Unknown27", "type": "float32" },
+        { "name": "Unknown28", "type": "float32" },
+        { "name": "Unknown29", "type": "float32" },
+        { "name": "Unknown30", "type": "float32" },
+        { "name": "Unknown31", "type": "float32" },
+        { "name": "Unknown32", "type": "uint32" },
+        { "name": "Unknown33", "type": "uint32" },
+        { "name": "Unknown34", "type": "uint32" },
+        { "name": "Unknown35", "type": "float32" },
+        { "name": "Unknown36", "type": "float32" },
+        { "name": "Unknown37", "type": "float32" },
+        { "name": "Unknown38", "type": "float32" },
+        { "name": "Unknown39", "type": "float32" },
+        { "name": "Unknown40", "type": "float32" },
+        { "name": "Unknown41", "type": "uint32" },
+        { "name": "Unknown42", "type": "float32" },
+        { "name": "Unknown43", "type": "uint32" },
+        { "name": "Unknown44", "type": "float32" },
+        { "name": "Unknown45", "type": "float32" },
+        { "name": "Unknown46", "type": "float32" },
+        { "name": "Unknown47", "type": "float32" },
+        { "name": "Unknown48", "type": "uint32" },
+        { "name": "Unknown49", "type": "float32" },
+        { "name": "Unknown50", "type": "uint32" },
+        { "name": "Unknown51", "type": "float32" },
+        { "name": "Unknown52", "type": "float32" },
+        { "name": "Unknown53", "type": "float32" },
+        { "name": "Unknown54", "type": "float32" },
+        { "name": "Unknown55", "type": "uint32" },
+        { "name": "Unknown56", "type": "float32" },
+        { "name": "Unknown57", "type": "uint32" },
+        { "name": "Unknown58", "type": "float32" },
+        { "name": "Unknown59", "type": "float32" },
+        { "name": "Unknown60", "type": "float32" },
+        { "name": "Unknown61", "type": "float32" },
+        { "name": "Unknown62", "type": "uint32" },
+        { "name": "Unknown63", "type": "float32" },
+        { "name": "Unknown64", "type": "uint32" },
+        { "name": "Unknown65", "type": "float32" },
+        { "name": "Unknown66", "type": "float32" },
+        { "name": "Unknown67", "type": "float32" },
+        { "name": "Unknown68", "type": "float32" },
+        { "name": "Unknown69", "type": "uint32" },
+        { "name": "Unknown70", "type": "float32" },
+        { "name": "Unknown71", "type": "uint32" },
+        { "name": "Unknown72", "type": "float32" },
+        { "name": "Unknown73", "type": "float32" },
+        { "name": "Unknown74", "type": "float32" },
+        { "name": "Unknown75", "type": "float32" },
+        { "name": "Unknown76", "type": "float32" },
+        { "name": "Unknown77", "type": "uint32" },
+        { "name": "Unknown78", "type": "uint32" },
+        { "name": "Unknown79", "type": "float32" },
+        { "name": "Unknown80", "type": "uint32" },
+        { "name": "Unknown81", "type": "uint32" },
+        { "name": "Unknown82", "type": "float32" },
+        { "name": "Unknown83", "type": "float32" },
+        { "name": "Unknown84", "type": "float32" },
+        { "name": "Unknown85", "type": "float32" },
+        { "name": "Unknown86", "type": "float32" },
+        { "name": "Unknown87", "type": "float32" },
+        { "name": "Unknown88", "type": "float32" },
+        { "name": "Unknown89", "type": "float32" },
+        { "name": "Unknown90", "type": "float32" },
+        { "name": "Unknown91", "type": "float32" },
+        { "name": "Unknown92", "type": "float32" },
+        { "name": "Unknown93", "type": "float32" },
+        { "name": "Unknown94", "type": "float32" },
+        { "name": "Unknown95", "type": "float32" },
+        { "name": "Unknown96", "type": "float32" },
+        { "name": "Unknown97", "type": "float32" },
+        { "name": "Unknown98", "type": "float32" },
+        { "name": "Unknown99", "type": "float32" },
+        { "name": "Unknown100", "type": "float32" },
+        { "name": "Unknown101", "type": "float32" },
+        { "name": "Unknown102", "type": "float32" },
+        { "name": "Unknown103", "type": "float32" },
+        { "name": "Unknown104", "type": "float32" },
+        { "name": "Unknown105", "type": "float32" },
+        { "name": "Unknown106", "type": "float32" },
+        { "name": "Unknown107", "type": "float32" },
+        { "name": "Unknown108", "type": "float32" },
+        { "name": "Unknown109", "type": "float32" },
+        { "name": "Unknown110", "type": "uint32" },
+        { "name": "Unknown111", "type": "uint32" },
+        { "name": "Unknown112", "type": "uint32" },
+        { "name": "Unknown113", "type": "uint32" },
+        { "name": "Unknown114", "type": "uint32" },
+        { "name": "Unknown115", "type": "uint32" },
+        { "name": "Unknown116", "type": "uint32" },
+        { "name": "Unknown117", "type": "uint32" },
+        { "name": "Unknown118", "type": "uint32" },
+        { "name": "Unknown119", "type": "uint32" },
+        { "name": "Unknown120", "type": "uint32" },
+        { "name": "Unknown121", "type": "uint32" },
+        { "name": "Unknown122", "type": "uint32" },
+        { "name": "Unknown123", "type": "uint32" },
+        { "name": "Unknown124", "type": "uint32" },
+        { "name": "Unknown125", "type": "uint32" },
+        { "name": "Unknown126", "type": "uint32" },
+        { "name": "Unknown127", "type": "uint32" },
+        { "name": "Unknown128", "type": "uint32" },
+        { "name": "Unknown129", "type": "uint32" },
+        { "name": "Unknown130", "type": "uint32" },
+        { "name": "Unknown131", "type": "uint32" },
+        { "name": "Unknown132", "type": "uint32" },
+        { "name": "Unknown133", "type": "uint32" },
+        { "name": "Unknown134", "type": "uint32" },
+        { "name": "Unknown135", "type": "uint32" },
+        { "name": "Unknown136", "type": "uint32" },
+        { "name": "Unknown137", "type": "uint32" },
+        { "name": "Unknown138", "type": "uint32" },
+        { "name": "Unknown139", "type": "uint32" },
+        { "name": "Unknown140", "type": "uint32" },
+        { "name": "Unknown141", "type": "uint32" },
+        { "name": "Unknown142", "type": "uint32" },
+        { "name": "Unknown143", "type": "uint32" },
+        { "name": "Unknown144", "type": "uint32" },
+        { "name": "Unknown145", "type": "uint32" },
+        { "name": "Unknown146", "type": "uint32" },
+        { "name": "Unknown147", "type": "uint32" },
+        { "name": "Unknown148", "type": "uint32" },
+        { "name": "Unknown149", "type": "uint32" },
+        { "name": "Unknown150", "type": "uint32" },
+        { "name": "Unknown151", "type": "uint32" },
+        { "name": "Unknown152", "type": "uint32" },
+        { "name": "Unknown153", "type": "uint32" },
+        { "name": "Unknown154", "type": "uint32" },
+        { "name": "Unknown155", "type": "uint32" },
+        { "name": "Unknown156", "type": "uint32" },
+        { "name": "Unknown157", "type": "uint32" },
+        { "name": "Unknown158", "type": "uint32" },
+        { "name": "Unknown159", "type": "uint32" },
+        { "name": "Unknown160", "type": "uint32" },
+        { "name": "Unknown161", "type": "uint32" },
+        { "name": "Unknown162", "type": "uint32" },
+        { "name": "Unknown163", "type": "uint32" },
+        { "name": "Unknown164", "type": "uint32" },
+        { "name": "Unknown165", "type": "uint32" },
+        { "name": "Unknown166", "type": "uint32" },
+        { "name": "Unknown167", "type": "uint32" },
+        { "name": "Unknown168", "type": "uint32" },
+        { "name": "Unknown169", "type": "uint32" },
+        { "name": "Unknown170", "type": "uint32" },
+        { "name": "Unknown171", "type": "uint32" },
+        { "name": "Unknown172", "type": "uint32" },
+        { "name": "Unknown173", "type": "uint32" },
+        { "name": "Unknown174", "type": "uint32" },
+        { "name": "Unknown175", "type": "uint32" },
+        { "name": "Unknown176", "type": "uint32" },
+        { "name": "Unknown177", "type": "uint32" },
+        { "name": "Unknown178", "type": "uint32" },
+        { "name": "Unknown179", "type": "uint32" },
+        { "name": "Unknown180", "type": "uint32" },
+        { "name": "Unknown181", "type": "uint32" },
+        { "name": "Unknown182", "type": "uint32" },
+        { "name": "Unknown183", "type": "uint32" },
+        { "name": "Unknown184", "type": "uint32" },
+        { "name": "Unknown185", "type": "uint32" },
+        { "name": "Unknown186", "type": "uint32" },
+        { "name": "Unknown187", "type": "uint32" },
+        { "name": "Unknown188", "type": "uint32" },
+        { "name": "Unknown189", "type": "uint32" },
+        { "name": "Unknown190", "type": "uint32" },
+        { "name": "Unknown191", "type": "uint32" },
+        { "name": "Unknown192", "type": "uint32" },
+        { "name": "Unknown193", "type": "uint32" },
+        { "name": "Unknown194", "type": "uint32" },
+        { "name": "Unknown195", "type": "uint32" },
+        { "name": "Unknown196", "type": "uint32" },
+        { "name": "Unknown197", "type": "uint32" },
+        { "name": "Unknown198", "type": "uint32" },
+        { "name": "Unknown199", "type": "uint32" },
+        { "name": "Unknown200", "type": "uint32" },
+        { "name": "Unknown201", "type": "uint32" },
+        { "name": "Unknown202", "type": "uint32" },
+        { "name": "Unknown203", "type": "uint32" },
+        { "name": "Unknown204", "type": "uint32" },
+        { "name": "Unknown205", "type": "uint32" },
+        { "name": "Unknown206", "type": "uint32" },
+        { "name": "Unknown207", "type": "uint32" },
+        { "name": "Unknown208", "type": "uint32" },
+        { "name": "Unknown209", "type": "uint32" },
+        { "name": "Unknown210", "type": "uint32" },
+        { "name": "Unknown211", "type": "uint32" },
+        { "name": "Unknown212", "type": "uint32" },
+        { "name": "Unknown213", "type": "uint32" },
+        { "name": "Unknown214", "type": "uint32" },
+        { "name": "Unknown215", "type": "uint32" },
+        { "name": "Unknown216", "type": "uint32" },
+        { "name": "Unknown217", "type": "uint32" },
+        { "name": "Unknown218", "type": "uint32" },
+        { "name": "Unknown219", "type": "uint32" },
+        { "name": "Unknown220", "type": "uint32" },
+        { "name": "Unknown221", "type": "float32" },
+        { "name": "Unknown222", "type": "float32" },
+        { "name": "Unknown223", "type": "float32" },
+        { "name": "Unknown224", "type": "float32" },
+        { "name": "Unknown225", "type": "float32" },
+        { "name": "Unknown226", "type": "uint32" },
+        { "name": "Unknown227", "type": "float32" },
+        { "name": "Unknown228", "type": "uint32" },
+        { "name": "Unknown229", "type": "uint32" },
+        { "name": "Unknown230", "type": "float32" },
+        { "name": "Unknown231", "type": "float32" },
+        { "name": "Unknown232", "type": "float32" },
+        { "name": "Unknown233", "type": "uint32" },
+        { "name": "Unknown234", "type": "float32" },
+        { "name": "Unknown235", "type": "uint32" },
+        { "name": "Unknown236", "type": "uint32" },
+        { "name": "Unknown237", "type": "float32" },
+        { "name": "Unknown238", "type": "float32" },
+        { "name": "Unknown239", "type": "uint32" },
+        { "name": "Unknown240", "type": "float32" },
+        { "name": "Unknown241", "type": "float32" },
+        { "name": "Unknown242", "type": "float32" },
+        { "name": "Unknown243", "type": "float32" },
+        { "name": "Unknown244", "type": "float32" },
+        { "name": "Unknown245", "type": "float32" },
+        { "name": "Unknown246", "type": "float32" },
+        { "name": "Unknown247", "type": "float32" },
+        { "name": "Unknown248", "type": "uint32" },
+        { "name": "Unknown249", "type": "uint32" },
+        { "name": "Unknown250", "type": "float32" },
+        { "name": "Unknown251", "type": "float32" },
+        { "name": "Unknown252", "type": "float32" },
+        { "name": "Unknown253", "type": "float32" },
+        { "name": "Unknown254", "type": "uint32" },
+        { "name": "Unknown255", "type": "uint32" }
+      ]
+    },
+    "BossEggMobileSpawner": {
+      "fields": [
+        { "name": "Datum", "type": "BossEggMobileSpawner::Datum" },
+        { "name": "Altitude", "type": "float32" },
+        { "name": "Unknown1", "type": "uint8" },
+        { "name": "Unknown2", "type": "uint8" },
+        { "name": "AppearOffset1D", "type": "float32" },
+        { "name": "Speed", "type": "float32" },
+        { "name": "Unknown3", "type": "uint8" }
+      ]
+    },
+    "BossFerrisWheelBaseSpawner": {
+      "fields": [
+        { "name": "SearchRadius", "type": "float32" }
+      ]
+    },
+    "BossFerrisWheelSpawner": {
+      "parent": "BossFerrisWheelBaseSpawner",
+      "fields": [
+        { "name": "ShotSpeed", "type": "float32" },
+        { "name": "ShotLifeTime", "type": "float32" },
+        { "name": "ShotHomingWait", "type": "float32" },
+        { "name": "ShotChaseTime", "type": "float32" },
+        { "name": "ShotRotateSpeed", "type": "float32" },
+        { "name": "ShotCollisionRadius", "type": "float32" }
+      ]
+    },
+    "BossCoffeeCupSpawner": {
+      "parent": "BossFerrisWheelBaseSpawner",
+      "fields": [
+        { "name": "AttackTime", "type": "array", "subtype": "float32", "size": 3 }
+      ]
+    },
+    "ObjCoffeeCupSpawner": {
+      "parent": "ObjGondolaBaseSpawner",
+      "fields": [
+        { "name": "PixieType", "type": "array", "subtype": "ObjCoffeeCupSpawner::PixieType", "size": 20 }
+      ]
+    },
+    "ObjGondolaBaseSpawner": {
+      "fields": [
+        { "name": "GondolaNum", "type": "uint32" },
+        { "name": "DirectionType", "type": "ObjGondolaBaseSpawner::DirectionType" },
+        { "name": "AngularSpeed", "type": "float32" },
+        { "name": "Radius", "type": "float32" },
+        { "name": "Offset", "type": "vector3" }
+      ]
+    },
+    "ObjGondolaSpawner": {
+      "parent": "ObjGondolaBaseSpawner",
+      "fields": [
+        { "name": "PixieType", "type": "array", "subtype": "ObjGondolaSpawner::PixieType", "size": 20 }
+      ]
+    },
+    "ObjPirateCannonSpawner": {
+      "fields": [
+        { "name": "IsBaseModel", "type": "bool" },
+        { "name": "IsCollision", "type": "bool" },
+        { "name": "Angle", "type": "float32" },
+        { "name": "SearchDistance", "type": "float32" },
+        { "name": "SearchDistanceMin", "type": "float32" },
+        { "name": "SearchDistanceMax", "type": "float32" },
+        { "name": "StartTime", "type": "float32" },
+        { "name": "NumShots", "type": "uint32" },
+        { "name": "ShotInterval", "type": "float32" },
+        { "name": "WaitTime", "type": "float32" },
+        { "name": "StartTime1st", "type": "float32" },
+        { "name": "NumShots1st", "type": "uint32" },
+        { "name": "ShotInterval1st", "type": "float32" },
+        { "name": "WaitTime1st", "type": "float32" },
+        { "name": "StartTime2nd", "type": "float32" },
+        { "name": "NumShots2nd", "type": "uint32" },
+        { "name": "ShotInterval2nd", "type": "float32" },
+        { "name": "WaitTime2nd", "type": "float32" },
+        { "name": "ShotSpeed", "type": "float32" },
+        { "name": "ShotSpecialNo", "type": "uint32" },
+        { "name": "NumRepeat", "type": "uint32" },
+        { "name": "ItemType", "type": "ObjPirateCannonSpawner::ItemType" },
+        { "name": "NumItems", "type": "uint32" },
+        { "name": "ShotOffsetX", "type": "float32" },
+        { "name": "ShotOffsetY", "type": "float32" }
+      ]
+    },
+    "ObjPirateSeqCoordinatorSpawner": {
+      "parent": "EnemyBaseSpawner",
+      "fields": [
+        { "name": "Unknown1", "type": "uint32" },
+        { "name": "NumMariners", "type": "uint32" },
+        { "name": "NumMariners1st", "type": "uint32" },
+        { "name": "NumMariners2nd", "type": "uint32" }
+      ]
+    },
+    "ObjSubmarineCannonSpawner": {
+      "fields": [
+        { "name": "SearchDistance", "type": "float32" },
+        { "name": "SearchDistanceMin", "type": "float32" },
+        { "name": "SearchDistanceMax", "type": "float32" },
+        { "name": "StartTime", "type": "float32" },
+        { "name": "NumShots", "type": "uint32" },
+        { "name": "ShotInterval", "type": "float32" },
+        { "name": "WaitTime", "type": "float32" },
+        { "name": "ShotSpeed", "type": "float32" },
+        { "name": "ShotRotateSpeed", "type": "float32" },
+        { "name": "StartTime1st", "type": "float32" },
+        { "name": "NumShots1st", "type": "uint32" },
+        { "name": "ShotInterval1st", "type": "float32" },
+        { "name": "WaitTime1st", "type": "float32" },
+        { "name": "ShotSpeed1st", "type": "float32" },
+        { "name": "ShotRotateSpeed1st", "type": "float32" },
+        { "name": "StartTime2nd", "type": "float32" },
+        { "name": "NumShots2nd", "type": "uint32" },
+        { "name": "ShotInterval2nd", "type": "float32" },
+        { "name": "WaitTime2nd", "type": "float32" },
+        { "name": "ShotSpeed2nd", "type": "float32" },
+        { "name": "ShotRotateSpeed2nd", "type": "float32" },
+        { "name": "ShotSpecialNo", "type": "uint32" },
+        { "name": "NumRepeat", "type": "uint32" },
+        { "name": "ItemType", "type": "ObjSubmarineCannonSpawner::ItemType" },
+        { "name": "NumItems", "type": "uint32" }
+      ]
+    },
+    "ObjSubmarineSeqCoordinatorSpawner": {
+      "parent": "ObjPirateSeqCoordinatorSpawner",
+      "fields": [
+      ]
+    },
+    "ObjICBMSpawner": {
+      "fields": [
+        { "name": "StartDist", "type": "float32" },
+        { "name": "Speed", "type": "float32" },
+        { "name": "StartTime", "type": "float32" },
+        { "name": "WaitTime", "type": "float32" },
+        { "name": "Speed1st", "type": "float32" },
+        { "name": "StartTime1st", "type": "float32" },
+        { "name": "WaitTime1st", "type": "float32" },
+        { "name": "Speed2nd", "type": "float32" },
+        { "name": "StartTime2nd", "type": "float32" },
+        { "name": "WaitTime2nd", "type": "float32" }
+      ]
+    },
+    "EnemyBeetonSpawner": {
+      "parent": "EnemyBaseSpawner",
+      "fields": [
+        { "name": "FirstState", "type": "EnemyBeetonSpawner::FirstState" },
+        { "name": "MessageType", "type": "EnemyBeetonSpawner::MessageType" },
+        { "name": "IsVisibleInMessageType", "type": "EnemyBeetonSpawner::IsVisibleInMessageType" },
+        { "name": "IsResurrect", "type": "bool" },
+        { "name": "AlivePoint", "type": "vector3" },
+        { "name": "IsMoveAttack", "type": "bool" },
+        { "name": "StartPos", "type": "vector3" },
+        { "name": "IsMoveAttackRotate", "type": "bool" },
+        { "name": "IsMoveResurrectRotate", "type": "bool" },
+        { "name": "MoveSpeed", "type": "float32" },
+        { "name": "IsFixDirection", "type": "bool" },
+        { "name": "RadiusActive", "type": "float32" },
+        { "name": "RadiusAttack", "type": "float32" },
+        { "name": "ShotSpeed", "type": "float32" },
+        { "name": "IntervalShot", "type": "float32" },
+        { "name": "IntervalAttack", "type": "float32" },
+        { "name": "IntervalWait", "type": "float32" },
+        { "name": "NumShotOneTime", "type": "uint8" },
+        { "name": "NumAttackOneTime", "type": "uint8" }
+      ]
+    },
+    "EnemyEggPawnNormalSpawner": {
+      "parent": "EnemyEggPawnBaseSpawner",
+      "fields": [
+      ]
+    },
+    "EnemyEggPawnGunSpawner": {
+      "parent": "EnemyEggPawnBaseSpawner",
+      "fields": [
+        { "name": "ShotType", "type": "EnemyEggPawnGunSpawner::ShotType" },
+        { "name": "AttackTime", "type": "float32" },
+        { "name": "AttackInterval", "type": "float32" },
+        { "name": "LimitDistance", "type": "float32" },
+        { "name": "NumAttackOneTime", "type": "uint8" },
+        { "name": "IntervalAttack", "type": "float32" }
+      ]
+    },
+    "EnemyEggPawnKnightSpawner": {
+      "parent": "EnemyEggPawnBaseSpawner",
+      "fields": [
+        { "name": "ShieldType", "type": "EnemyEggPawnKnightSpawner::ShieldType" },
+        { "name": "StartTime", "type": "float32" },
+        { "name": "AttackTime", "type": "float32" },
+        { "name": "AttackInterval", "type": "float32" }
+      ]
+    },
+    "EnemyEggPawnLanceSpawner": {
+      "parent": "EnemyEggPawnBaseSpawner",
+      "fields": [
+      ]
+    },
+    "EnemyEventCollisionBaseSpawner": {
+      "fields": [
+        { "name": "ShapeType", "type": "EnemyEventCollisionBaseSpawner::ShapeType" },
+        { "name": "ShapeDatum", "type": "EnemyEventCollisionBaseSpawner::ShapeDatum" },
+        { "name": "Width", "type": "float32" },
+        { "name": "Height", "type": "float32" },
+        { "name": "Depth", "type": "float32" },
+        { "name": "EventType", "type": "EnemyEventCollisionBaseSpawner::EventType" }
+      ]
+    },
+    "EnemyGaniganiSpawner": {
+      "parent": "EnemyBaseSpawner",
+      "fields": [
+        { "name": "Type", "type": "EnemyGaniganiSpawner::Type" },
+        { "name": "AttackType", "type": "EnemyGaniganiSpawner::AttackType" },
+        { "name": "IsCharge", "type": "bool" },
+        { "name": "IsEventAttack", "type": "bool" },
+        { "name": "IsSideView", "type": "bool" },
+        { "name": "IsOnlyPlayerAttack", "type": "bool" },
+        { "name": "RadiusActive", "type": "float32" },
+        { "name": "RadiusAttack", "type": "float32" },
+        { "name": "RadiusNearAttack", "type": "float32" },
+        { "name": "ShotInterval", "type": "float32" },
+        { "name": "ShotSpeed", "type": "float32" },
+        { "name": "ShotLifeTime", "type": "float32" },
+        { "name": "LimitDistance", "type": "float32" },
+        { "name": "HomingStartTime", "type": "float32" },
+        { "name": "HomingTime", "type": "float32" },
+        { "name": "HomingPower", "type": "float32" },
+        { "name": "ShotCollisionRadius", "type": "float32" }
+      ]
+    },
+    "EnemyLarvaSpawner": {
+      "parent": "EnemyBaseSpawner",
+      "fields": [
+        { "name": "InvokeByEvent", "type": "bool" }
+      ]
+    },
+    "EnemyMoleSpawner": {
+      "parent": "EnemyBaseSpawner",
+      "fields": [
+        { "name": "Type", "type": "EnemyMoleSpawner::Type" },
+        { "name": "MoveType", "type": "EnemyMoleSpawner::MoveType" },
+        { "name": "SearchRadius", "type": "float32" },
+        { "name": "TargetPointX", "type": "float32" },
+        { "name": "TargetPointY", "type": "float32" },
+        { "name": "ChaseTime", "type": "float32" },
+        { "name": "UseSVPath", "type": "bool" },
+        { "name": "InvokeByEvent", "type": "bool" },
+        { "name": "RebirthEnable", "type": "bool" },
+        { "name": "RebirthTime", "type": "float32" }
+      ]
+    },
+    "EnemyNalSpawner": {
+      "parent": "EnemyBaseSpawner",
+      "fields": [
+        { "name": "Type", "type": "EnemyNalSpawner::Type" },
+        { "name": "FirstState", "type": "EnemyNalSpawner::FirstState" },
+        { "name": "IsFixDirection", "type": "bool" },
+        { "name": "RadiusAppear", "type": "float32" },
+        { "name": "RadiusEscape", "type": "float32" },
+        { "name": "ShotSpeed", "type": "float32" },
+        { "name": "IntervalShot", "type": "float32" },
+        { "name": "IntervalAttack", "type": "float32" },
+        { "name": "NumShotOneTime", "type": "uint8" },
+        { "name": "NumAttackOneTime", "type": "uint8" }
+      ]
+    },
+    "EnemySpannerSpawner": {
+      "parent": "EnemySpinnerBaseSpawner",
+      "fields": [
+        { "name": "StartTime", "type": "float32" },
+        { "name": "AttackTime", "type": "float32" },
+        { "name": "AttackInterval", "type": "float32" }
+      ]
+    },
+    "EnemySparvaSpawner": {
+      "parent": "EnemyLarvaSpawner",
+      "fields": [
+      ]
+    },
+    "EnemySpinnerBaseSpawner": {
+      "parent": "EnemyBaseSpawner",
+      "fields": [
+        { "name": "Type", "type": "EnemySpinnerBaseSpawner::Type" },
+        { "name": "AlivePoint", "type": "vector3" },
+        { "name": "ForSideView", "type": "bool" },
+        { "name": "OnlyPlayerAttack", "type": "bool" },
+        { "name": "IsCrackup", "type": "bool" }
+      ]
+    },
+    "EnemySpinnerSpawner": {
+      "parent": "EnemySpinnerBaseSpawner",
+      "fields": [
+      ]
+    },
+    "ObjBigChaserEventCollisionSpawner": {
+      "parent": "EnemyEventCollisionBaseSpawner",
+      "fields": [
+        { "name": "Mode", "type": "ObjBigChaserEventCollisionSpawner::Mode" },
+        { "name": "Speed", "type": "float32" },
+        { "name": "AttackType", "type": "ObjBigChaserEventCollisionSpawner::AttackType" }
+      ]
+    },
+    "EnemyBigChaserSpawner": {
+      "parent": "EnemyChaserBaseSpawner",
+      "fields": [
+        { "name": "InitialState", "type": "EnemyBigChaserSpawner::InitialState" },
+        { "name": "BombAtEndOfPath", "type": "bool" },
+        { "name": "AppearOffset1D", "type": "float32" },
+        { "name": "Speed", "type": "float32" },
+        { "name": "UpperEnable", "type": "bool" },
+        { "name": "JumpGuideEnable", "type": "bool" }
+      ]
+    },
+    "ObjEggChaserEventCollisionSpawner": {
+      "parent": "EnemyEventCollisionBaseSpawner",
+      "fields": [
+        { "name": "AutoRecruitSwitch", "type": "bool" }
+      ]
+    },
+    "EnemyChaserBaseSpawner": {
+      "parent": "EnemyBaseSpawner",
+      "fields": [
+        { "name": "Datum", "type": "EnemyChaserBaseSpawner::Datum" },
+        { "name": "Altitude", "type": "float32" }
+      ]
+    },
+    "EnemyEggChaserSpawner": {
+      "parent": "EnemyChaserBaseSpawner",
+      "fields": [
+        { "name": "TargetRange", "type": "float32" },
+        { "name": "RaycastRange", "type": "float32" },
+        { "name": "ExitCrashEnable", "type": "bool" },
+        { "name": "NumUnits", "type": "uint32" },
+        { "name": "NumMaxUnits", "type": "uint32" },
+        { "name": "AutoRecruitEnable", "type": "bool" },
+        { "name": "AutoLaneChangeEnable", "type": "bool" },
+        { "name": "TakedownEnable", "type": "bool" }
+      ]
+    },
+    "ObjMotoraEventCollisionSpawner": {
+      "parent": "EnemyEventCollisionBaseSpawner",
+      "fields": [
+        { "name": "AutoRecruitSwitch", "type": "bool" }
+      ]
+    },
+    "EnemyMotoraBaseSpawner": {
+      "parent": "EnemyBaseSpawner",
+      "fields": [
+        { "name": "BaseSpeed", "type": "float32" },
+        { "name": "DropProbability", "type": "float32" },
+        { "name": "TumbleProbability", "type": "float32" },
+        { "name": "TackEnable", "type": "bool" },
+        { "name": "CrashEnable", "type": "bool" },
+        { "name": "NumUnits", "type": "uint32" }
+      ]
+    },
+    "EnemyMotoraSpawner": {
+      "parent": "EnemyMotoraBaseSpawner",
+      "fields": [
+        { "name": "NumMaxUnits", "type": "uint32" },
+        { "name": "LevelProbabilities", "type": "array", "subtype": "float32", "size": 6 },
+        { "name": "XXProbability", "type": "float32" }
+      ]
+    },
+    "EnemyMotoraEventSpawner": {
+      "parent": "EnemyMotoraBaseSpawner",
+      "fields": [
+        { "name": "PathIDs", "type": "array", "subtype": "uint32", "size": 4 },
+        { "name": "PathOffsets", "type": "array", "subtype": "float32", "size": 4}
+      ]
+    },
+    "EnemyLanderSpawner": {
+      "parent": "EnemyBaseSpawner",
+      "fields": [
+        { "name": "Type", "type": "EnemyLanderSpawner::Type" },
+        { "name": "ThrowType", "type": "EnemyLanderSpawner::ThrowType" },
+        { "name": "Angle", "type": "float32" },
+        { "name": "MinSpeed", "type": "float32" },
+        { "name": "MaxSpeed", "type": "float32" },
+        { "name": "GenerateGap", "type": "float32" },
+        { "name": "ThrowNum", "type": "uint32" },
+        { "name": "WaitTime", "type": "float32" }
+      ]
+    },
+    "EnemySprinklerSpawner": {
+      "parent": "EnemyBaseSpawner",
+      "fields": [
+        { "name": "ThrowTime", "type": "float32" },
+        { "name": "RingRatio", "type": "float32" },
+        { "name": "SuperRingRatio", "type": "float32" },
+        { "name": "ThornRatio", "type": "float32" },
+        { "name": "PathID", "type": "uint32" },
+        { "name": "StartPosition", "type": "float32" },
+        { "name": "Type", "type": "EnemySprinklerSpawner::Type" },
+        { "name": "Velocity", "type": "float32" },
+        { "name": "EscapeThrow", "type": "EnemySprinklerSpawner::EscapeThrow" }
+      ]
+    },
+    "EnemyMetalSpinnerSpawner": {
+      "parent": "EnemySpinnerSpawner",
+      "fields": [
+      ]
+    },
+    "EnemyMetalSpannerSpawner": {
+      "parent": "EnemySpannerSpawner",
+      "fields": [
+      ]
+    },
+    "ObjAirSpringSpawner": {
+      "parent": "ObjSpringSpawner",
+      "fields": [
+      ]
+    },
+    "ObjBalloonSpawner": {
+      "fields": [
+        { "name": "UpSpeed", "type": "float32" },
+        { "name": "ReviveTime", "type": "float32" },
+        { "name": "BalloonColor", "type": "ObjBalloonSpawner::BalloonColor" },
+        { "name": "SpeedMin", "type": "float32" },
+        { "name": "SpeedMax", "type": "float32" },
+        { "name": "OutOfControl", "type": "float32" },
+        { "name": "StartOffset", "type": "float32" },
+        { "name": "IsReveive", "type": "bool" }
+      ]
+    },
+    "ObjChainFloorSpawner": {
+      "fields": [
+        { "name": "Radius", "type": "float32" },
+        { "name": "FloorCount", "type": "uint32" },
+        { "name": "AngularSpeed", "type": "float32" },
+        { "name": "Phase", "type": "float32" },
+        { "name": "FloorSize", "type": "ObjChainFloorSpawner::FloorSize" },
+        { "name": "RotateType", "type": "ObjChainFloorSpawner::RotateType" },
+        { "name": "EventActType", "type": "ObjChainFloorSpawner::EventActType" }
+      ]
+    },
+    "ObjCommonFloorSpawner": {
+      "fields": [
+        { "name": "MoveType", "type": "ObjCommonFloorSpawner::MoveType" },
+        { "name": "FloorSize", "type": "ObjCommonFloorSpawner::FloorSize" },
+        { "name": "IsMessageON", "type": "bool" },
+        { "name": "IsWallJump", "type": "bool" },
+        { "name": "Target", "type": "object_reference" },
+        { "name": "MoveXRot", "type": "float32" },
+        { "name": "MoveYRot", "type": "float32" },
+        { "name": "WaitTime", "type": "float32" },
+        { "name": "Phase", "type": "float32" },
+        { "name": "Cycle", "type": "float32" },
+        { "name": "Amplitude", "type": "float32" },
+        { "name": "Length", "type": "float32" },
+        { "name": "AppearTime", "type": "float32" },
+        { "name": "DisappearTime", "type": "float32" },
+        { "name": "AppearStopTime", "type": "float32" },
+        { "name": "DisappearStopTime", "type": "float32" },
+        { "name": "OnShakeTime", "type": "float32" },
+        { "name": "OnFloorTime", "type": "float32" },
+        { "name": "CollisionTimeLag", "type": "float32" },
+        { "name": "Gravity", "type": "float32" },
+        { "name": "ResetTime", "type": "float32" },
+        { "name": "PathIndex", "type": "uint32" },
+        { "name": "StartPath1DPos", "type": "float32" },
+        { "name": "PathSpeed", "type": "float32" },
+        { "name": "PathReverseTime", "type": "float32" },
+        { "name": "LightFieldOffset", "type": "float32" },
+        { "name": "IsReverse", "type": "bool" },
+        { "name": "IsEffect", "type": "bool" }
+      ]
+    },
+    "ObjCommonWallSpawner": {
+      "fields": [
+        { "name": "MoveType", "type": "ObjCommonWallSpawner::MoveType" },
+        { "name": "WallSize", "type": "ObjCommonWallSpawner::WallSize" },
+        { "name": "IsMessageON", "type": "bool" },
+        { "name": "IsWallJump", "type": "bool" },
+        { "name": "MoveXRot", "type": "float32" },
+        { "name": "MoveYRot", "type": "float32" },
+        { "name": "WaitTime", "type": "float32" },
+        { "name": "Phase", "type": "float32" },
+        { "name": "Cycle", "type": "float32" },
+        { "name": "Amplitude", "type": "float32" },
+        { "name": "Length", "type": "float32" },
+        { "name": "AppearTime", "type": "float32" },
+        { "name": "DisappearTime", "type": "float32" },
+        { "name": "AppearStopTime", "type": "float32" },
+        { "name": "DisappearStopTime", "type": "float32" }
+      ]
+    },
+    "ObjDashPanelSpawner": {
+      "fields": [
+        { "name": "OutOfControl", "type": "float32" },
+        { "name": "Speed", "type": "float32" },
+        { "name": "IsVisibleModel", "type": "bool" }
+      ]
+    },
+    "ObjDashRingSpawner": {
+      "fields": [
+        { "name": "FirstSpeed", "type": "float32" },
+        { "name": "OutOfControl", "type": "float32" },
+        { "name": "KeepVelocityDistance", "type": "float32" }
+      ]
+    },
+    "ObjDestBoxSpawner": {
+      "fields": [
+        { "name": "isEarth", "type": "bool" }
+      ]
+    },
+    "ObjDummySpringSpawner": {
+      "parent": "ObjSpringSpawner",
+      "fields": [
+      ]
+    },
+    "ObjFanSpawner": {
+      "fields": [
+        { "name": "Height", "type": "float32" },
+        { "name": "Velocity", "type": "float32" },
+        { "name": "OnTime", "type": "float32" },
+        { "name": "OffTime", "type": "float32" },
+        { "name": "Phase", "type": "float32" },
+        { "name": "Type", "type": "ObjFanSpawner::Type" }
+      ]
+    },
+    "ObjGrindBoosterSpawner": {
+      "fields": [
+        { "name": "OutOfControl", "type": "float32" },
+        { "name": "Speed", "type": "float32" },
+        { "name": "IsFront", "type": "bool" },
+        { "name": "IsVisibleModel", "type": "bool" }
+      ]
+    },
+    "ObjIronBoxSpawner": {
+      "fields": [
+        { "name": "BoxNumX", "type": "uint32" },
+        { "name": "BoxNumY", "type": "uint32" },
+        { "name": "BoxNumZ", "type": "uint32" },
+        { "name": "TargetID", "type": "object_reference" }
+      ]
+    },
+    "ObjJumpBoardSpawner": {
+      "fields": [
+        { "name": "ImpulseSpeedOnNormal", "type": "float32" },
+        { "name": "ImpulseSpeedOnBoost", "type": "float32" },
+        { "name": "OutOfControl", "type": "float32" },
+        { "name": "SizeType", "type": "ObjJumpBoardSpawner::SizeType" }
+      ]
+    },
+    "ObjJumpSelectorSpawner": {
+      "fields": [
+        { "name": "FrontJumpForce", "type": "float32" },
+        { "name": "FrontJumpOutOfControl", "type": "float32" },
+        { "name": "UpJumpForce", "type": "float32" },
+        { "name": "UpJumpPitch", "type": "float32" },
+        { "name": "UpJumpOutOfControl", "type": "float32" },
+        { "name": "DownShotForce", "type": "float32" },
+        { "name": "DownShotOutOfControl", "type": "float32" },
+        { "name": "FirstDirection", "type": "ObjJumpSelectorSpawner::FirstDirection" },
+        { "name": "IsPathChange", "type": "bool" }
+      ]
+    },
+    "ObjPulleySpawner": {
+      "fields": [
+        { "name": "PathID", "type": "uint32" },
+        { "name": "StartPosition", "type": "float32" },
+        { "name": "EndPosition", "type": "float32" },
+        { "name": "IsJumpCancel", "type": "bool" },
+        { "name": "Offset", "type": "vector3" },
+        { "name": "MinSpeed", "type": "float32" },
+        { "name": "MaxSpeed", "type": "float32" }
+      ]
+    },
+    "ObjPulleyColumnSpawner": {
+      "fields": [
+        { "name": "PathID", "type": "uint32" },
+        { "name": "StartPosition", "type": "float32" },
+        { "name": "Offset", "type": "vector3" },
+        { "name": "IsStart", "type": "bool" },
+        { "name": "IsLong", "type": "bool" }
+      ]
+    },
+    "ObjPushBoxSpawner": {
+      "fields": [
+        { "name": "TargetID", "type": "object_reference" },
+        { "name": "MoveType", "type": "ObjPushBoxSpawner::MoveType" }
+      ]
+    },
+    "ObjRainbowRingSpawner": {
+      "fields": [
+        { "name": "FirstSpeed", "type": "float32" },
+        { "name": "OutOfControl", "type": "float32" },
+        { "name": "KeepVelocityDistance", "type": "float32" }
+      ]
+    },
+    "ObjSpringSpawner": {
+      "fields": [
+        { "name": "FirstSpeed", "type": "float32" },
+        { "name": "OutOfControl", "type": "float32" },
+        { "name": "KeepVelocityDistance", "type": "float32" },
+        { "name": "DebugShotTimeLength", "type": "float32" },
+        { "name": "IsPathChange", "type": "bool" },
+        { "name": "IsWallWalk", "type": "bool" },
+        { "name": "IsChangeCameraWhenPathChange", "type": "bool" },
+        { "name": "m_IsMonkeyHunting", "type": "bool" },
+        { "name": "m_MonkeyTarget", "type": "vector3" },
+        { "name": "m_IsMonkeyHuntingLowAngle", "type": "bool" },
+        { "name": "m_IsTo3D", "type": "bool" },
+        { "name": "IsYawUpdate", "type": "bool" },
+        { "name": "m_IsConstantPosition", "type": "bool" },
+        { "name": "m_IsConstantFrame", "type": "bool" },
+        { "name": "m_IsStopBoost", "type": "bool" },
+        { "name": "HasBase", "type": "bool" },
+        { "name": "IsVisibleModel", "type": "bool" },
+        { "name": "IsSuperSonicSpring", "type": "bool" },
+        { "name": "IsUpMovePathSearch", "type": "bool" },
+        { "name": "SpecialFunc", "type": "ObjSpringSpawner::SpecialFunc" }
+      ]
+    },
+    "ObjSpringPoleSpawner": {
+      "fields": [
+        { "name": "AddMinVelocity", "type": "float32" },
+        { "name": "AddMaxVelocity", "type": "float32" }
+      ]
+    },
+    "ObjSwitchSpawner": {
+      "fields": [
+        { "name": "TargetList", "type": "array", "subtype": "object_reference" },
+        { "name": "EventTimer", "type": "float32" },
+        { "name": "EventType", "type": "ObjSwitchSpawner::EventType" },
+        { "name": "TargetList2", "type": "array", "subtype": "object_reference" },
+        { "name": "EventTimer2", "type": "float32" },
+        { "name": "EventType2", "type": "ObjSwitchSpawner::EventType2" },
+        { "name": "TargetList3", "type": "array", "subtype": "object_reference" },
+        { "name": "EventTimer3", "type": "float32" },
+        { "name": "EventType3", "type": "ObjSwitchSpawner::EventType3" },
+        { "name": "OffTimer", "type": "float32" },
+        { "name": "TargetID", "type": "object_reference" },
+        { "name": "SwitchType", "type": "ObjSwitchSpawner::SwitchType" }
+      ]
+    },
+    "ObjTrickJumpSpawner": {
+      "fields": [
+        { "name": "FirstSpeed", "type": "float32" },
+        { "name": "FirstPitch", "type": "float32" },
+        { "name": "FirstOutOfControl", "type": "float32" },
+        { "name": "SecondSpeed", "type": "float32" },
+        { "name": "SecondPitch", "type": "float32" },
+        { "name": "SecondOutOfControl", "type": "float32" },
+        { "name": "FailedSpeed", "type": "float32" },
+        { "name": "IsSideView", "type": "bool" }
+      ]
+    },
+    "ObjUpReelSpawner": {
+      "fields": [
+        { "name": "Length", "type": "float32" },
+        { "name": "IsWaitUp", "type": "bool" },
+        { "name": "IsOneTimeUp", "type": "bool" },
+        { "name": "ImpulseVelocity", "type": "float32" },
+        { "name": "OutOfControl", "type": "float32" },
+        { "name": "UpSpeedMax", "type": "float32" }
+      ]
+    },
+    "ObjWaterFanSpawner": {
+      "parent": "ObjFanSpawner",
+      "fields": [
+      ]
+    },
+    "ObjWideSpringSpawner": {
+      "fields": [
+        { "name": "FirstSpeed", "type": "float32" },
+        { "name": "OutOfControl", "type": "float32" },
+        { "name": "KeepVelocityDistance", "type": "float32" }
+      ]
+    },
+    "ObjWoodBoxSpawner": {
+      "fields": [
+      ]
+    },
+    "ObjOneUpSpawner": {
+      "fields": [
+        { "name": "TargetID", "type": "object_reference" },
+        { "name": "MessageBoot", "type": "bool" }
+      ]
+    },
+    "ObjBubbleGeneratorSpawner": {
+      "fields": [
+        { "name": "VanishHeight", "type": "float32" }
+      ]
+    },
+    "ObjFlyReleaseBoxSmallSpawner": {
+      "parent": "ObjReleaseBoxSmallBaseSpawner",
+      "fields": [
+        { "name": "MoveType", "type": "ObjFlyReleaseBoxSmallSpawner::MoveType" },
+        { "name": "Turn", "type": "bool" },
+        { "name": "Target", "type": "vector3" },
+        { "name": "Velocity", "type": "float32" },
+        { "name": "DeadTime", "type": "float32" },
+        { "name": "MessageBoot", "type": "bool" }
+      ]
+    },
+    "ObjGoalRingSpawner": {
+      "fields": [
+        { "name": "IsMessageON", "type": "bool" }
+      ]
+    },
+    "ObjRedRingSpawner": {
+      "fields": [
+        { "name": "ItemId", "type": "int32" },
+        { "name": "TargetID", "type": "object_reference" },
+        { "name": "EventType", "type": "ObjRedRingSpawner::EventType" },
+        { "name": "PlaceType", "type": "ObjRedRingSpawner::PlaceType" }
+      ]
+    },
+    "ObjReleaseBoxBigSpawner": {
+      "fields": [
+        { "name": "CameraID", "type": "object_reference" }
+      ]
+    },
+    "ObjReleaseBoxSmallBaseSpawner": {
+      "fields": [
+        { "name": "PixieType", "type": "ObjReleaseBoxSmallBaseSpawner::PixieType" },
+        { "name": "Revive", "type": "bool" }
+      ]
+    },
+    "ObjReleaseBoxSmallSpawner": {
+      "parent": "ObjReleaseBoxSmallBaseSpawner",
+      "fields": [
+        { "name": "MessageBoot", "type": "bool" },
+        { "name": "TargetID", "type": "object_reference" }
+      ]
+    },
+    "ObjRingSpawner": {
+      "fields": [
+        { "name": "ResetTime", "type": "float32" },
+        { "name": "TargetID", "type": "object_reference" },
+        { "name": "IsReset", "type": "bool" },
+        { "name": "IsLightSpeedDashTarget", "type": "bool" },
+        { "name": "SetPlaceType", "type": "ObjRingSpawner::SetPlaceType" },
+        { "name": "EventType", "type": "ObjRingSpawner::EventType" },
+        { "name": "RotType", "type": "ObjRingSpawner::RotType" }
+      ]
+    },
+    "ObjSuperRingSpawner": {
+      "fields": [
+        { "name": "TargetID", "type": "object_reference" },
+        { "name": "SetPlaceType", "type": "ObjSuperRingSpawner::SetPlaceType" },
+        { "name": "EventType", "type": "ObjSuperRingSpawner::EventType" }
+      ]
+    },
+    "ObjBombBlockSpawner": {
+      "fields": [
+        { "name": "Counter", "type": "uint32" }
+      ]
+    },
+    "ObjPlasmaCannonSpawner": {
+      "fields": [
+        { "name": "ShotSpeed", "type": "float32" },
+        { "name": "ShotInterval", "type": "float32" },
+        { "name": "BarrageInterval", "type": "float32" },
+        { "name": "ShotLifeTime", "type": "float32" },
+        { "name": "BarrageType", "type": "ObjPlasmaCannonSpawner::BarrageType" },
+        { "name": "ActionType", "type": "ObjPlasmaCannonSpawner::ActionType" }
+      ]
+    },
+    "ObjReproductionSpawner": {
+      "fields": [
+        { "name": "ReviveTime", "type": "float32" },
+        { "name": "Type", "type": "ObjReproductionSpawner::Type" }
+      ]
+    },
+    "ObjShootingSpawner": {
+      "fields": [
+        { "name": "MoveRate", "type": "float32" },
+        { "name": "MoveLength", "type": "float32" },
+        { "name": "Phase", "type": "float32" },
+        { "name": "MoveType", "type": "ObjShootingSpawner::MoveType" },
+        { "name": "ActionType", "type": "ObjShootingSpawner::ActionType" }
+      ]
+    },
+    "ObjVaultSpawner": {
+      "fields": [
+        { "name": "MoveSpeed", "type": "float32" },
+        { "name": "GuidePathID", "type": "uint32" },
+        { "name": "Path1DPos", "type": "float32" },
+        { "name": "ActionType", "type": "ObjVaultSpawner::ActionType" },
+        { "name": "OffsetType", "type": "ObjVaultSpawner::OffsetType" }
+      ]
+    },
+    "ObjBigCatapultSpawner": {
+      "fields": [
+        { "name": "UpSpeed", "type": "float32" },
+        { "name": "DownSpeed", "type": "float32" },
+        { "name": "Height", "type": "float32" },
+        { "name": "StopTime", "type": "float32" },
+        { "name": "DeadPos", "type": "float32" },
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "Size", "type": "ObjBigCatapultSpawner::Size" },
+        { "name": "Mode", "type": "ObjBigCatapultSpawner::Mode" },
+        { "name": "IsDeadTypeCrush", "type": "bool" },
+        { "name": "IsMessageBoot", "type": "bool" }
+      ]
+    },
+    "ObjBilliardSpawner": {
+      "fields": [
+        { "name": "ModelType", "type": "ObjBilliardSpawner::ModelType" },
+        { "name": "NumMaxCollisions", "type": "uint8" }
+      ]
+    },
+    "EventDimChangetoLoopSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "m_PathEaseTime", "type": "float32" },
+        { "name": "TargetDirection", "type": "vector3" },
+        { "name": "m_IsChangeCamera", "type": "bool" },
+        { "name": "m_IsPadCorrect", "type": "bool" },
+        { "name": "m_IsAutoChange2DPath", "type": "bool" },
+        { "name": "m_IsEnableFromFront", "type": "bool" },
+        { "name": "m_IsEnableFromBack", "type": "bool" }
+      ]
+    },
+    "ObjEggmanMedalSpawner": {
+      "fields": [
+      ]
+    },
+    "ObjEggMaskBoxSpawner": {
+      "fields": [
+        { "name": "AttackInterval", "type": "float32" },
+        { "name": "SearchRadius", "type": "float32" },
+        { "name": "DeadTime", "type": "float32" },
+        { "name": "OffsetY", "type": "float32" },
+        { "name": "OffsetX", "type": "float32" }
+      ]
+    },
+    "ObjEggMaskCollisionSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" }
+      ]
+    },
+    "ObjMapPartsBaseSpawner": {
+      "fields": [
+        { "name": "IsPlayerTerrain", "type": "bool" },
+        { "name": "ForceGrid", "type": "bool" }
+      ]
+    },
+    "ObjMapPartsBoxSpawner": {
+      "parent": "ObjMapPartsBaseSpawner",
+      "fields": [
+        { "name": "Type", "type": "ObjMapPartsBoxSpawner::Type" },
+        { "name": "Width", "type": "float32" },
+        { "name": "Height", "type": "float32" },
+        { "name": "Length", "type": "float32" }
+      ]
+    },
+    "ObjMapPartsPlaneSpawner": {
+      "parent": "ObjMapPartsBaseSpawner",
+      "fields": [
+        { "name": "Type", "type": "ObjMapPartsPlaneSpawner::Type" },
+        { "name": "Width", "type": "float32" },
+        { "name": "Height", "type": "float32" },
+        { "name": "Length", "type": "float32" }
+      ]
+    },
+    "ObjMapPartsMeshSpawner": {
+      "parent": "ObjMapPartsBaseSpawner",
+      "fields": [
+        { "name": "Type", "type": "ObjMapPartsMeshSpawner::Type" }
+      ]
+    },
+    "ObjMultiBoostBoxSpawner": {
+      "fields": [
+        { "name": "Revive", "type": "bool" }
+      ]
+    },
+    "ObjMultiPhantomBoxSpawner": {
+      "fields": [
+        { "name": "PixieType", "type": "ObjMultiPhantomBoxSpawner::PixieType" },
+        { "name": "PixieType2", "type": "ObjMultiPhantomBoxSpawner::PixieType2" },
+        { "name": "Revive", "type": "bool" }
+      ]
+    },
+    "ObjPunchingBallSpawner": {
+      "fields": [
+        { "name": "Length", "type": "float32" }
+      ]
+    },
+    "ObjSlotSpawner": {
+      "fields": [
+        { "name": "Probabilities", "type": "array", "subtype": "float32", "size": 5 }
+      ]
+    },
+    "ObjSprialDoorSpawner": {
+      "fields": [
+        { "name": "KeepVelocityDistance", "type": "float32" },
+        { "name": "Speed", "type": "float32" }
+      ]
+    },
+    "ObjWaterCollisionSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "CollisionLength", "type": "float32" }
+      ]
+    },
+    "ObjPhantomObjBreakableSpawner": {
+      "fields": [
+      ]
+    },
+    "ObjBombSpawner": {
+      "fields": [
+        { "name": "Counter", "type": "uint32" },
+        { "name": "SearchRadius", "type": "float32" }
+      ]
+    },
+    "ObjConnectionPipeSpawner": {
+      "fields": [
+        { "name": "reverse", "type": "bool" }
+      ]
+    },
+    "ObjEventLaserCancelCollisionSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "CollisionLength", "type": "float32" }
+      ]
+    },
+    "ObjPrismSpawner": {
+      "fields": [
+        { "name": "Pitch", "type": "float32" },
+        { "name": "Yaw", "type": "float32" },
+        { "name": "Target", "type": "vector3" },
+        { "name": "ObjectID", "type": "object_reference" },
+        { "name": "Type", "type": "ObjPrismSpawner::Type" },
+        { "name": "CameraID", "type": "object_reference" }
+      ]
+    },
+    "ObjFiberSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "CollisionDepth", "type": "float32" },
+        { "name": "PathID", "type": "uint32" },
+        { "name": "TargetCamera", "type": "object_reference" },
+        { "name": "EventType", "type": "ObjFiberSpawner::EventType" },
+        { "name": "IsExitOutside", "type": "bool" },
+        { "name": "IsExit2D", "type": "bool" },
+        { "name": "ExitType", "type": "ObjFiberSpawner::ExitType" },
+        { "name": "LaserSpeed", "type": "float32" },
+        { "name": "IsChangeSpeed", "type": "bool" }
+      ]
+    },
+    "ObjCogWheelSpawner": {
+      "fields": [
+        { "name": "num", "type": "uint32" }
+      ]
+    },
+    "ObjRotationGlobeSpawner": {
+      "fields": [
+        { "name": "SizeType", "type": "ObjRotationGlobeSpawner::SizeType" },
+        { "name": "IsReverseStart", "type": "bool" }
+      ]
+    },
+    "ObjPuzzleRingSpawner": {
+      "fields": [
+        { "name": "Type", "type": "ObjPuzzleRingSpawner::Type" }
+      ]
+    },
+    "ObjSpinLaserBaseSpawner": {
+      "fields": [
+        { "name": "AngleVelocity", "type": "float32" },
+        { "name": "LaserLength", "type": "float32" },
+        { "name": "LaserNum", "type": "ObjSpinLaserBaseSpawner::LaserNum" },
+        { "name": "RayCast", "type": "bool" }
+      ]
+    },
+    "ObjSpinLaserSpawner": {
+      "parent": "ObjSpinLaserBaseSpawner",
+      "fields": [
+        { "name": "IsMessageTurn", "type": "bool" },
+        { "name": "TurnType", "type": "ObjSpinLaserSpawner::TurnType" },
+        { "name": "ThresholdAngle", "type": "float32" }
+      ]
+    },
+    "ObjSpinLaserPathMoveSpawner": {
+      "parent": "ObjSpinLaserBaseSpawner",
+      "fields": [
+        { "name": "TurnType", "type": "ObjSpinLaserPathMoveSpawner::TurnType" },
+        { "name": "ThresholdAngle", "type": "float32" },
+        { "name": "IsRepeat", "type": "bool" },
+        { "name": "IsMessageMove", "type": "bool" },
+        { "name": "IsMessageTurn", "type": "bool" },
+        { "name": "PathID", "type": "uint32" },
+        { "name": "MoveDistance", "type": "float32" },
+        { "name": "MoveSpeed", "type": "float32" }
+      ]
+    },
+    "ObjSpinLaserStraightMoveSpawner": {
+      "parent": "ObjSpinLaserBaseSpawner",
+      "fields": [
+        { "name": "TurnType", "type": "ObjSpinLaserStraightMoveSpawner::TurnType" },
+        { "name": "ThresholdAngle", "type": "float32" },
+        { "name": "IsRepeat", "type": "bool" },
+        { "name": "IsMessageMove", "type": "bool" },
+        { "name": "IsMessageTurn", "type": "bool" },
+        { "name": "ShiftY", "type": "float32" },
+        { "name": "ShiftZ", "type": "float32" },
+        { "name": "ShiftX", "type": "float32" },
+        { "name": "MoveDistance", "type": "float32" },
+        { "name": "MoveSpeed", "type": "float32" }
+      ]
+    },
+    "ObjTurnBarSpawner": {
+      "fields": [
+        { "name": "OutAngle", "type": "float32" },
+        { "name": "FirstSpeed", "type": "float32" },
+        { "name": "OutOfControl", "type": "float32" },
+        { "name": "OutAngleInv", "type": "float32" },
+        { "name": "FirstSpeedInv", "type": "float32" },
+        { "name": "OutOfControlInv", "type": "float32" },
+        { "name": "BoostOutAngle", "type": "float32" },
+        { "name": "BoostFirstSpeed", "type": "float32" },
+        { "name": "BoostOutOfControl", "type": "float32" },
+        { "name": "BoostOutAngleInv", "type": "float32" },
+        { "name": "BoostFirstSpeedInv", "type": "float32" },
+        { "name": "BoostOutOfControlInv", "type": "float32" },
+        { "name": "CameraID", "type": "object_reference" }
+      ]
+    },
+    "ObjGeneratorSpawner": {
+      "fields": [
+        { "name": "KillerSpeed", "type": "float32" },
+        { "name": "RechargeInterval", "type": "float32" },
+        { "name": "BurstDistance", "type": "float32" },
+        { "name": "LaunchesTimeBeforehand", "type": "float32" },
+        { "name": "KillerType", "type": "ObjGeneratorSpawner::KillerType" }
+      ]
+    },
+    "ObjBattleShipShutterSpawner": {
+      "fields": [
+        { "name": "Type", "type": "ObjBattleShipShutterSpawner::Type" }
+      ]
+    },
+    "ObjCatapultSpawner": {
+      "fields": [
+        { "name": "Height", "type": "float32" },
+        { "name": "UpTime", "type": "float32" },
+        { "name": "DownTime", "type": "float32" },
+        { "name": "ImpulsePower", "type": "float32" },
+        { "name": "TargetID", "type": "object_reference" }
+      ]
+    },
+    "ObjLightRoadSpawner": {
+      "fields": [
+        { "name": "PathType", "type": "ObjLightRoadSpawner::PathType" },
+        { "name": "InOutType", "type": "ObjLightRoadSpawner::InOutType" },
+        { "name": "LengthType", "type": "ObjLightRoadSpawner::LengthType" },
+        { "name": "UsageType", "type": "ObjLightRoadSpawner::UsageType" }
+      ]
+    },
+    "ObjMonolithSpawner": {
+      "fields": [
+        { "name": "Phase", "type": "float32" }
+      ]
+    },
+    "ObjPartitionSpawner": {
+      "fields": [
+        { "name": "Type", "type": "ObjPartitionSpawner::Type" },
+        { "name": "Length", "type": "float32" },
+        { "name": "DownMoveTime", "type": "float32" },
+        { "name": "DownMoveTimeUnderHead", "type": "float32" },
+        { "name": "DownTime", "type": "float32" },
+        { "name": "UpMoveTime", "type": "float32" },
+        { "name": "UpTime", "type": "float32" }
+      ]
+    },
+    "ObjShortWarpSpawner": {
+      "fields": [
+        { "name": "Type", "type": "ObjShortWarpSpawner::Type" },
+        { "name": "Scale", "type": "float32" }
+      ]
+    },
+    "ObjWarpHoleSpawner": {
+      "fields": [
+      ]
+    },
+    "ObjGlassFloorSpawner": {
+      "fields": [
+        { "name": "Type", "type": "ObjGlassFloorSpawner::Type" },
+        { "name": "Size", "type": "ObjGlassFloorSpawner::Size" }
+      ]
+    },
+    "ObjAquariumDoorSpawner": {
+      "fields": [
+        { "name": "UpSpeed", "type": "float32" }
+      ]
+    },
+    "ObjFishbushSpawner": {
+      "fields": [
+      ]
+    },
+    "ObjFountainSpawner": {
+      "fields": [
+        { "name": "FirstSpeed", "type": "float32" },
+        { "name": "OutOfControl", "type": "float32" }
+      ]
+    },
+    "ObjGlassBarrierSpawner": {
+      "fields": [
+        { "name": "ItemType", "type": "ObjGlassBarrierSpawner::ItemType" },
+        { "name": "NumItems", "type": "uint32" }
+      ]
+    },
+    "ObjMoraySpawner": {
+      "fields": [
+        { "name": "Type", "type": "ObjMoraySpawner::Type" },
+        { "name": "Length", "type": "float32" },
+        { "name": "AppearMoveTime", "type": "float32" },
+        { "name": "AppearTime", "type": "float32" },
+        { "name": "DisappearMoveTime", "type": "float32" },
+        { "name": "DisappearTime", "type": "float32" }
+      ]
+    },
+    "ObjBreakableMeteorSpawner": {
+      "parent": "ObjMeteorSpawner",
+      "fields": [
+        { "name": "UpSpeed", "type": "float32" },
+        { "name": "SpeedMin", "type": "float32" },
+        { "name": "SpeedMax", "type": "float32" }
+      ]
+    },
+    "ObjGravityCollisionSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "CollisionLength", "type": "float32" },
+        { "name": "EventState", "type": "ObjGravityCollisionSpawner::EventState" }
+      ]
+    },
+    "ObjGravityMachineSpawner": {
+      "fields": [
+        { "name": "RoundRadius", "type": "float32" },
+        { "name": "RoundSpeed", "type": "float32" },
+        { "name": "ShieldSpeed", "type": "float32" }
+      ]
+    },
+    "ObjHatchSpawner": {
+      "fields": [
+        { "name": "Type", "type": "ObjHatchSpawner::Type" },
+        { "name": "speed", "type": "float32" }
+      ]
+    },
+    "ObjLightTimeFloorSpawner": {
+      "fields": [
+        { "name": "OnFloorTime", "type": "float32" },
+        { "name": "ForetasteTime", "type": "float32" },
+        { "name": "AriseTime", "type": "float32" },
+        { "name": "Phase", "type": "float32" },
+        { "name": "FloorSize", "type": "ObjLightTimeFloorSpawner::FloorSize" },
+        { "name": "ActionType", "type": "ObjLightTimeFloorSpawner::ActionType" },
+        { "name": "EventType", "type": "ObjLightTimeFloorSpawner::EventType" }
+      ]
+    },
+    "ObjLongTankSpawner": {
+      "fields": [
+      ]
+    },
+    "ObjMeteorSpawner": {
+      "fields": [
+        { "name": "SizeType", "type": "ObjMeteorSpawner::SizeType" }
+      ]
+    },
+    "ObjPotSpawner": {
+      "fields": [
+        { "name": "UpSpeed", "type": "float32" },
+        { "name": "SpeedMin", "type": "float32" },
+        { "name": "SpeedMax", "type": "float32" }
+      ]
+    },
+    "ObjPushBlockSpawner": {
+      "fields": [
+        { "name": "AppearTime", "type": "float32" },
+        { "name": "DisappearTime", "type": "float32" },
+        { "name": "AppearStopTime", "type": "float32" },
+        { "name": "DisappearStopTime", "type": "float32" },
+        { "name": "Phase", "type": "float32" },
+        { "name": "WaitTime", "type": "float32" },
+        { "name": "AppearDistance", "type": "float32" },
+        { "name": "BlockType", "type": "ObjPushBlockSpawner::BlockType" },
+        { "name": "IsEventStart", "type": "bool" },
+        { "name": "IsPushDead", "type": "bool" }
+      ]
+    },
+    "ObjRollerCoasterSpawner": {
+      "fields": [
+        { "name": "PathID", "type": "uint32" },
+        { "name": "StartPosition", "type": "float32" },
+        { "name": "MaxSpped", "type": "float32" },
+        { "name": "FristSpeed", "type": "float32" },
+        { "name": "Accel", "type": "float32" },
+        { "name": "VehicleNum", "type": "uint32" },
+        { "name": "Type", "type": "ObjRollerCoasterSpawner::Type" },
+        { "name": "PrepareSpeed", "type": "float32" }
+      ]
+    },
+    "ObjRollerCoasterCollisionSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" }
+      ]
+    },
+    "ObjChaserBrokenBlockSpawner": {
+      "fields": [
+      ]
+    },
+    "ObjColorFilterSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "FadeSpeed", "type": "float32" },
+        { "name": "FadeTime", "type": "float32" },
+        { "name": "TopFadeSpeed", "type": "float32" }
+      ]
+    },
+    "ObjDenergySpawner": {
+      "fields": [
+        { "name": "FirstSpeed", "type": "float32" },
+        { "name": "SecondSpeed", "type": "float32" }
+      ]
+    },
+    "ObjFloatingFloorSpawner": {
+      "fields": [
+        { "name": "Type", "type": "ObjFloatingFloorSpawner::Type" },
+        { "name": "MinSpeed", "type": "float32" },
+        { "name": "MaxSpeed", "type": "float32" },
+        { "name": "HideEffect", "type": "bool" }
+      ]
+    },
+    "ObjGoalCollisionSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" }
+      ]
+    },
+    "ObjCleanKillSpawner": {
+      "fields": [
+        { "name": "TargetId", "type": "ObjCleanKillSpawner::TargetId" },
+        { "name": "TargetList", "type": "array", "subtype": "object_reference" },
+        { "name": "LimitTime", "type": "float32" }
+      ]
+    },
+    "ObjEventSetterSpawner": {
+      "fields": [
+        { "name": "TargetList", "type": "array", "subtype": "object_reference" },
+        { "name": "Trigger", "type": "ObjEventSetterSpawner::Trigger" },
+        { "name": "Condition", "type": "ObjEventSetterSpawner::Condition" },
+        { "name": "TimesType", "type": "ObjEventSetterSpawner::TimesType" },
+        { "name": "EventList", "type": "array", "subtype": "object_reference" },
+        { "name": "EventNotifier", "type": "ObjEventSetterSpawner::EventNotifier" },
+        { "name": "EventTimer", "type": "float32" },
+        { "name": "EventList2", "type": "array", "subtype": "object_reference" },
+        { "name": "EventNotifier2", "type": "ObjEventSetterSpawner::EventNotifier2" },
+        { "name": "EventTimer2", "type": "float32" },
+        { "name": "EventList3", "type": "array", "subtype": "object_reference" },
+        { "name": "EventNotifier3", "type": "ObjEventSetterSpawner::EventNotifier3" },
+        { "name": "EventTimer3", "type": "float32" }
+      ]
+    },
+    "ObjHintRingSpawner": {
+      "fields": [
+        { "name": "HintID", "type": "uint32" },
+        { "name": "IsMessageBoot", "type": "bool" },
+        { "name": "OnlyOneBoot", "type": "bool" }
+      ]
+    },
+    "ObjHintRingMultiSpawner": {
+      "fields": [
+        { "name": "HintID", "type": "uint32" },
+        { "name": "HintID2", "type": "uint32" },
+        { "name": "HintID3", "type": "uint32" },
+        { "name": "IsMessageBoot", "type": "bool" },
+        { "name": "OnlyOneBoot", "type": "bool" }
+      ]
+    },
+    "ObjGrouperSpawner": {
+      "fields": [
+        { "name": "TargetList", "type": "array", "subtype": "object_reference" },
+        { "name": "Connect", "type": "bool" }
+      ]
+    },
+    "ObjLayerBoardSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "OnLayer0", "type": "uint8" },
+        { "name": "OnLayer1", "type": "uint8" },
+        { "name": "OffLayer0", "type": "uint8" },
+        { "name": "OffLayer1", "type": "uint8" },
+        { "name": "IsBackEffective", "type": "bool" }
+      ]
+    },
+    "ObjPointMarkerSpawner": {
+      "fields": [
+        { "name": "Width", "type": "float32" },
+        { "name": "Height", "type": "float32" },
+        { "name": "StageType", "type": "ObjPointMarkerSpawner::StageType" }
+      ]
+    },
+    "ObjShadowSpawner": {
+      "fields": [
+        { "name": "Width", "type": "float32" },
+        { "name": "Height", "type": "float32" },
+        { "name": "Depth", "type": "float32" }
+      ]
+    },
+    "TestObjSpawner": {
+      "fields": [
+      ]
+    },
+    "CCTTestObjSpawner": {
+      "fields": [
+      ]
+    },
+    "ObjAppearThornBallSpawner": {
+      "fields": [
+        { "name": "Time", "type": "float32" },
+        { "name": "Distance", "type": "float32" }
+      ]
+    },
+    "ObjChainSpikeBallSpawner": {
+      "fields": [
+        { "name": "Radius", "type": "float32" },
+        { "name": "AngularSpeed", "type": "float32" },
+        { "name": "Phase", "type": "float32" },
+        { "name": "RotateType", "type": "ObjChainSpikeBallSpawner::RotateType" }
+      ]
+    },
+    "ObjChaserBombSpawner": {
+      "fields": [
+        { "name": "ThresholdStubmle", "type": "float32" },
+        { "name": "IsBigChaserMode", "type": "bool" }
+      ]
+    },
+    "ObjDirectionalThornSpawner": {
+      "fields": [
+        { "name": "OffTime", "type": "float32" },
+        { "name": "OnTime", "type": "float32" },
+        { "name": "MoveTime", "type": "float32" },
+        { "name": "ForetasteTime", "type": "float32" },
+        { "name": "Phase", "type": "float32" },
+        { "name": "TargetID", "type": "object_reference" },
+        { "name": "UsePanel", "type": "bool" },
+        { "name": "Type", "type": "ObjDirectionalThornSpawner::Type" }
+      ]
+    },
+    "ObjFlameSpawner": {
+      "fields": [
+        { "name": "OffTime", "type": "float32" },
+        { "name": "OnTime", "type": "float32" },
+        { "name": "LengthType", "type": "ObjFlameSpawner::LengthType" },
+        { "name": "Phase", "type": "float32" },
+        { "name": "Type", "type": "ObjFlameSpawner::Type" }
+      ]
+    },
+    "ObjGrindThornSpawner": {
+      "fields": [
+      ]
+    },
+    "ObjMovingThornBallSpawner": {
+      "fields": [
+        { "name": "Time", "type": "float32" },
+        { "name": "Distance", "type": "float32" },
+        { "name": "Phase", "type": "float32" },
+        { "name": "Direction", "type": "ObjMovingThornBallSpawner::Direction" }
+      ]
+    },
+    "ObjRollingBallSpawner": {
+      "fields": [
+        { "name": "Radius", "type": "float32" },
+        { "name": "Cycle", "type": "float32" },
+        { "name": "Phase", "type": "float32" },
+        { "name": "BallCount", "type": "uint8" },
+        { "name": "Option", "type": "ObjRollingBallSpawner::Option" }
+      ]
+    },
+    "ObjThornBallSpawner": {
+      "fields": [
+      ]
+    },
+    "ObjThornCylinderSpawner": {
+      "fields": [
+        { "name": "IsLongModel", "type": "bool" }
+      ]
+    },
+    "ObjEnvSoundSpawner": {
+      "fields": [
+        { "name": "CueID", "type": "uint32" },
+        { "name": "Volume", "type": "float32" },
+        { "name": "IsPlay3D", "type": "bool" }
+      ]
+    },
+    "ObjPathSoundSourceSpawner": {
+      "fields": [
+        { "name": "CueID", "type": "uint32" },
+        { "name": "Volume", "type": "float32" },
+        { "name": "PathID", "type": "uint32" }
+      ]
+    },
+    "ObjSoundBoardSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionHeight", "type": "float32" },
+        { "name": "TargetID", "type": "object_reference" }
+      ]
+    },
+    "ObjTimerSoundSpawner": {
+      "fields": [
+        { "name": "CueID", "type": "uint32" },
+        { "name": "Volume", "type": "float32" },
+        { "name": "UndampedRange", "type": "float32" },
+        { "name": "Interval", "type": "float32" }
+      ]
+    },
+    "ObjWindNoiseCollisionSpawner": {
+      "fields": [
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CollisionWidth", "type": "float32" },
+        { "name": "CueID", "type": "uint32" },
+        { "name": "EmitterPos", "type": "vector3" }
+      ]
+    }
+  },
+  "objects": {
+    "Camera2D": {
+      "struct": "ObjCamera2DSpawner",
+      "categories": [
+        "Camera"
+      ]
+    },
+    "Camera3D": {
+      "struct": "ObjCamera3DSpawner",
+      "categories": [
+        "Camera"
+      ]
+    },
+    "CameraCollisionBoard": {
+      "struct": "CameraCollisionBoardSpawner",
+      "categories": [
+        "Camera"
+      ]
+    },
+    "EventVolumeCameraChange": {
+      "struct": "EventVolumeCameraChangeSpawner",
+      "categories": [
+        "Camera"
+      ]
+    },
+    "FixCamera": {
+      "struct": "ObjCameraFixSpawner",
+      "categories": [
+        "Camera"
+      ]
+    },
+    "ObjectLookCamera": {
+      "struct": "ObjCameraObjectLookSpawner",
+      "categories": [
+        "Camera"
+      ]
+    },
+    "PanCamera": {
+      "struct": "ObjCameraPanSpawner",
+      "categories": [
+        "Camera"
+      ]
+    },
+    "PanVerticalCamera": {
+      "struct": "ObjCameraPanVerticalSpawner",
+      "categories": [
+        "Camera"
+      ]
+    },
+    "ParallelCamera": {
+      "struct": "ObjCameraParallelSpawner",
+      "categories": [
+        "Camera"
+      ]
+    },
+    "PathLookCamera": {
+      "struct": "ObjCameraPathLookSpawner",
+      "categories": [
+        "Camera"
+      ]
+    },
+    "PathPathCamera": {
+      "struct": "ObjCameraPathPathSpawner",
+      "categories": [
+        "Camera"
+      ]
+    },
+    "PathTargetCamera": {
+      "struct": "ObjCameraPathTargetSpawner",
+      "categories": [
+        "Camera"
+      ]
+    },
+    "PointCamera": {
+      "struct": "ObjCameraPointSpawner",
+      "categories": [
+        "Camera"
+      ]
+    },
+    "PointVerticalCamera": {
+      "struct": "ObjCameraPointVerticalSpawner",
+      "categories": [
+        "Camera"
+      ]
+    },
+    "StopCamera": {
+      "struct": "ObjCameraStopSpawner",
+      "categories": [
+        "Camera"
+      ]
+    },
+    "SubjectiveCamera": {
+      "struct": "ObjCameraSubjectiveSpawner",
+      "categories": [
+        "Camera"
+      ]
+    },
+    "AutorunCollisionEnd": {
+      "struct": "ObjAutorunCollisionEndSpawner",
+      "categories": [
+        "Collision"
+      ]
+    },
+    "AutorunCollisionStart": {
+      "struct": "ObjAutorunCollisionStartSpawner",
+      "categories": [
+        "Collision"
+      ]
+    },
+    "ChangeDiveModeEnd": {
+      "struct": "ObjChangeDiveModeEndSpawner",
+      "categories": [
+        "Collision"
+      ]
+    },
+    "ChangeDiveModeStart": {
+      "struct": "ObjChangeDiveModeStartSpawner",
+      "categories": [
+        "Collision"
+      ]
+    },
+    "ChageMode_3Dto2D": {
+      "struct": "EventDimChange3Dto2DSpawner",
+      "categories": [
+        "Collision"
+      ]
+    },
+    "ChageMode_3DtoDash": {
+      "struct": "EventDimChange3DtoDashSpawner",
+      "categories": [
+        "Collision"
+      ]
+    },
+    "ChageMode_3DtoForward": {
+      "struct": "EventDimChange3DtoForwardSpawner",
+      "categories": [
+        "Collision"
+      ]
+    },
+    "ChageMode_2DtoForward": {
+      "struct": "EventDimChange2DtoForwardSpawner",
+      "categories": [
+        "Collision"
+      ]
+    },
+    "DriftCollision": {
+      "struct": "ObjDriftCollisionSpawner",
+      "categories": [
+        "Collision"
+      ]
+    },
+    "FallDeadCollision": {
+      "struct": "EventFallDeadSpawner",
+      "categories": [
+        "Collision"
+      ]
+    },
+    "EventJumpCollision": {
+      "struct": "ObjEventJumpCollisionSpawner",
+      "categories": [
+        "Collision"
+      ]
+    },
+    "EventNavigationCollision": {
+      "struct": "ObjEventNavigationCollisionSpawner",
+      "categories": [
+        "Collision"
+      ]
+    },
+    "EventNavigationCollisionPlane": {
+      "struct": "ObjEventNavigationCollisionPlaneSpawner",
+      "categories": [
+        "Collision"
+      ]
+    },
+    "EventPathHolding": {
+      "struct": "ObjEventPathHoldingSpawner",
+      "categories": [
+        "Collision"
+      ]
+    },
+    "EventSpiralPipe": {
+      "struct": "ObjEventSpiralPipeSpawner",
+      "categories": [
+        "Collision"
+      ]
+    },
+    "EventStumbleCollision": {
+      "struct": "ObjEventStumbleCollisionSpawner",
+      "categories": [
+        "Collision"
+      ]
+    },
+    "KeepRunningCollision": {
+      "struct": "ObjKeepRunningCollisionSpawner",
+      "categories": [
+        "Collision"
+      ]
+    },
+    "OutOfControlCollision": {
+      "struct": "ObjOutOfControlCollisionSpawner",
+      "categories": [
+        "Collision"
+      ]
+    },
+    "PhantomCancelCollision": {
+      "struct": "ObjPhantomCancelCollisionSpawner",
+      "categories": [
+        "Collision"
+      ]
+    },
+    "SetRigidBody": {
+      "struct": "ObjSetRigidBodySpawner",
+      "categories": [
+        "Collision"
+      ]
+    },
+    "SwitchCollision": {
+      "struct": "ObjSwitchCollisionSpawner",
+      "categories": [
+        "Collision"
+      ]
+    },
+    "FlowEx": {
+      "struct": "ObjFlowExSpawner",
+      "categories": [
+        "Design"
+      ]
+    },
+    "Gismo": {
+      "struct": "ObjGismoSpawner",
+      "categories": [
+        "Design"
+      ]
+    },
+    "SetParticle": {
+      "struct": "ObjSetParticleSpawner",
+      "categories": [
+        "Design"
+      ]
+    },
+    "enmEggPawn_rso": {
+      "struct": "EnemyEggPawn_rsoSpawner",
+      "categories": [
+        "Enemy/01-WelcomeResort"
+      ]
+    },
+    "enmEggPawn_fct": {
+      "struct": "EnemyEggPawn_fctSpawner",
+      "categories": [
+        "Enemy/02-SweetFactory"
+      ]
+    },
+    "enmEggPawn_shp": {
+      "struct": "EnemyEggPawn_shpSpawner",
+      "categories": [
+        "Enemy/03-StarshipParade"
+      ]
+    },
+    "enmEggPawn_pla": {
+      "struct": "EnemyEggPawn_plaSpawner",
+      "categories": [
+        "Enemy/04-PlanetPixie"
+      ]
+    },
+    "enmEggPawn_qua": {
+      "struct": "EnemyEggPawn_quaSpawner",
+      "categories": [
+        "Enemy/05-ExoticAquarium"
+      ]
+    },
+    "enmBatabata": {
+      "struct": "EnemyBatabataSpawner",
+      "categories": [
+        "Enemy/05-ExoticAquarium"
+      ]
+    },
+    "enmJaws": {
+      "struct": "EnemyJawsSpawner",
+      "categories": [
+        "Enemy/05-ExoticAquarium"
+      ]
+    },
+    "enmEggPawn_ast": {
+      "struct": "EnemyEggPawn_astSpawner",
+      "categories": [
+        "Enemy/06-AsteroidCoaster"
+      ]
+    },
+    "enmEggPawnNormal_elv": {
+      "struct": "EnemyEggPawnNormal_elvSpawner",
+      "categories": [
+        "Enemy/07-FinalRoad"
+      ]
+    },
+    "enmEggPawn_elv": {
+      "struct": "EnemyEggPawn_elvSpawner",
+      "categories": [
+        "Enemy/07-FinalRoad"
+      ]
+    },
+    "bossBattleShip": {
+      "struct": "BossBattleShipSpawner",
+      "categories": [
+        "Enemy/Boss/BattleShip"
+      ]
+    },
+    "bossAsteroid": {
+      "struct": "BossAsteroidSpawner",
+      "categories": [
+        "Enemy/Boss/BattleShip"
+      ]
+    },
+    "bossEggMobile": {
+      "struct": "BossEggMobileSpawner",
+      "categories": [
+        "Enemy/Boss/EggMobile"
+      ]
+    },
+    "bossFerrisWheel": {
+      "struct": "BossFerrisWheelSpawner",
+      "categories": [
+        "Enemy/Boss/FerrisWheel"
+      ]
+    },
+    "bossCoffeeCup": {
+      "struct": "BossCoffeeCupSpawner",
+      "categories": [
+        "Enemy/Boss/FerrisWheel"
+      ]
+    },
+    "CoffeeCup": {
+      "struct": "ObjCoffeeCupSpawner",
+      "categories": [
+        "Enemy/Boss/FerrisWheel"
+      ]
+    },
+    "Gondola": {
+      "struct": "ObjGondolaSpawner",
+      "categories": [
+        "Enemy/Boss/FerrisWheel"
+      ]
+    },
+    "PirateCannon": {
+      "struct": "ObjPirateCannonSpawner",
+      "categories": [
+        "Enemy/Boss/Pirate"
+      ]
+    },
+    "PirateSeqCoordinator": {
+      "struct": "ObjPirateSeqCoordinatorSpawner",
+      "categories": [
+        "Enemy/Boss/Pirate"
+      ]
+    },
+    "SubmarineCannon": {
+      "struct": "ObjSubmarineCannonSpawner",
+      "categories": [
+        "Enemy/Boss/Pirate"
+      ]
+    },
+    "SubmarineSeqCoordinator": {
+      "struct": "ObjSubmarineSeqCoordinatorSpawner",
+      "categories": [
+        "Enemy/Boss/Pirate"
+      ]
+    },
+    "ICBM": {
+      "struct": "ObjICBMSpawner",
+      "categories": [
+        "Enemy/Boss/Pirate"
+      ]
+    },
+    "enmBeeton": {
+      "struct": "EnemyBeetonSpawner",
+      "categories": [
+        "Enemy/Common"
+      ]
+    },
+    "enmEggPawn": {
+      "struct": "EnemyEggPawnNormalSpawner",
+      "categories": [
+        "Enemy/Common"
+      ]
+    },
+    "enmEggPawnGun": {
+      "struct": "EnemyEggPawnGunSpawner",
+      "categories": [
+        "Enemy/Common"
+      ]
+    },
+    "enmEggPawnKnight": {
+      "struct": "EnemyEggPawnKnightSpawner",
+      "categories": [
+        "Enemy/Common"
+      ]
+    },
+    "enmEggPawnLance": {
+      "struct": "EnemyEggPawnLanceSpawner",
+      "categories": [
+        "Enemy/Common"
+      ]
+    },
+    "enmGanigani": {
+      "struct": "EnemyGaniganiSpawner",
+      "categories": [
+        "Enemy/Common"
+      ]
+    },
+    "enmLarva": {
+      "struct": "EnemyLarvaSpawner",
+      "categories": [
+        "Enemy/Common"
+      ]
+    },
+    "enmMole": {
+      "struct": "EnemyMoleSpawner",
+      "categories": [
+        "Enemy/Common"
+      ]
+    },
+    "enmNal": {
+      "struct": "EnemyNalSpawner",
+      "categories": [
+        "Enemy/Common"
+      ]
+    },
+    "enmSpanner": {
+      "struct": "EnemySpannerSpawner",
+      "categories": [
+        "Enemy/Common"
+      ]
+    },
+    "enmSparva": {
+      "struct": "EnemySparvaSpawner",
+      "categories": [
+        "Enemy/Common"
+      ]
+    },
+    "enmSpinner": {
+      "struct": "EnemySpinnerSpawner",
+      "categories": [
+        "Enemy/Common"
+      ]
+    },
+    "BigChaserEventCollision": {
+      "struct": "ObjBigChaserEventCollisionSpawner",
+      "categories": [
+        "Enemy/Common/enmBigChaser"
+      ]
+    },
+    "enmBigChaser": {
+      "struct": "EnemyBigChaserSpawner",
+      "categories": [
+        "Enemy/Common/enmBigChaser"
+      ]
+    },
+    "EggChaserEventCollision": {
+      "struct": "ObjEggChaserEventCollisionSpawner",
+      "categories": [
+        "Enemy/Common/enmEggChaser"
+      ]
+    },
+    "enmEggChaser": {
+      "struct": "EnemyEggChaserSpawner",
+      "categories": [
+        "Enemy/Common/enmEggChaser"
+      ]
+    },
+    "MotoraEventCollision": {
+      "struct": "ObjMotoraEventCollisionSpawner",
+      "categories": [
+        "Enemy/Common/enmMotora"
+      ]
+    },
+    "enmMotora": {
+      "struct": "EnemyMotoraSpawner",
+      "categories": [
+        "Enemy/Common/enmMotora"
+      ]
+    },
+    "enmMotoraEvent": {
+      "struct": "EnemyMotoraEventSpawner",
+      "categories": [
+        "Enemy/Common/enmMotora"
+      ]
+    },
+    "enmLander": {
+      "struct": "EnemyLanderSpawner",
+      "categories": [
+        "Enemy/Other"
+      ]
+    },
+    "enmSprinkler": {
+      "struct": "EnemySprinklerSpawner",
+      "categories": [
+        "Enemy/Other"
+      ]
+    },
+    "enmMetalSpinner": {
+      "struct": "EnemyMetalSpinnerSpawner",
+      "categories": [
+        "Enemy/Other"
+      ]
+    },
+    "enmMetalSpanner": {
+      "struct": "EnemyMetalSpannerSpawner",
+      "categories": [
+        "Enemy/Other"
+      ]
+    },
+    "AirSpring": {
+      "struct": "ObjAirSpringSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "Balloon": {
+      "struct": "ObjBalloonSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "ChainFloor": {
+      "struct": "ObjChainFloorSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "CommonFloor": {
+      "struct": "ObjCommonFloorSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "CommonWall": {
+      "struct": "ObjCommonWallSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "DashPanel": {
+      "struct": "ObjDashPanelSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "DashRing": {
+      "struct": "ObjDashRingSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "DestBox": {
+      "struct": "ObjDestBoxSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "DummySpring": {
+      "struct": "ObjDummySpringSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "Fan": {
+      "struct": "ObjFanSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "GrindBooster": {
+      "struct": "ObjGrindBoosterSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "IronBox": {
+      "struct": "ObjIronBoxSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "JumpBoard": {
+      "struct": "ObjJumpBoardSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "JumpSelector": {
+      "struct": "ObjJumpSelectorSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "Pulley": {
+      "struct": "ObjPulleySpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "PulleyColumn": {
+      "struct": "ObjPulleyColumnSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "PushBox": {
+      "struct": "ObjPushBoxSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "RainbowRing": {
+      "struct": "ObjRainbowRingSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "Spring": {
+      "struct": "ObjSpringSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "SpringPole": {
+      "struct": "ObjSpringPoleSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "Switch": {
+      "struct": "ObjSwitchSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "TrickJump": {
+      "struct": "ObjTrickJumpSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "UpReel": {
+      "struct": "ObjUpReelSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "WaterFan": {
+      "struct": "ObjWaterFanSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "WideSpring": {
+      "struct": "ObjWideSpringSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "WoodBox": {
+      "struct": "ObjWoodBoxSpawner",
+      "categories": [
+        "Gimmick"
+      ]
+    },
+    "1UP": {
+      "struct": "ObjOneUpSpawner",
+      "categories": [
+        "Item"
+      ]
+    },
+    "BubbleGenerator": {
+      "struct": "ObjBubbleGeneratorSpawner",
+      "categories": [
+        "Item"
+      ]
+    },
+    "FlyReleaseBoxSmall": {
+      "struct": "ObjFlyReleaseBoxSmallSpawner",
+      "categories": [
+        "Item"
+      ]
+    },
+    "GoalRing": {
+      "struct": "ObjGoalRingSpawner",
+      "categories": [
+        "Item",
+        "Multiplay"
+      ]
+    },
+    "RedRing": {
+      "struct": "ObjRedRingSpawner",
+      "categories": [
+        "Item"
+      ]
+    },
+    "ReleaseBoxBig": {
+      "struct": "ObjReleaseBoxBigSpawner",
+      "categories": [
+        "Item"
+      ]
+    },
+    "ReleaseBoxSmall": {
+      "struct": "ObjReleaseBoxSmallSpawner",
+      "categories": [
+        "Item"
+      ]
+    },
+    "Ring": {
+      "struct": "ObjRingSpawner",
+      "categories": [
+        "Item"
+      ]
+    },
+    "SuperRing": {
+      "struct": "ObjSuperRingSpawner",
+      "categories": [
+        "Item"
+      ]
+    },
+    "BombBlock": {
+      "struct": "ObjBombBlockSpawner",
+      "categories": [
+        "Mission"
+      ]
+    },
+    "PlasmaCannon": {
+      "struct": "ObjPlasmaCannonSpawner",
+      "categories": [
+        "Mission"
+      ]
+    },
+    "Reproduction": {
+      "struct": "ObjReproductionSpawner",
+      "categories": [
+        "Mission"
+      ]
+    },
+    "Shooting": {
+      "struct": "ObjShootingSpawner",
+      "categories": [
+        "Mission"
+      ]
+    },
+    "Vault": {
+      "struct": "ObjVaultSpawner",
+      "categories": [
+        "Mission"
+      ]
+    },
+    "BigCatapult": {
+      "struct": "ObjBigCatapultSpawner",
+      "categories": [
+        "Multiplay"
+      ]
+    },
+    "Billiard": {
+      "struct": "ObjBilliardSpawner",
+      "categories": [
+        "Multiplay"
+      ]
+    },
+    "ChageMode_toLoop": {
+      "struct": "EventDimChangetoLoopSpawner",
+      "categories": [
+        "Multiplay"
+      ]
+    },
+    "EggmanMedal": {
+      "struct": "ObjEggmanMedalSpawner",
+      "categories": [
+        "Multiplay"
+      ]
+    },
+    "EggMaskBox": {
+      "struct": "ObjEggMaskBoxSpawner",
+      "categories": [
+        "Multiplay"
+      ]
+    },
+    "EggMaskCollision": {
+      "struct": "ObjEggMaskCollisionSpawner",
+      "categories": [
+        "Multiplay"
+      ]
+    },
+    "MapPartsBox": {
+      "struct": "ObjMapPartsBoxSpawner",
+      "categories": [
+        "Multiplay"
+      ]
+    },
+    "MapPartsPlane": {
+      "struct": "ObjMapPartsPlaneSpawner",
+      "categories": [
+        "Multiplay"
+      ]
+    },
+    "MapPartsMesh": {
+      "struct": "ObjMapPartsMeshSpawner",
+      "categories": [
+        "Multiplay"
+      ]
+    },
+    "MultiBoostBox": {
+      "struct": "ObjMultiBoostBoxSpawner",
+      "categories": [
+        "Multiplay"
+      ]
+    },
+    "MultiPhantomBox": {
+      "struct": "ObjMultiPhantomBoxSpawner",
+      "categories": [
+        "Multiplay"
+      ]
+    },
+    "PunchingBall": {
+      "struct": "ObjPunchingBallSpawner",
+      "categories": [
+        "Multiplay"
+      ]
+    },
+    "Slot": {
+      "struct": "ObjSlotSpawner",
+      "categories": [
+        "Multiplay"
+      ]
+    },
+    "SprialDoor": {
+      "struct": "ObjSprialDoorSpawner",
+      "categories": [
+        "Multiplay"
+      ]
+    },
+    "WaterCollision": {
+      "struct": "ObjWaterCollisionSpawner",
+      "categories": [
+        "Multiplay"
+      ]
+    },
+    "PhantomObjBreakable": {
+      "struct": "ObjPhantomObjBreakableSpawner",
+      "categories": [
+        "Phantom/00-Common"
+      ]
+    },
+    "Bomb": {
+      "struct": "ObjBombSpawner",
+      "categories": [
+        "Phantom/01-Spin"
+      ]
+    },
+    "ConnectionPipe": {
+      "struct": "ObjConnectionPipeSpawner",
+      "categories": [
+        "Phantom/01-Spin"
+      ]
+    },
+    "EventLaserCancelCollision": {
+      "struct": "ObjEventLaserCancelCollisionSpawner",
+      "categories": [
+        "Phantom/02-Laser"
+      ]
+    },
+    "Prism": {
+      "struct": "ObjPrismSpawner",
+      "categories": [
+        "Phantom/02-Laser"
+      ]
+    },
+    "Fiber": {
+      "struct": "ObjFiberSpawner",
+      "categories": [
+        "Phantom/02-Laser"
+      ]
+    },
+    "CogWheel": {
+      "struct": "ObjCogWheelSpawner",
+      "categories": [
+        "Phantom/03-Spike"
+      ]
+    },
+    "RotationGlobe": {
+      "struct": "ObjRotationGlobeSpawner",
+      "categories": [
+        "Phantom/03-Spike"
+      ]
+    },
+    "PuzzleRing": {
+      "struct": "ObjPuzzleRingSpawner",
+      "categories": [
+        "Phantom/06-Puzzle"
+      ]
+    },
+    "SpinLaser": {
+      "struct": "ObjSpinLaserSpawner",
+      "categories": [
+        "Phantom/07-Astro"
+      ]
+    },
+    "SpinLaserPathMove": {
+      "struct": "ObjSpinLaserPathMoveSpawner",
+      "categories": [
+        "Phantom/07-Astro"
+      ]
+    },
+    "SpinLaserStraightMove": {
+      "struct": "ObjSpinLaserStraightMoveSpawner",
+      "categories": [
+        "Phantom/07-Astro"
+      ]
+    },
+    "TurnBar": {
+      "struct": "ObjTurnBarSpawner",
+      "categories": [
+        "Stage/02-SweetFactory"
+      ]
+    },
+    "Generator": {
+      "struct": "ObjGeneratorSpawner",
+      "categories": [
+        "Stage/02-SweetFactory"
+      ]
+    },
+    "BattleShipShutter": {
+      "struct": "ObjBattleShipShutterSpawner",
+      "categories": [
+        "Stage/03-StarShipParade"
+      ]
+    },
+    "Catapult": {
+      "struct": "ObjCatapultSpawner",
+      "categories": [
+        "Stage/03-StarShipParade"
+      ]
+    },
+    "LightRoad": {
+      "struct": "ObjLightRoadSpawner",
+      "categories": [
+        "Stage/03-StarShipParade"
+      ]
+    },
+    "Monolith": {
+      "struct": "ObjMonolithSpawner",
+      "categories": [
+        "Stage/03-StarShipParade"
+      ]
+    },
+    "Partition": {
+      "struct": "ObjPartitionSpawner",
+      "categories": [
+        "Stage/03-StarShipParade"
+      ]
+    },
+    "ShortWarp": {
+      "struct": "ObjShortWarpSpawner",
+      "categories": [
+        "Stage/03-StarShipParade"
+      ]
+    },
+    "WarpHole": {
+      "struct": "ObjWarpHoleSpawner",
+      "categories": [
+        "Stage/03-StarShipParade"
+      ]
+    },
+    "GlassFloor": {
+      "struct": "ObjGlassFloorSpawner",
+      "categories": [
+        "Stage/04-PlanetPixie"
+      ]
+    },
+    "AquariumDoor": {
+      "struct": "ObjAquariumDoorSpawner",
+      "categories": [
+        "Stage/05-ExoticAquarium"
+      ]
+    },
+    "Fishbush": {
+      "struct": "ObjFishbushSpawner",
+      "categories": [
+        "Stage/05-ExoticAquarium"
+      ]
+    },
+    "Fountain": {
+      "struct": "ObjFountainSpawner",
+      "categories": [
+        "Stage/05-ExoticAquarium"
+      ]
+    },
+    "GlassBarrier": {
+      "struct": "ObjGlassBarrierSpawner",
+      "categories": [
+        "Stage/05-ExoticAquarium"
+      ]
+    },
+    "Moray": {
+      "struct": "ObjMoraySpawner",
+      "categories": [
+        "Stage/05-ExoticAquarium"
+      ]
+    },
+    "BreakableMeteor": {
+      "struct": "ObjBreakableMeteorSpawner",
+      "categories": [
+        "Stage/06-AsteroidCoaster"
+      ]
+    },
+    "GravityCollision": {
+      "struct": "ObjGravityCollisionSpawner",
+      "categories": [
+        "Stage/06-AsteroidCoaster"
+      ]
+    },
+    "GravityMachine": {
+      "struct": "ObjGravityMachineSpawner",
+      "categories": [
+        "Stage/06-AsteroidCoaster"
+      ]
+    },
+    "Hatch": {
+      "struct": "ObjHatchSpawner",
+      "categories": [
+        "Stage/06-AsteroidCoaster"
+      ]
+    },
+    "LightTimeFloor": {
+      "struct": "ObjLightTimeFloorSpawner",
+      "categories": [
+        "Stage/06-AsteroidCoaster",
+        "Multiplay"
+      ]
+    },
+    "LongTank": {
+      "struct": "ObjLongTankSpawner",
+      "categories": [
+        "Stage/06-AsteroidCoaster"
+      ]
+    },
+    "Meteor": {
+      "struct": "ObjMeteorSpawner",
+      "categories": [
+        "Stage/06-AsteroidCoaster"
+      ]
+    },
+    "Pot": {
+      "struct": "ObjPotSpawner",
+      "categories": [
+        "Stage/06-AsteroidCoaster"
+      ]
+    },
+    "PushBlock": {
+      "struct": "ObjPushBlockSpawner",
+      "categories": [
+        "Stage/06-AsteroidCoaster"
+      ]
+    },
+    "RollerCoaster": {
+      "struct": "ObjRollerCoasterSpawner",
+      "categories": [
+        "Stage/06-AsteroidCoaster"
+      ]
+    },
+    "RollerCoasterCollision": {
+      "struct": "ObjRollerCoasterCollisionSpawner",
+      "categories": [
+        "Stage/06-AsteroidCoaster"
+      ]
+    },
+    "ChaserBrokenBlock": {
+      "struct": "ObjChaserBrokenBlockSpawner",
+      "categories": [
+        "Stage/07-FinalRoad"
+      ]
+    },
+    "ColorFilter": {
+      "struct": "ObjColorFilterSpawner",
+      "categories": [
+        "Stage/07-FinalRoad"
+      ]
+    },
+    "Denergy": {
+      "struct": "ObjDenergySpawner",
+      "categories": [
+        "Stage/07-FinalRoad"
+      ]
+    },
+    "FloatingFloor": {
+      "struct": "ObjFloatingFloorSpawner",
+      "categories": [
+        "Stage/07-FinalRoad"
+      ]
+    },
+    "GoalCollision": {
+      "struct": "ObjGoalCollisionSpawner",
+      "categories": [
+        "Stage/07-FinalRoad"
+      ]
+    },
+    "CleanKill": {
+      "struct": "ObjCleanKillSpawner",
+      "categories": [
+        "System"
+      ]
+    },
+    "EventSetter": {
+      "struct": "ObjEventSetterSpawner",
+      "categories": [
+        "System"
+      ]
+    },
+    "HintRing": {
+      "struct": "ObjHintRingSpawner",
+      "categories": [
+        "System"
+      ]
+    },
+    "HintRingMulti": {
+      "struct": "ObjHintRingMultiSpawner",
+      "categories": [
+        "System"
+      ]
+    },
+    "Grouper": {
+      "struct": "ObjGrouperSpawner",
+      "categories": [
+        "System"
+      ]
+    },
+    "LayerBoard": {
+      "struct": "ObjLayerBoardSpawner",
+      "categories": [
+        "System"
+      ]
+    },
+    "PointMarker": {
+      "struct": "ObjPointMarkerSpawner",
+      "categories": [
+        "System"
+      ]
+    },
+    "Shadow": {
+      "struct": "ObjShadowSpawner",
+      "categories": [
+        "System"
+      ]
+    },
+    "TestObj": {
+      "struct": "TestObjSpawner",
+      "categories": [
+        "System"
+      ]
+    },
+    "CCTTestObj": {
+      "struct": "CCTTestObjSpawner",
+      "categories": [
+        "System"
+      ]
+    },
+    "AppearThornBall": {
+      "struct": "ObjAppearThornBallSpawner",
+      "categories": [
+        "Trap"
+      ]
+    },
+    "ChainSpikeBall": {
+      "struct": "ObjChainSpikeBallSpawner",
+      "categories": [
+        "Trap"
+      ]
+    },
+    "ChaserBomb": {
+      "struct": "ObjChaserBombSpawner",
+      "categories": [
+        "Trap"
+      ]
+    },
+    "DirectionalThorn": {
+      "struct": "ObjDirectionalThornSpawner",
+      "categories": [
+        "Trap"
+      ]
+    },
+    "Flame": {
+      "struct": "ObjFlameSpawner",
+      "categories": [
+        "Trap"
+      ]
+    },
+    "GrindThorn": {
+      "struct": "ObjGrindThornSpawner",
+      "categories": [
+        "Trap"
+      ]
+    },
+    "MovingThornBall": {
+      "struct": "ObjMovingThornBallSpawner",
+      "categories": [
+        "Trap"
+      ]
+    },
+    "RollingBall": {
+      "struct": "ObjRollingBallSpawner",
+      "categories": [
+        "Trap"
+      ]
+    },
+    "ThornBall": {
+      "struct": "ObjThornBallSpawner",
+      "categories": [
+        "Trap"
+      ]
+    },
+    "ThornCylinder": {
+      "struct": "ObjThornCylinderSpawner",
+      "categories": [
+        "Trap"
+      ]
+    },
+    "EnvSound": {
+      "struct": "ObjEnvSoundSpawner",
+      "categories": [
+        "Sound"
+      ]
+    },
+    "PathSoundSource": {
+      "struct": "ObjPathSoundSourceSpawner",
+      "categories": [
+        "Sound"
+      ]
+    },
+    "SoundBoard": {
+      "struct": "ObjSoundBoardSpawner",
+      "categories": [
+        "Sound"
+      ]
+    },
+    "TimerSound": {
+      "struct": "ObjTimerSoundSpawner",
+      "categories": [
+        "Sound"
+      ]
+    },
+    "WindNoiseCollision": {
+      "struct": "ObjWindNoiseCollisionSpawner",
+      "categories": [
+        "Sound"
+      ]
+    }
+  }
+}
