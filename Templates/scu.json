@@ -877,9 +877,7 @@
       "fields": [
         { "name": "FovY", "type": "float32" },
         { "name": "BaseSpacePathPosition", "type": "float32" },
-        { "name": "SphericalPositionX", "type": "float32" },
-        { "name": "SphericalPositionY", "type": "float32" },
-        { "name": "SphericalPositionZ", "type": "float32" },
+        { "name": "SphericalPosition", "type": "vector3" },
         { "name": "TargetUpOffset", "type": "float32" },
         { "name": "TargetFrontOffset", "type": "float32" },
         { "name": "TargetFrontOffsetMax", "type": "float32" },
@@ -956,9 +954,7 @@
         { "name": "TargetPositionFix", "type": "vector3" },
         { "name": "TargetObject", "type": "object_reference" },
         { "name": "Distance", "type": "float32" },
-        { "name": "TargetOffsetWorldX", "type": "float32" },
-        { "name": "TargetOffsetWorldY", "type": "float32" },
-        { "name": "TargetOffsetWorldZ", "type": "float32" },
+        { "name": "TargetOffsetWorld", "type": "vector3" },
         { "name": "TargetOffsetRight", "type": "float32" },
         { "name": "TargetOffsetUp", "type": "float32" },
         { "name": "TargetOffsetFront", "type": "float32" }
@@ -1388,9 +1384,7 @@
         { "name": "EffectID", "type": "uint32" },
         { "name": "OnTime", "type": "float32" },
         { "name": "OffTime", "type": "float32" },
-        { "name": "ScaleX", "type": "float32" },
-        { "name": "ScaleY", "type": "float32" },
-        { "name": "ScaleZ", "type": "float32" },
+        { "name": "Scale", "type": "vector3" },
         { "name": "Trigger", "type": "ObjSetParticleSpawner::Trigger" }
       ]
     },
@@ -1976,34 +1970,13 @@
     "BossCoffeeCupSpawner": {
       "parent": "BossFerrisWheelBaseSpawner",
       "fields": [
-        { "name": "AttackTime[0]", "type": "float32" },
-        { "name": "AttackTime[1]", "type": "float32" },
-        { "name": "AttackTime[2]", "type": "float32" }
+        { "name": "AttackTime", "type": "array", "subtype": "float32", "size": 3 }
       ]
     },
     "ObjCoffeeCupSpawner": {
       "parent": "ObjGondolaBaseSpawner",
       "fields": [
-        { "name": "PixieType[0]", "type": "ObjCoffeeCupSpawner::PixieType" },
-        { "name": "PixieType[1]", "type": "ObjCoffeeCupSpawner::PixieType" },
-        { "name": "PixieType[2]", "type": "ObjCoffeeCupSpawner::PixieType" },
-        { "name": "PixieType[3]", "type": "ObjCoffeeCupSpawner::PixieType" },
-        { "name": "PixieType[4]", "type": "ObjCoffeeCupSpawner::PixieType" },
-        { "name": "PixieType[5]", "type": "ObjCoffeeCupSpawner::PixieType" },
-        { "name": "PixieType[6]", "type": "ObjCoffeeCupSpawner::PixieType" },
-        { "name": "PixieType[7]", "type": "ObjCoffeeCupSpawner::PixieType" },
-        { "name": "PixieType[8]", "type": "ObjCoffeeCupSpawner::PixieType" },
-        { "name": "PixieType[9]", "type": "ObjCoffeeCupSpawner::PixieType" },
-        { "name": "PixieType[10]", "type": "ObjCoffeeCupSpawner::PixieType" },
-        { "name": "PixieType[11]", "type": "ObjCoffeeCupSpawner::PixieType" },
-        { "name": "PixieType[12]", "type": "ObjCoffeeCupSpawner::PixieType" },
-        { "name": "PixieType[13]", "type": "ObjCoffeeCupSpawner::PixieType" },
-        { "name": "PixieType[14]", "type": "ObjCoffeeCupSpawner::PixieType" },
-        { "name": "PixieType[15]", "type": "ObjCoffeeCupSpawner::PixieType" },
-        { "name": "PixieType[16]", "type": "ObjCoffeeCupSpawner::PixieType" },
-        { "name": "PixieType[17]", "type": "ObjCoffeeCupSpawner::PixieType" },
-        { "name": "PixieType[18]", "type": "ObjCoffeeCupSpawner::PixieType" },
-        { "name": "PixieType[19]", "type": "ObjCoffeeCupSpawner::PixieType" }
+        { "name": "PixieType", "type": "array", "subtype": "ObjCoffeeCupSpawner::PixieType", "size": 20 }
       ]
     },
     "ObjGondolaBaseSpawner": {
@@ -2012,34 +1985,13 @@
         { "name": "DirectionType", "type": "ObjGondolaBaseSpawner::DirectionType" },
         { "name": "AngularSpeed", "type": "float32" },
         { "name": "Radius", "type": "float32" },
-        { "name": "OffsetX", "type": "float32" },
-        { "name": "OffsetY", "type": "float32" },
-        { "name": "OffsetZ", "type": "float32" }
+        { "name": "Offset", "type": "vector3" }
       ]
     },
     "ObjGondolaSpawner": {
       "parent": "ObjGondolaBaseSpawner",
       "fields": [
-        { "name": "PixieType[0]", "type": "ObjGondolaSpawner::PixieType" },
-        { "name": "PixieType[1]", "type": "ObjGondolaSpawner::PixieType" },
-        { "name": "PixieType[2]", "type": "ObjGondolaSpawner::PixieType" },
-        { "name": "PixieType[3]", "type": "ObjGondolaSpawner::PixieType" },
-        { "name": "PixieType[4]", "type": "ObjGondolaSpawner::PixieType" },
-        { "name": "PixieType[5]", "type": "ObjGondolaSpawner::PixieType" },
-        { "name": "PixieType[6]", "type": "ObjGondolaSpawner::PixieType" },
-        { "name": "PixieType[7]", "type": "ObjGondolaSpawner::PixieType" },
-        { "name": "PixieType[8]", "type": "ObjGondolaSpawner::PixieType" },
-        { "name": "PixieType[9]", "type": "ObjGondolaSpawner::PixieType" },
-        { "name": "PixieType[10]", "type": "ObjGondolaSpawner::PixieType" },
-        { "name": "PixieType[11]", "type": "ObjGondolaSpawner::PixieType" },
-        { "name": "PixieType[12]", "type": "ObjGondolaSpawner::PixieType" },
-        { "name": "PixieType[13]", "type": "ObjGondolaSpawner::PixieType" },
-        { "name": "PixieType[14]", "type": "ObjGondolaSpawner::PixieType" },
-        { "name": "PixieType[15]", "type": "ObjGondolaSpawner::PixieType" },
-        { "name": "PixieType[16]", "type": "ObjGondolaSpawner::PixieType" },
-        { "name": "PixieType[17]", "type": "ObjGondolaSpawner::PixieType" },
-        { "name": "PixieType[18]", "type": "ObjGondolaSpawner::PixieType" },
-        { "name": "PixieType[19]", "type": "ObjGondolaSpawner::PixieType" }
+        { "name": "PixieType", "type": "array", "subtype": "ObjGondolaSpawner::PixieType", "size": 20 }
       ]
     },
     "ObjPirateCannonSpawner": {
@@ -2344,26 +2296,15 @@
       "parent": "EnemyMotoraBaseSpawner",
       "fields": [
         { "name": "NumMaxUnits", "type": "uint32" },
-        { "name": "LevelProbabilities[0]", "type": "float32" },
-        { "name": "LevelProbabilities[1]", "type": "float32" },
-        { "name": "LevelProbabilities[2]", "type": "float32" },
-        { "name": "LevelProbabilities[3]", "type": "float32" },
-        { "name": "LevelProbabilities[4]", "type": "float32" },
-        { "name": "LevelProbabilities[5]", "type": "float32" },
+        { "name": "LevelProbabilities", "type": "array", "subtype": "float32", "size": 6 },
         { "name": "XXProbability", "type": "float32" }
       ]
     },
     "EnemyMotoraEventSpawner": {
       "parent": "EnemyMotoraBaseSpawner",
       "fields": [
-        { "name": "PathIDs[0]", "type": "uint32" },
-        { "name": "PathIDs[1]", "type": "uint32" },
-        { "name": "PathIDs[2]", "type": "uint32" },
-        { "name": "PathIDs[3]", "type": "uint32" },
-        { "name": "PathOffsets[0]", "type": "float32" },
-        { "name": "PathOffsets[1]", "type": "float32" },
-        { "name": "PathOffsets[2]", "type": "float32" },
-        { "name": "PathOffsets[3]", "type": "float32" }
+        { "name": "PathIDs", "type": "array", "subtype": "uint32", "size": 4 },
+        { "name": "PathOffsets", "type": "array", "subtype": "float32", "size": 4}
       ]
     },
     "EnemyLanderSpawner": {
@@ -2560,9 +2501,7 @@
         { "name": "StartPosition", "type": "float32" },
         { "name": "EndPosition", "type": "float32" },
         { "name": "IsJumpCancel", "type": "bool" },
-        { "name": "OffsetX", "type": "float32" },
-        { "name": "OffsetY", "type": "float32" },
-        { "name": "OffsetZ", "type": "float32" },
+        { "name": "Offset", "type": "vector3" },
         { "name": "MinSpeed", "type": "float32" },
         { "name": "MaxSpeed", "type": "float32" }
       ]
@@ -2571,9 +2510,7 @@
       "fields": [
         { "name": "PathID", "type": "uint32" },
         { "name": "StartPosition", "type": "float32" },
-        { "name": "OffsetX", "type": "float32" },
-        { "name": "OffsetY", "type": "float32" },
-        { "name": "OffsetZ", "type": "float32" },
+        { "name": "Offset", "type": "vector3" },
         { "name": "IsStart", "type": "bool" },
         { "name": "IsLong", "type": "bool" }
       ]
@@ -2903,11 +2840,7 @@
     },
     "ObjSlotSpawner": {
       "fields": [
-        { "name": "Probabilities[0]", "type": "float32" },
-        { "name": "Probabilities[1]", "type": "float32" },
-        { "name": "Probabilities[2]", "type": "float32" },
-        { "name": "Probabilities[3]", "type": "float32" },
-        { "name": "Probabilities[4]", "type": "float32" }
+        { "name": "Probabilities", "type": "array", "subtype": "float32", "size": 5 }
       ]
     },
     "ObjSprialDoorSpawner": {
