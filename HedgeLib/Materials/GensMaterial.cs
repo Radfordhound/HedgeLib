@@ -15,12 +15,11 @@ namespace HedgeLib.Materials
         public List<Parameter> Parameters => parameters;
         public GensTexset Texset = new GensTexset();
         public HedgehogEngineHeader Header = new GensHeader();
-        public string ShaderName = "Common_d", SubShaderName = "Common_d";
+        public string ShaderName = "Common_d";
         public string TexsetName = string.Empty;
 
-        public byte MaterialFlag = 0x80, UnknownFlag1 = 0;
-        public bool NoBackFaceCulling = false,
-            AdditiveBlending = false;
+        public byte AlphaThreshold = 0x80;
+        public bool DoubleSided = false, Additive = false;
 
         protected List<Parameter> parameters = new List<Parameter>();
         public const string Extension = ".material", MaterialMirageType = "Material";
@@ -57,10 +56,10 @@ namespace HedgeLib.Materials
             uint texsetOffset = reader.ReadUInt32();
             uint texturesOffset = reader.ReadUInt32();
 
-            MaterialFlag = reader.ReadByte(); // ?
-            NoBackFaceCulling = reader.ReadBoolean();
-            AdditiveBlending = reader.ReadBoolean();
-            UnknownFlag1 = reader.ReadByte();
+            AlphaThreshold = reader.ReadByte();
+            DoubleSided = reader.ReadBoolean();
+            Additive = reader.ReadBoolean();
+            byte padding3 =  reader.ReadByte();
 
             byte paramCount = reader.ReadByte();
             byte padding1 = reader.ReadByte();
@@ -85,10 +84,6 @@ namespace HedgeLib.Materials
             reader.JumpTo(shaderOffset, false);
             ShaderName = reader.ReadNullTerminatedString();
 
-            // Sub-Shader Name
-            reader.JumpTo(subShaderOffset, false);
-            SubShaderName = reader.ReadNullTerminatedString();
-
             // Parameter Offsets
             var paramOffsets = new uint[paramCount];
             reader.JumpTo(paramsOffset, false);
@@ -103,12 +98,10 @@ namespace HedgeLib.Materials
             for (uint i = 0; i < paramCount; ++i)
             {
                 reader.JumpTo(paramOffsets[i], false);
-                var param = new Parameter()
-                {
-                    ParamFlag1 = reader.ReadUInt16(),
-                    ParamFlag2 = reader.ReadUInt16()
-                };
+                var param = new Parameter();
 
+                ushort unused1 = reader.ReadUInt16();
+                ushort unused2 = reader.ReadUInt16();
                 uint paramNameOffset = reader.ReadUInt32();
                 uint paramValueOffset = reader.ReadUInt32();
 
@@ -125,7 +118,7 @@ namespace HedgeLib.Materials
 
             // Texset
             reader.JumpTo(texsetOffset, false);
-            if (Header.RootNodeType == 1) // TODO: Maybe check for textureCount < 1 instead?
+            if (Header.RootNodeType == 1)
             {
                 TexsetName = reader.ReadNullTerminatedString();
             }
@@ -156,7 +149,7 @@ namespace HedgeLib.Materials
             base.Save(filePath, overwrite);
 
             // Save External Texset (if any)
-            if (!string.IsNullOrEmpty(TexsetName))
+            if (!string.IsNullOrEmpty(TexsetName) && Header.RootNodeType == 1)
             {
                 string dir = Path.GetDirectoryName(filePath);
                 string texsetPath = Path.Combine(dir,
@@ -168,13 +161,6 @@ namespace HedgeLib.Materials
 
         public override void Save(Stream fileStream)
         {
-            bool useExternalTexset = !string.IsNullOrEmpty(TexsetName);
-            if (useExternalTexset && Texset.Textures.Count > 255)
-            {
-                throw new NotSupportedException(
-                    "Embedded texsets cannot contain more than 255 textures");
-            }
-
             // Header
             var writer = new GensWriter(fileStream, Header, MaterialMirageType);
 
@@ -184,15 +170,15 @@ namespace HedgeLib.Materials
             writer.AddOffset("texsetOffset");
             writer.AddOffset("texturesOffset");
 
-            writer.Write(MaterialFlag);
-            writer.Write(NoBackFaceCulling);
-            writer.Write(AdditiveBlending);
-            writer.Write(UnknownFlag1);
+            writer.Write(AlphaThreshold);
+            writer.Write(DoubleSided);
+            writer.Write(Additive);
+            writer.Write((byte)0);
 
             writer.Write((byte)parameters.Count);
             writer.Write((byte)0); // Padding1
             writer.Write((byte)0); // UnknownFlag2
-            byte textureCount = (byte)Texset.Textures.Count;
+            byte textureCount = (byte)(Header.RootNodeType == 1 ? 0 : Texset.Textures.Count);
             writer.Write(textureCount);
 
             writer.AddOffset("paramsOffset");
@@ -205,8 +191,16 @@ namespace HedgeLib.Materials
 
             // Sub-Shader Name
             writer.FillInOffset("subShaderOffset", false, false);
-            writer.WriteNullTerminatedString(SubShaderName);
+            writer.WriteNullTerminatedString(ShaderName);
             writer.FixPadding(4);
+
+            // Texset Name
+            if (Header.RootNodeType == 1)
+            {
+                writer.FillInOffset("texsetOffset", false, false);
+                writer.WriteNullTerminatedString(TexsetName);
+                writer.FixPadding(4);
+            }
 
             // Parameter Offsets
             writer.FillInOffset("paramsOffset", false, false);
@@ -217,8 +211,8 @@ namespace HedgeLib.Materials
             {
                 var param = parameters[i];
                 writer.FillInOffset($"param_{i}", false, false);
-                writer.Write(param.ParamFlag1);
-                writer.Write(param.ParamFlag2);
+                writer.Write((ushort)(Header.RootNodeType == 1 ? 0 : 512));
+                writer.Write((ushort)256);
 
                 writer.AddOffset($"paramNameOffset{i}");
                 writer.AddOffset($"paramValueOffset{i}");
@@ -233,15 +227,10 @@ namespace HedgeLib.Materials
                 writer.Write(param.Value);
             }
 
-            // Texset
-            writer.FillInOffset("texsetOffset", false, false);
-            if (useExternalTexset)
+            // Embedded Texset
+            if (Header.RootNodeType != 1)
             {
-                writer.WriteNullTerminatedString(TexsetName);
-                writer.FixPadding(4);
-            }
-            else
-            {
+                writer.FillInOffset("texsetOffset", false, false);
                 Texset.Write(writer);
 
                 // Texture Offsets
@@ -282,11 +271,10 @@ namespace HedgeLib.Materials
                 Header = new GensHeader();
 
             Header.RootNodeType = root.GetUIntAttr("version");
-            MaterialFlag = root.GetByteAttr("flags");
+            AlphaThreshold = root.GetByteAttr("AlphaThreshold");
             ShaderName = root.GetElemValue("ShaderName");
-            SubShaderName = root.GetElemValue("SubShaderName");
-            NoBackFaceCulling = root.GetBoolElem("NoBackfaceCulling");
-            AdditiveBlending = root.GetBoolElem("AdditiveBlending");
+            DoubleSided = root.GetBoolElem("DoubleSided");
+            Additive = root.GetBoolElem("Additive");
 
             // Parameters
             var paramsElem = root.Element("Parameters");
@@ -317,7 +305,7 @@ namespace HedgeLib.Materials
         public virtual void ExportXML(Stream fs)
         {
             var root = new XElement("Material");
-            root.AddAttr("flags", MaterialFlag);
+            root.AddAttr("AlphaThreshold", AlphaThreshold);
 
             if (Header is MirageHeader)
                 root.AddAttr("headerType", "mirage");
@@ -326,9 +314,8 @@ namespace HedgeLib.Materials
 
             root.AddAttr("version", Header.RootNodeType);
             root.AddElem("ShaderName", ShaderName);
-            root.AddElem("SubShaderName", SubShaderName);
-            root.AddElem("NoBackfaceCulling", NoBackFaceCulling);
-            root.AddElem("AdditiveBlending", AdditiveBlending);
+            root.AddElem("DoubleSided", DoubleSided);
+            root.AddElem("Additive", Additive);
 
             // Parameters
             var paramsElem = new XElement("Parameters");
@@ -356,7 +343,6 @@ namespace HedgeLib.Materials
             // Variables/Constants
             public Vector4 Value = new Vector4();
             public string Name;
-            public ushort ParamFlag1, ParamFlag2;
 
             // Constructors
             public Parameter() { }
@@ -369,8 +355,6 @@ namespace HedgeLib.Materials
             public virtual void ImportXML(XElement elem)
             {
                 Name = elem.GetAttrValue("name");
-                ParamFlag1 = elem.GetUShortElem("ParamFlag1");
-                ParamFlag2 = elem.GetUShortElem("ParamFlag2");
                 Value = elem.GetVector4Elem("Value");
             }
 
@@ -379,8 +363,6 @@ namespace HedgeLib.Materials
                 var elem = new XElement("Parameter",
                     new XAttribute("name", Name));
 
-                elem.AddElem("ParamFlag1", ParamFlag1);
-                elem.AddElem("ParamFlag2", ParamFlag2);
                 elem.AddElem("Value", Value);
 
                 return elem;

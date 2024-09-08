@@ -1,7 +1,6 @@
 ﻿using HedgeLib.Headers;
 using HedgeLib.Materials;
 using HedgeLib.Textures;
-using OpenTK.Graphics.ES30;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,7 +16,9 @@ namespace HedgeEdit.UI
         public List<SerializableTexture> Textures = new List<SerializableTexture>();
         protected SerializableNode root = new SerializableNode();
         protected string matPath;
-        protected bool useMirageHeader = false;
+       
+        public uint Version { get; set; }
+        public bool UseMirageHeader { get; set; }
 
         // Constructors
         public MaterialEditor()
@@ -45,13 +46,11 @@ namespace HedgeEdit.UI
         public void NewMaterial()
         {
             Material = new GensMaterial();
-            var mHeader = new MirageHeader()
-            {
-                RootNodeType = 3
-            };
+            Version = 3;
 
-            mHeader.GenerateNodes(GensMaterial.MaterialMirageType);
-            root = new SerializableNode(mHeader.RootNode);
+            var header = new MirageHeader();
+            header.GenerateNodes(GensMaterial.MaterialMirageType);
+            root = new SerializableNode(header.RootNode);
 
             matPath = null;
             UpdateTitle("Untitled");
@@ -65,7 +64,8 @@ namespace HedgeEdit.UI
                 var sfd = new SaveFileDialog()
                 {
                     Title = "Save Material As...",
-                    Filter = "Hedgehog Engine Material (*.material)|*.material|All files (*.*)|*.*"
+                    Filter = "Hedgehog Engine Material (*.material)|*.material|All files (*.*)|*.*",
+                    FileName = Path.GetFileName(matPath)
                 };
 
                 if (sfd.ShowDialog() != DialogResult.OK)
@@ -83,29 +83,27 @@ namespace HedgeEdit.UI
         {
             // Header
             propertyGrid.Item.Clear();
-            propertyGrid.Item.Add("Use Mirage Header", useMirageHeader, false,
-                "Header", "Whether to use the MirageHeader (only supported by LW/Forces!)", true);
 
-            object obj = root;
+            object obj = this;
             string category = "Header";
+            AddProperty("Version", "Version", "Version of the material file. 1 is Sonic Unleashed, 3 is Sonic Generations and onwards.");
+            AddProperty("Use Mirage Header", "UseMirageHeader", "Whether to use the MirageHeader (only supported by LW/Forces!)");
 
-            AddProperty("Mirage Nodes", "Children",
-                "Nodes used by the MirageHeader. Only saved if Use Mirage Header is true.");
+            obj = root;
+            AddProperty("Mirage Nodes", "Children", "Nodes used by the MirageHeader.");
 
             // Material
             obj = Material;
             category = "Material";
 
             AddProperty("Shader Name", "ShaderName", "The name of the shader.");
-            AddProperty("Sub-Shader Name", "SubShaderName", "The name of the sub-shader.");
 
-            AddProperty("Material Flag", "MaterialFlag", "Material Flags.");
-            AddProperty("No Backface Culling", "NoBackfaceCulling",
+            AddProperty("Alpha Threshold", "AlphaThreshold", 
+                "The alpha clip value when the material is on the punch-through layer.");
+            AddProperty("Double Sided", "DoubleSided",
                 "Whether this material is visible from both sides.");
-            AddProperty("Additive Blending", "AdditiveBlending",
+            AddProperty("Additive", "Additive",
                 "Whether this material is drawn additively (used on lights, for example).");
-
-            AddProperty("Unknown Flag1", "UnknownFlag1", "");
 
             // Parameters
             category = "Parameters";
@@ -128,11 +126,6 @@ namespace HedgeEdit.UI
                 Textures.Add(new SerializableTexture(tex));
             }
 
-            obj = Material;
-            AddProperty("Texset Name", "TexsetName", string.Format("{0}{1}",
-                "The name of the .texset file which contains the Textures list.",
-                "If blank, the texset will be embedded within the .material."));
-
             obj = this;
             AddProperty("Textures", "Textures", "The textures used by this material.");
             propertyGrid.Refresh();
@@ -148,16 +141,20 @@ namespace HedgeEdit.UI
         protected void UpdateMaterial()
         {
             // Generate Header/Assign Root Node
-            if (useMirageHeader)
+            if (UseMirageHeader && root != null && root.Children.Count > 0)
             {
                 Material.Header = new MirageHeader
                 {
-                    RootNode = root.GetNode()
+                    RootNode = root.GetNode(),
+                    RootNodeType = 3
                 };
             }
             else
             {
-                Material.Header = new GensHeader { RootNodeType = 3 };
+                Material.Header = new GensHeader 
+                { 
+                    RootNodeType = Version == 1 ? 1u : 3
+                };
             }
 
             // Assign Parameters
@@ -168,34 +165,17 @@ namespace HedgeEdit.UI
             }
 
             // Assign Textures
+            Material.TexsetName = Path.GetFileNameWithoutExtension(matPath);
+
             var textures = Material.Texset.Textures;
             textures.Clear();
 
             for (int i = 0; i < Textures.Count; ++i)
             {
-                textures.Add(Textures[i].GetTexture());
+                var tex = Textures[i].GetTexture();
+                tex.Name = $"{Material.TexsetName}-{i:D4}";
+                textures.Add(tex);
             }
-        }
-
-        // GUI Events
-        private void Viewport_Paint(object sender, PaintEventArgs e)
-        {
-            // Clear the background color
-            viewport.MakeCurrent();
-            GL.ClearColor(0, 0, 0, 1);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-            // Start using our "Default" program and bind our VAO
-            //int defaultID = Shaders.ShaderPrograms["Default"];
-            //GL.UseProgram(defaultID);
-
-            // Draw
-            //Data.DefaultCube.Draw(defaultID, Mesh.Slots.Default);
-
-            // TODO: Draw preview mesh
-
-            //GL.Flush();
-            viewport.SwapBuffers();
         }
 
         private void MaterialEditor_FormClosing(object sender, FormClosingEventArgs e)
@@ -229,12 +209,21 @@ namespace HedgeEdit.UI
                     return;
                 }
 
-                useMirageHeader = (mat.Header is MirageHeader);
-                if (useMirageHeader)
-                    root = new SerializableNode(((MirageHeader)mat.Header).RootNode);
+                var header = mat.Header as MirageHeader;
+                UseMirageHeader = header != null;
+
+                if (header == null)
+                { 
+                    header = new MirageHeader();
+                    header.GenerateNodes(GensMaterial.MaterialMirageType);
+                }
+
+                root = new SerializableNode(header.RootNode);
 
                 Material = mat;
+                Version = mat.Header.RootNodeType;
                 matPath = ofd.FileName;
+
                 UpdateTitle(Path.GetFileNameWithoutExtension(ofd.FileName));
                 RefreshUI();
             }
@@ -267,17 +256,12 @@ namespace HedgeEdit.UI
             public float Z { get => param.Value.Z; set => param.Value.Z = value; }
             public float W { get => param.Value.W; set => param.Value.W = value; }
 
-            public ushort Flag1 { get => param.ParamFlag1; set => param.ParamFlag1 = value; }
-            public ushort Flag2 { get => param.ParamFlag2; set => param.ParamFlag2 = value; }
-
             protected GensMaterial.Parameter param;
 
             // Constructors
             public SerializableParameter()
             {
                 param = new GensMaterial.Parameter();
-                param.ParamFlag1 = 512;
-                param.ParamFlag2 = 256;
             }
 
             public SerializableParameter(GensMaterial.Parameter param)

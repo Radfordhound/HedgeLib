@@ -65,7 +65,7 @@ namespace HedgeLib.Textures
                 string texPath = Path.Combine(dir,
                     $"{tex.Name}{GensTexture.Extension}");
 
-                tex.Save(filePath, overwrite);
+                tex.Save(texPath, overwrite);
             }
         }
 
