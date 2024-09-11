@@ -173,6 +173,7 @@ namespace HedgeEdit.UI
             for (int i = 0; i < Textures.Count; ++i)
             {
                 var tex = Textures[i].GetTexture();
+                tex.Header.RootNodeType = 1;
                 tex.Name = $"{Material.TexsetName}-{i:D4}";
                 textures.Add(tex);
             }

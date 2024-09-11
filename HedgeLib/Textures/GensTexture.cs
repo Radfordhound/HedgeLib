@@ -21,6 +21,7 @@ namespace HedgeLib.Textures
         public GensTexture(string name)
         {
             Name = name;
+            Header.RootNodeType = 1;
         }
 
         public GensTexture(XElement elem)

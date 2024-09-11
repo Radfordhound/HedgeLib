@@ -192,15 +192,15 @@ namespace HedgeLib.Materials
             // Sub-Shader Name
             writer.FillInOffset("subShaderOffset", false, false);
             writer.WriteNullTerminatedString(ShaderName);
-            writer.FixPadding(4);
 
             // Texset Name
             if (Header.RootNodeType == 1)
             {
                 writer.FillInOffset("texsetOffset", false, false);
                 writer.WriteNullTerminatedString(TexsetName);
-                writer.FixPadding(4);
             }
+
+            writer.FixPadding(4);
 
             // Parameter Offsets
             writer.FillInOffset("paramsOffset", false, false);
