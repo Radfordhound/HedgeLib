@@ -1287,9 +1287,9 @@ public:
     }
 
     stack_or_heap_memory(const stack_or_heap_memory& other) :
-        m_data(in_alloc_memory(other._size()))
+        m_data(in_alloc_memory(other.size()))
     {
-        const auto count = other._size();
+        const auto count = other.size();
         try
         {
             std::uninitialized_copy(other.m_data,
