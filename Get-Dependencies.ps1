@@ -105,11 +105,6 @@ $Dependencies += { Install-CMakeProject -Name "robin_hood" `
     -Arguments "-DRH_STANDALONE_PROJECT=OFF"
 }
 
-$Dependencies += { Install-CMakeProject -Name "glm" `
-    -Url https://github.com/g-truc/glm/archive/refs/heads/master.zip `
-    -SourcePath "glm-master"
-}
-
 $Dependencies += { Install-CMakeProject -Name "lz4" `
     -Url https://github.com/lz4/lz4/archive/refs/heads/dev.zip `
     -SourcePath "lz4-dev/build/cmake" `

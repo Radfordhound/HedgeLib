@@ -4,12 +4,12 @@
 #include "hedgelib/io/hl_file.h"
 #include "hedgelib/io/hl_path.h"
 #include "hedgelib/hl_blob.h"
-
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
-#include <glm/gtx/matrix_decompose.hpp>
-
+#include <DirectXMath.h>
+#include <DirectXPackedVector.h>
 #include <cstring>
+
+using namespace DirectX;
+using namespace DirectX::PackedVector;
 
 namespace hl
 {
@@ -371,19 +371,25 @@ void raw_vertex_element::convert_to_vec4(const void* vtx, vec4& vec) const
 
     case raw_vertex_format::float16_2:
     {
-        const glm::uint v = *static_cast<const glm::uint*>(vtx);
-        const glm::vec2 unpackedV = glm::unpackHalf2x16(v);
-
-        vec = vec4(unpackedV[0], unpackedV[1], 0.0f, 0.0f);
+        const auto v = *static_cast<const DirectX::PackedVector::XMHALF2*>(vtx);
+        vec = vec4(
+            XMConvertHalfToFloat(v.x),
+            XMConvertHalfToFloat(v.y),
+            0.0f,
+            0.0f
+        );
         break;
     }
 
     case raw_vertex_format::float16_4:
     {
-        const glm::uint v = *static_cast<const glm::uint*>(vtx);
-        const glm::vec2 unpackedV = glm::unpackHalf2x16(v);
-
-        vec = vec4(unpackedV[0], unpackedV[1], unpackedV[2], unpackedV[3]);
+        const auto v = *static_cast<const DirectX::PackedVector::XMHALF4*>(vtx);
+        vec = vec4(
+            XMConvertHalfToFloat(v.x),
+            XMConvertHalfToFloat(v.y),
+            XMConvertHalfToFloat(v.z),
+            XMConvertHalfToFloat(v.w)
+        );
         break;
     }
 
@@ -748,23 +754,25 @@ void raw_vertex_element::convert_to_ivec4(const void* vtx, ivec4& ivec) const
 
     case raw_vertex_format::float16_2:
     {
-        const glm::uint v = *static_cast<const glm::uint*>(vtx);
-        const glm::vec2 unpackedV = glm::unpackHalf2x16(v);
-
-        ivec = ivec4(static_cast<int>(unpackedV[0]),
-            static_cast<int>(unpackedV[1]), 0, 0);
+        const auto v = *static_cast<const XMHALF2*>(vtx);
+        ivec = ivec4(
+            static_cast<int>(XMConvertHalfToFloat(v.x)),
+            static_cast<int>(XMConvertHalfToFloat(v.y)),
+            0,
+            0
+        );
         break;
     }
 
     case raw_vertex_format::float16_4:
     {
-        const glm::uint v = *static_cast<const glm::uint*>(vtx);
-        const glm::vec2 unpackedV = glm::unpackHalf2x16(v);
-
-        ivec = ivec4(static_cast<int>(unpackedV[0]),
-            static_cast<int>(unpackedV[1]),
-            static_cast<int>(unpackedV[2]),
-            static_cast<int>(unpackedV[3]));
+        const auto v = *static_cast<const XMHALF4*>(vtx);
+        ivec = ivec4(
+            static_cast<int>(XMConvertHalfToFloat(v.x)),
+            static_cast<int>(XMConvertHalfToFloat(v.y)),
+            static_cast<int>(XMConvertHalfToFloat(v.z)),
+            static_cast<int>(XMConvertHalfToFloat(v.w))
+        );
         break;
     }
 
@@ -1983,50 +1991,60 @@ hl::node& node::add_to_node(hl::node& parentNode,
         parentNode.add_child<hl::node>(name);
 
     // Decompose node matrix.
-    glm::quat glmRot;
-    glm::vec3 glmPos, glmScale;
+    XMVECTOR rot, pos, scale;
 
     {
-        glm::mat4x4 glmMatrix(
+        XMMATRIX mtx = XMMatrixInverse(nullptr, XMMATRIX(
             matrix.m11, matrix.m12, matrix.m13, matrix.m14,
             matrix.m21, matrix.m22, matrix.m23, matrix.m24,
             matrix.m31, matrix.m32, matrix.m33, matrix.m34,
             matrix.m41, matrix.m42, matrix.m43, matrix.m44
-        );
-
-        glmMatrix = glm::inverse(glmMatrix);
+        ));
 
         if (nodes)
         {
             for (long i = parentIndex; i >= 0; i = (*nodes)[i].parentIndex)
             {
-                const matrix4x4& hhParentMatrix = (*nodes)[i].matrix;
-                glm::mat4x4 glmParentMatrix(
-                    hhParentMatrix.m11, hhParentMatrix.m12, hhParentMatrix.m13, hhParentMatrix.m14,
-                    hhParentMatrix.m21, hhParentMatrix.m22, hhParentMatrix.m23, hhParentMatrix.m24,
-                    hhParentMatrix.m31, hhParentMatrix.m32, hhParentMatrix.m33, hhParentMatrix.m34,
-                    hhParentMatrix.m41, hhParentMatrix.m42, hhParentMatrix.m43, hhParentMatrix.m44
+                const matrix4x4& hhParentMtx = (*nodes)[i].matrix;
+                const XMMATRIX parentMtx(
+                    hhParentMtx.m11, hhParentMtx.m12, hhParentMtx.m13, hhParentMtx.m14,
+                    hhParentMtx.m21, hhParentMtx.m22, hhParentMtx.m23, hhParentMtx.m24,
+                    hhParentMtx.m31, hhParentMtx.m32, hhParentMtx.m33, hhParentMtx.m34,
+                    hhParentMtx.m41, hhParentMtx.m42, hhParentMtx.m43, hhParentMtx.m44
                 );
 
-                glmMatrix *= glmParentMatrix;
-                //glmMatrix = glmParentMatrix * glmMatrix;
+                mtx *= parentMtx;
                 break; // TODO: Do we really only do this once?
             }
         }
 
         {
-            glm::vec3 glmSkew;
-            glm::vec4 glmPerspective;
-
-            glmMatrix = glm::transpose(glmMatrix);
-            glm::decompose(glmMatrix, glmScale, glmRot, glmPos, glmSkew, glmPerspective);
+            mtx = XMMatrixTranspose(mtx);
+            if (!XMMatrixDecompose(&scale, &rot, &pos, mtx))
+            {
+                rot = XMVectorZero();
+            }
         }
     }
     
     // Set object transform.
-    newNode.pos = vec3(glmPos.x, glmPos.y, glmPos.z);
-    newNode.rot = quat(glmRot.x, glmRot.y, glmRot.z, glmRot.w);
-    newNode.scale = vec3(glmScale.x, glmScale.y, glmScale.z);
+    HL_STATIC_ASSERT_SIZE(DirectX::XMFLOAT3, sizeof(vec3));
+    HL_STATIC_ASSERT_SIZE(DirectX::XMFLOAT4, sizeof(quat));
+
+    DirectX::XMStoreFloat3(
+        reinterpret_cast<DirectX::XMFLOAT3*>(&newNode.pos),
+        pos
+    );
+
+    DirectX::XMStoreFloat4(
+        reinterpret_cast<DirectX::XMFLOAT4*>(&newNode.rot),
+        rot
+    );
+
+    DirectX::XMStoreFloat3(
+        reinterpret_cast<DirectX::XMFLOAT3*>(&newNode.scale),
+        scale
+    );
 
     return newNode;
 }

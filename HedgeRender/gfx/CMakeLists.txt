@@ -137,7 +137,7 @@ FetchContent_Declare(VulkanMemoryAllocator
 )
 
 # Setup VulkanMemoryAllocator and add it to HedgeRender_GFX private includes
-FetchContent_Populate(VulkanMemoryAllocator)
+FetchContent_MakeAvailable(VulkanMemoryAllocator)
 list(APPEND HEDGERENDER_GFX_PRIVATE_INCLUDE_DIRS ${vulkanmemoryallocator_SOURCE_DIR}/include)
 
 # Setup dependencies

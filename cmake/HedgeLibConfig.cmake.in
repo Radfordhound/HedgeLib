@@ -23,13 +23,6 @@ if(NOT HEDGELIB_IS_SHARED_LIB)
         unset(CMAKE_FIND_PACKAGE_PREFER_CONFIG)
     endif()
 
-    if(NOT TARGET glm::glm)
-        find_dependency(glm)
-        if(TARGET glm AND NOT TARGET glm::glm)
-            add_library(glm::glm ALIAS glm)
-        endif()
-    endif()
-
     if(NOT TARGET LZ4::LZ4)
         find_dependency(LZ4)
     endif()

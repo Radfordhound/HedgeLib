@@ -172,27 +172,6 @@ endif()
 
 list(APPEND HEDGELIB_PUBLIC_DEPEND_LIBS robin_hood::robin_hood)
 
-# Find glm and add it to HedgeLib dependencies
-if(NOT TARGET glm::glm)
-    message(STATUS "Searching for glm...")
-    find_package(glm QUIET REQUIRED)
-    if(TARGET glm AND NOT TARGET glm::glm)
-        add_library(glm::glm ALIAS glm)
-    endif()
-endif()
-
-list(APPEND HEDGELIB_PRIVATE_DEPEND_LIBS glm::glm)
-
-# TODO: Do we actually need this workaround, or did I just misunderstand something?
-
-## Work around bug on macOS that causes clang to attempt to link to
-## glm despite it having no actual compiled binaries to link to.
-#if(APPLE)
-    #list(APPEND HEDGELIB_PRIVATE_INCLUDE_DIRS ${GLM_INCLUDE_DIRS})
-#else()
-    #list(APPEND HEDGELIB_PRIVATE_DEPEND_LIBS glm)
-#endif()
-
 # Download DirectXMath
 message(STATUS "Downloading and/or configuring DirectXMath as necessary...")
 FetchContent_Declare(DirectXMath
@@ -202,7 +181,7 @@ FetchContent_Declare(DirectXMath
 )
 
 # Setup DirectXMath and add it to HedgeLib private includes
-FetchContent_Populate(DirectXMath)
+FetchContent_MakeAvailable(DirectXMath)
 list(APPEND HEDGELIB_PRIVATE_INCLUDE_DIRS ${directxmath_SOURCE_DIR}/Inc)
 
 # Download POSIX sal.h for usage with DirectXMath on non-Windows platforms
