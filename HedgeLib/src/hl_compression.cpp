@@ -1,12 +1,235 @@
 #include "hl_in_blob.h"
 #include "hedgelib/hl_compression.h"
+
+#include <mspack.h>
+#include <lzx.h>
+
+// Hack to make the warning about "register" being deprecated shut up.
+#define register
+#include <lzxd.c>
+#undef register
+
 #include <lz4.h>
+
 #define ZLIB_CONST
 #include <zlib.h>
+
 #include <cstring>
 
 namespace hl
 {
+struct in_mspack_read_stream
+{
+    const u8* data = nullptr;
+    int size = 0; // Size from every compressed block.
+};
+
+// libmspack interface implementation for Xbox decompression.
+static int in_mspack_read(mspack_file* file, void* buffer, int bytes)
+{
+    in_mspack_read_stream* stream = reinterpret_cast<in_mspack_read_stream*>(file);
+
+    if (stream->size == 0)
+    {
+        u16 size = *reinterpret_cast<const u16*>(stream->data);
+        stream->data += sizeof(u16);
+
+#ifndef HL_IS_BIG_ENDIAN
+        hl::endian_swap(size);
+#endif
+
+        // This indicates there is an uncompressed block size available. We don't need it so we skip it.
+        if ((size & 0xFF00) == 0xFF00)
+        {
+            stream->data += 1;
+            size = *reinterpret_cast<const u16*>(stream->data);
+            stream->data += sizeof(u16);
+
+#ifndef HL_IS_BIG_ENDIAN
+            hl::endian_swap(size);
+#endif
+        }
+
+        stream->size = size;
+    }
+
+    int sizeToRead = std::min(stream->size, bytes);
+
+    memcpy(buffer, stream->data, sizeToRead);
+    stream->data += sizeToRead;
+    stream->size -= sizeToRead;
+
+    return sizeToRead;
+}
+
+struct in_mspack_write_stream
+{
+    u8* data = nullptr;
+    std::size_t size = 0; // Remaining available space in the stream.
+};
+
+static int in_mspack_write(mspack_file* file, void* buffer, int bytes)
+{
+    in_mspack_write_stream* stream = reinterpret_cast<in_mspack_write_stream*>(file);
+
+    std::size_t sizeToWrite = std::min(stream->size, static_cast<std::size_t>(bytes));
+
+    memcpy(stream->data, buffer, sizeToWrite);
+    stream->data += sizeToWrite;
+    stream->size -= sizeToWrite;
+
+    return static_cast<int>(sizeToWrite);
+}
+
+static void* in_mspack_alloc(mspack_system* self, size_t bytes)
+{
+    return operator new(bytes);
+}
+
+static void in_mspack_free(void* ptr)
+{
+    operator delete(ptr);
+}
+
+static void in_mspack_copy(void* src, void* dst, size_t bytes)
+{
+    memcpy(dst, src, bytes);
+}
+
+static mspack_system in_lzx_system =
+{
+    nullptr,
+    nullptr,
+    in_mspack_read,
+    in_mspack_write,
+    nullptr,
+    nullptr,
+    nullptr,
+    in_mspack_alloc,
+    in_mspack_free,
+    in_mspack_copy
+};
+
+// Xbox Compression header definitions.
+static constexpr u32 x_compress_signature = 0xFF512EE;
+
+struct x_compress_header
+{
+    u32 signature;
+    u32 field04;
+    u32 field08;
+    u32 field0C;
+    u32 windowSize;
+    u32 compressedBlockSize;
+    u64 uncompressedSize;
+    u64 compressedSize;
+    u32 uncompressedBlockSize;
+    u32 field2C;
+
+    template<bool swapOffsets = true>
+    void endian_swap() noexcept
+    {
+        hl::endian_swap(signature);
+        hl::endian_swap(field04);
+        hl::endian_swap(field08);
+        hl::endian_swap(field0C);
+        hl::endian_swap(windowSize);
+        hl::endian_swap(compressedBlockSize);
+        hl::endian_swap(uncompressedSize);
+        hl::endian_swap(compressedSize);
+        hl::endian_swap(uncompressedBlockSize);
+        hl::endian_swap(field2C);
+    }
+};
+
+static x_compress_header in_parse_x_compress_header(const void* src)
+{
+    x_compress_header header = *reinterpret_cast<const x_compress_header*>(src);
+#ifndef HL_IS_BIG_ENDIAN
+    header.endian_swap();
+#endif
+    return header;
+}
+
+bool x_check_signature(std::size_t srcSize, const void* src)
+{
+    // Should at least be the header size.
+    if (srcSize >= sizeof(x_compress_header))
+    {
+        x_compress_header header = in_parse_x_compress_header(src);
+        return header.signature == x_compress_signature;
+    }
+
+    return false;
+}
+
+std::size_t x_get_uncompressed_size(std::size_t srcSize, const void* src)
+{
+    x_compress_header header = in_parse_x_compress_header(src);
+    return header.uncompressedSize;
+}
+
+void x_decompress_no_alloc(std::size_t srcSize,
+    const void* src, std::size_t dstSize, void* dst)
+{
+    x_compress_header header = *reinterpret_cast<const x_compress_header*>(src);
+#ifndef HL_IS_BIG_ENDIAN
+    header.endian_swap();
+#endif
+
+    if (header.uncompressedSize > dstSize)
+    {
+        throw std::out_of_range("Destination buffer is not large enough "
+            "to contain uncompressed data");
+    }
+
+    const u8* srcBytes = hl::ptradd<u8>(src, sizeof(x_compress_header));
+
+    in_mspack_write_stream dstStream;
+    dstStream.data = reinterpret_cast<uint8_t*>(dst);
+    dstStream.size = header.uncompressedSize;
+
+    // libmspack wants the bit index. This value is always guaranteed to be a power of two,
+    // so we can extract the bit index by counting the amount of leading zeroes.
+    int windowBits = 0;
+    u32 windowSize = header.windowSize;
+    while ((windowSize & 0x1) == 0)
+    {
+        ++windowBits;
+        windowSize >>= 1;
+    }
+
+    // Loop over compressed blocks.
+    while (srcBytes < hl::ptradd<u8>(src, srcSize) && dstStream.data < hl::ptradd<u8>(dst, header.uncompressedSize))
+    {
+        u32 compressedSize = *reinterpret_cast<const u32*>(srcBytes);
+#ifndef HL_IS_BIG_ENDIAN
+        hl::endian_swap(compressedSize);
+#endif
+        srcBytes += sizeof(u32);
+
+        in_mspack_read_stream srcStream;
+        srcStream.data = srcBytes;
+
+        std::size_t uncompressedBlockSize = std::min(static_cast<std::size_t>(header.uncompressedBlockSize), dstStream.size);
+
+        lzxd_stream* lzx = lzxd_init(
+            &in_lzx_system,
+            reinterpret_cast<mspack_file*>(&srcStream),
+            reinterpret_cast<mspack_file*>(&dstStream),
+            windowBits,
+            0,
+            static_cast<int>(header.compressedBlockSize),
+            static_cast<off_t>(uncompressedBlockSize),
+            0);
+
+        lzxd_decompress(lzx, uncompressedBlockSize);
+        lzxd_free(lzx);
+
+        srcBytes += compressedSize;
+    }
+}
+
 void lz4_decompress_no_alloc(std::size_t srcSize,
     const void* src, std::size_t dstSize, void* dst)
 {
@@ -68,6 +291,10 @@ void decompress_no_alloc(compress_type type, std::size_t srcSize,
     {
     case compress_type::none:
         in_none_decompress_no_alloc(srcSize, src, dstSize, dst);
+        break;
+
+    case compress_type::x:
+        x_decompress_no_alloc(srcSize, src, dstSize, dst);
         break;
 
     case compress_type::lz4:

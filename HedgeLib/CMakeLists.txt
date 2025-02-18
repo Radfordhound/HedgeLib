@@ -241,6 +241,17 @@ endif()
 
 list(APPEND HEDGELIB_PRIVATE_INCLUDE_DIRS RAPIDJSON_INCLUDE_DIR)
 
+# Download libmspack and add it to HedgeLib private includes
+message(STATUS "Downloading and/or configuring libmspack as necessary...")
+FetchContent_Declare(libmspack
+    GIT_REPOSITORY https://github.com/kyz/libmspack.git
+    GIT_TAG v1.11
+    GIT_SHALLOW TRUE
+)
+
+FetchContent_Populate(libmspack)
+list(APPEND HEDGELIB_PRIVATE_INCLUDE_DIRS ${libmspack_SOURCE_DIR}/libmspack/mspack)
+
 # Setup dependencies
 target_include_directories(HedgeLib
     PUBLIC
