@@ -111,7 +111,7 @@ nstring get_root_path(const nstring& filePath)
     return rootPath;
 }
 
-void read(blob& hhArc, archive_entry_list* hlArc,
+static void in_read(blob& hhArc, archive_entry_list* hlArc,
     std::vector<blob>* hhArcs)
 {
     // Add a copy of this blob to the blob list if necessary.
@@ -125,6 +125,24 @@ void read(blob& hhArc, archive_entry_list* hlArc,
     {
         fix(hhArc);
         parse(hhArc, *hlArc);
+    }
+}
+
+void read(blob& hhArc, archive_entry_list* hlArc,
+    std::vector<blob>* hhArcs)
+{
+    // Check for Xbox Compression.
+    if (x_check_signature(hhArc.size(), hhArc.data()))
+    {
+        u64 uncompressedSize = x_get_uncompressed_size(hhArc.size(), hhArc.data());
+        blob uncompressedArc(static_cast<std::size_t>(uncompressedSize));
+        x_decompress_no_alloc(hhArc.size(), hhArc.data(), uncompressedArc.size(), uncompressedArc.data());
+
+        in_read(uncompressedArc, hlArc, hhArcs);
+    }
+    else
+    {
+        in_read(hhArc, hlArc, hhArcs);
     }
 }
 
