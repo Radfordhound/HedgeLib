@@ -230,6 +230,113 @@ void x_decompress_no_alloc(std::size_t srcSize,
     }
 }
 
+// PS3 Compression header definitions.
+static constexpr u32 segs_signature = 0x73656773;
+
+struct segs_header
+{
+    uint32_t signature;
+    uint16_t flags;
+    uint16_t chunkCount;
+    uint32_t uncompressedSize;
+    uint32_t compressedSize;
+
+    template<bool swapOffsets = true>
+    void endian_swap() noexcept
+    {
+        hl::endian_swap(signature);
+        hl::endian_swap(flags);
+        hl::endian_swap(chunkCount);
+        hl::endian_swap(uncompressedSize);
+        hl::endian_swap(compressedSize);
+    }
+};
+
+struct segs_chunk
+{
+    uint16_t compressedSize;
+    uint16_t uncompressedSize;
+    uint32_t dataOffset;
+
+    template<bool swapOffsets = true>
+    void endian_swap() noexcept
+    {
+        hl::endian_swap(compressedSize);
+        hl::endian_swap(uncompressedSize);
+        hl::endian_swap(dataOffset);
+    }
+};
+
+static segs_header in_parse_segs_header(const void* src)
+{
+    segs_header header = *reinterpret_cast<const segs_header*>(src);
+#ifndef HL_IS_BIG_ENDIAN
+    header.endian_swap();
+#endif
+    return header;
+}
+
+bool segs_check_signature(std::size_t srcSize, const void* src)
+{
+    // Should at least be the header size.
+    if (srcSize >= sizeof(segs_header))
+    {
+        segs_header header = in_parse_segs_header(src);
+        return header.signature == segs_signature;
+    }
+
+    return false;
+}
+
+std::size_t segs_get_uncompressed_size(std::size_t srcSize, const void* src)
+{
+    segs_header header = in_parse_segs_header(src);
+    return header.uncompressedSize;
+}
+
+void segs_decompress_no_alloc(std::size_t srcSize, const void* src, std::size_t dstSize, void* dst)
+{
+    segs_header header = *reinterpret_cast<const segs_header*>(src);
+#ifndef HL_IS_BIG_ENDIAN
+    header.endian_swap();
+#endif
+
+    if (header.uncompressedSize > dstSize)
+    {
+        throw std::out_of_range("Destination buffer is not large enough "
+            "to contain uncompressed data");
+    }
+
+    const segs_chunk* chunks = ptradd<segs_chunk>(src, sizeof(segs_header));
+    uint8_t* dstPtr = static_cast<uint8_t*>(dst);
+
+    for (std::size_t i = 0; i < header.chunkCount; i++)
+    {
+        segs_chunk chunk = chunks[i];
+#ifndef HL_IS_BIG_ENDIAN
+        chunk.endian_swap();
+#endif
+
+        // Uncompressed chunk, just copy the data.
+        if (chunk.compressedSize == chunk.uncompressedSize)
+        {
+            std::memcpy(dstPtr, ptradd<uint8_t>(src, chunk.dataOffset), chunk.compressedSize);
+            dstPtr += chunk.compressedSize;
+            continue;
+        }
+
+        // If the uncompressed size is 0, it's actually 65536.
+        const std::size_t chunkSize = chunk.uncompressedSize == 0 ? 
+            0x10000 : chunk.uncompressedSize;
+
+        // Sonic Unleashed PS3 only uses deflate compression.
+        deflate_decompress_no_alloc(chunk.compressedSize,
+            ptradd<uint8_t>(src, chunk.dataOffset - 1), chunkSize, dstPtr);
+
+        dstPtr += chunkSize;
+    }
+}
+
 void lz4_decompress_no_alloc(std::size_t srcSize,
     const void* src, std::size_t dstSize, void* dst)
 {
@@ -295,6 +402,10 @@ void decompress_no_alloc(compress_type type, std::size_t srcSize,
 
     case compress_type::x:
         x_decompress_no_alloc(srcSize, src, dstSize, dst);
+        break;
+
+    case compress_type::segs:
+        segs_decompress_no_alloc(srcSize, src, dstSize, dst);
         break;
 
     case compress_type::lz4:
