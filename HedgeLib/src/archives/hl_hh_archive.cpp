@@ -140,6 +140,15 @@ void read(blob& hhArc, archive_entry_list* hlArc,
 
         in_read(uncompressedArc, hlArc, hhArcs);
     }
+    // Check for PS3 Compression.
+    else if (segs_check_signature(hhArc.size(), hhArc.data()))
+    {
+        u64 uncompressedSize = segs_get_uncompressed_size(hhArc.size(), hhArc.data());
+        blob uncompressedArc(static_cast<std::size_t>(uncompressedSize));
+        segs_decompress_no_alloc(hhArc.size(), hhArc.data(), uncompressedArc.size(), uncompressedArc.data());
+
+        in_read(uncompressedArc, hlArc, hhArcs);
+    }
     else
     {
         in_read(hhArc, hlArc, hhArcs);
