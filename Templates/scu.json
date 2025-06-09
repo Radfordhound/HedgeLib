@@ -2341,7 +2341,7 @@
         { "name": "LevelProbabilities[2]", "type": "float32" },
         { "name": "LevelProbabilities[3]", "type": "float32" },
         { "name": "LevelProbabilities[4]", "type": "float32" },
-        { "name": "LevelProbabilities[6]", "type": "float32" },
+        { "name": "LevelProbabilities[5]", "type": "float32" },
         { "name": "XXProbability", "type": "float32" }
       ]
     },
