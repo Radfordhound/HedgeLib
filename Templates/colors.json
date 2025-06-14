@@ -51,6 +51,16 @@
       "type": "uint8",
       "values": {
       }
+    },    
+    "ObjCameraPanVerticalSpawner::PositionMode": {
+      "type": "uint8",
+      "values": {
+      }
+    },
+    "ObjCameraPanVerticalSpawner::TargetType": {
+      "type": "uint8",
+      "values": {
+      }
     },
     "ObjCameraParallelSpawner::TargetType": {
       "type": "uint8",
@@ -107,6 +117,11 @@
       "values": {
       }
     },
+    "ObjAutorunCollisionStartSpawner::ForceToGround": {
+      "type": "uint8",
+      "values": {
+      }
+    },	
     "ObjAutorunCollisionStartSpawner::SendType": {
       "type": "uint8",
       "values": {
@@ -621,6 +636,11 @@
       "type": "uint8",
       "values": {
       }
+    },    
+    "ObjMapPartsBoxSpawner::IsWallJump": {
+      "type": "uint8",
+      "values": {
+      }
     },
     "ObjMapPartsPlaneSpawner::Type": {
       "type": "uint8",
@@ -978,8 +998,21 @@
       ]
     },
     "ObjCameraPanVerticalSpawner": {
-      "parent": "ObjCameraPanSpawner",
+      "parent": "ObjCameraSpawner",
       "fields": [
+        { "name": "Fovy", "type": "float32" },
+        { "name": "ZRot", "type": "float32" },
+        { "name": "Pitch", "type": "float32" },
+        { "name": "PositionMode", "type": "ObjCameraPanVerticalSpawner::PositionMode" },
+        { "name": "Distance", "type": "float32" },
+        { "name": "TargetType", "type": "ObjCameraPanVerticalSpawner::TargetType" },
+        { "name": "Target", "type": "object_reference" },
+        { "name": "TargetPositionFix", "type": "vector3" },
+        { "name": "TargetOffsetRight", "type": "float32" },
+        { "name": "TargetOffsetUp", "type": "float32" },
+        { "name": "TargetOffsetFront", "type": "float32" },
+        { "name": "OffsetYaw", "type": "float32" },
+        { "name": "OffsetPitch", "type": "float32" }
       ]
     },
     "ObjCameraParallelSpawner": {
@@ -1115,7 +1148,7 @@
         { "name": "KeepTime", "type": "float32" },
         { "name": "EaseTime", "type": "float32" },
         { "name": "ToPathEaseTime", "type": "float32" },
-        { "name": "ForceToGround", "type": "float32" },
+        { "name": "ForceToGround", "type": "ObjAutorunCollisionStartSpawner::ForceToGround" },
         { "name": "SendType", "type": "ObjAutorunCollisionStartSpawner::SendType" },
         { "name": "ForcedRun", "type": "bool" }
       ]
@@ -1303,7 +1336,7 @@
         { "name": "MinSpeed", "type": "float32" },
         { "name": "MaxSpeed", "type": "float32" },
         { "name": "UseMaxSpeed", "type": "bool" },
-        { "name": "SearchPathID", "type": "uint32" },
+        { "name": "SearchPathID", "type": "bool" },
         { "name": "IsPathReverse", "type": "bool" },
         { "name": "UseTimeOut", "type": "bool" },
         { "name": "TimeOut", "type": "float32" },
@@ -2834,18 +2867,19 @@
       "parent": "ObjMapPartsBaseSpawner",
       "fields": [
         { "name": "Type", "type": "ObjMapPartsBoxSpawner::Type" },
-        { "name": "Width", "type": "float32" },
-        { "name": "Height", "type": "float32" },
-        { "name": "Length", "type": "float32" }
+        { "name": "BoxSizeX", "type": "uint8" },
+        { "name": "BoxSizeY", "type": "uint8" },
+        { "name": "BoxSizeZ", "type": "uint8" },
+        { "name": "IsWallJump", "type": "ObjMapPartsBoxSpawner::IsWallJump" }
       ]
     },
     "ObjMapPartsPlaneSpawner": {
       "parent": "ObjMapPartsBaseSpawner",
       "fields": [
         { "name": "Type", "type": "ObjMapPartsPlaneSpawner::Type" },
-        { "name": "Width", "type": "float32" },
-        { "name": "Height", "type": "float32" },
-        { "name": "Length", "type": "float32" }
+        { "name": "Width", "type": "uint8" },
+        { "name": "Height", "type": "uint8" },
+        { "name": "Length", "type": "uint8" }
       ]
     },
     "ObjMapPartsMeshSpawner": {
