@@ -99,6 +99,13 @@ function Install-CMakeProject {
 
 # Download and install all required dependencies
 $Dependencies = @()
+
+$Dependencies += { Install-CMakeProject -Name "libRad" `
+    -Url https://github.com/Radfordhound/libRad/archive/refs/heads/master.zip `
+    -SourcePath "libRad-master" `
+    -BuildDebugConfig $true
+}
+
 $Dependencies += { Install-CMakeProject -Name "robin_hood" `
     -Url https://github.com/martinus/robin-hood-hashing/archive/refs/heads/master.zip `
     -SourcePath "robin-hood-hashing-master" `
@@ -134,6 +141,11 @@ $Dependencies += { Install-CMakeProject -Name "RapidJSON" `
     -SourcePath "rapidjson-master" `
     -Arguments "-DRAPIDJSON_BUILD_DOC=OFF", "-DRAPIDJSON_BUILD_EXAMPLES=OFF", `
         "-DRAPIDJSON_BUILD_TESTS=OFF", "-DRAPIDJSON_HAS_STDSTRING=ON"
+}
+
+$Dependencies += { Install-CMakeProject -Name "unordered_dense" `
+    -Url https://github.com/martinus/unordered_dense/archive/refs/heads/main.zip `
+    -SourcePath "unordered_dense-main"
 }
 
 for ($i = 0; $i -lt $Dependencies.Length; $i++) {

@@ -7,6 +7,14 @@ set(HEDGELIB_INCLUDES
     "${HEDGELIB_INCLUDE_DIR}/hedgelib/archives/hl_archive.h"
     "${HEDGELIB_INCLUDE_DIR}/hedgelib/archives/hl_hh_archive.h"
     "${HEDGELIB_INCLUDE_DIR}/hedgelib/archives/hl_pacx.h"
+    "${HEDGELIB_INCLUDE_DIR}/hedgelib/common/io/hl_endian_readers.h"
+    "${HEDGELIB_INCLUDE_DIR}/hedgelib/common/io/hl_endian_writers.h"
+    "${HEDGELIB_INCLUDE_DIR}/hedgelib/cri/hl_cri_aax.h"
+    "${HEDGELIB_INCLUDE_DIR}/hedgelib/cri/hl_cri_atom_cue_sheet.h"
+    "${HEDGELIB_INCLUDE_DIR}/hedgelib/cri/hl_cri_atom_wave_bank.h"
+    "${HEDGELIB_INCLUDE_DIR}/hedgelib/cri/hl_cri_cue_sheet.h"
+    "${HEDGELIB_INCLUDE_DIR}/hedgelib/cri/hl_cri_packed_file.h"
+    "${HEDGELIB_INCLUDE_DIR}/hedgelib/cri/hl_cri_utf.h"
     "${HEDGELIB_INCLUDE_DIR}/hedgelib/csl/hl_csl_move_array.h"
     "${HEDGELIB_INCLUDE_DIR}/hedgelib/effects/hl_fxcol.h"
     "${HEDGELIB_INCLUDE_DIR}/hedgelib/effects/hl_grif.h"
@@ -51,6 +59,21 @@ set(HEDGELIB_SOURCES
     "${HEDGELIB_SOURCE_DIR}/archives/hl_hh_archive.cpp"
     "${HEDGELIB_SOURCE_DIR}/archives/hl_in_pacx_type_autogen.h"
     "${HEDGELIB_SOURCE_DIR}/archives/hl_pacx.cpp"
+    "${HEDGELIB_SOURCE_DIR}/common/io/hl_endian_readers.cpp"
+    "${HEDGELIB_SOURCE_DIR}/common/io/hl_endian_writers.cpp"
+    "${HEDGELIB_SOURCE_DIR}/cri/hl_cri_aax.cpp"
+    "${HEDGELIB_SOURCE_DIR}/cri/hl_cri_atom_cue_sheet_aisac_impl.cpp"
+    "${HEDGELIB_SOURCE_DIR}/cri/hl_cri_atom_cue_sheet_cue_impl.cpp"
+    "${HEDGELIB_SOURCE_DIR}/cri/hl_cri_atom_cue_sheet_graph_impl.cpp"
+    "${HEDGELIB_SOURCE_DIR}/cri/hl_cri_atom_cue_sheet_sequence_impl.cpp"
+    "${HEDGELIB_SOURCE_DIR}/cri/hl_cri_atom_cue_sheet_synth_impl.cpp"
+    "${HEDGELIB_SOURCE_DIR}/cri/hl_cri_atom_cue_sheet_track_impl.cpp"
+    "${HEDGELIB_SOURCE_DIR}/cri/hl_cri_atom_cue_sheet_waveform_impl.cpp"
+    "${HEDGELIB_SOURCE_DIR}/cri/hl_cri_atom_cue_sheet.cpp"
+    "${HEDGELIB_SOURCE_DIR}/cri/hl_cri_atom_wave_bank.cpp"
+    "${HEDGELIB_SOURCE_DIR}/cri/hl_cri_cue_sheet.cpp"
+    "${HEDGELIB_SOURCE_DIR}/cri/hl_cri_packed_file.cpp"
+    "${HEDGELIB_SOURCE_DIR}/cri/hl_cri_utf.cpp"
     "${HEDGELIB_SOURCE_DIR}/effects/hl_grif.cpp"
     "${HEDGELIB_SOURCE_DIR}/hh/hl_hh_gedit_v1.cpp"
     "${HEDGELIB_SOURCE_DIR}/hh/hl_hh_gedit_v3.cpp"
@@ -172,6 +195,14 @@ endif()
 
 list(APPEND HEDGELIB_PUBLIC_DEPEND_LIBS robin_hood::robin_hood)
 
+# Find unordered_dense and add it to HedgeLib dependencies
+if(NOT TARGET unordered_dense::unordered_dense)
+    message(STATUS "Searching for unordered_dense...")
+    find_package(unordered_dense CONFIG REQUIRED)
+endif()
+
+list(APPEND HEDGELIB_PUBLIC_DEPEND_LIBS unordered_dense::unordered_dense)
+
 # Download DirectXMath
 message(STATUS "Downloading and/or configuring DirectXMath as necessary...")
 FetchContent_Declare(DirectXMath
@@ -230,6 +261,10 @@ FetchContent_Declare(libmspack
 
 FetchContent_Populate(libmspack)
 list(APPEND HEDGELIB_PRIVATE_INCLUDE_DIRS ${libmspack_SOURCE_DIR}/libmspack/mspack)
+
+# Find libRad and add it to HedgeLib dependencies
+find_package(libRad REQUIRED)
+list(APPEND HEDGELIB_PUBLIC_DEPEND_LIBS libRad::libRad)
 
 # Setup dependencies
 target_include_directories(HedgeLib
