@@ -316,26 +316,26 @@ public:
 
     iterator erase(const_iterator pos)
     {
-        const auto it = m_orderedPtrs.erase(pos.m_current);
         m_data.erase(pos->first);
+        const auto it = m_orderedPtrs.erase(pos.m_current);
         return it;
     }
 
     iterator erase(iterator pos)
     {
-        const auto it = m_orderedPtrs.erase(pos.m_current);
         m_data.erase(pos->first);
+        const auto it = m_orderedPtrs.erase(pos.m_current);
         return it;
     }
 
     iterator erase(const_iterator first, const_iterator last)
     {
-        const auto it = m_orderedPtrs.erase(first.m_current, last.m_current);
         for (; first != last; ++first)
         {
             m_data.erase((*first)->first);
         }
 
+        const auto it = m_orderedPtrs.erase(first.m_current, last.m_current);
         return it;
     }
 
