@@ -370,8 +370,9 @@ void deflate_decompress_no_alloc(std::size_t srcSize,
 
     // Decompress deflate data.
     // TODO: Should we use Z_SYNC_FLUSH?
-    r = inflate(&stream, Z_SYNC_FLUSH);
-    if (r < Z_OK)
+    r = inflate(&stream, Z_FINISH);
+    inflateEnd(&stream);
+    if (r != Z_STREAM_END)
     {
         throw std::runtime_error("Failed to decompress deflate data");
     }
