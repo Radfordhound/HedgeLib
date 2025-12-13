@@ -4,7 +4,7 @@
 
 **IMPORTANT:** All code committed to this repository, preferably, should follow [these style guidelines](https://github.com/Radfordhound/HedgeLib/wiki/Code-Style).
 
-## Download.
+## Download
 
 This repository uses [AppVeyor](https://www.appveyor.com) to automatically build every commit!
 As such, you don't have to manually build any of the tools/libraries in this repository if you simply want to try out the latest versions.
