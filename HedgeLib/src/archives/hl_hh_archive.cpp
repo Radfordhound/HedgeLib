@@ -131,6 +131,15 @@ static void in_read(blob& hhArc, archive_entry_list* hlArc,
 void read(blob& hhArc, archive_entry_list* hlArc,
     std::vector<blob>* hhArcs)
 {
+    // Check for CAB Compression.
+    if (hhArc.size() >= 4)
+    {
+        u32 sig = *reinterpret_cast<const u32*>(hhArc.data());
+        if (sig == 0x4643534D)
+        {
+            throw std::runtime_error("CAB-compressed archives are not supported yet");
+        }
+    }
     // Check for Xbox Compression.
     if (x_check_signature(hhArc.size(), hhArc.data()))
     {
