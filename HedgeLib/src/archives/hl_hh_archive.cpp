@@ -134,12 +134,7 @@ void read(blob& hhArc, archive_entry_list* hlArc,
     // Check for CAB Compression.
     if (cab_check_signature(hhArc.size(), hhArc.data()))
     {
-        const std::size_t uncompressedSize = cab_get_uncompressed_size(
-            hhArc.size(), hhArc.data());
-
-        blob uncompressedArc(uncompressedSize);
-        cab_decompress_no_alloc(hhArc.size(), hhArc.data(),
-            uncompressedArc.size(), uncompressedArc.data());
+        blob uncompressedArc = cab_decompress(hhArc.size(), hhArc.data());
 
         in_read(uncompressedArc, hlArc, hhArcs);
     }

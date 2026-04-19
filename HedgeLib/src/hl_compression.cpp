@@ -182,18 +182,8 @@ struct in_mspack_cab_stream
 static mspack_file* in_mspack_cab_open(mspack_system* self,
     const char* filename, int mode)
 {
-    if (!filename)
-    {
-        return nullptr;
-    }
-
     in_mspack_cab_stream* stream = static_cast<in_mspack_cab_stream*>(
         in_mspack_alloc(self, sizeof(in_mspack_cab_stream)));
-
-    if (!stream)
-    {
-        return nullptr;
-    }
 
     stream->pos = 0;
     stream->written = nullptr;
@@ -204,12 +194,6 @@ static mspack_file* in_mspack_cab_open(mspack_system* self,
         const in_mspack_cab_in_stream* inStream =
             reinterpret_cast<const in_mspack_cab_in_stream*>(filename);
 
-        if (!inStream->data || inStream->size == 0)
-        {
-            in_mspack_free(stream);
-            return nullptr;
-        }
-
         stream->data = const_cast<u8*>(inStream->data);
         stream->size = inStream->size;
     }
@@ -217,12 +201,6 @@ static mspack_file* in_mspack_cab_open(mspack_system* self,
     {
         in_mspack_cab_out_stream* outStream =
             reinterpret_cast<in_mspack_cab_out_stream*>(const_cast<char*>(filename));
-
-        if (!outStream->data || outStream->size == 0)
-        {
-            in_mspack_free(stream);
-            return nullptr;
-        }
 
         stream->data = outStream->data;
         stream->size = outStream->size;
@@ -250,7 +228,7 @@ static int in_mspack_cab_read(mspack_file* file, void* buffer, int bytes)
 {
     in_mspack_cab_stream* stream = reinterpret_cast<in_mspack_cab_stream*>(file);
 
-    if (!stream->isRead || bytes < 0)
+    if (!stream->isRead)
     {
         return -1;
     }
@@ -267,7 +245,7 @@ static int in_mspack_cab_write(mspack_file* file, void* buffer, int bytes)
 {
     in_mspack_cab_stream* stream = reinterpret_cast<in_mspack_cab_stream*>(file);
 
-    if (stream->isRead || bytes < 0)
+    if (stream->isRead)
     {
         return -1;
     }
@@ -347,11 +325,45 @@ static mspack_system in_cab_system =
 static mscabd_file* in_mspack_cab_get_file(mscabd_cabinet* cab)
 {
     mscabd_file* file = cab->files;
+    return (file && !file->next) ? file : nullptr;
+}
 
-    if (!file || file->next)
-        return nullptr;
+struct in_cab_context
+{
+    in_mspack_cab_in_stream srcStream;
+    mscab_decompressor* cabd = nullptr;
+    mscabd_cabinet* cab = nullptr;
+    mscabd_file* file = nullptr;
 
-    return file;
+    ~in_cab_context()
+    {
+        if (cabd && cab) cabd->close(cabd, cab);
+        if (cabd) mspack_destroy_cab_decompressor(cabd);
+    }
+};
+
+static bool in_cab_open_single_file(std::size_t srcSize,
+    const void* src, in_cab_context& context)
+{
+    context.srcStream.data = static_cast<const u8*>(src);
+    context.srcStream.size = srcSize;
+
+    context.cabd = mspack_create_cab_decompressor(&in_cab_system);
+    if (!context.cabd)
+    {
+        return false;
+    }
+
+    context.cab = context.cabd->open(context.cabd,
+        reinterpret_cast<const char*>(&context.srcStream));
+
+    if (!context.cab)
+    {
+        return false;
+    }
+
+    context.file = in_mspack_cab_get_file(context.cab);
+    return (context.file != nullptr);
 }
 
 // Xbox Compression header definitions.
@@ -402,109 +414,67 @@ bool cab_check_signature(std::size_t srcSize, const void* src)
         return false;
     }
 
-    const u32 sig = *reinterpret_cast<const u32*>(src);
+    u32 sig = 0;
+    std::memcpy(&sig, src, sizeof(sig));
     return sig == in_cab_signature;
 }
 
 std::size_t cab_get_uncompressed_size(std::size_t srcSize, const void* src)
 {
-    if (!cab_check_signature(srcSize, src))
+    in_cab_context context;
+    if (!in_cab_open_single_file(srcSize, src, context))
         return 0;
 
-    in_mspack_cab_in_stream srcStream;
-    srcStream.data = static_cast<const u8*>(src);
-    srcStream.size = srcSize;
+    return context.file->length;
+}
 
-    struct in_cab_context
+blob cab_decompress(std::size_t srcSize, const void* src)
+{
+    in_cab_context context;
+    if (!in_cab_open_single_file(srcSize, src, context))
     {
-        mscab_decompressor* cabd = nullptr;
-        mscabd_cabinet* cab = nullptr;
+        throw std::out_of_range("");
+    }
 
-        ~in_cab_context()
-        {
-            if (cabd)
-            {
-                if (cab)
-                {
-                    cabd->close(cabd, cab);
-                }
+    blob dst(context.file->length);
+    in_mspack_cab_out_stream dstStream;
+    dstStream.data = static_cast<u8*>(dst.data());
+    dstStream.size = dst.size();
 
-                mspack_destroy_cab_decompressor(cabd);
-            }
-        }
-    } context;
+    const int r = context.cabd->extract(context.cabd, context.file,
+        reinterpret_cast<const char*>(&dstStream));
 
-    context.cabd = mspack_create_cab_decompressor(&in_cab_system);
-    if (!context.cabd)
-        return 0;
+    if (r != MSPACK_ERR_OK)
+    {
+        throw std::out_of_range("");
+    }
 
-    context.cab = context.cabd->open(context.cabd,
-        reinterpret_cast<const char*>(&srcStream));
-
-    if (!context.cab)
-        return 0;
-
-    mscabd_file* file = in_mspack_cab_get_file(context.cab);
-    if (!file)
-        return 0;
-
-    return file->length;
+    return dst;
 }
 
 void cab_decompress_no_alloc(std::size_t srcSize,
     const void* src, std::size_t dstSize, void* dst)
 {
-    if (!cab_check_signature(srcSize, src))
+    in_cab_context context;
+    if (!in_cab_open_single_file(srcSize, src, context))
         return;
-
-    in_mspack_cab_in_stream srcStream;
-    srcStream.data = static_cast<const u8*>(src);
-    srcStream.size = srcSize;
 
     in_mspack_cab_out_stream dstStream;
     dstStream.data = static_cast<u8*>(dst);
     dstStream.size = dstSize;
 
-    struct in_cab_context
-    {
-        mscab_decompressor* cabd = nullptr;
-        mscabd_cabinet* cab = nullptr;
-
-        ~in_cab_context()
-        {
-            if (cabd)
-            {
-                if (cab)
-                {
-                    cabd->close(cabd, cab);
-                }
-
-                mspack_destroy_cab_decompressor(cabd);
-            }
-        }
-    } context;
-
-    context.cabd = mspack_create_cab_decompressor(&in_cab_system);
-    if (!context.cabd)
-        return;
-
-    context.cab = context.cabd->open(context.cabd,
-        reinterpret_cast<const char*>(&srcStream));
-
-    if (!context.cab)
-        return;
-
-    mscabd_file* file = in_mspack_cab_get_file(context.cab);
-    if (!file)
-        return;
-
-    if (file->length > dstSize)
+    if (context.file->length > dstSize)
     {
         throw std::out_of_range("");
     }
 
-    context.cabd->extract(context.cabd, file,
+    const int r = context.cabd->extract(context.cabd, context.file,
         reinterpret_cast<const char*>(&dstStream));
+
+    if (r != MSPACK_ERR_OK)
+    {
+        throw std::out_of_range("");
+    }
 }
 
 bool x_check_signature(std::size_t srcSize, const void* src)
