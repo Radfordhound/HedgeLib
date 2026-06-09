@@ -1,10 +1,11 @@
 #include "hedgelib/cri/hl_cri_packed_file.h"
 #include "hedgelib/cri/hl_cri_utf.h"
+#include "hedgelib/io/hl_endian_readers.h"
 #include <rad/rad_path_unix.h>
 #include <rad/rad_memory_stream.h>
 #include <cstring>
 
-namespace hl::cri_new
+namespace hl::cri
 {
 static const utf::column_info cpk_header_columns_[] =
 {
@@ -469,7 +470,7 @@ static void read_section_(
     rad::vector<unsigned char>& section)
 {
     // Read section header.
-    little_endian_reader reader(stream);
+    io::little_endian_reader reader(stream);
     
     if (reader.read_u32() != expectedSig)
     {
@@ -497,34 +498,37 @@ void packed_file::read_toc_section_(read_params_& rp, unsigned long long content
     read_section_(*rp.stream, toc_signature, rp.section);
 
     rad::readonly_memory_stream sectionStream(rp.section);
-    utf::table_deserializer td(sectionStream);
+    utf::deserializer dr(sectionStream);
 
     // Validate columns.
-    if (!td.are_columns_exact_types(toc_info_columns_, 0, std::size(toc_info_columns_)))
+    if (!dr.has_columns_of_exact_types(
+        toc_info_columns_,
+        0,
+        static_cast<u16>(std::size(toc_info_columns_))))
     {
         throw std::runtime_error("Invalid or unsupported CpkTocInfo layout");
     }
 
     // Parse rows.
-    reserve(td.row_count());
+    reserve(dr.row_count());
 
-    for (u32 i = 0; i < td.row_count(); ++i)
+    for (u32 i = 0; i < dr.row_count(); ++i)
     {
         // Read row.
-        const auto rawDirName = td.read_cell_as_string();
-        const auto rawFileName = td.read_cell_as_string();
-        const auto fileSize = td.read_cell_as_u32();
-        const auto extractSize = td.read_cell_as_u32();
-        const auto fileOffset = td.read_cell_as_u64();
-        const auto id = td.read_cell_as_u32();
-        const auto rawUserString = td.read_cell_as_string();
+        const auto rawDirName = dr.next_cell_as_string();
+        const auto rawFileName = dr.next_cell_as_string();
+        const auto fileSize = dr.next_cell_as_u32();
+        const auto extractSize = dr.next_cell_as_u32();
+        const auto fileOffset = dr.next_cell_as_u64();
+        const auto id = dr.next_cell_as_u32();
+        const auto rawUserString = dr.next_cell_as_string();
 
-        td.next_row();
+        dr.next_row();
 
         // Add entry.
         auto canonicalPath = rad::path::combine_unix(
-            td.get_string_data(rawDirName),
-            td.get_string_data(rawFileName)
+            dr.get_string_data(rawDirName),
+            dr.get_string_data(rawFileName)
         );
 
         const auto p = insert_proxy_(
@@ -533,7 +537,7 @@ void packed_file::read_toc_section_(read_params_& rp, unsigned long long content
             fileSize,
             extractSize,
             contentPos + fileOffset,
-            td.get_string_data(rawUserString)
+            dr.get_string_data(rawUserString)
         );
 
         switch (rp.dataReadMode)
@@ -665,12 +669,12 @@ struct cpk_header_
         read_section_(stream, cpk_signature, section);
 
         rad::readonly_memory_stream sectionStream(section);
-        utf::table_deserializer td(sectionStream);
+        utf::deserializer dr(sectionStream);
 
         // Validate columns.
-        if (td.row_count() != 1)
-            //td.column_count() < std::size(cpk_header_columns_) ||
-            //!td.are_columns_exact_types(
+        if (dr.row_count() != 1)
+            //dr.column_count() < std::size(cpk_header_columns_) ||
+            //!dr.are_columns_exact_types(
             //cpk_header_columns_,
             //0,
             //std::size(cpk_header_columns_)))
@@ -679,181 +683,181 @@ struct cpk_header_
         }
 
         // Read fields.
-        if (td.try_go_to_cell("UpdateDateTime"))
+        if (dr.try_go_to_cell("UpdateDateTime"))
         {
-            updateDateTime = td.read_cell_as_u64();
+            updateDateTime = dr.next_cell_as_u64();
         }
 
-        if (td.try_go_to_cell("FileSize"))
+        if (dr.try_go_to_cell("FileSize"))
         {
-            fileSize = td.read_cell_as_u64();
+            fileSize = dr.next_cell_as_u64();
         }
 
-        if (td.try_go_to_cell("ContentOffset"))
+        if (dr.try_go_to_cell("ContentOffset"))
         {
-            contentOffset = td.read_cell_as_u64();
+            contentOffset = dr.next_cell_as_u64();
         }
 
-        if (td.try_go_to_cell("ContentSize"))
+        if (dr.try_go_to_cell("ContentSize"))
         {
-            contentSize = td.read_cell_as_u64();
+            contentSize = dr.next_cell_as_u64();
         }
 
-        if (td.try_go_to_cell("TocOffset"))
+        if (dr.try_go_to_cell("TocOffset"))
         {
-            tocOffset = td.read_cell_as_u64();
+            tocOffset = dr.next_cell_as_u64();
         }
 
-        if (td.try_go_to_cell("TocSize"))
+        if (dr.try_go_to_cell("TocSize"))
         {
-            tocSize = td.read_cell_as_u64();
+            tocSize = dr.next_cell_as_u64();
         }
 
-        if (td.try_go_to_cell("TocCrc"))
+        if (dr.try_go_to_cell("TocCrc"))
         {
-            tocCrc = td.read_cell_as_u32();
+            tocCrc = dr.next_cell_as_u32();
         }
 
-        if (td.try_go_to_cell("EtocOffset"))
+        if (dr.try_go_to_cell("EtocOffset"))
         {
-            etocOffset = td.read_cell_as_u64();
+            etocOffset = dr.next_cell_as_u64();
         }
 
-        if (td.try_go_to_cell("EtocSize"))
+        if (dr.try_go_to_cell("EtocSize"))
         {
-            etocSize = td.read_cell_as_u64();
+            etocSize = dr.next_cell_as_u64();
         }
 
-        if (td.try_go_to_cell("ItocOffset"))
+        if (dr.try_go_to_cell("ItocOffset"))
         {
-            itocOffset = td.read_cell_as_u64();
+            itocOffset = dr.next_cell_as_u64();
         }
 
-        if (td.try_go_to_cell("ItocSize"))
+        if (dr.try_go_to_cell("ItocSize"))
         {
-            itocSize = td.read_cell_as_u64();
+            itocSize = dr.next_cell_as_u64();
         }
 
-        if (td.try_go_to_cell("ItocCrc"))
+        if (dr.try_go_to_cell("ItocCrc"))
         {
-            iTocCrc = td.read_cell_as_u32();
+            iTocCrc = dr.next_cell_as_u32();
         }
 
-        if (td.try_go_to_cell("GtocOffset"))
+        if (dr.try_go_to_cell("GtocOffset"))
         {
-            gtocOffset = td.read_cell_as_u64();
+            gtocOffset = dr.next_cell_as_u64();
         }
 
-        if (td.try_go_to_cell("GtocSize"))
+        if (dr.try_go_to_cell("GtocSize"))
         {
-            gtocSize = td.read_cell_as_u64();
+            gtocSize = dr.next_cell_as_u64();
         }
 
-        if (td.try_go_to_cell("GtocCrc"))
+        if (dr.try_go_to_cell("GtocCrc"))
         {
-            gTocCrc = td.read_cell_as_u32();
+            gTocCrc = dr.next_cell_as_u32();
         }
 
-        if (td.try_go_to_cell("EnabledPackedSize"))
+        if (dr.try_go_to_cell("EnabledPackedSize"))
         {
-            enabledPackedSize = td.read_cell_as_u64();
+            enabledPackedSize = dr.next_cell_as_u64();
         }
 
-        if (td.try_go_to_cell("EnabledDataSize"))
+        if (dr.try_go_to_cell("EnabledDataSize"))
         {
-            enabledDataSize = td.read_cell_as_u64();
+            enabledDataSize = dr.next_cell_as_u64();
         }
 
-        if (td.try_go_to_cell("TotalDataSize"))
+        if (dr.try_go_to_cell("TotalDataSize"))
         {
-            totalDataSize = td.read_cell_as_u64();
+            totalDataSize = dr.next_cell_as_u64();
         }
 
-        if (td.try_go_to_cell("Tocs"))
+        if (dr.try_go_to_cell("Tocs"))
         {
-            tocs = td.read_cell_as_u32();
+            tocs = dr.next_cell_as_u32();
         }
 
-        if (td.try_go_to_cell("Files"))
+        if (dr.try_go_to_cell("Files"))
         {
-            files = td.read_cell_as_u32();
+            files = dr.next_cell_as_u32();
         }
 
-        if (td.try_go_to_cell("Groups"))
+        if (dr.try_go_to_cell("Groups"))
         {
-            groups = td.read_cell_as_u32();
+            groups = dr.next_cell_as_u32();
         }
 
-        if (td.try_go_to_cell("Attrs"))
+        if (dr.try_go_to_cell("Attrs"))
         {
-            attrs = td.read_cell_as_u32();
+            attrs = dr.next_cell_as_u32();
         }
 
-        if (td.try_go_to_cell("TotalFiles"))
+        if (dr.try_go_to_cell("TotalFiles"))
         {
-            totalFiles = td.read_cell_as_u32();
+            totalFiles = dr.next_cell_as_u32();
         }
 
-        if (td.try_go_to_cell("Directories"))
+        if (dr.try_go_to_cell("Directories"))
         {
-            directories = td.read_cell_as_u32();
+            directories = dr.next_cell_as_u32();
         }
 
-        if (td.try_go_to_cell("Updates"))
+        if (dr.try_go_to_cell("Updates"))
         {
-            updates = td.read_cell_as_u32();
+            updates = dr.next_cell_as_u32();
         }
 
-        if (td.try_go_to_cell("Version"))
+        if (dr.try_go_to_cell("Version"))
         {
-            version = td.read_cell_as_u16();
+            version = dr.next_cell_as_u16();
         }
 
-        if (td.try_go_to_cell("Revision"))
+        if (dr.try_go_to_cell("Revision"))
         {
-            revision = td.read_cell_as_u16();
+            revision = dr.next_cell_as_u16();
         }
 
-        if (td.try_go_to_cell("Align"))
+        if (dr.try_go_to_cell("Align"))
         {
-            align = td.read_cell_as_u16();
+            align = dr.next_cell_as_u16();
         }
 
-        if (td.try_go_to_cell("Sorted"))
+        if (dr.try_go_to_cell("Sorted"))
         {
-            sorted = td.read_cell_as_u16();
+            sorted = dr.next_cell_as_u16();
         }
 
-        if (td.try_go_to_cell("EID"))
+        if (dr.try_go_to_cell("EID"))
         {
-            eID = td.read_cell_as_u16();
+            eID = dr.next_cell_as_u16();
         }
 
-        if (td.try_go_to_cell("CpkMode"))
+        if (dr.try_go_to_cell("CpkMode"))
         {
-            cpkMode = td.read_cell_as_u32();
+            cpkMode = dr.next_cell_as_u32();
         }
 
-        if (td.try_go_to_cell("Tvers"))
+        if (dr.try_go_to_cell("Tvers"))
         {
-            const auto rawTvers = td.read_cell_as_string();
-            tvers = td.get_string_data(rawTvers, section.allocator());
+            const auto rawTvers = dr.next_cell_as_string();
+            tvers = dr.get_string_data(rawTvers);
         }
 
-        if (td.try_go_to_cell("Comment"))
+        if (dr.try_go_to_cell("Comment"))
         {
-            const auto rawComment = td.read_cell_as_string();
-            comment = td.get_string_data(rawComment, section.allocator());
+            const auto rawComment = dr.next_cell_as_string();
+            comment = dr.get_string_data(rawComment);
         }
 
-        if (td.try_go_to_cell("Codec"))
+        if (dr.try_go_to_cell("Codec"))
         {
-            codec = td.read_cell_as_u32();
+            codec = dr.next_cell_as_u32();
         }
 
-        if (td.try_go_to_cell("DpkItoc"))
+        if (dr.try_go_to_cell("DpkItoc"))
         {
-            dpkItoc = td.read_cell_as_u32();
+            dpkItoc = dr.next_cell_as_u32();
         }
 
         // TODO: New format version.

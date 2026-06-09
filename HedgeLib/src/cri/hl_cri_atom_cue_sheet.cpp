@@ -1,8 +1,13 @@
-#include "hedgelib/cri/hl_cri_atom_cue_sheet.h"
 #include <rad/rad_memory_stream.h>
 
-namespace hl::cri_new::atom
+#include "hedgelib/cri/hl_cri_atom_cue_sheet.h"
+#include "hl_cri_atom_impl.h"
+
+namespace hl::cri::atom
 {
+// TODO: Move to atom.cpp
+static const md5_hash empty_md5_hash_ = { 0 };
+
 static const utf::column_info cue_sheet_columns_[] =
 {
     // reserved columns
@@ -250,7 +255,7 @@ static constexpr utf::column_info_range cue_sheet_columns_r7_[] =
     { 70, 3 },  // PaddingArea - StreamAwbAfs2Header
 };
 
-static constexpr revision_info cue_sheet_revisions_[] =
+static constexpr revision_info_ cue_sheet_revisions_[] =
 {
     // old format version (v0.00.00 - v1.37.00)
     { packed_version(0), cue_sheet_columns_r0_ }, // r0
@@ -269,81 +274,347 @@ static constexpr u16 cue_sheet_column_count_r0_ = 64;
 
 static constexpr u16 cue_sheet_column_count_r6_ = 96;
 
-const revision_info* get_revision_info(
-    rad::span<const revision_info> revisionInfos,
-    packed_version version) noexcept
+static const utf::column_info string_value_columns_[] =
 {
-    const revision_info* result = nullptr;
+    { utf::cell_type::string, "StringValue" },
+};
 
-    for (const auto& revisionInfo : revisionInfos)
+static void read_string_value_table_(
+    rad::stream& stream,
+    rad::allocator& tmpAllocator,
+    rad::vector<rad::string>& stringValues)
+{
+    assert(stringValues.empty() &&
+        "The given output vector must be empty"
+    );
+
+    // Read raw table header.
+    utf::deserializer dr(stream, utf::deserialize_type::utf, tmpAllocator);
+
+    // Validate columns.
+    if (!dr.has_columns_of_exact_types(
+        string_value_columns_,
+        0,
+        static_cast<u16>(std::size(string_value_columns_))))
     {
-        if (version < revisionInfo.version) break;
+        throw std::runtime_error("Invalid or unsupported ACB string value layout");
+    }
 
-        result = &revisionInfo;
+    // Read rows.
+    auto& stringValueAllocator = stringValues.allocator();
+    stringValues.reserve(dr.row_count());
+
+    for (u32 i = 0; i < dr.row_count(); dr.next_row(), ++i)
+    {
+        const auto val = dr.get_string_data(dr.next_cell_as_string()); // StringValue
+        stringValues.emplace_back_unchecked(
+            rad::string(stringValueAllocator, val)
+        );
+    }
+}
+
+static void write_string_value_table_(
+    detail_::write_params& wp,
+    const rad::vector<rad::string>& stringValues)
+{
+    utf::serializer sr(*wp.stream, *wp.allocator);
+
+    sr.start(
+        "Strings",
+        string_value_columns_,
+        wp.encoding
+    );
+
+    // Write rows.
+    for (const auto& strVal : stringValues)
+    {
+        sr.push_cell_string(strVal); // StringValue
+        sr.next_row();
+    }
+
+    // Finish writing table.
+    sr.finish();
+}
+
+static void write_global_aisac_reference_table_(
+    detail_::write_params& wp,
+    const rad::vector<rad::string>& globalAisacNames)
+{
+    utf::serializer sr(*wp.stream, *wp.allocator);
+
+    sr.start(
+        "GlobalAisacReference",
+        { { utf::cell_type::string, "Name" } },
+        wp.encoding
+    );
+
+    // Write rows.
+    for (const auto& globalAisacName : globalAisacNames)
+    {
+        sr.push_cell_string(globalAisacName); // Name
+        sr.next_row();
+    }
+
+    // Finish writing table.
+    sr.finish();
+}
+
+static const utf::column_info acf_reference_columns_[] =
+{
+    { utf::cell_type::u8, "Type" },
+    { utf::cell_type::string, "Name" },
+    { utf::cell_type::string, "Name2" },
+    { utf::cell_type::u32, "Id" },
+};
+
+config_ref_item_type parse_config_ref_item_type_(u8 type)
+{
+    if (type != static_cast<u8>(config_ref_item_type::category) &&
+        type != static_cast<u8>(config_ref_item_type::aisac) &&
+        type != static_cast<u8>(config_ref_item_type::aisac_control) &&
+        type != static_cast<u8>(config_ref_item_type::voice_limit_group) &&
+        type != static_cast<u8>(config_ref_item_type::selector_label) &&
+        type != static_cast<u8>(config_ref_item_type::dsp_bus))
+    {
+        throw std::runtime_error("Unsupported CriAtom ACF ref item type");
+    }
+
+    return static_cast<config_ref_item_type>(type);
+}
+
+static void read_acf_reference_table_(
+    rad::stream& stream,
+    rad::allocator& tmpAllocator,
+    rad::vector<config_ref_item>& acfRefItems)
+{
+    assert(acfRefItems.empty() &&
+        "The given output vector must be empty"
+    );
+
+    // Read raw table header.
+    utf::deserializer dr(stream, utf::deserialize_type::utf, tmpAllocator);
+
+    // Validate columns.
+    if (!dr.has_columns_of_exact_types(
+        acf_reference_columns_,
+        0,
+        static_cast<u16>(std::size(acf_reference_columns_))))
+    {
+        throw std::runtime_error("Invalid or unsupported ACB ACF reference table layout");
+    }
+
+    // Read rows.
+    auto& acfRefItemAllocator = acfRefItems.allocator();
+    acfRefItems.reserve(dr.row_count());
+
+    for (u32 i = 0; i < dr.row_count(); dr.next_row(), ++i)
+    {
+        const auto type = parse_config_ref_item_type_(dr.next_cell_as_u8()); // Type
+        const auto name = dr.get_string_data(dr.next_cell_as_string()); // Name
+        const auto name2 = dr.get_string_data(dr.next_cell_as_string()); // Name2
+        const auto id = dr.next_cell_as_u32(); // Id
+
+        acfRefItems.emplace_back_unchecked(
+            type,
+            rad::string(acfRefItemAllocator, name),
+            rad::string(acfRefItemAllocator, name2),
+            id
+        );
+    }
+}
+
+void write_acf_reference_table_(
+    detail_::write_params& wp,
+    const rad::vector<config_ref_item>& acfRefItems)
+{
+    utf::serializer sr(*wp.stream, *wp.allocator);
+
+    sr.start("AcfReference", acf_reference_columns_, wp.encoding);
+
+    // Write rows.
+    for (const auto& acfRefItem : acfRefItems)
+    {
+        sr.push_cell_u8(static_cast<u8>(acfRefItem.type)); // Type
+        sr.push_cell_string(acfRefItem.name); // Name
+        sr.push_cell_string(acfRefItem.name2); // Name2
+        sr.push_cell_u32(acfRefItem.id); // Id
+
+        sr.next_row();
+    }
+
+    sr.begin_buffer_data_section();
+
+    // Finish writing table.
+    sr.writer().stream().pad(4);
+    sr.finish();
+}
+
+static void write_stream_awb_hash_table_(
+    detail_::write_params& wp,
+    const rad::vector<wave_bank_hash>& streamAwbHashes)
+{
+    utf::serializer sr(*wp.stream, *wp.allocator);
+
+    static const utf::column_info columns[] =
+    {
+        { utf::cell_type::string, "Name" },
+        { utf::cell_type::buffer, "Hash" },
+    };
+
+    sr.start("StreamAwb", columns, wp.encoding);
+
+    // Write rows.
+    for (const auto& streamAwbHash : streamAwbHashes)
+    {
+        sr.push_cell_string(streamAwbHash.name); // Name
+        sr.push_cell_buffer(); // Hash
+        sr.next_row();
+    }
+
+    // Write buffer data.
+    auto br = sr.begin_buffer_data_section();
+
+    for (const auto& streamAwbHash : streamAwbHashes)
+    {
+        br.start();
+        br.stream().write(streamAwbHash.md5Hash.data(), streamAwbHash.md5Hash.size());
+        br.next();
+    }
+
+    // Finish writing table.
+    sr.finish();
+}
+
+static const utf::column_info stream_awb_header_columns_[] =
+{
+    { utf::cell_type::buffer, "Header" },
+};
+
+static void read_stream_awb_header_table_(
+    rad::stream& stream,
+    rad::allocator& tmpAllocator,
+    rad::vector<rad::vector<unsigned char>>& streamAwbTocData)
+{
+    // TODO: In versions prior to 1.30.00, this table is actually written with
+    // the table name "StreamAwb", followed by the following UNUSED strings: "Name", then
+    // "Hash", followed by the name of the awb, followed by "StreamAwb" again (this one is
+    // unused), finally followed by the "Header" string, which IS actually used by the column.
+
+    // Also, the data begins with the MD5 hash of the awb data, followed immediately (no padding)
+    // by the actual awb toc data.
+
+    assert(streamAwbTocData.empty() &&
+        "The given output vector must be empty"
+    );
+
+    // Read raw table header.
+    utf::deserializer dr(stream, utf::deserialize_type::utf, tmpAllocator);
+
+    // Validate columns.
+    if (!dr.has_columns_of_exact_types(
+        stream_awb_header_columns_,
+        0,
+        static_cast<u16>(std::size(stream_awb_header_columns_))))
+    {
+        throw std::runtime_error("Invalid or unsupported ACB stream AWB header layout");
+    }
+
+    // Read rows.
+    auto& streamAwbTocDataAllocator = streamAwbTocData.allocator();
+    streamAwbTocData.reserve(dr.row_count());
+
+    for (u32 i = 0; i < dr.row_count(); dr.next_row(), ++i)
+    {
+        const auto rawHeader = dr.next_cell_as_buffer(); // Header
+
+        // Header
+        streamAwbTocData.emplace_back_unchecked(
+            dr.read_buffer_data(rawHeader, streamAwbTocDataAllocator)
+        );
+    }
+}
+
+static void write_stream_awb_header_table_(
+    detail_::write_params& wp,
+    const rad::vector<rad::vector<unsigned char>>& streamAwbTocData)
+{
+    // TODO: In versions prior to 1.30.00, this table is actually written with
+    // the table name "StreamAwb", followed by the following UNUSED strings: "Name", then
+    // "Hash", followed by the name of the awb, followed by "StreamAwb" again (this one is
+    // unused), finally followed by the "Header" string, which IS actually used by the column.
+
+    // Also, the data begins with the MD5 hash of the awb data, followed immediately (no padding)
+    // by the actual awb toc data.
+    if (wp.version < cue_sheet_revisions_[4].version)
+    {
+        // TODO
+        throw std::runtime_error("Writing StreamAwb header table for this revision is not yet implemented");
+    }
+
+    utf::serializer sr(*wp.stream, *wp.allocator);
+
+    sr.start("StreamAwbHeader", stream_awb_header_columns_, wp.encoding);
+
+    // Write rows.
+    for (const auto& streamAwbToc : streamAwbTocData)
+    {
+        sr.push_cell_buffer(); // Header
+        sr.next_row();
+    }
+
+    // Write buffer data.
+    auto br = sr.begin_buffer_data_section();
+
+    for (const auto& streamAwbToc : streamAwbTocData)
+    {
+        br.start();
+        br.stream().write(streamAwbToc.data(), streamAwbToc.size());
+        br.next();
+    }
+
+    // Finish writing table.
+    sr.writer().stream().pad(4);
+    sr.finish();
+}
+
+bool cue_sheet::has_any_command_tables() const noexcept
+{
+    return (
+        !synthCommands.empty() ||
+        !sequenceCommands.empty() ||
+        !trackCommands.empty() ||
+        !trackEventCommands.empty()
+    );
+}
+
+u16 cue_sheet::get_related_waveform_count(const synth& synth) const
+{
+    u16 relatedWaveformCount = 0;
+
+    // TODO: Do we need to account for synth command table??
+
+    for (const auto& refItem : synth.refItems)
+    {
+        relatedWaveformCount += get_related_waveform_count(refItem);
     }
     
-    return result;
+    return relatedWaveformCount;
 }
 
-u16 reference_item::compute_related_waveform_count(const cue_sheet& cueSheet) const
-{
-    switch (type)
-    {
-    case reference_type::waveform:
-        return 1;
-
-    case reference_type::synth:
-    {
-        const auto& synth = cueSheet.synths.at(index);
-        return synth.compute_related_waveform_count(cueSheet);
-    }
-
-    case reference_type::sequence:
-    {
-        const auto& sequence = cueSheet.sequences.at(index);
-        return sequence.compute_related_waveform_count(cueSheet);
-    }
-
-    case reference_type::block_sequence:
-        // TODO
-        throw std::runtime_error("Not yet implemented");
-
-    case reference_type::none:
-        return 0;
-
-    default:
-        throw std::runtime_error("Unsupported ref type");
-    }
-}
-
-command_table::const_iterator& command_table::const_iterator::operator++() noexcept
-{
-    const auto& cmd = *(*this);
-    ptr_ += (sizeof(u16) + 1 + cmd.argument_count());
-    return *this;
-}
-
-command_table::const_iterator command_table::const_iterator::operator++(int) noexcept
-{
-    const_iterator it;
-    ++(*this);
-    return it;
-}
-
-u16 command_table::compute_related_waveform_count(const cue_sheet& cueSheet) const
+u16 cue_sheet::get_related_waveform_count(const command_table& cmdTable) const
 {
     u16 relatedWaveformCount = 0;
     
-    for (const auto cmd : *this)
+    for (const auto cmd : cmdTable)
     {
         switch (cmd.type())
         {
         case command_type::play:
         {
             const u16* args = static_cast<const u16*>(cmd.arguments_big_endian());
-            const reference_item refItem(static_cast<reference_type>(args[0]), args[1]);
+            const ref_item refItem(static_cast<ref_type>(args[0]), args[1]);
 
-            relatedWaveformCount += refItem.compute_related_waveform_count(cueSheet);
+            relatedWaveformCount += get_related_waveform_count(refItem);
             break;
         }
 
@@ -355,1047 +626,1553 @@ u16 command_table::compute_related_waveform_count(const cue_sheet& cueSheet) con
     return relatedWaveformCount;
 }
 
-void command_table::write(rad::stream& stream) const
+u16 cue_sheet::get_related_waveform_count(const track& track) const
 {
-    stream.write_as(rawData.data(), rawData.size());
-}
+    u16 relatedWaveformCount = 0;
 
-command_table::command_table(rad::vector<unsigned char> data) noexcept
-    : rawData(std::move(data))
-{
-}
+    // TOOD: Do we also need to do this for the track command table??
 
-config_reference_item::config_reference_item(
-    config_reference_item_type type,
-    rad::string name,
-    rad::string name2,
-    unsigned long id) noexcept
-    : type(type)
-    , name(std::move(name))
-    , name2(std::move(name2))
-    , id(id)
-{
-}
-
-namespace detail_
-{
-    void validate_reference_type(u8 type)
+    if (track.eventIndex != UINT16_MAX)
     {
-        if (type != static_cast<u8>(reference_type::waveform) &&
-            type != static_cast<u8>(reference_type::synth) &&
-            type != static_cast<u8>(reference_type::sequence) &&
-            type != static_cast<u8>(reference_type::block_sequence))
-        {
-            throw std::runtime_error("Unsupported reference type");
-        }
+        const auto& trackEventCmdTable = trackEventCommands.at(track.eventIndex);
+        relatedWaveformCount += get_related_waveform_count(trackEventCmdTable);
     }
+    
+    return relatedWaveformCount;
 }
 
-u16 cue_sheet::compute_global_aisac_start_indices_(
-    detail_::write_params& wp) const
+u16 cue_sheet::get_related_waveform_count(const sequence& sequence) const
 {
-    u16 startIndex = 0;
+    u16 relatedWaveformCount = 0;
 
-    for (const auto& synth : synths)
+    // TODO: Do we need to account for sequence command table??
+
+    for (const auto trackIndex : sequence.trackIndices)
     {
-        startIndex += synth.globalAisacs.size();
+        const auto& track = tracks.at(trackIndex);
+        relatedWaveformCount += get_related_waveform_count(track);
     }
 
-    wp.globalAisacStartIndices.track = startIndex;
-
-    for (const auto& track : tracks)
-    {
-        startIndex += track.globalAisacs.size();
-    }
-
-    wp.globalAisacStartIndices.sequence = startIndex;
-
-    for (const auto& sequence : sequences)
-    {
-        startIndex += sequence.globalAisacs.size();
-    }
-
-    return startIndex;
+    return relatedWaveformCount;
 }
 
-void cue_sheet::write_string_value_table_(detail_::write_params& wp) const
+u16 cue_sheet::get_related_waveform_count(ref_item refItem) const
 {
-    utf::table_serializer ts(*wp.stream, *wp.allocator);
-
-    ts.start(
-        "Strings",
-        { { utf::cell_type::string, "StringValue" } },
-        wp.encoding
-    );
-
-    // Write rows.
-    for (const auto& strVal : stringValues)
+    switch (refItem.type)
     {
-        ts.write_cell_as_string(strVal); // StringValue
-        ts.next_row();
+    case ref_type::waveform:
+        return 1;
+
+    case ref_type::synth:
+    {
+        const auto& synth = synths.at(refItem.index);
+        return get_related_waveform_count(synth);
     }
 
-    // Finish writing table.
-    ts.finish();
-    wp.stream->pad(32);
-}
-
-static void write_global_aisac_reference_row_(
-    utf::table_serializer& ts,
-    const rad::vector<rad::string>& globalAisacs)
-{
-    for (const auto& globalAisacName : globalAisacs)
+    case ref_type::sequence:
     {
-        ts.write_cell_as_string(globalAisacName); // Name
-        ts.next_row();
-    }
-}
-
-void cue_sheet::write_global_aisac_reference_table_(detail_::write_params& wp) const
-{
-    utf::table_serializer ts(*wp.stream, *wp.allocator);
-
-    ts.start(
-        "GlobalAisacReference",
-        { { utf::cell_type::string, "Name" } },
-        wp.encoding
-    );
-
-    // Write rows.
-    for (const auto& synth : synths)
-    {
-        write_global_aisac_reference_row_(ts, synth.globalAisacs);
+        const auto& sequence = sequences.at(refItem.index);
+        return get_related_waveform_count(sequence);
     }
 
-    for (const auto& track : tracks)
-    {
-        write_global_aisac_reference_row_(ts, track.globalAisacs);
+    case ref_type::block_sequence:
+        // TODO
+        throw std::runtime_error("Not yet implemented");
+
+    default:
+        throw std::runtime_error("Unsupported ref_type");
     }
-
-    for (const auto& sequence : sequences)
-    {
-        write_global_aisac_reference_row_(ts, sequence.globalAisacs);
-    }
-
-    // Finish writing table.
-    ts.finish();
-    wp.stream->pad(32);
-}
-
-void cue_sheet::write_acf_reference_table_(detail_::write_params& wp) const
-{
-    utf::table_serializer ts(*wp.stream, *wp.allocator);
-
-    static const utf::column_info columns[] =
-    {
-        { utf::cell_type::u8, "Type" },
-        { utf::cell_type::string, "Name" },
-        { utf::cell_type::string, "Name2" },
-        { utf::cell_type::u32, "Id" },
-    };
-
-    ts.start("AcfReference", columns, wp.encoding);
-
-    // Write rows.
-    for (const auto& acfRefItem : acfRefItems)
-    {
-        ts.write_cell_as_u8(static_cast<u8>(acfRefItem.type)); // Type
-        ts.write_cell_as_string(acfRefItem.name); // Name
-        ts.write_cell_as_string(acfRefItem.name2); // Name2
-        ts.write_cell_as_u32(acfRefItem.id); // Id
-
-        ts.next_row();
-    }
-
-    // Finish writing table.
-    ts.finish();
-    wp.stream->pad(32);
-}
-
-void cue_sheet::write_stream_awb_hash_table_(
-    detail_::write_params& wp,
-    rad::span<const unsigned char> streamingAwbHash) const // TODO: Support multiple streaming awbs
-{
-    utf::table_serializer ts(*wp.stream, *wp.allocator);
-
-    static const utf::column_info columns[] =
-    {
-        { utf::cell_type::string, "Name" },
-        { utf::cell_type::buffer, "Hash" },
-    };
-
-    ts.start("StreamAwb", columns, wp.encoding);
-
-    // Write rows.
-    ts.write_cell_as_string(name); // Name
-    const auto hashBufId = ts.write_cell_as_buffer(); // Hash
-
-    ts.finish_rows();
-
-    // Write data.
-    const auto hashDataPos = ts.stream().tell();
-    ts.stream().write(streamingAwbHash.data(), streamingAwbHash.size());
-    ts.fill_buffer_cell(hashBufId, hashDataPos);
-
-    // Finish writing table.
-    ts.finish();
-}
-
-void cue_sheet::write_stream_awb_header_table_(
-    detail_::write_params& wp,
-    rad::span<const unsigned char> streamingAwbToc) // TODO: Support multiple streaming awbs
-{
-    // TODO: In versions prior to 1.30.00, this table is actually written with
-    // the table name "StreamAwb", followed by the following UNUSED strings: "Name", then
-    // "Hash", followed by the name of the awb, followed by "StreamAwb" again (this one is
-    // unused), finally followed by the "Header" string, which IS actually used by the column.
-
-    // Also, the data begins with the MD5 hash of the awb data, followed immediately (no padding)
-    // by the actual awb toc data.
-
-    utf::table_serializer ts(*wp.stream, *wp.allocator);
-
-    static const utf::column_info columns[] =
-    {
-        { utf::cell_type::buffer, "Header" },
-    };
-
-    ts.start("StreamAwbHeader", columns, wp.encoding);
-
-    // Write rows.
-    const auto headerBufId = ts.write_cell_as_buffer(); // Header
-
-    ts.finish_rows();
-
-    // Write data.
-    const auto headerDataPos = ts.stream().tell();
-    ts.stream().write(streamingAwbToc.data(), streamingAwbToc.size());
-    ts.fill_buffer_cell(headerBufId, headerDataPos);
-
-    // Finish writing table.
-    ts.finish();
-}
-
-void cue_sheet::read_columns_ex_(
-    utf::table_deserializer& td,
-    packed_version version)
-{
-    // r1
-    if (version < cue_sheet_revisions_[1].version) return;
-
-    const auto name = td.read_cell_as_string();
-    this->name = td.get_string_data(name);
-
-    // r2
-    if (version < cue_sheet_revisions_[2].version) return;
-
-    const auto characterEncodingType = td.read_cell_as_u8(); // TODO
-    const auto eventTable = td.read_cell_as_buffer(); // TODO
-    const auto actionTrackTable = td.read_cell_as_buffer(); // TODO
-    const auto acfReferenceTable = td.read_cell_as_buffer(); // TODO
-
-    // r3, v1.26.00+
-    const auto waveformExtensionDataTable = td.read_cell_as_buffer(); // TODO
-    const auto beatSyncInfoTable = td.read_cell_as_buffer(); // TODO
-    const auto cuePriorityType = td.read_cell_as_u8(); // TODO
-    const auto numCueLimit = td.read_cell_as_u16(); // TODO
-
-    // r4, v1.30.00+
-    const auto trackCommandTable = td.read_cell_as_buffer(); // TODO
-    const auto synthCommandTable = td.read_cell_as_buffer(); // TODO
-    const auto trackEventTable = td.read_cell_as_buffer(); // TODO
-    const auto seqParameterPalletTable = td.read_cell_as_buffer(); // TODO
-    const auto trackParameterPalletTable = td.read_cell_as_buffer(); // TODO
-    const auto synthParameterPalletTable = td.read_cell_as_buffer(); // TODO
-    const auto soundGeneratorTable = td.read_cell_as_buffer(); // TODO
-
-    // r6, v1.37.00+
-    const auto instrumentPluginTrackTable = td.read_cell_as_buffer(); // TODO
-    const auto instrumentPluginParameterTable = td.read_cell_as_buffer(); // TODO
-    const auto lipsMorphTable = td.read_cell_as_buffer(); // TODO
-
-    // r5, v1.32.01+
-    const auto projectKey = td.read_cell_as_buffer(); // TODO
-
-    // r6, v1.37.00+
-    const auto soundInstruments = td.read_cell_as_buffer(); // TODO
-    const auto soundProgramBankKey = td.read_cell_as_buffer(); // TODO
-    const auto midiTrackTable = td.read_cell_as_buffer(); // TODO
-
-    // r7, v1.42.01+
-    const auto soundProgramBankCommandTable = td.read_cell_as_buffer(); // TODO
-    const auto parameterAction = td.read_cell_as_buffer(); // TODO
-    const auto parameterActionCondition = td.read_cell_as_buffer(); // TODO
-    const auto stopAction = td.read_cell_as_buffer(); // TODO
-}
-
-bool cue_sheet::has_any_command_tables() const noexcept
-{
-    return (
-        !synthCmdTables.empty() ||
-        !sequenceCmdTables.empty() ||
-        !trackCmdTables.empty() ||
-        !trackEventCmdTables.empty()
-    );
 }
 
 void cue_sheet::clear() noexcept
 {
-    acfRefItems.clear();
     cues.clear();
-    synths.clear();
-    synthCmdTables.clear();
-    sequences.clear();
-    sequenceCmdTables.clear();
-    tracks.clear();
-    trackCmdTables.clear();
-    trackEventCmdTables.clear();
     waveforms.clear();
     aisacs.clear();
-    autoModulations.clear();
     graphs.clear();
+    globalAisacNames.clear();
+    synths.clear();
+    sequenceCommands.clear();
+    tracks.clear();
+    sequences.clear();
     aisacControls.clear();
+    autoModulations.clear();
+    embeddedAwbData.clear();
+    streamAwbHashes.clear();
     stringValues.clear();
-    name.clear();
+    acfRefItems.clear();
+    trackCommands.clear();
+    synthCommands.clear();
+    trackEventCommands.clear();
+    streamAwbTocData.clear();
 }
 
-void cue_sheet::read_inner(rad::stream& stream)
+static const utf::column_info command_table_columns_[] =
+{
+    { utf::cell_type::buffer, "Command" },
+};
+
+static const utf::column_info stream_awb_hash_columns[] =
+{
+    { utf::cell_type::string, "Name" },
+    { utf::cell_type::buffer, "Hash" },
+};
+
+static void read_stream_awb_hash_table_(
+    rad::stream& stream,
+    rad::allocator& tmpAllocator,
+    rad::vector<wave_bank_hash>& streamAwbHashes)
+{
+    assert(streamAwbHashes.empty() &&
+        "The given output vector must be empty"
+    );
+
+    // Read raw table header.
+    utf::deserializer dr(stream, utf::deserialize_type::utf, tmpAllocator);
+
+    // Validate columns.
+    if (!dr.has_columns_of_exact_types(
+        stream_awb_hash_columns,
+        0,
+        static_cast<u16>(std::size(stream_awb_hash_columns))))
+    {
+        throw std::runtime_error("Invalid or unsupported ACB stream AWB hash layout");
+    }
+
+    // Read rows.
+    auto& streamAwbHashAllocator = streamAwbHashes.allocator();
+    streamAwbHashes.reserve(dr.row_count());
+
+    for (u32 i = 0; i < dr.row_count(); dr.next_row(), ++i)
+    {
+        const auto name = dr.get_string_data(dr.next_cell_as_string()); // Name
+        const auto rawHash = dr.next_cell_as_buffer(); // Hash
+
+        // Hash
+        md5_hash hash;
+
+        if (rawHash.size != hash.size())
+        {
+            throw std::runtime_error("Invalid stream AWB hash size");
+        }
+
+        dr.reader().stream().jump_to(dr.get_buffer_data_position(rawHash));
+        dr.reader().stream().read(hash.data(), hash.size());
+
+        streamAwbHashes.emplace_back_unchecked(
+            rad::string(streamAwbHashAllocator, name),
+            hash
+        );
+    }
+}
+
+static void read_command_tables_(
+    rad::stream& stream,
+    rad::allocator& tmpAllocator,
+    rad::vector<command_table>& commandTables)
+{
+    assert(commandTables.empty() &&
+        "The given output vector must be empty"
+    );
+
+    // Read raw table header.
+    utf::deserializer dr(stream, utf::deserialize_type::utf, tmpAllocator);
+
+    // Validate columns.
+    if (!dr.has_columns_of_exact_types(
+        command_table_columns_,
+        0,
+        static_cast<u16>(std::size(command_table_columns_))))
+    {
+        throw std::runtime_error("Invalid or unsupported ACB command tables layout");
+    }
+
+    // Read rows.
+    auto& commandTableAllocator = commandTables.allocator();
+    commandTables.reserve(dr.row_count());
+
+    for (u32 i = 0; i < dr.row_count(); dr.next_row(), ++i)
+    {
+        const auto rawCommand = dr.next_cell_as_buffer(); // Command
+
+        // Command
+        commandTables.emplace_back_unchecked(
+            dr.read_buffer_data(rawCommand, commandTableAllocator)
+        );
+    }
+}
+
+void read_graph_table_(
+    rad::stream& stream,
+    rad::allocator& tmpAllocator,
+    packed_version version,
+    rad::vector<graph>& graphs
+);
+
+void read_auto_modulation_table_(
+    rad::stream& stream,
+    rad::allocator& tmpAllocator,
+    packed_version version,
+    rad::vector<auto_modulation>& autoModulations
+);
+
+void read_aisac_control_name_table_(
+    rad::stream& stream,
+    rad::allocator& tmpAllocator,
+    packed_version version,
+    rad::vector<aisac_control>& aisacControls
+);
+
+void read_aisac_table_(
+    rad::stream& stream,
+    rad::allocator& tmpAllocator,
+    packed_version version,
+    rad::vector<aisac>& aisacs
+);
+
+void read_waveform_table_(
+    rad::stream& stream,
+    rad::allocator& tmpAllocator,
+    packed_version version,
+    rad::vector<waveform>& waveforms
+);
+
+void read_synth_table_(
+    rad::stream& stream,
+    rad::allocator& tmpAllocator,
+    packed_version version,
+    rad::vector<synth>& synths
+);
+
+void read_track_table_(
+    rad::stream& stream,
+    rad::allocator& tmpAllocator,
+    packed_version version,
+    rad::vector<track>& tracks
+);
+
+void read_sequence_table_(
+    rad::stream& stream,
+    rad::allocator& tmpAllocator,
+    packed_version version,
+    rad::vector<sequence>& sequences
+);
+
+void read_cue_name_table_(
+    rad::stream& stream,
+    rad::allocator& tmpAllocator,
+    packed_version version,
+    rad::vector<cue>& cues
+);
+
+void read_cue_table_(
+    rad::stream& stream,
+    rad::allocator& tmpAllocator,
+    packed_version version,
+    rad::vector<cue>& cues
+);
+
+cue_sheet::serialize_info cue_sheet::read_inner(
+    rad::stream& stream,
+    rad::allocator& tmpAllocator)
 {
     clear();
 
-    utf::table_deserializer td(stream, utf::table_deserialize_type::inner_table);
+    utf::deserializer dr(
+        stream,
+        utf::deserialize_type::inner_table,
+        tmpAllocator
+    );
 
     // Validate base columns.
-    if (td.row_count() != 1 || td.column_count() < cue_sheet_column_count_r0_ ||
-        !td.are_columns_exact_types(cue_sheet_columns_, 0, 3))
+    if (dr.row_count() != 1 || !dr.has_columns_of_exact_types(
+        cue_sheet_columns_ + 36, 0, 3))
     {
         throw std::runtime_error("Invalid or unsupported ACB Header base layout");
     }
 
     // Read base columns.
-    const auto fileIdentifier = td.read_cell_as_u32(); // TODO
-    const auto size = td.read_cell_as_u32(); // TODO
-    const packed_version version(td.read_cell_as_u32());
+    fileIdentifier = dr.next_cell_as_u32();
+    const auto size = dr.next_cell_as_u32(); // TODO
+    const packed_version version(dr.next_cell_as_u32());
+
+    if (version > latest_supported_version)
+    {
+        // TODO: Log warning
+    }
 
     // Validate revision columns.
-
-    // TODO: Log warning if version > latest_supported_version 
-
-    const auto revisionInfo = get_revision_info(
+    const auto revisionInfo = get_revision_info_for_version_(
         cue_sheet_revisions_,
         version
     );
 
-    if (!revisionInfo->columns.validate(cue_sheet_columns_, td))
+    if (!dr.has_columns_of_exact_types(revisionInfo->columnGroup, cue_sheet_columns_))
     {
         throw std::runtime_error("Invalid or unsupported ACB Header revision layout");
     }
 
     // Read base columns.
-    const auto type = td.read_cell_as_u8(); // TODO
-    const auto target = td.read_cell_as_u8(); // TODO
-    const auto acfMd5Hash = td.read_cell_as_buffer(); // TODO
-    const auto categoryExtension = td.read_cell_as_u8(); // TODO
-    const auto cueTable = td.read_cell_as_buffer(); // TODO
-    const auto cueNameTable = td.read_cell_as_buffer(); // TODO
-    const auto waveformTable = td.read_cell_as_buffer(); // TODO
-    const auto aisacTable = td.read_cell_as_buffer(); // TODO
-    const auto graphTable = td.read_cell_as_buffer(); // TODO
-    const auto globalAisacReferenceTable = td.read_cell_as_buffer(); // TODO
-    const auto aisacNameTable = td.read_cell_as_buffer(); // TODO
-    const auto synthTable = td.read_cell_as_buffer(); // TODO
-    const auto seqCommandTable = td.read_cell_as_buffer(); // TODO
-    const auto trackTable = td.read_cell_as_buffer(); // TODO
-    const auto sequenceTable = td.read_cell_as_buffer(); // TODO
-    const auto aisacControlNameTable = td.read_cell_as_buffer(); // TODO
-    const auto autoModulationTable = td.read_cell_as_buffer(); // TODO
-    const auto streamAwbTocWorkOld = td.read_cell_as_buffer(); // TODO
-    const auto awbFile = td.read_cell_as_buffer(); // TODO
-    const auto versionString = td.read_cell_as_string(); // TODO
-    const auto cueLimitWorkTable = td.read_cell_as_buffer(); // TODO
-    const auto numCueLimitListWorks = td.read_cell_as_u16(); // TODO
-    const auto numCueLimitNodeWorks = td.read_cell_as_u16(); // TODO
-    const auto acbGuid = td.read_cell_as_buffer(); // TODO
-    const auto streamAwbHash = td.read_cell_as_buffer(); // TODO
-    const auto streamAwbTocWork_Old = td.read_cell_as_buffer(); // TODO
-    const auto acbVolume = td.read_cell_as_f32(); // TODO
-    const auto stringValueTable = td.read_cell_as_buffer(); // TODO
-    const auto outsideLinkTable = td.read_cell_as_buffer(); // TODO
-    const auto blockSequenceTable = td.read_cell_as_buffer(); // TODO
-    const auto blockTable = td.read_cell_as_buffer(); // TODO
+    const auto type = dr.next_cell_as_u8(); // TODO
+    const auto target = dr.next_cell_as_u8(); // TODO
+    const auto rawAcfMd5Hash = dr.next_cell_as_buffer(); // AcfMd5Hash
+    const auto categoryExtension = dr.next_cell_as_u8(); // TODO
+    const auto cueTable = dr.next_cell_as_buffer(); // CueTable
+    const auto cueNameTable = dr.next_cell_as_buffer(); // CueNameTable
+    const auto waveformTable = dr.next_cell_as_buffer(); // WaveformTable
+    const auto aisacTable = dr.next_cell_as_buffer(); // AisacTable
+    const auto graphTable = dr.next_cell_as_buffer(); // GraphTable
+    const auto globalAisacReferenceTable = dr.next_cell_as_buffer(); // TODO
+    const auto aisacNameTable = dr.next_cell_as_buffer(); // TODO
+    const auto synthTable = dr.next_cell_as_buffer(); // SynthTable
+    const auto seqCommandTable = dr.next_cell_as_buffer(); // SeqCommandTable
+    const auto trackTable = dr.next_cell_as_buffer(); // TrackTable
+    const auto sequenceTable = dr.next_cell_as_buffer(); // SequenceTable
+    const auto aisacControlNameTable = dr.next_cell_as_buffer(); // AisacControlNameTable
+    const auto autoModulationTable = dr.next_cell_as_buffer(); // AutoModulationTable
+    const auto streamAwbTocWorkOld = dr.next_cell_as_buffer(); // TODO
+    const auto awbFile = dr.next_cell_as_buffer(); // AwbFile
+    const auto versionString = dr.get_string_data(dr.next_cell_as_string()); // VersionString
+    const auto cueLimitWorkTable = dr.next_cell_as_buffer(); // TODO
+    const auto numCueLimitListWorks = dr.next_cell_as_u16(); // TODO
+    const auto numCueLimitNodeWorks = dr.next_cell_as_u16(); // TODO
+    const auto acbGuid = dr.next_cell_as_buffer(); // AcbGuid
+    const auto streamAwbHash = dr.next_cell_as_buffer(); // StreamAwbHash
+    const auto streamAwbTocWork_Old = dr.next_cell_as_buffer(); // TODO
+    volume = dr.next_cell_as_f32(); // AcbVolume
+    const auto stringValueTable = dr.next_cell_as_buffer(); // StringValueTable
+    const auto outsideLinkTable = dr.next_cell_as_buffer(); // TODO
+    const auto blockSequenceTable = dr.next_cell_as_buffer(); // TODO
+    const auto blockTable = dr.next_cell_as_buffer(); // TODO
 
-    // Read extra columns.
-    read_columns_ex_(td, version);
+    // r1
+    if (version >= cue_sheet_revisions_[1].version)
+    {
+        name.assign(dr.get_string_data(dr.next_cell_as_string())); // Name
+    }
+
+    // r2
+    utf::raw_buffer acfReferenceTable = {};
+
+    if (version >= cue_sheet_revisions_[2].version)
+    {
+        const auto characterEncodingType = dr.next_cell_as_u8(); // TODO
+        const auto eventTable = dr.next_cell_as_buffer(); // TODO
+        const auto actionTrackTable = dr.next_cell_as_buffer(); // TODO
+        acfReferenceTable = dr.next_cell_as_buffer(); // AcfReferenceTable
+    }
+
+    // r3
+    if (version >= cue_sheet_revisions_[3].version)
+    {
+        const auto waveformExtensionDataTable = dr.next_cell_as_buffer(); // TODO
+        const auto beatSyncInfoTable = dr.next_cell_as_buffer(); // TODO
+        const auto cuePriorityType = dr.next_cell_as_u8(); // TODO
+        const auto numCueLimit = dr.next_cell_as_u16(); // TODO
+    }
+
+    // r4
+    utf::raw_buffer trackCommandTable = {};
+    utf::raw_buffer synthCommandTable = {};
+    utf::raw_buffer trackEventTable = {};
+
+    if (version >= cue_sheet_revisions_[4].version)
+    {
+        trackCommandTable = dr.next_cell_as_buffer(); // TrackCommandTable
+        synthCommandTable = dr.next_cell_as_buffer(); // SynthCommandTable
+        trackEventTable = dr.next_cell_as_buffer(); // TrackEventTable
+        const auto seqParameterPalletTable = dr.next_cell_as_buffer(); // TODO
+        const auto trackParameterPalletTable = dr.next_cell_as_buffer(); // TODO
+        const auto synthParameterPalletTable = dr.next_cell_as_buffer(); // TODO
+        const auto soundGeneratorTable = dr.next_cell_as_buffer(); // TODO
+    }
+
+    // r5
+    if (version >= cue_sheet_revisions_[5].version)
+    {
+        if (version >= cue_sheet_revisions_[6].version)
+        {
+            // r6
+            const auto instrumentPluginTrackTable = dr.next_cell_as_buffer(); // TODO
+            const auto instrumentPluginParameterTable = dr.next_cell_as_buffer(); // TODO
+            const auto lipsMorphTable = dr.next_cell_as_buffer(); // TODO
+        }
+        else
+        {
+            dr.skip_cell();
+            dr.skip_cell();
+            dr.skip_cell();
+        }
+
+        const auto projectKey = dr.next_cell_as_buffer(); // TODO
+    }
+
+    // r6
+    if (version >= cue_sheet_revisions_[6].version)
+    {
+        const auto soundInstruments = dr.next_cell_as_buffer(); // TODO
+        const auto soundProgramBankKey = dr.next_cell_as_buffer(); // TODO
+        const auto midiTrackTable = dr.next_cell_as_buffer(); // TODO
+    }
+
+    // r7
+    if (version >= cue_sheet_revisions_[7].version)
+    {
+        const auto soundProgramBankCommandTable = dr.next_cell_as_buffer(); // TODO
+        const auto parameterAction = dr.next_cell_as_buffer(); // TODO
+        const auto parameterActionCondition = dr.next_cell_as_buffer(); // TODO
+        const auto stopAction = dr.next_cell_as_buffer(); // TODO
+    }
 
     // Read footer columns.
-    const auto paddingArea = td.read_cell_as_buffer();
-    const auto streamAwbTocWork = td.read_cell_as_buffer();
-    const auto streamAwbAfs2Header = td.read_cell_as_buffer(); // TODO
+    dr.go_to_cell((version >= cue_sheet_revisions_[6].version) ? 95 : 63);
+
+    //const auto paddingArea = dr.next_cell_as_buffer();
+    //const auto streamAwbTocWork = dr.next_cell_as_buffer();
+    const auto streamAwbAfs2Header = dr.next_cell_as_buffer(); // StreamAwbAfs2Header
 
     // Read ACF MD5 hash.
-    if (acfMd5Hash.size != sizeof(this->acfMD5Hash))
+    if (rawAcfMd5Hash.size == acfMd5Hash.size())
     {
-        // TODO: Is it also valid to have the buffer be empty?
-        throw std::runtime_error("Invalid ACF MD5 hash");
+        stream.jump_to(dr.get_buffer_data_position(rawAcfMd5Hash));
+        stream.read(acfMd5Hash.data(), acfMd5Hash.size());
     }
     else
     {
-        stream.jump_to(td.get_buffer_data_position(acfMd5Hash));
-        stream.read(this->acfMD5Hash, sizeof(this->acfMD5Hash));
+        // TODO: Log warning.
+        acfMd5Hash.fill(0);
     }
 
-    // Read cues.
+    // CueTable
     if (cueTable.size)
     {
-        stream.jump_to(td.get_buffer_data_position(cueTable));
-        read_cue_table_(stream, version);
+        stream.jump_to(dr.get_buffer_data_position(cueTable));
+        read_cue_table_(stream, tmpAllocator, version, cues);
     }
 
-    // TODO: Validate new format version columns
+    // CueNameTable
+    if (cueNameTable.size)
+    {
+        stream.jump_to(dr.get_buffer_data_position(cueNameTable));
+        read_cue_name_table_(stream, tmpAllocator, version, cues);
+    }
 
-    // TODO: Read new format version columns
+    // WaveformTable
+    if (waveformTable.size)
+    {
+        stream.jump_to(dr.get_buffer_data_position(waveformTable));
+        read_waveform_table_(stream, tmpAllocator, version, waveforms);
+    }
+
+    // AisacTable
+    if (aisacTable.size)
+    {
+        stream.jump_to(dr.get_buffer_data_position(aisacTable));
+        read_aisac_table_(stream, tmpAllocator, version, aisacs);
+    }
+
+    // GraphTable
+    if (graphTable.size)
+    {
+        stream.jump_to(dr.get_buffer_data_position(graphTable));
+        read_graph_table_(stream, tmpAllocator, version, graphs);
+    }
+
+    // TODO
+
+    // SynthTable
+    if (synthTable.size)
+    {
+        stream.jump_to(dr.get_buffer_data_position(synthTable));
+        read_synth_table_(stream, tmpAllocator, version, synths);
+    }
+
+    // SeqCommandTable
+    if (seqCommandTable.size)
+    {
+        stream.jump_to(dr.get_buffer_data_position(seqCommandTable));
+        read_command_tables_(stream, tmpAllocator, sequenceCommands);
+    }
+
+    // TrackTable
+    if (trackTable.size)
+    {
+        stream.jump_to(dr.get_buffer_data_position(trackTable));
+        read_track_table_(stream, tmpAllocator, version, tracks);
+    }
+
+    // SequenceTable
+    if (sequenceTable.size)
+    {
+        stream.jump_to(dr.get_buffer_data_position(sequenceTable));
+        read_sequence_table_(stream, tmpAllocator, version, sequences);
+    }
+
+    // AisacControlNameTable
+    if (aisacControlNameTable.size)
+    {
+        stream.jump_to(dr.get_buffer_data_position(aisacControlNameTable));
+        read_aisac_control_name_table_(stream, tmpAllocator, version, aisacControls);
+    }
+
+    // AutoModulationTable
+    if (autoModulationTable.size)
+    {
+        stream.jump_to(dr.get_buffer_data_position(autoModulationTable));
+        read_auto_modulation_table_(stream, tmpAllocator, version, autoModulations);
+    }
+
+    // AwbFile
+    if (awbFile.size)
+    {
+        stream.jump_to(dr.get_buffer_data_position(awbFile));
+        embeddedAwbData.resize(rad::no_value_init, awbFile.size);
+        stream.read(embeddedAwbData.data(), embeddedAwbData.size());
+    }
+
+    // TODO
+    
+    // AcbGuid
+    if (acbGuid.size == id.data.size())
+    {
+        stream.jump_to(dr.get_buffer_data_position(acbGuid));
+        stream.read(id.data.data(), id.data.size());
+    }
+    else
+    {
+        // TODO: Log warning
+        id = guid::zero();
+    }
+
+    // StreamAwbHash
+    if (streamAwbHash.size)
+    {
+        stream.jump_to(dr.get_buffer_data_position(streamAwbHash));
+
+        if (streamAwbHash.size == 16)
+        {
+            md5_hash hash;
+            stream.read(hash.data(), hash.size());
+
+            if (hash != empty_md5_hash_)
+            {
+                streamAwbHashes.emplace_back(name, hash);
+            }
+        }
+        else
+        {
+            read_stream_awb_hash_table_(stream, tmpAllocator, streamAwbHashes);
+        }
+    }
+
+    // TODO
+
+    // StringValueTable
+    if (stringValueTable.size)
+    {
+        stream.jump_to(dr.get_buffer_data_position(stringValueTable));
+        read_string_value_table_(stream, tmpAllocator, stringValues);
+    }
+
+    // TODO
+
+    if (version >= cue_sheet_revisions_[2].version)
+    {
+        // TODO
+
+        // AcfReferenceTable
+        if (acfReferenceTable.size)
+        {
+            stream.jump_to(dr.get_buffer_data_position(acfReferenceTable));
+            read_acf_reference_table_(stream, tmpAllocator, acfRefItems);
+        }
+    }
+
+    // TODO
+
+    if (version >= cue_sheet_revisions_[4].version)
+    {
+        // TrackCommandTable
+        if (trackCommandTable.size)
+        {
+            stream.jump_to(dr.get_buffer_data_position(trackCommandTable));
+            read_command_tables_(stream, tmpAllocator, trackCommands);
+        }
+
+        // SynthCommandTable
+        if (synthCommandTable.size)
+        {
+            stream.jump_to(dr.get_buffer_data_position(synthCommandTable));
+            read_command_tables_(stream, tmpAllocator, synthCommands);
+        }
+
+        // TrackEventTable
+        if (trackEventTable.size)
+        {
+            stream.jump_to(dr.get_buffer_data_position(trackEventTable));
+            read_command_tables_(stream, tmpAllocator, trackEventCommands);
+        }
+    }
+    else
+    {
+        // TODO: Split up sequenceCommands into sequenceCommands,
+        // trackCommands, synthCommands, and trackEventCommands
+    }
+
+    // TODO
+
+    // StreamAwbAfs2Header
+    if (streamAwbAfs2Header.size)
+    {
+        stream.jump_to(dr.get_buffer_data_position(streamAwbAfs2Header));
+
+        if (version >= cue_sheet_revisions_[3].version)
+        {
+            read_stream_awb_header_table_(stream, tmpAllocator, streamAwbTocData);
+        }
+        else
+        {
+            streamAwbTocData.emplace_back(
+                dr.read_buffer_data(
+                    streamAwbAfs2Header,
+                    streamAwbTocData.allocator())
+            );
+        }
+    }
+
+    return serialize_info{ version, encoding_type::utf8 }; // TODO: Pass correct encoding!!!
 }
 
-void cue_sheet::read(rad::stream& stream)
+cue_sheet::serialize_info cue_sheet::read(
+    rad::stream& stream,
+    rad::allocator& tmpAllocator)
 {
     // Read UTF header.
-    utf::table_reader reader(stream);
-    const auto rawUtfHeader = reader.read_raw_utf_header();
+    utf::reader reader(stream);
+    const auto header = reader.read_header();
 
     // Read inner table data.
     if (stream.capabilities().can_nocost_read() &&
         stream.capabilities().can_seek())
     {
         // Directly read the data from the stream.
-        const auto rawTablePos = stream.tell();
-        read_inner(stream);
+        const auto tablePos = stream.tell();
+        const auto serializeInfo = read_inner(stream, tmpAllocator);
 
         // Jump to the end of the table.
-        stream.jump_to(rawTablePos + rawUtfHeader.tableSize);
+        stream.jump_to(tablePos + header.tableSize);
+
+        return serializeInfo;
     }
     else
     {
         // Read all of the table data from the stream into
         // a buffer, then parse all of the data in the buffer.
-
-        std::unique_ptr<unsigned char[]> tableData(
-            new unsigned char[rawUtfHeader.tableSize]
+        rad::vector<unsigned char> tableData(
+            rad::no_value_init,
+            tmpAllocator,
+            header.tableSize
         );
 
-        stream.read(tableData.get(), rawUtfHeader.tableSize);
+        stream.read(tableData.data(), header.tableSize);
 
         rad::readonly_memory_stream tableDataStream(
-            tableData.get(),
-            rawUtfHeader.tableSize
+            tableData.data(),
+            header.tableSize
         );
 
-        read_inner(tableDataStream);
+        return read_inner(tableDataStream, tmpAllocator);
     }
 }
 
 static void start_write_command_utf_table_(
-    utf::table_serializer& ts,
+    utf::serializer& sr,
     std::string_view name,
     utf::encoding_type encoding)
 {
-    static const utf::column_info columns[] =
-    {
-        { utf::cell_type::buffer, "Command" },
-    };
-
-    ts.start(name, columns, encoding);
+    sr.start(name, command_table_columns_, encoding);
 }
 
 static void write_command_utf_table_rows_(
-    utf::table_serializer& ts,
+    utf::serializer& sr,
     const rad::vector<command_table>& cmdTables)
 {
     for (const auto& cmdTable : cmdTables)
     {
-        ts.write_cell_as_buffer(); // Command
-        ts.next_row();
+        sr.push_cell_buffer(); // Command
+        sr.next_row();
     }
 }
 
 static void write_command_utf_table_buffers_(
-    utf::table_serializer& ts,
-    const rad::vector<command_table>& cmdTables,
-    unsigned long long utfPos)
+    utf::buffers_resolver& br,
+    const rad::vector<command_table>& cmdTables)
 {
-    constexpr unsigned long rowsOff = 5;
-    unsigned long long curBufferPos = utfPos + 32 + rowsOff;
+    //constexpr unsigned long rowsOff = 5;
+    //unsigned long long curBufferPos = utfPos + 32 + rowsOff;
 
     for (const auto& cmdTable : cmdTables)
     {
-        const auto cmdTableDataPos = ts.stream().tell();
-        cmdTable.write(ts.stream());
+        br.start();
+        //const auto cmdTableDataPos = sr.stream().tell();
+        cmdTable.write(br.stream());
+        br.next();
 
-        ts.fill_buffer(curBufferPos, cmdTableDataPos);
-        curBufferPos += 8;
+        //sr.fill_buffer(curBufferPos, cmdTableDataPos);
+        //curBufferPos += 8;
     }
 }
 
 static void write_command_utf_tables_(
-    utf::table_serializer& ts,
+    utf::serializer& sr,
     std::string_view name,
     utf::encoding_type encoding,
     const rad::vector<command_table>& cmdTables)
 {
     // Write rows.
-    const auto utfPos = ts.stream().tell();
-    start_write_command_utf_table_(ts, name, encoding);
-    write_command_utf_table_rows_(ts, cmdTables);
+    //const auto utfPos = sr.stream().tell();
+    start_write_command_utf_table_(sr, name, encoding);
+    write_command_utf_table_rows_(sr, cmdTables);
 
     // Write buffers.
-    ts.finish_rows(32);
-    write_command_utf_table_buffers_(ts, cmdTables, utfPos);
+    auto br = sr.begin_buffer_data_section();
+    write_command_utf_table_buffers_(br, cmdTables);
 
     // Finish writing table.
-    ts.finish();
-    ts.stream().pad(32);
+    sr.writer().stream().pad(4);
+    sr.finish();
+}
+
+void write_graph_table_(
+    detail_::write_params& wp,
+    const rad::vector<graph>& graphs
+);
+
+void write_auto_modulation_table_(
+    detail_::write_params& wp,
+    const rad::vector<auto_modulation>& autoModulations
+);
+
+void write_aisac_control_name_table_(
+    detail_::write_params& wp,
+    const rad::vector<aisac_control>& aisacControls
+);
+
+void write_aisac_table_(
+    detail_::write_params& wp,
+    const rad::vector<aisac>& aisacs
+);
+
+void write_waveform_table_(
+    detail_::write_params& wp,
+    const rad::vector<waveform>& waveforms
+);
+
+void write_synth_table_(
+    detail_::write_params& wp,
+    const rad::vector<synth>& synths
+);
+
+void write_track_table_(
+    detail_::write_params& wp,
+    const rad::vector<track>& tracks
+);
+
+void write_sequence_table_(
+    detail_::write_params& wp,
+    const rad::vector<sequence>& sequences
+);
+
+void write_cue_name_table_(
+    detail_::write_params& wp,
+    const rad::vector<const cue*>& sortedCues
+);
+
+void write_cue_table_(
+    detail_::write_params& wp,
+    const rad::vector<const cue*>& sortedCues,
+    const rad::vector<synth>& synths
+);
+
+static const md5_hash& get_stream_awb_md5_hash_(
+    const rad::string& name,
+    const rad::vector<wave_bank_hash>& streamAwbHashes)
+{
+    for (const auto& streamAwbHash : streamAwbHashes)
+    {
+        if (streamAwbHash.name == name)
+        {
+            return streamAwbHash.md5Hash;
+        }
+    }
+
+    return empty_md5_hash_;
 }
 
 void cue_sheet::write(
     rad::stream& stream,
-    rad::span<const unsigned char> embeddedAwb,
-    rad::span<const unsigned char> streamingAwbToc,
-    packed_version version,
-    utf::encoding_type encoding) const
+    const serialize_info& serializeInfo,
+    rad::allocator& tmpAllocator) const
 {
     detail_::write_params wp;
     wp.stream = &stream;
-    wp.allocator = &rad::default_allocator; // TODO !!
-    wp.version = version;
-    wp.encoding = encoding;
-    wp.useGlobalCmdTable = (version < cue_sheet_revisions_[4].version);
+    wp.allocator = &tmpAllocator;
+    wp.version = serializeInfo.version;
+    wp.encoding = (serializeInfo.encoding == encoding_type::shift_jis) ?
+        utf::encoding_type::shift_jis : utf::encoding_type::utf8;
 
-    const auto totalGlobalAisacCount = compute_global_aisac_start_indices_(wp);
+    wp.useGlobalCmdTable = (wp.version < cue_sheet_revisions_[4].version);
+
+    //const auto totalGlobalAisacCount = compute_global_aisac_start_indices_(wp);
 
     //unsigned int id = 0;
 
-    const auto revisionInfo = get_revision_info(
+    const auto revisionInfo = get_revision_info_for_version_(
         cue_sheet_revisions_,
-        version
+        wp.version
     );
 
-    rad::vector<utf::column_info> columns(*wp.allocator);
+    rad::vector<utf::column_info> columns(tmpAllocator);
 
-    columns.reserve((version < cue_sheet_revisions_[6].version) ?
+    columns.reserve((wp.version < cue_sheet_revisions_[6].version) ?
         cue_sheet_column_count_r0_ : cue_sheet_column_count_r6_
     );
 
-    revisionInfo->columns.append_to(cue_sheet_columns_, columns);
+    revisionInfo->columnGroup.append_to(cue_sheet_columns_, columns);
 
     // Write rows.
-    utf::table_serializer ts(stream);
-    ts.start("Header", columns, encoding, false, false);
+    utf::serializer sr(stream, tmpAllocator);
+    sr.start(
+        "Header",
+        columns,
+        wp.encoding
+    );
 
-    ts.write_cell_as_u32(0); // FileIdentifier
-    ts.write_cell_as_u32(0); // Size
-    ts.write_cell_as_u32(version.value()); // Version
-    ts.write_cell_as_u8(0); // Type
-    ts.write_cell_as_u8(0); // Target
+    sr.push_cell_u32(0); // FileIdentifier
+    sr.push_cell_u32(0); // Size
+    sr.push_cell_u32(wp.version.value()); // Version
+    sr.push_cell_u8(0); // Type
+    sr.push_cell_u8(0); // Target
 
-    ts.write_cell_as_buffer(); // AcfMd5Hash
-    ts.write_cell_as_u8(0); // CategoryExtension
+    sr.push_cell_buffer(); // AcfMd5Hash
+    sr.push_cell_u8(0); // CategoryExtension
 
-    ts.write_cell_as_buffer(); // CueTable
-    ts.write_cell_as_buffer(); // CueNameTable
-    ts.write_cell_as_buffer(); // WaveformTable
-    ts.write_cell_as_buffer(); // AisacTable
-    ts.write_cell_as_buffer(); // GraphTable
-    ts.write_cell_as_buffer(); // GlobalAisacReferenceTable
-    ts.write_cell_as_buffer(); // AisacNameTable
-    ts.write_cell_as_buffer(); // SynthTable
-    ts.write_cell_as_buffer(); // SeqCommandtable
-    ts.write_cell_as_buffer(); // TrackTable
-    ts.write_cell_as_buffer(); // SequenceTable
-    ts.write_cell_as_buffer(); // AisacControlNameTable
-    ts.write_cell_as_buffer(); // AutoModulationTable
-    ts.write_cell_as_buffer(); // StreamAwbTocWorkOld
-    ts.write_cell_as_buffer(); // AwbFile
+    sr.push_cell_buffer(cues.empty()); // CueTable
+    sr.push_cell_buffer(cues.empty()); // CueNameTable
+    sr.push_cell_buffer(waveforms.empty()); // WaveformTable
+    sr.push_cell_buffer(aisacs.empty()); // AisacTable
+    sr.push_cell_buffer(graphs.empty()); // GraphTable
+    sr.push_cell_buffer(globalAisacNames.empty()); // GlobalAisacReferenceTable
+    sr.push_cell_buffer(); // AisacNameTable
+    sr.push_cell_buffer(synths.empty()); // SynthTable
+    sr.push_cell_buffer(); // SeqCommandtable
+    sr.push_cell_buffer(tracks.empty()); // TrackTable
+    sr.push_cell_buffer(sequences.empty()); // SequenceTable
+    sr.push_cell_buffer(aisacControls.empty()); // AisacControlNameTable
+    sr.push_cell_buffer(autoModulations.empty()); // AutoModulationTable
+    sr.push_cell_buffer(); // StreamAwbTocWorkOld
+    sr.push_cell_buffer(embeddedAwbData.empty()); // AwbFile
 
     {
-        // TODO: Optimize this with snprintf or something
-        std::string versionString("\nACB Format/PC Ver."); // TODO: Other platforms
-        versionString += std::to_string(version.get_major());
-        versionString += ".";
-        versionString += std::to_string(version.get_minor());
-        versionString += ".";
-        versionString += std::to_string(version.get_revision());
-        versionString += " Build:\n";
+        char versionString[39];
+        std::snprintf(
+            versionString,
+            sizeof(versionString),
+            "\nACB Format/PC Ver.%hhu.%02hhu.%02hhu Build:\n",
+            wp.version.get_major(),
+            wp.version.get_minor(),
+            wp.version.get_revision()
+        );
 
-        ts.write_cell_as_string(std::move(versionString)); // VersionString
+        sr.push_cell_string(std::string_view{versionString}); // VersionString
     }
 
-    ts.write_cell_as_buffer(); // CueLimitWorkTable
-    ts.write_cell_as_u16(0); // NumCueLimitListWorks
-    ts.write_cell_as_u16(0); // NumCueLimitNodeWorks
-    ts.write_cell_as_buffer(); // AcbGuid
+    sr.push_cell_buffer(); // CueLimitWorkTable
+    sr.push_cell_u16(0); // NumCueLimitListWorks
+    sr.push_cell_u16(0); // NumCueLimitNodeWorks
+    sr.push_cell_buffer(); // AcbGuid
+    sr.push_cell_buffer(); // StreamAwbHash
+    sr.push_cell_buffer(); // StreamAwbTocWork_Old
+    sr.push_cell_f32(1.0f); // AcbVolume
+    sr.push_cell_buffer(stringValues.empty()); // StringValueTable
+    sr.push_cell_buffer(); // OutsideLinkTable
+    sr.push_cell_buffer(); // BlockSequenceTable
+    sr.push_cell_buffer(); // BlockTable
 
-    // TODO: StreamAwbHash becomes a UTF table in the newer versions!
-    const auto streamAwbHashBufId = ts.write_cell_as_buffer(); // StreamAwbHash
-
-    ts.write_cell_as_buffer(); // StreamAwbTocWork_Old
-    ts.write_cell_as_f32(1.0f); // AcbVolume
-    const auto stringValTableBufId = ts.write_cell_as_buffer(); // StringValueTable
-    ts.write_cell_as_buffer(); // OutsideLinkTable
-    ts.write_cell_as_buffer(); // BlockSequenceTable
-    ts.write_cell_as_buffer(); // BlockTable
-
-    if (version >= cue_sheet_revisions_[1].version)
+    if (wp.version >= cue_sheet_revisions_[1].version)
     {
-        ts.write_cell_as_string(name); // Name
+        sr.push_cell_string(name); // Name
     }
     else
     {
-        ts.write_cell_as_u8(0); // R26
+        sr.push_cell_u8(0); // R26
     }
 
     unsigned long long acfRefTableBufId;
 
-    if (version >= cue_sheet_revisions_[2].version)
+    if (wp.version >= cue_sheet_revisions_[2].version)
     {
-        ts.write_cell_as_u8(0); // CharacterEncodingType
-        ts.write_cell_as_buffer(); // EventTable
-        ts.write_cell_as_buffer(); // ActionTrackTable
-        acfRefTableBufId = ts.write_cell_as_buffer(); // AcfReferenceTable
+        sr.push_cell_u8(static_cast<u8>(serializeInfo.encoding)); // CharacterEncodingType
+        sr.push_cell_buffer(); // EventTable
+        sr.push_cell_buffer(); // ActionTrackTable
+        acfRefTableBufId = sr.push_cell_buffer(acfRefItems.empty()); // AcfReferenceTable
     }
     else
     {
-        ts.write_cell_as_u8(0); // R25
-        ts.write_cell_as_u8(0); // R24
-        ts.write_cell_as_u8(0); // R23
-        ts.write_cell_as_u8(0); // R22
+        sr.push_cell_u8(0); // R25
+        sr.push_cell_u8(0); // R24
+        sr.push_cell_u8(0); // R23
+        sr.push_cell_u8(0); // R22
     }
 
-    if (version >= cue_sheet_revisions_[3].version)
+    if (wp.version >= cue_sheet_revisions_[3].version)
     {
-        ts.write_cell_as_buffer(); // WaveformExtensionDataTable
-        ts.write_cell_as_buffer(); // BeatSyncInfoTable
-        ts.write_cell_as_u8(255); // CuePriorityType
-        ts.write_cell_as_u16(0); // NumCueLimit
+        sr.push_cell_buffer(); // WaveformExtensionDataTable
+        sr.push_cell_buffer(); // BeatSyncInfoTable
+        sr.push_cell_u8(255); // CuePriorityType
+        sr.push_cell_u16(0); // NumCueLimit
     }
     else
     {
-        ts.write_cell_as_u8(0); // R21
-        ts.write_cell_as_u8(0); // R20
-        ts.write_cell_as_u8(0); // R19
-        ts.write_cell_as_u8(0); // R18
+        sr.push_cell_u8(0); // R21
+        sr.push_cell_u8(0); // R20
+        sr.push_cell_u8(0); // R19
+        sr.push_cell_u8(0); // R18
     }
 
     unsigned long long trackCmdTableBufId;
     unsigned long long synthCmdTableBufId;
     unsigned long long trackEventCmdTableBufId;
 
-    if (version >= cue_sheet_revisions_[4].version)
+    if (wp.version >= cue_sheet_revisions_[4].version)
     {
-        trackCmdTableBufId = ts.write_cell_as_buffer(); // TrackCommandTable
-        synthCmdTableBufId = ts.write_cell_as_buffer(); // SynthCommandTable
-        trackEventCmdTableBufId = ts.write_cell_as_buffer(); // TrackEventTable
-        ts.write_cell_as_buffer(); // SeqParameterPalletTable
-        ts.write_cell_as_buffer(); // TrackParameterPalletTable
-        ts.write_cell_as_buffer(); // SynthParameterPalletTable
-        ts.write_cell_as_buffer(); // SoundGeneratorTable
+        trackCmdTableBufId = sr.push_cell_buffer(trackCommands.empty()); // TrackCommandTable
+        synthCmdTableBufId = sr.push_cell_buffer(synthCommands.empty()); // SynthCommandTable
+        trackEventCmdTableBufId = sr.push_cell_buffer(trackEventCommands.empty()); // TrackEventTable
+        sr.push_cell_buffer(); // SeqParameterPalletTable
+        sr.push_cell_buffer(); // TrackParameterPalletTable
+        sr.push_cell_buffer(); // SynthParameterPalletTable
+        sr.push_cell_buffer(); // SoundGeneratorTable
     }
     else
     {
-        ts.write_cell_as_u8(0); // R17
-        ts.write_cell_as_u8(0); // R16
-        ts.write_cell_as_u8(0); // R15
-        ts.write_cell_as_u8(0); // R14
-        ts.write_cell_as_u8(0); // R13
-        ts.write_cell_as_u8(0); // R12
-        ts.write_cell_as_u8(0); // R11
+        sr.push_cell_u8(0); // R17
+        sr.push_cell_u8(0); // R16
+        sr.push_cell_u8(0); // R15
+        sr.push_cell_u8(0); // R14
+        sr.push_cell_u8(0); // R13
+        sr.push_cell_u8(0); // R12
+        sr.push_cell_u8(0); // R11
     }
 
-    if (version >= cue_sheet_revisions_[6].version)
+    if (wp.version >= cue_sheet_revisions_[6].version)
     {
-        ts.write_cell_as_buffer(); // InstrumentPluginTrackTable
-        ts.write_cell_as_buffer(); // InstrumentPluginParameterTable
-        ts.write_cell_as_buffer(); // LipsMorphTable
-        ts.write_cell_as_buffer(); // ProjectKey
-        ts.write_cell_as_buffer(); // SoundInstruments
-        ts.write_cell_as_buffer(); // SoundProgramBankKey
-        ts.write_cell_as_buffer(); // MIDITrackTable
+        sr.push_cell_buffer(); // InstrumentPluginTrackTable
+        sr.push_cell_buffer(); // InstrumentPluginParameterTable
+        sr.push_cell_buffer(); // LipsMorphTable
+        sr.push_cell_buffer(); // ProjectKey
+        sr.push_cell_buffer(); // SoundInstruments
+        sr.push_cell_buffer(); // SoundProgramBankKey
+        sr.push_cell_buffer(); // MIDITrackTable
 
-        if (version >= cue_sheet_revisions_[7].version)
+        if (wp.version >= cue_sheet_revisions_[7].version)
         {
-            ts.write_cell_as_buffer(); // SoundProgramBankCommandTable
-            ts.write_cell_as_buffer(); // ParameterAction
-            ts.write_cell_as_buffer(); // ParameterActionCondition
-            ts.write_cell_as_buffer(); // StopAction
+            sr.push_cell_buffer(); // SoundProgramBankCommandTable
+            sr.push_cell_buffer(); // ParameterAction
+            sr.push_cell_buffer(); // ParameterActionCondition
+            sr.push_cell_buffer(); // StopAction
         }
         else
         {
-            ts.write_cell_as_u8(0); // R35
-            ts.write_cell_as_u8(0); // R34
-            ts.write_cell_as_u8(0); // R33
-            ts.write_cell_as_u8(0); // R32
+            sr.push_cell_u8(0); // R35
+            sr.push_cell_u8(0); // R34
+            sr.push_cell_u8(0); // R33
+            sr.push_cell_u8(0); // R32
         }
 
-        ts.write_cell_as_u8(0); // R31
-        ts.write_cell_as_u8(0); // R30
-        ts.write_cell_as_u8(0); // R29
-        ts.write_cell_as_u8(0); // R28
-        ts.write_cell_as_u8(0); // R27
-        ts.write_cell_as_u8(0); // R26
-        ts.write_cell_as_u8(0); // R25
-        ts.write_cell_as_u8(0); // R24
-        ts.write_cell_as_u8(0); // R23
-        ts.write_cell_as_u8(0); // R22
-        ts.write_cell_as_u8(0); // R21
-        ts.write_cell_as_u8(0); // R20
-        ts.write_cell_as_u8(0); // R19
-        ts.write_cell_as_u8(0); // R18
-        ts.write_cell_as_u8(0); // R17
-        ts.write_cell_as_u8(0); // R16
-        ts.write_cell_as_u8(0); // R15
-        ts.write_cell_as_u8(0); // R14
-        ts.write_cell_as_u8(0); // R13
-        ts.write_cell_as_u8(0); // R12
-        ts.write_cell_as_u8(0); // R11
-        ts.write_cell_as_u8(0); // R10
-        ts.write_cell_as_u8(0); // R9
-        ts.write_cell_as_u8(0); // R8
-        ts.write_cell_as_u8(0); // R7
+        sr.push_cell_u8(0); // R31
+        sr.push_cell_u8(0); // R30
+        sr.push_cell_u8(0); // R29
+        sr.push_cell_u8(0); // R28
+        sr.push_cell_u8(0); // R27
+        sr.push_cell_u8(0); // R26
+        sr.push_cell_u8(0); // R25
+        sr.push_cell_u8(0); // R24
+        sr.push_cell_u8(0); // R23
+        sr.push_cell_u8(0); // R22
+        sr.push_cell_u8(0); // R21
+        sr.push_cell_u8(0); // R20
+        sr.push_cell_u8(0); // R19
+        sr.push_cell_u8(0); // R18
+        sr.push_cell_u8(0); // R17
+        sr.push_cell_u8(0); // R16
+        sr.push_cell_u8(0); // R15
+        sr.push_cell_u8(0); // R14
+        sr.push_cell_u8(0); // R13
+        sr.push_cell_u8(0); // R12
+        sr.push_cell_u8(0); // R11
+        sr.push_cell_u8(0); // R10
+        sr.push_cell_u8(0); // R9
+        sr.push_cell_u8(0); // R8
+        sr.push_cell_u8(0); // R7
     }
     else
     {
-        ts.write_cell_as_u8(0); // R10
-        ts.write_cell_as_u8(0); // R9
-        ts.write_cell_as_u8(0); // R8
+        sr.push_cell_u8(0); // R10
+        sr.push_cell_u8(0); // R9
+        sr.push_cell_u8(0); // R8
 
-        if (version >= cue_sheet_revisions_[5].version)
+        if (wp.version >= cue_sheet_revisions_[5].version)
         {
-            ts.write_cell_as_buffer(); // ProjectKey
+            sr.push_cell_buffer(); // ProjectKey
         }
         else
         {
-            ts.write_cell_as_u8(0); // R7
+            sr.push_cell_u8(0); // R7
         }
     }
 
-    ts.write_cell_as_u8(0); // R6
-    ts.write_cell_as_u8(0); // R5
-    ts.write_cell_as_u8(0); // R4
-    ts.write_cell_as_u8(0); // R3
-    ts.write_cell_as_u8(0); // R2
-    ts.write_cell_as_u8(0); // R1
-    ts.write_cell_as_u8(0); // R0
+    sr.push_cell_u8(0); // R6
+    sr.push_cell_u8(0); // R5
+    sr.push_cell_u8(0); // R4
+    sr.push_cell_u8(0); // R3
+    sr.push_cell_u8(0); // R2
+    sr.push_cell_u8(0); // R1
+    sr.push_cell_u8(0); // R0
 
-    ts.write_cell_as_buffer(); // PaddingArea
-    const auto streamAwbTocWorkBufId = ts.write_cell_as_buffer(); // StreamAwbTocWork
-    const auto streamAwbAfs2HeaderBufId = ts.write_cell_as_buffer(); // StreamAwbAfs2Header
+    sr.push_cell_buffer(); // PaddingArea
+    sr.push_cell_buffer(); // StreamAwbTocWork
+    sr.push_cell_buffer(); // StreamAwbAfs2Header
 
     // Finish writing rows.
-    ts.finish_rows(32);
+    auto br = sr.begin_buffer_data_section(32);
 
     // Write AcfMd5Hash.
+    br.start();
+    stream.write_as(acfMd5Hash);
+    br.next();
+
     {
-        const auto acfMd5HashDataPos = stream.tell();
+        // Sort cues by ID.
+        rad::vector<const cue*> sortedCues(
+            rad::no_value_init,
+            *wp.allocator,
+            cues.size()
+        );
 
-        stream.write_as(acfMD5Hash);
+        for (std::size_t i = 0; i < cues.size(); ++i)
+        {
+            sortedCues[i] = cues.data() + i;
+        }
 
-        ts.fill_buffer_cell(5, acfMd5HashDataPos);
-        stream.pad(32);
-    }
+        std::sort(sortedCues.begin(), sortedCues.end(),
+            [](const cue* a, const cue* b)
+            {
+                return a->id < b->id;
+            }
+        );
 
-    // Write CueTable.
-    if (!cues.empty())
-    {
-        const auto cueTableDataPos = stream.tell();
-        write_cue_table_(wp);
-        ts.fill_buffer_cell(7, cueTableDataPos);
-    }
+        // Write CueTable.
+        if (!cues.empty())
+        {
+            stream.pad(32);
+            br.start();
+            write_cue_table_(wp, sortedCues, synths);
+        }
 
-    // Write CueNameTable.
-    if (!cues.empty())
-    {
-        const auto cueNameTableDataPos = stream.tell();
-        write_cue_name_table_(wp);
-        ts.fill_buffer_cell(8, cueNameTableDataPos);
+        br.next();
+
+        // Write CueNameTable.
+        if (!cues.empty())
+        {
+            stream.pad(32);
+            br.start();
+            write_cue_name_table_(wp, sortedCues);
+        }
+
+        br.next();
     }
 
     // Write WaveformTable.
     if (!waveforms.empty())
     {
-        const auto waveformTableDataPos = stream.tell();
-        write_waveform_table_(wp);
-        ts.fill_buffer_cell(9, waveformTableDataPos);
+        stream.pad(64);
+        br.start();
+        write_waveform_table_(wp, waveforms);
     }
+    
+    br.next();
 
     // Write AisacTable
+    if (!aisacs.empty())
     {
-        const auto aisacTableDataPos = stream.tell();
-        detail_::write_aisac_table(wp, aisacs);
-        ts.fill_buffer_cell(10, aisacTableDataPos);
+        stream.pad(64);
+        br.start();
+        write_aisac_table_(wp, aisacs);
     }
+
+    br.next();
 
     // Write GraphTable
+    if (!graphs.empty())
     {
-        const auto graphTableDataPos = stream.tell();
-        detail_::write_graph_table(wp, graphs);
-        ts.fill_buffer_cell(11, graphTableDataPos);
+        stream.pad(32);
+        br.start();
+        write_graph_table_(wp, graphs);
     }
+
+    br.next();
 
     // Write GlobalAisacReferenceTable.
-    if (totalGlobalAisacCount != 0)
+    //if (totalGlobalAisacCount != 0)
+    if (!globalAisacNames.empty())
     {
-        const auto globalAisacRefTableDataPos = stream.tell();
-        write_global_aisac_reference_table_(wp);
-        ts.fill_buffer_cell(12, globalAisacRefTableDataPos);
+        stream.pad(32);
+        br.start();
+        write_global_aisac_reference_table_(wp, globalAisacNames);
     }
+    
+    br.next();
 
     // Write AisacNameTable.
-    // TODO: Figure out the structure of this table and write them.
+    // TODO: Figure out the structure of this table and write it.
+    br.next();
 
     // Write SynthTable.
     if (!synths.empty())
     {
-        const auto synthTableDataPos = stream.tell();
-        write_synth_table_(wp);
-        ts.fill_buffer_cell(14, synthTableDataPos);
+        stream.pad(32);
+        br.start();
+        write_synth_table_(wp, synths);
     }
+    
+    br.next();
 
     // Write CommandTable.
-    utf::table_serializer cmdTs(stream);
+    utf::serializer cmdTs(stream);
 
     if (wp.useGlobalCmdTable)
     {
         if (has_any_command_tables())
         {
-            const auto cmdTableDataPos = stream.tell();
+            stream.pad(64);
+            br.start();
 
             // Write rows.
             start_write_command_utf_table_(
                 cmdTs,
                 "Command",
-                encoding
+                wp.encoding
             );
 
             // TODO: Collapse IDs and write in this order instead:
             // write_synths()
-            // write_sequences() {
-            //   write_track_event_cmds();
-            //   write_track_cmds();
-            //   write_sequence_cmds();
-            // }
+            // write_track_event_cmds()
+            // write_track_cmds()
+            // write_sequence_cmds();
 
-            write_command_utf_table_rows_(cmdTs, synthCmdTables);
+            write_command_utf_table_rows_(cmdTs, synthCommands);
             // TODO: Write the rest of the command tables!!!
 
             // Write buffers.
-            cmdTs.finish_rows(32);
-            write_command_utf_table_buffers_(cmdTs, synthCmdTables, cmdTableDataPos);
+            auto cmdBr = cmdTs.begin_buffer_data_section(32);
+            write_command_utf_table_buffers_(cmdBr, synthCommands);
             // TODO: Write the rest of the command tables!!!
 
             // Finish writing table.
             cmdTs.finish();
-            cmdTs.stream().pad(32);
-            ts.fill_buffer_cell(15, cmdTableDataPos);
         }
     }
 
     // Write SeqCommandTable.
-    else if (!sequenceCmdTables.empty())
+    else if (!sequenceCommands.empty())
     {
-        const auto seqCmdTableDataPos = stream.tell();
+        stream.pad(64);
+        br.start();
 
         write_command_utf_tables_(
             cmdTs,
             "SequenceCommand",
-            encoding,
-            sequenceCmdTables
+            wp.encoding,
+            sequenceCommands
         );
-
-        ts.fill_buffer_cell(15, seqCmdTableDataPos);
     }
+    
+    br.next();
 
     // Write TrackTable.
     if (!tracks.empty())
     {
-        const auto trackTableDataPos = stream.tell();
-        write_track_table_(wp);
-        ts.fill_buffer_cell(16, trackTableDataPos);
+        stream.pad(32);
+        br.start();
+        write_track_table_(wp, tracks);
     }
+    
+    br.next();
 
     // Write SequenceTable.
     if (!sequences.empty())
     {
-        const auto seqTableDataPos = stream.tell();
-        write_sequence_table_(wp);
-        ts.fill_buffer_cell(17, seqTableDataPos);
+        stream.pad(32);
+        br.start();
+        write_sequence_table_(wp, sequences);
     }
+    
+    br.next();
 
     // Write AisacControlNameTable.
     if (!aisacControls.empty())
     {
-        const auto aisacControlNameTableDataPos = stream.tell();
-        detail_::write_aisac_control_name_table(wp, aisacControls);
-        ts.fill_buffer_cell(18, aisacControlNameTableDataPos);
+        stream.pad(32);
+        br.start();
+        write_aisac_control_name_table_(wp, aisacControls);
     }
+    
+    br.next();
 
     // Write AutoModulationTable.
     if (!autoModulations.empty())
     {
-        const auto autoModulationTableDataPos = stream.tell();
-        detail_::write_auto_modulation_table(wp, autoModulations);
-        ts.fill_buffer_cell(19, autoModulationTableDataPos);
+        stream.pad(32);
+        br.start();
+        write_auto_modulation_table_(wp, autoModulations);
     }
+    
+    br.next();
 
     // Write StreamAwbTocWorkOld.
     // TODO: Does this ever actually get written?
+    br.next();
 
     // Write AwbFile.
-    if (!embeddedAwb.empty())
+    if (!embeddedAwbData.empty())
     {
-        const auto awbFileDataPos = stream.tell();
-        stream.write_as(embeddedAwb.data(), embeddedAwb.size());
-        ts.fill_buffer_cell(21, awbFileDataPos);
-        //stream.pad(32);
+        stream.pad(32);
+        br.start();
+        stream.write_as(embeddedAwbData.data(), embeddedAwbData.size());
+        br.next();
+    }
+    else
+    {
+        br.next();
     }
 
     // Write CueLimitWorkTable.
     // TODO
+    br.next();
 
     // Write AcbGuid.
-    // TODO
+    stream.pad(32);
+    br.start();
+    br.writer().stream().write(id.data.data(), id.data.size());
+    br.next();
 
     // Write StreamAwbHash.
+    stream.pad(32);
+    br.start();
+
+    if (wp.version >= cue_sheet_revisions_[3].version) // TODO: Is this the correct version??
     {
-        // TODO: Don't hardcode this!!!
-        const unsigned char streamAwbHash[16] = {
-            //0xFE, 0x3B, 0xF2, 0xA3, 0x51, 0x61, 0x09, 0x38, 0xA1, 0xCE, 0xD7, 0x24, 0xA5, 0xD8, 0x8F, 0x24
-            //0xF7, 0xE3, 0xC7, 0x23, 0x19, 0xD6, 0xBF, 0xD7, 0x20, 0x21, 0x7D, 0x14, 0xAE, 0x63, 0xDD, 0x11
-            //0x1F, 0xE1, 0x68, 0x20, 0xB5, 0x86, 0xE2, 0xE5, 0x3B, 0xF6, 0x7B, 0x4F, 0x6F, 0xFA, 0x83, 0xDF
-        };
-
-        if (!streamingAwbToc.empty())
+        if (!streamAwbHashes.empty())
         {
-            // TODO: Generate MD5 hash from awb and store it in streamAwbHash
-        }
-
-        const auto streamAwbHashDataPos = stream.tell();
-
-        if (!streamingAwbToc.empty() && version >= packed_version(1, 26, 00)) // TODO: Is this the correct version??
-        {
-            write_stream_awb_hash_table_(wp, streamAwbHash);
+            write_stream_awb_hash_table_(wp, streamAwbHashes);
         }
         else
         {
-            stream.write_as(streamAwbHash);
+            stream.write(empty_md5_hash_.data(), empty_md5_hash_.size());
+        }
+    }
+    else
+    {
+        if (streamAwbHashes.size() > 1)
+        {
+            // TODO: Log warning that this revision only supports using up to 1 stream awb file
         }
 
-        ts.fill_buffer_cell(streamAwbHashBufId, streamAwbHashDataPos);
-        stream.pad(32);
+        const auto streamAwbMd5Hash = get_stream_awb_md5_hash_(
+            name,
+            streamAwbHashes
+        );
+
+        stream.write(streamAwbMd5Hash.data(), streamAwbMd5Hash.size());
     }
 
-    // TODO
+    br.next();
+
+    // Write StreamAwbTocWork_Old
+    br.next();
 
     // Write StringValueTable.
     if (!stringValues.empty())
     {
-        const auto stringValTableDataPos = stream.tell();
-        write_string_value_table_(wp);
-        ts.fill_buffer_cell(stringValTableBufId, stringValTableDataPos);
+        stream.pad(32);
+        br.start();
+        write_string_value_table_(wp, stringValues);
     }
+    
+    br.next();
 
+    // Write OutsideLinkTable
     // TODO
+    br.next();
 
-    // Write AcfReferenceTable.
-    if (version >= cue_sheet_revisions_[2].version)
+    // Write BlockSequenceTable
+    br.next();
+
+    // Write BlockTable
+    br.next();
+
+    if (wp.version >= cue_sheet_revisions_[2].version)
     {
-        const auto acfRefTableDataPos = stream.tell();
-        write_acf_reference_table_(wp);
-        ts.fill_buffer_cell(acfRefTableBufId, acfRefTableDataPos);
+        // Write EventTable
+        // TODO
+        br.next();
+
+        // Write ActionTrackTable
+        br.next();
+
+        // Write AcfReferenceTable
+        if (!acfRefItems.empty())
+        {
+            stream.pad(32);
+            br.start();
+            write_acf_reference_table_(wp, acfRefItems);
+        }
+
+        br.next();
     }
 
+    if (wp.version >= cue_sheet_revisions_[3].version)
+    {
+        // Write WaveformExtensionDataTable
+        // TODO
+        br.next();
+
+        // Write BeatSyncInfoTable
+        // TODO
+        br.next();
+    }
+
+    if (wp.version >= cue_sheet_revisions_[4].version)
+    {
+        // Write TrackCommandTable.
+        if (!wp.useGlobalCmdTable && !trackCommands.empty())
+        {
+            stream.pad(32);
+            br.start();
+
+            write_command_utf_tables_(
+                cmdTs,
+                "TrackCommand",
+                wp.encoding,
+                trackCommands
+            );
+        }
+
+        br.next();
+
+        // Write SynthCommandTable.
+        if (!wp.useGlobalCmdTable && !synthCommands.empty())
+        {
+            stream.pad(32);
+            br.start();
+
+            write_command_utf_tables_(
+                cmdTs,
+                "SynthCommand",
+                wp.encoding,
+                synthCommands
+            );
+        }
+        
+        br.next();
+
+        // Write TrackEventTable.
+        if (!wp.useGlobalCmdTable && !trackEventCommands.empty())
+        {
+            stream.pad(32);
+            br.start();
+
+            write_command_utf_tables_(
+                cmdTs,
+                "TrackEvent",
+                wp.encoding,
+                trackEventCommands
+            );
+        }
+        
+        br.next();
+
+        // Write SeqParameterPalletTable
+        // TODO
+        br.next();
+
+        // Write TrackParameterPalletTable
+        // TODO
+        br.next();
+
+        // Write SynthParameterPalletTable
+        // TODO
+        br.next();
+
+        // Write SoundGeneratorTable
+        // TODO
+        br.next();
+    }
+
+    if (wp.version >= cue_sheet_revisions_[6].version)
+    {
+        // Write InstrumentPluginTrackTable
+        // TODO
+        br.next();
+
+        // Write InstrumentPluginParameterTable
+        // TODO
+        br.next();
+
+        // Write LipsMorphTable
+        // TODO
+        br.next();
+    }
+
+    if (wp.version >= cue_sheet_revisions_[5].version)
+    {
+        // Write ProjectKey
+        // TODO
+        br.next();
+    }
+
+    if (wp.version >= cue_sheet_revisions_[6].version)
+    {
+        // Write SoundInstruments
+        // TODO
+        br.next();
+
+        // Write SoundProgramBankKey
+        // TODO
+        br.next();
+
+        // Write MIDITrackTable
+        // TODO
+        br.next();
+    }
+
+    if (wp.version >= cue_sheet_revisions_[7].version)
+    {
+        // Write SoundProgramBankCommandTable
+        // TODO
+        br.next();
+
+        // Write ParameterAction
+        // TODO
+        br.next();
+
+        // Write ParameterActionCondition
+        // TODO
+        br.next();
+
+        // Write StopAction
+        // TODO
+        br.next();
+    }
+
+    // PaddingArea
     // TODO
-
-    // Write TrackCommandTable.
-    if (!wp.useGlobalCmdTable && !trackCmdTables.empty())
-    {
-        const auto trackCmdTableDataPos = stream.tell();
-
-        write_command_utf_tables_(
-            cmdTs,
-            "TrackCommand",
-            encoding,
-            trackCmdTables
-        );
-
-        ts.fill_buffer_cell(trackCmdTableBufId, trackCmdTableDataPos);
-    }
-
-    // Write SynthCommandTable.
-    if (!wp.useGlobalCmdTable && !synthCmdTables.empty())
-    {
-        const auto synthCmdTableDataPos = stream.tell();
-
-        write_command_utf_tables_(
-            cmdTs,
-            "SynthCommand",
-            encoding,
-            synthCmdTables
-        );
-
-        ts.fill_buffer_cell(synthCmdTableBufId, synthCmdTableDataPos);
-    }
-
-    // Write TrackEventTable.
-    if (!wp.useGlobalCmdTable && !trackEventCmdTables.empty())
-    {
-        const auto trackEventCmdTableDataPos = stream.tell();
-
-        write_command_utf_tables_(
-            cmdTs,
-            "TrackEvent",
-            encoding,
-            trackEventCmdTables
-        );
-
-        ts.fill_buffer_cell(trackEventCmdTableBufId, trackEventCmdTableDataPos);
-    }
-
-    // TODO
+    br.next();
 
     // Write streaming awb toc data.
-    if (!streamingAwbToc.empty())
+    if (!streamAwbTocData.empty())
     {
-        // Write StreamAwbTocWork.
-        const auto streamAwbTocWorkDataPos = stream.tell();
+        // StreamAwbTocWork
+        stream.pad(32);
+        br.start();
 
         stream.write_nulls(
-            (version >= cue_sheet_revisions_[3].version) ?
+            (wp.version >= cue_sheet_revisions_[3].version) ?
             0x850 : 0x800
         );
 
-        ts.fill_buffer_cell(streamAwbTocWorkBufId, streamAwbTocWorkDataPos);
+        br.next();
+
+        // StreamAwbAfs2Header
         stream.pad(32);
+        br.start();
 
-        // Write StreamAwbAfs2Header.
-        const auto streamAwbAfs2HeaderDataPos = stream.tell();
-
-        if (version >= cue_sheet_revisions_[3].version)
+        if (wp.version >= cue_sheet_revisions_[3].version)
         {
-            write_stream_awb_header_table_(wp, streamingAwbToc);
+            write_stream_awb_header_table_(wp, streamAwbTocData);
         }
         else
         {
-            stream.write_as(streamingAwbToc.data(), streamingAwbToc.size());
+            if (streamAwbTocData.size() > 1)
+            {
+                // TODO: Log warning that this revision only supports using up to 1 stream awb file
+            }
+
+            stream.write(streamAwbTocData[0].data(), streamAwbTocData[0].size());
         }
 
-        ts.fill_buffer_cell(streamAwbAfs2HeaderBufId, streamAwbAfs2HeaderDataPos);
+        br.next();
         stream.pad(32);
     }
 
     // Finish writing table.
-    ts.finish();
+    sr.finish();
 }
 
-cue_sheet::cue_sheet(rad::stream& stream)
+cue_sheet::cue_sheet(
+    rad::string name,
+    guid id,
+    rad::allocator& allocator) noexcept
+    : cues(allocator)
+    , waveforms(allocator)
+    , aisacs(allocator)
+    , graphs(allocator)
+    , globalAisacNames(allocator)
+    , synths(allocator)
+    , sequenceCommands(allocator)
+    , tracks(allocator)
+    , sequences(allocator)
+    , aisacControls(allocator)
+    , autoModulations(allocator)
+    , embeddedAwbData(allocator)
+    , id(std::move(id))
+    , streamAwbHashes(allocator)
+    , stringValues(allocator)
+    , name(std::move(name))
+    , acfRefItems(allocator)
+    , trackCommands(allocator)
+    , synthCommands(allocator)
+    , trackEventCommands(allocator)
+    , streamAwbTocData(allocator)
 {
-    read(stream);
+}
+
+cue_sheet::cue_sheet(
+    rad::stream& stream,
+    rad::allocator& tmpAllocator,
+    rad::allocator& allocator)
+    : cues(allocator)
+    , waveforms(allocator)
+    , aisacs(allocator)
+    , graphs(allocator)
+    , globalAisacNames(allocator)
+    , synths(allocator)
+    , sequenceCommands(allocator)
+    , tracks(allocator)
+    , sequences(allocator)
+    , aisacControls(allocator)
+    , autoModulations(allocator)
+    , embeddedAwbData(allocator)
+    , streamAwbHashes(allocator)
+    , stringValues(allocator)
+    , name(allocator)
+    , acfRefItems(allocator)
+    , trackCommands(allocator)
+    , synthCommands(allocator)
+    , trackEventCommands(allocator)
+    , streamAwbTocData(allocator)
+{
+    read(stream, tmpAllocator);
 }
 }

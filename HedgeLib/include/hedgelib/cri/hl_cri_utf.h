@@ -1,25 +1,27 @@
 #ifndef HL_CRI_UTF_H_INCLUDED
 #define HL_CRI_UTF_H_INCLUDED
 
-#include "../hl_internal.h"
-#include "../hl_guid.h"
-#include "../common/io/hl_endian_readers.h"
-#include "../common/io/hl_endian_writers.h"
-#include <rad/rad_span.h>
-#include <rad/rad_vector.h>
-#include <rad/rad_stack_or_heap_array.h>
 #include <stdexcept>
 #include <utility>
-#include <memory>
-#include <string>
+#include <memory> // TODO: Do we need this?
+#include <string_view>
 
-namespace hl::cri_new::utf
+#include <rad/rad_span.h>
+#include <rad/rad_vector.h>
+#include <rad/rad_string.h>
+
+#include "../hl_internal.h"
+#include "../hl_guid.h"
+#include "../io/hl_endian_readers.h"
+#include "../io/hl_endian_writers.h"
+
+namespace hl::cri::utf
 {
-class table_deserializer;
+class serializer;
 
 inline constexpr u32 signature = 0x40555446U; // @UTF
 
-inline constexpr std::string_view null_string = "<NULL>";
+inline constexpr char null_string[7] = "<NULL>";
 
 struct raw_string
 {
@@ -230,7 +232,7 @@ class get_size_of_cell_functor
 public:
     constexpr std::size_t operator()() noexcept
     {
-        return sizeof(cell_type_traits<T>::value_type);
+        return sizeof(typename cell_type_traits<T>::value_type);
     }
 };
 
@@ -239,9 +241,38 @@ constexpr std::size_t get_size_of_cell(cell_type type)
     return dispatch_by_cell_type<get_size_of_cell_functor>(type);
 }
 
-enum raw_column_flags : u8
+/// @brief Returns whether the given cellType is compatible with the expected cell type.
+/// @details All cell types are obviously compatible with the same cell type
+/// (e.g. f32 is always compatible with f32).
+///
+/// Additionally, two integer types are compatible if:
+/// - They have the same signedness
+/// - The expected type's bit-width is >= the given type's.
+///
+/// Specifically, this means:
+/// - u8 is compatible with u16, u32, and u64.
+/// - u16 is compatible with u32 and u64.
+/// - u32 is compatible with u64.
+/// - s8 is compatible with s16, s32, and s64.
+/// - s16 is compatible with s32 and s64.
+/// - s32 is compatible with s64.
+///
+/// Please note that this does not go both ways.
+/// For example: u64 is NOT compatible with u32.
+///
+/// @example `assert(is_cell_type_compatible(cell_type::u16, cell_type::u64));`
+/// @param cellType The cell type to check against.
+/// @param expectedCellType The expected cell type.
+/// @return Whether the given cellType is compatible with the expected cell type.
+HL_API bool is_cell_type_compatible(
+    cell_type cellType,
+    cell_type expectedCellType
+) noexcept;
+
+enum column_flags : u8
 {
-    COLUMN_MASK_TYPE = 0xf,
+    COLUMN_MASK_TYPE = 0x0F,
+    COLUMN_MASK_FLAGS = 0xF0,
 
     /// @brief Whether the column has a name, or is unnamed.
     COLUMN_FLAGS_HAS_NAME = 16,
@@ -291,48 +322,54 @@ struct raw_column
     }
 };
 
-enum encoding_type : u8
+enum class encoding_type : u8
 {
     shift_jis = 0,
     utf8 = 1,
 };
 
-struct raw_table_header
+struct table_header
 {
-    u8 unknown1;
-    encoding_type encoding;
-    u16 rowsOff;
-    u32 stringsOff;
-    u32 bufferDataOff;
-    raw_string name;
-    u16 columnCount;
-    u16 rowSize;
-    u32 rowCount;
+    u8 unknown1 = 0; // TODO: Probably version?
+    encoding_type encoding = encoding_type::utf8;
+    u16 rowsOff = 0;
+    u32 stringTableOff = 0;
+    u32 bufferDataOff = 0;
+    raw_string name = {};
+    u16 columnCount = 0;
+    u16 rowSize = 0;
+    u32 rowCount = 0;
 };
 
-struct raw_utf_header
+struct header
 {
-    u32 signature;
-    u32 tableSize;
+    u32 signature = utf::signature;
+    u32 tableSize = 0;
 };
 
 struct column_info
 {
     cell_type type;
     const char* name;
+
+    constexpr column_info(cell_type type, const char* name = nullptr) noexcept
+        : type(type)
+        , name(name)
+    {
+    }
 };
 
 struct column_info_range
 {
-    u16 beginIndex;
-    u16 count;
+    u16 beginIndex = 0;
+    u16 count = 0;
 };
 
 struct column_info_group
 {
     rad::span<const column_info_range> ranges;
 
-    constexpr u16 get_total_count() const noexcept
+    constexpr u16 get_column_count() const noexcept
     {
         u16 totalColumnCount = 0;
 
@@ -344,32 +381,20 @@ struct column_info_group
         return totalColumnCount;
     }
 
-    HL_API bool validate(
-        const column_info* columnInfo,
-        const table_deserializer& td
-    ) const noexcept;
-
     HL_API void append_to(
         const column_info* columnInfo,
-        rad::vector<column_info>& columns
+        rad::vector<column_info>& output
     ) const;
 };
 
-class table_reader
-    : public big_endian_reader
+class reader
+    : public io::big_endian_reader
 {
 public:
-    HL_API u16 read_as_u16(cell_type type);
-
-    HL_API s16 read_as_s16(cell_type type);
-
-    HL_API u32 read_as_u32(cell_type type);
-
-    HL_API s32 read_as_s32(cell_type type);
-
-    HL_API u64 read_as_u64(cell_type type);
-
-    HL_API s64 read_as_s64(cell_type type);
+    HL_API rad::string read_string(
+        encoding_type encoding,
+        rad::allocator& allocator = rad::default_allocator
+    );
 
     HL_API raw_string read_raw_string();
 
@@ -377,108 +402,112 @@ public:
 
     HL_API guid read_guid();
 
-    HL_API raw_table_header read_raw_table_header();
-
-    HL_API raw_utf_header read_raw_utf_header();
-
-    HL_API rad::string read_string(
-        encoding_type encoding,
-        rad::allocator& allocator = rad::default_allocator
-    );
-
-    HL_API rad::vector<unsigned char> read_bytes(
-        std::size_t size,
-        rad::allocator& allocator = rad::default_allocator
-    );
-
-    HL_API void read_raw_cell_value(cell_type type, void* dst);
+    HL_API void read_cell_value(cell_type type, void* dst);
 
     HL_API raw_cell read_raw_cell(cell_type type);
 
     HL_API raw_column read_raw_column();
 
-    inline table_reader(rad::stream& stream) noexcept
+    HL_API table_header read_table_header();
+
+    HL_API header read_header();
+
+    inline reader(rad::stream& stream) noexcept
         : big_endian_reader(stream)
     {
     }
 };
 
-class table_writer
-    : public big_endian_writer
+class writer
+    : public io::big_endian_writer
 {
 public:
     HL_API void write_string(
-        const char* utf8Str,
+        rad::cstring_view utf8Str,
         encoding_type writeEncoding
     );
 
-    HL_API void write_raw_string(raw_string str);
+    HL_API void write_raw_string(raw_string rawStr);
 
-    HL_API void write_raw_buffer(raw_buffer buffer);
+    HL_API void write_raw_buffer(raw_buffer rawBuf);
 
     HL_API void write_empty_raw_buffer();
 
     HL_API void write_guid(const guid& guid);
 
-    HL_API void write_raw_table_header(const raw_table_header& rawTblHeader);
+    HL_API void write_cell_value(cell_type type, const void* src);
 
-    HL_API void write_raw_utf_header(raw_utf_header rawUtfHeader);
-
-    HL_API void write_raw_cell_value(cell_type type, const void* src);
-
-    inline void write_raw_cell(cell_type type, const raw_cell& cell)
+    inline void write_raw_cell(cell_type type, const raw_cell& rawCell)
     {
-        write_raw_cell_value(type, &cell);
+        write_cell_value(type, &rawCell);
     }
 
-    HL_API void write_raw_column(const raw_column& column);
+    HL_API void write_raw_column(const raw_column& rawColumn);
 
-    inline table_writer(rad::stream& stream) noexcept
+    HL_API void write_table_header(const table_header& tableHeader);
+
+    HL_API void write_header(header header);
+
+    inline writer(rad::stream& stream) noexcept
         : big_endian_writer(stream)
     {
     }
 };
 
-enum class table_deserialize_type
+enum class deserialize_type
 {
     utf,
     inner_table
 };
 
-class table_deserializer
+class deserializer
 {
-    rad::allocator*         allocator_;
-    table_reader            reader_;
-    unsigned long long      tablePos_;
-    raw_table_header        header_;
-    raw_column*             columns_;
+    rad::allocator*         allocator_ = &rad::default_allocator;
+    reader                  reader_;
+    unsigned long long      tablePos_ = 0;
+    table_header            tableHeader_;
+    raw_column*             columns_ = nullptr;
     const char*             stringTable_ = nullptr;
+    bool                    ownsStringTable_ = false;
     u16                     nextColumnIndex_ = 0;
     u32                     curRowIndex_ = 0;
 
-    unsigned long long get_start_of_inner_table_(
-        table_deserialize_type type);
+    unsigned long long go_to_table_header_(deserialize_type type);
 
     const raw_column* next_column_();
 
     void go_to_row_(u32 rowIndex);
 
+    void validate_raw_string_(raw_string rawStr) const;
+
     void destruct_() noexcept;
 
+    void load_string_table_();
+
 public:
+    inline const utf::reader& reader() const noexcept
+    {
+        return reader_;
+    }
+
+    inline utf::reader& reader() noexcept
+    {
+        return reader_;
+    }
+
     inline unsigned long long header_pos() const noexcept
     {
         return tablePos_;
     }
 
-    inline const raw_table_header& header() const noexcept
+    inline const table_header& header() const noexcept
     {
-        return header_;
+        return tableHeader_;
     }
 
     inline rad::span<const raw_column> columns() const noexcept
     {
-        return { columns_, header_.columnCount };
+        return { columns_, tableHeader_.columnCount };
     }
 
     inline const char* string_table() const noexcept
@@ -488,92 +517,101 @@ public:
 
     inline u32 string_table_size() const noexcept
     {
-        return header_.bufferDataOff - header_.stringsOff;
+        return tableHeader_.bufferDataOff - tableHeader_.stringTableOff;
     }
 
     inline u16 column_count() const noexcept
     {
-        return header_.columnCount;
+        return tableHeader_.columnCount;
     }
 
     inline u32 row_count() const noexcept
     {
-        return header_.rowCount;
+        return tableHeader_.rowCount;
     }
 
-    HL_API bool is_column_compatible_type(
+    HL_API bool has_column_of_compatible_type(
         u16 columnIndex,
         cell_type expectedColumnType
     ) const noexcept;
 
-    HL_API bool is_column_exact_type(
+    HL_API bool has_column_of_exact_type(
         u16 columnIndex,
         cell_type expectedColumnType
     ) const noexcept;
 
-    HL_API bool are_columns_compatible_types(
-        const column_info* columns,
-        u16 utfTableStartIndex,
+    HL_API bool has_columns_of_compatible_types(
+        const column_info* expectedColumnInfo,
+        u16 tableStartIndex,
         u16 columnCount
     ) const noexcept;
 
-    HL_API bool are_columns_exact_types(
-        const column_info* columns,
-        u16 utfTableStartIndex,
+    HL_API bool has_columns_of_compatible_types(
+        const column_info_group& expectedColumnInfoGroup,
+        const column_info* expectedColumnInfo
+    ) const noexcept;
+
+    HL_API bool has_columns_of_exact_types(
+        const column_info* expectedColumnInfo,
+        u16 tableStartIndex,
         u16 columnCount
+    ) const noexcept;
+
+    HL_API bool has_columns_of_exact_types(
+        const column_info_group& expectedColumnInfoGroup,
+        const column_info* expectedColumnInfo
     ) const noexcept;
 
     inline unsigned long long get_string_data_position(
-        raw_string rawString) const noexcept
+        raw_string rawStr) const noexcept
     {
-        return (tablePos_ + header_.stringsOff + rawString.dataOff);
+        return (tablePos_ + tableHeader_.stringTableOff + rawStr.dataOff);
     }
 
     inline unsigned long long get_buffer_data_position(
-        raw_buffer rawBuffer) const noexcept
+        raw_buffer rawBuf) const noexcept
     {
-        return (tablePos_ + header_.bufferDataOff + rawBuffer.dataOff);
+        return (tablePos_ + tableHeader_.bufferDataOff + rawBuf.dataOff);
     }
 
-    HL_API rad::string get_string_data(
-        raw_string rawString,
-        rad::allocator& allocator = rad::default_allocator
-    );
+    HL_API const char* get_string_data(raw_string rawStr) const;
 
-    HL_API rad::vector<unsigned char> get_buffer_data(
-        raw_buffer rawBuffer,
+    HL_API const char* get_optional_string_data(raw_string rawStr) const;
+
+    HL_API rad::vector<unsigned char> read_buffer_data(
+        raw_buffer rawBuf,
         rad::allocator& allocator = rad::default_allocator
     );
 
     HL_API u16 get_column_index(const char* name) const;
 
-    HL_API u8 read_cell_as_u8();
+    HL_API u8 next_cell_as_u8();
 
-    HL_API s8 read_cell_as_s8();
+    HL_API s8 next_cell_as_s8();
 
-    HL_API u16 read_cell_as_u16();
+    HL_API u16 next_cell_as_u16();
 
-    HL_API s16 read_cell_as_s16();
+    HL_API s16 next_cell_as_s16();
 
-    HL_API u32 read_cell_as_u32();
+    HL_API u32 next_cell_as_u32();
 
-    HL_API s32 read_cell_as_s32();
+    HL_API s32 next_cell_as_s32();
 
-    HL_API u64 read_cell_as_u64();
+    HL_API u64 next_cell_as_u64();
 
-    HL_API s64 read_cell_as_s64();
+    HL_API s64 next_cell_as_s64();
 
-    HL_API float read_cell_as_f32();
+    HL_API float next_cell_as_f32();
 
-    HL_API double read_cell_as_f64();
+    HL_API double next_cell_as_f64();
 
-    HL_API raw_string read_cell_as_string();
+    HL_API raw_string next_cell_as_string();
 
-    HL_API raw_buffer read_cell_as_buffer();
+    HL_API raw_buffer next_cell_as_buffer();
 
-    HL_API guid read_cell_as_guid();
+    HL_API guid next_cell_as_guid();
 
-    HL_API raw_cell read_cell(cell_type* cellType = nullptr);
+    HL_API std::pair<cell_type, raw_cell> next_cell();
 
     HL_API void skip_cell();
 
@@ -583,39 +621,80 @@ public:
 
     HL_API bool try_go_to_cell(const char* columnName, u32 rowIndex = 0);
 
-    table_deserializer& operator=(const table_deserializer& other) = delete;
+    deserializer& operator=(const deserializer& other) = delete;
 
-    HL_API table_deserializer& operator=(table_deserializer&& other) noexcept;
+    HL_API deserializer& operator=(deserializer&& other) noexcept;
 
-    HL_API table_deserializer(
+    HL_API deserializer(
         rad::stream& stream,
-        table_deserialize_type type = table_deserialize_type::utf,
+        deserialize_type type = deserialize_type::utf,
         rad::allocator& allocator = rad::default_allocator
     );
 
-    table_deserializer(const table_deserializer& other) = delete;
+    deserializer(const deserializer& other) = delete;
 
-    HL_API table_deserializer(table_deserializer&& other) noexcept;
+    HL_API deserializer(deserializer&& other) noexcept;
 
-    HL_API ~table_deserializer();
+    HL_API ~deserializer();
 };
 
-class table_serializer
+class buffers_resolver
 {
+    friend serializer;
+
+    serializer*             sr_;
+    std::size_t             curBufCellIndex_ = 0;
+    //u16                     curBufColumnIndex_ = 0;
+    //u32                     curBufRowIndex_ = 0;
+    unsigned long long      curBufDataPos_ = 0;
+
+    std::size_t get_next_buffer_cell_index_(std::size_t cellIndex) const;
+
+    explicit buffers_resolver(serializer& sr);
+
+public:
+    rad::stream& stream() const noexcept;
+
+    const utf::writer& writer() const noexcept;
+
+    utf::writer& writer() noexcept;
+
+    HL_API void start();
+
+    HL_API void next();
+
+    buffers_resolver& operator=(const buffers_resolver& other) = delete;
+
+    buffers_resolver& operator=(buffers_resolver&& other) noexcept = default;
+
+    buffers_resolver(const buffers_resolver& other) = delete;
+
+    buffers_resolver(buffers_resolver&& other) noexcept = default;
+};
+
+enum serializer_flags : u32
+{
+    SERIALIZER_FLAG_NONE = 0,
+    SERIALIZER_FLAG_SUPPORT_NULL_STRING = (1 << 0),
+};
+
+class serializer
+{
+    friend buffers_resolver;
+
     enum sequence_ : unsigned char
     {
         SEQ_NONE_,
         SEQ_HEADER_,
-        SEQ_TABLE_,
         SEQ_STRINGS_,
         SEQ_BUFFER_DATA_,
     };
 
-    struct column_
+    struct column_meta_
     {
-        u8              flags;
+        u16             dataOff;
         bool            hasCells = false;
-        unsigned short  dataOff;
+        u8              flags;
         raw_string      name;
 
         inline cell_type type() const noexcept
@@ -623,46 +702,42 @@ class table_serializer
             return static_cast<cell_type>(flags & COLUMN_MASK_TYPE);
         }
 
-        column_(cell_type type) noexcept;
+        column_meta_(cell_type type) noexcept;
     };
 
-    table_writer                        writer_;
+    writer                              writer_;
     sequence_                           lastSeqStep_ = SEQ_NONE_;
     encoding_type                       encoding_;
-    unsigned short                      curColumnIndex_;
-    unsigned long                       rowCount_;
+    u16                                 curColumnIndex_;
+    u32                                 rowCount_;
     rad::vector<char>                   strings_;
     unsigned long long                  utfPos_;
-    unsigned long long                  stringsPos_;
+    unsigned long long                  stringTablePos_;
     unsigned long long                  bufDataPos_;
-    raw_string                          tableName_;
-    bool                                hasNullString_;
-    bool                                useDefaultValues_;
-    unsigned short                      rowsOff_;
-    unsigned short                      rowSize_;
-    rad::vector<column_>                columns_;
+    u32                                 flags_ = SERIALIZER_FLAG_NONE;
+    //raw_string                          tableName_;
+    //bool                                hasNullString_;
+    //bool                                useDefaultValues_;
+    u16                                 rowsOff_;
+    u16                                 rowSize_;
+    rad::vector<column_meta_>           columns_;
     rad::vector<raw_cell>               cells_;
 
-    raw_string add_string_(std::string_view str);
+    raw_string append_string_(std::string_view str);
 
-    void next_column_() noexcept;
+    raw_cell& push_cell_();
 
-    void write_table_();
+    std::size_t next_cell_() noexcept;
 
     u32 compute_buffer_size_(unsigned long long dataStartPos) const;
 
 public:
-    inline rad::stream& stream() const noexcept
-    {
-        return writer_.stream();
-    }
-
-    inline const table_writer& writer() const noexcept
+    inline const utf::writer& writer() const noexcept
     {
         return writer_;
     }
 
-    inline table_writer& writer() noexcept
+    inline utf::writer& writer() noexcept
     {
         return writer_;
     }
@@ -672,80 +747,78 @@ public:
         return strings_.allocator();
     }
 
-    inline std::size_t column_count() const noexcept
+    inline u16 column_count() const noexcept
     {
-        return columns_.size();
+        return static_cast<u16>(columns_.size());
     }
 
     HL_API void start(
         std::string_view tableName,
         rad::span<const column_info> columnsInfo,
         encoding_type encoding = encoding_type::utf8,
-        bool writeNullString = false,
-        bool useDefaultValues = true
+        u32 flags = SERIALIZER_FLAG_NONE
+        //bool writeNullString = false,
+        //bool useDefaultValues = true
     );
 
-    HL_API std::size_t write_cell_as_u8(u8 val);
+    HL_API std::size_t push_cell_u8(u8 val);
 
-    HL_API std::size_t write_cell_as_s8(s8 val);
+    HL_API std::size_t push_cell_s8(s8 val);
 
-    HL_API std::size_t write_cell_as_u16(u16 val);
+    HL_API std::size_t push_cell_u16(u16 val);
 
-    HL_API std::size_t write_cell_as_s16(s16 val);
+    HL_API std::size_t push_cell_s16(s16 val);
 
-    HL_API std::size_t write_cell_as_u32(u32 val);
+    HL_API std::size_t push_cell_u32(u32 val);
 
-    HL_API std::size_t write_cell_as_s32(s32 val);
+    HL_API std::size_t push_cell_s32(s32 val);
 
-    HL_API std::size_t write_cell_as_u64(u64 val);
+    HL_API std::size_t push_cell_u64(u64 val);
 
-    HL_API std::size_t write_cell_as_s64(s64 val);
+    HL_API std::size_t push_cell_s64(s64 val);
 
-    HL_API std::size_t write_cell_as_f32(float val);
+    HL_API std::size_t push_cell_f32(float val);
 
-    HL_API std::size_t write_cell_as_f64(double val);
+    HL_API std::size_t push_cell_f64(double val);
 
-    HL_API std::size_t write_cell_as_string(std::string_view val);
+    HL_API std::size_t push_cell_string(const char* val);
 
-    HL_API std::size_t write_cell_as_buffer();
+    HL_API std::size_t push_cell_string(std::string_view val);
 
-    HL_API std::size_t write_cell_as_guid(guid val);
+    HL_API std::size_t push_cell_buffer(bool willBeEmpty = false);
+
+    HL_API std::size_t push_cell_guid(guid val);
 
     HL_API void skip_cell();
 
     HL_API void next_row();
 
-    HL_API void finish_rows(unsigned short bufferDataAlignment = 16);
-
-    HL_API void fill_buffer(
-        unsigned long long bufferPos,
-        unsigned long long dataPos,
-        u32 dataSize
-    );
-
-    HL_API void fill_buffer(
-        unsigned long long bufferPos,
-        unsigned long long dataPos
-    );
-
-    HL_API void fill_buffer_cell(
-        std::size_t cellIndex,
-        unsigned long long dataPos,
-        u32 dataSize
-    );
-
-    HL_API void fill_buffer_cell(
-        std::size_t cellIndex,
-        unsigned long long dataPos
+    HL_API buffers_resolver begin_buffer_data_section(
+        unsigned short bufferDataAlignment = 1
     );
 
     HL_API void finish();
 
-    HL_API table_serializer(
+    HL_API explicit serializer(
         rad::stream& stream,
         rad::allocator& allocator = rad::default_allocator
     ) noexcept;
 };
+
+inline rad::stream& buffers_resolver::stream() const noexcept
+{
+    return sr_->writer_.stream();
+}
+
+inline const utf::writer& buffers_resolver::writer() const noexcept
+{
+    return sr_->writer_;
+}
+
+inline utf::writer& buffers_resolver::writer() noexcept
+{
+    return sr_->writer_;
+}
 }
 
 #endif

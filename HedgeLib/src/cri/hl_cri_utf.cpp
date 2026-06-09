@@ -1,208 +1,73 @@
 #include "hedgelib/cri/hl_cri_utf.h"
-#include <rad/rad_stack_or_heap_array.h>
 
-namespace hl::cri_new::utf
+namespace hl::cri::utf
 {
-bool column_info_group::validate(
-    const utf::column_info* columnInfo,
-    const utf::table_deserializer& td) const noexcept
+bool is_cell_type_compatible(
+    cell_type cellType,
+    cell_type expectedCellType) noexcept
 {
-    // Validate column count.
-    const auto totalCount = get_total_count();
-    if (td.column_count() < totalCount)
+    // Exact types are always compatible.
+    if (cellType == expectedCellType)
     {
+        return true;
+    }
+
+    // Integer types are also compatible in cases where the actual cell type
+    // is an integer of the same signedness but smaller bit width
+    // than the expected cell type (e.g. [actual: u8, expected: u16] is OK).
+
+    // This is because it's perfectly acceptable to read, for example, a
+    // u8 value into a u16 variable, without any bit loss.
+
+    switch (expectedCellType)
+    {
+    case cell_type::u64:
+        if (cellType == cell_type::u32) return true;
+        [[fallthrough]];
+
+    case cell_type::u32:
+        if (cellType == cell_type::u16) return true;
+        [[fallthrough]];
+
+    case cell_type::u16:
+        return (cellType == cell_type::u8);
+
+    case cell_type::s64:
+        if (cellType == cell_type::s32) return true;
+        [[fallthrough]];
+
+    case cell_type::s32:
+        if (cellType == cell_type::s16) return true;
+        [[fallthrough]];
+
+    case cell_type::s16:
+        return (cellType == cell_type::s8);
+
+    default:
         return false;
     }
-
-    // Validate column types.
-    u16 utfTableStartIndex = 0;
-
-    for (const auto& columnRange : ranges)
-    {
-        if (!td.are_columns_exact_types(
-            columnInfo + columnRange.beginIndex,
-            utfTableStartIndex,
-            columnRange.count))
-        {
-            return false;
-        }
-
-        utfTableStartIndex += columnRange.count;
-    }
-
-    return true;
 }
 
 void column_info_group::append_to(
     const utf::column_info* columnInfo,
-    rad::vector<utf::column_info>& columns) const
+    rad::vector<utf::column_info>& output) const
 {
-    const auto totalCount = get_total_count();
-    columns.reserve(columns.size() + totalCount);
+    assert(columnInfo &&
+        "columnInfo argument must not be null"
+    );
+
+    output.reserve(output.size() + get_column_count());
 
     for (const auto& columnRange : ranges)
     {
         const auto rangeBegin = (columnInfo + columnRange.beginIndex);
         const auto rangeEnd = (rangeBegin + columnRange.count);
 
-        columns.append(rangeBegin, rangeEnd); // TODO: Switch to append_unchecked
+        output.append(rangeBegin, rangeEnd); // TODO: Switch to append_unchecked
     }
 }
 
-u16 table_reader::read_as_u16(cell_type type)
-{
-    switch (type)
-    {
-    case cell_type::u16:
-        return read_u16();
-
-    case cell_type::u8:
-        return read_u8();
-
-    default:
-        throw std::runtime_error("Cannot properly read value as u16");
-    }
-}
-
-s16 table_reader::read_as_s16(cell_type type)
-{
-    switch (type)
-    {
-    case cell_type::s16:
-        return read_s16();
-
-    case cell_type::s8:
-        return read_s8();
-
-    default:
-        throw std::runtime_error("Cannot properly read value as s16");
-    }
-}
-
-u32 table_reader::read_as_u32(cell_type type)
-{
-    switch (type)
-    {
-    case cell_type::u32:
-        return read_u32();
-
-    case cell_type::u16:
-        return read_u16();
-
-    case cell_type::u8:
-        return read_u8();
-
-    default:
-        throw std::runtime_error("Cannot properly read value as u32");
-    }
-}
-
-s32 table_reader::read_as_s32(cell_type type)
-{
-    switch (type)
-    {
-    case cell_type::s32:
-        return read_s32();
-
-    case cell_type::s16:
-        return read_s16();
-
-    case cell_type::s8:
-        return read_s8();
-
-    default:
-        throw std::runtime_error("Cannot properly read value as s32");
-    }
-}
-
-u64 table_reader::read_as_u64(cell_type type)
-{
-    switch (type)
-    {
-    case cell_type::u64:
-        return read_u64();
-
-    case cell_type::u32:
-        return read_u32();
-
-    case cell_type::u16:
-        return read_u16();
-
-    case cell_type::u8:
-        return read_u8();
-
-    default:
-        throw std::runtime_error("Cannot properly read value as u64");
-    }
-}
-
-s64 table_reader::read_as_s64(cell_type type)
-{
-    switch (type)
-    {
-    case cell_type::s64:
-        return read_s64();
-
-    case cell_type::s32:
-        return read_s32();
-
-    case cell_type::s16:
-        return read_s16();
-
-    case cell_type::s8:
-        return read_s8();
-
-    default:
-        throw std::runtime_error("Cannot properly read value as s64");
-    }
-}
-
-raw_string table_reader::read_raw_string()
-{
-    return raw_string{ read_u32() };
-}
-
-raw_buffer table_reader::read_raw_buffer()
-{
-    return raw_buffer{ read_u32(), read_u32() };
-}
-
-guid table_reader::read_guid()
-{
-    //guid val;
-    //stream().read_as(val);
-    //return val;
-
-    // TODO: Are UTF guids for sure 16-byte, and are they endian-swapped at all??
-    throw std::runtime_error("Not yet implemented");
-}
-
-raw_table_header table_reader::read_raw_table_header()
-{
-    raw_table_header header;
-    header.unknown1 = read_u8();
-    header.encoding = static_cast<encoding_type>(read_u8());
-    header.rowsOff = read_u16();
-    header.stringsOff = read_u32();
-    header.bufferDataOff = read_u32();
-    header.name = read_raw_string();
-    header.columnCount = read_u16();
-    header.rowSize = read_u16();
-    header.rowCount = read_u32();
-
-    return header;
-}
-
-raw_utf_header table_reader::read_raw_utf_header()
-{
-    raw_utf_header header;
-    header.signature = read_u32();
-    header.tableSize = read_u32();
-
-    return header;
-}
-
-rad::string table_reader::read_string(
+rad::string reader::read_string(
     encoding_type encoding,
     rad::allocator& allocator)
 {
@@ -220,16 +85,27 @@ rad::string table_reader::read_string(
     }
 }
 
-rad::vector<unsigned char> table_reader::read_bytes(
-    std::size_t size,
-    rad::allocator& allocator)
+raw_string reader::read_raw_string()
 {
-    rad::vector<unsigned char> data(rad::no_value_init, allocator, size);
-    stream().read(data.data(), size);
-    return data;
+    return raw_string{ read_u32() };
 }
 
-void table_reader::read_raw_cell_value(cell_type type, void* dst)
+raw_buffer reader::read_raw_buffer()
+{
+    return raw_buffer{ read_u32(), read_u32() };
+}
+
+guid reader::read_guid()
+{
+    //guid val;
+    //stream().read_as(val);
+    //return val;
+
+    // TODO: Are UTF guids for sure 16-byte, and are they endian-swapped at all??
+    throw std::runtime_error("Not yet implemented");
+}
+
+void reader::read_cell_value(cell_type type, void* dst)
 {
     switch (type)
     {
@@ -287,40 +163,65 @@ void table_reader::read_raw_cell_value(cell_type type, void* dst)
     }
 }
 
-raw_cell table_reader::read_raw_cell(cell_type type)
+raw_cell reader::read_raw_cell(cell_type type)
 {
-    raw_cell val;
-    read_raw_cell_value(type, &val);
-    return val;
+    raw_cell cell;
+    read_cell_value(type, &cell);
+    return cell;
 }
 
-raw_column table_reader::read_raw_column()
+raw_column reader::read_raw_column()
 {
-    raw_column val;
-    val.flags = read_u8();
+    raw_column rawColumn;
+    rawColumn.flags = read_u8();
 
-    if (val.has_name())
+    if (rawColumn.has_name())
     {
-        val.name = read_raw_string();
+        rawColumn.name = read_raw_string();
     }
 
-    if (val.has_default_value())
+    if (rawColumn.has_default_value())
     {
-        read_raw_cell_value(val.type(), &val.defaultValue);
+        read_cell_value(rawColumn.type(), &rawColumn.defaultValue);
     }
-    else if (!val.has_per_row_data())
+    else if (!rawColumn.has_per_row_data())
     {
-        // HACK: Handle empty columns by using a "zero-initialized" default value.
+        // Handle empty columns by using a "zero-initialized" default value.
+        // This means it's always valid to read the default value if !has_per_row_data().
         // NOTE: These are actually used, for example in cpk files.
-        //val.flags |= COLUMN_FLAGS_HAS_DEFAULT_VALUE;
-        std::memset(&val.defaultValue, 0, sizeof(val.defaultValue));
+        std::memset(&rawColumn.defaultValue, 0, sizeof(rawColumn.defaultValue));
     }
 
-    return val;
+    return rawColumn;
 }
 
-void table_writer::write_string(
-    const char* utf8Str,
+table_header reader::read_table_header()
+{
+    return table_header{
+        // TODO: Use C++20 delegated initializers.
+        read_u8(),
+        static_cast<encoding_type>(read_u8()),
+        read_u16(),
+        read_u32(),
+        read_u32(),
+        read_raw_string(),
+        read_u16(),
+        read_u16(),
+        read_u32()
+    };
+}
+
+header reader::read_header()
+{
+    return header{
+        // TODO: Use C++20 delegated initializers.
+        read_u32(),
+        read_u32()
+    };
+}
+
+void writer::write_string(
+    rad::cstring_view utf8Str,
     encoding_type writeEncoding)
 {
     switch (writeEncoding)
@@ -339,50 +240,30 @@ void table_writer::write_string(
     }
 }
 
-void table_writer::write_raw_string(raw_string str)
+void writer::write_raw_string(raw_string rawStr)
 {
-    write_u32(str.dataOff);
+    write_u32(rawStr.dataOff);
 }
 
-void table_writer::write_raw_buffer(raw_buffer buffer)
+void writer::write_raw_buffer(raw_buffer rawBuf)
 {
-    write_u32(buffer.dataOff);
-    write_u32(buffer.size);
+    write_u32(rawBuf.dataOff);
+    write_u32(rawBuf.size);
 }
 
-void table_writer::write_empty_raw_buffer()
+void writer::write_empty_raw_buffer()
 {
-    const raw_buffer rawBuffer = {};
-    stream().write_as(rawBuffer);
+    const raw_buffer rawBuf = {};
+    stream().write_as(rawBuf);
 }
 
-void table_writer::write_guid(const guid& guid)
+void writer::write_guid(const guid& guid)
 {
     // TODO: Are UTF guids for sure 16-byte, and are they endian-swapped at all??
     throw std::runtime_error("Not yet implemented");
 }
 
-void table_writer::write_raw_table_header(
-    const raw_table_header& rawTblHeader)
-{
-    write_u8(rawTblHeader.unknown1);
-    write_u8(rawTblHeader.encoding);
-    write_u16(rawTblHeader.rowsOff);
-    write_u32(rawTblHeader.stringsOff);
-    write_u32(rawTblHeader.bufferDataOff);
-    write_raw_string(rawTblHeader.name);
-    write_u16(rawTblHeader.columnCount);
-    write_u16(rawTblHeader.rowSize);
-    write_u32(rawTblHeader.rowCount);
-}
-
-void table_writer::write_raw_utf_header(raw_utf_header rawUtfHeader)
-{
-    write_u32(rawUtfHeader.signature);
-    write_u32(rawUtfHeader.tableSize);
-}
-
-void table_writer::write_raw_cell_value(cell_type type, const void* src)
+void writer::write_cell_value(cell_type type, const void* src)
 {
     switch (type)
     {
@@ -443,33 +324,54 @@ void table_writer::write_raw_cell_value(cell_type type, const void* src)
     }
 }
 
-void table_writer::write_raw_column(const raw_column& column)
+void writer::write_raw_column(const raw_column& rawColumn)
 {
-    write_u8(column.flags);
+    write_u8(rawColumn.flags);
 
-    if (column.has_name())
+    if (rawColumn.has_name())
     {
-        write_raw_string(column.name);
+        write_raw_string(rawColumn.name);
     }
 
-    if (column.has_default_value())
+    if (rawColumn.has_default_value())
     {
-        if (column.has_per_row_data())
+        if (rawColumn.has_per_row_data())
         {
             throw std::runtime_error("Invalid column flags combination");
         }
 
-        write_raw_cell(column.type(), column.defaultValue);
+        write_raw_cell(rawColumn.type(), rawColumn.defaultValue);
     }
 }
 
-unsigned long long table_deserializer::get_start_of_inner_table_(
-    table_deserialize_type type)
+void writer::write_table_header(
+    const table_header& tableHeader)
 {
-    if (type == table_deserialize_type::utf)
+    write_u8(tableHeader.unknown1);
+    write_u8(static_cast<u8>(tableHeader.encoding));
+    write_u16(tableHeader.rowsOff);
+    write_u32(tableHeader.stringTableOff);
+    write_u32(tableHeader.bufferDataOff);
+    write_raw_string(tableHeader.name);
+    write_u16(tableHeader.columnCount);
+    write_u16(tableHeader.rowSize);
+    write_u32(tableHeader.rowCount);
+}
+
+void writer::write_header(header header)
+{
+    write_u32(header.signature);
+    write_u32(header.tableSize);
+}
+
+unsigned long long deserializer::go_to_table_header_(
+    deserialize_type type)
+{
+    if (type == deserialize_type::utf)
     {
-        const auto utfHeader = reader_.read_raw_utf_header();
-        if (utfHeader.signature != signature)
+        // Read past UTF header and verify it.
+        const auto header = reader_.read_header();
+        if (header.signature != signature)
         {
             throw std::runtime_error("Unsupported UTF data format");
         }
@@ -478,9 +380,9 @@ unsigned long long table_deserializer::get_start_of_inner_table_(
     return reader_.stream().tell();
 }
 
-const raw_column* table_deserializer::next_column_()
+const raw_column* deserializer::next_column_()
 {
-    assert(nextColumnIndex_ + 1 <= column_count() &&
+    assert(nextColumnIndex_ < column_count() &&
         "You're reading too many cells from the current row! "
         "Please remember to call next_row() as appropriate and "
         "validate that your expected column layout matches what's "
@@ -490,19 +392,29 @@ const raw_column* table_deserializer::next_column_()
     return columns_ + nextColumnIndex_++;
 }
 
-void table_deserializer::go_to_row_(u32 rowIndex)
+void deserializer::go_to_row_(u32 rowIndex)
 {
     reader_.stream().jump_to(
-        tablePos_ + header_.rowsOff + (header_.rowSize * rowIndex)
+        tablePos_ + tableHeader_.rowsOff + (tableHeader_.rowSize * rowIndex)
     );
 
     nextColumnIndex_ = 0;
     curRowIndex_ = rowIndex;
 }
 
-void table_deserializer::destruct_() noexcept
+void deserializer::validate_raw_string_(raw_string rawStr) const
 {
-    if (!reader_.stream().capabilities().can_get_data_pointer())
+    if (rawStr.dataOff >= string_table_size())
+    {
+        throw std::runtime_error("Invalid string data offset; "
+            "offset was outside of the range of the string table"
+        );
+    }
+}
+
+void deserializer::destruct_() noexcept
+{
+    if (ownsStringTable_)
     {
         allocator_->free(const_cast<char*>(stringTable_));
     }
@@ -510,168 +422,240 @@ void table_deserializer::destruct_() noexcept
     allocator_->free(columns_);
 }
 
-static bool is_cell_type_compatible_(
-    cell_type cellType,
-    cell_type expectedCellType) noexcept
+void deserializer::load_string_table_()
 {
-    if (cellType != expectedCellType)
+    // Validate string table data region.
+    if (tableHeader_.stringTableOff > tableHeader_.bufferDataOff)
     {
-        // Types are also compatible in cases where the actual cell type
-        // is an integer of the same signedness but smaller bit width
-        // than the expected cell type (e.g. [actual: u8, expected: u16] is OK).
-
-        // This is because it's perfectly acceptable to read, for example, a
-        // u8 value into a u16 variable, without any bit loss.
-
-        switch (expectedCellType)
-        {
-        case cell_type::u64:
-            if (cellType == cell_type::u32) return true;
-            [[fallthrough]];
-
-        case cell_type::u32:
-            if (cellType == cell_type::u16) return true;
-            [[fallthrough]];
-
-        case cell_type::u16:
-            return (cellType == cell_type::u8);
-
-        case cell_type::s64:
-            if (cellType == cell_type::s32) return true;
-            [[fallthrough]];
-
-        case cell_type::s32:
-            if (cellType == cell_type::s16) return true;
-            [[fallthrough]];
-
-        case cell_type::s16:
-            return (cellType == cell_type::s8);
-
-        default:
-            return false;
-        }
+        throw std::runtime_error(
+            "Invalid UTF data; "
+            "buffer data should not come before string table"
+        );
     }
 
-    return true;
+    reader_.stream().jump_to(tablePos_ + tableHeader_.stringTableOff);
+    const auto stringTableSize = string_table_size();
+
+    if (!stringTableSize) return;
+
+    // OPTIMIZATION: Just set the pointer directly if we can; no allocations.
+    if (reader_.stream().capabilities().can_get_data_pointer())
+    {
+        // Ensure the string table memory ends before the end of the stream.
+        if ((reader_.stream().tell() + stringTableSize) > reader_.stream().get_size())
+        {
+            throw std::runtime_error("Invalid UTF data; "
+                "string table extends past the end of the stream"
+            );
+        }
+
+        stringTable_ = static_cast<const char*>(reader_.stream().get_data_pointer());
+        ownsStringTable_ = false;
+
+        // Ensure string table memory ends with a null-terminator, so
+        // it is always safe to use strcmp when searching for a string.
+        if (stringTable_[stringTableSize - 1] == '\0') return;
+
+        // If string table does not end with a null-terminator, continue
+        // and fallback to creating copy of string table data which does.
+    }
+
+    // Read the string table from the stream.
+    // NOTE: We allocate one additional char at the end
+    // to use as a failsafe null-terminator.
+    const auto strTableBuf = static_cast<char*>(
+        allocator_->allocate(
+            static_cast<std::size_t>(stringTableSize) + 1,
+            alignof(char))
+    );
+
+    stringTable_ = strTableBuf;
+    ownsStringTable_ = true;
+
+    reader_.stream().read(strTableBuf, stringTableSize);
+
+    // Ensure string table memory ends with a null-terminator, so
+    // it is always safe to use strcmp when searching for a string.
+    strTableBuf[stringTableSize] = '\0';
 }
 
-bool table_deserializer::is_column_compatible_type(
+bool deserializer::has_column_of_compatible_type(
     u16 columnIndex,
     cell_type expectedColumnType) const noexcept
 {
-    assert(columnIndex < column_count() &&
-        "Invalid column index; please ensure "
-        "columnIndex < column_count() before calling"
-    );
+    if (columnIndex >= column_count())
+    {
+        return false;
+    }
 
     const auto columnType = columns_[columnIndex].type();
-    return is_cell_type_compatible_(columnType, expectedColumnType);
+    return is_cell_type_compatible(columnType, expectedColumnType);
 }
 
-bool table_deserializer::is_column_exact_type(
+bool deserializer::has_column_of_exact_type(
     u16 columnIndex,
     cell_type expectedColumnType) const noexcept
 {
-    assert(columnIndex < column_count() &&
-        "Invalid column index; please ensure "
-        "columnIndex < column_count() before calling"
-    );
+    if (columnIndex >= column_count())
+    {
+        return false;
+    }
 
     const auto columnType = columns_[columnIndex].type();
     return (columnType == expectedColumnType);
 }
 
-bool table_deserializer::are_columns_compatible_types(
-    const column_info* columns,
-    u16 beginIndex,
-    u16 endIndex) const noexcept
-{
-    assert(beginIndex <= endIndex &&
-        "Invalid index range; endIndex must be >= beginIndex"
-    );
-
-    assert(endIndex <= column_count() &&
-        "Invalid index range; please ensure "
-        "endIndex <= column_count() before calling"
-    );
-
-    for (u16 i = beginIndex; i < endIndex; ++i)
-    {
-        if (!is_column_compatible_type(i, columns[i].type))
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool table_deserializer::are_columns_exact_types(
-    const column_info* columns,
-    u16 utfTableStartIndex,
+bool deserializer::has_columns_of_compatible_types(
+    const column_info* expectedColumnInfo,
+    u16 tableStartIndex,
     u16 columnCount) const noexcept
 {
-    assert(utfTableStartIndex <= column_count() &&
-        "Invalid index range; please ensure "
-        "utfTableStartIndex <= column_count() before calling"
+    assert(expectedColumnInfo &&
+        "expectedColumnInfo argument must not be null"
     );
 
-    const auto endIndex = utfTableStartIndex + columnCount;
+    const auto endIndex = tableStartIndex + columnCount;
 
-    assert(endIndex <= column_count() &&
-        "Invalid index range; please ensure "
-        "utfTableStartIndex + columnCount <= column_count() "
-        "before calling"
-    );
-
-    for (u16 i = utfTableStartIndex; i < endIndex; ++i)
+    if (endIndex > column_count())
     {
-        if (!is_column_exact_type(i, columns->type))
+        return false;
+    }
+
+    for (u16 i = tableStartIndex; i < endIndex; ++i)
+    {
+        if (!is_cell_type_compatible(
+            columns_[i].type(),
+            expectedColumnInfo->type))
         {
             return false;
         }
 
-        ++columns;
+        ++expectedColumnInfo;
     }
 
     return true;
 }
 
-rad::string table_deserializer::get_string_data(
-    raw_string rawString,
-    rad::allocator& allocator)
+bool deserializer::has_columns_of_compatible_types(
+    const column_info_group& expectedColumnInfoGroup,
+    const column_info* expectedColumnInfo) const noexcept
 {
-    if (rawString.dataOff >= string_table_size())
+    assert(expectedColumnInfo &&
+        "expectedColumnInfo argument must not be null"
+    );
+
+    // Validate column types.
+    u16 utfTableStartIndex = 0;
+
+    for (const auto& columnInfoRange : expectedColumnInfoGroup.ranges)
     {
-        throw std::runtime_error("Invalid string data offset; "
-            "offset was outside of the range of the string table"
-        );
+        if (!has_columns_of_compatible_types(
+            expectedColumnInfo + columnInfoRange.beginIndex,
+            utfTableStartIndex,
+            columnInfoRange.count))
+        {
+            return false;
+        }
+
+        utfTableStartIndex += columnInfoRange.count;
     }
 
-    return rad::string(allocator, stringTable_ + rawString.dataOff);
+    return true;
 }
 
-rad::vector<unsigned char> table_deserializer::get_buffer_data(
-    raw_buffer rawBuffer,
+bool deserializer::has_columns_of_exact_types(
+    const column_info* expectedColumnInfo,
+    u16 tableStartIndex,
+    u16 columnCount) const noexcept
+{
+    assert(expectedColumnInfo &&
+        "expectedColumnInfo argument must not be null"
+    );
+
+    const auto endIndex = tableStartIndex + columnCount;
+
+    if (endIndex > column_count())
+    {
+        return false;
+    }
+
+    for (u16 i = tableStartIndex; i < endIndex; ++i)
+    {
+        if (columns_[i].type() != expectedColumnInfo->type)
+        {
+            return false;
+        }
+
+        ++expectedColumnInfo;
+    }
+
+    return true;
+}
+
+bool deserializer::has_columns_of_exact_types(
+    const column_info_group& expectedColumnInfoGroup,
+    const column_info* expectedColumnInfo) const noexcept
+{
+    assert(expectedColumnInfo &&
+        "expectedColumnInfo argument must not be null"
+    );
+
+    // Validate column types.
+    u16 utfTableStartIndex = 0;
+
+    for (const auto& columnInfoRange : expectedColumnInfoGroup.ranges)
+    {
+        if (!has_columns_of_exact_types(
+            expectedColumnInfo + columnInfoRange.beginIndex,
+            utfTableStartIndex,
+            columnInfoRange.count))
+        {
+            return false;
+        }
+
+        utfTableStartIndex += columnInfoRange.count;
+    }
+
+    return true;
+}
+
+const char* deserializer::get_string_data(raw_string rawStr) const
+{
+    validate_raw_string_(rawStr);
+    return stringTable_ + rawStr.dataOff;
+}
+
+const char* deserializer::get_optional_string_data(raw_string rawStr) const
+{
+    const auto str = get_string_data(rawStr);
+
+    return (std::strcmp(str, "<NULL>") == 0) ?
+        nullptr : str;
+}
+
+rad::vector<unsigned char> deserializer::read_buffer_data(
+    raw_buffer rawBuf,
     rad::allocator& allocator)
 {
     const auto curPos = reader_.stream().tell();
-    reader_.stream().jump_to(get_buffer_data_position(rawBuffer));
+    reader_.stream().jump_to(get_buffer_data_position(rawBuf));
 
-    auto buf = reader_.read_bytes(rawBuffer.size, allocator);
+    auto buf = reader_.read_bytes(rawBuf.size, allocator);
+
     reader_.stream().jump_to(curPos);
-
     return buf;
 }
 
-u16 table_deserializer::get_column_index(const char* name) const
+u16 deserializer::get_column_index(const char* name) const
 {
-    for (u16 i = 0; i < header_.columnCount; ++i)
+    for (u16 i = 0; i < tableHeader_.columnCount; ++i)
     {
-        const auto& column = columns_[i];
-        if (!column.has_name()) continue;
+        const auto& rawColumn = columns_[i];
+        if (!rawColumn.has_name()) continue;
 
-        const char* columnName = stringTable_ + column.name.dataOff;
+        validate_raw_string_(rawColumn.name);
+
+        const auto columnName = stringTable_ + rawColumn.name.dataOff;
         if (std::strcmp(columnName, name) == 0)
         {
             return i;
@@ -681,136 +665,204 @@ u16 table_deserializer::get_column_index(const char* name) const
     return UINT16_MAX;
 }
 
-#define VALIDATE_READ_CELL_TYPE_(expectedType)\
-    assert(is_cell_type_compatible_(curColumn->type(), expectedType) &&\
-        "You're reading a cell using the incorrect type! "\
+#define ASSERT_HAS_COMPATIBLE_CELL_TYPE_(expectedType)\
+    assert(is_cell_type_compatible(curColumn->type(), expectedType) &&\
+        "You're reading a cell using an incompatible type! "\
         "Please validate that your expected column layout "\
-        "matches what's in the file before reading!"\
+        "matches what's in the file before reading."\
     )
-
-#define READ_AS_OR_DEFAULT_(valueType, defaultValFieldName)\
-    (curColumn->has_per_row_data()) ?\
-        reader_.read_as_##valueType(curColumn->type()) :\
-        curColumn->defaultValue.defaultValFieldName
 
 #define READ_OR_DEFAULT_(valueType, defaultValFieldName)\
     (curColumn->has_per_row_data()) ?\
         reader_.read_##valueType() :\
         curColumn->defaultValue.defaultValFieldName
 
-u8 table_deserializer::read_cell_as_u8()
+u8 deserializer::next_cell_as_u8()
 {
     const auto curColumn = next_column_();
-    VALIDATE_READ_CELL_TYPE_(cell_type::u8);
+    ASSERT_HAS_COMPATIBLE_CELL_TYPE_(cell_type::u8);
 
     return READ_OR_DEFAULT_(u8, valueU8);
 }
 
-s8 table_deserializer::read_cell_as_s8()
+s8 deserializer::next_cell_as_s8()
 {
     const auto curColumn = next_column_();
-    VALIDATE_READ_CELL_TYPE_(cell_type::s8);
+    ASSERT_HAS_COMPATIBLE_CELL_TYPE_(cell_type::s8);
 
     return READ_OR_DEFAULT_(s8, valueS8);
 }
 
-u16 table_deserializer::read_cell_as_u16()
+u16 deserializer::next_cell_as_u16()
 {
     const auto curColumn = next_column_();
-    VALIDATE_READ_CELL_TYPE_(cell_type::u16);
+    ASSERT_HAS_COMPATIBLE_CELL_TYPE_(cell_type::u16);
 
-    return READ_AS_OR_DEFAULT_(u16, valueU16);
+    switch (curColumn->type())
+    {
+    case cell_type::u16:
+        return READ_OR_DEFAULT_(u16, valueU16);
+
+    case cell_type::u8:
+        return READ_OR_DEFAULT_(u8, valueU8);
+
+    default:
+        throw std::runtime_error("Cannot read cell as u16");
+    }
 }
 
-s16 table_deserializer::read_cell_as_s16()
+s16 deserializer::next_cell_as_s16()
 {
     const auto curColumn = next_column_();
-    VALIDATE_READ_CELL_TYPE_(cell_type::s16);
+    ASSERT_HAS_COMPATIBLE_CELL_TYPE_(cell_type::s16);
 
-    return READ_AS_OR_DEFAULT_(s16, valueS16);
+    switch (curColumn->type())
+    {
+    case cell_type::s16:
+        return READ_OR_DEFAULT_(s16, valueS16);
+
+    case cell_type::s8:
+        return READ_OR_DEFAULT_(s8, valueS8);
+
+    default:
+        throw std::runtime_error("Cannot read cell as s16");
+    }
 }
 
-u32 table_deserializer::read_cell_as_u32()
+u32 deserializer::next_cell_as_u32()
 {
     const auto curColumn = next_column_();
-    VALIDATE_READ_CELL_TYPE_(cell_type::u32);
+    ASSERT_HAS_COMPATIBLE_CELL_TYPE_(cell_type::u32);
 
-    return READ_AS_OR_DEFAULT_(u32, valueU32);
+    switch (curColumn->type())
+    {
+    case cell_type::u32:
+        return READ_OR_DEFAULT_(u32, valueU32);
+
+    case cell_type::u16:
+        return READ_OR_DEFAULT_(u16, valueU16);
+
+    case cell_type::u8:
+        return READ_OR_DEFAULT_(u8, valueU8);
+
+    default:
+        throw std::runtime_error("Cannot read cell as u32");
+    }
 }
 
-s32 table_deserializer::read_cell_as_s32()
+s32 deserializer::next_cell_as_s32()
 {
     const auto curColumn = next_column_();
-    VALIDATE_READ_CELL_TYPE_(cell_type::s32);
+    ASSERT_HAS_COMPATIBLE_CELL_TYPE_(cell_type::s32);
 
-    return READ_AS_OR_DEFAULT_(s32, valueS32);
+    switch (curColumn->type())
+    {
+    case cell_type::s32:
+        return READ_OR_DEFAULT_(s32, valueS32);
+
+    case cell_type::s16:
+        return READ_OR_DEFAULT_(s16, valueS16);
+
+    case cell_type::s8:
+        return READ_OR_DEFAULT_(s8, valueS8);
+
+    default:
+        throw std::runtime_error("Cannot read cell as s32");
+    }
 }
 
-u64 table_deserializer::read_cell_as_u64()
+u64 deserializer::next_cell_as_u64()
 {
     const auto curColumn = next_column_();
-    VALIDATE_READ_CELL_TYPE_(cell_type::u64);
+    ASSERT_HAS_COMPATIBLE_CELL_TYPE_(cell_type::u64);
 
-    return READ_AS_OR_DEFAULT_(u64, valueU64);
+    switch (curColumn->type())
+    {
+    case cell_type::u64:
+        return READ_OR_DEFAULT_(u64, valueU64);
+
+    case cell_type::u32:
+        return READ_OR_DEFAULT_(u32, valueU32);
+
+    case cell_type::u16:
+        return READ_OR_DEFAULT_(u16, valueU16);
+
+    case cell_type::u8:
+        return READ_OR_DEFAULT_(u8, valueU8);
+
+    default:
+        throw std::runtime_error("Cannot read cell as u64");
+    }
 }
 
-s64 table_deserializer::read_cell_as_s64()
+s64 deserializer::next_cell_as_s64()
 {
     const auto curColumn = next_column_();
-    VALIDATE_READ_CELL_TYPE_(cell_type::s64);
+    ASSERT_HAS_COMPATIBLE_CELL_TYPE_(cell_type::s64);
 
-    return READ_AS_OR_DEFAULT_(s64, valueS64);
+    switch (curColumn->type())
+    {
+    case cell_type::s64:
+        return READ_OR_DEFAULT_(s64, valueS64);
+
+    case cell_type::s32:
+        return READ_OR_DEFAULT_(s32, valueS32);
+
+    case cell_type::s16:
+        return READ_OR_DEFAULT_(s16, valueS16);
+
+    case cell_type::s8:
+        return READ_OR_DEFAULT_(s8, valueS8);
+
+    default:
+        throw std::runtime_error("Cannot read cell as s64");
+    }
 }
 
-float table_deserializer::read_cell_as_f32()
+float deserializer::next_cell_as_f32()
 {
     const auto curColumn = next_column_();
-    VALIDATE_READ_CELL_TYPE_(cell_type::f32);
+    ASSERT_HAS_COMPATIBLE_CELL_TYPE_(cell_type::f32);
 
     return READ_OR_DEFAULT_(f32, valueF32);
 }
 
-double table_deserializer::read_cell_as_f64()
+double deserializer::next_cell_as_f64()
 {
     const auto curColumn = next_column_();
-    VALIDATE_READ_CELL_TYPE_(cell_type::f64);
+    ASSERT_HAS_COMPATIBLE_CELL_TYPE_(cell_type::f64);
 
     return READ_OR_DEFAULT_(f64, valueF64);
 }
 
-raw_string table_deserializer::read_cell_as_string()
+raw_string deserializer::next_cell_as_string()
 {
     const auto curColumn = next_column_();
-    VALIDATE_READ_CELL_TYPE_(cell_type::string);
+    ASSERT_HAS_COMPATIBLE_CELL_TYPE_(cell_type::string);
 
     return READ_OR_DEFAULT_(raw_string, valueString);
 }
 
-raw_buffer table_deserializer::read_cell_as_buffer()
+raw_buffer deserializer::next_cell_as_buffer()
 {
     const auto curColumn = next_column_();
-    VALIDATE_READ_CELL_TYPE_(cell_type::buffer);
+    ASSERT_HAS_COMPATIBLE_CELL_TYPE_(cell_type::buffer);
 
     return READ_OR_DEFAULT_(raw_buffer, valueBuffer);
 }
 
-guid table_deserializer::read_cell_as_guid()
+guid deserializer::next_cell_as_guid()
 {
     const auto curColumn = next_column_();
-    VALIDATE_READ_CELL_TYPE_(cell_type::guid);
+    ASSERT_HAS_COMPATIBLE_CELL_TYPE_(cell_type::guid);
 
     return READ_OR_DEFAULT_(guid, valueGuid);
 }
 
-raw_cell table_deserializer::read_cell(cell_type* cellType)
+std::pair<cell_type, raw_cell> deserializer::next_cell()
 {
     raw_cell c;
     const auto curColumn = next_column_();
-
-    if (cellType)
-    {
-        *cellType = curColumn->type();
-    }
 
     switch (curColumn->type())
     {
@@ -823,27 +875,27 @@ raw_cell table_deserializer::read_cell(cell_type* cellType)
         break;
 
     case cell_type::u16:
-        c.valueU16 = READ_AS_OR_DEFAULT_(u16, valueU16);
+        c.valueU16 = READ_OR_DEFAULT_(u16, valueU16);
         break;
 
     case cell_type::s16:
-        c.valueS16 = READ_AS_OR_DEFAULT_(s16, valueS16);
+        c.valueS16 = READ_OR_DEFAULT_(s16, valueS16);
         break;
 
     case cell_type::u32:
-        c.valueU32 = READ_AS_OR_DEFAULT_(u32, valueU32);
+        c.valueU32 = READ_OR_DEFAULT_(u32, valueU32);
         break;
 
     case cell_type::s32:
-        c.valueS32 = READ_AS_OR_DEFAULT_(s32, valueS32);
+        c.valueS32 = READ_OR_DEFAULT_(s32, valueS32);
         break;
 
     case cell_type::u64:
-        c.valueU64 = READ_AS_OR_DEFAULT_(u64, valueU64);
+        c.valueU64 = READ_OR_DEFAULT_(u64, valueU64);
         break;
 
     case cell_type::s64:
-        c.valueS64 = READ_AS_OR_DEFAULT_(s64, valueS64);
+        c.valueS64 = READ_OR_DEFAULT_(s64, valueS64);
         break;
 
     case cell_type::f32:
@@ -870,10 +922,10 @@ raw_cell table_deserializer::read_cell(cell_type* cellType)
         throw std::runtime_error("Unsupported cell type");
     }
 
-    return c;
+    return { curColumn->type(), c };
 }
 
-void table_deserializer::skip_cell()
+void deserializer::skip_cell()
 {
     const auto curColumn = next_column_();
 
@@ -913,9 +965,9 @@ void table_deserializer::skip_cell()
     }
 }
 
-void table_deserializer::next_row()
+void deserializer::next_row()
 {
-    assert(curRowIndex_ < header_.rowCount &&
+    assert(curRowIndex_ < tableHeader_.rowCount &&
         "next_row() is being called too many times! "
         "Please ensure you are only calling it up to "
         "row_count() times."
@@ -924,14 +976,14 @@ void table_deserializer::next_row()
     go_to_row_(curRowIndex_ + 1);
 }
 
-void table_deserializer::go_to_cell(u16 columnIndex, u32 rowIndex)
+void deserializer::go_to_cell(u16 columnIndex, u32 rowIndex)
 {
-    assert(columnIndex < header_.columnCount &&
+    assert(columnIndex < tableHeader_.columnCount &&
         "Invalid column index was given; please ensure "
         "you check the column index against column_count()"
     );
 
-    assert(rowIndex < header_.rowCount &&
+    assert(rowIndex < tableHeader_.rowCount &&
         "Invalid row index was given; please ensure "
         "you check the row index against row_count()"
     );
@@ -944,7 +996,7 @@ void table_deserializer::go_to_cell(u16 columnIndex, u32 rowIndex)
     }
 }
 
-bool table_deserializer::try_go_to_cell(const char* columnName, u32 rowIndex)
+bool deserializer::try_go_to_cell(const char* columnName, u32 rowIndex)
 {
     const auto columnIndex = get_column_index(columnName);
     if (columnIndex == UINT16_MAX) return false;
@@ -953,8 +1005,7 @@ bool table_deserializer::try_go_to_cell(const char* columnName, u32 rowIndex)
     return true;
 }
 
-table_deserializer& table_deserializer::operator=(
-    table_deserializer&& other) noexcept
+deserializer& deserializer::operator=(deserializer&& other) noexcept
 {
     if (&other != this)
     {
@@ -963,85 +1014,45 @@ table_deserializer& table_deserializer::operator=(
         allocator_ = other.allocator_;
         reader_ = std::move(other.reader_);
         tablePos_ = other.tablePos_;
-        header_ = other.header_;
+        tableHeader_ = other.tableHeader_;
         columns_ = other.columns_;
         stringTable_ = other.stringTable_;
+        ownsStringTable_ = other.ownsStringTable_;
         nextColumnIndex_ = other.nextColumnIndex_;
         curRowIndex_ = other.curRowIndex_;
 
         other.columns_ = nullptr;
         other.stringTable_ = nullptr;
+        // NOTE: We don't have to set other.ownsStringTable_ to false
     }
 
     return *this;
 }
 
-table_deserializer::table_deserializer(
+deserializer::deserializer(
     rad::stream& stream,
-    table_deserialize_type type,
+    deserialize_type type,
     rad::allocator& allocator)
     : allocator_(&allocator)
     , reader_(stream)
-    , tablePos_(get_start_of_inner_table_(type))
-    , header_(reader_.read_raw_table_header())
-    , columns_(allocator_->create<raw_column>(rad::no_value_init, header_.columnCount))
+    , tablePos_(go_to_table_header_(type))
+    , tableHeader_(reader_.read_table_header())
+    , columns_(allocator_->create<raw_column>(
+        rad::no_value_init, tableHeader_.columnCount))
 {
     try
     {
         // Read columns.
-        for (u16 i = 0; i < header_.columnCount; ++i)
+        for (u16 i = 0; i < tableHeader_.columnCount; ++i)
         {
             columns_[i] = reader_.read_raw_column();
         }
 
         // Read string table.
-        if (header_.stringsOff > header_.bufferDataOff)
-        {
-            throw std::runtime_error(
-                "Invalid UTF data; "
-                "buffer data should not come before string table"
-            );
-        }
-
-        reader_.stream().jump_to(tablePos_ + header_.stringsOff);
-        const auto stringTableSize = string_table_size();
-
-        if (reader_.stream().capabilities().can_get_data_pointer())
-        {
-            // Ensure the string table ends before the end of the stream.
-            // NOTE: This is not necessary in the else block, because we
-            // call read, which will throw in this case.
-            if (reader_.stream().tell() + stringTableSize > reader_.stream().get_size())
-            {
-                throw std::runtime_error("Invalid UTF data; "
-                    "string table extends past the end of the stream"
-                );
-            }
-
-            // OPTIMIZATION: Just set the pointer directly if we can; no allocations.
-            stringTable_ = static_cast<const char*>(reader_.stream().get_data_pointer());
-        }
-        else
-        {
-            // Read the string table from the stream.
-            stringTable_ = static_cast<const char*>(
-                allocator_->allocate(stringTableSize, alignof(char))
-            );
-
-            reader_.stream().read(const_cast<char*>(stringTable_), stringTableSize);
-        }
-
-        // Ensure string table ends with a null-terminator, so it is
-        // always safe to use strcmp when searching for a string.
-        if (stringTableSize && stringTable_[stringTableSize - 1] != '\0')
-        {
-            throw std::runtime_error("Invalid UTF data; "
-                "string table does not end with null-terminator"
-            );
-        }
+        load_string_table_();
         
         // Jump to rows position.
-        reader_.stream().jump_to(tablePos_ + header_.rowsOff);
+        reader_.stream().jump_to(tablePos_ + tableHeader_.rowsOff);
     }
     catch (...)
     {
@@ -1050,43 +1061,205 @@ table_deserializer::table_deserializer(
     }
 }
 
-table_deserializer::table_deserializer(
-    table_deserializer&& other) noexcept
+deserializer::deserializer(deserializer&& other) noexcept
     : allocator_(other.allocator_)
     , reader_(std::move(other.reader_))
     , tablePos_(other.tablePos_)
-    , header_(other.header_)
+    , tableHeader_(other.tableHeader_)
     , columns_(other.columns_)
     , stringTable_(other.stringTable_)
+    , ownsStringTable_(other.ownsStringTable_)
     , nextColumnIndex_(other.nextColumnIndex_)
     , curRowIndex_(other.curRowIndex_)
 {
     other.columns_ = nullptr;
     other.stringTable_ = nullptr;
+    // NOTE: We don't have to set other.ownsStringTable_ to false
 }
 
-table_deserializer::~table_deserializer()
+deserializer::~deserializer()
 {
     destruct_();
 }
 
-table_serializer::column_::column_(cell_type type) noexcept
+std::size_t buffers_resolver::get_next_buffer_cell_index_(
+    std::size_t cellIndex) const
+{
+    const auto& columns = sr_->columns_;
+
+    while (cellIndex < sr_->cells_.size())
+    {
+        const auto columnIndex = cellIndex % columns.size();
+        const auto& column = columns[columnIndex];
+
+        if (column.type() == cell_type::buffer)
+        {
+            break;
+        }
+
+        ++cellIndex;
+    }
+
+    return cellIndex;
+}
+
+buffers_resolver::buffers_resolver(serializer& sr)
+    : sr_(&sr)
+    , curBufCellIndex_(get_next_buffer_cell_index_(0))
+{
+}
+
+void buffers_resolver::start()
+{
+    // TODO: Validate serializer sequence.
+
+    assert(curBufDataPos_ == 0 && curBufCellIndex_ < sr_->cells_.size() &&
+        "start() must be called only once per buffer"
+    );
+
+    assert(sr_->columns_[curBufCellIndex_ % sr_->columns_.size()].hasCells &&
+        "start() must not be called for buffer cells which were skipped"
+    );
+
+    // HACK: buffer dataOff field is used as a "willBeEmpty" marker.
+    assert(!sr_->cells_[curBufCellIndex_].valueBuffer.dataOff &&
+        "start() must not be called for buffer cells which were promised to be empty"
+    );
+
+    const auto curPos = stream().tell();
+
+    if (curPos < sr_->bufDataPos_)
+    {
+        throw std::runtime_error("UTF buffer data cannot start "
+            "outside of the range of the buffer data section"
+        );
+    }
+
+    curBufDataPos_ = curPos;
+}
+
+void buffers_resolver::next()
+{
+    //assert(curBufDataPos_ != 0 &&
+        //"start() must be called before finish()"
+    //);
+
+    // TODO: Validate serializer sequence.
+
+    assert(curBufCellIndex_ < sr_->cells_.size() &&
+        "next() must be called only once per buffer"
+    );
+
+    if (curBufDataPos_ != 0)
+    {
+        // Compute and validate buffer data size.
+        auto& writer = sr_->writer();
+        const auto dataEndPos = writer.stream().tell();
+
+        if (dataEndPos < curBufDataPos_)
+        {
+            throw std::runtime_error(
+                "UTF buffer end position is less than "
+                "buffer data start position"
+            );
+        }
+
+        if ((dataEndPos - curBufDataPos_) > UINT32_MAX)
+        {
+            throw std::runtime_error("UTF buffer size exceeds u32 range");
+        }
+
+        const auto bufDataSize = static_cast<u32>(dataEndPos - curBufDataPos_);
+
+        // Compute and validate buffer position.
+        const auto& columns = sr_->columns_;
+        const auto columnIndex = curBufCellIndex_ % columns.size();
+        const auto rowIndex = curBufCellIndex_ / columns.size();
+
+        const auto tablePos = sr_->utfPos_ + 8;
+        const auto perRowDataPos = tablePos + sr_->rowsOff_;
+
+        const auto bufferPos = (
+            perRowDataPos +
+            (sr_->rowSize_ * rowIndex) +
+            columns[columnIndex].dataOff
+        );
+
+        assert(bufferPos >= sr_->utfPos_ && bufferPos < sr_->stringTablePos_ &&
+            "The computed buffer position was not within the per-row-data region"
+        );
+
+        // Jump to buffer position.
+        const auto pos = writer.stream().tell();
+        writer.stream().jump_to(bufferPos);
+
+        // Fill-in buffer data position and size.
+        writer.write_raw_buffer({
+            static_cast<u32>(curBufDataPos_ - sr_->bufDataPos_),
+            bufDataSize
+        });
+
+        // Jump back to previous stream position.
+        writer.stream().jump_to(pos);
+    }
+
+    // Get next buffer cell index.
+    curBufCellIndex_ = get_next_buffer_cell_index_(curBufCellIndex_ + 1);
+    curBufDataPos_ = 0;
+}
+
+serializer::column_meta_::column_meta_(cell_type type) noexcept
     : flags(static_cast<u8>(type))
 {
 }
 
-raw_string table_serializer::add_string_(std::string_view str)
+raw_string serializer::append_string_(std::string_view str)
 {
+    // TODO: Check if strings_.size() exceeds u32 range ?
+    // TODO: Handle SHIFT-JIS encoding !!!
+
     const raw_string rawStr{ static_cast<u32>(strings_.size()) };
 
+    strings_.reserve(strings_.size() + str.size() + 1);
+
+    // TODO: Switch to append_unchecked
     strings_.append(
         str.begin(),
         str.end()
     );
 
-    strings_.push_back('\0');
+    strings_.push_back_unchecked('\0');
 
     return rawStr;
+}
+
+raw_cell& serializer::push_cell_()
+{
+    assert(lastSeqStep_ > SEQ_NONE_ &&
+        "start() must be called before pushing or skipping a cell!"
+    );
+
+    assert(lastSeqStep_ < SEQ_STRINGS_ &&
+        "No more cells should be pushed or skipped after "
+        "a call to begin_buffer_data_section() or finish()"
+    );
+
+    assert(curColumnIndex_ < column_count() &&
+        "You're pushing too many cells to the current row! "
+        "Please remember to call next_row() as appropriate and "
+        "validate that you're pushing cells in accordance with your "
+        "column layout specified by the columnsInfo you passed into start()."
+    );
+
+    return cells_.push_back(rad::no_value_init);
+}
+
+std::size_t serializer::next_cell_() noexcept
+{
+    columns_[curColumnIndex_].hasCells = true;
+    ++curColumnIndex_;
+
+    return cells_.back_index();
 }
 
 template<cell_type CellType>
@@ -1096,19 +1269,48 @@ public:
     bool operator()(
         raw_cell& output,
         const rad::vector<raw_cell>& cells,
-        unsigned short firstCellIndex,
-        unsigned short columnCount)
+        const char* strings,
+        u16 firstCellIndex,
+        u16 columnCount)
     {
         if constexpr (CellType == cell_type::buffer)
         {
-            // Don't bother checking buffers for equality since
-            // they're all just placeholders at this point anyway.
-            return false;
+            for (std::size_t i = firstCellIndex;
+                i < cells.size();
+                i += columnCount)
+            {
+                // HACK: buffer dataOff field is used as a "willBeEmpty" marker.
+                if (!cells[i].valueBuffer.dataOff) return false;
+            }
+
+            // If all buffers will be empty, copy an empty buffer value to the output.
+            output.valueBuffer = raw_buffer{};
+            return true;
+        }
+        else if constexpr (CellType == cell_type::string)
+        {
+            std::size_t i = firstCellIndex;
+            const auto firstCellVal = cells[i].valueString;
+
+            while ((i += columnCount) < cells.size())
+            {
+                if (std::strcmp(
+                    strings + cells[i].valueString.dataOff,
+                    strings + firstCellVal.dataOff) != 0)
+                {
+                    return false;
+                }
+            }
+
+            // If all strings are equal, copy that cell value to the output.
+            output.valueString = firstCellVal;
+            return true;
         }
         else
         {
             constexpr auto valMemberPtr = cell_type_traits<CellType>::cell_member_ptr;
 
+            // Loop through all cells. If all cell values are not equal, return false.
             std::size_t i = firstCellIndex;
             const auto firstCellVal = cells[i].*valMemberPtr;
 
@@ -1123,80 +1325,336 @@ public:
                 }
             }
 
-            output.*valMemberPtr = cells[firstCellIndex].*valMemberPtr;
+            // If all cell values are equal, copy that cell value to the output.
+            output.*valMemberPtr = firstCellVal;
             return true;
         }
     }
 };
 
-void table_serializer::write_table_()
+u32 serializer::compute_buffer_size_(
+    unsigned long long dataStartPos) const
 {
+    const auto dataEndPos = writer_.stream().tell();
+
+    assert(dataEndPos >= dataStartPos &&
+        "Buffer data position is invalid"
+    );
+
+    // TODO: Should this be an exception?
+    assert((dataEndPos - dataStartPos) <= UINT32_MAX &&
+        "Buffer size is too large"
+    );
+
+    return static_cast<u32>(dataEndPos - dataStartPos);
+}
+
+void serializer::start(
+    std::string_view tableName,
+    rad::span<const column_info> columnsInfo,
+    encoding_type encoding,
+    u32 flags)
+{
+    assert(lastSeqStep_ == SEQ_NONE_ &&
+        "start() must not be called again until after "
+        "a matching call to finish()"
+    );
+
+    if (columnsInfo.size() > UINT16_MAX)
+    {
+        throw std::runtime_error("UTF column count exceeded u16 range");
+    };
+
+    // Reset fields.
+    encoding_ = encoding;
+    curColumnIndex_ = 0;
+    rowCount_ = 0;
+    strings_.clear();
+    bufDataPos_ = stringTablePos_ = utfPos_ = writer_.stream().tell();
+
+    append_string_(tableName);
+    
+    flags_ = flags;
+    rowsOff_ = 0;
+    rowSize_ = 0;
+    columns_.clear();
+    cells_.clear();
+
+    // Populate column metadata.
+    columns_.reserve(columnsInfo.size());
+
+    for (const auto& columnInfo : columnsInfo)
+    {
+        auto& columnMeta = columns_.emplace_back(columnInfo.type);
+
+        // Set name if necessary.
+        if (columnInfo.name)
+        {
+            columnMeta.name = append_string_(columnInfo.name);
+            columnMeta.flags |= COLUMN_FLAGS_HAS_NAME;
+        }
+    }
+
+    // Write placeholder UTF and table headers.
+    writer_.stream().write_nulls(32);
+    lastSeqStep_ = SEQ_HEADER_;
+}
+
+std::size_t serializer::push_cell_u8(u8 val)
+{
+    push_cell_().valueU8 = val;
+    return next_cell_();
+}
+
+std::size_t serializer::push_cell_s8(s8 val)
+{
+    push_cell_().valueS8 = val;
+    return next_cell_();
+}
+
+std::size_t serializer::push_cell_u16(u16 val)
+{
+    push_cell_().valueU16 = val;
+    return next_cell_();
+}
+
+std::size_t serializer::push_cell_s16(s16 val)
+{
+    push_cell_().valueS16 = val;
+    return next_cell_();
+}
+
+std::size_t serializer::push_cell_u32(u32 val)
+{
+    push_cell_().valueU32 = val;
+    return next_cell_();
+}
+
+std::size_t serializer::push_cell_s32(s32 val)
+{
+    push_cell_().valueS32 = val;
+    return next_cell_();
+}
+
+std::size_t serializer::push_cell_u64(u64 val)
+{
+    push_cell_().valueU64 = val;
+    return next_cell_();
+}
+
+std::size_t serializer::push_cell_s64(s64 val)
+{
+    push_cell_().valueS64 = val;
+    return next_cell_();
+}
+
+std::size_t serializer::push_cell_f32(float val)
+{
+    push_cell_().valueF32 = val;
+    return next_cell_();
+}
+
+std::size_t serializer::push_cell_f64(double val)
+{
+    push_cell_().valueF64 = val;
+    return next_cell_();
+}
+
+std::size_t serializer::push_cell_string(const char* val)
+{
+    assert((val || flags_ & SERIALIZER_FLAG_SUPPORT_NULL_STRING) &&
+        "nullptr must not be passed to push_cell_string unless null "
+        "string support was requested in the flags passed to start()"
+    );
+
+    push_cell_().valueString = ((!val) ?
+        raw_string{} :
+        append_string_(val)
+    );
+
+    return next_cell_();
+}
+
+std::size_t serializer::push_cell_string(std::string_view val)
+{
+    push_cell_().valueString = append_string_(val);
+    return next_cell_();
+}
+
+std::size_t serializer::push_cell_buffer(bool willBeEmpty)
+{
+    // HACK: buffer dataOff field is used as a "willBeEmpty" marker.
+    push_cell_().valueBuffer = raw_buffer{ willBeEmpty };
+    return next_cell_();
+}
+
+std::size_t serializer::push_cell_guid(guid val)
+{
+    push_cell_().valueGuid = val;
+    return next_cell_();
+}
+
+void serializer::skip_cell()
+{
+    std::memset(&push_cell_(), 0, sizeof(raw_cell));
+    ++curColumnIndex_;
+}
+
+// TODO: assert column type in all write_cell calls!
+
+void serializer::next_row()
+{
+    assert(lastSeqStep_ > SEQ_NONE_ &&
+        "start() must be called before next_row()"
+    );
+
+    assert(lastSeqStep_ < SEQ_STRINGS_ &&
+        "next_row() should not be called again after "
+        "a call to begin_buffer_data_section() or finish()"
+    );
+
+    // Skip unpushed cells.
+    const auto columnCount = column_count();
+    while (curColumnIndex_ < columnCount)
+    {
+        skip_cell();
+    }
+
+    // Start next row.
+    curColumnIndex_ = 0;
+    ++rowCount_;
+}
+
+class string_table_
+{
+    const char* strings_;
+    rad::vector<char> data_;
+
+public:
+    inline const char* data() const noexcept
+    {
+        return data_.data();
+    }
+
+    inline std::size_t size() const noexcept
+    {
+        return data_.size();
+    }
+
+    raw_string append(raw_string rawStr)
+    {
+        const auto str = strings_ + rawStr.dataOff;
+        const auto strSize = std::strlen(str) + 1;
+
+        rawStr.dataOff = static_cast<u32>(data_.size());
+        // TODO: Switch to append_unchecked
+        data_.append(str, str + strSize);
+
+        return rawStr;
+    }
+
+    string_table_(const rad::vector<char>& strings, u32 serializerFlags)
+        : strings_(strings.data())
+        , data_(strings.allocator())
+    {
+        const auto exSize = (
+            ((serializerFlags & SERIALIZER_FLAG_SUPPORT_NULL_STRING) ?
+            std::size(null_string) : static_cast<std::size_t>(0))
+        );
+
+        data_.reserve(strings.size() + exSize);
+
+        // Append null string if necessary.
+        if (serializerFlags & SERIALIZER_FLAG_SUPPORT_NULL_STRING)
+        {
+            // TODO: Switch to append_unchecked
+            data_.append(std::begin(null_string), std::end(null_string));
+        }
+
+        // Append table name.
+        const auto tableName = strings.data(); // NOTE: First string is always the table name.
+        const auto tableNameSize = std::strlen(tableName) + 1;
+
+        // TODO: Switch to append_unchecked
+        data_.append(tableName, tableName + tableNameSize);
+    }
+};
+
+buffers_resolver serializer::begin_buffer_data_section(
+    unsigned short bufferDataAlignment)
+{
+    assert(lastSeqStep_ > SEQ_NONE_ &&
+        "start() must be called before begin_buffer_data_section()"
+    );
+
+    assert(lastSeqStep_ < SEQ_STRINGS_ &&
+        "begin_buffer_data_section() should not be called "
+        "more than once per call to start()"
+    );
+
     // Commit any uncommitted cells.
     if (curColumnIndex_ != 0)
     {
         next_row();
     }
 
-    // Validate column/row counts.
-    assert(columns_.size() <= 65535 &&
-        "UTF tables cannot have more than 65535 columns"
-    );
-
-    const auto columnCount = static_cast<unsigned short>(columns_.size());
+    // Validate cell count.
+    const auto columnCount = column_count();
 
     assert(cells_.size() == (static_cast<std::size_t>(columnCount) * rowCount_) &&
-        "UTF table cell size was not equal to (columnCount * rowCount)"
+        "UTF table cell size must be equal to (columnCount * rowCount)"
     );
 
     // Write columns.
+    string_table_ stringTable(strings_, flags_);
     std::size_t cellIndex = 0;
-    unsigned short columnIndex, rowSize = 0;
-
-    rad::stack_or_heap_array<bool, 128> skipColumn(
-        rad::no_value_init,
-        allocator(),
-        columnCount
-    );
+    u16 columnIndex, rowSize = 0;
 
     for (columnIndex = 0; columnIndex < columnCount; ++columnIndex)
     {
-        // Set type.
-        auto& column = columns_[columnIndex];
-
+        auto& columnMeta = columns_[columnIndex];
         raw_column rawColumn;
-        rawColumn.flags = column.flags;
-        rawColumn.name = column.name;
 
-        if (column.hasCells)
+        // Append column name to string table.
+        rawColumn.name = stringTable.append(columnMeta.name);
+
+        // Determine flags to use.
+        if (columnMeta.hasCells)
         {
             // Set default value if necessary.
-            if (useDefaultValues_ && dispatch_by_cell_type<set_default_value_functor_>(
-                column.type(),
-                rawColumn.defaultValue,
-                cells_,
-                cellIndex,
-                columnCount))
+            if (/*useDefaultValues_ &&*/ rowCount_ > 1 &&
+                dispatch_by_cell_type<set_default_value_functor_>(
+                    columnMeta.type(),
+                    rawColumn.defaultValue,
+                    cells_,
+                    strings_.data(),
+                    cellIndex,
+                    columnCount))
             {
-                rawColumn.flags |= COLUMN_FLAGS_HAS_DEFAULT_VALUE;
-                skipColumn[columnIndex] = true;
+                columnMeta.flags |= COLUMN_FLAGS_HAS_DEFAULT_VALUE;
+
+                if (columnMeta.type() == cell_type::string)
+                {
+                    // Copy default value to string table.
+                    rawColumn.defaultValue.valueString = stringTable.append(
+                        rawColumn.defaultValue.valueString
+                    );
+                }
             }
 
             // Set has-per-row-data flag if necessary.
             else
             {
-                rawColumn.flags |= COLUMN_FLAGS_HAS_PER_ROW_DATA;
-                skipColumn[columnIndex] = false;
+                columnMeta.flags |= COLUMN_FLAGS_HAS_PER_ROW_DATA;
 
-                column.dataOff = rowSize;
-                rowSize += get_size_of_cell(column.type());
+                columnMeta.dataOff = rowSize;
+                rowSize += get_size_of_cell(columnMeta.type());
             }
 
             ++cellIndex;
         }
-        else
-        {
-            skipColumn[columnIndex] = true;
-        }
+
+        rawColumn.flags = columnMeta.flags;
 
         // Write column.
         writer_.write_raw_column(rawColumn);
@@ -1206,362 +1664,114 @@ void table_serializer::write_table_()
     const auto perRowDataStartPos = writer_.stream().tell();
     const auto tablePos = (utfPos_ + 8);
 
+    if (perRowDataStartPos - tablePos > UINT16_MAX)
+    {
+        throw std::runtime_error("UTF rows offset exceeds u16 range");
+    }
+
     cellIndex = 0;
-    rowsOff_ = static_cast<unsigned short>(perRowDataStartPos - tablePos);
+    rowsOff_ = static_cast<u16>(perRowDataStartPos - tablePos);
     rowSize_ = rowSize;
 
-    for (unsigned long rowIndex = 0; rowIndex < rowCount_; ++rowIndex)
+    for (u32 rowIndex = 0; rowIndex < rowCount_; ++rowIndex)
     {
         for (columnIndex = 0; columnIndex < columnCount; ++columnIndex)
         {
-            if (!skipColumn[columnIndex])
+            const auto& columnMeta = columns_[columnIndex];
+
+            if (columnMeta.hasCells)
             {
-                writer_.write_raw_cell(
-                    columns_[columnIndex].type(),
-                    cells_[cellIndex]
-                );
+                if (columnMeta.flags & COLUMN_FLAGS_HAS_PER_ROW_DATA)
+                {
+                    if (columnMeta.type() == cell_type::string)
+                    {
+                        const auto rawStr = stringTable.append(
+                            cells_[cellIndex].valueString
+                        );
+
+                        writer_.write_raw_string(rawStr);
+                    }
+                    else if (columnMeta.type() == cell_type::buffer)
+                    {
+                        writer_.write_empty_raw_buffer();
+                    }
+                    else
+                    {
+                        writer_.write_raw_cell(
+                            columnMeta.type(),
+                            cells_[cellIndex]
+                        );
+                    }
+                }
+
+                ++cellIndex;
             }
-
-            ++cellIndex;
         }
     }
 
-    lastSeqStep_ = SEQ_TABLE_;
-}
-
-u32 table_serializer::compute_buffer_size_(
-    unsigned long long dataStartPos) const
-{
-    const auto dataEndPos = writer_.stream().tell();
-
-    assert(dataEndPos >= dataStartPos &&
-        "Buffer data position is invalid"
-    );
-
-    assert((dataEndPos - dataStartPos) <= UINT32_MAX &&
-        "Buffer size is too large"
-    );
-
-    return static_cast<u32>(dataEndPos - dataStartPos);
-}
-
-void table_serializer::start(
-    std::string_view tableName,
-    rad::span<const column_info> columnsInfo,
-    encoding_type encoding,
-    bool writeNullString,
-    bool useDefaultValues)
-{
-    // Reset fields.
-    encoding_ = encoding;
-    curColumnIndex_ = 0;
-    rowCount_ = 0;
-    strings_.clear();
-    bufDataPos_ = stringsPos_ = utfPos_ = writer_.stream().tell();
-
-    if (writeNullString)
-    {
-        add_string_(null_string);
-    }
-
-    tableName_ = add_string_(tableName);
-    hasNullString_ = writeNullString;
-    useDefaultValues_ = useDefaultValues;
-    rowsOff_ = 0;
-    rowSize_ = 0;
-    cells_.clear();
-
-    columns_.clear();
-    columns_.reserve(columnsInfo.size());
-
-    for (const auto& columnInfo : columnsInfo)
-    {
-        auto& column = columns_.emplace_back(columnInfo.type);
-
-        // Set name if necessary.
-        if (columnInfo.name)
-        {
-            column.name = add_string_(columnInfo.name);
-            column.flags |= COLUMN_FLAGS_HAS_NAME;
-        }
-    }
-
-    // Write placeholder UTF and table headers.
-    writer_.stream().write_nulls(32);
-    lastSeqStep_ = SEQ_HEADER_;
-}
-
-std::size_t table_serializer::write_cell_as_u8(u8 val)
-{
-    cells_.push_back(rad::no_value_init).valueU8 = val;
-
-    columns_[curColumnIndex_].hasCells = true;
-    ++curColumnIndex_;
-
-    return cells_.back_index();
-}
-
-std::size_t table_serializer::write_cell_as_s8(s8 val)
-{
-    cells_.push_back(rad::no_value_init).valueS8 = val;
-
-    columns_[curColumnIndex_].hasCells = true;
-    ++curColumnIndex_;
-
-    return cells_.back_index();
-}
-
-std::size_t table_serializer::write_cell_as_u16(u16 val)
-{
-    cells_.push_back(rad::no_value_init).valueU16 = val;
-
-    columns_[curColumnIndex_].hasCells = true;
-    ++curColumnIndex_;
-
-    return cells_.back_index();
-}
-
-std::size_t table_serializer::write_cell_as_s16(s16 val)
-{
-    cells_.push_back(rad::no_value_init).valueS16 = val;
-
-    columns_[curColumnIndex_].hasCells = true;
-    ++curColumnIndex_;
-
-    return cells_.back_index();
-}
-
-std::size_t table_serializer::write_cell_as_u32(u32 val)
-{
-    cells_.push_back(rad::no_value_init).valueU32 = val;
-
-    columns_[curColumnIndex_].hasCells = true;
-    ++curColumnIndex_;
-
-    return cells_.back_index();
-}
-
-std::size_t table_serializer::write_cell_as_s32(s32 val)
-{
-    cells_.push_back(rad::no_value_init).valueS32 = val;
-
-    columns_[curColumnIndex_].hasCells = true;
-    ++curColumnIndex_;
-
-    return cells_.back_index();
-}
-
-std::size_t table_serializer::write_cell_as_u64(u64 val)
-{
-    cells_.push_back(rad::no_value_init).valueU64 = val;
-
-    columns_[curColumnIndex_].hasCells = true;
-    ++curColumnIndex_;
-
-    return cells_.back_index();
-}
-
-std::size_t table_serializer::write_cell_as_s64(s64 val)
-{
-    cells_.push_back(rad::no_value_init).valueS64 = val;
-
-    columns_[curColumnIndex_].hasCells = true;
-    ++curColumnIndex_;
-
-    return cells_.back_index();
-}
-
-std::size_t table_serializer::write_cell_as_f32(float val)
-{
-    cells_.push_back(rad::no_value_init).valueF32 = val;
-
-    columns_[curColumnIndex_].hasCells = true;
-    ++curColumnIndex_;
-
-    return cells_.back_index();
-}
-
-std::size_t table_serializer::write_cell_as_f64(double val)
-{
-    cells_.push_back(rad::no_value_init).valueF64 = val;
-
-    columns_[curColumnIndex_].hasCells = true;
-    ++curColumnIndex_;
-
-    return cells_.back_index();
-}
-
-std::size_t table_serializer::write_cell_as_string(std::string_view val)
-{
-    cells_.push_back(rad::no_value_init).valueString = (
-        (hasNullString_ && val == null_string) ?
-        raw_string{} : add_string_(val)
-    );
-
-    columns_[curColumnIndex_].hasCells = true;
-    ++curColumnIndex_;
-
-    return cells_.back_index();
-}
-
-std::size_t table_serializer::write_cell_as_buffer()
-{
-    cells_.push_back(rad::no_value_init).valueBuffer = raw_buffer{};
-
-    columns_[curColumnIndex_].hasCells = true;
-    ++curColumnIndex_;
-
-    return cells_.back_index();
-}
-
-std::size_t table_serializer::write_cell_as_guid(guid val)
-{
-    cells_.push_back(rad::no_value_init).valueGuid = val;
-
-    columns_[curColumnIndex_].hasCells = true;
-    ++curColumnIndex_;
-
-    return cells_.back_index();
-}
-
-void table_serializer::skip_cell()
-{
-    std::memset(&cells_.push_back(rad::no_value_init), 0, sizeof(raw_cell));
-    ++curColumnIndex_;
-}
-
-// TODO: assert curColumnIndex at the beginning of all write_cell and skip_cell calls!
-
-void table_serializer::next_row()
-{
-    curColumnIndex_ = 0;
-    ++rowCount_;
-}
-
-void table_serializer::finish_rows(unsigned short bufferDataAlignment)
-{
-    // Write table data.
-    write_table_();
-
-    // Write strings.
-    stringsPos_ = writer_.stream().tell();
-    writer_.stream().write(strings_.data(), strings_.size());
+    // Write string table.
+    stringTablePos_ = writer_.stream().tell();
+    writer_.stream().write(stringTable.data(), stringTable.size());
     writer_.stream().pad(bufferDataAlignment);
 
     // Update state.
     bufDataPos_ = writer_.stream().tell();
     lastSeqStep_ = SEQ_STRINGS_;
+
+    return buffers_resolver(*this);
 }
 
-void table_serializer::fill_buffer(
-    unsigned long long bufferPos,
-    unsigned long long dataPos,
-    u32 dataSize)
+void serializer::finish()
 {
-    // TODO: Assert sequence (>= SEQ_STRINGS_)
-    // NOTE: The check against stringsPos_ in the following assert is unsafe until we do this!
-
-    assert(bufferPos >= utfPos_ && bufferPos < stringsPos_ &&
-        "The given buffer position must be within the per-row-data region"
+    assert(lastSeqStep_ >= SEQ_HEADER_ &&
+        "finish() must not be called until after "
+        "a matching call to start()"
     );
 
-    assert(dataPos >= bufDataPos_ &&
-        "The given buffer data position must be within the buffer data region"
-    );
-
-    // Jump to buffer position.
-    const auto pos = writer_.stream().tell();
-    writer_.stream().jump_to(bufferPos);
-
-    // Fill-in buffer data position and size.
-    writer_.write_raw_buffer({
-        static_cast<u32>(dataPos - bufDataPos_),
-        dataSize
-    });
-    
-    // Jump back to previous stream position.
-    writer_.stream().jump_to(pos);
-    lastSeqStep_ = SEQ_BUFFER_DATA_;
-}
-
-void table_serializer::fill_buffer(
-    unsigned long long bufferPos,
-    unsigned long long dataPos)
-{
-    const auto dataSize = compute_buffer_size_(dataPos);
-    fill_buffer(bufferPos, dataPos, dataSize);
-}
-
-void table_serializer::fill_buffer_cell(
-    std::size_t cellIndex,
-    unsigned long long dataPos,
-    u32 dataSize)
-{
-    assert(cellIndex < cells_.size() &&
-        "Invalid cell index"
-    );
-
-    const auto columnIndex = cellIndex % columns_.size();
-    const auto rowIndex = cellIndex / columns_.size();
-    const auto tablePos = utfPos_ + 8;
-    const auto perRowDataPos = tablePos + rowsOff_;
-
-    const auto bufferPos = (
-        perRowDataPos +
-        (rowSize_ * rowIndex) +
-        columns_[columnIndex].dataOff
-    );
-
-    fill_buffer(bufferPos, dataPos, dataSize);
-}
-
-void table_serializer::fill_buffer_cell(
-    std::size_t cellIndex,
-    unsigned long long dataPos)
-{
-    const auto dataSize = compute_buffer_size_(dataPos);
-    fill_buffer_cell(cellIndex, dataPos, dataSize);
-}
-
-void table_serializer::finish()
-{
-    // TODO: Assert sequence
-
-    if (lastSeqStep_ == SEQ_HEADER_)
+    // Write table data if begin_buffer_data_section() was not called.
+    if (lastSeqStep_ < SEQ_STRINGS_)
     {
-        finish_rows();
+        begin_buffer_data_section();
     }
 
+    // Fill-in UTF header.
     const auto endPos = writer_.stream().tell();
-
     writer_.stream().jump_to(utfPos_);
 
-    // Fill-in UTF header.
     const auto tablePos = (utfPos_ + 8);
-    writer_.write_raw_utf_header({
-        signature,
-        static_cast<u32>(endPos - tablePos)
-    });
+    writer_.write_header(
+        header{
+            // TODO: Use C++20 delegated initializers.
+            signature,
+            static_cast<u32>(endPos - tablePos)
+        }
+    );
 
     // Fill-in table header.
-    raw_table_header rawTblHeader;
-    rawTblHeader.unknown1 = 0;
-    rawTblHeader.encoding = encoding_;
-    rawTblHeader.rowsOff = rowsOff_;
-    rawTblHeader.stringsOff = static_cast<u32>(stringsPos_ - tablePos);
-    rawTblHeader.bufferDataOff = static_cast<u32>(bufDataPos_ - tablePos);
-    rawTblHeader.name = tableName_;
-    rawTblHeader.columnCount = static_cast<u16>(columns_.size());
-    rawTblHeader.rowSize = rowSize_;
-    rawTblHeader.rowCount = rowCount_;
+    writer_.write_table_header(
+        table_header{
+            // TODO: Use C++20 delegated initializers.
+            0,
+            encoding_,
+            rowsOff_,
+            static_cast<u32>(stringTablePos_ - tablePos),
+            static_cast<u32>(bufDataPos_ - tablePos),
+            {
+                static_cast<u32>(
+                    (flags_ & SERIALIZER_FLAG_SUPPORT_NULL_STRING) ?
+                    std::size(null_string) : 0)
+            },
+            column_count(),
+            rowSize_,
+            rowCount_
+        }
+    );
 
-    writer_.write_raw_table_header(rawTblHeader);
     writer_.stream().jump_to(endPos);
-
     lastSeqStep_ = SEQ_NONE_;
 }
 
-table_serializer::table_serializer(
+serializer::serializer(
     rad::stream& stream,
     rad::allocator& allocator) noexcept
     : writer_(stream)

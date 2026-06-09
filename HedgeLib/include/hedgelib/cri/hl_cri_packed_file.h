@@ -13,7 +13,7 @@
 #include <unordered_map>
 #include <cassert>
 
-namespace hl::cri_new
+namespace hl::cri
 {
 constexpr u32 cpk_signature = make_sig("CPK ");
 
@@ -292,6 +292,6 @@ public:
 
     HL_API explicit packed_file(rad::stream& stream, data_read_mode dataReadMode);
 };
-} // hl::cri
+}
 
 #endif

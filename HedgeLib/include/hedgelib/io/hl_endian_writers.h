@@ -1,26 +1,14 @@
 #ifndef HL_ENDIAN_WRITERS_H_INCLUDED
 #define HL_ENDIAN_WRITERS_H_INCLUDED
 
-#include "../../hl_internal.h"
-#include <rad/rad_stream.h>
+#include "hl_writer_base.h"
 
-namespace hl
+namespace hl::io
 {
 class big_endian_writer
+    : public writer_base
 {
-protected:
-    rad::stream*    stream_;
-
 public:
-    inline rad::stream& stream() const noexcept
-    {
-        return *stream_;
-    }
-
-    HL_API void write_u8(u8 val);
-
-    HL_API void write_s8(s8 val);
-
     HL_API void write_u16(u16 val);
 
     HL_API void write_s16(s16 val);
@@ -38,26 +26,15 @@ public:
     HL_API void write_f64(double val);
 
     inline big_endian_writer(rad::stream& stream) noexcept
-        : stream_(&stream)
+        : writer_base(stream)
     {
     }
 };
 
 class little_endian_writer
+    : public writer_base
 {
-protected:
-    rad::stream*    stream_;
-
 public:
-    inline rad::stream& stream() const noexcept
-    {
-        return *stream_;
-    }
-
-    HL_API void write_u8(u8 val);
-
-    HL_API void write_s8(s8 val);
-
     HL_API void write_u16(u16 val);
 
     HL_API void write_s16(s16 val);
@@ -75,7 +52,7 @@ public:
     HL_API void write_f64(double val);
 
     inline little_endian_writer(rad::stream& stream) noexcept
-        : stream_(&stream)
+        : writer_base(stream)
     {
     }
 };

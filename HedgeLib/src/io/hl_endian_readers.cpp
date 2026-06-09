@@ -1,7 +1,8 @@
-#include "hedgelib/common/io/hl_endian_readers.h"
+#include "hedgelib/io/hl_endian_readers.h"
 #include <rad/rad_endian.h>
+#include <rad/rad_stream.h>
 
-namespace hl
+namespace hl::io
 {
 template<typename T>
 static T read_big_endian_value_(rad::stream& stream)
@@ -9,20 +10,6 @@ static T read_big_endian_value_(rad::stream& stream)
     T val;
     stream.read_as(val);
     return rad::endian::big_to_native(val);
-}
-
-u8 big_endian_reader::read_u8()
-{
-    u8 val;
-    stream_->read_as(val);
-    return val;
-}
-
-s8 big_endian_reader::read_s8()
-{
-    s8 val;
-    stream_->read_as(val);
-    return val;
 }
 
 u16 big_endian_reader::read_u16()
@@ -71,20 +58,6 @@ static T read_little_endian_value_(rad::stream& stream)
     T val;
     stream.read_as(val);
     return rad::endian::little_to_native(val);
-}
-
-u8 little_endian_reader::read_u8()
-{
-    u8 val;
-    stream_->read_as(val);
-    return val;
-}
-
-s8 little_endian_reader::read_s8()
-{
-    s8 val;
-    stream_->read_as(val);
-    return val;
 }
 
 u16 little_endian_reader::read_u16()

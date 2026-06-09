@@ -1,22 +1,13 @@
-#include "hedgelib/common/io/hl_endian_writers.h"
+#include "hedgelib/io/hl_endian_writers.h"
 #include <rad/rad_endian.h>
+#include <rad/rad_stream.h>
 
-namespace hl
+namespace hl::io
 {
 template<typename T>
 static void write_big_endian_value_(rad::stream& stream, T val)
 {
     stream.write_as(rad::endian::big_to_native(val));
-}
-
-void big_endian_writer::write_u8(u8 val)
-{
-    stream_->write_as(val);
-}
-
-void big_endian_writer::write_s8(s8 val)
-{
-    stream_->write_as(val);
 }
 
 void big_endian_writer::write_u16(u16 val)
@@ -63,16 +54,6 @@ template<typename T>
 static void write_little_endian_value_(rad::stream& stream, T val)
 {
     stream.write_as(rad::endian::little_to_native(val));
-}
-
-void little_endian_writer::write_u8(u8 val)
-{
-    stream_->write_as(val);
-}
-
-void little_endian_writer::write_s8(s8 val)
-{
-    stream_->write_as(val);
 }
 
 void little_endian_writer::write_u16(u16 val)

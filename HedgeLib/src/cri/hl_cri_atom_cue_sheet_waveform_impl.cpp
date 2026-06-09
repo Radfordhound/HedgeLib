@@ -1,6 +1,7 @@
 #include "hedgelib/cri/hl_cri_atom_cue_sheet.h"
+#include "hl_cri_atom_impl.h"
 
-namespace hl::cri_new::atom
+namespace hl::cri::atom
 {
 static const utf::column_info waveform_columns_[] =
 {
@@ -93,7 +94,7 @@ static constexpr utf::column_info_range waveform_columns_r4_[] =
     { 14, 2 },  // ChConfig - HrtfType
 };
 
-static constexpr revision_info waveform_revisions_[] =
+static constexpr revision_info_ waveform_revisions_[] =
 {
     { packed_version(0), waveform_columns_r0_ }, // r0
     { packed_version(1, 26, 00), waveform_columns_r1_ }, // r1
@@ -102,106 +103,256 @@ static constexpr revision_info waveform_revisions_[] =
     { packed_version(1, 42, 01), waveform_columns_r4_ }, // r4
 };
 
-static constexpr std::size_t waveform_max_column_count_ = waveform_revisions_[4].get_total_count();
-
-void cue_sheet::write_waveform_table_(detail_::write_params& wp) const
+static waveform_encode_type parse_waveform_encode_type_(u8 type)
 {
-    utf::table_serializer ts(*wp.stream, *wp.allocator);
+    if (type != static_cast<u8>(waveform_encode_type::adx) &&
+        type != static_cast<u8>(waveform_encode_type::hca) &&
+        type != static_cast<u8>(waveform_encode_type::hca_mx) &&
+        type != static_cast<u8>(waveform_encode_type::cwav) &&
+        type != static_cast<u8>(waveform_encode_type::atrac9))
+    {
+        throw std::runtime_error("Unsupported CriAtom waveform encode type");
+    }
 
-    const auto revisionInfo = get_revision_info(
+    return static_cast<waveform_encode_type>(type);
+}
+
+static waveform_stream_type parse_waveform_stream_type_(u8 type)
+{
+    if (type != static_cast<u8>(waveform_stream_type::memory) &&
+        type != static_cast<u8>(waveform_stream_type::stream) &&
+        type != static_cast<u8>(waveform_stream_type::stream_no_latency))
+    {
+        throw std::runtime_error("Unsupported CriAtom waveform stream type");
+    }
+
+    return static_cast<waveform_stream_type>(type);
+}
+
+static waveform_loop_type parse_waveform_loop_type_(u8 type)
+{
+    if (type != static_cast<u8>(waveform_loop_type::one_shot) &&
+        type != static_cast<u8>(waveform_loop_type::loop))
+    {
+        throw std::runtime_error("Unsupported CriAtom waveform loop type");
+    }
+
+    return static_cast<waveform_loop_type>(type);
+}
+
+void read_waveform_table_(
+    rad::stream& stream,
+    rad::allocator& tmpAllocator,
+    packed_version version,
+    rad::vector<waveform>& waveforms)
+{
+    assert(waveforms.empty() &&
+        "The given output vector must be empty"
+    );
+
+    // Read raw table header.
+    utf::deserializer dr(stream, utf::deserialize_type::utf, tmpAllocator);
+
+    // Get revision info.
+    const auto revisionInfo = get_revision_info_for_version_(
+        waveform_revisions_,
+        version
+    );
+
+    // Validate columns.
+    if (!dr.has_columns_of_exact_types(revisionInfo->columnGroup, waveform_columns_))
+    {
+        throw std::runtime_error("Invalid or unsupported ACB Waveform layout");
+    }
+
+    // Read rows.
+    waveforms.reserve(dr.row_count());
+
+    for (u32 i = 0; i < dr.row_count(); dr.next_row(), ++i)
+    {
+        // r0 
+        u16 memoryAwbId = dr.next_cell_as_u16(); // MemoryAwbId
+        const auto encodeType = parse_waveform_encode_type_(dr.next_cell_as_u8()); // EncodeType
+        const auto streamType = parse_waveform_stream_type_(dr.next_cell_as_u8()); // Streaming
+        const auto channelCount = dr.next_cell_as_u8(); // NumChannels
+        const auto loopType = parse_waveform_loop_type_(dr.next_cell_as_u8()); // LoopFlag
+        const auto sampleRate = dr.next_cell_as_u32(); // SamplingRate
+        const auto sampleCount = dr.next_cell_as_u32(); // NumSamples
+
+        if (version >= waveform_revisions_[1].version)
+        {
+            const auto extDataIndex = dr.next_cell_as_u16(); // ExtensionData
+            // TODO
+        }
+        else
+        {
+            const auto extDataBuf = dr.next_cell_as_buffer(); // ExtensionData
+            // TODO
+        }
+
+        // r1
+        const u16 streamAwbPortNo = (version >= waveform_revisions_[1].version) ?
+            dr.next_cell_as_u16() : UINT16_MAX; // StreamAwbPortNo
+
+        // r2
+        u16 streamAwbId;
+        if (version >= waveform_revisions_[2].version)
+        {
+            streamAwbId = dr.next_cell_as_u16(); // StreamAwbId
+        }
+        else if (streamType == waveform_stream_type::memory)
+        {
+            streamAwbId = UINT16_MAX;
+        }
+        else
+        {
+            streamAwbId = memoryAwbId;
+            memoryAwbId = UINT16_MAX;
+        }
+
+        // r3
+        const u16 lipMorthIndex = (version >= waveform_revisions_[3].version) ?
+            dr.next_cell_as_u16() : UINT16_MAX; // LipMorthIndex
+
+        // r4
+        const u32 chConfig = (version >= waveform_revisions_[4].version) ?
+            dr.next_cell_as_u32() : 0; // ChConfig
+
+        const u8 hrtfType = (version >= waveform_revisions_[4].version) ?
+            dr.next_cell_as_u32() : 0; // HrtfType
+
+        // Generate waveform.
+        waveforms.emplace_back_unchecked(
+            memoryAwbId,
+            streamAwbId,
+            encodeType,
+            streamType,
+            loopType,
+            channelCount,
+            sampleRate,
+            sampleCount,
+            // TODO: ExtensionData
+            streamAwbPortNo
+            // TODO: LipMorthIndex
+            // TODO: ChConfig
+            // TODO: HrtfType
+        );
+    }
+}
+
+void write_waveform_table_(
+    detail_::write_params& wp,
+    const rad::vector<waveform>& waveforms)
+{
+    utf::serializer sr(*wp.stream, *wp.allocator);
+
+    const auto revisionInfo = get_revision_info_for_version_(
         waveform_revisions_,
         wp.version
     );
 
     rad::vector<utf::column_info> columns(*wp.allocator);
-    columns.reserve(waveform_max_column_count_);
+    revisionInfo->columnGroup.append_to(waveform_columns_, columns);
 
-    revisionInfo->columns.append_to(waveform_columns_, columns);
-
-    ts.start("Waveform", columns, wp.encoding);
+    sr.start("Waveform", columns, wp.encoding);
 
     // Write rows.
-    for (std::size_t i = 0; i < waveforms.size(); ts.next_row(), ++i)
+    for (std::size_t i = 0; i < waveforms.size(); sr.next_row(), ++i)
     {
         const auto& waveform = waveforms[i];
 
-        // r0 columns
+        // r0
         if (wp.version >= waveform_revisions_[2].version)
         {
-            ts.write_cell_as_u16((waveform.isStreaming) ? // MemoryAwbId
-                UINT16_MAX : waveform.awbId
-            );
+            sr.push_cell_u16(waveform.memoryAwbId); // MemoryAwbId
         }
         else
         {
-            ts.write_cell_as_u16(waveform.awbId); // Id
+            if (waveform.streamType == waveform_stream_type::stream_no_latency)
+            {
+                // TODO: Log warning about stream_no_latency being unsupported
+                // by this revision, and mention that the value specified by 
+                // memoryAwbId will be ignored.
+            }
+
+            sr.push_cell_u16(
+                (waveform.streamType == waveform_stream_type::memory) ?
+                waveform.memoryAwbId : waveform.streamAwbId
+            ); // Id
         }
 
-        ts.write_cell_as_u8(static_cast<u8>(waveform.encodeType)); // EncodeType
-        ts.write_cell_as_u8(waveform.isStreaming); // Streaming
-        ts.write_cell_as_u8(waveform.channelCount); // NumChannels
-        ts.write_cell_as_u8(waveform.loopFlags); // LoopFlag
+        sr.push_cell_u8(static_cast<u8>(waveform.encodeType)); // EncodeType
+        sr.push_cell_u8(static_cast<u8>(waveform.streamType)); // Streaming
+        sr.push_cell_u8(waveform.channelCount); // NumChannels
+        sr.push_cell_u8(static_cast<u8>(waveform.loopType)); // LoopFlag
 
         if (wp.version >= waveform_revisions_[4].version)
         {
-            ts.write_cell_as_u32(waveform.sampleRate); // SamplingRate
+            sr.push_cell_u32(waveform.sampleRate); // SamplingRate
         }
         else
         {
-            // TODO: Error if sampleRate is > UINT16_MAX
-            ts.write_cell_as_u16(static_cast<u16>(waveform.sampleRate)); // SamplingRate
+            if (waveform.sampleRate > UINT16_MAX) // TODO: Mark unlikely
+            {
+                throw std::overflow_error(
+                    "ACB waveform sample rate exceeds u16 range "
+                    "allowed by this revision."
+                );
+            }
+
+            sr.push_cell_u16(static_cast<u16>(waveform.sampleRate)); // SamplingRate
         }
 
-        ts.write_cell_as_u32(waveform.sampleCount); // NumSamples
+        sr.push_cell_u32(waveform.sampleCount); // NumSamples
 
         if (wp.version >= waveform_revisions_[1].version)
         {
-            ts.write_cell_as_u16(UINT16_MAX); // ExtensionData
+            // TODO
+            sr.push_cell_u16(UINT16_MAX); // ExtensionData
         }
         else
         {
-            ts.write_cell_as_buffer(); // ExtensionData
+            sr.push_cell_buffer(); // ExtensionData
             continue;
         }
 
-        // r1 columns
-        ts.write_cell_as_u16((waveform.isStreaming) ? 0 : UINT16_MAX); // StreamAwbPortNo
+        // r1
+        sr.push_cell_u16(waveform.streamAwbPort); // StreamAwbPortNo
 
-        // r2 columns
+        // r2
         if (wp.version < waveform_revisions_[2].version) continue;
 
-        ts.write_cell_as_u16((waveform.isStreaming) ? // StreamAwbId
-            waveform.awbId : UINT16_MAX
-        );
+        sr.push_cell_u16(waveform.streamAwbId); // StreamAwbId
 
-        // r3 columns
+        // r3
         if (wp.version < waveform_revisions_[3].version) continue;
 
-        ts.write_cell_as_u16(UINT16_MAX); // LipMorthIndex
+        // TODO
+        sr.push_cell_u16(UINT16_MAX); // LipMorthIndex
 
-        // r4 columns
+        // r4
         if (wp.version < waveform_revisions_[4].version) continue;
 
-        ts.write_cell_as_u32(0); // ChConfig
-        ts.write_cell_as_u8(0); // HrtfType
+        // TODO
+        sr.push_cell_u32(0); // ChConfig
+        sr.push_cell_u8(0); // HrtfType
     }
 
-    // Finish writing rows.
-    ts.finish_rows();
-
     // Write buffers.
+    auto br = sr.begin_buffer_data_section();
+
     if (wp.version < waveform_revisions_[1].version)
     {
-        for (std::size_t cellIndex = 0, i = 0;
-            i < waveforms.size();
-            cellIndex += ts.column_count(), ++i)
+        for (const auto& waveform : waveforms)
         {
-            // TODO: Write ExtensionData; fill-in using cellIndex + 7
+            // ExtensionData
+            // TODO: Write ExtensionData
+            br.next();
         }
     }
 
     // Finish writing table.
-    ts.finish();
-    wp.stream->pad(32);
+    sr.writer().stream().pad(4);
+    sr.finish();
 }
 }

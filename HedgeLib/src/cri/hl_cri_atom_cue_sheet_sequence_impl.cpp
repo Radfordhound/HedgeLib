@@ -1,6 +1,7 @@
 #include "hedgelib/cri/hl_cri_atom_cue_sheet.h"
+#include "hl_cri_atom_impl.h"
 
-namespace hl::cri_new::atom
+namespace hl::cri::atom
 {
 static const utf::column_info sequence_columns_[] =
 {
@@ -93,7 +94,7 @@ static constexpr utf::column_info_range sequence_columns_r4_[] =
     { 18, 6 },  // MIDITrackStartIndex - NumStopAction
 };
 
-static constexpr revision_info sequence_revisions_[] =
+static constexpr revision_info_ sequence_revisions_[] =
 {
     { packed_version(0), sequence_columns_r0_ }, // r0
     { packed_version(1, 12, 00), sequence_columns_r1_ }, // r1
@@ -102,134 +103,237 @@ static constexpr revision_info sequence_revisions_[] =
     { packed_version(1, 42, 01), sequence_columns_r4_ }, // r4
 };
 
-static constexpr std::size_t sequence_max_column_count_ = sequence_revisions_[2].get_total_count();
-
-u16 sequence::compute_related_waveform_count(const cue_sheet& cueSheet) const
+static sequence_type parse_sequence_type_(u8 type)
 {
-    u16 relatedWaveformCount = 0;
-
-    // TODO: Do we need to account for sequence command table??
-
-    for (const auto trackIndex : trackIndices)
+    if (type != static_cast<u8>(sequence_type::polyphonic) &&
+        type != static_cast<u8>(sequence_type::sequential) &&
+        type != static_cast<u8>(sequence_type::shuffle) &&
+        type != static_cast<u8>(sequence_type::random) &&
+        type != static_cast<u8>(sequence_type::random_no_repeat) &&
+        type != static_cast<u8>(sequence_type::switch_game_variable) &&
+        type != static_cast<u8>(sequence_type::combo_sequential) &&
+        type != static_cast<u8>(sequence_type::switch_selector) &&
+        type != static_cast<u8>(sequence_type::track_transition_by_selector))
     {
-        const auto& track = cueSheet.tracks.at(trackIndex);
-        relatedWaveformCount += track.compute_related_waveform_count(cueSheet);
+        throw std::runtime_error("Unsupported CriAtom sequence type");
     }
 
-    return relatedWaveformCount;
+    return static_cast<sequence_type>(type);
 }
 
-void cue_sheet::write_sequence_table_(detail_::write_params& wp) const
+void read_sequence_table_(
+    rad::stream& stream,
+    rad::allocator& tmpAllocator,
+    packed_version version,
+    rad::vector<sequence>& sequences)
 {
-    utf::table_serializer ts(*wp.stream, *wp.allocator);
+    assert(sequences.empty() &&
+        "The given output vector must be empty"
+    );
 
-    const auto revisionInfo = get_revision_info(
+    // Read raw table header.
+    utf::deserializer dr(stream, utf::deserialize_type::utf, tmpAllocator);
+
+    // Get revision info.
+    const auto revisionInfo = get_revision_info_for_version_(
+        sequence_revisions_,
+        version
+    );
+
+    // Validate columns.
+    if (!dr.has_columns_of_exact_types(revisionInfo->columnGroup, sequence_columns_))
+    {
+        throw std::runtime_error("Invalid or unsupported ACB Sequence layout");
+    }
+
+    // Read rows.
+    auto& sequenceAllocator = sequences.allocator();
+    sequences.reserve(dr.row_count());
+
+    for (u32 i = 0; i < dr.row_count(); dr.next_row(), ++i)
+    {
+        auto& sequence = sequences.emplace_back_unchecked(
+            sequence_type::polyphonic,
+            sequenceAllocator
+        );
+
+        // r0
+        // TODO: Write Tempo correctly for r0 files. How does Tempo differ from playbackRatio ??
+        sequence.playbackRatio = dr.next_cell_as_u16(); // PlaybackRatio
+        const auto trackCount = dr.next_cell_as_u16(); // NumTracks
+        const auto rawTrackIndex = dr.next_cell_as_buffer(); // TrackIndex
+        sequence.commandIndex = dr.next_cell_as_u16(); // CommandIndex
+
+        // r1
+        utf::raw_buffer rawLocalAisacs = {};
+
+        if (version >= sequence_revisions_[1].version)
+        {
+            rawLocalAisacs = dr.next_cell_as_buffer(); // LocalAisacs
+            sequence.globalAisacStartIndex = dr.next_cell_as_u16(); // GlobalAisacStartIndex
+            sequence.globalAisacCount = dr.next_cell_as_u16(); // GlobalAisacNumRefs
+            const auto parameterPallet = dr.next_cell_as_u16(); // ParameterPallet // TODO
+        }
+
+        // r2
+        utf::raw_buffer rawTrackValues = {};
+        utf::raw_buffer rawNumPlaybackTrackNoHistories = {};
+
+        if (version >= sequence_revisions_[2].version)
+        {
+            const auto actionTrackStartIndex = dr.next_cell_as_u16(); // ActionTrackStartIndex // TODO
+            const auto numActionTracks = dr.next_cell_as_u16(); // NumActionTracks // TODO
+            rawTrackValues = dr.next_cell_as_buffer(); // TrackValues
+            sequence.type = parse_sequence_type_(dr.next_cell_as_u8()); // Type
+            dr.skip_cell(); // ControlWorkArea1
+
+            if (version >= sequence_revisions_[4].version)
+            {
+                rawNumPlaybackTrackNoHistories = dr.next_cell_as_buffer(); // NumPlaybackTrackNoHistories
+            }
+            else
+            {
+                dr.skip_cell(); // ControlWorkArea2
+            }
+        }
+
+        // r3
+        if (version >= sequence_revisions_[3].version)
+        {
+            const auto instPluginTrackStartIndex = dr.next_cell_as_u16(); // InstPluginTrackStartIndex // TODO
+            const auto numInstPluginTracks = dr.next_cell_as_u16(); // NumInstPluginTracks // TODO
+        }
+
+        // r4
+        if (version >= sequence_revisions_[4].version)
+        {
+            const auto midiTrackStartIndex = dr.next_cell_as_u16(); // MIDITrackStartIndex // TODO
+            const auto numMidiTracks = dr.next_cell_as_u16(); // NumMIDITracks // TODO
+            const auto watchActionStartIndex = dr.next_cell_as_u16(); // WatchActionStartIndex // TODO
+            const auto numWatchAction = dr.next_cell_as_u16(); // NumWatchAction // TODO
+            const auto stopActionStartIndex = dr.next_cell_as_u16(); // StopActionStartIndex // TODO
+            const auto numStopAction = dr.next_cell_as_u16(); // NumStopAction // TODO
+        }
+
+        // TrackIndex
+        deserialize_u16_array_(dr, rawTrackIndex, sequence.trackIndices);
+
+        if (version < sequence_revisions_[1].version) continue;
+
+        // LocalAisacs
+        deserialize_u16_array_(dr, rawLocalAisacs, sequence.localAisacIndices);
+
+        if (version < sequence_revisions_[1].version) continue;
+
+        // TrackValues
+        deserialize_u16_array_(dr, rawTrackValues, sequence.trackValues);
+
+        if (version >= sequence_revisions_[4].version)
+        {
+            // NumPlaybackTrackNoHistories
+            // TODO
+        }
+    }
+}
+
+void write_sequence_table_(
+    detail_::write_params& wp,
+    const rad::vector<sequence>& sequences)
+{
+    utf::serializer sr(*wp.stream, *wp.allocator);
+
+    const auto revisionInfo = get_revision_info_for_version_(
         sequence_revisions_,
         wp.version
     );
 
     rad::vector<utf::column_info> columns(*wp.allocator);
-    columns.reserve(sequence_max_column_count_);
+    revisionInfo->columnGroup.append_to(sequence_columns_, columns);
 
-    revisionInfo->columns.append_to(sequence_columns_, columns);
-
-    ts.start("Sequence", columns, wp.encoding);
+    sr.start("Sequence", columns, wp.encoding);
 
     // Write rows.
-    u16 globalAisacStartIndex = wp.globalAisacStartIndices.sequence;
-
-    for (std::size_t i = 0; i < sequences.size(); ts.next_row(), ++i)
+    for (std::size_t i = 0; i < sequences.size(); sr.next_row(), ++i)
     {
         const auto& sequence = sequences[i];
 
         // r0
-        // TODO: How does Tempo differ from playbackRatio ??
-        ts.write_cell_as_u16(sequence.playbackRatio); // PlaybackRatio
-        ts.write_cell_as_u16(sequence.trackIndices.size()); // NumTracks
-        ts.write_cell_as_buffer(); // TrackIndex
-        ts.write_cell_as_u16(sequence.commandIndex); // CommandIndex
+        // TODO: Write Tempo correctly for r0 files. How does Tempo differ from playbackRatio ??
+        sr.push_cell_u16(sequence.playbackRatio); // PlaybackRatio
+        sr.push_cell_u16(sequence.trackIndices.size()); // NumTracks
+        sr.push_cell_buffer(sequence.trackIndices.empty()); // TrackIndex
+        sr.push_cell_u16(sequence.commandIndex); // CommandIndex
 
-        // r1 columns
+        // r1
         if (wp.version < sequence_revisions_[1].version) continue;
 
-        ts.write_cell_as_buffer(); // LocalAisacs
+        sr.push_cell_buffer(sequence.localAisacIndices.empty()); // LocalAisacs
+        sr.push_cell_u16(sequence.globalAisacStartIndex); // GlobalAisacStartIndex
+        sr.push_cell_u16(sequence.globalAisacCount); // GlobalAisacNumRefs
+        sr.push_cell_u16(UINT16_MAX); // ParameterPallet // TODO
 
-        ts.write_cell_as_u16((sequence.globalAisacs.empty()) ?
-            UINT16_MAX : globalAisacStartIndex
-        ); // GlobalAisacStartIndex
-
-        // TODO: Validate size.
-        const auto globalAisacNumRefs = static_cast<u16>(sequence.globalAisacs.size());
-        ts.write_cell_as_u16(globalAisacNumRefs); // GlobalAisacNumRefs
-
-        globalAisacStartIndex += globalAisacNumRefs;
-
-        ts.write_cell_as_u16(UINT16_MAX); // ParameterPallet
-
-        // r2 columns
+        // r2
         if (wp.version < sequence_revisions_[2].version) continue;
 
-        ts.write_cell_as_u16(UINT16_MAX); // ActionTrackStartIndex
-        ts.write_cell_as_u16(0); // NumActionTracks
-        ts.write_cell_as_buffer(); // TrackValues
-        ts.write_cell_as_u8(static_cast<u8>(sequence.type)); // Type
-        ts.write_cell_as_u16(i); // ControlWorkArea1
-        ts.write_cell_as_u16(i); // ControlWorkArea2
+        sr.push_cell_u16(UINT16_MAX); // ActionTrackStartIndex // TODO
+        sr.push_cell_u16(0); // NumActionTracks // TODO
+        sr.push_cell_buffer(sequence.trackValues.empty()); // TrackValues
+        sr.push_cell_u8(static_cast<u8>(sequence.type)); // Type
+        sr.push_cell_u16(i); // ControlWorkArea1
+
+        if (wp.version >= sequence_revisions_[4].version)
+        {
+            sr.push_cell_buffer(); // NumPlaybackTrackNoHistories
+        }
+        else
+        {
+            sr.push_cell_u16(i); // ControlWorkArea2
+        }
+
+        // r3
+        if (wp.version < sequence_revisions_[3].version) continue;
+
+        sr.push_cell_u16(UINT16_MAX); // InstPluginTrackStartIndex // TODO
+        sr.push_cell_u16(0); // NumInstPluginTracks // TODO
+
+        // r4
+        if (wp.version < sequence_revisions_[4].version) continue;
+
+        sr.push_cell_u16(UINT16_MAX); // MIDITrackStartIndex // TODO
+        sr.push_cell_u16(0); // NumMIDITracks // TODO
+        sr.push_cell_u16(UINT16_MAX); // WatchActionStartIndex // TODO
+        sr.push_cell_u16(0); // NumWatchAction // TODO
+        sr.push_cell_u16(UINT16_MAX); // StopActionStartIndex // TODO
+        sr.push_cell_u16(0); // NumStopAction // TODO
     }
 
-    // Finish writing rows.
-    ts.finish_rows();
-
     // Write buffers.
-    for (std::size_t cellIndex = 0, i = 0;
-        i < sequences.size();
-        cellIndex += ts.column_count(), ++i)
+    auto br = sr.begin_buffer_data_section();
+
+    for (const auto& sequence : sequences)
     {
-        const auto& sequence = sequences[i];
-
-        // Write TrackIndex.
-        if (!sequence.trackIndices.empty())
-        {
-            const auto trackIndicesDataPos = wp.stream->tell();
-            for (const auto trackIndex : sequence.trackIndices)
-            {
-                ts.writer().write_u16(trackIndex);
-            }
-
-            ts.fill_buffer_cell(cellIndex + 2, trackIndicesDataPos);
-        }
+        // TrackIndex
+        serialize_u16_array_(br, sequence.trackIndices);
 
         if (wp.version < sequence_revisions_[1].version) continue;
 
-        // Write LocalAisacs.
-        if (!sequence.localAisacIndices.empty())
-        {
-            const auto localAisacsDataPos = wp.stream->tell();
-            for (const auto localAisacIndex : sequence.localAisacIndices)
-            {
-                ts.writer().write_u16(localAisacIndex);
-            }
-
-            ts.fill_buffer_cell(cellIndex + 4, localAisacsDataPos);
-        }
+        // LocalAisacs
+        serialize_u16_array_(br, sequence.localAisacIndices);
 
         if (wp.version < sequence_revisions_[2].version) continue;
 
-        // Write TrackValues.
-        if (!sequence.trackValues.empty())
-        {
-            const auto trackValuesDataPos = wp.stream->tell();
-            for (const auto trackValue : sequence.trackValues)
-            {
-                ts.writer().write_u16(trackValue);
-            }
+        // TrackValues
+        serialize_u16_array_(br, sequence.trackValues);
 
-            ts.fill_buffer_cell(cellIndex + 10, trackValuesDataPos);
+        if (wp.version >= sequence_revisions_[4].version)
+        {
+            // NumPlaybackTrackNoHistories
+            // TODO
+            br.next();
         }
     }
 
     // Finish writing table.
-    ts.finish();
-    wp.stream->pad(32);
+    sr.finish();
 }
 }

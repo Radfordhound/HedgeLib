@@ -1,13 +1,15 @@
-#include "hedgelib/cri/hl_cri_atom_wave_bank.h"
-#include "hedgelib/cri/hl_cri_cue_sheet.h"
-#include "hedgelib/common/io/hl_endian_writers.h"
+#include <rad/rad_stream.h>
 
-namespace hl::cri_new::atom
+#include "hedgelib/io/hl_endian_readers.h"
+#include "hedgelib/cri/hl_cri_atom_wave_bank.h"
+
+namespace hl::cri::atom
 {
-rad::vector<unsigned char> wave_bank_reader::read_waveform_data_by_index(
-    std::size_t index)
+rad::vector<unsigned char> wave_bank_deserializer::read_waveform_data_by_index(
+    std::size_t index,
+    rad::allocator& allocator)
 {
-    if (index + 1 >= entries_.size())
+    if (index >= entries_.size() - 1)
     {
         throw std::out_of_range("The given index was out of range");
     }
@@ -18,269 +20,349 @@ rad::vector<unsigned char> wave_bank_reader::read_waveform_data_by_index(
         info_.dataAlignment
     );
 
-    stream().jump_to(alignedDataPos);
+    stream_->jump_to(alignedDataPos);
 
     const auto dataSize = (
         entries_[index + 1].unalignedDataPos -
         alignedDataPos
     );
 
-    rad::vector<unsigned char> waveformData(rad::no_value_init, dataSize);
-    stream().read_as(waveformData.data(), dataSize);
+    rad::vector<unsigned char> waveformData(rad::no_value_init, allocator, dataSize);
+    stream_->read_as(waveformData.data(), dataSize);
 
     return waveformData;
 }
 
-rad::vector<unsigned char> wave_bank_reader::read_waveform_data_by_id(
-    u16 id)
+rad::vector<unsigned char> wave_bank_deserializer::read_waveform_data_by_id(
+    u16 id,
+    rad::allocator& allocator)
 {
     for (std::size_t i = 0; i < waveform_count(); ++i)
     {
         if (entries_[i].id == id)
         {
-            return read_waveform_data_by_index(i);
+            return read_waveform_data_by_index(i, allocator);
         }
     }
 
     throw std::runtime_error("No waveform was found with the given id");
 }
 
-wave_bank_reader::wave_bank_reader(rad::stream& stream)
-    : little_endian_reader(stream)
+wave_bank_deserializer::wave_bank_deserializer(rad::stream& stream)
+    : stream_(&stream)
 {
     // Read header.
-    if (read_u32() != wave_bank_signature)
+    io::little_endian_reader reader(stream);
+    if (reader.read_u32() != wave_bank_signature)
     {
         throw std::runtime_error("Unsupported AWB data format");
     }
 
-    const auto version = read_u8();
+    const auto version = reader.read_u8();
 
-    if (version != 2)
+    if (version > 2)
     {
         throw std::runtime_error("Unsupported AWB data version");
     }
 
-    const auto waveformDataPosSize = read_u8();
-    const auto waveformIDSize = read_u8();
-    const auto unknown1 = read_u8();
-    const auto waveformCount = read_u32();
-    info_.dataAlignment = read_u16();
-    const auto subkey = read_u16(); // TODO: Use this!!!
+    info_.dataPosSize = reader.read_u8();
+    info_.idAlignment = reader.read_u8();
+    const auto unknown1 = reader.read_u8();
+    const auto waveformCount = reader.read_u32();
+    info_.dataAlignment = reader.read_u16();
+
+    // NOTE: In version 1, this is a reserved, unused field.
+    // However, there's no harm in reading it and passing its
+    // value to the subkey field anyway.
+    info_.subkey = reader.read_u16();
 
     // Read IDs.
-    if (waveformIDSize != 2)
+    if constexpr (SIZE_MAX <= UINT32_MAX)
     {
-        throw std::runtime_error("Unsupported waveform ID size");
+        // NOTE: We're not checking the waveform count, but the
+        // waveform *entry* count, which is the waveform count + 1.
+        if (waveformCount >= SIZE_MAX)
+        {
+            throw std::overflow_error("AWB waveform entry count exceeds size_t range");
+        }
     }
 
-    entries_.assign(rad::no_value_init, waveformCount + 1);
+    entries_.assign(rad::no_value_init, static_cast<std::size_t>(waveformCount) + 1);
 
-    for (unsigned long i = 0; i < waveformCount; ++i)
+    if (info_.idAlignment > 2)
     {
-        entries_[i].id = read_u16();
+        for (u32 i = 0; i < waveformCount; ++i)
+        {
+            // TODO: Is this correct?
+            stream.align(info_.idAlignment);
+            entries_[i].id = reader.read_u16();
+        }
+    }
+    else
+    {
+        for (u32 i = 0; i < waveformCount; ++i)
+        {
+            entries_[i].id = reader.read_u16();
+        }
     }
 
     entries_[waveformCount].id = UINT16_MAX;
 
     // Read unaligned data positions.
-    switch (waveformDataPosSize)
+    switch (info_.dataPosSize)
     {
     case 2:
-        for (unsigned long i = 0; i < waveformCount + 1; ++i)
+        for (u32 i = 0; i < waveformCount + 1; ++i)
         {
-            entries_[i].unalignedDataPos = read_u16();
+            entries_[i].unalignedDataPos = reader.read_u16();
         }
         break;
 
     case 4:
-        for (unsigned long i = 0; i < waveformCount + 1; ++i)
+        for (u32 i = 0; i < waveformCount + 1; ++i)
         {
-            entries_[i].unalignedDataPos = read_u32();
+            entries_[i].unalignedDataPos = reader.read_u32();
         }
         break;
 
     default:
-        throw std::runtime_error("Unsupported waveform data position size");
+        throw std::runtime_error("Unsupported AWB waveform data position size");
     }
 }
 
-void wave_bank_writer::fill_data_position_(unsigned long long unalignedDataPos)
+void wave_bank_serializer::write_data_position_(unsigned long long unalignedDataPos)
 {
-    writer_.stream().jump_to(curDataPositionPos_);
-
-    switch (dataPosSize_)
+    switch (waveBankInfo_.dataPosSize)
     {
     case 2:
         if (unalignedDataPos > UINT16_MAX)
         {
-            throw std::overflow_error("Waveform data position is too large");
+            throw std::overflow_error("AWB waveform data position is too large");
         }
 
         writer_.write_u16(static_cast<u16>(unalignedDataPos));
-        curDataPositionPos_ += 2;
         break;
 
     case 4:
         if (unalignedDataPos > UINT32_MAX)
         {
-            throw std::overflow_error("Waveform data position is too large");
+            throw std::overflow_error("AWB waveform data position is too large");
         }
 
         writer_.write_u32(static_cast<u32>(unalignedDataPos));
-        curDataPositionPos_ += 4;
         break;
 
     default:
         assert(false &&
-            "Invalid waveform data position size; this should never happen!"
+            "Invalid AWB waveform data position size; this should never happen!"
         );
         break;
     }
 }
 
-void wave_bank_writer::start(
-    u16 dataAlignment,
-    u16 subkey,
-    u8 dataPosSize,
-    u8 idSize)
+wave_bank_serializer::waveform_resolver::waveform_resolver(
+    wave_bank_serializer& serializer,
+    unsigned long long firstOffPos) noexcept
+    : serializer_(&serializer)
+    , curOffPos_(firstOffPos)
 {
-    assert(lastSeqStep_ == SEQ_NONE_ &&
-        "The writer functions are being called in an incorrect order"
+}
+
+void wave_bank_serializer::waveform_resolver::start()
+{
+    assert(serializer_->lastSeqStep_ == SEQ_DATA_POSITIONS_ &&
+        "This resolver cannot be used after finish() "
+        "has been called on its associated serializer"
     );
 
-    if (idSize != 2)
+    // TODO: Somehow validate that start() was not called
+    // again without a finish() call inbetween.
+
+    // Fill-in waveform unaligned data position.
+    auto writer = serializer_->writer_;
+    const auto unalignedDataPos = writer.stream().tell();
+
+    writer.stream().jump_to(curOffPos_);
+    serializer_->write_data_position_(unalignedDataPos);
+
+    // Update state.
+    curOffPos_ += serializer_->waveBankInfo_.dataPosSize;
+
+    // Align waveform data.
+    writer.stream().jump_to(unalignedDataPos);
+    writer.stream().pad(serializer_->waveBankInfo_.dataAlignment);
+}
+
+void wave_bank_serializer::waveform_resolver::finish()
+{
+    assert(serializer_->lastSeqStep_ == SEQ_DATA_POSITIONS_ &&
+        "This resolver cannot be used after finish() "
+        "has been called on its associated serializer"
+    );
+
+    // TODO: Somehow validate that start() was called first?
+
+    // Update data section end position.
+    const auto dataEndPos = serializer_->writer_.stream().tell();
+
+    assert(dataEndPos >= serializer_->dataSectionEndPos_ &&
+        "finish() must be called with the stream position set to "
+        "the end of the associated waveform"
+    );
+    
+    serializer_->dataSectionEndPos_ = dataEndPos;
+}
+
+wave_bank_serializer::toc_waveform_resolver::toc_waveform_resolver(
+    wave_bank_serializer& serializer,
+    unsigned long long firstOffPos) noexcept
+    : serializer_(&serializer)
+    , curOffPos_(firstOffPos)
+{
+}
+
+void wave_bank_serializer::toc_waveform_resolver::next(u32 promisedWaveformSize)
+{
+    assert(serializer_->lastSeqStep_ == SEQ_DATA_POSITIONS_ &&
+        "This resolver cannot be used after finish() "
+        "has been called on its associated serializer"
+    );
+
+    // Fill-in waveform unaligned data position.
+    auto writer = serializer_->writer_;
+
+    writer.stream().jump_to(curOffPos_);
+    serializer_->write_data_position_(serializer_->dataSectionEndPos_);
+
+    // Update state.
+    curOffPos_ += serializer_->waveBankInfo_.dataPosSize;
+    serializer_->dataSectionEndPos_ = (
+        align(
+            serializer_->dataSectionEndPos_,
+            serializer_->waveBankInfo_.dataAlignment) +
+        promisedWaveformSize
+    );
+}
+
+void wave_bank_serializer::start(wave_bank_info waveBankInfo)
+{
+    assert(lastSeqStep_ == SEQ_NONE_ &&
+        "start() must not be called again until after "
+        "a matching call to finish()"
+    );
+
+    if (waveBankInfo.version > 2)
     {
-        throw std::runtime_error("Unsupported waveform ID size");
+        throw std::runtime_error("Unsupported AWB version");
     }
 
-    if (dataPosSize != 2 && dataPosSize != 4)
+    if (waveBankInfo.dataPosSize != 2 && waveBankInfo.dataPosSize != 4)
     {
-        throw std::runtime_error("Unsupported waveform data position size");
+        throw std::runtime_error("Unsupported AWB waveform data position size");
     }
 
     headerPos_ = writer_.stream().tell();
 
     writer_.write_u32(wave_bank_signature); // signature
-    writer_.write_u8(2); // version
-    writer_.write_u8(dataPosSize); // waveformDataPosSize
-    writer_.write_u8(idSize); // waveformIDSize
+    writer_.write_u8(waveBankInfo.version); // version
+    writer_.write_u8(waveBankInfo.dataPosSize); // dataPosSize
+    writer_.write_u8(waveBankInfo.idAlignment); // idAlignment
     writer_.write_u8(0); // unknown1
     writer_.write_u32(0); // waveformCount
-    writer_.write_u16(dataAlignment); // waveformDataAlignment
-    writer_.write_u16(subkey); // subkey
+    writer_.write_u16(waveBankInfo.dataAlignment); // dataAlignment
+    writer_.write_u16((waveBankInfo.version > 1) ? waveBankInfo.subkey : 0); // subkey
 
-    idSize_ = idSize;
-    dataPosSize_ = dataPosSize;
+    waveBankInfo_ = waveBankInfo;
     waveformCount_ = 0;
-    dataAlignment_ = dataAlignment;
     lastSeqStep_ = SEQ_HEADER_;
 }
 
-void wave_bank_writer::write_id(u16 id)
+void wave_bank_serializer::write_id(u16 id)
 {
-    assert(lastSeqStep_ == SEQ_HEADER_ || lastSeqStep_ == SEQ_IDS_ &&
-        "The writer functions are being called in an incorrect order"
+    assert(lastSeqStep_ > SEQ_NONE_ &&
+        "start() must be called before write_id()"
     );
 
-    switch (idSize_)
-    {
-    case 2:
-        writer_.write_u16(id);
-        break;
+    assert(lastSeqStep_ < SEQ_DATA_POSITIONS_ &&
+        "write_id() should not be called again after "
+        "starting the data section or calling finish()"
+    );
 
-    default:
-        assert(false &&
-            "Invalid waveform ID size; this should never happen!"
-        );
-        break;
+    if (waveBankInfo_.idAlignment > 2)
+    {
+        writer_.stream().pad(waveBankInfo_.idAlignment);
     }
+
+    writer_.write_u16(id);
 
     ++waveformCount_;
     lastSeqStep_ = SEQ_IDS_;
 }
 
-void wave_bank_writer::write_data_positions()
+auto wave_bank_serializer::begin_data_section() -> waveform_resolver
 {
-    assert(lastSeqStep_ == SEQ_IDS_ ||
-        (lastSeqStep_ == SEQ_HEADER_ && waveformCount_ == 0) &&
-        "The writer functions are being called in an incorrect order"
+    assert(lastSeqStep_ > SEQ_NONE_ &&
+        "start() must be called before starting the data section"
     );
 
-    curDataPositionPos_ = writer_.stream().tell();
-    writer_.stream().write_nulls(dataPosSize_ * (waveformCount_ + 1));
+    assert(lastSeqStep_ < SEQ_DATA_POSITIONS_ &&
+        "The data section must not be started "
+        "more than once per call to start()"
+    );
 
-    curDataEndPos_ = writer_.stream().tell();
+    // Write placeholder offsets.
+    const auto curOffPos = writer_.stream().tell();
+    writer_.stream().write_nulls(
+        (static_cast<std::size_t>(waveformCount_) + 1) *
+        waveBankInfo_.dataPosSize
+    );
+
+    // Return offset resolver.
+    dataSectionBeginPos_ = dataSectionEndPos_ = writer_.stream().tell();
     lastSeqStep_ = SEQ_DATA_POSITIONS_;
+
+    return waveform_resolver(*this, curOffPos);
 }
 
-void wave_bank_writer::write_data(rad::span<const unsigned char> rawData)
+auto wave_bank_serializer::begin_toc_data_section() -> toc_waveform_resolver
 {
-    assert(lastSeqStep_ == SEQ_DATA_POSITIONS_ || lastSeqStep_ == SEQ_DATA_ &&
-        "The writer functions are being called in an incorrect order"
+    assert(lastSeqStep_ > SEQ_NONE_ &&
+        "start() must be called before starting the data section"
     );
 
-    assert(curDataPositionPos_ < // lastDataPositionPos:
-        ((headerPos_ + 16) +
-        (idSize_ * waveformCount_) +
-        (dataPosSize_ * waveformCount_)) &&
-        "write_data is being called too many times"
+    assert(lastSeqStep_ < SEQ_DATA_POSITIONS_ &&
+        "The data section must not be started "
+        "more than once per call to start()"
     );
 
-    // Fill-in waveform unaligned data position.
-    const auto unalignedDataPos = writer_.stream().tell();
-    fill_data_position_(unalignedDataPos);
+    // Write placeholder offsets.
+    const auto curOffPos = writer_.stream().tell();
+    writer_.stream().write_nulls(
+        (static_cast<std::size_t>(waveformCount_) + 1) *
+        waveBankInfo_.dataPosSize
+    );
 
-    // Align waveform data.
-    writer_.stream().jump_to(unalignedDataPos);
-    writer_.stream().pad(dataAlignment_);
+    // Return offset resolver.
+    dataSectionBeginPos_ = dataSectionEndPos_ = writer_.stream().tell();
+    lastSeqStep_ = SEQ_DATA_POSITIONS_;
 
-    // Write waveform data.
-    writer_.stream().write(rawData.data(), rawData.size());
-
-    lastSeqStep_ = SEQ_DATA_;
+    return toc_waveform_resolver(*this, curOffPos);
 }
 
-void wave_bank_writer::fill_data_position(
-    unsigned long long unalignedDataPos,
-    unsigned long long dataSize)
+unsigned long long wave_bank_serializer::finish()
 {
-    assert(lastSeqStep_ == SEQ_DATA_POSITIONS_ || lastSeqStep_ == SEQ_DATA_ &&
-        "The writer functions are being called in an incorrect order"
+    assert(lastSeqStep_ > SEQ_NONE_ &&
+        "start() must be called before finish()"
     );
 
-    assert(curDataPositionPos_ < // lastDataPositionPos:
-        ((headerPos_ + 16) +
-        (idSize_ * waveformCount_) +
-        (dataPosSize_ * waveformCount_)) &&
-        "fill_data_position is being called too many times"
+    assert(lastSeqStep_ == SEQ_DATA_POSITIONS_ &&
+        "The data section must be started before calling finish()"
     );
 
-    // Fill-in waveform unaligned data position.
-    fill_data_position_(unalignedDataPos);
-
-    // Update data end position.
-    const auto alignedDataPos = align(unalignedDataPos, dataAlignment_);
-    const auto dataEndPos = alignedDataPos + dataSize;
-
-    if (dataEndPos > curDataEndPos_)
-    {
-        curDataEndPos_ = dataEndPos;
-    }
-
-    lastSeqStep_ = SEQ_DATA_;
-}
-
-void wave_bank_writer::finish()
-{
-    assert(lastSeqStep_ == SEQ_DATA_ ||
-        (lastSeqStep_ == SEQ_DATA_POSITIONS_ && waveformCount_ == 0) &&
-        "The writer functions are being called in an incorrect order"
-    );
-
-    // Fill-in end position.
+    // Fill-in data section end position.
     const auto endPos = writer_.stream().tell();
-    fill_data_position_(std::max<>(endPos, curDataEndPos_));
+    writer_.stream().jump_to(dataSectionBeginPos_ - waveBankInfo_.dataPosSize);
+    write_data_position_(dataSectionEndPos_);
 
     // Fill-in waveform count.
     writer_.stream().jump_to(headerPos_ + 8);
@@ -290,5 +372,6 @@ void wave_bank_writer::finish()
     writer_.stream().jump_to(endPos);
 
     lastSeqStep_ = SEQ_NONE_;
+    return dataSectionBeginPos_;
 }
 }
