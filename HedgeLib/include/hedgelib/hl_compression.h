@@ -20,6 +20,16 @@ enum class compress_type
     deflate
 };
 
+HL_API bool cab_check_signature(std::size_t srcSize, const void* src);
+
+/** @brief CAB support currently expects a single-file cabinet payload. */
+HL_API std::size_t cab_get_uncompressed_size(std::size_t srcSize, const void* src);
+
+HL_API blob cab_decompress(std::size_t srcSize, const void* src);
+
+HL_API void cab_decompress_no_alloc(std::size_t srcSize,
+    const void* src, std::size_t dstSize, void* dst);
+
 HL_API bool x_check_signature(std::size_t srcSize, const void* src);
 
 HL_API std::size_t x_get_uncompressed_size(std::size_t srcSize, const void* src);
