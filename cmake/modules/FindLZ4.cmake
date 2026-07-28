@@ -30,9 +30,16 @@ find_path(LZ4_INCLUDE_DIR
   NAMES lz4.h
   DOC "lz4 include directory")
 mark_as_advanced(LZ4_INCLUDE_DIR)
+# MinGW additions. Under Msys2 we can just specify the static LZ4 library directly
+if(MINGW)
+find_library(LZ4_LIBRARY
+  NAMES liblz4.a liblz4
+  DOC "lz4 library")
+else()
 find_library(LZ4_LIBRARY
   NAMES lz4 liblz4
   DOC "lz4 library")
+endif()
 mark_as_advanced(LZ4_LIBRARY)
 
 if (LZ4_INCLUDE_DIR)

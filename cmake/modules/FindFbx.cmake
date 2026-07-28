@@ -86,7 +86,12 @@ function(FindFbxLibrariesGeneric _FBX_ROOT_DIR _OUT_FBX_LIBRARIES _OUT_FBX_LIBRA
   elseif(APPLE)
     set(FBX_CP_PATH "*")
   else()
-    set(FBX_CP_PATH "*")
+    if(MINGW)
+        # Idk, installed 2020.2.1 vs2019
+        set(FBX_CP_PATH "vs2019")
+    else()
+        set(FBX_CP_PATH "*")
+    endif()
   endif()
 
   # Detects current processor type.

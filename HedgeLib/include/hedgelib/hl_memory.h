@@ -276,6 +276,8 @@ OutputIt move_strong(InputIt begin, InputIt end, OutputIt dst) noexcept(
 {
 #ifdef _MSC_VER
     return _aligned_malloc(size, __STDCPP_DEFAULT_NEW_ALIGNMENT__);
+#elif __MINGW32__
+    return _aligned_malloc(size, __STDCPP_DEFAULT_NEW_ALIGNMENT__);
 #else
     return std::malloc(size);
 #endif
@@ -295,6 +297,8 @@ OutputIt move_strong(InputIt begin, InputIt end, OutputIt dst) noexcept(
 [[nodiscard]] inline void* allocate(std::size_t size, std::size_t alignment, const std::nothrow_t) noexcept
 {
 #ifdef _MSC_VER
+    return _aligned_malloc(size, alignment);
+#elif __MINGW32__
     return _aligned_malloc(size, alignment);
 #else
     return std::aligned_alloc(alignment, size);
@@ -344,6 +348,8 @@ template<typename T>
 {
 #ifdef _MSC_VER
     return _aligned_realloc(ptr, size, __STDCPP_DEFAULT_NEW_ALIGNMENT__);
+#elif __MINGW32__
+    return _aligned_realloc(ptr, size, __STDCPP_DEFAULT_NEW_ALIGNMENT__);
 #else
     return std::realloc(ptr, size);
 #endif
@@ -364,6 +370,8 @@ template<typename T>
     std::size_t alignment, const std::nothrow_t) noexcept
 {
 #ifdef _MSC_VER
+    return _aligned_realloc(ptr, size, alignment);
+#elif __MINGW32__
     return _aligned_realloc(ptr, size, alignment);
 #else
     const auto mem = std::aligned_alloc(alignment, size);
@@ -427,6 +435,8 @@ template<typename T>
 inline void free(void* ptr) noexcept
 {
 #ifdef _MSC_VER
+    _aligned_free(ptr);
+#elif __MINGW32__
     _aligned_free(ptr);
 #else
     std::free(ptr);

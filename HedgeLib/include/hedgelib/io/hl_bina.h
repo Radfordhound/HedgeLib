@@ -1011,14 +1011,14 @@ HL_API endian_flag fix_container32(void* rawData, std::size_t dataSize);
 
 inline endian_flag fix_container32(blob& rawData)
 {
-    fix_container32(rawData.data(), rawData.size());
+    return fix_container32(rawData.data(), rawData.size());
 }
 
 HL_API endian_flag fix_container64(void* rawData, std::size_t dataSize);
 
 inline endian_flag fix_container64(blob& rawData)
 {
-    fix_container64(rawData.data(), rawData.size());
+    return fix_container64(rawData.data(), rawData.size());
 }
 
 template<typename T = void>

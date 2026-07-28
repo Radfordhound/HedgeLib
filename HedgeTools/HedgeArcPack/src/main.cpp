@@ -425,7 +425,11 @@ static void print_usage(std::FILE* stream)
     hl::console::write(get_text(text_id::help1), stream);
 
     // Print types.
+#if defined(__MINGW32__) && !defined(HL_WIN32_FORCE_ANSI)
+    print_types(HL_NTEXT("\t\t%ls"), stream);
+#else
     print_types(HL_NTEXT("\t\t%s"), stream);
+#endif
 
     // Print help2.
     hl::console::write(get_text(text_id::help2), stream);
@@ -455,7 +459,13 @@ static arc_type prompt_for_arc_type()
 {
     // Ask user for type and print all valid type options.
     hl::console::write(get_text(text_id::type1), stderr);
+    
+#if defined(__MINGW32__) && !defined(HL_WIN32_FORCE_ANSI)
+    print_types(HL_NTEXT(" %ls"), stderr);
+#else
     print_types(HL_NTEXT(" %s"), stderr);
+#endif
+
     hl::console::write(get_text(text_id::type2), stderr);
 
     // Get type from user input and return it.

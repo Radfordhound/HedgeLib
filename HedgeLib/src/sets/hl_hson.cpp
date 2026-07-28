@@ -1103,7 +1103,7 @@ static const parameter* in_get_parameter(
             const auto nextNameSep = std::strchr(curNameSep + 1, '/');
             if (nextNameSep)
             {
-                curName.assign(curNameSep + 1, nextNameSep);
+                curName.assign(curNameSep + 1, nextNameSep[0]);
             }
             else
             {

@@ -104,12 +104,23 @@ static void print_usage(const hl::nchar* templateDir, std::FILE* s)
     hl::nfputs(HL_NTEXT(" -game=VALUE     Specifies which template to use for conversion.\n"), s);
     hl::nfputs(HL_NTEXT("                 Valid options are:\n\n"), s);
 
+#if defined(__MINGW32__) && !defined(HL_WIN32_FORCE_ANSI)
+    print_valid_game_types(templateDir, HL_NTEXT("                 %ls"), s);
+#else
     print_valid_game_types(templateDir, HL_NTEXT("                 %s"), s);
+#endif
+    
     hl::nfputs(HL_NTEXT("\n"), s);
 
     hl::nfputs(HL_NTEXT(" -platform=VALUE Specifies which platform to use for conversion.\n"), s);
     hl::nfputs(HL_NTEXT("                 Valid options are:\n\n"), s);
+    
+#if defined(__MINGW32__) && !defined(HL_WIN32_FORCE_ANSI)
+    print_valid_platform_types(HL_NTEXT("                 %ls"), s);
+#else
     print_valid_platform_types(HL_NTEXT("                 %s"), s);
+#endif
+
 }
 
 static hl::nstring prompt_for_game_type(const hl::nchar* templateDir)
@@ -118,7 +129,11 @@ static hl::nstring prompt_for_game_type(const hl::nchar* templateDir)
     hl::nfputs(HL_NTEXT("Game type could not be auto-determined.\n"
         "Please enter one of the following options:\n\n"), stderr);
 
+#if defined(__MINGW32__) && !defined(HL_WIN32_FORCE_ANSI)
+    print_valid_game_types(templateDir, HL_NTEXT(" %ls"), stderr);
+#else
     print_valid_game_types(templateDir, HL_NTEXT(" %s"), stderr);
+#endif
     
     hl::nfprintf(stderr, HL_NTEXT("Game type: "));
 
@@ -132,7 +147,11 @@ static platform_type prompt_for_platform_type()
     hl::nfputs(HL_NTEXT("Platform type could not be auto-determined.\n"
         "Please enter one of the following options:\n\n"), stderr);
 
+#if defined(__MINGW32__) && !defined(HL_WIN32_FORCE_ANSI)
+    print_valid_platform_types(HL_NTEXT(" %ls"), stderr);
+#else
     print_valid_platform_types(HL_NTEXT(" %s"), stderr);
+#endif
     
     hl::nfprintf(stderr, HL_NTEXT("Platform type: "));
 
@@ -145,7 +164,12 @@ static void convert_gedit_v3_to_hson(const hl::set_object_type_database& objType
     const hl::nchar* input, const hl::nchar* output, platform_type platform)
 {
     // Load .gedit file.
+#if defined(__MINGW32__) && !defined(HL_WIN32_FORCE_ANSI)
+    hl::nprintf(HL_NTEXT("Loading set data from \"%ls\"...\n"), input);
+#else
     hl::nprintf(HL_NTEXT("Loading set data from \"%s\"...\n"), input);
+#endif
+
     hl::blob blob(input);
 
     // Fix BINA data.
@@ -182,7 +206,12 @@ static void convert_hson_to_gedit_v3(const hl::set_object_type_database& objType
     const hl::nchar* input, const hl::nchar* output, platform_type platform)
 {
     // Load HSON data.
+#if defined(__MINGW32__) && !defined(HL_WIN32_FORCE_ANSI)
+    hl::nprintf(HL_NTEXT("Loading HSON data from \"%ls\"...\n"), input);
+#else
     hl::nprintf(HL_NTEXT("Loading HSON data from \"%s\"...\n"), input);
+#endif
+
     hl::hson::project hsonProject(input);
 
     // Save gedit data to file.
@@ -243,7 +272,11 @@ int HL_NMAIN(int argc, hl::nchar* argv[])
         {
             hl::nfprintf(stderr,
                 HL_NTEXT("ERROR: The templates directory was "
+#if defined(__MINGW32__) && !defined(HL_WIN32_FORCE_ANSI)
+                "not found at the expected path (\"%ls\")."),
+#else
                 "not found at the expected path (\"%s\")."),
+#endif
                 templateDir);
 
             hl::console::pause_if_necessary(current_language);
@@ -314,7 +347,12 @@ int HL_NMAIN(int argc, hl::nchar* argv[])
         }
 
         // Load templates for the given game.
+#if defined(__MINGW32__) && !defined(HL_WIN32_FORCE_ANSI)
+        hl::nprintf(HL_NTEXT("Loading templates for %ls...\n"), game);
+#else
         hl::nprintf(HL_NTEXT("Loading templates for %s...\n"), game);
+#endif
+        
         const hl::set_object_type_database objTypeDB(
             hl::path::combine(templateDir, game) +
             HL_NTEXT(".json"));
@@ -341,7 +379,11 @@ int HL_NMAIN(int argc, hl::nchar* argv[])
             {
                 hl::nfprintf(stderr, HL_NTEXT(
                     "WARNING: Input file type is of an unknown extension. "
+#if defined(__MINGW32__) && !defined(HL_WIN32_FORCE_ANSI)
+                    "Proceeding as if input file is a %ls file.\n"), gameExt);
+#else
                     "Proceeding as if input file is a %s file.\n"), gameExt);
+#endif
             }
 
             if (!output)

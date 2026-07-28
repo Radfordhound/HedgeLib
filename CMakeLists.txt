@@ -77,6 +77,15 @@ if(MSVC)
     add_compile_options(/permissive- /utf-8)
 endif()
 
+# MinGW is finicky with unicode
+if(MINGW)
+    if(HEDGELIB_WIN32_FORCE_ANSI)
+        SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -static")
+    else()
+        SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -municode -static")
+    endif()
+endif()  
+
 # Make CMake check for packages in "Dependencies" subdirectory
 list(APPEND CMAKE_PREFIX_PATH
     ${HEDGELIB_LOCAL_DEPENDENCIES_DIR}
